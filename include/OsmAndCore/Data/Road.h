@@ -59,6 +59,14 @@ namespace OsmAnd
         QString getRefInNativeLanguage() const;
         QString getRefInLanguage(const QString& lang) const;
         QString getRef(const QString lang, bool transliterate) const;
+        QString getDestinationRef(bool direction) const;
+        QString getDestinationName(const QString lang, bool transliterate, bool direction) const;
+
+        float getMaximumSpeed(bool direction) const;
+
+        double directionRoute(int startPoint, bool plus) const;
+        double directionRoute(int startPoint, bool plus, float dist) const;
+        bool bearingVsRouteDirection(double bearing) const;
 
         const bool hasGeocodingAccess() const;
 

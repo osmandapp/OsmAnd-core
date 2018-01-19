@@ -31,6 +31,17 @@ namespace OsmAnd
 {
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
     {
+        inline static std::tm localtime(const std::time_t& time)
+        {
+            std::tm tm_snapshot;
+#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
+            localtime_s(&tm_snapshot, &time);
+#else
+            localtime_r(&time, &tm_snapshot); // POSIX
+#endif
+            return tm_snapshot;
+        }
+        
         inline static double toRadians(const double angle)
         {
             return angle / 180.0 * M_PI;

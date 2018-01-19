@@ -166,6 +166,8 @@ set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	file(GLOB legacy_sources
+		"${LEGACY_SRC}/routeTypeRule.h"
+		"${LEGACY_SRC}/routeTypeRule.cpp"
 		"${LEGACY_SRC}/binaryRead.h"
 		"${LEGACY_SRC}/binaryRead.cpp"
 		"${LEGACY_SRC}/binaryRoutePlanner.h"
@@ -195,6 +197,8 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
         "${LEGACY_SRC}/routePlannerFrontEnd.cpp"
 		"${LEGACY_SRC}/routingContext.h"
 		"${LEGACY_SRC}/routingContext.cpp"
+		"${LEGACY_SRC}/openingHoursParser.h"
+		"${LEGACY_SRC}/openingHoursParser.cpp"
 
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"

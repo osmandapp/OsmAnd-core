@@ -17,6 +17,8 @@
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/MapObject.h>
 
+#include <openingHoursParser.h>
+
 namespace OsmAnd
 {
     class ObfRoutingSectionReader_P;
@@ -61,6 +63,62 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API ObfRoutingSectionAttributeMapping : public MapObject::AttributeMapping
     {
+    public:
+        struct OSMAND_CORE_API RouteTypeCondition Q_DECL_FINAL
+        {
+            RouteTypeCondition();
+            ~RouteTypeCondition();
+
+            QString condition;
+            std::shared_ptr<OpeningHoursParser::OpeningHours> hours;
+            float floatValue;
+        };
+        
+        class OSMAND_CORE_API RouteTypeRule Q_DECL_FINAL
+        {
+        private:
+            enum {
+                Access = 1,
+                OneWay = 2,
+                HighwayType = 3,
+                MaxSpeed = 4,
+                Roundabout = 5,
+                TrafficSignals = 6,
+                RailwayCrossing = 7,
+                Lanes = 8,
+            };
+            
+            QString t;
+            QString v;
+
+            int intValue;
+            float floatValue;
+            int type;
+            QList<std::shared_ptr<const RouteTypeCondition>> conditions;
+            int forward;
+            
+            void analyze();
+            
+        public:
+            RouteTypeRule();
+            RouteTypeRule(const QString& tag, const QString& value);
+            ~RouteTypeRule();
+
+            int isForward() const;
+            QString getTag() const;
+            QString getValue() const;
+            bool roundabout() const;
+            int getType() const;
+            bool conditional() const;
+            int onewayDirection() const;
+            float maxSpeed() const;
+            int lanes() const;
+            QString highwayRoad() const;
+        };
+        
+    public:
+        ListMap< RouteTypeRule > routingDecodeMap;
+
         uint32_t refAttributeId;
         QHash< QStringRef, uint32_t > localizedRefAttributes;
         QHash< uint32_t, QStringRef> localizedRefAttributeIds;

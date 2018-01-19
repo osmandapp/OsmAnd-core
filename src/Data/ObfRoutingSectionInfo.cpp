@@ -73,6 +73,14 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::registerMapping(
     const QStringRef tagRef(&pDecode->tag);
     const QStringRef valueRef(&pDecode->value);
     
+    // Create decode mapping
+    auto pRoutingDecode = routingDecodeMap.getRef(id);
+    if (!pRoutingDecode)
+    {
+        RouteTypeRule rt(tag, value);
+        pRoutingDecode = routingDecodeMap.insert(id, rt);
+    }
+    
     // Capture quick-access rules
     if (tag.startsWith(QLatin1String("ref:")))
     {
@@ -80,6 +88,196 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::registerMapping(
         localizedRefAttributes.insert(languageIdRef, id);
         localizedRefAttributeIds.insert(id, languageIdRef);
         refAttributeIds.insert(id);
+    }
+}
+
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeCondition::RouteTypeCondition() : condition(""), hours(nullptr), floatValue(0)
+{
+}
+
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeCondition::~RouteTypeCondition()
+{
+}
+
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::RouteTypeRule()
+: intValue(0), floatValue(0), type(0), forward(0)
+{
+}
+
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::RouteTypeRule(const QString& tag, const QString& value)
+: intValue(0), floatValue(0), type(0), forward(0)
+{
+    t = tag;
+    if (QLatin1String("true") == value)
+        v = QLatin1String("yes");
+    else if (QLatin1String("false") == value)
+        v = QLatin1String("no");
+    else
+        v = value;
+
+    analyze();
+}
+
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::~RouteTypeRule()
+{
+}
+
+int OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::isForward() const
+{
+    return forward;
+}
+
+QString OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::getTag() const
+{
+    return t;
+}
+
+QString OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::getValue() const
+{
+    return v;
+}
+
+bool OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::roundabout() const
+{
+    return type == RouteTypeRule::Roundabout;
+}
+
+int OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::getType() const
+{
+    return type;
+}
+
+bool OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::conditional() const
+{
+    return !conditions.empty();
+}
+
+int OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::onewayDirection() const
+{
+    if (type == RouteTypeRule::OneWay)
+        return intValue;
+    
+    return 0;
+}
+
+float OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::maxSpeed() const
+{
+    if (type == RouteTypeRule::MaxSpeed)
+    {
+        if (!conditions.empty())
+        {
+            time_t rawtime;
+            time (&rawtime);
+            const auto& timeinfo = Utilities::localtime(rawtime);
+            
+            for (auto& c : conditions)
+            {
+                if (c->hours && c->hours->isOpenedForTime(timeinfo)) {
+                    return c->floatValue;
+                }
+            }
+        }
+        return floatValue;
+    }
+    return -1;
+}
+
+int OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::lanes() const
+{
+    if (type == RouteTypeRule::Lanes)
+        return intValue;
+    
+    return -1;
+}
+
+QString OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::highwayRoad() const
+{
+    if (type == RouteTypeRule::HighwayType)
+        return v;
+    
+    return QString();
+}
+
+void OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::analyze()
+{
+    if (t.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
+    {
+        type = RouteTypeRule::OneWay;
+        if (QLatin1String("-1") == v || QLatin1String("reverse") == v)
+            intValue = -1;
+        else if(QLatin1String("1") == v || QLatin1String("yes") == v)
+            intValue = 1;
+        else
+            intValue = 0;
+    }
+    else if (t.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && QLatin1String("traffic_signals") == v)
+    {
+        type = RouteTypeRule::TrafficSignals;
+    }
+    else if (t.compare(QLatin1String("railway"), Qt::CaseInsensitive) == 0 && (QLatin1String("crossing") == v || QLatin1String("level_crossing") == v))
+    {
+        type = RouteTypeRule::RailwayCrossing;
+    }
+    else if(t.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::Roundabout;
+    }
+    else if (t.compare(QLatin1String("junction"), Qt::CaseInsensitive) == 0 && QString("roundabout").compare(v, Qt::CaseInsensitive) == 0)
+    {
+        type = RouteTypeRule::Roundabout;
+    }
+    else if (t.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::HighwayType;
+    }
+    else if (t.startsWith(QLatin1String("access")) && !v.isNull())
+    {
+        type = RouteTypeRule::Access;
+    }
+    else if (t.compare(QLatin1String("maxspeed:conditional"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        QStringList cts = v.split(';');
+        for (const auto& c : cts)
+        {
+            int ch = c.indexOf('@');
+            if (ch > 0)
+            {
+                const auto cond = std::make_shared<RouteTypeCondition>();
+                cond->floatValue = Utilities::parseSpeed(c.mid(0, ch), 0);
+                cond->condition = c.mid(0, ch + 1).trimmed();
+                if (cond->condition.startsWith('('))
+                    cond->condition = cond->condition.mid(1).trimmed();
+                
+                if (cond->condition.endsWith(')'))
+                    cond->condition = cond->condition.mid(0, cond->condition.length() - 1).trimmed();
+                
+                cond->hours = OpeningHoursParser::parseOpenedHours(cond->condition.toStdString());
+                conditions.push_back(cond);
+            }
+        }
+        type = RouteTypeRule::MaxSpeed;
+    }
+    else if (t.compare(QLatin1String("maxspeed"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::MaxSpeed;
+        floatValue = Utilities::parseSpeed(v, 0);
+    }
+    else if (t.compare(QLatin1String("maxspeed:forward"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::MaxSpeed;
+        forward = 1;
+        floatValue = Utilities::parseSpeed(v, 0);
+    }
+    else if(t.compare(QLatin1String("maxspeed:backward"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::MaxSpeed;
+        forward = -1;
+        floatValue = Utilities::parseSpeed(v, 0);
+    }
+    else if (t.compare(QLatin1String("lanes"), Qt::CaseInsensitive) == 0 && !v.isNull())
+    {
+        type = RouteTypeRule::Lanes;
+        intValue = Utilities::parseArbitraryInt(v, -1);
     }
 }
 

@@ -3,7 +3,9 @@
 #include "ObfRoutingSectionInfo.h"
 #include "ObfRoutingSectionInfo_P.h"
 #include "QKeyValueIterator.h"
+
 #include <ICU.h>
+#include <OsmAndCore/Utilities.h>
 
 const QHash<QString, QStringList> GEOCODING_ACCESS {
     {
@@ -99,6 +101,169 @@ QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
     else
         return name;
 }
+
+QString OsmAnd::Road::getDestinationRef(bool direction) const
+{
+    if (!captions.empty())
+    {
+        const auto& kt = captions.keys();
+        QString refTag = (direction == true) ? QLatin1String("destination:ref:forward") : QLatin1String("destination:ref:backward");
+        QString refTagDefault = QLatin1String("destination:ref");
+        QString refDefault = QString();
+        
+        for(int i = 0 ; i < kt.size(); i++)
+        {
+            auto k = kt[i];
+            if (section->getAttributeMapping()->decodeMap.size() > k)
+            {
+                if (refTag == section->getAttributeMapping()->decodeMap[k].tag)
+                    return captions[k];
+                
+                if (refTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
+                    refDefault = captions[k];
+            }
+        }
+        if (!refDefault.isNull())
+            return refDefault;
+
+        //return names.get(region.refTypeRule);
+    }
+    return QString();
+}
+
+QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate, bool direction) const
+{
+    //Issue #3289: Treat destination:ref like a destination, not like a ref
+    QString destRef = (getDestinationRef(direction).isNull() || getDestinationRef(direction) == getRef(lang, transliterate)) ? QString() : getDestinationRef(direction);
+    QString destRef1 = destRef.isEmpty() ? QString() : destRef + QLatin1String(", ");
+    
+    if (!captions.empty())
+    {
+        const auto& kt = captions.keys();
+
+        // Issue #3181: Parse destination keys in this order:
+        //              destination:lang:XX:forward/backward
+        //              destination:forward/backward
+        //              destination:lang:XX
+        //              destination
+        
+        QString destinationTagLangFB = QLatin1String("destination:lang:XX");
+        if(!lang.isEmpty())
+        {
+            destinationTagLangFB = (direction == true) ? QLatin1String("destination:lang:") + lang + QLatin1String(":forward") : QLatin1String("destination:lang:") + lang + QLatin1String(":backward");
+        }
+        QString destinationTagFB = (direction == true) ? QLatin1String("destination:forward") : QLatin1String("destination:backward");
+        QString destinationTagLang = QLatin1String("destination:lang:XX");
+        if (!lang.isEmpty())
+            destinationTagLang = QLatin1String("destination:lang:") + lang;
+        
+        QString destinationTagDefault = QLatin1String("destination");
+        QString destinationDefault = QString();
+        
+        for(int i = 0 ; i < kt.size(); i++)
+        {
+            auto k = kt[i];
+            if (section->getAttributeMapping()->decodeMap.size() > k)
+            {
+                if (!lang.isEmpty() && destinationTagLangFB == section->getAttributeMapping()->decodeMap[k].tag)
+                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                
+                if (destinationTagFB == section->getAttributeMapping()->decodeMap[k].tag)
+                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+            
+                if (!lang.isEmpty() && destinationTagLang == section->getAttributeMapping()->decodeMap[k].tag)
+                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+            
+                if (destinationTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
+                    destinationDefault = captions[k];
+            }
+        }
+        if (!destinationDefault.isNull())
+            return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(destinationDefault) : destinationDefault);
+    }
+    return destRef.isEmpty() ? QString() : destRef;
+}
+
+float OsmAnd::Road::getMaximumSpeed(bool direction) const
+{
+    const auto& decodeMap = section->getAttributeMapping()->routingDecodeMap;
+    float maxSpeed = 0;
+    for (int i = 0; i < attributeIds.size(); i++) {
+        const auto r = decodeMap.getRef(attributeIds[i]);
+        if (r)
+        {
+            if (r->isForward() != 0)
+            {
+                if ((r->isForward() == 1) != direction)
+                    continue;
+            }
+            float mx = r->maxSpeed();
+            if (mx > 0)
+            {
+                maxSpeed = mx;
+                // conditional has priority
+                if (r->conditional())
+                    break;
+            }
+        }
+    }
+    return maxSpeed;
+}
+
+// Gives route direction of EAST degrees from NORTH ]-PI, PI]
+double OsmAnd::Road::directionRoute(int startPoint, bool plus, float dist) const
+{
+    int x = points31[startPoint].x;
+    int y = points31[startPoint].y;
+    int nx = startPoint;
+    int px = x;
+    int py = y;
+    double total = 0;
+    do
+    {
+        if (plus)
+        {
+            nx++;
+            if (nx >= (int) points31.size())
+                break;
+        }
+        else
+        {
+            nx--;
+            if (nx < 0)
+                break;
+        }
+        px = points31[nx].x;
+        py = points31[nx].y;
+        // translate into meters
+        total += abs(px - x) * 0.011 + abs(py - y) * 0.01863;
+    }
+    while (total < dist);
+    
+    return -atan2( (float)x - px, (float) y - py );
+}
+
+
+double OsmAnd::Road::directionRoute(int startPoint, bool plus) const
+{
+    // same goes to C++
+    // Victor : the problem to put more than 5 meters that BinaryRoutePlanner will treat
+    // 2 consequent Turn Right as UT and here 2 points will have same turn angle
+    // So it should be fix in both places
+    return directionRoute(startPoint, plus, 5);
+}
+
+bool OsmAnd::Road::bearingVsRouteDirection(double bearing) const
+{
+    bool direction = true;
+    if (bearing >= 0)
+    {
+        double diff = Utilities::normalizedAngleRadians(directionRoute(0, true) - bearing / 180.f * M_PI);
+        direction = fabs(diff) < M_PI / 2.f;
+    }
+    return direction;
+}
+
 
 //OsmAnd::Road::Road( const std::shared_ptr<const Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )
 //    : _ref(that)
