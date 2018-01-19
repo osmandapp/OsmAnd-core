@@ -1,3 +1,6 @@
+#ifndef _OSMAND_ROUTE_TYPE_RULE_H_
+#define _OSMAND_ROUTE_TYPE_RULE_H_
+
 #include <string>
 #include <vector>
 
@@ -46,7 +49,7 @@ public:
             v = "no";
         }
         this->v = v;
-        analyze();
+        this->analyze();
     }
     
     inline int isForward() {
@@ -96,3 +99,5 @@ public:
         return "";
     }
 };
+
+#endif
