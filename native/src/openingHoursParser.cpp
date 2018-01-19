@@ -1,6 +1,5 @@
 #include "openingHoursParser.h"
 
-#include <time.h>
 #include <set>
 #include <iomanip>
 
@@ -1396,7 +1395,7 @@ void OpeningHoursParser::testOpened(const std::string& time, const std::shared_p
 {
     tm date = {0};
     std::istringstream ss(time);
-    ss >> get_time(&date, "%d.%m.%Y %H:%M");
+    ss >> std::get_time(&date, "%d.%m.%Y %H:%M");
     if (ss.fail())
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "!!! Cannot parse date: %s", time.c_str());
