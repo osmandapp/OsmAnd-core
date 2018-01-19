@@ -1,5 +1,6 @@
 #include "openingHoursParser.h"
 
+#include <stdlib.h>
 #include <set>
 #include <cstring>
 
@@ -10,6 +11,13 @@ static const int HIGH_TIME_LIMIT = 300;
 static const int WITHOUT_TIME_LIMIT = -1;
 
 static StringsHolder stringsHolder;
+
+template < typename T > std::string ohp_to_string( const T& n )
+{
+    std::ostringstream stm ;
+    stm << n ;
+    return stm.str() ;
+}
 
 std::string ohp_to_lowercase(const std::string& in)
 {
@@ -90,13 +98,13 @@ void formatTime(int h, int t, std::stringstream& b)
     if (h < 10)
         b << "0";
 
-    std::string hs = std::to_string(h);
+    std::string hs = ohp_to_string(h);
     b << hs;
     b << ":";
     if (t < 10)
         b << "0";
 
-    std::string ts = std::to_string(t);
+    std::string ts = ohp_to_string(t);
     b << ts;
 }
 
@@ -471,7 +479,7 @@ void OpeningHoursParser::BasicOpeningHourRule::addArray(const std::vector<bool>&
             else if (!dash)
                 b << ", ";
             
-            b << (arrayNames.empty() ? std::to_string(i + 1) : arrayNames[i]);
+            b << (arrayNames.empty() ? ohp_to_string(i + 1) : arrayNames[i]);
             dash = false;
         }
     }
@@ -1110,7 +1118,7 @@ OpeningHoursParser::Token::~Token()
 
 std::string OpeningHoursParser::Token::toString() const
 {
-    return text + " [" + std::to_string((int)type) + "] ";
+    return text + " [" + ohp_to_string((int)type) + "] ";
 }
 
 void replaceString(std::string& s, const std::string& oldString, const std::string& newString)
