@@ -17,7 +17,7 @@
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/MapObject.h>
 
-//#include <openingHoursParser.h>
+#include <openingHoursParser.h>
 
 namespace OsmAnd
 {
@@ -70,7 +70,7 @@ namespace OsmAnd
             ~RouteTypeCondition();
 
             QString condition;
-            //std::shared_ptr<OpeningHoursParser::OpeningHours> hours;
+            std::shared_ptr<OpeningHoursParser::OpeningHours> hours;
             float floatValue;
         };
         

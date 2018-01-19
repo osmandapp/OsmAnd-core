@@ -164,6 +164,11 @@ set(CORE_LEGACY "${OSMAND_ROOT}/core-legacy")
 set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
 set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
+file(GLOB shared_legacy_sources
+    "${LEGACY_SRC}/openingHoursParser.h"
+    "${LEGACY_SRC}/openingHoursParser.cpp"
+)
+
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	file(GLOB legacy_sources
 		"${LEGACY_SRC}/routeTypeRule.h"
@@ -197,8 +202,6 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
         "${LEGACY_SRC}/routePlannerFrontEnd.cpp"
 		"${LEGACY_SRC}/routingContext.h"
 		"${LEGACY_SRC}/routingContext.cpp"
-		"${LEGACY_SRC}/openingHoursParser.h"
-		"${LEGACY_SRC}/openingHoursParser.cpp"
 
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
@@ -263,7 +266,8 @@ set(merged_sources
 	${sources}
 	${sources_map}
 	${target_specific_sources}
-	${legacy_sources}
+	${shared_legacy_sources}
+    ${legacy_sources}
 	"protos/OBF.pb.h"
 )
 set(merged_dependencies

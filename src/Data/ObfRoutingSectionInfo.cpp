@@ -91,7 +91,7 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::registerMapping(
     }
 }
 
-OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeCondition::RouteTypeCondition() : condition(""), /*hours(nullptr),*/ floatValue(0)
+OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeCondition::RouteTypeCondition() : condition(""), hours(nullptr), floatValue(0)
 {
 }
 
@@ -172,9 +172,9 @@ float OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::maxSpeed() const
             
             for (auto& c : conditions)
             {
-                //if (c->hours && c->hours->isOpenedForTime(timeinfo)) {
-                //    return c->floatValue;
-                //}
+                if (c->hours && c->hours->isOpenedForTime(timeinfo)) {
+                    return c->floatValue;
+                }
             }
         }
         return floatValue;
@@ -251,7 +251,7 @@ void OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::analyze()
                 if (cond->condition.endsWith(')'))
                     cond->condition = cond->condition.mid(0, cond->condition.length() - 1).trimmed();
                 
-                //cond->hours = OpeningHoursParser::parseOpenedHours(cond->condition.toStdString());
+                cond->hours = OpeningHoursParser::parseOpenedHours(cond->condition.toStdString());
                 conditions.push_back(cond);
             }
         }
