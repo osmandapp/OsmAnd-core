@@ -1,6 +1,7 @@
 #include "openingHoursParser.h"
 
 #include <set>
+#include <cstring>
 
 #include "Logging.h"
 
@@ -10,7 +11,7 @@ static const int WITHOUT_TIME_LIMIT = -1;
 
 static StringsHolder stringsHolder;
 
-std::string to_lowercase(const std::string& in)
+std::string ohp_to_lowercase(const std::string& in)
 {
     std::string out(in);
     for (uint i = 0; i < in.length(); i++) {
@@ -19,7 +20,7 @@ std::string to_lowercase(const std::string& in)
     return out;
 }
 
-std::vector<std::string> split_string( const std::string& str, const std::string& delimiters)
+std::vector<std::string> ohp_split_string( const std::string& str, const std::string& delimiters)
 {
     std::vector<std::string> tokens;
     std::string::size_type pos, lastPos = 0, length = str.length();
@@ -37,22 +38,22 @@ std::vector<std::string> split_string( const std::string& str, const std::string
     return tokens;
 }
 
-const static char* trim_chars = " \t\n\r\f\v";
+const static char* ohp_trim_chars = " \t\n\r\f\v";
 
-std::string rtrim(const std::string& in, const char* t = trim_chars) {
+std::string ohp_rtrim(const std::string& in, const char* t = ohp_trim_chars) {
     std::string s(in);
     s.erase(s.find_last_not_of(t) + 1);
     return s;
 }
 
-std::string ltrim(const std::string& in, const char* t = trim_chars) {
+std::string ohp_ltrim(const std::string& in, const char* t = ohp_trim_chars) {
     std::string s(in);
     s.erase(0, s.find_first_not_of(t));
     return s;
 }
 
-std::string trim(const std::string& in, const char* t = trim_chars) {
-    return ltrim(rtrim(in, t), t);
+std::string ohp_trim(const std::string& in, const char* t = ohp_trim_chars) {
+    return ohp_ltrim(ohp_rtrim(in, t), t);
 }
 
 std::vector<std::string> getTwoLettersStringArray(const std::vector<std::string>& strings)
@@ -1146,7 +1147,7 @@ void OpeningHoursParser::findInArray(std::shared_ptr<Token>& t, const std::vecto
 
 std::shared_ptr<OpeningHoursParser::OpeningHoursRule> OpeningHoursParser::parseRuleV2(const std::string& rl)
 {
-    std::string r = to_lowercase(rl);
+    std::string r = ohp_to_lowercase(rl);
     
     std::vector<std::string> daysStr = { "mo", "tu", "we", "th", "fr", "sa", "su" };
     std::vector<std::string> monthsStr = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
@@ -1190,7 +1191,7 @@ std::shared_ptr<OpeningHoursParser::OpeningHoursRule> OpeningHoursParser::parseR
 
         if (delimiter || del != nullptr)
         {
-            std::string wrd = trim(localRuleString.substr(startWord, i - startWord));
+            std::string wrd = ohp_trim(localRuleString.substr(startWord, i - startWord));
             if (wrd.length() > 0)
                 tokens.push_back(std::make_shared<Token>(TokenType::TOKEN_UNKNOWN, wrd));
             
@@ -1408,13 +1409,13 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
         return nullptr;
     
     // split the OSM string in multiple rules
-    auto rules = split_string(format, ";");
+    auto rules = ohp_split_string(format, ";");
     // FIXME: What if the semicolon is inside a quoted string?
     auto rs = std::make_shared<OpeningHours>();
     rs->setOriginal(format);
     for (auto& r : rules)
     {
-        r = trim(r);
+        r = ohp_trim(r);
         if (r.length() == 0)
             continue;
         
@@ -1471,7 +1472,7 @@ void OpeningHoursParser::testOpened(const std::string& time, const std::shared_p
 void OpeningHoursParser::testParsedAndAssembledCorrectly(const std::string& timeString, const std::shared_ptr<OpeningHours>& hours)
 {
     auto assembledString = hours->toString();
-    bool isCorrect = to_lowercase(assembledString) == to_lowercase(timeString);
+    bool isCorrect = ohp_to_lowercase(assembledString) == ohp_to_lowercase(timeString);
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
                       "%sok: Expected: \"%s\" got: \"%s\"",
                       (!isCorrect ? "NOT " : ""), timeString.c_str(), assembledString.c_str());
@@ -1492,12 +1493,12 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
     if (format.empty())
         return nullptr;
 
-    const auto& rules = split_string(format, ";");
+    const auto& rules = ohp_split_string(format, ";");
     auto rs = std::make_shared<OpeningHours>();
     rs->setOriginal(format);
     for (const auto& rl : rules)
     {
-        const auto& r = trim(rl);
+        const auto& r = ohp_trim(rl);
         if (r.length() == 0)
             continue;
         
