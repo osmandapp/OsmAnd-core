@@ -4,6 +4,8 @@
 #include <set>
 #include <iomanip>
 
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "Logging.h"
 
 static const int LOW_TIME_LIMIT = 120;
@@ -46,13 +48,13 @@ void formatTime(int h, int t, std::stringstream& b)
     if (h < 10)
         b << "0";
 
-    string hs = std::to_string(h);
+    std::string hs = std::to_string(h);
     b << hs;
     b << ":";
     if (t < 10)
         b << "0";
 
-    string ts = std::to_string(t);
+    std::string ts = std::to_string(t);
     b << ts;
 }
 

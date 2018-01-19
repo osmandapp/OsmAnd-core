@@ -17,6 +17,7 @@
 #include "multipolygons.h"
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "routeTypeRule.h"
 
 #if defined(WIN32)
 #define close _close

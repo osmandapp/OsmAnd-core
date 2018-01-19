@@ -4,8 +4,9 @@
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
 //  git revision 
 
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
+#include <string>
+#include <vector>
+#include <sstream>
 
 struct StringsHolder
 {

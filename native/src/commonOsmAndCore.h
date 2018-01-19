@@ -34,6 +34,17 @@ inline double toRadians(double angdeg) {
 	return angdeg / 180 * M_PI;
 }
 
+inline std::tm localtime(const std::time_t& time)
+{
+    std::tm tm_snapshot;
+#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
+    localtime_s(&tm_snapshot, &time);
+#else
+    localtime_r(&time, &tm_snapshot); // POSIX
+#endif
+    return tm_snapshot;
+}
+
 struct FontEntry {
 	bool bold;
 	bool italic;
@@ -188,115 +199,6 @@ typedef pair<std::string, std::string> tag_value;
 typedef pair<int, int> int_pair;
 typedef vector< pair<int, int> > coordinates;
 
-struct RouteTypeCondition {
-    string condition;
-    //OpeningHoursParser.OpeningHours hours = null;
-    float floatValue;
-    
-    RouteTypeCondition() : condition("") {
-    }
-};
-
-struct RouteTypeRule {
-    const static int ACCESS = 1;
-    const static int ONEWAY = 2;
-    const static int HIGHWAY_TYPE = 3;
-    const static int MAXSPEED = 4;
-    const static int ROUNDABOUT = 5;
-    const static int TRAFFIC_SIGNALS = 6;
-    const static int RAILWAY_CROSSING = 7;
-    const static int LANES = 8;
-    
-private:
-    string t;
-    string v;
-    int intValue;
-    float floatValue;
-    int type;
-    vector<RouteTypeCondition> conditions;
-    int forward;
-    
-public:
-    RouteTypeRule() : t(""), v("") {
-    }
-    
-    RouteTypeRule(string t, string v) : t(t) {
-        if ("true" == v) {
-            v = "yes";
-        }
-        if ("false" == v) {
-            v = "no";
-        }
-        this->v = v;
-        analyze();
-    }
-    
-    inline int isForward() {
-        return forward;
-    }
-    
-    inline const string& getTag() {
-        return t;
-    }
-    
-    inline const string& getValue() {
-        return v;
-    }
-    
-    inline bool roundabout() {
-        return type == ROUNDABOUT;
-    }
-    
-    inline int getType() {
-        return type;
-    }
-    
-    inline bool conditional() {
-        return !conditions.empty();
-    }
-    
-    inline int onewayDirection(){
-        if (type == ONEWAY){
-            return intValue;
-        }
-        return 0;
-    }
-    
-    inline float maxSpeed() {
-        if(type == MAXSPEED){
-            /*
-             if (conditions != null) {
-             Calendar i = Calendar.getInstance();
-             i.setTimeInMillis(System.currentTimeMillis());
-             for(RouteTypeCondition c : conditions) {
-             if(c.hours != null && c.hours.isOpenedForTime(i)) {
-             return c.floatValue;
-             }
-             }
-             }
-             */
-            return floatValue;
-        }
-        return -1;
-    }
-    
-    inline int lanes(){
-        if (type == LANES) {
-            return intValue;
-        }
-        return -1;
-    }
-    
-    inline string highwayRoad() {
-        if (type == HIGHWAY_TYPE){
-            return v;
-        }
-        return "";
-    }
-    
-private:
-    void analyze();
-};
 
 class MapDataObject
 {
