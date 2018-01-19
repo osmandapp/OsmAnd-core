@@ -8,8 +8,7 @@
 #include <vector>
 #include <sstream>
 #include <memory>
-
-#include <time.h>
+#include <ctime>
 
 struct StringsHolder
 {
