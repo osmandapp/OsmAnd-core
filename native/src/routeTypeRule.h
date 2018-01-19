@@ -31,6 +31,9 @@ private:
     std::vector<RouteTypeCondition> conditions;
     int forward;
     
+private:
+    void analyze();
+    
 public:
     RouteTypeRule() : t(""), v("") {
     }
@@ -92,7 +95,4 @@ public:
         }
         return "";
     }
-    
-private:
-    void analyze();
 };
