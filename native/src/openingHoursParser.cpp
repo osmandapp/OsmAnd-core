@@ -902,7 +902,7 @@ std::string OpeningHoursParser::OpeningHours::getClosingTime(const tm& dateTime)
 std::string OpeningHoursParser::OpeningHours::getOpeningDay(const tm& dateTime) const
 {
     struct tm cal;
-    std::memcpy(&cal, &dateTime, sizeof(cal));
+    memcpy(&cal, &dateTime, sizeof(cal));
     
     std::string openingTime("");
     for (int i = 0; i < 7; i++)
@@ -1396,7 +1396,7 @@ void OpeningHoursParser::testOpened(const std::string& time, const std::shared_p
 {
     tm date = {0};
     std::istringstream ss(time);
-    ss >> std::get_time(&date, "%d.%m.%Y %H:%M");
+    ss >> get_time(&date, "%d.%m.%Y %H:%M");
     if (ss.fail())
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "!!! Cannot parse date: %s", time.c_str());
