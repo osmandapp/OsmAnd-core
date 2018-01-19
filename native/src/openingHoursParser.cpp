@@ -2,8 +2,6 @@
 
 #include <set>
 
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "Logging.h"
 
 static const int LOW_TIME_LIMIT = 120;
@@ -11,6 +9,51 @@ static const int HIGH_TIME_LIMIT = 300;
 static const int WITHOUT_TIME_LIMIT = -1;
 
 static StringsHolder stringsHolder;
+
+std::string to_lowercase(const std::string& in)
+{
+    std::string out(in);
+    for (uint i = 0; i < in.length(); i++) {
+        out[i] = std::tolower(in[i]);
+    }
+    return out;
+}
+
+std::vector<std::string> split_string( const std::string& str, const std::string& delimiters)
+{
+    std::vector<std::string> tokens;
+    std::string::size_type pos, lastPos = 0, length = str.length();
+    
+    while (lastPos < length + 1) {
+        pos = str.find_first_of(delimiters, lastPos);
+        if (pos == std::string::npos) {
+            pos = length;
+        }
+        if (pos != lastPos)
+            tokens.push_back(str.substr(lastPos, pos - lastPos));
+        
+        lastPos = pos + 1;
+    }
+    return tokens;
+}
+
+const static char* trim_chars = " \t\n\r\f\v";
+
+std::string rtrim(const std::string& in, const char* t = trim_chars) {
+    std::string s(in);
+    s.erase(s.find_last_not_of(t) + 1);
+    return s;
+}
+
+std::string ltrim(const std::string& in, const char* t = trim_chars) {
+    std::string s(in);
+    s.erase(0, s.find_first_not_of(t));
+    return s;
+}
+
+std::string trim(const std::string& in, const char* t = trim_chars) {
+    return ltrim(rtrim(in, t), t);
+}
 
 std::vector<std::string> getTwoLettersStringArray(const std::vector<std::string>& strings)
 {
