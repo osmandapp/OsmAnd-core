@@ -1,7 +1,6 @@
 #include "openingHoursParser.h"
 
 #include <set>
-#include <iomanip>
 
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
@@ -1393,18 +1392,31 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
  */
 void OpeningHoursParser::testOpened(const std::string& time, const std::shared_ptr<OpeningHours>& hours, bool expected)
 {
-    tm date = {0};
-    std::istringstream ss(time);
-    ss >> std::get_time(&date, "%d.%m.%Y %H:%M");
-    if (ss.fail())
+    tm dateTime = {0};
+    if (time.length() == 16)
+    {
+        auto day = time.substr(0, 2);
+        auto month = time.substr(3, 2);
+        auto year = time.substr(6, 4);
+        auto hour = time.substr(11, 2);
+        auto min = time.substr(14, 2);
+        
+        dateTime.tm_mday = atoi(day.c_str());
+        dateTime.tm_mon = atoi(month.c_str()) - 1;
+        dateTime.tm_year = atoi(year.c_str()) - 1900;
+        dateTime.tm_hour = atoi(hour.c_str());
+        dateTime.tm_min = atoi(min.c_str());
+        dateTime.tm_sec = 0;
+    }
+    else
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "!!! Cannot parse date: %s", time.c_str());
         return;
     }
-    std::mktime(&date);
+    std::mktime(&dateTime);
     
-    bool calculated = hours->isOpenedForTimeV2(date);
-    auto currentRuleTime = hours->getCurrentRuleTime(date);
+    bool calculated = hours->isOpenedForTimeV2(dateTime);
+    auto currentRuleTime = hours->getCurrentRuleTime(dateTime);
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
                       "%sok: Expected %s: %s = %s (rule %s)",
                       (calculated != expected) ? "NOT " : "", time.c_str(), expected ? "true" : "false", calculated ? "true" : "false", currentRuleTime.c_str());
@@ -1480,9 +1492,9 @@ void OpeningHoursParser::runTest()
     hours = parseOpenedHours(string);
     testParsedAndAssembledCorrectly(string, hours);
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
-    testOpened("7.09.2015 14:54", hours, true); // monday
-    testOpened("7.09.2015 15:05", hours, false);
-    testOpened("6.09.2015 16:05", hours, true);
+    testOpened("07.09.2015 14:54", hours, true); // monday
+    testOpened("07.09.2015 15:05", hours, false);
+    testOpened("06.09.2015 16:05", hours, true);
     
     
     // two time and date ranges
