@@ -170,7 +170,6 @@ file(GLOB legacy_shared_sources
 )
 
 set(legacy_shared_dirs_public
-    # "${CORE_LEGACY}/native/include"
     "${CORE_LEGACY}/native/src"
 )
 
@@ -275,7 +274,7 @@ set(merged_sources
 	${sources}
 	${sources_map}
 	${target_specific_sources}
-	${shared_legacy_sources}
+	${legacy_shared_sources}
     ${legacy_sources}
 	"protos/OBF.pb.h"
 )
