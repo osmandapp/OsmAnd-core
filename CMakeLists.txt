@@ -170,7 +170,7 @@ file(GLOB legacy_shared_sources
 )
 
 set(legacy_shared_dirs_public
-    "${CORE_LEGACY}/native/include"
+    # "${CORE_LEGACY}/native/include"
     "${CORE_LEGACY}/native/src"
 )
 
