@@ -17,7 +17,7 @@
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/MapObject.h>
 
-#include "openingHoursParser.h"
+#include <openingHoursParser.h>
 
 namespace OsmAnd
 {
