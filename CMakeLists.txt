@@ -164,9 +164,18 @@ set(CORE_LEGACY "${OSMAND_ROOT}/core-legacy")
 set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
 set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
-file(GLOB shared_legacy_sources
+file(GLOB legacy_shared_sources
     "${LEGACY_SRC}/openingHoursParser.h"
     "${LEGACY_SRC}/openingHoursParser.cpp"
+)
+
+set(legacy_shared_dirs_public
+    "${CORE_LEGACY}/native/include"
+    "${CORE_LEGACY}/native/src"
+)
+
+set(target_legacy_shared_public_includes
+    ${legacy_shared_dirs_public}
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
@@ -303,6 +312,7 @@ set(merged_include_dirs_private
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	${target_specific_public_includes}
+    ${target_legacy_shared_public_includes}
 	${target_legacy_public_includes}
 )
 set(merged_link_libs_public
