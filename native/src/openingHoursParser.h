@@ -498,7 +498,9 @@ private:
     
     static void findInArray(std::shared_ptr<Token>& t, const std::vector<std::string>& list, TokenType tokenType);
     
+    static bool parseTime(const std::string& time, tm& dateTime);
     static void testOpened(const std::string& time, const std::shared_ptr<OpeningHours>& hours, bool expected);
+    static void testInfo(const std::string& time, const std::shared_ptr<OpeningHours>& hours, const std::string& expected);
     static void testParsedAndAssembledCorrectly(const std::string& timeString, const std::shared_ptr<OpeningHours>& hours);
     static std::shared_ptr<OpeningHours> parseOpenedHoursHandleErrors(const std::string& format);
 

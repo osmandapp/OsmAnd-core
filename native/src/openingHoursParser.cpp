@@ -7,8 +7,8 @@
 #include "Logging.h"
 
 static const int LOW_TIME_LIMIT = 120;
-static const int HIGH_TIME_LIMIT = 300;
 static const int WITHOUT_TIME_LIMIT = -1;
+static const int CURRENT_DAY_TIME_LIMIT = -2;
 
 static StringsHolder stringsHolder;
 
@@ -67,7 +67,6 @@ std::string ohp_trim(const std::string& in, const char* t = ohp_trim_chars) {
 std::vector<std::string> getTwoLettersStringArray(const std::vector<std::string>& strings)
 {
     std::vector<std::string> newStrings;
-    newStrings.push_back("");
     for (const auto& s : strings)
     {
         if (s.length() > 2)
@@ -558,14 +557,14 @@ std::string OpeningHoursParser::BasicOpeningHourRule::getTime(const tm& dateTime
     {
         int startTime = _startTimes[i];
         int endTime = _endTimes[i];
-        if (opening)
+        if (opening != _off)
         {
             if (startTime < endTime || endTime == -1)
             {
                 if (_days[d] && !checkAnotherDay)
                 {
                     int diff = startTime - time;
-                    if (limit == WITHOUT_TIME_LIMIT || ((time <= startTime) && (diff <= limit)))
+                    if (limit == WITHOUT_TIME_LIMIT || (time <= startTime && (diff <= limit || limit == CURRENT_DAY_TIME_LIMIT)))
                     {
                         formatTime(startTime, sb);
                         break;
@@ -580,7 +579,7 @@ std::string OpeningHoursParser::BasicOpeningHourRule::getTime(const tm& dateTime
                 else if (time > endTime && _days[ad] && checkAnotherDay)
                     diff = 24 * 60 - endTime  + time;
                 
-                if (limit == WITHOUT_TIME_LIMIT || ((diff != -1) && (diff <= limit)))
+                if (limit == WITHOUT_TIME_LIMIT || (diff != -1 && diff <= limit || limit == CURRENT_DAY_TIME_LIMIT))
                 {
                     formatTime(startTime, sb);
                     break;
@@ -594,7 +593,7 @@ std::string OpeningHoursParser::BasicOpeningHourRule::getTime(const tm& dateTime
                 if (_days[d] && !checkAnotherDay)
                 {
                     int diff = endTime - time;
-                    if (limit == WITHOUT_TIME_LIMIT || ((time <= endTime) && (diff <= limit)))
+                    if ((limit == WITHOUT_TIME_LIMIT && diff >= 0) || (time <= endTime && diff <= limit))
                     {
                         formatTime(endTime, sb);
                         break;
@@ -607,9 +606,9 @@ std::string OpeningHoursParser::BasicOpeningHourRule::getTime(const tm& dateTime
                 if (time <= endTime && _days[d] && !checkAnotherDay)
                     diff = 24 * 60 - time + endTime;
                 else if (time < endTime && _days[ad] && checkAnotherDay)
-                    diff = startTime - time;
+                    diff = endTime - time;
                 
-                if (limit == WITHOUT_TIME_LIMIT || ((diff != -1) && (diff <= limit)))
+                if (limit == WITHOUT_TIME_LIMIT || (diff != -1 && diff <= limit))
                 {
                     formatTime(endTime, sb);
                     break;
@@ -936,7 +935,7 @@ std::string OpeningHoursParser::OpeningHours::getNearToOpeningTime(const tm& dat
 
 std::string OpeningHoursParser::OpeningHours::getOpeningTime(const tm& dateTime) const
 {
-    return getTime(dateTime, HIGH_TIME_LIMIT, true);
+    return getTime(dateTime, CURRENT_DAY_TIME_LIMIT, true);
 }
 
 std::string OpeningHoursParser::OpeningHours::getNearToClosingTime(const tm& dateTime) const
@@ -955,17 +954,26 @@ std::string OpeningHoursParser::OpeningHours::getOpeningDay(const tm& dateTime) 
     memcpy(&cal, &dateTime, sizeof(cal));
     
     std::string openingTime("");
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < 8; i++)
     {
         cal.tm_mday += 1;
+        std::mktime(&cal);
+
         for (const auto r : _rules)
         {
             if (r->containsDay(cal) && r->containsMonth(cal))
+            {
                 openingTime = r->getTime(cal, false, WITHOUT_TIME_LIMIT, true);
+            }
         }
+        
         if (!openingTime.empty())
         {
             openingTime += " " + stringsHolder.localDaysStr[cal.tm_wday];
+            break;
+        }
+
+        if (!openingTime.empty()) {
             break;
         }
     }
@@ -1436,15 +1444,12 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
 }
 
 /**
- * test if the calculated opening hours are what you expect
+ * parse time string
  *
- * @param time     the time to test in the format "dd.MM.yyyy HH:mm"
- * @param hours    the OpeningHours object
- * @param expected the expected state
+ * @param time     the time in the format "dd.MM.yyyy HH:mm"
  */
-void OpeningHoursParser::testOpened(const std::string& time, const std::shared_ptr<OpeningHours>& hours, bool expected)
+bool OpeningHoursParser::parseTime(const std::string& time, tm& dateTime)
 {
-    tm dateTime = {0};
     if (time.length() == 16)
     {
         auto day = time.substr(0, 2);
@@ -1459,13 +1464,32 @@ void OpeningHoursParser::testOpened(const std::string& time, const std::shared_p
         dateTime.tm_hour = atoi(hour.c_str());
         dateTime.tm_min = atoi(min.c_str());
         dateTime.tm_sec = 0;
+        
+        std::mktime(&dateTime);
+
+        return true;
     }
     else
+    {
+        return false;
+    }
+}
+
+/**
+ * test if the calculated opening hours are what you expect
+ *
+ * @param time     the time to test in the format "dd.MM.yyyy HH:mm"
+ * @param hours    the OpeningHours object
+ * @param expected the expected state
+ */
+void OpeningHoursParser::testOpened(const std::string& time, const std::shared_ptr<OpeningHours>& hours, bool expected)
+{
+    tm dateTime = {0};
+    if (!OpeningHoursParser::parseTime(time, dateTime))
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "!!! Cannot parse date: %s", time.c_str());
         return;
     }
-    std::mktime(&dateTime);
     
     bool calculated = hours->isOpenedForTimeV2(dateTime);
     auto currentRuleTime = hours->getCurrentRuleTime(dateTime);
@@ -1474,6 +1498,73 @@ void OpeningHoursParser::testOpened(const std::string& time, const std::shared_p
                       (calculated != expected) ? "NOT " : "", time.c_str(), expected ? "true" : "false", calculated ? "true" : "false", currentRuleTime.c_str());
 
     if (calculated != expected)
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "BUG!!!");
+}
+
+/**
+ * test if the calculated opening hours are what you expect
+ *
+ * @param time        the time to test in the format "dd.MM.yyyy HH:mm"
+ * @param hours       the OpeningHours object
+ * @param expected    the expected string in format:
+ *                         "Open from HH:mm"     - open in 5 hours
+ *                         "Will open at HH:mm"  - open in 2 hours
+ *                         "Open till HH:mm"     - close in 5 hours
+ *                         "Will close at HH:mm" - close in 2 hours
+ *                         "Will open on HH:mm (Mo,Tu,We,Th,Fr,Sa,Su)" - open in >5 hours
+ *                         "Open 24/7"           - open 24/7
+ */
+void OpeningHoursParser::testInfo(const std::string& time, const std::shared_ptr<OpeningHours>& hours, const std::string& expected)
+{
+    tm dateTime = {0};
+    if (!OpeningHoursParser::parseTime(time, dateTime))
+    {
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "!!! Cannot parse date: %s", time.c_str());
+        return;
+    }
+    
+    bool opened24_calc = false;
+    bool openFrom_calc = false;
+    bool willOpenAt_calc = false;
+    bool openTill_calc = false;
+    bool willCloseAt_calc = false;
+    bool willOpenOn_calc = false;
+    
+    bool opened = hours->isOpenedForTimeV2(dateTime);
+    if (opened) {
+        opened24_calc = hours->isOpened24_7();
+        openTill_calc = !hours->getClosingTime(dateTime).empty();
+        willCloseAt_calc = !hours->getNearToClosingTime(dateTime).empty();
+    } else {
+        openFrom_calc = !hours->getOpeningTime(dateTime).empty();
+        willOpenAt_calc = !hours->getNearToOpeningTime(dateTime).empty();
+        willOpenOn_calc = !hours->getOpeningDay(dateTime).empty();
+    }
+    
+    std::string description = "Unknown";
+    if (opened24_calc) {
+        description = "Open 24/7";
+    } else if (willOpenAt_calc) {
+        description = "Will open at " + hours->getNearToOpeningTime(dateTime);
+    } else if (openFrom_calc) {
+        description = "Open from " + hours->getOpeningTime(dateTime);
+    } else if (willCloseAt_calc) {
+        description = "Will close at " + hours->getNearToClosingTime(dateTime);
+    } else if (openTill_calc) {
+        description = "Open till " + hours->getClosingTime(dateTime);
+    } else if (willOpenOn_calc) {
+        description = "Will open on " + hours->getOpeningDay(dateTime);
+    }
+
+    auto currentRuleTime = hours->getCurrentRuleTime(dateTime);
+    
+    bool result = ohp_to_lowercase(expected) == ohp_to_lowercase(description);
+    
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
+                      "%sok: Expected %s (%s): %s (rule %s)",
+                      (!result) ? "NOT " : "", time.c_str(), expected.c_str(), description.c_str(), currentRuleTime.c_str());
+
+    if (!result)
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "BUG!!!");
 }
 
@@ -1702,7 +1793,7 @@ void OpeningHoursParser::runTest()
     testOpened("25.12.2015 14:00", hours, false);
     testOpened("24.12.2015 08:00", hours, true);
     
-    // test time off (not days
+    // test time off (not days)
     hours = parseOpenedHours("Mo-Fr 08:30-17:00; 12:00-12:40 off;");
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
     testOpened("07.05.2017 14:00", hours, false); // Sunday
@@ -1716,5 +1807,51 @@ void OpeningHoursParser::runTest()
     std::string hoursString = "mo-fr 11:00-21:00; PH off";
     hours = parseOpenedHoursHandleErrors(hoursString);
     testParsedAndAssembledCorrectly(hoursString, hours);
+
+    // test open from/till
+    hours = parseOpenedHours("Mo-Fr 08:30-17:00; 12:00-12:40 off;");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("15.01.2018 09:00", hours, "Open till 12:00");
+    testInfo("15.01.2018 11:00", hours, "Will close at 12:00");
+    testInfo("15.01.2018 12:00", hours, "Will open at 12:40");
+    
+    hours = parseOpenedHours("Mo-Fr: 9:00-13:00, 14:00-18:00");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("15.01.2018 08:00", hours, "Will open at 09:00");
+    testInfo("15.01.2018 09:00", hours, "Open till 13:00");
+    testInfo("15.01.2018 12:00", hours, "Will close at 13:00");
+    testInfo("15.01.2018 13:10", hours, "Will open at 14:00");
+    testInfo("15.01.2018 14:00", hours, "Open till 18:00");
+    testInfo("15.01.2018 16:00", hours, "Will close at 18:00");
+    testInfo("15.01.2018 18:10", hours, "Will open on 09:00 Tu");
+    
+    hours = parseOpenedHours("Mo-Sa 02:00-10:00; Th off");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("15.01.2018 23:00", hours, "Will open on 02:00 Tu");
+    
+    hours = parseOpenedHours("Mo-Sa 23:00-02:00; Th off");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("15.01.2018 22:00", hours, "Will open at 23:00");
+    testInfo("15.01.2018 23:00", hours, "Open till 02:00");
+    testInfo("16.01.2018 00:30", hours, "Will close at 02:00");
+    testInfo("16.01.2018 02:00", hours, "Open from 23:00");
+    
+    hours = parseOpenedHours("Mo-Sa 08:30-17:00; Th off");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("17.01.2018 20:00", hours, "Will open on 08:30 Fr");
+    testInfo("18.01.2018 05:00", hours, "Will open on 08:30 Fr");
+    testInfo("20.01.2018 05:00", hours, "Open from 08:30");
+    testInfo("21.01.2018 05:00", hours, "Will open on 08:30 Mo");
+    testInfo("22.01.2018 02:00", hours, "Open from 08:30");
+    testInfo("22.01.2018 04:00", hours, "Open from 08:30");
+    testInfo("22.01.2018 07:00", hours, "Will open at 08:30");
+    testInfo("23.01.2018 10:00", hours, "Open till 17:00");
+    testInfo("23.01.2018 16:00", hours, "Will close at 17:00");
+    
+    hours = parseOpenedHours("24/7");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("24.01.2018 02:00", hours, "Open 24/7");
+    
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "OpeningHoursParser test done");
 }
 
