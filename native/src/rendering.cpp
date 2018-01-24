@@ -279,7 +279,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			if(missingName) {						
 				name = rc->getTranslatedString(name);
 			}
-			name = rc->getReshapedString(name);
+			//name = rc->getReshapedString(name);
 			req->setInitialTagValueZoom(tag, value, rc->getZoom(), obj);
 			req->setIntFilter(req->props()->R_TEXT_LENGTH, name.length());
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);

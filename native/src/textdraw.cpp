@@ -175,20 +175,22 @@ bool isLetterOrDigit(char c)
 	return c != ' ';
 }
 
-void drawTextOnCanvas(SkCanvas* cv, const char* text, uint16_t len, float centerX, float centerY, SkPaint& paintText,
+void drawTextOnCanvas(RenderingContext* rc, SkCanvas* cv, const char* text, uint16_t len, float centerX, float centerY, SkPaint& paintText,
 		int textShadowColor, float textShadow) {
+	std::string str(text, len);
+	str = rc->getReshapedString(str);
 	if (textShadow > 0) {
 		int c = paintText.getColor();
 		paintText.setStyle(SkPaint::kStroke_Style);
 		paintText.setColor(textShadowColor); // white
 		paintText.setStrokeWidth(2 + textShadow);
-		cv->drawText(text, len, centerX, centerY, paintText);
+		cv->drawText(str.c_str(), str.length(), centerX, centerY, paintText);
 // reset
 		paintText.setStrokeWidth(2);
 		paintText.setStyle(SkPaint::kFill_Style);
 		paintText.setColor(c);
 	}
-	cv->drawText(text, len, centerX, centerY, paintText);
+	cv->drawText(str.c_str(), str.length(), centerX, centerY, paintText);
 }
 
 
@@ -234,7 +236,7 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo
 				}
 			} while(pos < end && charRead < text->textWrap);
 
-			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, 
+			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(rc, cv, c_str, pos - start , text->centerX, 
 				text->centerY + line * (textSize + 2), paintText, 
 				text->textShadowColor, text->textShadow));
 			c_str += (pos - start);
@@ -242,7 +244,7 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo
 			line++;
 		}
 	} else {
-		PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, 
+		PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(rc, cv, text->text.data(), text->text.length(), text->centerX, text->centerY, paintText, 
 			text->textShadowColor, text->textShadow));
 	}
 }
@@ -842,6 +844,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 			}
 			textDrawInfo->visible = true;
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
+				textDrawInfo->text = rc->getReshapedString(textDrawInfo->text);
 				if (textDrawInfo->textShadow > 0) {
 					paintText.setColor(textDrawInfo->textShadowColor);
 					paintText.setStyle(SkPaint::kStroke_Style);

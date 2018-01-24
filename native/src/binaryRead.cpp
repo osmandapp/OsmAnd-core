@@ -975,8 +975,8 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		}
 	}
 	if(oceanTag >= 0) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
-				oceanTag, current->left >> 19, current->top >> 19);
+		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
+		//		oceanTag, current->left >> 19, current->top >> 19);
 		req->oceanTiles++;
 		if(oceanTag == 1) {
 			req->ocean++;
@@ -1478,7 +1478,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %f. Detailed added %d, basemap processed %d, basemap added %d.",
 					coastLines.size(), basemapCoastLines.size(), ocean, detailedCoastlinesWereAdded, addBasemapCoastlines,
-					(addBasemapCoastlines ? false : coastlinesWereAdded));
+					(addBasemapCoastlines ? coastlinesWereAdded : false));
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
 		if (!coastlinesWereAdded && ocean > 0.5) {
