@@ -560,7 +560,7 @@ RoadSplitStructure calculateRoadSplitStructure(SHARED_PTR<RouteSegmentResult> pr
         double mpi = abs(degreesDiff(prevSegm->getBearingEnd(), attached->getBearingBegin()));
         int rsSpeakPriority = highwaySpeakPriority(attached->object->getHighway());
         int lanes = countLanesMinOne(attached);
-        const auto& turnLanes = parseTurnLanes(attached->object, attached->getBearingBegin());
+        const auto& turnLanes = parseTurnLanes(attached->object, attached->getBearingBegin() * M_PI / 180);
         bool smallStraightVariation = mpi < TURN_DEGREE_MIN;
         bool smallTargetVariation = abs(ex) < TURN_DEGREE_MIN;
         bool attachedOnTheRight = ex >= 0;
