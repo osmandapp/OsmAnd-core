@@ -2,13 +2,14 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 
+//  git revision 4a04cf2ecf5b25fc23c99e16c70c5a869dad8777
 
 #include <string>
 #include <vector>
 #include <sstream>
 #include <memory>
 #include <ctime>
+#include <unordered_map>
 
 struct StringsHolder
 {
@@ -16,9 +17,13 @@ struct StringsHolder
     std::vector<std::string> localDaysStr;
     std::vector<std::string> monthsStr;
     std::vector<std::string> localMothsStr;
-    
+    std::unordered_map<std::string, std::string> additionalStrings;
+
     StringsHolder();
     ~StringsHolder();
+    
+    void setAdditionalString(std::string& key, std::string& value);
+
 };
 
 struct OpeningHoursParser
@@ -135,6 +140,8 @@ public:
          */
         virtual bool hasOverlapTimes() const = 0;
         
+        virtual int getSequenceIndex() const = 0;
+        
         /**
          * @param date
          * @return true if rule applies for current time
@@ -198,9 +205,23 @@ public:
          */
         bool _off;
         
+        /**
+         * Additional information or limitation.
+         * https://wiki.openstreetmap.org/wiki/Key:opening_hours/specification#explain:comment
+         */
+        std::string _comment;
+        
+        int _sequenceIndex;
+
+        void init();
+        
     public:
         BasicOpeningHourRule();
+        BasicOpeningHourRule(int sequenceIndex);
+        
         virtual ~BasicOpeningHourRule();
+        
+        int getSequenceIndex() const;
         
         /**
          * return an array representing the days of the rule
@@ -225,6 +246,9 @@ public:
         bool appliesEaster() const;
         bool appliesToSchoolHolidays() const;
         bool appliesOff() const;
+        
+        std::string getComment() const;
+        void setComment(std::string comment);
         
         void setPublicHolidays(bool value);
         void setEaster(bool value);
@@ -398,6 +422,8 @@ public:
         bool containsNextDay(const tm& dateTime) const;
         bool containsMonth(const tm& dateTime) const;
 
+        int getSequenceIndex() const;
+
         bool isOpened24_7() const;
         
         std::string toRuleString() const;
@@ -418,12 +444,38 @@ public:
      */
     struct OpeningHours
     {
+        static const int ALL_SEQUENCES = -1;
+        
+        struct Info
+        {
+            bool opened;
+            bool opened24_7;
+            std::string openingTime;
+            std::string nearToOpeningTime;
+            std::string closingTime;
+            std::string nearToClosingTime;
+            std::string openingTomorrow;
+            std::string openingDay;
+            std::string ruleString;
+        
+            /**
+             * Empty constructor
+             */
+            Info();
+            virtual ~Info();
+            
+            std::string getInfo();
+        };
+        
     private:
         /**
          * list of the different rules
          */
         std::vector<std::shared_ptr<OpeningHoursRule>> _rules;
         std::string _original;
+        int _sequenceCount;
+        
+        std::shared_ptr<Info> getInfo(const tm& dateTime, int sequenceIndex) const;
         
     public:
         /**
@@ -439,52 +491,75 @@ public:
         OpeningHours();
         virtual ~OpeningHours();
 
+        std::vector<std::shared_ptr<Info>> getInfo();
+        std::vector<std::shared_ptr<Info>> getInfo(const tm& dateTime);
+        std::shared_ptr<Info> getCombinedInfo();
+        std::shared_ptr<Info> getCombinedInfo(const tm& dateTime);
+        
         /**
          * add a rule to the opening hours
          *
          * @param r rule to add
          */
-        void addRule(std::shared_ptr<OpeningHoursRule>& r);
+        void addRule(std::shared_ptr<OpeningHoursRule> r);
+        
+        /**
+         * add rules to the opening hours
+         *
+         * @param rules - rules to add
+         */
+        void addRules(std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
         
         /**
          * return the list of rules
          *
          * @return the rules
          */
-        std::vector<std::shared_ptr<OpeningHoursRule>>& getRules();
+        std::vector<std::shared_ptr<OpeningHoursRule>> getRules() const;
+        
+        std::vector<std::shared_ptr<OpeningHoursRule>> getRules(int sequenceIndex) const;
+
+        int getSequenceCount() const;
+        void setSequenceCount(int sequenceCount);
         
         /**
          * check if the feature is opened at time "cal"
          *
-         * @param cal the time to check
+         * @param dateTime the time to check
          * @return true if feature is open
          */
-        bool isOpenedForTimeV2(const tm& dateTime) const;
+        bool isOpenedForTimeV2(const tm& dateTime, int sequenceIndex) const;
         
+        /**
+         * check if the feature is opened now
+         *
+         * @return true if feature is open
+         */
+        bool isOpened() const;
+
         /**
          * check if the feature is opened at time "cal"
          *
-         * @param cal the time to check
+         * @param dateTime the time to check
          * @return true if feature is open
          */
         bool isOpenedForTime(const tm& dateTime) const;
 
         
-        bool isOpened24_7() const;
+        bool isOpened24_7(int sequenceIndex) const;
         
-        std::string getNearToOpeningTime(const tm& dateTime) const;
-        std::string getOpeningTime(const tm& dateTime) const;
-        std::string getNearToClosingTime(const tm& dateTime) const;
-        std::string getClosingTime(const tm& dateTime) const;
+        std::string getNearToOpeningTime(const tm& dateTime, int sequenceIndex) const;
+        std::string getOpeningTime(const tm& dateTime, int sequenceIndex) const;
+        std::string getNearToClosingTime(const tm& dateTime, int sequenceIndex) const;
+        std::string getClosingTime(const tm& dateTime, int sequenceIndex) const;
+        std::string getOpeningTomorrow(const tm& dateTime, int sequenceIndex) const;
+        std::string getOpeningDay(const tm& dateTime, int sequenceIndex) const;
         
-        std::string getOpeningDay(const tm& dateTime) const;
-        std::string getTime(const tm& dateTime, int limit, bool opening) const;
-        std::string getTimeDay(const tm& dateTime, int limit, bool opening) const;
-        std::string getTimeAnotherDay(const tm& dateTime, int limit, bool opening) const;
+        std::string getTime(const tm& dateTime, int limit, bool opening, int sequenceIndex) const;
+        std::string getTimeDay(const tm& dateTime, int limit, bool opening, int sequenceIndex) const;
+        std::string getTimeAnotherDay(const tm& dateTime, int limit, bool opening, int sequenceIndex) const;
 
-        std::string getCurrentRuleTime(const tm& dateTime) const;
-        
-        std::string getCurrentRuleTimeV1(const tm& dateTime) const;
+        std::string getCurrentRuleTime(const tm& dateTime, int sequenceIndex) const;
         
         std::string toString() const;
         std::string toLocalString() const;
@@ -497,24 +572,30 @@ private:
     std::string openingHours;
     
     static void findInArray(std::shared_ptr<Token>& t, const std::vector<std::string>& list, TokenType tokenType);
-    
+    static std::vector<std::vector<std::string>> splitSequences(const std::string& format);
+
     static bool parseTime(const std::string& time, tm& dateTime);
     static void testOpened(const std::string& time, const std::shared_ptr<OpeningHours>& hours, bool expected);
     static void testInfo(const std::string& time, const std::shared_ptr<OpeningHours>& hours, const std::string& expected);
+    static void testInfo(const std::string& time, const std::shared_ptr<OpeningHours>& hours, const std::string& expected, int sequenceIndex);
+
     static void testParsedAndAssembledCorrectly(const std::string& timeString, const std::shared_ptr<OpeningHours>& hours);
     static std::shared_ptr<OpeningHours> parseOpenedHoursHandleErrors(const std::string& format);
+
+    static void buildRule(std::shared_ptr<BasicOpeningHourRule>& basic, std::vector<std::shared_ptr<Token>>& tokens, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
 
 public:
     
     OpeningHoursParser(const std::string& openingHours);
     ~OpeningHoursParser();
 
-    static std::shared_ptr<OpeningHoursRule> parseRuleV2(const std::string& rl);
-    static std::shared_ptr<OpeningHoursRule> parseRule(const std::string& rl);
+    static void parseRuleV2(const std::string& rl, int sequenceIndex, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
+    static void parseRules(const std::string& rl, int sequenceIndex, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
 
     static std::shared_ptr<OpeningHours> parseOpenedHours(const std::string& format);
-
-    //bool isOpenedForTime(const tm& dateTime) const;
+    
+    static std::vector<std::shared_ptr<OpeningHours::Info>> getInfo(const std::string& format);
+    
     static void runTest();
 
 };

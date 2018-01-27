@@ -5,11 +5,8 @@
 float RouteTypeRule::maxSpeed() {
     if (type == MAXSPEED) {
         if (!conditions.empty()) {
-            time_t rawtime;
-            time (&rawtime);
-            const auto& timeinfo = localtime(rawtime);
             for (const auto& c : conditions) {
-                if (c.hours != nullptr && c.hours->isOpenedForTime(timeinfo)) {
+                if (c.hours != nullptr && c.hours->isOpened()) {
                     return c.floatValue;
                 }
             }
