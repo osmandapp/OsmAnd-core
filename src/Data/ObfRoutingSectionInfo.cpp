@@ -166,13 +166,9 @@ float OsmAnd::ObfRoutingSectionAttributeMapping::RouteTypeRule::maxSpeed() const
     {
         if (!conditions.empty())
         {
-            time_t rawtime;
-            time (&rawtime);
-            const auto& timeinfo = Utilities::localtime(rawtime);
-            
             for (auto& c : conditions)
             {
-                if (c->hours && c->hours->isOpenedForTime(timeinfo)) {
+                if (c->hours && c->hours->isOpened()) {
                     return c->floatValue;
                 }
             }
