@@ -601,7 +601,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 
 //display google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
 // display google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)
-bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
+bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive) {
 	uint32_t tag;
 	uint32_t versionConfirm = -2;
 	file->external = file->inputName.find("osmand_ext") != string::npos;
@@ -638,7 +638,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 			readRoutingIndex(input, routingIndex, false);
 			input->PopLimit(oldLimit);
 			input->Seek(routingIndex->filePointer + routingIndex->length);
-			if(!file->liveMap) {
+			if(!file->liveMap || useLive) {
 				file->routingIndexes.push_back(routingIndex);
 				file->indexes.push_back(file->routingIndexes.back());
 			}
@@ -2021,7 +2021,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 		CodedInputStream cis(&input);
 		cis.SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File not initialized from cache : %s", inputName.c_str());
-		if (!initMapStructure(&cis, mapFile)) {
+		if (!initMapStructure(&cis, mapFile, useLive)) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File not initialised : %s", inputName.c_str());
 			delete mapFile;
 			return NULL;
