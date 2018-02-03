@@ -253,28 +253,26 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
-	bool nameScanned = false;
 	while (it != obj->namesOrder.end()) {
 		k++;
-		bool nameTag = (*it).find("name") == 0;
-		std::string tagName = nameTag ? "" : (*it);
+		if((*it).find(":") != std::string::npos) {
+			it++;
+			continue;
+		}
+		std::string tagName = (*it) == "name" ? "" : (*it);
 		std::string name = obj->objectNames[*it];
 		bool missingName = rc->getPreferredLocale() != "";
-		it++;
-		if(nameTag) {
-			if(nameScanned) {
-				continue;
-			}
-			if (rc -> getPreferredLocale() != "" && obj->objectNames.find("name:"+rc->getPreferredLocale())  != 
+		//if(nameTag) {
+			std::string tagNameLocale = (*it)+ ":"+rc->getPreferredLocale();
+			if (rc -> getPreferredLocale() != "" && obj->objectNames.find(tagNameLocale)  != 
 					obj->objectNames.end() ) {
-				std::string sname  = obj->objectNames["name:"+rc->getPreferredLocale()];
+				std::string sname  = obj->objectNames[tagNameLocale];
 				if (sname.length() > 0) {
 					name = sname;
 					missingName = false;
 				}
 			}
-			nameScanned = true;				
-		}
+		//}
 		if (name.length() > 0) {
 			if(missingName) {						
 				name = rc->getTranslatedString(name);
@@ -303,6 +301,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				rc->textToDraw.push_back(info);
 			}
 		}
+		it++;
 	}
 
 }
