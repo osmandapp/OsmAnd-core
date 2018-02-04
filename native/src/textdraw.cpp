@@ -212,7 +212,6 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo
 		// set maximum for all text
 		text->textWrap = 15;
 	}
-
 	if(text->text.length() > text->textWrap) {
 		const char* c_str = text->text.c_str();
 
@@ -819,7 +818,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
         	def = sBoldTypeface;
         }
         globalFontRegistry.updateTypeface(&paintText, 
-			textDrawInfo->text, textDrawInfo->bold, //false,
+        	rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
 			textDrawInfo->italic, def); 
    		// sest text size before finding intersection (it is used there)
 		float textSize = textDrawInfo->textSize ;
