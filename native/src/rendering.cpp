@@ -255,7 +255,8 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 	uint k = 0;
 	while (it != obj->namesOrder.end()) {
 		k++;
-		if((*it).find(":") != std::string::npos) {
+		if((*it).find(":") != std::string::npos &&
+			(*it).find("addr:") == std::string::npos) {
 			it++;
 			continue;
 		}
