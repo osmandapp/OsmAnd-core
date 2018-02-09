@@ -1,3 +1,8 @@
+if (CMAKE_TARGET_OS STREQUAL "ios")
+	# External : xsb
+	add_subdirectory("${OSMAND_ROOT}/core/externals/xsb" "core/externals/xsb")
+endif()
+
 # External : geographiclib
 add_subdirectory("${OSMAND_ROOT}/core/externals/geographiclib" "core/externals/geographiclib")
 

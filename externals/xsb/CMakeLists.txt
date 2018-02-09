@@ -1,0 +1,82 @@
+project(xsb)
+
+prepare_upstream()
+build_upstream()
+
+add_library(XSB_STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/auxlry.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/biassert.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/builtin.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/call_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/cinterf.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/conc_compl.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/debug_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/dis.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/dynload.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/dynamic_stack.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/deadlock.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/emuloop.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/error_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/findall.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/function.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/hash_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/hashtable_xsb.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/heap_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/init_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/inst_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/io_builtins_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/loader_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/main_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/memory_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/orient_xsb.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/pathname_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/psc_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/random_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/remove_unf.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/residual.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/rw_lock.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/scc_xsb.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/slgdelay.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/socket_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/string_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/storage_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/struct_manager.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/sub_delete.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/subp.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/system_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/table_stats.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tables.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/thread_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/timer_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/token_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tr_utils.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/trace_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/trie_lookup.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/trie_search.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tries.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tst_insert.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tst_retrv.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tst_unify.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/tst_utils.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/varstring.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/ubi_BinTree.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/ubi_SplayTree.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/hashtable.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/hashtable_itr.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/sha1.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/md5.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/url_encode.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/getMemorySize.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/incr_xsb.c 
+    ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu/call_graph_xsb.c)
+
+set(XSB_CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/config)
+set(XSB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu)
+set(XSB_CONFIG_INCLUDE_DIR ${XSB_CONFIG_DIR}/i386-apple-darwin${CMAKE_HOST_SYSTEM_VERSION})
+
+target_include_directories(XSB_STATIC 
+    PRIVATE
+        ${XSB_CONFIG_INCLUDE_DIR}
+    PUBLIC 
+        ${XSB_INCLUDE_DIR}
+)

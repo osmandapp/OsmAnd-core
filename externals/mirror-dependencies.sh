@@ -48,3 +48,4 @@ download "http://zlib.net/zlib-1.2.8.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.8.ta
 download "http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.bz2/download" "$DEPENDENCIES_MIRROR/giflib-4.2.3.tar.bz2"
 download "http://sourceforge.net/projects/freeglut/files/freeglut/2.8.1/freeglut-2.8.1.tar.gz/download" "$DEPENDENCIES_MIRROR/freeglut-2.8.1.tar.gz"
 download "https://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.46.tar.gz/download" "$DEPENDENCIES_MIRROR/GeographicLib-1.46.tar.gz"
+download "https://sourceforge.net/projects/xsb/files/xsb/3.8%20Three-Buck%20Chuck/XSB38.tar.gz/download" "$DEPENDENCIES_MIRROR/XSB38.tar.gz"

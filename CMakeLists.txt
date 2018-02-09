@@ -323,6 +323,9 @@ set(merged_link_libs_public
 	glm_headers_only
 	boost_static_precompiled
 	GeographicLib_STATIC
+	if (CMAKE_TARGET_OS STREQUAL "ios")
+		XSB_STATIC
+	endif()
 	${target_specific_public_libraries}
 )
 
