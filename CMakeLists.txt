@@ -178,6 +178,9 @@ set(target_legacy_shared_public_includes
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		XSB_STATIC
+	)
 	file(GLOB legacy_sources
 		"${LEGACY_SRC}/routeTypeRule.h"
 		"${LEGACY_SRC}/routeTypeRule.cpp"
@@ -323,9 +326,6 @@ set(merged_link_libs_public
 	glm_headers_only
 	boost_static_precompiled
 	GeographicLib_STATIC
-	if (CMAKE_TARGET_OS STREQUAL "ios")
-		XSB_STATIC
-	endif()
 	${target_specific_public_libraries}
 )
 
