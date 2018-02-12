@@ -19,28 +19,22 @@ targetArch=$3
 if [[ "$targetOS" == "ios" ]]; then
 	# Configure
 	path="$SRCLOC/upstream.patched/XSB/build"
-	(cd "$path" && ./configure)
+	(cd "$path" && ./configure --build=x86_64-apple-darwin)
+	#(cd "$path" && ./configure)
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to configure 'XSB', aborting..."
 		exit $retcode
 	fi
 
-	# Build XSB
-	#(cd "$path" && ./makexsb)
-	#retcode=$?
-	#if [ $retcode -ne 0 ]; then
-	#	echo "Failed to build 'XSB', aborting..."
-	#	exit $retcode
-	#fi
-
 	# Build XSB module
-	#(cd "$path" && ./makexsb module)
-	#retcode=$?
-	#if [ $retcode -ne 0 ]; then
-	#	echo "Failed to build 'XSB module', aborting..."
-	#	exit $retcode
-	#fi
+	pathConfig="$SRCLOC/upstream.patched/XSB/config/x86_64-apple-darwin"
+	(cd "$path" && make -f "$pathConfig/topMakefile" module)
+	retcode=$?
+	if [ $retcode -ne 0 ]; then
+		echo "Failed to build 'XSB module', aborting..."
+		exit $retcode
+	fi
 else
 	echo "Only 'ios' is supported target, while '${targetOS}' was specified"
 	exit 1
