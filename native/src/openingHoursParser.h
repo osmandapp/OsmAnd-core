@@ -2,7 +2,7 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 4a04cf2ecf5b25fc23c99e16c70c5a869dad8777
+//  git revision 92c30694eefd0ff34d8e8c104966c84cbc3f2a8f
 
 #include <string>
 #include <vector>
@@ -140,6 +140,15 @@ public:
          */
         virtual bool hasOverlapTimes() const = 0;
         
+        /**
+         * Check if r rule times overlap with this rule times at "cal" date.
+         *
+         * @param cal the date to check
+         * @param r the rule to check
+         * @return true if the this rule times overlap with r times
+         */
+        virtual bool hasOverlapTimes(const tm& dateTime, const std::shared_ptr<OpeningHoursRule>& r) const = 0;
+
         virtual int getSequenceIndex() const = 0;
         
         /**
@@ -346,6 +355,8 @@ public:
         bool containsDay(const tm& dateTime) const;
         
         bool hasOverlapTimes() const;
+        
+        bool hasOverlapTimes(const tm& dateTime, const std::shared_ptr<OpeningHoursRule>& r) const;
 
         /**
          * Check if the next weekday of time "date" is part of this rule
@@ -418,6 +429,7 @@ public:
         bool isOpenedForTime(const tm& dateTime, bool checkPrevious) const;
         bool containsPreviousDay(const tm& dateTime) const;
         bool hasOverlapTimes() const;
+        bool hasOverlapTimes(const tm& dateTime, const std::shared_ptr<OpeningHoursRule>& r) const;
         bool containsDay(const tm& dateTime) const;
         bool containsNextDay(const tm& dateTime) const;
         bool containsMonth(const tm& dateTime) const;
