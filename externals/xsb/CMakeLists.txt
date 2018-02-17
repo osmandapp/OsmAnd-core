@@ -5,14 +5,11 @@ build_upstream()
 
 set(XSB_CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/config)
 set(XSB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/XSB/emu)
-set(XSB_CONFIG_INCLUDE_DIR ${XSB_CONFIG_DIR}/x86_64-apple-darwin)
+set(XSB_CONFIG_INCLUDE_DIR ${XSB_CONFIG_DIR}/arm-apple-darwin)
 
 file(GLOB xsb_emu_headers "${XSB_INCLUDE_DIR}/*.h")
 
-add_library(XSB_STATIC STATIC
-    ${XSB_CONFIG_INCLUDE_DIR}/saved.o/struct_intern.o
-    ${XSB_CONFIG_INCLUDE_DIR}/saved.o/interprolog_callback.o
-
+add_library(XSB_STATIC
     ${xsb_emu_headers}
 
     ${XSB_INCLUDE_DIR}/auxlry.c
@@ -80,6 +77,7 @@ add_library(XSB_STATIC STATIC
     ${XSB_INCLUDE_DIR}/getMemorySize.c 
     ${XSB_INCLUDE_DIR}/incr_xsb.c 
     ${XSB_INCLUDE_DIR}/call_graph_xsb.c
+    ${XSB_INCLUDE_DIR}/struct_intern.c
 )
 
 target_include_directories(XSB_STATIC 
