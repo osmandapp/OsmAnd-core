@@ -22,8 +22,7 @@ struct StringsHolder
     StringsHolder();
     ~StringsHolder();
     
-    void setAdditionalString(std::string& key, std::string& value);
-
+    void setAdditionalString(const std::string& key, const std::string& value);
 };
 
 struct OpeningHoursParser
@@ -600,6 +599,8 @@ public:
     
     OpeningHoursParser(const std::string& openingHours);
     ~OpeningHoursParser();
+
+    static void setAdditionalString(const std::string& key, const std::string& value);
 
     static void parseRuleV2(const std::string& rl, int sequenceIndex, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
     static void parseRules(const std::string& rl, int sequenceIndex, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);

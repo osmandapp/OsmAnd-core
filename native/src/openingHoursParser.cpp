@@ -196,7 +196,7 @@ StringsHolder::~StringsHolder()
 /**
  * Set additional localized strings like "off", etc.
  */
-void StringsHolder::setAdditionalString(std::string& key, std::string& value)
+void StringsHolder::setAdditionalString(const std::string& key, const std::string& value)
 {
     additionalStrings[key] = value;
 }
@@ -1871,6 +1871,11 @@ bool OpeningHoursParser::parseTime(const std::string& time, tm& dateTime)
     {
         return false;
     }
+}
+
+void OpeningHoursParser::setAdditionalString(const std::string& key, const std::string& value)
+{
+    stringsHolder.setAdditionalString(key, value);
 }
 
 /**
