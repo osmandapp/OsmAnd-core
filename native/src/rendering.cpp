@@ -512,7 +512,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
-		if (mObj->containsAdditional("piste:oneway", "yes") && mObj->containsAdditional("oneway", "yes")) {
+		if (mObj->containsAdditional("piste:oneway", "yes") || mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
 			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
 				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
