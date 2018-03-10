@@ -108,14 +108,13 @@ dynbitset& increaseSize(dynbitset& t, uint targetSize) {
 	return t;
 }
 
-dynbitset align(dynbitset& t, uint targetSize) {
-    dynbitset bitset(t);
-	if (t.size() < targetSize) {
-		bitset.resize(targetSize);
-	} else if (t.size() > targetSize) {
+dynbitset& align(dynbitset& t, uint targetSize) {
+    if (t.size() < targetSize) {
+        t.resize(targetSize);
+    } else if (t.size() > targetSize) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Bitset %d is longer than target %d", t.size(), targetSize);
 	}
-	return bitset;
+    return t;
 }
 
 
@@ -494,18 +493,14 @@ double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContex
 	}
 	if (selectValueDef.length() > 0 && selectValueDef[0]=='$') {
 		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(selectValueDef.substr(1));
-		if (ms != router->tagRuleMask.end())
+		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
         {
-            dynbitset bitset = align(ms->second, types.size());
-            if (bitset.intersects(types))
-            {
-                dynbitset findBit(bitset.size());
-                findBit |= bitset;
-                findBit &= types;
-                uint value = findBit.find_first();
-                double vd = router->parseValueFromTag(value, selectType, router);;
-                return vd;
-            }
+            dynbitset findBit(ms->second.size());
+            findBit |= ms->second;
+            findBit &= types;
+            uint value = findBit.find_first();
+            double vd = router->parseValueFromTag(value, selectType, router);;
+            return vd;
         }
 	} else if (selectValueDef.length() > 0 && selectValueDef[0]==':') {
 		string p = selectValueDef.substr(1);
@@ -547,16 +542,13 @@ double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, Pa
 	}
 	if (value.length() > 0 && value[0]=='$') {
         UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
-        if (ms != router->tagRuleMask.end())
+        if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
         {
-            dynbitset bitset = align(ms->second, types.size());
-            if (bitset.intersects(types)) {
-                dynbitset findBit(bitset.size());
-                findBit |= bitset;
-                findBit &= types;
-                uint value = findBit.find_first();
-                return router->parseValueFromTag(value, valueType, router);
-            }
+            dynbitset findBit(ms->second.size());
+            findBit |= ms->second;
+            findBit &= types;
+            uint value = findBit.find_first();
+            return router->parseValueFromTag(value, valueType, router);
         }
 	} else if(value == ":incline") {
 		return paramContext.incline;
