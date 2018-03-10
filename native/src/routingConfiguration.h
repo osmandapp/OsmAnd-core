@@ -77,8 +77,7 @@ public:
         }
         SHARED_PTR<RoutingConfiguration> i = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration());
         if (routers.find(router) != routers.end()) {
-            i->router = routers[router];
-            i->router = i->router->build(params);
+            i->router = routers[router]->build(params);
             i->routerName = router;
         }
         attributes["routerName"] = router;

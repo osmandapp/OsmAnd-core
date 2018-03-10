@@ -229,6 +229,23 @@ RouteAttributeExpression::RouteAttributeExpression(vector<string>&vls, int type,
 	}
 }
 
+RouteAttributeEvalRule::RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule> original) {
+    parameters = original->parameters;
+    selectValue = original->selectValue;
+    selectValueDef = original->selectValueDef;
+    selectType = original->selectType;
+    filterTypes = original->filterTypes;
+    filterNotTypes = original->filterNotTypes;
+    
+    onlyTags = original->onlyTags;
+    onlyNotTags = original->onlyNotTags;
+    expressions = original->expressions;
+    
+    tagValueCondDefValue = original->tagValueCondDefValue;
+    tagValueCondDefTag = original->tagValueCondDefTag;
+    tagValueCondDefNot = original->tagValueCondDefNot;
+}
+
 void RouteAttributeEvalRule::registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt) {
 	tagValueCondDefTag.push_back(tag);
 	tagValueCondDefValue.push_back(value);

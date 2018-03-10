@@ -158,7 +158,9 @@ public:
     
     RouteAttributeEvalRule() : selectValue(0), selectValueDef(""), selectType("") {
     }
-    
+
+    RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule> original);
+
 	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt); 
 
 	// formated as [param1,-param2]
@@ -206,10 +208,11 @@ public:
     RouteAttributeContext(GeneralRouter* r, RouteAttributeContext* original, MAP_STR_STR params) : router(r) {
         if (!params.empty()) {
             paramContext.vars = params;
-        }
-        for (auto rt : original->rules) {
-            if (checkParameter(rt)) {
-                rules.push_back(rt);
+        
+            for (auto rt : original->rules) {
+                if (checkParameter(rt)) {
+                    rules.push_back(std::make_shared<RouteAttributeEvalRule>(rt));
+                }
             }
         }
     }
