@@ -547,8 +547,8 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
 
                 bool rejectBox = false;
 
-                if (!rejectBox && tileFilter)
-                    rejectBox = !tileFilter(tileId, zoom);
+                //if (!rejectBox && tileFilter)
+                //    rejectBox = !tileFilter(tileId, zoom);
 
                 if (!rejectBox && bbox31)
                 {
@@ -633,18 +633,27 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     read = req.tiles.contains((zx << SearchRequest.ZOOM_TO_SEARCH_POI) + zy);
                 }*/
 
+                bool read = true;
+                if (tileFilter)
+                    read = tileFilter(tileId, zoom);
+
                 const auto dataOffset = ObfReaderUtilities::readBigEndianInt(cis);
 
-                if (zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip)
+                if (read)
                 {
-                    const auto tileValue =
+                    if (zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip)
+                    {
+                        const auto tileValue =
                         ((static_cast<uint64_t>(tileId.x) >> (zoom - zoomToSkip)) << zoomToSkip) |
                         (static_cast<uint64_t>(tileId.y) >> (zoom - zoomToSkip));
-                    outDataOffsetsMap.insert(dataOffset, tileValue);
-                    tilesToSkip.insert(tileValue);
+                        outDataOffsetsMap.insert(dataOffset, tileValue);
+                        tilesToSkip.insert(tileValue);
+                    }
+                    else
+                    {
+                        outDataOffsetsMap.insert(dataOffset, std::numeric_limits<uint64_t>::max());
+                    }
                 }
-                else
-                    outDataOffsetsMap.insert(dataOffset, std::numeric_limits<uint64_t>::max());
 
                 break;
             }
