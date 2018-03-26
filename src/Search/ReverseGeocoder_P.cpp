@@ -238,28 +238,9 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (Utilities::distance(road->searchPoint->longitude, road->searchPoint->latitude, plon, plat) < DISTANCE_BUILDING_PROXIMITY)
             {
                 auto bld = makeResult();
-                if (!b->interpolationNativeName.isEmpty())
-                {
-                    int fi = OsmAnd::Utilities::extractFirstInteger(b->nativeName);
-                    int si = OsmAnd::Utilities::extractFirstInteger(b->interpolationNativeName);
-                    if (si != 0 && fi != 0)
-                    {
-                        int num = (int) (fi + (si - fi) * coeff);
-                        if (b->interpolation == Building::Interpolation::Even || b->interpolation == Building::Interpolation::Odd)
-                        {
-                            if (num % 2 == (b->interpolation == Building::Interpolation::Even ? 1 : 0))
-                                num--;
-                        }
-                        else if (b->interpolationInterval > 0)
-                        {
-                            int intv = b->interpolationInterval;
-                            if ((num - fi) % intv != 0) {
-                                num = ((num - fi) / intv) * intv + fi;
-                            }
-                        }
-                        bld->buildingInterpolation = QString::number(num);
-                    }
-                }
+                auto nm = b->getInterpolationName(coeff);
+                if (!nm.isEmpty())
+                    bld->buildingInterpolation = nm;
             }
         }
         else if (Utilities::distance(Utilities::convert31ToLatLon(b->position31), *road->searchPoint) < DISTANCE_BUILDING_PROXIMITY)

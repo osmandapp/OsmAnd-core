@@ -53,6 +53,7 @@ namespace OsmAnd
         
         float evaluateInterpolation(const QString& hno) const;
         bool belongsToInterpolation(const QString& hno) const;
+        QString getInterpolationName(double coeff) const;
     };
 }
 

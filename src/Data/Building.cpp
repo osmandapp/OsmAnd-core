@@ -77,3 +77,30 @@ bool OsmAnd::Building::belongsToInterpolation(const QString& hno) const
     return evaluateInterpolation(hno) >= 0;
 }
 
+QString OsmAnd::Building::getInterpolationName(double coeff) const
+{
+    if (!interpolationNativeName.isEmpty())
+    {
+        int fi = Utilities::extractFirstInteger(nativeName);
+        int si = Utilities::extractFirstInteger(interpolationNativeName);
+        if (si != 0 && fi != 0)
+        {
+            int num = (int) (fi + (si - fi) * coeff);
+            if (interpolation == Interpolation::Even || interpolation == Interpolation::Odd)
+            {
+                if (num % 2 == (interpolation == Interpolation::Even ? 1 : 0))
+                    num--;
+            }
+            else if (interpolationInterval > 0)
+            {
+                int intv = interpolationInterval;
+                if ((num - fi) % intv != 0) {
+                    num = ((num - fi) / intv) * intv + fi;
+                }
+            }
+            return QString::number(num);
+        }
+    }
+    return QString();
+}
+
