@@ -178,9 +178,6 @@ set(target_legacy_shared_public_includes
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
-	set(target_specific_public_libraries ${target_specific_public_libraries}
-		XSB_STATIC
-	)
 	file(GLOB legacy_sources
 		"${LEGACY_SRC}/routeTypeRule.h"
 		"${LEGACY_SRC}/routeTypeRule.cpp"
