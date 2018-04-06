@@ -49,6 +49,9 @@ namespace OsmAnd
 
         virtual ColorRGB getColor() const = 0;
         virtual void setColor(const ColorRGB newColor) = 0;
+
+        virtual uint32_t hash() const;
+        virtual bool isEqual(IFavoriteLocation* favoriteLocation) const;
     };
 }
 
