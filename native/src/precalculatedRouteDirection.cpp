@@ -20,9 +20,15 @@ PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vecto
 PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) {
     init();
 
-    this->empty = parent.empty;
     this->minSpeed = parent.minSpeed;
     this->maxSpeed = parent.maxSpeed;
+    bool inverse = false;
+    if (s1 > s2) {
+        int tmp = s1;
+        s1 = s2;
+        s2 = tmp;
+        inverse = true;
+    }
     times.assign(s2 - s1 + 1, .0f);
     pointsX.assign(s2 - s1 + 1, 0);
     pointsY.assign(s2 - s1 + 1, 0);
@@ -33,7 +39,7 @@ PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirec
         //			indexedPoints.registerObjectXY(parent.pointsX.get(i), parent.pointsY.get(i), pointsX.size() - 1);
         SkRect rct = SkRect::MakeLTRB(parent.pointsX[i], parent.pointsY[i], parent.pointsX[i], parent.pointsY[i]);
         quadTree.insert(shiftInd, rct);
-        times[shiftInd] = parent.times[i] - parent.times[s2];
+        times[shiftInd] = parent.times[i] - parent.times[inverse ? s1 : s2];
     }
 }
 
@@ -45,7 +51,6 @@ void PrecalculatedRouteDirection::init() {
     followNext = false;
     startPoint = 0;
     endPoint = 0;
-    empty = true;
 }
 
 SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::build(vector<SHARED_PTR<RouteSegmentResult> >& ls, float cutoffDistance, float maxSpeed) {
@@ -110,7 +115,6 @@ void PrecalculatedRouteDirection::init(vector<int>& x31, vector<int>& y31, vecto
         totDec -= times[i];
         this->times.push_back(totDec);
     }
-    empty = false;
 }
 
 void PrecalculatedRouteDirection::init(vector<SHARED_PTR<RouteSegmentResult> >& ls) {

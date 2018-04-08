@@ -348,7 +348,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
     if (!intermediatesX.empty()) {
         for (int i = 0; i < intermediatesX.size(); i++) {
             int x31 = intermediatesX[i];
-            int y31 = intermediatesX[i];
+            int y31 = intermediatesY[i];
             if (!addSegment(x31, y31, ctx.get(), indexNotFound++, points)) {
                 return vector<SHARED_PTR<RouteSegmentResult> >();
             }

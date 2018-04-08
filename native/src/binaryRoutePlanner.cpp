@@ -50,7 +50,7 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist31(begX, begY,  endX, endY);
 	double result = distToFinalPoint /  ctx->config->router->getMaxDefaultSpeed();
-	if(!ctx->precalcRoute->empty){
+	if(ctx->precalcRoute != nullptr){
 		float te = ctx->precalcRoute->timeEstimate(begX, begY,  endX, endY);
 		if(te > 0) return te;
 	}
@@ -503,7 +503,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			continue;
 		}
 		// correct way of handling precalculatedRouteDirection 
-		if(!ctx->precalcRoute->empty) {
+		if(ctx->precalcRoute != nullptr) {
 //				long nt = System.nanoTime();
 //				float devDistance = ctx.precalculatedRouteDirection.getDeviationDistance(x, y);
 //				// 1. linear method
@@ -516,7 +516,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		// 3. get intersected ways
 		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config->memoryLimitation - ctx.memoryOverhead
 		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
-		if(!ctx->precalcRoute->empty && ctx->precalcRoute->followNext) {
+		if(ctx->precalcRoute != nullptr && ctx->precalcRoute->followNext) {
 			//distStartObstacles = 0;
 			distStartObstacles = ctx->precalcRoute->getDeviationDistance(x, y) / ctx->precalcRoute->maxSpeed;
 		}

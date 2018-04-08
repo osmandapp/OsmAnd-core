@@ -17,7 +17,6 @@ struct PrecalculatedRouteDirection {
 	bool followNext;
 	static int SHIFT;
 	static int SHIFTS[];
-	bool empty;
 
 	uint64_t startPoint;
 	uint64_t endPoint;
