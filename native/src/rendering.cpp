@@ -526,6 +526,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		pair.second == "platter" ||
 		pair.second == "magic_carpet" ||
 		pair.second == "rope_tow" ||
+		pair.second == "zip_line" ||
 		pair.second == "drag_lift"
 		)) {
 		if (!(mObj->containsAdditional("oneway", "no"))) {
