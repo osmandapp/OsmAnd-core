@@ -548,6 +548,14 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			} else onewayColor = 0xff5959ff;
 		}
 	}
+	if(pair.first == "highway" && pair.second == "via_ferrata" && rc->getZoom() >= 15) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff5959ff;
+		}
+	}
 
 	rc->visible++;
 	SkPath path;
