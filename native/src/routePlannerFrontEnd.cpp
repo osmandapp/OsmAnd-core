@@ -130,7 +130,7 @@ bool addSegment(int x31, int y31, RoutingContext* ctx, int indexNotFound, vector
         ctx->progress->segmentNotFound = indexNotFound;
         return false;
     } else {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] Route segment found %d %s", f->getRoad()->getId(), f->getRoad()->getName().c_str());
+        //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] Route segment found %d %s", f->getRoad()->getId(), f->getRoad()->getName().c_str());
         res.push_back(f);
         return true;
     }
