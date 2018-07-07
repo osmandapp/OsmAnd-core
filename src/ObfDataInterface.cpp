@@ -1073,3 +1073,10 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
 
     return true;
 }
+
+/*
+bool OsmAnd::ObfDataInterface::transportStopBelongsTo(TransportStop s)
+{
+    return getTransportIndex(s.getFileOffset()) != null;
+}
+*/

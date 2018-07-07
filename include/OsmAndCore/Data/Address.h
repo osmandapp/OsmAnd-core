@@ -12,7 +12,6 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
-#include <OsmAndCore/Data/Address.h>
 
 namespace OsmAnd
 {

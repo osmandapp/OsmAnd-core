@@ -28,6 +28,8 @@ namespace OsmAnd
 {
     namespace gpb = google::protobuf;
 
+    static const int TRANSPORT_STOP_ZOOM = 24;
+
     class ObfInfo;
 
     class ObfReader;

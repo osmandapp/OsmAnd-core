@@ -8,6 +8,9 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "DataCommonTypes.h"
+#include "ObfTransportSectionReader.h"
+#include "ObfTransportSectionInfo.h"
 
 namespace OsmAnd {
 
@@ -17,15 +20,51 @@ namespace OsmAnd {
 
     class ObfTransportSectionReader_P Q_DECL_FINAL
     {
+    public:
+        typedef ObfTransportSectionReader::TransportStopVisitorFunction TransportStopVisitorFunction;
+
     private:
         ObfTransportSectionReader_P();
         ~ObfTransportSectionReader_P();
     protected:
-        static void read(const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
+        static void read(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfTransportSectionInfo>& section);
 
-        static void readTransportStopsBounds(const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section);
+        static void readTransportStopsBounds(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfTransportSectionInfo>& section);
+
+        static void searchTransportTreeBounds(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            QList< std::shared_ptr<const TransportStop> >* resultOut,
+            const AreaI* const bbox31,
+            ObfSectionInfo::StringTable* const stringTable,
+            const TransportStopVisitorFunction visitor,
+            const std::shared_ptr<const IQueryController>& queryController);
+
+        static void readTransportStop(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            const uint32_t stopOffset,
+            std::shared_ptr<TransportStop>& outTransportStop,
+            const AreaI& cbbox31,
+            const AreaI* const bbox31,
+            ObfSectionInfo::StringTable* const stringTable,
+            const std::shared_ptr<const IQueryController>& queryController);
+    public:
+        static void searchTransportStops(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            QList< std::shared_ptr<const TransportStop> >* resultOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            ObfSectionInfo::StringTable* const stringTable = nullptr,
+            const TransportStopVisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
     friend class OsmAnd::ObfReader_P;
+    friend class OsmAnd::ObfTransportSectionReader;
     };
 
 } // namespace OsmAnd

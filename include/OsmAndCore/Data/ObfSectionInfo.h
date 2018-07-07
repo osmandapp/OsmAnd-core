@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QAtomicInt>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -19,6 +20,10 @@ namespace OsmAnd
     class ObfSectionInfo
     {
         Q_DISABLE_COPY_AND_MOVE(ObfSectionInfo);
+        
+    public:
+        typedef QHash<uint32_t, QString> StringTable;
+
     private:
         static QAtomicInt _nextRuntimeGeneratedId;
     protected:
