@@ -31,6 +31,8 @@ namespace OsmAnd {
         virtual ~ObfTransportSectionInfo();
 
         const AreaI& area24;
+        const uint32_t& stopsOffset;
+        const uint32_t& stopsLength;
 
         friend class OsmAnd::ObfTransportSectionReader_P;
         friend class OsmAnd::ObfReader_P;

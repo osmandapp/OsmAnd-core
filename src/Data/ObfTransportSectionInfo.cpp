@@ -2,6 +2,8 @@
 
 OsmAnd::ObfTransportSectionInfo::ObfTransportSectionInfo(const std::shared_ptr<const ObfInfo>& container)
     : ObfSectionInfo(container)
+    , stopsOffset(_stopsOffset)
+    , stopsLength(_stopsLength)
     , area24(_area24)
 {
 }

@@ -18,10 +18,13 @@
 #include "ObfPoiSectionInfo.h"
 #include "ObfAddressSectionReader.h"
 #include "ObfAddressSectionInfo.h"
+#include "ObfTransportSectionReader.h"
+#include "ObfTransportSectionInfo.h"
 #include "ObfMapObject.h"
 #include "Amenity.h"
 #include "StreetGroup.h"
 #include "Street.h"
+#include "TransportStop.h"
 #include "IQueryController.h"
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
@@ -1073,6 +1076,53 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
 
     return true;
 }
+
+bool OsmAnd::ObfDataInterface::searchTransportIndex(
+    QList< std::shared_ptr<const TransportStop> >* outTransportStops /*= nullptr*/,
+    const AreaI* const bbox31 /*= nullptr*/,
+    ObfSectionInfo::StringTable* const stringTable /*= nullptr*/,
+    const ObfTransportSectionReader::TransportStopVisitorFunction visitor /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+        
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& transportSection : constOf(obfInfo->transportSections))
+        {
+            if (transportSection->stopsLength == 0)
+                return false;
+
+            if (queryController && queryController->isAborted())
+                return false;
+            
+            if (bbox31)
+            {
+                bool accept = false;
+                accept = accept || transportSection->area24.contains(*bbox31);
+                accept = accept || transportSection->area24.intersects(*bbox31);
+                accept = accept || bbox31->contains(transportSection->area24);
+                
+                if (!accept)
+                    continue;
+            }
+            
+            OsmAnd::ObfTransportSectionReader::searchTransportStops(
+                                                                    obfReader,
+                                                                    transportSection,
+                                                                    outTransportStops,
+                                                                    bbox31,
+                                                                    stringTable,
+                                                                    visitor,
+                                                                    queryController);
+        }
+    }
+    
+    return true;
+}
+
 
 /*
 bool OsmAnd::ObfDataInterface::transportStopBelongsTo(TransportStop s)

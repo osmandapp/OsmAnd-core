@@ -121,8 +121,8 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->offset);
-    const auto oldLimit = cis->PushLimit(section->length);
+    cis->Seek(section->stopsOffset);
+    const auto oldLimit = cis->PushLimit(section->stopsLength);
     
     searchTransportTreeBounds(
                               reader,

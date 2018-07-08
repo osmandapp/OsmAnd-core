@@ -15,6 +15,7 @@
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
+#include <OsmAndCore/Data/ObfTransportSectionReader.h>
 #include <OsmAndCore/CollatorStringMatcher.h>
 
 namespace OsmAnd
@@ -158,6 +159,13 @@ namespace OsmAnd
             QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::IntersectionVisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        bool searchTransportIndex(
+            QList< std::shared_ptr<const TransportStop> >* outTransportStops = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            ObfSectionInfo::StringTable* const stringTable = nullptr,
+            const ObfTransportSectionReader::TransportStopVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };
 }
