@@ -261,7 +261,7 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
     const auto cis = reader.getCodedInputStream().get();
     ObfObjectId id;
     PointI position31;
-    ObfTransportSectionInfo::ReferencesToRoutes referencesToRoutes;
+    QVector<uint32_t> referencesToRoutes;
 
     int tag = gpb::internal::WireFormatLite::GetTagFieldNumber(cis->ReadTag());
     assert(OBF::TransportStop::kDxFieldNumber == tag);

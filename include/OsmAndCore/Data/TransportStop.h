@@ -5,14 +5,16 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QVector>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
-#include <OsmAndCore/Data/ObfTransportSectionInfo.h>
 
 namespace OsmAnd
 {
+    class ObfTransportSectionInfo;
+    
     class OSMAND_CORE_API TransportStop
     {
         Q_DISABLE_COPY_AND_MOVE(TransportStop);
@@ -28,7 +30,7 @@ namespace OsmAnd
         const std::shared_ptr<const ObfTransportSectionInfo> obfSection;
 
         uint32_t offset;
-        ObfTransportSectionInfo::ReferencesToRoutes referencesToRoutes;
+        QVector<uint32_t> referencesToRoutes;
 
         ObfObjectId id;
         PointI position31;
