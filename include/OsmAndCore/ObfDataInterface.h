@@ -17,6 +17,7 @@
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
 #include <OsmAndCore/Data/ObfTransportSectionReader.h>
 #include <OsmAndCore/CollatorStringMatcher.h>
+#include <OsmAndCore/Ref.h>
 
 namespace OsmAnd
 {
@@ -161,12 +162,25 @@ namespace OsmAnd
             const ObfAddressSectionReader::IntersectionVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
+        // Transport
         bool searchTransportIndex(
             QList< std::shared_ptr<const TransportStop> >* outTransportStops = nullptr,
             const AreaI* const bbox31 = nullptr,
             ObfSectionInfo::StringTable* const stringTable = nullptr,
             const ObfTransportSectionReader::TransportStopVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        bool getTransportRoutes(
+            const std::shared_ptr<const TransportStop>& transportStop,
+            QList< std::shared_ptr<const TransportRoute> >* resultOut = nullptr,
+            ObfSectionInfo::StringTable* const stringTable = nullptr,
+            const ObfTransportSectionReader::TransportRouteVisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        const std::shared_ptr<const ObfTransportSectionInfo> getTransportSectionInfo(
+            const QList<Ref<ObfTransportSectionInfo>>& sections,
+            const uint32_t filePointer);
+
     };
 }
 

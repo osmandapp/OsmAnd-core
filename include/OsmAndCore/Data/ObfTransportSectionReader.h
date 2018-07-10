@@ -13,20 +13,32 @@
 namespace OsmAnd {
 
     class ObfReader;
+    class ObfReader_P;
     class ObfTransportSectionInfo;
     class TransportStop;
+    class TransportRoute;
     class IQueryController;
 
     class OSMAND_CORE_API ObfTransportSectionReader
     {
     public:
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::TransportStop>& transportStop)> TransportStopVisitorFunction;
+        typedef std::function<bool(const std::shared_ptr<const OsmAnd::TransportRoute>& transportRoute)> TransportRouteVisitorFunction;
 
     private:
         ObfTransportSectionReader();
         ~ObfTransportSectionReader();
     protected:
     public:
+        static void initializeStringTable(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            ObfSectionInfo::StringTable* const stringTable);
+        
+        static void initializeNames(
+            ObfSectionInfo::StringTable* const stringTable,
+            std::shared_ptr<TransportStop> s);
+
         static void searchTransportStops(
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfTransportSectionInfo>& section,

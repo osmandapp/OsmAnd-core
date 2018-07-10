@@ -11,6 +11,22 @@ OsmAnd::ObfTransportSectionReader::~ObfTransportSectionReader()
 {
 }
 
+void OsmAnd::ObfTransportSectionReader::initializeStringTable(
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfTransportSectionInfo>& section,
+    ObfSectionInfo::StringTable* const stringTable)
+{
+    ObfTransportSectionReader_P::initializeStringTable(*reader->_p, section, stringTable);
+}
+
+void OsmAnd::ObfTransportSectionReader::initializeNames(
+    ObfSectionInfo::StringTable* const stringTable,
+    std::shared_ptr<TransportStop> s)
+{
+    ObfTransportSectionReader_P::initializeNames(stringTable, s);
+}
+
+
 void OsmAnd::ObfTransportSectionReader::searchTransportStops(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfTransportSectionInfo>& section,

@@ -25,6 +25,7 @@
 #include "StreetGroup.h"
 #include "Street.h"
 #include "TransportStop.h"
+#include "TransportRoute.h"
 #include "IQueryController.h"
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
@@ -1123,6 +1124,73 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
     return true;
 }
 
+const std::shared_ptr<const OsmAnd::ObfTransportSectionInfo> OsmAnd::ObfDataInterface::getTransportSectionInfo(
+    const QList<Ref<ObfTransportSectionInfo>>& sections,
+    const uint32_t filePointer)
+{
+    for (const auto& transportSection : constOf(sections))
+        if (transportSection->offset <= filePointer && (filePointer - transportSection->offset) < transportSection->length)
+            return transportSection.shared_ptr();
+
+    return nullptr;
+}
+
+bool OsmAnd::ObfDataInterface::getTransportRoutes(
+    const std::shared_ptr<const TransportStop>& transportStop,
+    QList< std::shared_ptr<const TransportRoute> >* resultOut /*= nullptr*/,
+    ObfSectionInfo::StringTable* const stringTable /*= nullptr*/,
+    const ObfTransportSectionReader::TransportRouteVisitorFunction visitor /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    QHash<uint32_t, std::shared_ptr<TransportRoute>> result;
+    QHash<const ObfTransportSectionInfo*, QList<uint32_t>> groupPoints;
+    for (auto filePointer : transportStop->referencesToRoutes)
+    {
+        for (const auto& obfReader : constOf(obfReaders))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+            
+            const auto& obfInfo = obfReader->obtainInfo();
+            const auto section = getTransportSectionInfo(constOf(obfInfo->transportSections), filePointer);
+            if (section)
+            {
+                if (!groupPoints.contains(section.get()))
+                    groupPoints[section.get()] = QList<uint32_t>();
+                
+                groupPoints[section.get()].push_back(filePointer);
+                OsmAnd::ObfTransportSectionReader::initializeStringTable(obfReader, section, stringTable);
+            }
+        }
+    }
+    /*
+    for(const auto& entry : rangeOf(constOf(groupPoints)))
+    {
+        const auto section = entry.key();
+        auto& pointers = entry.value();
+        qSort(pointers);
+        auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
+        for (const auto& filePointer : pointers)
+        {
+            TransportRoute transportRoute = transportAdapter.getTransportRoute(filePointer, stringTable, false);
+            result.put(filePointer, transportRoute);
+        }
+        for (TransportRoute r : result.values(new TransportRoute[result.size()])) {
+            OsmAnd::ObfTransportSectionReader::initializeNames(false, r, stringTable);
+        }
+    }
+    
+    for (auto transportRoute : res)
+    {
+        if (!visitor || visitor(transportStop))
+        {
+            if (resultOut)
+                resultOut->push_back(transportStop);
+        }
+    }
+     */
+    return true;
+}
 
 /*
 bool OsmAnd::ObfDataInterface::transportStopBelongsTo(TransportStop s)
