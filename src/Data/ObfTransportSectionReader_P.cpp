@@ -58,16 +58,12 @@ void OsmAnd::ObfTransportSectionReader_P::read(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto offset = cis->CurrentPosition();
+                ObfTransportSectionInfo::IndexStringTable st;
+                st.fileOffset = offset;
+                st.length = length;
+                section->_stringTable = st;
                 cis->Seek(offset + length);
             }
-            //TODO:
-            /*IndexStringTable st = new IndexStringTable();
-            st.length = codedIS.readRawVarint32();
-            st.fileOffset = codedIS.getTotalBytesRead();
-            // Do not cache for now save memory
-            // readStringTable(st, 0, 20, true);
-            ind.stringTable = st;
-            codedIS.seek(st.length + st.fileOffset);*/
             break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -93,22 +89,41 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds(
 
             return;
         case OBF::TransportStopsTree::kLeftFieldNumber:
-            section->_area24.left() = ObfReaderUtilities::readSInt32(cis);
+            section->_area31.left() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kRightFieldNumber:
-            section->_area24.right() = ObfReaderUtilities::readSInt32(cis);
+            section->_area31.right() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kTopFieldNumber:
-            section->_area24.top() = ObfReaderUtilities::readSInt32(cis);
+            section->_area31.top() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kBottomFieldNumber:
-            section->_area24.bottom() = ObfReaderUtilities::readSInt32(cis);
+            section->_area31.bottom() = ObfReaderUtilities::readSInt32(cis);
             break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
             break;
         }
     }
+}
+
+void OsmAnd::ObfTransportSectionReader_P::initializeStringTable(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfTransportSectionInfo>& section,
+    ObfSectionInfo::StringTable* const stringTable)
+{
+    
+}
+
+void OsmAnd::ObfTransportSectionReader_P::initializeNames(
+    ObfSectionInfo::StringTable* const stringTable,
+    std::shared_ptr<TransportStop> s)
+{
+    if (!s->localizedName.isEmpty())
+        s->localizedName = stringTable->value(s->localizedName[0].unicode());
+    
+    if (!s->enName.isEmpty())
+        s->enName = stringTable->value(s->enName[0].unicode());
 }
 
 void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
@@ -123,34 +138,51 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportStops(
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->stopsOffset);
     const auto oldLimit = cis->PushLimit(section->stopsLength);
+    QList< std::shared_ptr<TransportStop> > res;
+    auto pbbox31 = AreaI(0, 0, 0, 0);
     
     searchTransportTreeBounds(
                               reader,
                               section,
-                              resultOut,
+                              res,
+                              pbbox31,
                               bbox31,
                               stringTable,
-                              visitor,
                               queryController);
     
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
+    
+    if (stringTable)
+    {
+        initializeStringTable(reader, section, stringTable);
+        for (auto st : res)
+            initializeNames(stringTable, st);
+    }
+    for (auto transportStop : res)
+    {
+        if (!visitor || visitor(transportStop))
+        {
+            if (resultOut)
+                resultOut->push_back(transportStop);
+        }
+    }
 }
 
 void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
-    QList< std::shared_ptr<const TransportStop> >* resultOut,
+    QList< std::shared_ptr<TransportStop> >& resultOut,
+    AreaI& pbbox31,
     const AreaI* const bbox31,
     ObfSectionInfo::StringTable* const stringTable,
-    const TransportStopVisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
 
     int init = 0;
-    int lastIndexResult = -1;
-    AreaI cbbox31 = AreaI(0, 0, 0, 0);
+    QList< std::shared_ptr<TransportStop> > res;
+    auto cbbox31 = AreaI(0, 0, 0, 0);
     
     for (;;)
     {
@@ -167,22 +199,25 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
+
+                for (auto ts : res)
+                    resultOut.append(res);
                 
                 return;
             case OBF::TransportStopsTree::kBottomFieldNumber:
-                cbbox31.bottom() = ObfReaderUtilities::readSInt32(cis) + bbox31->bottom();
+                cbbox31.bottom() = ObfReaderUtilities::readSInt32(cis) + pbbox31.bottom();
                 init |= 1;
                 break;
             case OBF::TransportStopsTree::kLeftFieldNumber:
-                cbbox31.left() = ObfReaderUtilities::readSInt32(cis) + bbox31->left();
+                cbbox31.left() = ObfReaderUtilities::readSInt32(cis) + pbbox31.left();
                 init |= 2;
                 break;
             case OBF::TransportStopsTree::kRightFieldNumber:
-                cbbox31.right() = ObfReaderUtilities::readSInt32(cis) + bbox31->right();
+                cbbox31.right() = ObfReaderUtilities::readSInt32(cis) + pbbox31.right();
                 init |= 4;
                 break;
             case OBF::TransportStopsTree::kTopFieldNumber:
-                cbbox31.top() = ObfReaderUtilities::readSInt32(cis) + bbox31->top();
+                cbbox31.top() = ObfReaderUtilities::readSInt32(cis) + pbbox31.top();
                 init |= 8;
                 break;
             case OBF::TransportStopsTree::kLeafsFieldNumber:
@@ -191,17 +226,10 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
-
-                if (lastIndexResult == -1)
-                    lastIndexResult = resultOut->size();
                 
-                std::shared_ptr<TransportStop> transportStop;
-                readTransportStop(reader, section, stopOffset, transportStop, cbbox31, bbox31, stringTable, queryController);
-                if (!visitor || visitor(transportStop))
-                {
-                    if (resultOut)
-                        resultOut->push_back(transportStop);
-                }
+                auto transportStop = readTransportStop(reader, section, stopOffset, cbbox31, bbox31, stringTable, queryController);
+                if (transportStop)
+                    res.push_back(transportStop);
                 
                 cis->PopLimit(oldLimit);
                 break;
@@ -209,36 +237,29 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
             case OBF::TransportStopsTree::kSubtreesFieldNumber:
             {
                 // left, ... already initialized
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-                int filePointer = cis->TotalBytesRead();
+                auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                int filePointer = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
                 searchTransportTreeBounds(
                                           reader,
                                           section,
-                                          resultOut,
-                                          &cbbox31,
+                                          res,
+                                          cbbox31,
+                                          bbox31,
                                           stringTable,
-                                          visitor,
                                           queryController);
                 cis->PopLimit(oldLimit);
                 cis->Seek(filePointer + length);
                 
-                assert(lastIndexResult < 0);
                 break;
             }
             case OBF::TransportStopsTree::kBaseIdFieldNumber:
             {
                 gpb::uint64 baseId;
                 cis->ReadVarint64(&baseId);
-                if (lastIndexResult != -1)
-                {
-                    for (int i = lastIndexResult; i < resultOut->size(); i++)
-                    {
-                        auto rs = std::const_pointer_cast<TransportStop>(resultOut->at(i));
-                        rs->id = ObfObjectId::fromRawId(rs->id.id + baseId);
-                    }
-                }
+                for (auto transportStop : res)
+                    transportStop->id = ObfObjectId::fromRawId(transportStop->id.id + baseId);
+
                 break;
             }
             default:
@@ -248,11 +269,10 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
     }
 }
 
-void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
+std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::readTransportStop(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
     const uint32_t stopOffset,
-    std::shared_ptr<TransportStop>& outTransportStop,
     const AreaI& cbbox31,
     const AreaI* const bbox31,
     ObfSectionInfo::StringTable* const stringTable,
@@ -274,10 +294,9 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
     if (bbox31->right() < position31.x || bbox31->left() > position31.x || bbox31->top() > position31.y || bbox31->bottom() < position31.y)
     {
         cis->Skip(cis->BytesUntilLimit());
-        return;
+        return nullptr;
     }
-    
-    outTransportStop.reset(new TransportStop(section));
+    auto outTransportStop = std::make_shared<TransportStop>(section);
     outTransportStop->position31 = position31;
     outTransportStop->offset = stopOffset;
     for (;;)
@@ -290,7 +309,7 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
                 outTransportStop->id = id;
                 outTransportStop->referencesToRoutes = referencesToRoutes;
                 
-                return;
+                return outTransportStop;
             case OBF::TransportStop::kRoutesFieldNumber:
                 referencesToRoutes.push_back(stopOffset - ObfReaderUtilities::readSInt32(cis));
                 break;
@@ -302,7 +321,7 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
                     if (!stringTable->contains(i))
                         stringTable->insert(i, QString());
                     
-                    outTransportStop->enName = i;
+                    outTransportStop->enName = QChar(i);
                 }
                 else
                 {
@@ -318,7 +337,7 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
                     if (!stringTable->contains(i))
                         stringTable->insert(i, QString());
 
-                    outTransportStop->localizedName = i;
+                    outTransportStop->localizedName = QChar(i);
                 }
                 else
                 {
@@ -334,5 +353,6 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStop(
                 break;
         }
     }
+    return nullptr;
 }
 

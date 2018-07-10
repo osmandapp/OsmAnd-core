@@ -18,21 +18,30 @@ namespace OsmAnd {
     class OSMAND_CORE_API ObfTransportSectionInfo : public ObfSectionInfo
     {
         Q_DISABLE_COPY_AND_MOVE(ObfTransportSectionInfo)
-            
+        
+        struct IndexStringTable
+        {
+            int fileOffset = 0;
+            int length = 0;
+        };
+        
     private:
     protected:
         ObfTransportSectionInfo(const std::shared_ptr<const ObfInfo>& container);
 
-        AreaI _area24;
+        AreaI _area31;
 
         uint32_t _stopsOffset;
         uint32_t _stopsLength;
+        Nullable<IndexStringTable> _stringTable;
+
     public:
         virtual ~ObfTransportSectionInfo();
 
-        const AreaI& area24;
+        const AreaI& area31;
         const uint32_t& stopsOffset;
         const uint32_t& stopsLength;
+        const Nullable<IndexStringTable>& stringTable;
 
         friend class OsmAnd::ObfTransportSectionReader_P;
         friend class OsmAnd::ObfReader_P;

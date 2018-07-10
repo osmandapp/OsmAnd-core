@@ -26,6 +26,16 @@ namespace OsmAnd {
     private:
         ObfTransportSectionReader_P();
         ~ObfTransportSectionReader_P();
+        
+        static void initializeStringTable(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            ObfSectionInfo::StringTable* const stringTable);
+        
+        static void initializeNames(
+            ObfSectionInfo::StringTable* const stringTable,
+            std::shared_ptr<TransportStop> s);
+        
     protected:
         static void read(
             const ObfReader_P& reader,
@@ -38,17 +48,16 @@ namespace OsmAnd {
         static void searchTransportTreeBounds(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfTransportSectionInfo>& section,
-            QList< std::shared_ptr<const TransportStop> >* resultOut,
+            QList< std::shared_ptr<TransportStop> >& resultOut,
+            AreaI& pbbox31,
             const AreaI* const bbox31,
             ObfSectionInfo::StringTable* const stringTable,
-            const TransportStopVisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
 
-        static void readTransportStop(
+        static std::shared_ptr<TransportStop> readTransportStop(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfTransportSectionInfo>& section,
             const uint32_t stopOffset,
-            std::shared_ptr<TransportStop>& outTransportStop,
             const AreaI& cbbox31,
             const AreaI* const bbox31,
             ObfSectionInfo::StringTable* const stringTable,

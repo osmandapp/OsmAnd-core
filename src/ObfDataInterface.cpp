@@ -1101,9 +1101,9 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
             if (bbox31)
             {
                 bool accept = false;
-                accept = accept || transportSection->area24.contains(*bbox31);
-                accept = accept || transportSection->area24.intersects(*bbox31);
-                accept = accept || bbox31->contains(transportSection->area24);
+                accept = accept || transportSection->area31.contains(*bbox31);
+                accept = accept || transportSection->area31.intersects(*bbox31);
+                accept = accept || bbox31->contains(transportSection->area31);
                 
                 if (!accept)
                     continue;
