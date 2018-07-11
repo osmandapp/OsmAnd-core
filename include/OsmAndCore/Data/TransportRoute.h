@@ -27,13 +27,21 @@ namespace OsmAnd
         TransportRoute();
         virtual ~TransportRoute();
 
+        virtual QString getName(const QString lang, bool transliterate) const;
+        
+        uint32_t offset;
+
+        ObfObjectId id;
+        QString enName;
+        QString localizedName;
+        
         QList<std::shared_ptr<TransportStop>> forwardStops;
         QString ref;
         QString oper;
         QString type;
         uint32_t dist;
         QString color;
-        QList<QVector<PointI>> forwardWays31;
+        QList< QVector<PointI> > forwardWays31;
     };
 }
 

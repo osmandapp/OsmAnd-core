@@ -28,6 +28,10 @@ namespace OsmAnd {
         ~ObfTransportSectionReader_P();
         
     protected:
+        enum : uint32_t {
+            ShiftCoordinates = 5,
+        };
+        
         static void read(
             const ObfReader_P& reader,
             const std::shared_ptr<ObfTransportSectionInfo>& section);
@@ -54,15 +58,41 @@ namespace OsmAnd {
             ObfSectionInfo::StringTable* const stringTable,
             const std::shared_ptr<const IQueryController>& queryController);
         
-    public:
         static void initializeStringTable(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfTransportSectionInfo>& section,
             ObfSectionInfo::StringTable* const stringTable);
         
         static void initializeNames(
+            bool onlyDescription,
+            ObfSectionInfo::StringTable* const stringTable,
+            std::shared_ptr<TransportRoute> r);
+        
+        static void initializeNames(
             ObfSectionInfo::StringTable* const stringTable,
             std::shared_ptr<TransportStop> s);
+        
+        static std::shared_ptr<TransportRoute> getTransportRoute(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            const uint32_t routeOffset,
+            ObfSectionInfo::StringTable* const stringTable,
+            bool onlyDescription);
+        
+        static std::shared_ptr<TransportStop> readTransportRouteStop(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            const uint32_t routeOffset,
+            int32_t dx,
+            int32_t dy,
+            ObfObjectId did,
+            ObfSectionInfo::StringTable* const stringTable);
+
+        static QString regStr(
+            const ObfReader_P& reader,
+            ObfSectionInfo::StringTable* const stringTable);
+        
+    public:
 
         static void searchTransportStops(
             const ObfReader_P& reader,

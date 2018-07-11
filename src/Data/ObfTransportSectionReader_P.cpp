@@ -113,37 +113,68 @@ void OsmAnd::ObfTransportSectionReader_P::initializeStringTable(
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
     ObfSectionInfo::StringTable* const stringTable)
 {
-    /*
-    section->
-    int[] values = stringTable.keys();
-    Arrays.sort(values);
-    codedIS.seek(ind.stringTable.fileOffset);
-    int oldLimit = codedIS.pushLimit(ind.stringTable.length);
+    const auto cis = reader.getCodedInputStream().get();
+    auto values = stringTable->keys();
+    qSort(values);
+    cis->Seek(section->stringTable->fileOffset);
+    const auto oldLimit = cis->PushLimit(section->stringTable->length);
     int current = 0;
     int i = 0;
-    while (i < values.length) {
-        int t = codedIS.readTag();
-        int tag = WireFormat.getTagFieldNumber(t);
-        switch (tag) {
+    while (i < values.size())
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
             case 0:
                 break;
-            case OsmandOdb.StringTable.S_FIELD_NUMBER:
-                if (current == values[i]) {
-                    String value = codedIS.readString();
-                    stringTable.put(values[i], value);
+            case OBF::StringTable::kSFieldNumber:
+                if (current == values[i])
+                {
+                    QString value;
+                    ObfReaderUtilities::readQString(cis, value);
+                    stringTable->insert(values[i], value);
                     i++;
-                } else {
-                    skipUnknownField(t);
                 }
-                current ++;
+                else
+                {
+                    ObfReaderUtilities::skipUnknownField(cis, tag);
+                }
+                current++;
                 break;
             default:
-                skipUnknownField(t);
+                ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
     }
-    codedIS.popLimit(oldLimit);
-     */
+    ObfReaderUtilities::ensureAllDataWasRead(cis);
+    cis->PopLimit(oldLimit);
+}
+
+void OsmAnd::ObfTransportSectionReader_P::initializeNames(
+    bool onlyDescription,
+    ObfSectionInfo::StringTable* const stringTable,
+    std::shared_ptr<TransportRoute> r)
+{
+    if (!r->localizedName.isEmpty())
+        r->localizedName = stringTable->value(r->localizedName[0].unicode());
+    
+    if (!r->enName.isEmpty())
+        r->enName = stringTable->value(r->enName[0].unicode());
+
+    if (!r->oper.isEmpty())
+        r->oper = stringTable->value(r->oper[0].unicode());
+
+    if (!r->color.isEmpty())
+        r->color = stringTable->value(r->color[0].unicode());
+
+    if (!r->type.isEmpty())
+        r->type = stringTable->value(r->type[0].unicode());
+
+    if (!onlyDescription)
+    {
+        for (auto s : r->forwardStops)
+            initializeNames(stringTable, s);
+    }
 }
 
 void OsmAnd::ObfTransportSectionReader_P::initializeNames(
@@ -300,6 +331,21 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
     }
 }
 
+QString OsmAnd::ObfTransportSectionReader_P::regStr(
+    const ObfReader_P& reader,
+    ObfSectionInfo::StringTable* const stringTable)
+{
+    if (stringTable)
+    {
+        const auto cis = reader.getCodedInputStream().get();
+        auto i = ObfReaderUtilities::readSInt32(cis);
+        if (!stringTable->contains(i))
+            stringTable->insert(i, QString());
+        return QChar(i);
+    }
+    return QString();
+}
+
 std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::readTransportStop(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfTransportSectionInfo>& section,
@@ -347,33 +393,19 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
             case OBF::TransportStop::kNameEnFieldNumber:
             {
                 if (stringTable)
-                {
-                    int i = ObfReaderUtilities::readSInt32(cis);
-                    if (!stringTable->contains(i))
-                        stringTable->insert(i, QString());
-                    
-                    outTransportStop->enName = QChar(i);
-                }
+                    outTransportStop->enName = regStr(reader, stringTable);
                 else
-                {
                     ObfReaderUtilities::skipUnknownField(cis, tag);
-                }
+
                 break;
             }
             case OBF::TransportStop::kNameFieldNumber:
             {
                 if (stringTable)
-                {
-                    int i = ObfReaderUtilities::readSInt32(cis);
-                    if (!stringTable->contains(i))
-                        stringTable->insert(i, QString());
-
-                    outTransportStop->localizedName = QChar(i);
-                }
+                    outTransportStop->localizedName = regStr(reader, stringTable);
                 else
-                {
                     ObfReaderUtilities::skipUnknownField(cis, tag);
-                }
+
                 break;
             }
             case OBF::TransportStop::kIdFieldNumber:
@@ -385,5 +417,183 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
         }
     }
     return nullptr;
+}
+
+std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::getTransportRoute(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfTransportSectionInfo>& section,
+    const uint32_t routeOffset,
+    ObfSectionInfo::StringTable* const stringTable,
+    bool onlyDescription)
+{
+    const auto cis = reader.getCodedInputStream().get();
+    
+    cis->Seek(routeOffset);
+    
+    gpb::uint32 routeLength;
+    cis->ReadVarint32(&routeLength);
+    const auto oldLimit = cis->PushLimit(routeLength);
+    
+    auto dataObject = std::make_shared<TransportRoute>();
+    bool end = false;
+    ObfObjectId rid = ObfObjectId::invalidId();
+    int32_t rx = 0;
+    int32_t ry = 0;
+    
+    dataObject->offset = routeOffset;
+    while (!end)
+    {
+        const auto t = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(t))
+        {
+            case 0:
+                end = true;
+                break;
+            case OBF::TransportRoute::kDistanceFieldNumber:
+                dataObject->dist = ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::TransportRoute::kIdFieldNumber:
+            {
+                ObfObjectId id;
+                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&id));
+                dataObject->id = id;
+                break;
+            }
+            case OBF::TransportRoute::kRefFieldNumber:
+                ObfReaderUtilities::readQString(cis, dataObject->ref);
+                break;
+            case OBF::TransportRoute::kTypeFieldNumber:
+                if (stringTable)
+                    dataObject->type = regStr(reader, stringTable);
+                break;
+            case OBF::TransportRoute::kNameEnFieldNumber:
+                if (stringTable)
+                    dataObject->enName = regStr(reader, stringTable);
+                break;
+            case OBF::TransportRoute::kNameFieldNumber:
+                if (stringTable)
+                    dataObject->localizedName = regStr(reader, stringTable);
+                break;
+            case OBF::TransportRoute::kOperatorFieldNumber:
+                if (stringTable)
+                    dataObject->oper = regStr(reader, stringTable);
+                break;
+            // TODO!!!
+            //case OBF::TransportRoute::kCOLOR_FIELD_NUMBER:
+            //    if (stringTable)
+            //        dataObject->color = regStr(reader, stringTable);
+            //    break;
+            case OBF::TransportRoute::kGeometryFieldNumber:
+            {
+                gpb::uint32 sizeL;
+                cis->ReadVarint32(&sizeL);
+                const auto pold = cis->PushLimit(sizeL);
+                int32_t px = 0;
+                int32_t py = 0;
+                QVector<PointI> w;
+                while (cis->BytesUntilLimit() > 0)
+                {
+                    auto ddx = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
+                    auto ddy = (ObfReaderUtilities::readSInt32(cis) << ShiftCoordinates);
+
+                    if (ddx == 0 && ddy == 0)
+                    {
+                        if (w.size() > 0)
+                            dataObject->forwardWays31.push_back(qMove(w));
+                        
+                        w.clear();
+                    }
+                    else
+                    {
+                        auto x = ddx + px;
+                        auto y = ddy + py;
+                        w.push_back(PointI(x, y));
+                        px = x;
+                        py = y;
+                    }
+                }
+                if (w.size() > 0)
+                    dataObject->forwardWays31.push_back(qMove(w));
+                
+                cis->PopLimit(pold);
+                break;
+            }
+            case OBF::TransportRoute::kDirectStopsFieldNumber:
+            {
+                if (onlyDescription)
+                {
+                    end = true;
+                    cis->Skip(cis->BytesUntilLimit());
+                    break;
+                }
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                const auto olds = cis->PushLimit(length);
+                auto stop = readTransportRouteStop(reader, section, routeOffset, rx, ry, rid, stringTable);
+                dataObject->forwardStops.push_back(stop);
+                rid = stop->id;
+                rx = stop->position31.x;
+                ry = stop->position31.y;
+                cis->PopLimit(olds);
+                break;
+            }
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, t);
+                break;
+        }
+    }
+
+    ObfReaderUtilities::ensureAllDataWasRead(cis);
+    cis->PopLimit(oldLimit);
+
+    return dataObject;
+}
+
+std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::readTransportRouteStop(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfTransportSectionInfo>& section,
+    const uint32_t routeOffset,
+    int32_t dx,
+    int32_t dy,
+    ObfObjectId did,
+    ObfSectionInfo::StringTable* const stringTable)
+{
+    const auto cis = reader.getCodedInputStream().get();
+    
+    auto dataObject = std::make_shared<TransportStop>(section);
+    dataObject->offset = cis->TotalBytesRead();
+    // dataObject.setReferencesToRoutes(new int[] {filePointer});
+    bool end = false;
+    while (!end)
+    {
+        const auto t = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(t))
+        {
+            case 0:
+                end = true;
+                break;
+            case OBF::TransportRouteStop::kNameEnFieldNumber:
+                dataObject->enName = regStr(reader, stringTable);
+                break;
+            case OBF::TransportRouteStop::kNameFieldNumber:
+                dataObject->localizedName = regStr(reader, stringTable);
+                break;
+            case OBF::TransportRouteStop::kIdFieldNumber:
+                did.id += ObfReaderUtilities::readSInt64(cis);
+                break;
+            case OBF::TransportRouteStop::kDxFieldNumber:
+                dx += ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::TransportRouteStop::kDyFieldNumber:
+                dy += ObfReaderUtilities::readSInt32(cis);
+                break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, t);
+                break;
+        }
+    }
+    dataObject->id = did;
+    dataObject->position31 = PointI(dx, dy);
+    return dataObject;
 }
 

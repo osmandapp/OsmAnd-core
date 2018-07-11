@@ -39,6 +39,18 @@ namespace OsmAnd {
             ObfSectionInfo::StringTable* const stringTable,
             std::shared_ptr<TransportStop> s);
 
+        static void initializeNames(
+            bool onlyDescription,
+            ObfSectionInfo::StringTable* const stringTable,
+            std::shared_ptr<TransportRoute> r);
+
+        static std::shared_ptr<TransportRoute> getTransportRoute(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            const uint32_t routeOffset,
+            ObfSectionInfo::StringTable* const stringTable,
+            bool onlyDescription);
+        
         static void searchTransportStops(
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfTransportSectionInfo>& section,

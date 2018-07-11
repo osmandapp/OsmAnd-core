@@ -5,6 +5,8 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QSet>
+#include <QHash>
+#include <QList>
 #include "restore_internal_warnings.h"
 
 #include "Ref.h"
@@ -1143,7 +1145,9 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     QHash<uint32_t, std::shared_ptr<TransportRoute>> result;
-    QHash<const ObfTransportSectionInfo*, QList<uint32_t>> groupPoints;
+    QHash<const int, QList<uint32_t>> groupPoints;
+    QHash<const int, std::shared_ptr<const ObfReader>> readers;
+    QHash<const int, std::shared_ptr<const ObfTransportSectionInfo>> sections;
     for (auto filePointer : transportStop->referencesToRoutes)
     {
         for (const auto& obfReader : constOf(obfReaders))
@@ -1155,40 +1159,47 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
             const auto section = getTransportSectionInfo(constOf(obfInfo->transportSections), filePointer);
             if (section)
             {
-                if (!groupPoints.contains(section.get()))
-                    groupPoints[section.get()] = QList<uint32_t>();
+                if (!groupPoints.contains(section->runtimeGeneratedId))
+                {
+                    if (!readers.contains(section->runtimeGeneratedId))
+                        readers[section->runtimeGeneratedId] = obfReader;
+                    if (!sections.contains(section->runtimeGeneratedId))
+                        sections[section->runtimeGeneratedId] = section;
+                    
+                    groupPoints[section->runtimeGeneratedId] = QList<uint32_t>();
+                }
                 
-                groupPoints[section.get()].push_back(filePointer);
+                groupPoints[section->runtimeGeneratedId].push_back(filePointer);
                 OsmAnd::ObfTransportSectionReader::initializeStringTable(obfReader, section, stringTable);
             }
         }
     }
-    /*
+    
     for(const auto& entry : rangeOf(constOf(groupPoints)))
     {
-        const auto section = entry.key();
-        auto& pointers = entry.value();
+        const auto sectionId = entry.key();
+        auto reader = readers[sectionId];
+        auto section = sections[sectionId];
+        auto pointers = entry.value();
         qSort(pointers);
         auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
         for (const auto& filePointer : pointers)
         {
-            TransportRoute transportRoute = transportAdapter.getTransportRoute(filePointer, stringTable, false);
-            result.put(filePointer, transportRoute);
+            auto transportRoute = OsmAnd::ObfTransportSectionReader::getTransportRoute(reader, section, filePointer, stringTable.get(), false);
+            result[filePointer] = transportRoute;
         }
-        for (TransportRoute r : result.values(new TransportRoute[result.size()])) {
-            OsmAnd::ObfTransportSectionReader::initializeNames(false, r, stringTable);
-        }
+        for (auto r : result.values())
+            OsmAnd::ObfTransportSectionReader::initializeNames(false, stringTable.get(), r);
     }
     
-    for (auto transportRoute : res)
+    for (const auto transportRoute : result.values())
     {
-        if (!visitor || visitor(transportStop))
+        if (!visitor || visitor(transportRoute))
         {
             if (resultOut)
-                resultOut->push_back(transportStop);
+                resultOut->push_back(transportRoute);
         }
     }
-     */
     return true;
 }
 
