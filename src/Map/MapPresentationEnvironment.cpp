@@ -126,3 +126,8 @@ OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment::getDesiredStubsStyle() 
 {
     return _p->getDesiredStubsStyle();
 }
+
+OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const
+{
+    return _p->getTransportRouteColor(nightMode, renderAttrName);
+}

@@ -111,6 +111,7 @@ namespace OsmAnd
         float getDefaultBlockPathSpacing() const;
         float getGlobalPathPadding() const;
         MapStubStyle getDesiredStubsStyle() const;
+        ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

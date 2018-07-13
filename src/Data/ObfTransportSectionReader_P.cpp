@@ -262,8 +262,7 @@ void OsmAnd::ObfTransportSectionReader_P::searchTransportTreeBounds(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
-                for (auto ts : res)
-                    resultOut.append(res);
+                resultOut.append(res);
                 
                 return;
             case OBF::TransportStopsTree::kBottomFieldNumber:
@@ -338,7 +337,7 @@ QString OsmAnd::ObfTransportSectionReader_P::regStr(
     if (stringTable)
     {
         const auto cis = reader.getCodedInputStream().get();
-        auto i = ObfReaderUtilities::readSInt32(cis);
+        auto i = ObfReaderUtilities::readLength(cis);
         if (!stringTable->contains(i))
             stringTable->insert(i, QString());
         return QChar(i);
@@ -388,7 +387,7 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
                 
                 return outTransportStop;
             case OBF::TransportStop::kRoutesFieldNumber:
-                referencesToRoutes.push_back(stopOffset - ObfReaderUtilities::readSInt32(cis));
+                referencesToRoutes.push_back(stopOffset - ObfReaderUtilities::readLength(cis));
                 break;
             case OBF::TransportStop::kNameEnFieldNumber:
             {
@@ -450,7 +449,7 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
                 end = true;
                 break;
             case OBF::TransportRoute::kDistanceFieldNumber:
-                dataObject->dist = ObfReaderUtilities::readSInt32(cis);
+                dataObject->dist = ObfReaderUtilities::readLength(cis);
                 break;
             case OBF::TransportRoute::kIdFieldNumber:
             {

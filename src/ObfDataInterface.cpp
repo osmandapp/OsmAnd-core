@@ -1170,7 +1170,6 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
                 }
                 
                 groupPoints[section->runtimeGeneratedId].push_back(filePointer);
-                OsmAnd::ObfTransportSectionReader::initializeStringTable(obfReader, section, stringTable);
             }
         }
     }
@@ -1188,6 +1187,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
             auto transportRoute = OsmAnd::ObfTransportSectionReader::getTransportRoute(reader, section, filePointer, stringTable.get(), false);
             result[filePointer] = transportRoute;
         }
+        OsmAnd::ObfTransportSectionReader::initializeStringTable(reader, section, stringTable.get());
         for (auto r : result.values())
             OsmAnd::ObfTransportSectionReader::initializeNames(false, stringTable.get(), r);
     }

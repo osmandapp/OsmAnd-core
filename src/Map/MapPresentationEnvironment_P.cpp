@@ -451,3 +451,20 @@ OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment_P::getDesiredStubsStyle(
 {
     return _desiredStubsStyle;
 }
+
+OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const
+{
+    ColorARGB result = ColorRGB(0xff, 0x0, 0x0);
+
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    applyTo(evaluator);
+    evaluator.setBooleanValue(owner->styleBuiltinValueDefs->id_INPUT_NIGHT_MODE, nightMode);
+    
+    auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
+    MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+    if (evaluator.evaluate(renderAttr, &evalResult))
+        evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
+    
+    return result;
+}
+
