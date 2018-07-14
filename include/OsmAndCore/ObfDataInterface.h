@@ -181,6 +181,7 @@ namespace OsmAnd
             const QList<Ref<ObfTransportSectionInfo>>& sections,
             const uint32_t filePointer);
 
+        bool transportStopBelongsTo(const std::shared_ptr<const TransportStop>& s);
     };
 }
 

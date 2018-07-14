@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
+#include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
@@ -33,7 +34,7 @@ namespace OsmAnd
         QVector<uint32_t> referencesToRoutes;
 
         ObfObjectId id;
-        PointI position31;
+        LatLon location;
         QString enName;
         QString localizedName;
     };

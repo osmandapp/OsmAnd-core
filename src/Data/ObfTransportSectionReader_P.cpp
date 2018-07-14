@@ -373,7 +373,7 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
         return nullptr;
     }
     auto outTransportStop = std::make_shared<TransportStop>(section);
-    outTransportStop->position31 = position31;
+    outTransportStop->location = LatLon(Utilities::getLatitudeFromTile(TRANSPORT_STOP_ZOOM, position31.y), Utilities::getLongitudeFromTile(TRANSPORT_STOP_ZOOM, position31.x));
     outTransportStop->offset = stopOffset;
     for (;;)
     {
@@ -531,8 +531,8 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
                 auto stop = readTransportRouteStop(reader, section, routeOffset, rx, ry, rid, stringTable);
                 dataObject->forwardStops.push_back(stop);
                 rid = stop->id;
-                rx = stop->position31.x;
-                ry = stop->position31.y;
+                rx = Utilities::getTileNumberX(TRANSPORT_STOP_ZOOM, stop->location.longitude);
+                ry = Utilities::getTileNumberY(TRANSPORT_STOP_ZOOM, stop->location.latitude);
                 cis->PopLimit(olds);
                 break;
             }
@@ -592,7 +592,7 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
         }
     }
     dataObject->id = did;
-    dataObject->position31 = PointI(dx, dy);
+    dataObject->location = LatLon(Utilities::getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dy), Utilities::getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dx));
     return dataObject;
 }
 

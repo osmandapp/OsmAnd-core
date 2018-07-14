@@ -1203,9 +1203,14 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
     return true;
 }
 
-/*
-bool OsmAnd::ObfDataInterface::transportStopBelongsTo(TransportStop s)
+bool OsmAnd::ObfDataInterface::transportStopBelongsTo(const std::shared_ptr<const TransportStop>& s)
 {
-    return getTransportIndex(s.getFileOffset()) != null;
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        const auto& obfInfo = obfReader->obtainInfo();
+        const auto section = getTransportSectionInfo(constOf(obfInfo->transportSections), s->offset);
+        if (section)
+            return true;
+    }
+    return false;
 }
-*/
