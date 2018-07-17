@@ -3159,6 +3159,13 @@ class TransportRoute : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 distance() const;
   inline void set_distance(::google::protobuf::uint32 value);
 
+  // optional uint32 color = 9;
+  inline bool has_color() const;
+  inline void clear_color();
+  static const int kColorFieldNumber = 9;
+  inline ::google::protobuf::uint32 color() const;
+  inline void set_color(::google::protobuf::uint32 value);
+
   // repeated .OsmAnd.OBF.TransportRouteStop directStops = 15;
   inline int directstops_size() const;
   inline void clear_directstops();
@@ -3211,6 +3218,8 @@ class TransportRoute : public ::google::protobuf::Message {
   inline void clear_has_name_en();
   inline void set_has_distance();
   inline void clear_has_distance();
+  inline void set_has_color();
+  inline void clear_has_color();
   inline void set_has_geometry();
   inline void clear_has_geometry();
 
@@ -3222,13 +3231,14 @@ class TransportRoute : public ::google::protobuf::Message {
   ::std::string* ref_;
   ::google::protobuf::uint32 name_;
   ::google::protobuf::uint32 name_en_;
+  ::google::protobuf::uint32 distance_;
+  ::google::protobuf::uint32 color_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > directstops_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > reversestops_;
   ::std::string* geometry_;
-  ::google::protobuf::uint32 distance_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -10332,6 +10342,28 @@ inline void TransportRoute::set_distance(::google::protobuf::uint32 value) {
   distance_ = value;
 }
 
+// optional uint32 color = 9;
+inline bool TransportRoute::has_color() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void TransportRoute::set_has_color() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void TransportRoute::clear_has_color() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void TransportRoute::clear_color() {
+  color_ = 0u;
+  clear_has_color();
+}
+inline ::google::protobuf::uint32 TransportRoute::color() const {
+  return color_;
+}
+inline void TransportRoute::set_color(::google::protobuf::uint32 value) {
+  set_has_color();
+  color_ = value;
+}
+
 // repeated .OsmAnd.OBF.TransportRouteStop directStops = 15;
 inline int TransportRoute::directstops_size() const {
   return directstops_.size();
@@ -10384,13 +10416,13 @@ TransportRoute::mutable_reversestops() {
 
 // optional bytes geometry = 17;
 inline bool TransportRoute::has_geometry() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void TransportRoute::set_has_geometry() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void TransportRoute::clear_has_geometry() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void TransportRoute::clear_geometry() {
   if (geometry_ != &::google::protobuf::internal::kEmptyString) {
