@@ -477,11 +477,10 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
                 if (stringTable)
                     dataObject->oper = regStr(reader, stringTable);
                 break;
-            // TODO!!!
-            //case OBF::TransportRoute::kCOLOR_FIELD_NUMBER:
-            //    if (stringTable)
-            //        dataObject->color = regStr(reader, stringTable);
-            //    break;
+            case OBF::TransportRoute::kColorFieldNumber:
+                if (stringTable)
+                    dataObject->color = regStr(reader, stringTable);
+                break;
             case OBF::TransportRoute::kGeometryFieldNumber:
             {
                 gpb::uint32 sizeL;
