@@ -385,9 +385,9 @@ bool checkViaRestrictions(SHARED_PTR<RouteSegment> from, SHARED_PTR<RouteSegment
     if(from.get() != NULL && to.get() != NULL) {
         int64_t fid = to->getRoad()->getId();
         for(uint i = 0; i < from->getRoad()->restrictions.size(); i++) {
-            int64_t id = from->getRoad()->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
+            int64_t id = from->getRoad()->restrictions[i].to;
             if(fid == id) {
-                int tp = from->getRoad()->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
+                int tp = from->getRoad()->restrictions[i].type;
                 if(tp == RESTRICTION_NO_LEFT_TURN || 
                    tp == RESTRICTION_NO_RIGHT_TURN || 
                    tp == RESTRICTION_NO_STRAIGHT_ON || 
@@ -535,9 +535,9 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 
 }
 
-void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment> inputNext, bool reverseWay, bool via,
+void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment> inputNext, bool reverseWay, int64_t viaId,
 			SHARED_PTR<RouteDataObject> road) {
-
+	bool via = viaId != 0;
 	SHARED_PTR<RouteSegment> next = inputNext;
 	bool exclusiveRestriction = false;
 	
@@ -545,18 +545,22 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment> inputNext,
 		int type = -1;
 		if (!reverseWay) {
 			for (uint i = 0; i < road->restrictions.size(); i++) {
-				if ((road->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT) == next->road->id) {
-					type = road->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
-					break;
+				if (road->restrictions[i].to == next->road->id) {
+					if(!via || road->restrictions[i].via == viaId) {
+						type = road->restrictions[i].type;
+						break;
+					}
 				}
 			}
 		} else {
 			for (uint i = 0; i < next->road->restrictions.size(); i++) {
-				int rt = next->road->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
-				int64_t restrictedTo = next->road->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
-				if (restrictedTo == road->id) {					
-					type = rt;
-					break;
+				int rt = next->road->restrictions[i].type;
+				int64_t restrictedTo = next->road->restrictions[i].to;
+				if (restrictedTo == road->id) {			
+					if(!via || next->road->restrictions[i].via == viaId) {		
+						type = rt;
+						break;
+					}
 				}
 
 				// Check if there is restriction only to the other than current road
@@ -634,9 +638,9 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteSegment> segment,
 	}
 	ctx->segmentsToVisitPrescripted.clear();
 	ctx->segmentsToVisitNotForbidden.clear();
-	processRestriction(ctx, inputNext, reverseWay, false, road);
+	processRestriction(ctx, inputNext, reverseWay, 0, road);
 	if(parent.get() != NULL) {
-		processRestriction(ctx, inputNext, reverseWay, true, parent->road);
+		processRestriction(ctx, inputNext, reverseWay, segment->road->id, parent->road);
 	}
 	return true;
 }

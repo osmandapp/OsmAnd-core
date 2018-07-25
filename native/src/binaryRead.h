@@ -39,6 +39,16 @@ struct MapTreeBounds {
 	MapTreeBounds() {
 	}
 };
+struct RestrictionInfo {
+	uint64_t to;
+	uint64_t via;
+	uint32_t type;
+
+	RestrictionInfo(): to(0), via(0), type(0) {
+
+	}
+};
+
 struct RoutingIndex;
 struct RouteSubregion {
 	uint32_t length;
@@ -108,7 +118,7 @@ struct RouteDataObject {
 	std::vector<uint32_t> types ;
 	std::vector<uint32_t> pointsX ;
 	std::vector<uint32_t> pointsY ;
-	std::vector<uint64_t> restrictions ;
+	std::vector<RestrictionInfo> restrictions ;
 	std::vector<std::vector<uint32_t> > pointTypes;
 	std::vector<std::vector<uint32_t> > pointNameTypes;
 	std::vector<std::vector<uint32_t> > pointNameIds;
@@ -292,11 +302,15 @@ struct RouteDataObject {
     }
     
     inline int getRestrictionType(int i) {
-        return (int) (restrictions[i] & RESTRICTION_MASK);
+        return restrictions[i].type;
     }
     
     inline long getRestrictionId(int i) {
-        return restrictions[i] >> RESTRICTION_SHIFT;
+        return restrictions[i].to;
+    }
+
+    inline long getRestrictionVia(int i) {
+        return restrictions[i].via;
     }
     
     bool tunnel();

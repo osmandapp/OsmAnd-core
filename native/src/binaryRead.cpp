@@ -1681,7 +1681,7 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, R
 bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects, RoutingIndex* routingIndex) {
 	int tag;
 	std::vector<int64_t> idTables;
-	UNORDERED(map)<int64_t, std::vector<uint64_t> > restrictions;
+	UNORDERED(map)<int64_t, std::vector<RestrictionInfo> > restrictions;
 	std::vector<std::string> stringTable;
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
@@ -1713,9 +1713,8 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 			uint32_t length;
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 			int oldLimit = input->PushLimit(length);
-			uint64_t from = 0;
-			uint64_t to = 0;
-			uint64_t type = 0;
+			uint64_t from;
+			RestrictionInfo info;
 			int tm;
 			int ts;
 			while ((ts = input->ReadTag()) != 0) {
@@ -1727,12 +1726,17 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 				}
 				case OsmAnd::OBF::RestrictionData::kToFieldNumber: {
 					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &tm)));
-					to = tm;
+					info.to = tm;
+					break;
+				}
+				case OsmAnd::OBF::RestrictionData::kViaFieldNumber: {
+					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &tm)));
+					info.via = tm;
 					break;
 				}
 				case OsmAnd::OBF::RestrictionData::kTypeFieldNumber: {
 					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &tm)));
-					type = tm;
+					info.type = tm;
 					break;
 				}
 				default: {
@@ -1746,7 +1750,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 				}
 				}
 			}
-			restrictions[from].push_back((to << RouteDataObject::RESTRICTION_SHIFT) + type);
+			restrictions[from].push_back(info);
 			input->PopLimit(oldLimit);
 			break;
 		}
@@ -1790,16 +1794,16 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 		}
 		}
 	}
-	UNORDERED(map)<int64_t, std::vector<uint64_t> >::iterator itRestrictions = restrictions.begin();
+	UNORDERED(map)<int64_t, std::vector<RestrictionInfo> >::iterator itRestrictions = restrictions.begin();
 	for (; itRestrictions != restrictions.end(); itRestrictions++) {
 		RouteDataObject* fromr = dataObjects[itRestrictions->first];
 		if (fromr != NULL) {
 			fromr->restrictions = itRestrictions->second;
 			for (uint i = 0; i < fromr->restrictions.size(); i++) {
-				uint64_t to = fromr->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
-				uint64_t valto = (idTables[to] << RouteDataObject::RESTRICTION_SHIFT)
-					| (fromr->restrictions[i] & RouteDataObject::RESTRICTION_MASK);
-				fromr->restrictions[i] = valto;
+				fromr->restrictions[i].to  = idTables[fromr->restrictions[i].to];
+				if(fromr->restrictions[i].via != 0) {
+					fromr->restrictions[i].via  = idTables[fromr->restrictions[i].via];
+				}
 			}
 		}
 	}
