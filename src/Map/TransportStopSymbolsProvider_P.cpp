@@ -57,41 +57,55 @@ bool OsmAnd::TransportStopSymbolsProvider_P::obtainData(
     const auto requestedZoom = request.zoom;
     
     const ObfTransportSectionReader::TransportStopVisitorFunction visitorFunction =
-    [this, requestedZoom, &mapSymbolsGroups]
+    [this, requestedZoom, &mapSymbolsGroups, bbox31]
     (const std::shared_ptr<const OsmAnd::TransportStop>& transportStop) -> bool
     {
         if (!owner->transportRouteIconProvider)
             return false;
         
         const auto position31 = Utilities::convertLatLonTo31(transportStop->location);
-
-        const auto icon = owner->transportRouteIconProvider->getIcon(owner->transportRoute, requestedZoom, false);
-        if (!icon)
+        if (bbox31.contains(position31.x >> (31 - TransportStopsInAreaSearch::TRANSPORT_STOP_ZOOM), position31.y >> (31 - TransportStopsInAreaSearch::TRANSPORT_STOP_ZOOM)))
+        {
+            const auto icon = owner->transportRouteIconProvider->getIcon(owner->transportRoute, requestedZoom, false);
+            if (!icon)
+                return false;
+            
+            const auto mapSymbolsGroup = std::make_shared<TransportStopSymbolsGroup>(transportStop);
+            
+            const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+            mapSymbol->order = owner->symbolsOrder;
+            mapSymbol->bitmap = icon;
+            mapSymbol->size = PointI(icon->width(), icon->height());
+            mapSymbol->languageId = LanguageId::Invariant;
+            mapSymbol->position31 = position31;
+            mapSymbolsGroup->symbols.push_back(mapSymbol);
+            
+            mapSymbolsGroups.push_back(mapSymbolsGroup);
+            
+            return true;
+        }
+        else
+        {
             return false;
-
-        const auto mapSymbolsGroup = std::make_shared<TransportStopSymbolsGroup>(transportStop);
-        
-        const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
-        mapSymbol->order = 100000;
-        mapSymbol->bitmap = icon;
-        mapSymbol->size = PointI(icon->width(), icon->height());
-        mapSymbol->languageId = LanguageId::Invariant;
-        mapSymbol->position31 = position31;
-        mapSymbolsGroup->symbols.push_back(mapSymbol);
-        
-        mapSymbolsGroups.push_back(mapSymbolsGroup);
-        
-        return true;
+        }
     };
     
-    auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
+    if (owner->transportRoute != nullptr)
+    {
+        const auto stops = owner->transportRoute->forwardStops;
+        for (auto stop : stops)
+            visitorFunction(stop);
+    }
+    else
+    {
+        auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
+        dataInterface->searchTransportIndex(
+                                            nullptr,
+                                            &bbox31,
+                                            stringTable.get(),
+                                            visitorFunction);
+    }
     
-    dataInterface->searchTransportIndex(
-        nullptr,
-        &bbox31,
-        stringTable.get(),
-        visitorFunction);
-
     outData.reset(new TransportStopSymbolsProvider::Data(
         request.tileId,
         request.zoom,

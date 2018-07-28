@@ -67,6 +67,7 @@ namespace OsmAnd
     public:
         TransportStopSymbolsProvider(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
+            const int symbolsOrder,
             const std::shared_ptr<const TransportRoute>& transportRoute = nullptr,
             const std::shared_ptr<const ITransportRouteIconProvider>& transportRouteIconProvider = nullptr);
         virtual ~TransportStopSymbolsProvider();
@@ -75,6 +76,8 @@ namespace OsmAnd
         
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
+
+        const int symbolsOrder;
 
         const std::shared_ptr<const TransportRoute> transportRoute;
         const std::shared_ptr<const ITransportRouteIconProvider> transportRouteIconProvider;

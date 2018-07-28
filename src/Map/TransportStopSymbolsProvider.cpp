@@ -6,10 +6,12 @@
 
 OsmAnd::TransportStopSymbolsProvider::TransportStopSymbolsProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
+    const int symbolsOrder_,
     const std::shared_ptr<const TransportRoute>& transportRoute_ /*= nullptr*/,
     const std::shared_ptr<const ITransportRouteIconProvider>& transportRouteIconProvider_ /*= nullptr*/)
     : _p(new TransportStopSymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
+    , symbolsOrder(symbolsOrder_)
     , transportRoute(transportRoute_)
     , transportRouteIconProvider(transportRouteIconProvider_)
 {
