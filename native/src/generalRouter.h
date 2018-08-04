@@ -37,9 +37,10 @@ enum class RouteDataObjectAttribute : unsigned int {
 	ONEWAY = 5,// "oneway"
 	PENALTY_TRANSITION = 6, // "penalty_transition"
 	OBSTACLE_SRTM_ALT_SPEED = 7, // "obstacle_srtm_alt_speed"
+    AREA = 8, // "area"
     
     UNDEFINED = 100000,
-    COUNT = 8
+    COUNT = 9
 };
 
 static RouteDataObjectAttribute parseRouteDataObjectAttribute(string attr, RouteDataObjectAttribute def) {
@@ -59,6 +60,8 @@ static RouteDataObjectAttribute parseRouteDataObjectAttribute(string attr, Route
         return RouteDataObjectAttribute::PENALTY_TRANSITION;
     } else if ("obstacle_srtm_alt_speed" == to_lowercase(attr)) {
         return RouteDataObjectAttribute::OBSTACLE_SRTM_ALT_SPEED;
+    } else if ("area" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::AREA;
     } else {
         return def;
     }
