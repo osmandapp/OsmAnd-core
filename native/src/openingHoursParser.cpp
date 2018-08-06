@@ -2258,7 +2258,7 @@ void OpeningHoursParser::runTest()
     
     hours = parseOpenedHours("Mo-Sa 08:30-17:00; Th off");
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
-    testInfo("17.01.2018 20:00", hours, "Will open on 08:30 Fr.");
+    testInfo("17.01.2018 20:00", hours, "Will open on 08:30 Fri.");
     testInfo("18.01.2018 05:00", hours, "Will open tomorrow at 08:30");
     testInfo("20.01.2018 05:00", hours, "Open from 08:30");
     testInfo("21.01.2018 05:00", hours, "Will open tomorrow at 08:30");
