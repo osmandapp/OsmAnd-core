@@ -2,7 +2,7 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 92c30694eefd0ff34d8e8c104966c84cbc3f2a8f
+//  git revision 98e0f234362687147312442ea6f3faa468b1825f (Fix #5198)
 
 #include <string>
 #include <vector>
