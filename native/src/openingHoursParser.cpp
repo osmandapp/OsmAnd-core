@@ -1648,6 +1648,11 @@ void OpeningHoursParser::buildRule(std::shared_ptr<BasicOpeningHourRule>& basic,
     for (int i = 0; i <= tokens.size(); i++)
     {
         const auto& t = i == tokens.size() ? nullptr : tokens[i];
+        if (i == 0 && t != nullptr && t->type == TokenType::TOKEN_UNKNOWN)
+        {
+            // skip rule if the first token unknown
+            return;
+        }
         if (t == nullptr || getTokenTypeOrd(t->type) > getTokenTypeOrd(currentParse))
         {
             presentTokens.insert(currentParse);
@@ -1752,18 +1757,11 @@ void OpeningHoursParser::buildRule(std::shared_ptr<BasicOpeningHourRule>& basic,
         auto& months = basic->getMonths();
         std::fill(months.begin(), months.end(), true);
     }
-    //        if(!presentTokens.contains(TokenType::TOKEN_DAY_MONTH)) {
-    //            Arrays.fill(basic.getDayMonths(), true);
-    //        }
     if (presentTokens.find(TokenType::TOKEN_DAY_WEEK) == presentTokens.end() && presentTokens.find(TokenType::TOKEN_HOLIDAY) == presentTokens.end() && presentTokens.find(TokenType::TOKEN_DAY_MONTH) == presentTokens.end())
     {
         auto& days = basic->getDays();
         std::fill(days.begin(), days.end(), true);
     }
-    //        if(!presentTokens.contains(TokenType::TOKEN_HOUR_MINUTES)) {
-    //            basic.addTimeRange(0, 24 * 60);
-    //        }
-    //        System.out.println(r + " " +  tokens);
     rules.insert(rules.begin(), basic);
 }
 
@@ -1841,7 +1839,7 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
         rs->addRules(basicRules);
     }
     rs->setSequenceCount(sequences.size());
-    return rs;
+    return rs->getRules().size() > 0 ? rs : nullptr;
 }
 
 /**
