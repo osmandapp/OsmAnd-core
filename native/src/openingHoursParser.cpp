@@ -1818,13 +1818,16 @@ std::shared_ptr<OpeningHoursParser::OpeningHours> OpeningHoursParser::parseOpene
             }
         }
         std::string basicRuleComment("");
-        for (const auto br : basicRules)
+        if (sequences.size() > 1)
         {
-            const auto& bRule = std::static_pointer_cast<BasicOpeningHourRule>(br);
-            if (!bRule->getComment().empty())
+            for (const auto br : basicRules)
             {
-                basicRuleComment = bRule->getComment();
-                break;
+                const auto& bRule = std::static_pointer_cast<BasicOpeningHourRule>(br);
+                if (!bRule->getComment().empty())
+                {
+                    basicRuleComment = bRule->getComment();
+                    break;
+                }
             }
         }
         if (!basicRuleComment.empty())
@@ -2316,6 +2319,9 @@ void OpeningHoursParser::runTest()
     testInfo("16.02.2018 14:00", hours, "Will close at 15:00");
     testInfo("16.02.2018 16:00", hours, "Will open at 17:00");
     testInfo("16.02.2018 18:00", hours, "Open till 23:00");
+    
+    hours = parseOpenedHours("Mo-Fr 10:00-21:00; Sa 12:00-23:00; PH \"Wird auf der Homepage bekannt gegeben.\"");
+    testParsedAndAssembledCorrectly("Mo-Fr 10:00-21:00; Sa 12:00-23:00; PH - Wird auf der Homepage bekannt gegeben.", hours);
     
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "OpeningHoursParser test done");
 }
