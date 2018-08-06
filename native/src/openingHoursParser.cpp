@@ -84,8 +84,8 @@ std::vector<std::string> getTwoLettersStringArray(const std::vector<std::string>
         if (str.length() > 0)
             str[0] = std::toupper(str[0]);
         
-        if (s.length() > 2)
-            newStrings.push_back(str.substr(0, 2));
+        if (s.length() > 3)
+            newStrings.push_back(str.substr(0, 3));
         else
             newStrings.push_back(str);
     }
