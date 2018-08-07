@@ -3,6 +3,9 @@
 #include "routeSegmentResult.h"
 
 void RouteSegmentResult::attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult> r) {
+    if (r->object->isRoadDeleted()) {
+        return;
+    }
     int st = abs(roadIndex - startPointIndex);
     if (st >= attachedRoutesFrontEnd.size()) {
         attachedRoutesFrontEnd.resize(st + 1);

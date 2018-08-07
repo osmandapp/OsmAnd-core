@@ -398,6 +398,17 @@ struct RouteDataObject {
         return direction;
     }
     
+    bool isRoadDeleted() {
+        auto sz = types.size();
+        for (int i = 0; i < sz; i++) {
+            auto& r = region->quickGetEncodingRule(types[i]);
+            if ("osmand_change" == r.getTag() && "delete" == r.getValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
 	// Gives route direction of EAST degrees from NORTH ]-PI, PI]
 	double directionRoute(int startPoint, bool plus, float dist) {
 		int x = pointsX[startPoint];
