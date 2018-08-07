@@ -233,7 +233,11 @@ int TurnType::orderFromLeftToRight(int type) {
 
 int TurnType::convertType(string lane) {
     int turn;
-    if (lane == "none" || lane == "through" || lane == "merge_to_right" || lane == "merge_to_left") {
+    if (lane == "merge_to_left") {
+        turn = C;
+    } else if (lane == "merge_to_right") {
+        turn = C;
+    } else if (lane == "none" || lane == "through") {
         turn = C;
     } else if (lane == "slight_right") {
         turn = TSLR;

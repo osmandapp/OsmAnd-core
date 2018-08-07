@@ -992,9 +992,9 @@ bool mergeTurnLanes(bool leftSide, SHARED_PTR<RouteSegmentResult> currentSegment
                         }
                     }
                 }
-                if (straightActiveLen == target.activeLen) {
+                if (straightActiveBegin != -1 && straightActiveLen <= target.activeLen) {
                     active.activeStartIndex = straightActiveBegin;
-                    active.activeEndIndex = straightActiveBegin + target.activeLen - 1;
+                    active.activeEndIndex = straightActiveBegin + straightActiveLen - 1;
                     changed = true;
                 } else {
                     // cause the next-turn goes forward exclude left most and right most lane
