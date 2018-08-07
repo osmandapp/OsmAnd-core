@@ -110,11 +110,10 @@ task copyNdkSharedLibs(type: Copy) {
 
     dependsOn cleanupNdkSharedLibs
 
-    from("$System.env.ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs") {
-        include "armeabi/libgnustl_shared.so"
-        include "armeabi-v7a/libgnustl_shared.so"
-        include "mips/libgnustl_shared.so"
-        include "x86/libgnustl_shared.so"
+    from("$System.env.ANDROID_NDK/sources/cxx-stl/llvm-libc++/libs") {
+        include "armeabi-v7a/libc++_shared.so"
+        include "arm64-v8a/libc++_shared.so"
+        include "x86/libc++_shared.so"
     }
 
     into "./jniLibs/NDK"

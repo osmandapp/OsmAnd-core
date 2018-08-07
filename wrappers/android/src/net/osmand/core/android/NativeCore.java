@@ -40,7 +40,7 @@ public class NativeCore {
      * Static block to perform loading of native libraries
      */
     static {
-        s_loadedNativeLibraries = loadNativeLibrary("gnustl_shared") &&
+        s_loadedNativeLibraries = loadNativeLibrary("c++_shared") &&
                 loadNativeLibrary("Qt5Core") &&
                 loadNativeLibrary("Qt5Network") &&
                 loadNativeLibrary("Qt5Sql") &&
