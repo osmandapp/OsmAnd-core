@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if [[ "$compiler" != "gcc" ]]; then
-	echo "'gcc' is the only supported compilers, while '${compiler}' was specified"
+if [[ "$compiler" != "clang" ]]; then
+	echo "'clang' is the only supported compilers, while '${compiler}' was specified"
 	exit 1
 fi
-if [[ "$targetArch" != "armeabi" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]] && [[ "$targetArch" != "mips" ]]; then
-	echo "'armeabi', 'armeabi-v7a', 'x86', 'mips' are the only supported target architectures, while '${targetArch}' was specified"
+if [[ "$targetArch" != "arm64-v8a" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]]; then
+	echo "'arm64-v8a', 'armeabi-v7a', 'x86' are the only supported target architectures, while '${targetArch}' was specified"
 	exit 1
 fi
 echo "Going to build Boost for ${targetOS}/${compiler}/${targetArch}"
@@ -67,26 +67,27 @@ if [[ -z "$ANDROID_SDK" ]]; then
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
-export ANDROID_NDK_PLATFORM=android-14
+export ANDROID_NDK_PLATFORM=android-21
 if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
 	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
 	exit 1
 fi
 echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
 
-if [[ "$compiler" == "gcc" ]]; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+if [[ "$compiler" == "clang" ]]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=clang
 fi
 echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 
 TOOLCHAIN_PATH=""
-if [[ "$targetArch"=="armeabi" ]] || [[ "$targetArch"=="armeabi-v7a" ]]; then
+if [[ "$targetArch"=="armeabi-v7a" ]]; then
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch"=="arm64-v8a" ]]; then
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/aarch64-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 elif [[ "$targetArch"=="x86" ]]; then
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="mips" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/mipsel-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 fi
+
 if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
 	echo "Toolchain at '$TOOLCHAIN_PATH' not found"
 	exit 1
@@ -97,7 +98,7 @@ echo "Using toolchain '${TOOLCHAIN_PATH}'"
 BOOST_CONFIGURATION=$(echo "
 	--layout=versioned
 	--with-thread
-	toolset=gcc-android
+	toolset=clang-android
 	target-os=linux
 	threading=multi
 	link=static

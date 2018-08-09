@@ -30,11 +30,11 @@ buildArch()
 {
 	local arch=$1
 	
-	local bakedDir="${PROJECTS_ROOT}/baked/${arch}-android-gcc-${BUILD_TYPE}.make"
+	local bakedDir="${PROJECTS_ROOT}/baked/${arch}-android-clang-${BUILD_TYPE}.make"
 	echo "Building SDK for '$arch':"
 	if [[ ! -d "$bakedDir" ]]; then
 		echo -e "\tBaking in '$bakedDir"
-		"${PROJECTS_ROOT}/build/${arch}-android-gcc.sh" $BUILD_TYPE
+		"${PROJECTS_ROOT}/build/${arch}-android-clang.sh" $BUILD_TYPE
 		retcode=$?
 		if [[ $retcode -ne 0 ]]; then
 			echo "Failed to bake ($retcode), aborting..."

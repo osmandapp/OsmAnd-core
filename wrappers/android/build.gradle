@@ -1,9 +1,11 @@
 buildscript {
     repositories {
+        google()
         mavenCentral()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:3.1.4'
     }
 }
 
@@ -136,11 +138,11 @@ task copyQtSharedLibs(type: Copy) {
     dependsOn cleanupQtSharedLibs
 
     from("../../externals/qtbase-android") {
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Core.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Network.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Sql.so"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.clang\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
         }
     }
 
@@ -164,9 +166,9 @@ task copyQtJarLibs(type: Copy) {
     dependsOn cleanupQtJarLibs
 
     from("../../externals/qtbase-android") {
-        include "upstream.patched.android.gcc-*.shared/jar/*-bundled.jar"
+        include "upstream.patched.android.clang-*.shared/jar/*-bundled.jar"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-.*\.shared\/jar\/(.*)/, '$1')
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.clang\-.*\.shared\/jar\/(.*)/, '$1')
         }
     }
 

@@ -15,15 +15,15 @@ if not "%targetOS%"=="android" (
 	exit /B 1
 )
 set validCompiler=0
-if "%compiler%"=="gcc" (
+if "%compiler%"=="clang" (
 	set validCompiler=1
 )
 if not "%validCompiler%"=="1" (
-	echo 'gcc' is the only supported compilers, while '%compiler%' was specified
+	echo 'clang' is the only supported compilers, while '%compiler%' was specified
 	exit /B 1
 )
 set validArch=0
-if "%targetArch%"=="armeabi" (
+if "%targetArch%"=="arm64-v8a" (
 	set validArch=1
 )
 if "%targetArch%"=="armeabi-v7a" (
@@ -32,11 +32,8 @@ if "%targetArch%"=="armeabi-v7a" (
 if "%targetArch%"=="x86" (
 	set validArch=1
 )
-if "%targetArch%"=="mips" (
-	set validArch=1
-)
 if not "%validArch%"=="1" (
-	echo 'armeabi', 'armeabi-v7a', 'x86', 'mips' are the only supported target architectures, while '%targetArch%' was specified
+	echo 'arm64-v8a', 'armeabi-v7a', 'x86' are the only supported target architectures, while '%targetArch%' was specified
 	exit /B 1
 )
 echo Going to build embedded Qt for %targetOS%/%compiler%/%targetArch%
@@ -108,7 +105,7 @@ if "ANDROID_NDK_HOST"=="" (
 )
 echo Using ANDROID_NDK_HOST '%ANDROID_NDK_HOST%'
 
-set ANDROID_NDK_PLATFORM=android-14
+set ANDROID_NDK_PLATFORM=android-21
 if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%" (
 	echo Platform '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%' does not exist
 	exit /B 1
@@ -117,17 +114,14 @@ echo Using ANDROID_NDK_PLATFORM '%ANDROID_NDK_PLATFORM%'
 
 set ANDROID_TARGET_ARCH=%targetArch%
 set targetArchFamily=""
-if "%targetArch%"=="armeabi" (
-	set targetArchFamily=arm
+if "%targetArch%"=="arm64-v8a" (
+	set targetArchFamily=arm64
 )
 if "%targetArch%"=="armeabi-v7a" (
 	set targetArchFamily=arm
 )
 if "%targetArch%"=="x86" (
 	set targetArchFamily=x86
-)
-if "%targetArch%"=="mips" (
-	set targetArchFamily=mips
 )
 if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchFamily%" (
 	echo Architecture headers '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchFamily%' does not exist
@@ -136,23 +130,20 @@ if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchFam
 echo Using ANDROID_TARGET_ARCH '%ANDROID_TARGET_ARCH%'
 
 set ANDROID_NDK_TOOLCHAIN_VERSION=0
-if "%compiler%"=="gcc" (
-	set ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+if "%compiler%"=="clang" (
+	set ANDROID_NDK_TOOLCHAIN_VERSION=clang
 )
 echo Using ANDROID_NDK_TOOLCHAIN_VERSION '%ANDROID_NDK_TOOLCHAIN_VERSION%'
 
 set TOOLCHAIN_PATH=""
-if "%targetArch%"=="armeabi" (
-	set TOOLCHAIN_PATH=%ANDROID_NDK%\toolchains\arm-linux-androideabi-%ANDROID_NDK_TOOLCHAIN_VERSION%
+if "%targetArch%"=="arm64-v8a" (
+	set TOOLCHAIN_PATH=%ANDROID_NDK%\toolchains\aarch64-linux-android-%ANDROID_NDK_TOOLCHAIN_VERSION%
 )
 if "%targetArch%"=="armeabi-v7a" (
 	set TOOLCHAIN_PATH=%ANDROID_NDK%\toolchains\arm-linux-androideabi-%ANDROID_NDK_TOOLCHAIN_VERSION%
 )
 if "%targetArch%"=="x86" (
 	set TOOLCHAIN_PATH=%ANDROID_NDK%\toolchains\x86-%ANDROID_NDK_TOOLCHAIN_VERSION%
-)
-if "%targetArch%"=="mips" (
-	set TOOLCHAIN_PATH=%ANDROID_NDK%\toolchains\mipsel-linux-android-%ANDROID_NDK_TOOLCHAIN_VERSION%
 )
 if not exist "%TOOLCHAIN_PATH%" (
 	echo Toolchain at '%TOOLCHAIN_PATH%' not found
@@ -166,16 +157,6 @@ set QTBASE_CONFIGURATION=^
 	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre ^
 	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus ^
 	-no-opengl -no-evdev
-if "%compiler%"=="gcc" (
-	set QTBASE_CONFIGURATION=^
-		-xplatform android-g++ ^
-		%QTBASE_CONFIGURATION%
-)
-if "%targetArch%"=="mips" (
-	set QTBASE_CONFIGURATION=^
-		%QTBASE_CONFIGURATION% ^
-		-no-use-gold-linker
-)
 if "%EXPERIMENTAL_USE_MSVC%"=="0" (
 	set QTBASE_CONFIGURATION=^
 		-platform win32-g++ ^

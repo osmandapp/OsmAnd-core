@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 148
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 149
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -51,13 +51,13 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	find_library(c++_shared_LIBRARY c++_shared)
 	find_library(log_LIBRARY log)
 	find_library(c_LIBRARY c)
-	find_library(gcc_LIBRARY gcc)
+	#find_library(gcc_LIBRARY gcc)
 	find_library(m_LIBRARY m)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${c++_shared_LIBRARY}
 		${log_LIBRARY}
 		${c_LIBRARY}
-		${gcc_LIBRARY}
+		#${gcc_LIBRARY}
 		${m_LIBRARY}
 		${dl_LIBRARY}
 	)
