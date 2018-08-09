@@ -65,7 +65,7 @@ if "ANDROID_NDK_HOST"=="" (
 )
 echo Using ANDROID_NDK_HOST '%ANDROID_NDK_HOST%'
 
-set ANDROID_NDK_PLATFORM=android-9
+set ANDROID_NDK_PLATFORM=android-14
 if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%" (
 	echo Platform '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%' does not exist
 	exit /B 1

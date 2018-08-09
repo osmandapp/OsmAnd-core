@@ -86,7 +86,7 @@ if [[ -z "$ANDROID_SDK" ]]; then
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
-export ANDROID_NDK_PLATFORM=android-9
+export ANDROID_NDK_PLATFORM=android-14
 if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
 	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
 	exit 1
