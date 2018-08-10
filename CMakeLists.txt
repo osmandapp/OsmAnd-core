@@ -51,14 +51,14 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	find_library(c++_shared_LIBRARY c++_shared)
 	find_library(log_LIBRARY log)
 	find_library(c_LIBRARY c)
-	#find_library(c++_LIBRARY c++)
+	find_library(c++_LIBRARY c++)
 	#find_library(gcc_LIBRARY gcc)
 	find_library(m_LIBRARY m)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${c++_shared_LIBRARY}
 		${log_LIBRARY}
 		${c_LIBRARY}
-		#${c++_LIBRARY}
+		${c++_LIBRARY}
 		#${gcc_LIBRARY}
 		${m_LIBRARY}
 		${dl_LIBRARY}
