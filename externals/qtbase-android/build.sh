@@ -147,7 +147,7 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		(cd "$path" && ./configure -xplatform android-clang $QTBASE_CONFIGURATION -$type -prefix $path)
+		(cd "$path" && ./configure -xplatform android-clang -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
