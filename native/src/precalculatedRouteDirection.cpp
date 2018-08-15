@@ -233,7 +233,7 @@ float PrecalculatedRouteDirection::timeEstimate(int sx31, int sy31, int ex31, in
 		x31 = sx31;
 		y31 = sy31;
 	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Alert unsupported time estimate ");
+		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Alert unsupported time estimate ");
 		return -2;
 	}
 	int ind = getIndex(x31, y31);
