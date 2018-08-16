@@ -20,7 +20,6 @@ LOCAL_SRC_FILES:= \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftstroke.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftsystem.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/fttype1.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftxf86.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/autofit/autofit.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/bdf/bdf.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/cff/cff.c \

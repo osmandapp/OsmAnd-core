@@ -22,7 +22,6 @@ add_library(freetype2_osmand STATIC
 	"${UPSTREAM}/src/base/ftstroke.c"
 	"${UPSTREAM}/src/base/ftsystem.c"
 	"${UPSTREAM}/src/base/fttype1.c"
-	"${UPSTREAM}/src/base/ftxf86.c"
 	"${UPSTREAM}/src/autofit/autofit.c"
 	"${UPSTREAM}/src/bdf/bdf.c"
 	"${UPSTREAM}/src/cff/cff.c"
