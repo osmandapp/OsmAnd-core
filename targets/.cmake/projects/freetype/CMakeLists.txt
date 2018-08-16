@@ -24,6 +24,7 @@ add_library(freetype2_osmand STATIC
 	"${UPSTREAM}/src/base/ftsystem.c"
 	"${UPSTREAM}/src/base/fttype1.c"
 	"${UPSTREAM}/src/base/ftmm.c"
+	"${UPSTREAM}/src/gzip/ftgzip.c"
 	"${UPSTREAM}/src/autofit/autofit.c"
 	"${UPSTREAM}/src/bdf/bdf.c"
 	"${UPSTREAM}/src/cff/cff.c"
