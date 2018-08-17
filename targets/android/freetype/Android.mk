@@ -12,7 +12,7 @@ LOCAL_SRC_FILES:= \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbase.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbbox.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftbitmap.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftfntfmt.c" \
+	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftfntfmt.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftfstype.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftgasp.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftglyph.c \
@@ -21,8 +21,8 @@ LOCAL_SRC_FILES:= \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftstroke.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftsystem.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/base/fttype1.c \
-	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftmm.c" \
-	$(OSMAND_FREETYPE_RELATIVE)/src/gzip/ftgzip.c" \
+	$(OSMAND_FREETYPE_RELATIVE)/src/base/ftmm.c \
+	$(OSMAND_FREETYPE_RELATIVE)/src/gzip/ftgzip.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/autofit/autofit.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/bdf/bdf.c \
 	$(OSMAND_FREETYPE_RELATIVE)/src/cff/cff.c \
