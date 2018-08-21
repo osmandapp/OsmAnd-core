@@ -158,13 +158,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
             }
             else if (tagName == QLatin1String("name"))
             {
-                if (!newItem)
+                // The <metadata> also contains the name tag, so it's ok to have a name tag without the item
+                if (newItem)
                 {
-                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <name>");
-                    return false;
+                    newItem->setTitle(xmlReader.readElementText());
                 }
-
-                newItem->setTitle(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("desc"))
             {
