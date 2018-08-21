@@ -362,26 +362,18 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	// Allocate ctor paramters
 	jobject bitmapBuffer;
 	if(encodePNG) { 
-		/*
-		sk_sp<SkData> fullData(SkData::MakeFromMalloc(bitmap->));
-		SkStream* bufferedStream = SkFrontBufferedStream::Create(
-                new SkMemoryStream(std::move(fullData)), SkCodec::MinBufferedBytesNeeded());
-        REPORTER_ASSERT(r, bufferedStream);
-        codec.reset(SkCodec::NewFromStream(bufferedStream));
-
-
-		SkImageEncoder* enc = SkImageEncoder::Create(SkImageEncoder::kPNG_Type);
 		SkDynamicMemoryWStream* stream = new SkDynamicMemoryWStream();
-		enc->encodeStream(stream, *bitmap, 80);
-		// clean previous data
-		free(bitmapData);
-		bitmapDataSize = stream->bytesWritten();
-		bitmapData = malloc(bitmapDataSize);
+        if (SkEncodeImage(stream, *bitmap, SkEncodedImageFormat::kPNG, 100)) {
+			// clean previous data
+			if (bitmapData != NULL) {
+				free(bitmapData);
+			}
+			bitmapDataSize = stream->bytesWritten();
+			bitmapData = malloc(bitmapDataSize);
 
-		stream->copyTo(bitmapData);
-		delete stream;
-		delete enc;
-		*/
+			stream->copyTo(bitmapData);
+        }
+        delete stream;
 	}
 	bitmapBuffer = ienv->NewDirectByteBuffer(bitmapData, bitmapDataSize);
 
@@ -1328,7 +1320,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 	jstring jstr = env->NewStringUTF(bitmapResource.c_str());
 	jbyteArray javaIconRawData = (jbyteArray)env->CallObjectMethod(this->javaRenderingContext, jmethod_RenderingContext_getIconRawData, jstr);
 	env->DeleteLocalRef(jstr);
-	if(!javaIconRawData)
+	//if(!javaIconRawData)
 		return NULL;
 
 	jbyte* bitmapBuffer = env->GetByteArrayElements(javaIconRawData, NULL);
