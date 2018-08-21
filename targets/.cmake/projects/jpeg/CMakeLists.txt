@@ -10,12 +10,8 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
-#include(CheckIncludeFiles)
-#include(CheckIncludeFile)
 include(CheckTypeSize)
-
-#check_include_files("dlfcn.h;stdint.h;stddef.h;inttypes.h;stdlib.h;strings.h;string.h;float.h" STDC_HEADERS)
-check_type_size(size_t SIZEOF_SIZE_T)
+check_type_size(size_t SIZE_T)
 
 ###############################################################################
 # CONFIGURATION OPTIONS
