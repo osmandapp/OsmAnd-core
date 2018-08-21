@@ -15,7 +15,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-VERSION="chromium-41.0.2272.118"
+VERSION="android/oreo"
 mkdir -p "$SRCLOC/upstream.original"
 (cd "$SRCLOC/upstream.original" && \
 	git init && \

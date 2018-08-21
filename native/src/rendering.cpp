@@ -18,6 +18,7 @@
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
 #include <SkPath.h>
+#include <SkFilterQuality.h>
 
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
@@ -63,8 +64,8 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
 }
 
 
-UNORDERED(map)<std::string, SkPathEffect*> pathEffects;
-SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
+UNORDERED(map)<std::string, sk_sp<SkPathEffect>> pathEffects;
+sk_sp<SkPathEffect> getDashEffect(RenderingContext* rc, std::string input)
 {
     const char* chars = input.c_str();
     int i = 0;
@@ -105,7 +106,7 @@ SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
 if(pathEffects.find(hash) != pathEffects.end())
         return pathEffects[hash];
 
-    SkPathEffect* r = SkDashPathEffect::Create(&primFloats[0], primFloats.size(), 0);
+    sk_sp<SkPathEffect> r = SkDashPathEffect::Make(&primFloats[0], primFloats.size(), 0);
     pathEffects[hash] = r;
     return r;
 }
@@ -205,7 +206,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 
         if (pathEff.size() > 0)
         {
-            SkPathEffect* p = getDashEffect(rc, pathEff);
+            sk_sp<SkPathEffect> p = getDashEffect(rc, pathEff);
             paint->setPathEffect(p);
         }
         else
@@ -224,7 +225,8 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
         {
             SkBitmap* bmp = getCachedBitmap(rc, shader);
             if (bmp != NULL) {
-                paint->setShader(new SkBitmapProcShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode))->unref();
+            	paint->setShader(
+                	SkShader::MakeBitmapShader(*bmp, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode));
                 if(color == 0) {
 					paint->setColor(0xffffffff);                	
                 }
@@ -244,7 +246,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
             shadowLayer = 0;
 
         if (shadowLayer > 0)
-            paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowLayer), 0, 0))->unref();
+            paint->setLooper(SkBlurDrawLooper::Make(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowLayer), 0, 0));
     }
     return 1;
 }
@@ -313,7 +315,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
     if (rc->getShadowRenderingMode() == 2 && shadowRadius > 0) {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0))->unref();
+        paint->setLooper(SkBlurDrawLooper::Make(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0));
         PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*path, *paint));
     }
 
@@ -322,7 +324,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
         paint->setLooper(NULL);
         paint->setStrokeWidth(paint->getStrokeWidth() + shadowRadius * 2);
         //		paint->setColor(0xffbababa);
-        paint->setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
+        paint->setColorFilter(SkColorFilter::MakeModeFilter(shadowColor, SkBlendMode::kSrcIn));
         //		paint->setColor(shadowColor);
         PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*path, *paint));
     }
@@ -348,32 +350,32 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
             {0, 12 + 6 * rmin, 2 * rmin , 152 + 2 * rmin},
             {0, 12 + 6 * rmin, 1 * rmin, 152 + 3 * rmin}
         };
-		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_oneway[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_oneway[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_oneway[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect1 = SkDashPathEffect::Make(intervals_oneway[0], 4, 0);
+		sk_sp<SkPathEffect> arrowDashEffect2 = SkDashPathEffect::Make(intervals_oneway[1], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect3 = SkDashPathEffect::Make(intervals_oneway[2], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect4 = SkDashPathEffect::Make(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin * 2);
-		p->setPathEffect(arrowDashEffect1)->unref();
+		p->setPathEffect(arrowDashEffect1);
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 4);
-		p->setPathEffect(arrowDashEffect2)->unref();
+		p->setPathEffect(arrowDashEffect2);
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 6);
-		p->setPathEffect(arrowDashEffect3)->unref();
+		p->setPathEffect(arrowDashEffect3);
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 8);
-		p->setPathEffect(arrowDashEffect4)->unref();
+		p->setPathEffect(arrowDashEffect4);
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 	}
@@ -385,31 +387,31 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
                 {0, 12 + 2 * rmin, 2 * rmin, 152 + 6 * rmin},
                 {0, 12 + 3 * rmin, 1 * rmin, 152 + 6 * rmin}
             };            
-		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_reverse[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_reverse[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect1 = SkDashPathEffect::Make(intervals_reverse[0], 4, 0);
+		sk_sp<SkPathEffect> arrowDashEffect2 = SkDashPathEffect::Make(intervals_reverse[1], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect3 = SkDashPathEffect::Make(intervals_reverse[2], 4, 1);
+		sk_sp<SkPathEffect> arrowDashEffect4 = SkDashPathEffect::Make(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin * 2);
-		p->setPathEffect(arrowDashEffect1)->unref();
+		p->setPathEffect(arrowDashEffect1);
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 4);
-		p->setPathEffect(arrowDashEffect2)->unref();
+		p->setPathEffect(arrowDashEffect2);
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 6);
-		p->setPathEffect(arrowDashEffect3)->unref();
+		p->setPathEffect(arrowDashEffect3);
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
 		p->setStrokeWidth(rmin * 8);
-		p->setPathEffect(arrowDashEffect4)->unref();
+		p->setPathEffect(arrowDashEffect4);
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 	}
@@ -927,7 +929,7 @@ void drawIconsOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, 
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
-	p.setFilterLevel(SkPaint::kLow_FilterLevel);
+	p.setFilterQuality(SkFilterQuality::kLow_SkFilterQuality);
 	vector<SHARED_PTR<IconDrawInfo> > searchText;
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)
@@ -962,28 +964,28 @@ void drawIconsOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, 
 				icon->visible = true;
 				if(icon->shield != NULL) {
 					SkRect r = makeRect(rc, icon, icon->shield, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->shield, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->shield, r, &p));
 				}
 				if(icon->bmp_1 != NULL) {
 					SkRect r = makeRect(rc, icon, icon->bmp_1, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp_1, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp_1, r, &p));
 				}
-				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, rm, &p));
+				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, rm, &p));
 				if(icon->bmp2 != NULL) {
 					SkRect r = makeRect(rc, icon, icon->bmp2, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp2, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp2,  r, &p));
 				}
 				if(icon->bmp3 != NULL) {
 					SkRect r = makeRect(rc, icon, icon->bmp3, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp3, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp3,  r, &p));
 				}
 				if(icon->bmp4 != NULL) {
 					SkRect r = makeRect(rc, icon, icon->bmp4, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp4, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp4,  r, &p));
 				}
 				if(icon->bmp5 != NULL) {
 					SkRect r = makeRect(rc, icon, icon->bmp5, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp5, (SkIRect*) NULL, r, &p));
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp5,  r, &p));
 				}
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);

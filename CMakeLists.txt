@@ -16,13 +16,23 @@ endif()
 
 # Externals
 add_subdirectory("${OSMAND_CORE_ROOT}/externals/zlib" "./externals/zlib") # zlibstatic
-add_subdirectory("${OSMAND_CORE_ROOT}/externals/giflib" "./externals/giflib")
-add_subdirectory("${OSMAND_CORE_ROOT}/externals/jpeg" "./externals/jpeg")
-add_subdirectory("${OSMAND_CORE_ROOT}/externals/libpng" "./externals/libpng")
-add_subdirectory("${OSMAND_CORE_ROOT}/externals/freetype" "./externals/freetype")
-add_subdirectory("${OSMAND_CORE_ROOT}/externals/expat" "./externals/expat")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/giflib" "./externals/giflib")
+add_subdirectory("${OSMAND_CORE_ROOT}/externals/skia/upstream.patched/third_party/externals/libjpeg-turbo" "./externals/jpeg")
+add_subdirectory("${OSMAND_CORE_ROOT}/externals/skia/upstream.patched/third_party/libpng" "./externals/libpng")
+add_subdirectory("${OSMAND_CORE_ROOT}/externals/skia/upstream.patched/third_party/externals/freetype" "./externals/freetype")
+add_subdirectory("${OSMAND_CORE_ROOT}/externals/skia/upstream.patched/third_party/externals/expat" "./externals/expat")
 add_subdirectory("${OSMAND_CORE_ROOT}/externals/libskia" "./externals/libskia")
 add_subdirectory("${OSMAND_CORE_ROOT}/externals/protobuf" "./externals/protobuf")
+
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/zlib" "./externals/zlib") # zlibstatic
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/giflib" "./externals/giflib")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/jpeg" "./externals/jpeg")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/libpng" "./externals/libpng")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/freetype" "./externals/freetype")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/expat" "./externals/expat")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/libskia" "./externals/libskia")
+#add_subdirectory("${OSMAND_CORE_ROOT}/externals/protobuf" "./externals/protobuf")
+
 
 # OsmAnd Core
 add_subdirectory("${OSMAND_CORE_ROOT}/osmand" "./osmand")

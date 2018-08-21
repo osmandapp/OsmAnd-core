@@ -3,8 +3,7 @@
 #endif
 #include <SkBitmap.h>
 #include <SkCanvas.h>
-#include <SkImageDecoder.h>
-#include <SkImageEncoder.h>
+#include <SkCodec.h>
 #include <SkStream.h>
 #include "java_renderRules.h"
 #include "CommonCollections.h"
@@ -362,7 +361,15 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 #endif
 	// Allocate ctor paramters
 	jobject bitmapBuffer;
-	if(encodePNG) {
+	if(encodePNG) { 
+		/*
+		sk_sp<SkData> fullData(SkData::MakeFromMalloc(bitmap->));
+		SkStream* bufferedStream = SkFrontBufferedStream::Create(
+                new SkMemoryStream(std::move(fullData)), SkCodec::MinBufferedBytesNeeded());
+        REPORTER_ASSERT(r, bufferedStream);
+        codec.reset(SkCodec::NewFromStream(bufferedStream));
+
+
 		SkImageEncoder* enc = SkImageEncoder::Create(SkImageEncoder::kPNG_Type);
 		SkDynamicMemoryWStream* stream = new SkDynamicMemoryWStream();
 		enc->encodeStream(stream, *bitmap, 80);
@@ -374,6 +381,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		stream->copyTo(bitmapData);
 		delete stream;
 		delete enc;
+		*/
 	}
 	bitmapBuffer = ienv->NewDirectByteBuffer(bitmapData, bitmapDataSize);
 
@@ -1327,11 +1335,24 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 	jint bufferLen = env->GetArrayLength(javaIconRawData);
 
 	// Decode bitmap
-	SkBitmap* iconBitmap = new SkBitmap();
 	//TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
-	if(!SkImageDecoder::DecodeMemory(bitmapBuffer, bufferLen, iconBitmap))
-	{
-		// Failed to decode
+	std::unique_ptr<SkCodec> codec(nullptr);
+    sk_sp<SkData> data((SkData::MakeFromMalloc(bitmapBuffer, bufferLen)));
+	codec.reset(SkCodec::NewFromData(data));
+	if (!codec) {
+		this->nativeOperations.Start();
+		env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
+		env->DeleteLocalRef(javaIconRawData);
+
+		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
+
+    	return NULL;
+	}
+	const SkImageInfo info = codec->getInfo().makeColorType(kN32_SkColorType);
+	SkBitmap* iconBitmap = new SkBitmap();
+	iconBitmap->allocPixels(info);
+	SkCodec::Result result = codec->getPixels(info, iconBitmap->getPixels(), iconBitmap->rowBytes());
+	if (result != SkCodec::kSuccess) {
 		delete iconBitmap;
 
 		this->nativeOperations.Start();

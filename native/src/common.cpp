@@ -2,8 +2,11 @@
 #include "commonOsmAndCore.h"
 
 #include <SkPath.h>
+//#include <SkAndroidCodec.h>
+#include <Resources.h>
+#include <SkCodec.h>
+#include <SkImageInfo.h>
 #include <SkBitmap.h>
-#include <SkImageDecoder.h>
 #include "Logging.h"
 
 #if defined(_WIN32)
@@ -92,12 +95,26 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 		if (f != NULL) {
 			fclose(f);
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
-			SkBitmap* bmp = new SkBitmap();
-			if (!SkImageDecoder::DecodeFile(fl.c_str(), bmp)) {
-				delete bmp;
+			std::unique_ptr<SkStream> stream(GetResourceAsStream(fl.c_str()));
+        	if (!stream) {
+            	return NULL;
+        	}
+
+			std::unique_ptr<SkCodec> codec(nullptr);
+			codec.reset(SkCodec::NewFromStream(stream.release()));
+        	if (!codec) {
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unable to decode '%s'", fl.c_str());
+            	return NULL;
+        	}
+        	const SkImageInfo info = codec->getInfo().makeColorType(kN32_SkColorType);
+        	SkBitmap* bm = new SkBitmap();
+        	bm->allocPixels(info);
+    		SkCodec::Result result = codec->getPixels(info, bm->getPixels(), bm->rowBytes());
+			if (result != SkCodec::kSuccess) {
+				delete bm;
 				return NULL;
 			}
-			return bmp;
+			return bm;
 		}
 	}
 	return NULL;
