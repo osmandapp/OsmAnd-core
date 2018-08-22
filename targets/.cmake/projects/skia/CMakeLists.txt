@@ -1507,9 +1507,7 @@ add_library(skia_osmand STATIC
 target_link_libraries(skia_osmand LINK_PUBLIC
 	expat_osmand
 	freetype2_osmand
-	#harfbuzz_osmand
 	png_osmand
-	#gif_osmand
 	jpeg_osmand
 )
 	

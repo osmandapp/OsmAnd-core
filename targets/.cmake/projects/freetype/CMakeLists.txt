@@ -1,12 +1,12 @@
 project(freetype2_osmand)
 
-set(ROOT "${OSMAND_ROOT}/externals/freetype")
-set(UPSTREAM "${ROOT}/upstream.patched")
+set(ROOT "${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/externals/freetype")
+set(UPSTREAM "${ROOT}")
 include_directories(AFTER SYSTEM
 	"${ROOT}"
 	"${UPSTREAM}/include"
 )
-add_definitions(-DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H=<ftmodule-override.h>)
+add_definitions(-DFT2_BUILD_LIBRARY)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()

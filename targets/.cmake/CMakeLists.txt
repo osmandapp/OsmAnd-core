@@ -48,7 +48,7 @@ add_subdirectory("${OSMAND_PROJECTS_ROOT}/expat" "expat")
 add_subdirectory("${OSMAND_PROJECTS_ROOT}/freetype" "freetype")
 
 # External : gif
-add_subdirectory("${OSMAND_PROJECTS_ROOT}/giflib" "giflib")
+#add_subdirectory("${OSMAND_PROJECTS_ROOT}/giflib" "giflib")
 
 # External : harfbuzz
 #add_subdirectory("${OSMAND_PROJECTS_ROOT}/harfbuzz" "harfbuzz")
