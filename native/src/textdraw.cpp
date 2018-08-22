@@ -112,13 +112,10 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
     {
 		paint->setTypeface(def);
 		if (!paint->containsText(text.c_str(), text.length())) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "======================== %s\n", text.c_str());
-
 			// TODO investigate that typeface is not constantly readed from memory
 			const auto fontMgr = SkFontMgr::RefDefault();
 			const auto pText = text.c_str();
 			const auto unichar = SkUTF8_ToUnichar(pText);
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  ">======================= %d\n", unichar);
 			if (unichar < 0xD800 && unichar > 0xDFFF) {
 				const auto typeface = fontMgr->matchFamilyStyleCharacter(0, SkFontStyle(), nullptr, 0, unichar);
 				paint->setTypeface(sk_sp<SkTypeface>(typeface));	
