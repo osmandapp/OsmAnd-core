@@ -4,7 +4,6 @@
 #include <SkPath.h>
 #include <SkCodec.h>
 #include <SkImageInfo.h>
-#include <SkBitmap.h>
 #include "SkImageGenerator.h"
 #include "Logging.h"
 
@@ -71,11 +70,6 @@ bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst) {
                        const_cast<SkPMColor*>(ctable->readColors()), &count);
 }
 
-sk_sp<SkImage> GetResourceAsImage(const char* resourcePath) {
-    sk_sp<SkData> resourceData(SkData::MakeFromFileName(resourcePath));
-    return SkImage::MakeFromEncoded(resourceData);
-}
-
 SkStreamAsset* GetResourceAsStream(const char* resourcePath) {
     std::unique_ptr<SkFILEStream> stream(new SkFILEStream(resourcePath));
     if (!stream->isValid()) {
@@ -132,25 +126,11 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 		if (f != NULL) {
 			fclose(f);
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
-
-			std::unique_ptr<SkStream> stream(GetResourceAsStream(fl.c_str()));
-        	if (!stream) {
-            	return NULL;
-        	}
-
-			std::unique_ptr<SkCodec> codec(nullptr);
-			codec.reset(SkCodec::NewFromStream(stream.release()));
-        	if (!codec) {
+			SkBitmap* bm = new SkBitmap();
+			if (!GetResourceAsBitmap(fl.c_str(), bm)) {
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unable to decode '%s'", fl.c_str());
-            	return NULL;
-        	}
-        	const SkImageInfo info = codec->getInfo().makeColorType(kN32_SkColorType);
-        	SkBitmap* bm = new SkBitmap();
-        	bm->allocPixels(info);
-    		SkCodec::Result result = codec->getPixels(info, bm->getPixels(), bm->rowBytes());
-			if (result != SkCodec::kSuccess) {
 				delete bm;
-				return NULL;
+		    	return NULL;				
 			}
 			return bm;
 		}

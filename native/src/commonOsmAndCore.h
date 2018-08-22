@@ -638,4 +638,9 @@ std::string rtrim(const std::string& in, const char* t = trim_chars);
 std::string ltrim(const std::string& in, const char* t = trim_chars);
 std::string trim(const std::string& in, const char* t = trim_chars);
 
+bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst);
+SkStreamAsset* GetResourceAsStream(const char* resourcePath);
+sk_sp<SkData> GetResourceAsData(const char* resourcePath);
+sk_sp<SkTypeface> MakeResourceAsTypeface(const char* resourcePath);
+
 #endif /*_OSMAND_COMMON_CORE_H*/
