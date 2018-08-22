@@ -116,7 +116,7 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
 			const auto fontMgr = SkFontMgr::RefDefault();
 			const auto pText = text.c_str();
 			const auto unichar = SkUTF8_ToUnichar(pText);
-			if (unichar < 0xD800 && unichar > 0xDFFF) {
+			if (unichar < 0xD800 || unichar > 0xDFFF) {
 				const auto typeface = fontMgr->matchFamilyStyleCharacter(0, SkFontStyle(), nullptr, 0, unichar);
 				paint->setTypeface(sk_sp<SkTypeface>(typeface));	
 			}

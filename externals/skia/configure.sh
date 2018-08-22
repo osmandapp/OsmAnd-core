@@ -35,3 +35,8 @@ if [ -d $SRCLOC/patches ]; then
 		patch --strip=1 --directory=$SRCLOC/upstream.patched/ --input=$PATCH
 	done
 fi
+
+# sync deps
+cd $SRCLOC/upstream.patched/tools
+./git-sync-deps
+
