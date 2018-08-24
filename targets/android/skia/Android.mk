@@ -528,7 +528,13 @@ else
 	LOCAL_SRC_FILES += \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_none.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse41.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse42.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_ssse3.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_avx.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_hsw.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_none.cpp 
+
 		
 endif
 
