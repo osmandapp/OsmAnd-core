@@ -21,23 +21,24 @@ endif
 LOCAL_ASMFLAGS += -DELF
 
 ifeq ($(TARGET_ARCH_ABI),x86_64)
+SIMD_SOURCES := $(OSMAND_JPEG)/simd/x86_64
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/simd/jsimd_x86_64.c \
-	$(SOURCE_PATH)/simd/jfdctflt-sse-64.asm \
-	$(SOURCE_PATH)/simd/jccolor-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jcgray-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jcsample-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jdcolor-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jdmerge-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jdsample-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jfdctfst-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jfdctint-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jidctflt-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jidctfst-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jidctint-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jidctred-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jquantf-sse2-64.asm \
-	$(SOURCE_PATH)/simd/jquanti-sse2-64.asm \
+	$(SIMD_SOURCES)/jsimd.c \
+	$(SIMD_SOURCES)/jfdctflt-sse-64.asm \
+	$(SIMD_SOURCES)/jccolor-sse2-64.asm \
+	$(SIMD_SOURCES)/jcgray-sse2-64.asm \
+	$(SIMD_SOURCES)/jcsample-sse2-64.asm \
+	$(SIMD_SOURCES)/jdcolor-sse2-64.asm \
+	$(SIMD_SOURCES)/jdmerge-sse2-64.asm \
+	$(SIMD_SOURCES)/jdsample-sse2-64.asm \
+	$(SIMD_SOURCES)/jfdctfst-sse2-64.asm \
+	$(SIMD_SOURCES)/jfdctint-sse2-64.asm \
+	$(SIMD_SOURCES)/jidctflt-sse2-64.asm \
+	$(SIMD_SOURCES)/jidctfst-sse2-64.asm \
+	$(SIMD_SOURCES)/jidctint-sse2-64.asm \
+	$(SIMD_SOURCES)/jidctred-sse2-64.asm \
+	$(SIMD_SOURCES)/jquantf-sse2-64.asm \
+	$(SIMD_SOURCES)/jquanti-sse2-64.asm \
 
 LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=8 \
@@ -45,41 +46,42 @@ LOCAL_CFLAGS += \
 LOCAL_ASMFLAGS += -D__x86_64__
 
 else ifeq ($(TARGET_ARCH_ABI),x86)
+SIMD_SOURCES := $(OSMAND_JPEG)/simd/i386
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/simd/jsimd_i386.c \
-	$(SOURCE_PATH)/simd/jsimdcpu.asm \
-	$(SOURCE_PATH)/simd/jfdctflt-3dn.asm \
-	$(SOURCE_PATH)/simd/jidctflt-3dn.asm \
-	$(SOURCE_PATH)/simd/jquant-3dn.asm \
-	$(SOURCE_PATH)/simd/jccolor-mmx.asm \
-	$(SOURCE_PATH)/simd/jcgray-mmx.asm \
-	$(SOURCE_PATH)/simd/jcsample-mmx.asm \
-	$(SOURCE_PATH)/simd/jdcolor-mmx.asm \
-	$(SOURCE_PATH)/simd/jdmerge-mmx.asm \
-	$(SOURCE_PATH)/simd/jdsample-mmx.asm \
-	$(SOURCE_PATH)/simd/jfdctfst-mmx.asm \
-	$(SOURCE_PATH)/simd/jfdctint-mmx.asm \
-	$(SOURCE_PATH)/simd/jidctfst-mmx.asm \
-	$(SOURCE_PATH)/simd/jidctint-mmx.asm \
-	$(SOURCE_PATH)/simd/jidctred-mmx.asm \
-	$(SOURCE_PATH)/simd/jquant-mmx.asm \
-	$(SOURCE_PATH)/simd/jfdctflt-sse.asm \
-	$(SOURCE_PATH)/simd/jidctflt-sse.asm \
-	$(SOURCE_PATH)/simd/jquant-sse.asm \
-	$(SOURCE_PATH)/simd/jccolor-sse2.asm \
-	$(SOURCE_PATH)/simd/jcgray-sse2.asm \
-	$(SOURCE_PATH)/simd/jcsample-sse2.asm \
-	$(SOURCE_PATH)/simd/jdcolor-sse2.asm \
-	$(SOURCE_PATH)/simd/jdmerge-sse2.asm \
-	$(SOURCE_PATH)/simd/jdsample-sse2.asm \
-	$(SOURCE_PATH)/simd/jfdctfst-sse2.asm \
-	$(SOURCE_PATH)/simd/jfdctint-sse2.asm \
-	$(SOURCE_PATH)/simd/jidctflt-sse2.asm \
-	$(SOURCE_PATH)/simd/jidctfst-sse2.asm \
-	$(SOURCE_PATH)/simd/jidctint-sse2.asm \
-	$(SOURCE_PATH)/simd/jidctred-sse2.asm \
-	$(SOURCE_PATH)/simd/jquantf-sse2.asm \
-	$(SOURCE_PATH)/simd/jquanti-sse2.asm \
+	$(SIMD_SOURCES)/jsimd.c \
+	$(SIMD_SOURCES)/jsimdcpu.asm \
+	$(SIMD_SOURCES)/jfdctflt-3dn.asm \
+	$(SIMD_SOURCES)/jidctflt-3dn.asm \
+	$(SIMD_SOURCES)/jquant-3dn.asm \
+	$(SIMD_SOURCES)/jccolor-mmx.asm \
+	$(SIMD_SOURCES)/jcgray-mmx.asm \
+	$(SIMD_SOURCES)/jcsample-mmx.asm \
+	$(SIMD_SOURCES)/jdcolor-mmx.asm \
+	$(SIMD_SOURCES)/jdmerge-mmx.asm \
+	$(SIMD_SOURCES)/jdsample-mmx.asm \
+	$(SIMD_SOURCES)/jfdctfst-mmx.asm \
+	$(SIMD_SOURCES)/jfdctint-mmx.asm \
+	$(SIMD_SOURCES)/jidctfst-mmx.asm \
+	$(SIMD_SOURCES)/jidctint-mmx.asm \
+	$(SIMD_SOURCES)/jidctred-mmx.asm \
+	$(SIMD_SOURCES)/jquant-mmx.asm \
+	$(SIMD_SOURCES)/jfdctflt-sse.asm \
+	$(SIMD_SOURCES)/jidctflt-sse.asm \
+	$(SIMD_SOURCES)/jquant-sse.asm \
+	$(SIMD_SOURCES)/jccolor-sse2.asm \
+	$(SIMD_SOURCES)/jcgray-sse2.asm \
+	$(SIMD_SOURCES)/jcsample-sse2.asm \
+	$(SIMD_SOURCES)/jdcolor-sse2.asm \
+	$(SIMD_SOURCES)/jdmerge-sse2.asm \
+	$(SIMD_SOURCES)/jdsample-sse2.asm \
+	$(SIMD_SOURCES)/jfdctfst-sse2.asm \
+	$(SIMD_SOURCES)/jfdctint-sse2.asm \
+	$(SIMD_SOURCES)/jidctflt-sse2.asm \
+	$(SIMD_SOURCES)/jidctfst-sse2.asm \
+	$(SIMD_SOURCES)/jidctint-sse2.asm \
+	$(SIMD_SOURCES)/jidctred-sse2.asm \
+	$(SIMD_SOURCES)/jquantf-sse2.asm \
+	$(SIMD_SOURCES)/jquanti-sse2.asm \
 
 LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=4 \
@@ -87,9 +89,10 @@ LOCAL_CFLAGS += \
 LOCAL_ASMFLAGS += -DPIC
 
 else ifneq ($(filter $(TARGET_ARCH_ABI), armeabi-v7a armeabi-v7a-hard),)
+SIMD_SOURCES := $(OSMAND_JPEG)/simd/arm
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/simd/jsimd_arm.c \
-	$(SOURCE_PATH)/simd/jsimd_arm_neon.S \
+	$(SIMD_SOURCES)/jsimd.c \
+	$(SIMD_SOURCES)/jsimd_arm_neon.S \
 
 LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=4 \
@@ -99,9 +102,10 @@ LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=4 \
 
 else ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+SIMD_SOURCES := $(OSMAND_JPEG)/simd/arm64
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/simd/jsimd_arm64.c \
-	$(SOURCE_PATH)/simd/jsimd_arm64_neon.S \
+	$(SIMD_SOURCES)/jsimd.c \
+	$(SIMD_SOURCES)/jsimd_neon.S \
 
 LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=8 \
