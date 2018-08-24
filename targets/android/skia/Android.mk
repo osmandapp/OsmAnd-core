@@ -463,9 +463,7 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontMgr_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_posix.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTLS_pthread.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp 
-
+	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTLS_pthread.cpp 
 	
 LOCAL_CFLAGS += \
 	-DSK_BUILD_FOR_ANDROID \
