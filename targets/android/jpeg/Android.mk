@@ -11,7 +11,9 @@ OSMAND_JPEG := $(LOCAL_PATH)/$(OSMAND_JPEG_RELATIVE)
 LOCAL_CFLAGS += -DNO_GETENV -fPIC
 
 LOCAL_C_INCLUDES += \
-	$(OSMAND_JPEG_ROOT)
+	$(OSMAND_JPEG_ROOT) \
+	$(OSMAND_JPEG) \
+	$(OSMAND_JPEG)/simd
 
 ifneq ($(filter $(TARGET_ARCH_ABI), armeabi-v7a armeabi-v7a-hard x86),)
 LOCAL_ARM_NEON := true
