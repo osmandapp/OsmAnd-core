@@ -515,6 +515,11 @@ else ifeq ($(TARGET_ARCH),arm)
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp 
 
 	# NEON
+	LOCAL_SRC_FILES += \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_arm_neon.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_matrixProcs_neon.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm_neon.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm_neon.cpp 
 	#LOCAL_SRC_FILES += \
 	#	$(OSMAND_SKIA_RELATIVE)/src/opts/memset16_neon.S \
 	#	$(OSMAND_SKIA_RELATIVE)/src/opts/memset32_neon.S \
