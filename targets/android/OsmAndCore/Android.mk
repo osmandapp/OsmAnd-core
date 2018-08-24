@@ -72,8 +72,8 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_jpeg \
 	osmand_ft2 \
 	osmand_png \
-	#osmand_gif \
 	osmand_expat
+	
 LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
 
 LOCAL_LDLIBS := -lz -llog -ldl -ljnigraphics
