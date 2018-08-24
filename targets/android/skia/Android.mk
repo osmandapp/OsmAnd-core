@@ -356,7 +356,6 @@ LOCAL_SRC_FILES += \
   $(OSMAND_SKIA_RELATIVE)/src/utils/SkShadowUtils.cpp \
   $(OSMAND_SKIA_RELATIVE)/src/utils/SkTextBox.cpp \
   $(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp \
-  $(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_win.cpp \
   $(OSMAND_SKIA_RELATIVE)/src/utils/SkWhitelistTypefaces.cpp 
 
 # effects
@@ -438,7 +437,6 @@ LOCAL_SRC_FILES += \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkSwizzler.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkWbmpCodec.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkImageEncoder.cpp \
-    $(OSMAND_SKIA_RELATIVE)/src/ports/SkDiscardableMemory_none.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/ports/SkImageGenerator_skia.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/ports/SkMemory_malloc.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_stdio.cpp \
