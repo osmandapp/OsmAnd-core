@@ -11,9 +11,7 @@ OSMAND_JPEG := $(LOCAL_PATH)/$(OSMAND_JPEG_RELATIVE)
 LOCAL_CFLAGS += -DNO_GETENV -fPIC
 
 LOCAL_C_INCLUDES += \
-	$(OSMAND_JPEG_ROOT) \
-	$(OSMAND_JPEG) \
-	$(OSMAND_JPEG)/simd
+	$(OSMAND_JPEG_ROOT) 
 
 ifneq ($(filter $(TARGET_ARCH_ABI), armeabi-v7a armeabi-v7a-hard x86),)
 LOCAL_ARM_NEON := true
@@ -116,75 +114,72 @@ endif
 
 # libjpeg_la_SOURCES from Makefile.am
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/jcapimin.c \
-	$(SOURCE_PATH)/jcapistd.c \
-	$(SOURCE_PATH)/jccoefct.c \
-	$(SOURCE_PATH)/jccolor.c \
-	$(SOURCE_PATH)/jcdctmgr.c \
-	$(SOURCE_PATH)/jchuff.c \
-	$(SOURCE_PATH)/jcinit.c \
-	$(SOURCE_PATH)/jcmainct.c \
-	$(SOURCE_PATH)/jcmarker.c \
-	$(SOURCE_PATH)/jcmaster.c \
-	$(SOURCE_PATH)/jcomapi.c \
-	$(SOURCE_PATH)/jcparam.c \
-	$(SOURCE_PATH)/jcphuff.c \
-	$(SOURCE_PATH)/jcprepct.c \
-	$(SOURCE_PATH)/jcsample.c \
-	$(SOURCE_PATH)/jctrans.c \
-	$(SOURCE_PATH)/jdapimin.c \
-	$(SOURCE_PATH)/jdapistd.c \
-	$(SOURCE_PATH)/jdatadst.c \
-	$(SOURCE_PATH)/jdatasrc.c \
-	$(SOURCE_PATH)/jdcoefct.c \
-	$(SOURCE_PATH)/jdcolor.c \
-	$(SOURCE_PATH)/jddctmgr.c \
-	$(SOURCE_PATH)/jdhuff.c \
-	$(SOURCE_PATH)/jdinput.c \
-	$(SOURCE_PATH)/jdmainct.c \
-	$(SOURCE_PATH)/jdmarker.c \
-	$(SOURCE_PATH)/jdmaster.c \
-	$(SOURCE_PATH)/jdmerge.c \
-	$(SOURCE_PATH)/jdphuff.c \
-	$(SOURCE_PATH)/jdpostct.c \
-	$(SOURCE_PATH)/jdsample.c \
-	$(SOURCE_PATH)/jdtrans.c \
-	$(SOURCE_PATH)/jerror.c \
-	$(SOURCE_PATH)/jfdctflt.c \
-	$(SOURCE_PATH)/jfdctfst.c \
-	$(SOURCE_PATH)/jfdctint.c \
-	$(SOURCE_PATH)/jidctflt.c \
-	$(SOURCE_PATH)/jidctfst.c \
-	$(SOURCE_PATH)/jidctint.c \
-	$(SOURCE_PATH)/jidctred.c \
-	$(SOURCE_PATH)/jquant1.c \
-	$(SOURCE_PATH)/jquant2.c \
-	$(SOURCE_PATH)/jutils.c \
-	$(SOURCE_PATH)/jmemmgr.c \
-	$(SOURCE_PATH)/jmemnobs.c \
+	$(OSMAND_JPEG)/jcapimin.c \
+	$(OSMAND_JPEG)/jcapistd.c \
+	$(OSMAND_JPEG)/jccoefct.c \
+	$(OSMAND_JPEG)/jccolor.c \
+	$(OSMAND_JPEG)/jcdctmgr.c \
+	$(OSMAND_JPEG)/jchuff.c \
+	$(OSMAND_JPEG)/jcinit.c \
+	$(OSMAND_JPEG)/jcmainct.c \
+	$(OSMAND_JPEG)/jcmarker.c \
+	$(OSMAND_JPEG)/jcmaster.c \
+	$(OSMAND_JPEG)/jcomapi.c \
+	$(OSMAND_JPEG)/jcparam.c \
+	$(OSMAND_JPEG)/jcphuff.c \
+	$(OSMAND_JPEG)/jcprepct.c \
+	$(OSMAND_JPEG)/jcsample.c \
+	$(OSMAND_JPEG)/jctrans.c \
+	$(OSMAND_JPEG)/jdapimin.c \
+	$(OSMAND_JPEG)/jdapistd.c \
+	$(OSMAND_JPEG)/jdatadst.c \
+	$(OSMAND_JPEG)/jdatasrc.c \
+	$(OSMAND_JPEG)/jdcoefct.c \
+	$(OSMAND_JPEG)/jdcolor.c \
+	$(OSMAND_JPEG)/jddctmgr.c \
+	$(OSMAND_JPEG)/jdhuff.c \
+	$(OSMAND_JPEG)/jdinput.c \
+	$(OSMAND_JPEG)/jdmainct.c \
+	$(OSMAND_JPEG)/jdmarker.c \
+	$(OSMAND_JPEG)/jdmaster.c \
+	$(OSMAND_JPEG)/jdmerge.c \
+	$(OSMAND_JPEG)/jdphuff.c \
+	$(OSMAND_JPEG)/jdpostct.c \
+	$(OSMAND_JPEG)/jdsample.c \
+	$(OSMAND_JPEG)/jdtrans.c \
+	$(OSMAND_JPEG)/jerror.c \
+	$(OSMAND_JPEG)/jfdctflt.c \
+	$(OSMAND_JPEG)/jfdctfst.c \
+	$(OSMAND_JPEG)/jfdctint.c \
+	$(OSMAND_JPEG)/jidctflt.c \
+	$(OSMAND_JPEG)/jidctfst.c \
+	$(OSMAND_JPEG)/jidctint.c \
+	$(OSMAND_JPEG)/jidctred.c \
+	$(OSMAND_JPEG)/jquant1.c \
+	$(OSMAND_JPEG)/jquant2.c \
+	$(OSMAND_JPEG)/jutils.c \
+	$(OSMAND_JPEG)/jmemmgr.c \
+	$(OSMAND_JPEG)/jmemnobs.c \
 
 # if WITH_ARITH_ENC from Makefile.am
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/jaricom.c \
-	$(SOURCE_PATH)/jcarith.c \
-	$(SOURCE_PATH)/jdarith.c \
+	$(OSMAND_JPEG)/jaricom.c \
+	$(OSMAND_JPEG)/jcarith.c \
+	$(OSMAND_JPEG)/jdarith.c \
 
 # libturbojpeg_la_SOURCES from Makefile.am
 LOCAL_SRC_FILES += \
-	$(SOURCE_PATH)/turbojpeg.c \
-	$(SOURCE_PATH)/transupp.c \
-	$(SOURCE_PATH)/jdatadst-tj.c \
-	$(SOURCE_PATH)/jdatasrc-tj.c \
+	$(OSMAND_JPEG)/turbojpeg.c \
+	$(OSMAND_JPEG)/transupp.c \
+	$(OSMAND_JPEG)/jdatadst-tj.c \
+	$(OSMAND_JPEG)/jdatasrc-tj.c \
 
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/include \
-
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/$(SOURCE_PATH)/simd \
-	$(LOCAL_PATH)/$(SOURCE_PATH) \
+	$(OSMAND_JPEG)/simd \
+	$(OSMAND_JPEG) \
 
 LOCAL_EXPORT_C_INCLUDES := \
-	$(LOCAL_PATH)/$(SOURCE_PATH) \
+	$(OSMAND_JPEG) \
 
 LOCAL_CFLAGS += \
 	-DBUILD="" \
