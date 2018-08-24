@@ -454,7 +454,6 @@ LOCAL_SRC_FILES += \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGImageEncoder.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGWriteUtility.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_none.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_crc32.cpp
 
 # Android specific files
@@ -494,6 +493,7 @@ ifeq ($(TARGET_ARCH),arm64)
 	#	-DSK_ARM_HAS_OPTIONAL_NEON
 	# ARM
 	LOCAL_SRC_FILES += \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp 
 
@@ -510,6 +510,7 @@ else ifeq ($(TARGET_ARCH),arm)
 
 	# ARM
 	LOCAL_SRC_FILES += \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp 
 
@@ -528,7 +529,10 @@ else ifeq ($(TARGET_ARCH),arm)
 else
 
 	LOCAL_SRC_FILES += \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_none.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/opts_check_x86.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_SSE2.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_SSSE3.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_SSE2.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse41.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse42.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_ssse3.cpp \
