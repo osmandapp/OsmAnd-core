@@ -15,7 +15,7 @@ OSMAND_LIBPNG_RELATIVE := ../../../externals/skia/upstream.patched/third_party/l
 OSMAND_LIBPNG := $(LOCAL_PATH)/$(OSMAND_LIBPNG_RELATIVE)
 
 OSMAND_GIF_RELATIVE := ../../../externals/skia/upstream.patched/third_party/gif
-OSMAND_GIF := $(LOCAL_PATH)/$(OSMAND_LIBPNG_RELATIVE)
+OSMAND_GIF := $(LOCAL_PATH)/$(OSMAND_GIF_RELATIVE)
 
 OSMAND_JPEG_RELATIVE := ../../../externals/skia/upstream.patched/third_party/externals/libjpeg-turbo
 OSMAND_JPEG := $(LOCAL_PATH)/$(OSMAND_JPEG_RELATIVE)
