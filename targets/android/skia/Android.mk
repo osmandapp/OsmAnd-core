@@ -495,25 +495,15 @@ ifeq ($(TARGET_ARCH),arm64)
 	#	-DSK_ARM_HAS_OPTIONAL_NEON
 	# ARM
 	LOCAL_SRC_FILES += \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_arm.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlurImage_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkMorphology_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkTextureCompression_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkUtils_opts_none.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkXfermode_opts_arm.cpp
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp 
 
 	# NEON
 	LOCAL_SRC_FILES += \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_arm_neon.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_matrixProcs_neon.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm_neon.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm_neon.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlurImage_opts_neon.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkMorphology_opts_neon.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkTextureCompression_opts_neon.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkXfermode_opts_arm_neon.cpp
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm_neon.cpp 
 
 else ifeq ($(TARGET_ARCH),arm)
 	#LOCAL_CFLAGS += \
@@ -521,15 +511,8 @@ else ifeq ($(TARGET_ARCH),arm)
 
 	# ARM
 	LOCAL_SRC_FILES += \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/memset.arm.S \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_arm.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlurImage_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkMorphology_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkTextureCompression_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkUtils_opts_arm.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkXfermode_opts_arm.cpp
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm.cpp 
 
 	# NEON
 	#LOCAL_SRC_FILES += \
