@@ -458,14 +458,12 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDebug_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDiscardableMemory_none.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontConfigParser_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType_common.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontMgr_android.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_posix.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTLS_pthread.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread_other.cpp
+	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp 
 
 	
 LOCAL_CFLAGS += \
