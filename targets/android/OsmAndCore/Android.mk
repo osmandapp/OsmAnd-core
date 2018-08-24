@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 OSMAND_PROTOBUF := $(LOCAL_PATH)/../../../externals/protobuf/upstream.patched
 OSMAND_SKIA_ROOT := $(LOCAL_PATH)/../../../externals/skia
 OSMAND_SKIA := $(LOCAL_PATH)/../../../externals/skia/upstream.patched
-OSMAND_EXPAT := $(LOCAL_PATH)/../../../externals/expat/upstream.patched
+OSMAND_EXPAT := $(LOCAL_PATH)/../../../externals/skia/upstream.patched/third_party/externals/expat
 OSMAND_CORE_RELATIVE := ../../../native
 OSMAND_CORE := $(LOCAL_PATH)/$(OSMAND_CORE_RELATIVE)
 
