@@ -499,7 +499,6 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkUnPreMultiply.h \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkVertices.h \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkWriter32.h \
-	# private
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkAtomics.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkChecksum.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkFixed.h \
@@ -524,7 +523,6 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkTSearch.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkTLogic.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkWeakRefCnt.h \
-	# pathops
 	$(OSMAND_SKIA_RELATIVE)/include/pathops/SkPathOps.h \
 	$(OSMAND_SKIA_RELATIVE)/src/pathops/SkAddIntersections.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pathops/SkDConicLineIntersection.cpp \
@@ -653,7 +651,6 @@ LOCAL_SRC_FILES += \
 # effects
 LOCAL_SRC_FILES += \
   $(OSMAND_SKIA_RELATIVE)/src/c/sk_effects.cpp \
-
   $(OSMAND_SKIA_RELATIVE)/src/effects/GrCircleBlurFragmentProcessor.cpp \
   $(OSMAND_SKIA_RELATIVE)/src/effects/GrCircleBlurFragmentProcessor.h \
   $(OSMAND_SKIA_RELATIVE)/src/effects/GrAlphaThresholdFragmentProcessor.cpp \
@@ -792,17 +789,14 @@ LOCAL_SRC_FILES += \
     $(OSMAND_SKIA_RELATIVE)/src/utils/mac/SkStream_mac.cpp \
     $(OSMAND_SKIA_RELATIVE)/third_party/etc1/etc1.cpp \
     $(OSMAND_SKIA_RELATIVE)/third_party/gif/SkGifImageReader.cpp \
-
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkIcoCodec.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkPngCodec.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkPNGImageEncoder.cpp \
-
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkJpegCodec.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkJpegDecoderMgr.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkJpegUtility.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGImageEncoder.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGWriteUtility.cpp \
-
     $(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_none.cpp
 
 # Android specific files
