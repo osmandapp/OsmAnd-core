@@ -499,6 +499,9 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkUnPreMultiply.h \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkVertices.h \
 	$(OSMAND_SKIA_RELATIVE)/include/core/SkWriter32.h \
+	$(OSMAND_SKIA_RELATIVE)/include/codec/SkAndroidCodec.h \
+	$(OSMAND_SKIA_RELATIVE)/include/codec/SkCodec.h \
+	$(OSMAND_SKIA_RELATIVE)/include/codec/SkEncodedInfo.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkAtomics.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkChecksum.h \
 	$(OSMAND_SKIA_RELATIVE)/include/private/SkFixed.h \
