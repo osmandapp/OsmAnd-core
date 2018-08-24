@@ -24,6 +24,7 @@ OSMAND_JPEG_ROOT := $(LOCAL_PATH)/$(OSMAND_JPEG_ROOT_RELATIVE)
 
 OSMAND_EXPAT_RELATIVE := ../../../externals/skia/upstream.patched/third_party/externals/expat
 OSMAND_EXPAT := $(LOCAL_PATH)/$(OSMAND_EXPAT_RELATIVE)
+LOCAL_ARM_NEON := true
 
 LOCAL_C_INCLUDES += \
 	${OSMAND_SKIA}/src/c \
