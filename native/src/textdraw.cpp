@@ -772,13 +772,13 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 #if defined(ANDROID)
     // This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
-        sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+        sDefaultTypeface = SkTypeface::MakeFromName("Droid Serif", SkTypeface::kNormal);
     if(!sBoldTypeface)
-        sBoldTypeface = SkTypeface::CreateFromName("", SkTypeface::kBold);
+        sBoldTypeface = SkTypeface::MakeFromName("", SkTypeface::kBold);
     if(!sItalicTypeface)
-        sItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kItalic);
+        sItalicTypeface = SkTypeface::MakeFromName("", SkTypeface::kItalic);
     if(!sBoldItalicTypeface)
-        sBoldItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kBoldItalic);
+        sBoldItalicTypeface = SkTypeface::MakeFromName("", SkTypeface::kBoldItalic);
 #endif
 
 	SkPaint paintIcon;
