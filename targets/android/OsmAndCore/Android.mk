@@ -20,6 +20,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 	$(OSMAND_SKIA) \
 	$(OSMAND_EXPAT)/lib \
 	$(OSMAND_SKIA)/include/core \
+	$(OSMAND_SKIA)/include/codec \
 	$(OSMAND_SKIA)/include/config \
 	$(OSMAND_SKIA)/include/effects \
 	$(OSMAND_SKIA)/include/images \
@@ -73,7 +74,7 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_ft2 \
 	osmand_png \
 	osmand_expat
-	
+
 LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
 
 LOCAL_LDLIBS := -lz -llog -ldl -ljnigraphics
