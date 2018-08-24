@@ -21,7 +21,7 @@ endif
 LOCAL_ASMFLAGS += -DELF
 
 ifeq ($(TARGET_ARCH_ABI),x86_64)
-SIMD_SOURCES := $(OSMAND_JPEG)/simd/x86_64
+SIMD_SOURCES := $(OSMAND_JPEG_RELATIVE)/simd/x86_64
 LOCAL_SRC_FILES += \
 	$(SIMD_SOURCES)/jsimd.c \
 	$(SIMD_SOURCES)/jfdctflt-sse-64.asm \
@@ -46,7 +46,42 @@ LOCAL_CFLAGS += \
 LOCAL_ASMFLAGS += -D__x86_64__
 
 else ifeq ($(TARGET_ARCH_ABI),x86)
-SIMD_SOURCES := $(OSMAND_JPEG)/simd/i386
+SIMD_SOURCES := $(OSMAND_JPEG_RELATIVE)/simd/i386
+LOCAL_SRC_FILES += \
+	$(SIMD_SOURCES)/jsimd.c \
+	$(SIMD_SOURCES)/jsimdcpu.asm \
+	$(SIMD_SOURCES)/jfdctflt-3dn.asm \
+	$(SIMD_SOURCES)/jidctflt-3dn.asm \
+	$(SIMD_SOURCES)/jquant-3dn.asm \
+	$(SIMD_SOURCES)/jccolor-mmx.asm \
+	$(SIMD_SOURCES)/jcgray-mmx.asm \
+	$(SIMD_SOURCES)/jcsample-mmx.asm \
+	$(SIMD_SOURCES)/jdcolor-mmx.asm \
+	$(SIMD_SOURCES)/jdmerge-mmx.asm \
+	$(SIMD_SOURCES)/jdsample-mmx.asm \
+	$(SIMD_SOURCES)/jfdctfst-mmx.asm \
+	$(SIMD_SOURCES)/jfdctint-mmx.asm \
+	$(SIMD_SOURCES)/jidctfst-mmx.asm \
+	$(SIMD_SOURCES)/jidctint-mmx.asm \
+	$(SIMD_SOURCES)/jidctred-mmx.asm \
+	$(SIMD_SOURCES)/jquant-mmx.asm \
+	$(SIMD_SOURCES)/jfdctflt-sse.asm \
+	$(SIMD_SOURCES)/jidctflt-sse.asm \
+	$(SIMD_SOURCES)/jquant-sse.asm \
+	$(SIMD_SOURCES)/jccolor-sse2.asm \
+	$(SIMD_SOURCES)/jcgray-sse2.asm \
+	$(SIMD_SOURCES)/jcsample-sse2.asm \
+	$(SIMD_SOURCES)/jdcolor-sse2.asm \
+	$(SIMD_SOURCES)/jdmerge-sse2.asm \
+	$(SIMD_SOURCES)/jdsample-sse2.asm \
+	$(SIMD_SOURCES)/jfdctfst-sse2.asm \
+	$(SIMD_SOURCES)/jfdctint-sse2.asm \
+	$(SIMD_SOURCES)/jidctflt-sse2.asm \
+	$(SIMD_SOURCES)/jidctfst-sse2.asm \
+	$(SIMD_SOURCES)/jidctint-sse2.asm \
+	$(SIMD_SOURCES)/jidctred-sse2.asm \
+	$(SIMD_SOURCES)/jquantf-sse2.asm \
+	$(SIMD_SOURCES)/jquanti-sse2.asm \
 
 LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=4 \
@@ -54,7 +89,7 @@ LOCAL_CFLAGS += \
 LOCAL_ASMFLAGS += -DPIC
 
 else ifneq ($(filter $(TARGET_ARCH_ABI), armeabi-v7a armeabi-v7a-hard),)
-SIMD_SOURCES := $(OSMAND_JPEG)/simd/arm
+SIMD_SOURCES := $(OSMAND_JPEG_RELATIVE)/simd/arm
 LOCAL_SRC_FILES += \
 	$(SIMD_SOURCES)/jsimd.c \
 	$(SIMD_SOURCES)/jsimd_arm_neon.S \
@@ -67,7 +102,7 @@ LOCAL_CFLAGS += \
 	-DSIZEOF_SIZE_T=4 \
 
 else ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-SIMD_SOURCES := $(OSMAND_JPEG)/simd/arm64
+SIMD_SOURCES := $(OSMAND_JPEG_RELATIVE)/simd/arm64
 LOCAL_SRC_FILES += \
 	$(SIMD_SOURCES)/jsimd.c \
 	$(SIMD_SOURCES)/jsimd_neon.S \
@@ -79,65 +114,65 @@ endif
 
 # libjpeg_la_SOURCES from Makefile.am
 LOCAL_SRC_FILES += \
-	$(OSMAND_JPEG)/jcapimin.c \
-	$(OSMAND_JPEG)/jcapistd.c \
-	$(OSMAND_JPEG)/jccoefct.c \
-	$(OSMAND_JPEG)/jccolor.c \
-	$(OSMAND_JPEG)/jcdctmgr.c \
-	$(OSMAND_JPEG)/jchuff.c \
-	$(OSMAND_JPEG)/jcinit.c \
-	$(OSMAND_JPEG)/jcmainct.c \
-	$(OSMAND_JPEG)/jcmarker.c \
-	$(OSMAND_JPEG)/jcmaster.c \
-	$(OSMAND_JPEG)/jcomapi.c \
-	$(OSMAND_JPEG)/jcparam.c \
-	$(OSMAND_JPEG)/jcphuff.c \
-	$(OSMAND_JPEG)/jcprepct.c \
-	$(OSMAND_JPEG)/jcsample.c \
-	$(OSMAND_JPEG)/jctrans.c \
-	$(OSMAND_JPEG)/jdapimin.c \
-	$(OSMAND_JPEG)/jdapistd.c \
-	$(OSMAND_JPEG)/jdatadst.c \
-	$(OSMAND_JPEG)/jdatasrc.c \
-	$(OSMAND_JPEG)/jdcoefct.c \
-	$(OSMAND_JPEG)/jdcolor.c \
-	$(OSMAND_JPEG)/jddctmgr.c \
-	$(OSMAND_JPEG)/jdhuff.c \
-	$(OSMAND_JPEG)/jdinput.c \
-	$(OSMAND_JPEG)/jdmainct.c \
-	$(OSMAND_JPEG)/jdmarker.c \
-	$(OSMAND_JPEG)/jdmaster.c \
-	$(OSMAND_JPEG)/jdmerge.c \
-	$(OSMAND_JPEG)/jdphuff.c \
-	$(OSMAND_JPEG)/jdpostct.c \
-	$(OSMAND_JPEG)/jdsample.c \
-	$(OSMAND_JPEG)/jdtrans.c \
-	$(OSMAND_JPEG)/jerror.c \
-	$(OSMAND_JPEG)/jfdctflt.c \
-	$(OSMAND_JPEG)/jfdctfst.c \
-	$(OSMAND_JPEG)/jfdctint.c \
-	$(OSMAND_JPEG)/jidctflt.c \
-	$(OSMAND_JPEG)/jidctfst.c \
-	$(OSMAND_JPEG)/jidctint.c \
-	$(OSMAND_JPEG)/jidctred.c \
-	$(OSMAND_JPEG)/jmemmgr.c \
-	$(OSMAND_JPEG)/jmemnobs.c \
-	$(OSMAND_JPEG)/jquant1.c \
-	$(OSMAND_JPEG)/jquant2.c \
-	$(OSMAND_JPEG)/jutils.c \
+	$(OSMAND_JPEG_RELATIVE)/jcapimin.c \
+	$(OSMAND_JPEG_RELATIVE)/jcapistd.c \
+	$(OSMAND_JPEG_RELATIVE)/jccoefct.c \
+	$(OSMAND_JPEG_RELATIVE)/jccolor.c \
+	$(OSMAND_JPEG_RELATIVE)/jcdctmgr.c \
+	$(OSMAND_JPEG_RELATIVE)/jchuff.c \
+	$(OSMAND_JPEG_RELATIVE)/jcinit.c \
+	$(OSMAND_JPEG_RELATIVE)/jcmainct.c \
+	$(OSMAND_JPEG_RELATIVE)/jcmarker.c \
+	$(OSMAND_JPEG_RELATIVE)/jcmaster.c \
+	$(OSMAND_JPEG_RELATIVE)/jcomapi.c \
+	$(OSMAND_JPEG_RELATIVE)/jcparam.c \
+	$(OSMAND_JPEG_RELATIVE)/jcphuff.c \
+	$(OSMAND_JPEG_RELATIVE)/jcprepct.c \
+	$(OSMAND_JPEG_RELATIVE)/jcsample.c \
+	$(OSMAND_JPEG_RELATIVE)/jctrans.c \
+	$(OSMAND_JPEG_RELATIVE)/jdapimin.c \
+	$(OSMAND_JPEG_RELATIVE)/jdapistd.c \
+	$(OSMAND_JPEG_RELATIVE)/jdatadst.c \
+	$(OSMAND_JPEG_RELATIVE)/jdatasrc.c \
+	$(OSMAND_JPEG_RELATIVE)/jdcoefct.c \
+	$(OSMAND_JPEG_RELATIVE)/jdcolor.c \
+	$(OSMAND_JPEG_RELATIVE)/jddctmgr.c \
+	$(OSMAND_JPEG_RELATIVE)/jdhuff.c \
+	$(OSMAND_JPEG_RELATIVE)/jdinput.c \
+	$(OSMAND_JPEG_RELATIVE)/jdmainct.c \
+	$(OSMAND_JPEG_RELATIVE)/jdmarker.c \
+	$(OSMAND_JPEG_RELATIVE)/jdmaster.c \
+	$(OSMAND_JPEG_RELATIVE)/jdmerge.c \
+	$(OSMAND_JPEG_RELATIVE)/jdphuff.c \
+	$(OSMAND_JPEG_RELATIVE)/jdpostct.c \
+	$(OSMAND_JPEG_RELATIVE)/jdsample.c \
+	$(OSMAND_JPEG_RELATIVE)/jdtrans.c \
+	$(OSMAND_JPEG_RELATIVE)/jerror.c \
+	$(OSMAND_JPEG_RELATIVE)/jfdctflt.c \
+	$(OSMAND_JPEG_RELATIVE)/jfdctfst.c \
+	$(OSMAND_JPEG_RELATIVE)/jfdctint.c \
+	$(OSMAND_JPEG_RELATIVE)/jidctflt.c \
+	$(OSMAND_JPEG_RELATIVE)/jidctfst.c \
+	$(OSMAND_JPEG_RELATIVE)/jidctint.c \
+	$(OSMAND_JPEG_RELATIVE)/jidctred.c \
+	$(OSMAND_JPEG_RELATIVE)/jmemmgr.c \
+	$(OSMAND_JPEG_RELATIVE)/jmemnobs.c \
+	$(OSMAND_JPEG_RELATIVE)/jquant1.c \
+	$(OSMAND_JPEG_RELATIVE)/jquant2.c \
+	$(OSMAND_JPEG_RELATIVE)/jutils.c \
 
 # if WITH_ARITH_ENC from Makefile.am
 LOCAL_SRC_FILES += \
-	$(OSMAND_JPEG)/jaricom.c \
-	$(OSMAND_JPEG)/jcarith.c \
-	$(OSMAND_JPEG)/jdarith.c \
+	$(OSMAND_JPEG_RELATIVE)/jaricom.c \
+	$(OSMAND_JPEG_RELATIVE)/jcarith.c \
+	$(OSMAND_JPEG_RELATIVE)/jdarith.c \
 
 # libturbojpeg_la_SOURCES from Makefile.am
 LOCAL_SRC_FILES += \
-	$(OSMAND_JPEG)/turbojpeg.c \
-	$(OSMAND_JPEG)/transupp.c \
-	$(OSMAND_JPEG)/jdatadst-tj.c \
-	$(OSMAND_JPEG)/jdatasrc-tj.c \
+	$(OSMAND_JPEG_RELATIVE)/turbojpeg.c \
+	$(OSMAND_JPEG_RELATIVE)/transupp.c \
+	$(OSMAND_JPEG_RELATIVE)/jdatadst-tj.c \
+	$(OSMAND_JPEG_RELATIVE)/jdatasrc-tj.c \
 
 LOCAL_C_INCLUDES += \
 	$(OSMAND_JPEG)/simd \
