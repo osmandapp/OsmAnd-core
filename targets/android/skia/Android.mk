@@ -453,7 +453,9 @@ LOCAL_SRC_FILES += \
     $(OSMAND_SKIA_RELATIVE)/src/codec/SkJpegUtility.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGImageEncoder.cpp \
     $(OSMAND_SKIA_RELATIVE)/src/images/SkJPEGWriteUtility.cpp \
-    $(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_none.cpp
+    $(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_none.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
+    $(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_crc32.cpp
 
 # Android specific files
 LOCAL_SRC_FILES += \
@@ -462,6 +464,8 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType_common.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontHost_FreeType.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontMgr_android.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontMgr_android_factory.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/ports/SkFontMgr_android_parser.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_posix.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTLS_pthread.cpp 
 	
@@ -524,14 +528,12 @@ else ifeq ($(TARGET_ARCH),arm)
 else
 
 	LOCAL_SRC_FILES += \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_opts_none.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitMask_opts_none.cpp \
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_none.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse41.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_sse42.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_ssse3.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_avx.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_hsw.cpp \
-		$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_none.cpp 
+		$(OSMAND_SKIA_RELATIVE)/src/opts/SkOpts_hsw.cpp 
 
 		
 endif
