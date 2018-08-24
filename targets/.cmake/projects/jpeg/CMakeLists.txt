@@ -11,7 +11,9 @@ if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang
 endif()
 
 include(CheckTypeSize)
-check_type_size(size_t SIZE_T)
+
+check_type_size("size_t" SIZE_T)
+check_type_size("unsigned long" UNSIGNED_LONG)
 
 ###############################################################################
 # CONFIGURATION OPTIONS

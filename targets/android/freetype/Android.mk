@@ -3,9 +3,9 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 PROJECT_ROOT_RELATIVE := ../../../../platforms/android/OsmAnd
-OSMAND_FREETYPE_ROOT_RELATIVE := ../../../externals/freetype
+OSMAND_FREETYPE_ROOT_RELATIVE := ../../../externals/skia/upstream.patched/third_party/externals/freetype
 OSMAND_FREETYPE_ROOT := $(LOCAL_PATH)/$(OSMAND_FREETYPE_ROOT_RELATIVE)
-OSMAND_FREETYPE_RELATIVE := ../../../externals/freetype/upstream.patched
+OSMAND_FREETYPE_RELATIVE := ../../../externals/skia/upstream.patched/third_party/externals/freetype
 OSMAND_FREETYPE := $(LOCAL_PATH)/$(OSMAND_FREETYPE_RELATIVE)
 
 LOCAL_SRC_FILES:= \
@@ -34,10 +34,9 @@ LOCAL_SRC_FILES:= \
 	$(OSMAND_FREETYPE_RELATIVE)/src/truetype/truetype.c
 
 LOCAL_C_INCLUDES += \
-	$(OSMAND_FREETYPE_ROOT) \
 	$(OSMAND_FREETYPE)/include
 
-LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H="<ftmodule-override.h>" -fPIC
+LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -fPIC
 LOCAL_ARM_MODE := arm
 
 LOCAL_MODULE := osmand_ft2
