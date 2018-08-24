@@ -409,6 +409,7 @@ ifneq ($(OSMAND_USE_PREBUILT),true)
 LOCAL_ARM_MODE := arm
 
 ifeq ($(TARGET_ARCH),arm64)
+	LOCAL_ARM_NEON := true
 	LOCAL_CFLAGS += \
 		-DSK_ARM_HAS_OPTIONAL_NEON
 	# ARM
@@ -434,6 +435,7 @@ ifeq ($(TARGET_ARCH),arm64)
 		$(OSMAND_SKIA_RELATIVE)/src/opts/SkXfermode_opts_arm_neon.cpp
 
 else ifeq ($(TARGET_ARCH),arm)
+	LOCAL_ARM_NEON := true
 	LOCAL_CFLAGS += \
 		-DSK_ARM_HAS_OPTIONAL_NEON
 
