@@ -125,10 +125,11 @@ endif()
 
 if(CMAKE_TARGET_OS STREQUAL "linux")
 
-	
+
 	file(GLOB src_utils_mac "${UPSTREAM}/src/utils/mac/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/ports/SkFontMgr_fontconfig.cpp"
+		"${UPSTREAM}/src/ports/SkFontMgr_fontconfig_factory.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
 		"${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
