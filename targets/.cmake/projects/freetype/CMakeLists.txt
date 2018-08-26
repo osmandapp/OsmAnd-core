@@ -6,10 +6,16 @@ include_directories(AFTER SYSTEM
 	"${ROOT}"
 	"${UPSTREAM}/include"
 )
+if(CMAKE_TARGET_OS STREQUAL "linux")
+	include_directories(AFTER SYSTEM
+		"${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/freetype/include/freetype-android/"
+	)
+endif()
 add_definitions(-DFT2_BUILD_LIBRARY)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
+
 add_library(freetype2_osmand STATIC
 	"${UPSTREAM}/src/base/ftbase.c"
 	"${UPSTREAM}/src/base/ftbbox.c"
