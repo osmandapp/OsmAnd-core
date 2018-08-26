@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 OSMAND_PROTOBUF := $(LOCAL_PATH)/../../../externals/protobuf/upstream.patched
 OSMAND_SKIA_ROOT := $(LOCAL_PATH)/../../../externals/skia
 OSMAND_SKIA := $(LOCAL_PATH)/../../../externals/skia/upstream.patched
-OSMAND_EXPAT := $(LOCAL_PATH)/../../../externals/expat/upstream.patched
+OSMAND_EXPAT := $(LOCAL_PATH)/../../../externals/skia/upstream.patched/third_party/externals/expat
 OSMAND_CORE_RELATIVE := ../../../native
 OSMAND_CORE := $(LOCAL_PATH)/$(OSMAND_CORE_RELATIVE)
 
@@ -20,6 +20,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src \
 	$(OSMAND_SKIA) \
 	$(OSMAND_EXPAT)/lib \
 	$(OSMAND_SKIA)/include/core \
+	$(OSMAND_SKIA)/include/codec \
 	$(OSMAND_SKIA)/include/config \
 	$(OSMAND_SKIA)/include/effects \
 	$(OSMAND_SKIA)/include/images \
@@ -72,8 +73,8 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_jpeg \
 	osmand_ft2 \
 	osmand_png \
-	osmand_gif \
 	osmand_expat
+
 LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
 
 LOCAL_LDLIBS := -lz -llog -ldl -ljnigraphics

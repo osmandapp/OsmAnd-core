@@ -1,7 +1,7 @@
 project(expat_osmand)
 
-set(ROOT "${OSMAND_ROOT}/externals/expat")
-set(UPSTREAM "${ROOT}/upstream.patched")
+set(ROOT "${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/externals/expat")
+set(UPSTREAM "${ROOT}")
 
 include_directories(AFTER SYSTEM
 	"${ROOT}"

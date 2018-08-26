@@ -1,4 +1,4 @@
-diff -rupN upstream.original/src/image/SkImage_Gpu.cpp upstream.patched/src/image/SkImage_Gpu.cpp
+  diff -rupN upstream.original/src/image/SkImage_Gpu.cpp upstream.patched/src/image/SkImage_Gpu.cpp
 --- upstream.original/src/image/SkImage_Gpu.cpp	2015-04-02 12:15:02.422077300 +0300
 +++ upstream.patched/src/image/SkImage_Gpu.cpp	2015-04-02 12:16:46.926778300 +0300
 @@ -13,6 +13,8 @@

@@ -3,14 +3,14 @@
 #include <algorithm>
 #include <math.h>
 #include <time.h>
-#include "SkTypes.h"
-#include "SkTypeface.h"
-#include "SkCanvas.h"
-#include "SkPaint.h"
-#include "SkPath.h"
-#include "SkUtils.h"
-#include "SkFontMgr.h"
-
+#include <SkTypes.h>
+#include <SkTypeface.h>
+#include <SkCanvas.h>
+#include <SkPaint.h>
+#include <SkPath.h>
+#include <SkUtils.h>
+#include <SkFontMgr.h>
+#include <SkFilterQuality.h>
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include "Logging.h"
@@ -62,11 +62,13 @@ struct DebugTextInfo {
 
 };
 
-const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length, string fontName, 
+const sk_sp<SkTypeface> FontRegistry::registerStream(const char* data, uint32_t length, string fontName, 
 			bool bold, bool italic) {
 	SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
-	SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
-    fontDataStream->unref();
+	// sk_sp<SkTypeface> typeface = SkTypeface::MakeFromStream(fontDataStream, 0);
+	sk_sp<SkFontMgr> fm(SkFontMgr::RefDefault());
+    SkTypeface* typeface = fm->createFromStream(fontDataStream, 0);
+    //fontDataStream->unref();
     if (!typeface) 
     {
         return nullptr;
@@ -75,16 +77,16 @@ const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length
  	entry->bold = bold;
  	entry->italic = italic;
  	entry->fontName = fontName;
- 	entry->typeface = typeface;
+ 	entry->typeface = sk_sp<SkTypeface>(typeface);
    	cache.push_back(entry);
-   	return typeface;
+   	return entry->typeface;
 }
 
-void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, SkTypeface* def) 
+void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, sk_sp<SkTypeface> def) 
 {
  	paint->setTextEncoding(SkPaint::kUTF8_TextEncoding);
  	const FontEntry* pBestMatchEntry = nullptr;
-    SkTypeface* bestMatchTypeface = nullptr;
+    sk_sp<SkTypeface> bestMatchTypeface = nullptr;
  	for(uint i = 0; i < cache.size(); i++) 
  	{
  		if(bestMatchTypeface != nullptr && (bold != cache[i]->bold) && (italic != cache[i]->italic))
@@ -110,12 +112,14 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
     {
 		paint->setTypeface(def);
 		if (!paint->containsText(text.c_str(), text.length())) {
+			// TODO investigate that typeface is not constantly readed from memory
 			const auto fontMgr = SkFontMgr::RefDefault();
 			const auto pText = text.c_str();
 			const auto unichar = SkUTF8_ToUnichar(pText);
-			const auto typeface = fontMgr->matchFamilyStyleCharacter(0, SkFontStyle(), nullptr, 0, unichar);
-			paint->setTypeface(typeface);	
-			fontMgr->unref();
+			if (unichar < 0xD800 || unichar > 0xDFFF) {
+				const auto typeface = fontMgr->matchFamilyStyleCharacter(0, SkFontStyle(), nullptr, 0, unichar);
+				paint->setTypeface(sk_sp<SkTypeface>(typeface));	
+			}
  		}
         // Adjust to handle bold text
         paint->setFakeBoldText(bold);	
@@ -585,10 +589,10 @@ void drawShield(SHARED_PTR<TextDrawInfo> textDrawInfo, std::string res, SkPaint*
 		float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 		float left = textDrawInfo->centerX - ico->width() / 2 * coef - 0.5f; //
 		float top = textDrawInfo->centerY - ico->height() / 2 * coef + fm.fTop / 3; //textDrawInfo->textBounds.height() / 2;
-		// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
+		SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height());
 		SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 					ico->height() * coef);
-		PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, paintIcon));
+		PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, src, r, paintIcon));
 	}
 }
 
@@ -752,10 +756,10 @@ void combineSimilarText(RenderingContext* rc) {
 }
 	
 
-static SkTypeface* sDefaultTypeface = nullptr;
-static SkTypeface* sItalicTypeface = nullptr;
-static SkTypeface* sBoldTypeface = nullptr;
-static SkTypeface* sBoldItalicTypeface = nullptr;
+static sk_sp<SkTypeface> sDefaultTypeface = nullptr;
+static sk_sp<SkTypeface> sItalicTypeface = nullptr;
+static sk_sp<SkTypeface> sBoldTypeface = nullptr;
+static sk_sp<SkTypeface> sBoldItalicTypeface = nullptr;
 
 void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
@@ -768,20 +772,20 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 #if defined(ANDROID)
     // This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
-        sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+        sDefaultTypeface = SkTypeface::MakeFromName("Droid Serif", SkFontStyle(SkFontStyle::kNormal_Weight, SkFontStyle::kNormal_Width, SkFontStyle::kUpright_Slant));
     if(!sBoldTypeface)
-        sBoldTypeface = SkTypeface::CreateFromName("", SkTypeface::kBold);
+        sBoldTypeface = SkTypeface::MakeFromName("", SkFontStyle(SkFontStyle::kBold_Weight, SkFontStyle::kNormal_Width, SkFontStyle::kUpright_Slant));
     if(!sItalicTypeface)
-        sItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kItalic);
+        sItalicTypeface = SkTypeface::MakeFromName("", SkFontStyle(SkFontStyle::kNormal_Weight, SkFontStyle::kNormal_Width, SkFontStyle::kItalic_Slant));
     if(!sBoldItalicTypeface)
-        sBoldItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kBoldItalic);
+        sBoldItalicTypeface = SkTypeface::MakeFromName("", SkFontStyle(SkFontStyle::kBold_Weight, SkFontStyle::kNormal_Width, SkFontStyle::kItalic_Slant));
 #endif
 
 	SkPaint paintIcon;
 	paintIcon.setStyle(SkPaint::kStroke_Style);
 	paintIcon.setStrokeWidth(1);
 	paintIcon.setColor(0xff000000);
-	paintIcon.setFilterLevel(SkPaint::kLow_FilterLevel);
+	paintIcon.setFilterQuality(SkFilterQuality::kLow_SkFilterQuality);
 	SkPaint paintText;
 	paintText.setStyle(SkPaint::kFill_Style);
 	paintText.setStrokeWidth(1);
@@ -809,7 +813,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
         }
 
         // Prepare font
-        SkTypeface* def = sDefaultTypeface;
+        sk_sp<SkTypeface> def = sDefaultTypeface;
         if( textDrawInfo->bold && textDrawInfo->italic) {
         	def = sBoldItalicTypeface;
         } else if(textDrawInfo->italic) {

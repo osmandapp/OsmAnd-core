@@ -2,8 +2,9 @@
 #include "commonOsmAndCore.h"
 
 #include <SkPath.h>
-#include <SkBitmap.h>
-#include <SkImageDecoder.h>
+#include <SkCodec.h>
+#include <SkImageInfo.h>
+#include "SkImageGenerator.h"
 #include "Logging.h"
 
 #if defined(_WIN32)
@@ -55,6 +56,39 @@ void deleteObjects(std::vector<MapDataObject* > & v)
 	v.clear();
 }
 
+bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst) {
+    sk_sp<SkData> resourceData(SkData::MakeFromFileName(resourcePath));
+    std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
+    if (!gen) {
+        return false;
+    }
+    SkPMColor ctStorage[256];
+    sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
+    int count = ctable->count();
+    return dst->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) &&
+        gen->getPixels(gen->getInfo().makeColorSpace(nullptr), dst->getPixels(), dst->rowBytes(),
+                       const_cast<SkPMColor*>(ctable->readColors()), &count);
+}
+
+SkStreamAsset* GetResourceAsStream(const char* resourcePath) {
+    std::unique_ptr<SkFILEStream> stream(new SkFILEStream(resourcePath));
+    if (!stream->isValid()) {
+        return nullptr;
+    }
+    return stream.release();
+}
+
+sk_sp<SkData> GetResourceAsData(const char* resourcePath) {
+    return SkData::MakeFromFileName(resourcePath);
+}
+
+sk_sp<SkTypeface> MakeResourceAsTypeface(const char* resourcePath) {
+    std::unique_ptr<SkStreamAsset> stream(GetResourceAsStream(resourcePath));
+    if (!stream) {
+        return nullptr;
+    }
+    return SkTypeface::MakeFromStream(stream.release());
+}
 
 
 TextDrawInfo::~TextDrawInfo()
@@ -92,12 +126,13 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 		if (f != NULL) {
 			fclose(f);
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
-			SkBitmap* bmp = new SkBitmap();
-			if (!SkImageDecoder::DecodeFile(fl.c_str(), bmp)) {
-				delete bmp;
-				return NULL;
+			SkBitmap* bm = new SkBitmap();
+			if (!GetResourceAsBitmap(fl.c_str(), bm)) {
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unable to decode '%s'", fl.c_str());
+				delete bm;
+		    	return NULL;				
 			}
-			return bmp;
+			return bm;
 		}
 	}
 	return NULL;

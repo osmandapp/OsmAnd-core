@@ -3,9 +3,9 @@
 #endif
 #include <SkBitmap.h>
 #include <SkCanvas.h>
-#include <SkImageDecoder.h>
-#include <SkImageEncoder.h>
+#include <SkCodec.h>
 #include <SkStream.h>
+#include <SkImageGenerator.h>
 #include "java_renderRules.h"
 #include "CommonCollections.h"
 #include "java_wrap.h"
@@ -362,18 +362,19 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 #endif
 	// Allocate ctor paramters
 	jobject bitmapBuffer;
-	if(encodePNG) {
-		SkImageEncoder* enc = SkImageEncoder::Create(SkImageEncoder::kPNG_Type);
+	if(encodePNG) { 
 		SkDynamicMemoryWStream* stream = new SkDynamicMemoryWStream();
-		enc->encodeStream(stream, *bitmap, 80);
-		// clean previous data
-		free(bitmapData);
-		bitmapDataSize = stream->bytesWritten();
-		bitmapData = malloc(bitmapDataSize);
+        if (SkEncodeImage(stream, *bitmap, SkEncodedImageFormat::kPNG, 100)) {
+			// clean previous data
+			if (bitmapData != NULL) {
+				free(bitmapData);
+			}
+			bitmapDataSize = stream->bytesWritten();
+			bitmapData = malloc(bitmapDataSize);
 
-		stream->copyTo(bitmapData);
-		delete stream;
-		delete enc;
+			stream->copyTo(bitmapData);
+        }
+        delete stream;
 	}
 	bitmapBuffer = ienv->NewDirectByteBuffer(bitmapData, bitmapDataSize);
 
@@ -1327,23 +1328,35 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 	jint bufferLen = env->GetArrayLength(javaIconRawData);
 
 	// Decode bitmap
-	SkBitmap* iconBitmap = new SkBitmap();
 	//TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
-	if(!SkImageDecoder::DecodeMemory(bitmapBuffer, bufferLen, iconBitmap))
-	{
-		// Failed to decode
-		delete iconBitmap;
-
+    sk_sp<SkData> resourceData((SkData::MakeFromMalloc(bitmapBuffer, bufferLen)));
+    std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
+    if (!gen) {
 		this->nativeOperations.Start();
-		env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 		env->DeleteLocalRef(javaIconRawData);
 
 		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
 
-		return NULL;
+    	return NULL;
+    }
+    SkPMColor ctStorage[256];
+    sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
+    int count = ctable->count();
+	SkBitmap* iconBitmap = new SkBitmap();
+    if (!iconBitmap->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) ||
+        !gen->getPixels(gen->getInfo().makeColorSpace(nullptr), iconBitmap->getPixels(), iconBitmap->rowBytes(),
+                       const_cast<SkPMColor*>(ctable->readColors()), &count)) {
+
+		delete iconBitmap;
+
+		this->nativeOperations.Start();
+		env->DeleteLocalRef(javaIconRawData);
+
+		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
+
+    	return NULL;
 	}
 
-	env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 	env->DeleteLocalRef(javaIconRawData);
 
 	return iconBitmap;

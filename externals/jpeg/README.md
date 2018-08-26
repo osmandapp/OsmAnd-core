@@ -1,0 +1,1 @@
+These files are for android build only

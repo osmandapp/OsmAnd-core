@@ -1,0 +1,11 @@
+--- upstream.original/src/core/SkCpu.cpp	2018-08-22 17:51:52.000000000 +0300
++++ upstream.patched/src/core/SkCpu.cpp	2018-08-24 18:10:18.000000000 +0300
+@@ -85,7 +85,7 @@
+         return features;
+     }
+ 
+-#elif defined(SK_CPU_ARM32) && __has_include(<asm/hwcap.h>) && __has_include(<sys/auxv.h>)
++#elif defined(SK_CPU_ARM32) && __has_include(<asm/hwcap.h>) && __has_include(<sys/auxv.h>) && false //wait until minsdk >= android 21
+     // asm/hwcap.h and sys/auxv.h won't be present on NDK builds before API v21.
+     #include <asm/hwcap.h>
+     #include <sys/auxv.h>

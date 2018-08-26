@@ -48,7 +48,7 @@ inline std::tm localtime(const std::time_t& time)
 struct FontEntry {
 	bool bold;
 	bool italic;
-	SkTypeface* typeface;
+	sk_sp<SkTypeface> typeface;
 	string fontName;
 };
 
@@ -56,9 +56,9 @@ class FontRegistry {
 	std::vector<FontEntry*> cache;
 
 	public:
-		const SkTypeface* registerStream(const char* data, uint32_t length, string fontName, 
+		const sk_sp<SkTypeface> registerStream(const char* data, uint32_t length, string fontName, 
 			bool bold, bool italic);
- 		void updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, SkTypeface* def) ;
+ 		void updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, sk_sp<SkTypeface> def) ;
 };
 
 extern FontRegistry globalFontRegistry;
@@ -637,5 +637,10 @@ const static char* trim_chars = " \t\n\r\f\v";
 std::string rtrim(const std::string& in, const char* t = trim_chars);
 std::string ltrim(const std::string& in, const char* t = trim_chars);
 std::string trim(const std::string& in, const char* t = trim_chars);
+
+bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst);
+SkStreamAsset* GetResourceAsStream(const char* resourcePath);
+sk_sp<SkData> GetResourceAsData(const char* resourcePath);
+sk_sp<SkTypeface> MakeResourceAsTypeface(const char* resourcePath);
 
 #endif /*_OSMAND_COMMON_CORE_H*/
