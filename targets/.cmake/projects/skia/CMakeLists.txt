@@ -1514,7 +1514,7 @@ target_link_libraries(skia_osmand LINK_PUBLIC
 )
 	
 if(CMAKE_TARGET_OS STREQUAL "linux")
-	find_library(FONTCONFIG_LIBRARY fontconfig)
+	find_library(FONTCONFIG_LIBRARY fontconfig2)
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
 		dl
