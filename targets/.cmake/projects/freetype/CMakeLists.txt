@@ -12,7 +12,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 		"${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/freetype/include/"
 	)
 	add_definitions(-D"FT_CONFIG_MODULES_H=<freetype-android/ftmodule.h>" 
-		-D"FT_CONFIG_OPTIONS_H=<include/freetype-android/ftoption.h>")
+		-D"FT_CONFIG_OPTIONS_H=<freetype-android/ftoption.h>")
 endif()
 
 
