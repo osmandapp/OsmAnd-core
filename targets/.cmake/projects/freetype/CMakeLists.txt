@@ -1,16 +1,18 @@
 project(freetype2_osmand)
 
 set(ROOT "${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/externals/freetype")
+
 set(UPSTREAM "${ROOT}")
+if(CMAKE_TARGET_OS STREQUAL "linux")
+	include_directories(BEFORE SYSTEM
+		"${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/freetype/include/freetype-android/"
+	)
+endif()
 include_directories(AFTER SYSTEM
 	"${ROOT}"
 	"${UPSTREAM}/include"
 )
-if(CMAKE_TARGET_OS STREQUAL "linux")
-	include_directories(AFTER SYSTEM
-		"${OSMAND_ROOT}/externals/skia/upstream.patched/third_party/freetype/include/freetype-android/"
-	)
-endif()
+
 add_definitions(-DFT2_BUILD_LIBRARY)
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
