@@ -1517,6 +1517,7 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(FONTCONFIG_LIBRARY fontconfig)
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
+		dl
 		${FONTCONFIG_LIBRARY}
 	)
 endif()
