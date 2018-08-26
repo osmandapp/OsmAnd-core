@@ -104,50 +104,49 @@ set(skia_opts_hsw "${UPSTREAM}/src/opts/SkOpts_hsw.cpp")
 
 if(CMAKE_TARGET_OS STREQUAL "darwin")
 	file(GLOB src_utils_mac "${UPSTREAM}/src/utils/mac/*")
-        set(target_specific_sources "${target_specific_sources}"
-       #          "${UPSTREAM}/src/fonts/SkFontMgr_fontconfig.cpp"
-                "${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
-       #       "${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
-       #       "${UPSTREAM}/src/ports/SkFontHost_fontconfig.cpp"
-       #       "${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
-       #        "${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
-       #        "${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
-			"${UPSTREAM}/src/ports/SkFontHost_mac.cpp"
-       		"${UPSTREAM}/src/ports/SkOSFile_posix.cpp"
-        	"${UPSTREAM}/src/ports/SkTLS_pthread.cpp"
-        	"${UPSTREAM}/src/utils/SkThreadUtils_pthread.cpp"
+    set(target_specific_sources "${target_specific_sources}"
+		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
+		"${UPSTREAM}/src/ports/SkFontHost_mac.cpp"
+		"${UPSTREAM}/src/ports/SkOSFile_posix.cpp"
+		"${UPSTREAM}/src/ports/SkTLS_pthread.cpp"
+		"${UPSTREAM}/src/utils/SkThreadUtils_pthread.cpp"
 
-        	${skia_opts_sse2}
-			${skia_opts_ssse3}
-			${skia_opts_sse41}
-			${skia_opts_sse42}
-			${skia_opts_avx}
-			${skia_opts_hsw}
+		${skia_opts_sse2}
+		${skia_opts_ssse3}
+		${skia_opts_sse41}
+		${skia_opts_sse42}
+		${skia_opts_avx}
+		${skia_opts_hsw}
 
-			${src_utils_mac}
-        )
-        add_definitions(-DSK_BUILD_FOR_MACOS -DSK_USE_POSIX_THREADS   -DSK_FONTHOST_USES_FONTMGR)
+		${src_utils_mac}
+    )
+    add_definitions(-DSK_BUILD_FOR_MACOS -DSK_USE_POSIX_THREADS   -DSK_FONTHOST_USES_FONTMGR)
 endif()
 
 if(CMAKE_TARGET_OS STREQUAL "linux")
+	file(GLOB src_utils_mac "${UPSTREAM}/src/utils/mac/*")
 	set(target_specific_sources "${target_specific_sources}"
-		"${UPSTREAM}/src/fonts/SkFontMgr_fontconfig.cpp"
+		"${UPSTREAM}/src/ports/SkFontMgr_fontconfig.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
 		"${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
-		"${UPSTREAM}/src/ports/SkFontHost_fontconfig.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
-		"${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
 		"${UPSTREAM}/src/ports/SkOSFile_posix.cpp"
-		"${UPSTREAM}/src/ports/SkTime_Unix.cpp"
 		"${UPSTREAM}/src/ports/SkTLS_pthread.cpp"
 		"${UPSTREAM}/src/utils/SkThreadUtils_pthread.cpp"
-		"${UPSTREAM}/src/utils/SkThreadUtils_pthread_linux.cpp"
+		${skia_opts_sse2}
+		${skia_opts_ssse3}
+		${skia_opts_sse41}
+		${skia_opts_sse42}
+		${skia_opts_avx}
+		${skia_opts_hsw}	
 	)
-	add_definitions(-DSK_BUILD_FOR_UNIX -DSK_USE_POSIX_THREADS)
+	add_definitions(-DSK_BUILD_FOR_UNIX  -DSK_USE_POSIX_THREADS   -DSK_FONTHOST_USES_FONTMGR)
 endif()
 
 if(CMAKE_TARGET_OS STREQUAL "windows")
+# windows is not tested after upgrade !
+	file(GLOB src_utils_mac "${UPSTREAM}/src/utils/win/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/fonts/SkFontMgr_indirect.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_win.cpp"
