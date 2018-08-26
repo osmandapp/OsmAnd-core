@@ -47,6 +47,8 @@ add_library(freetype2_osmand STATIC
 	"${UPSTREAM}/src/truetype/truetype.c"
 )
 
-target_link_libraries(freetype2_osmand LINK_PUBLIC
-	png_osmand
-)
+if(CMAKE_TARGET_OS STREQUAL "linux")
+	target_link_libraries(freetype2_osmand LINK_PUBLIC
+		png
+	)
+endif()

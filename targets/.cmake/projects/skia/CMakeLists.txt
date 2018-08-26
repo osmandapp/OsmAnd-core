@@ -1516,10 +1516,6 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
 		dl
-		expat_osmand
-		png_osmand
-		freetype2_osmand
-		jpeg_osmand
 		${FONTCONFIG_LIBRARY}
 	)
 endif()
