@@ -11,7 +11,9 @@ buildscript {
 
 allprojects {
     repositories {
+        google()
         mavenCentral()
+        jcenter()
     }
 }
 
@@ -388,7 +390,7 @@ tasks.withType(JavaCompile) {
 
 // Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
 artifacts {
-    archives(file("build/intermediates/bundles/release/classes.jar")) {
+    archives(file("build/intermediates/packaged-classes/release/classes.jar")) {
         name "OsmAndCore_android"
         type "jar"
     }

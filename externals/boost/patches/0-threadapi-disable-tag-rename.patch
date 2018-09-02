@@ -1,7 +1,7 @@
 diff -rupN upstream.original/libs/thread/build/Jamfile.v2 upstream.patched/libs/thread/build/Jamfile.v2
---- upstream.original/libs/thread/build/Jamfile.v2	2013-09-14 17:22:45.000000000 +0300
-+++ upstream.patched/libs/thread/build/Jamfile.v2	2014-03-02 10:36:18.806703000 +0200
-@@ -147,16 +147,6 @@ rule tag ( name : type ? : property-set
+--- upstream.original/libs/thread/build/Jamfile.v2	2018-08-01 23:50:53.000000000 +0300
++++ upstream.patched/libs/thread/build/Jamfile.v2	2018-09-02 09:51:22.000000000 +0300
+@@ -147,16 +147,6 @@
  {
      local result = $(name) ;
  
@@ -10,7 +10,7 @@ diff -rupN upstream.original/libs/thread/build/Jamfile.v2 upstream.patched/libs/
 -        local api = [ $(property-set).get <threadapi> ] ;
 -
 -        # non native api gets additional tag
--        if $(api) != [ default_threadapi ] {
+-        if $(api) != [ threadapi-feature.get-default $(property-set) ] {
 -            result = $(result)_$(api) ;
 -        }
 -    }

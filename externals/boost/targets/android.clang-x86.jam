@@ -1,0 +1,46 @@
+import os ;
+local NDK = [ os.environ ANDROID_NDK_ROOT ] ;
+local NDK_HOST = [ os.environ ANDROID_NDK_HOST ] ;
+local NDK_PLATFORM = [ os.environ ANDROID_NDK_PLATFORM ] ;
+local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
+
+# --------------------------------------------------------------------
+
+using clang : android
+:
+$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-clang++
+:
+<archiver>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ar
+<ranlib>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ranlib
+<compileflags>-fexceptions
+<compileflags>-frtti
+#<compileflags>-Wall
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+# Configuration taken from $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-no-canonical-prefixes
+<compileflags>-std=c++11
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-isystem$(NDK)/sysroot/usr/include/i686-linux-android 
+<compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++/include \
+<compileflags>-isystem$(NDK)/sources/android/support/include \
+<compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++abi/include
+<compileflags>-stdlib=libc++
+<linkflags>-no-canonical-prefixes
+<linkflags>-stdlib=libc++
+# 'Release/x86' section
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-DNDEBUG
+<compileflags>-fomit-frame-pointer
+<compileflags>-fstrict-aliasing
+# Various
+<architecture>x86
+<cxxflags>-D_REENTRANT
+;
+
+option.set keep-going : false ; 

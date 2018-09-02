@@ -67,24 +67,20 @@ if [[ -z "$ANDROID_SDK" ]]; then
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
-export ANDROID_NDK_PLATFORM=android-21
-if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
-	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
-	exit 1
-fi
-echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
-
 if [[ "$compiler" == "clang" ]]; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=clang
 fi
 echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 
 TOOLCHAIN_PATH=""
-if [[ "$targetArch"=="armeabi-v7a" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="arm64-v8a" ]]; then
+if [[ "$targetArch" == "armeabi-v7a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm1-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch" == "arm64-v8a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-21
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/aarch64-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="x86" ]]; then
+elif [[ "$targetArch" == "x86" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 fi
 
@@ -94,11 +90,17 @@ if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
 fi
 echo "Using toolchain '${TOOLCHAIN_PATH}'"
 
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
+	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
+	exit 1
+fi
+echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
+
 # Configuration
 BOOST_CONFIGURATION=$(echo "
-	--layout=versioned
+	--layout=system
 	--with-thread
-	toolset=clang-android
+	toolset=clang
 	target-os=linux
 	threading=multi
 	link=static
@@ -114,7 +116,7 @@ if [ ! -d "$STATIC_BUILD_PATH" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$STATIC_BUILD_PATH"
 
 	(cd "$STATIC_BUILD_PATH" && \
-		./bootstrap.sh)
+		./bootstrap.sh --with-toolset=clang)
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to configure 'Boost' for '${targetOS}.${compiler}-${targetArch}', aborting..."

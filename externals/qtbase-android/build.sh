@@ -86,39 +86,20 @@ if [[ -z "$ANDROID_SDK" ]]; then
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
-export ANDROID_NDK_PLATFORM=android-21
-if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
-	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
-	exit 1
-fi
-echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
-
-export ANDROID_TARGET_ARCH=$targetArch
-targetArchFamily=""
-if [[ "$targetArch"=="armeabi-v7a" ]]; then
-	targetArchFamily="arm"
-elif [[ "$targetArch"=="arm64-v8a" ]]; then
-	targetArchFamily="arm64"
-elif [[ "$targetArch"=="x86" ]]; then
-	targetArchFamily="x86"
-fi
-if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}" ]]; then
-	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}' does not exist"
-	exit 1
-fi
-echo "Using ANDROID_TARGET_ARCH '${ANDROID_TARGET_ARCH}'"
-
 if [[ "$compiler" == "clang" ]]; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=clang
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
 fi
 echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 
 TOOLCHAIN_PATH=""
-if [[ "$targetArch"=="armeabi-v7a" ]]; then
+if [[ "$targetArch" == "armeabi-v7a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="arm64-v8a" ]]; then
+elif [[ "$targetArch" == "arm64-v8a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-21
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/aarch64-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="x86" ]]; then
+elif [[ "$targetArch" == "x86" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 fi
 if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
@@ -127,14 +108,37 @@ if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
 fi
 echo "Using toolchain '${TOOLCHAIN_PATH}'"
 
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
+	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
+	exit 1
+fi
+echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
+
+export ANDROID_TARGET_ARCH=$targetArch
+targetArchFamily=""
+if [[ "$targetArch" == "armeabi-v7a" ]]; then
+	targetArchFamily="arm"
+elif [[ "$targetArch" == "arm64-v8a" ]]; then
+	targetArchFamily="arm64"
+elif [[ "$targetArch" == "x86" ]]; then
+	targetArchFamily="x86"
+fi
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}" ]]; then
+	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}' does not exist"
+	exit 1
+fi
+echo "Using ANDROID_TARGET_ARCH '${ANDROID_TARGET_ARCH}'"
+
 # Prepare configuration
 QTBASE_CONFIGURATION=$(echo "
-	-release -opensource -confirm-license -c++std c++11 -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-release -opensource -confirm-license -c++std c++11 -sql-sqlite -qt-sqlite
+	-qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre -no-use-gold-linker -nomake tests
 	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
-	-no-opengl -no-evdev -qt-xcb
-	-v
+	-no-opengl -no-evdev 
+	-no-warnings-are-errors -v
 " | tr '\n' ' ')
+
+# -no-gcc-sysroot -qt-xcb
 
 # Function: makeFlavor(type)
 makeFlavor()
@@ -147,7 +151,7 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		(cd "$path" && ./configure -xplatform android-clang -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
+		(cd "$path" && ./configure -xplatform android-clang -android-toolchain-version 4.9 -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
