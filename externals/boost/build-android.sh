@@ -75,7 +75,7 @@ echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 TOOLCHAIN_PATH=""
 if [[ "$targetArch" == "armeabi-v7a" ]]; then
 	export ANDROID_NDK_PLATFORM=android-14
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm1-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 elif [[ "$targetArch" == "arm64-v8a" ]]; then
 	export ANDROID_NDK_PLATFORM=android-21
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/aarch64-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
