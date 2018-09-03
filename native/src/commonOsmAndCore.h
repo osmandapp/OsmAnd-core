@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <climits>
 
 #include <SkPath.h>
 #include <ElapsedTimer.h>
@@ -177,7 +176,6 @@ typedef vector< pair<int, int> > coordinates;
 
 class MapDataObject
 {
-	static const unsigned int UNDEFINED_STRING = INT_MAX;
 public:
 
 	std::vector< tag_value >  types;
