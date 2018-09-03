@@ -11,8 +11,6 @@
 #include <SkUtils.h>
 #include <SkFontMgr.h>
 #include <SkFilterQuality.h>
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "Logging.h"
 #include "renderRules.h"
 //#include "utf8.cpp"

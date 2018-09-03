@@ -36,6 +36,7 @@ LOCAL_SRC_FILES := \
 	src/Logging.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/ElapsedTimer.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/common.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/commonRendering.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/renderRules.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/rendering.cpp \

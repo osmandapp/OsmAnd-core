@@ -22,6 +22,7 @@
 
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "commonRendering.h"
 #include "renderRules.h"
 #include "binaryRead.h"
 #include "textdraw.cpp"

@@ -5,9 +5,21 @@
 #include <vector>
 #include <map>
 
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
+#ifdef __APPLE__
+	#include "TargetConditionals.h"
+    #if TARGET_OS_SIMULATOR == 1 || TARGET_OS_IPHONE == 1
+		#define _IOS_BUILD
+	#else 
+		#undef _IOS_BUILD
+    #endif
+#endif
 
+#ifndef _IOS_BUILD
+#	include "commonRendering.h"
+#else
+#	include "CommonCollections.h"
+#	include "commonOsmAndCore.h"
+#endif
 
 /**
  * Parse the color string, and return the corresponding color-int.
@@ -646,10 +658,9 @@ public:
 	virtual ~BasePathRenderingRulesStorageResolver() {}
 };
 
-float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop, float defValue); 
-
+#ifndef _IOS_BUILD
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop, float defValue);
 float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop) ;
-
-
+#endif
 
 #endif

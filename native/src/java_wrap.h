@@ -4,6 +4,7 @@
 #include "jni.h"
 #include "binaryRead.h"
 #include "Logging.h"
+#include "commonRendering.h"
 
 
 struct ResultJNIPublisher : ResultPublisher {
