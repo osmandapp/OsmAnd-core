@@ -4,8 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <stdint.h>
-#include <limits>
+#include <climits>
 
 #include <SkPath.h>
 #include <ElapsedTimer.h>
