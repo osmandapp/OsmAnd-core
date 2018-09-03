@@ -33,3 +33,11 @@ Installation on Ubuntu
  * ./build/amd64-linux-gcc.sh
  * cd baked/amd64-linux-gcc.make
  * make
+
+Before building android wrapper!
+================================
+Install clang toolchains:
+cd ANDROID_NDK/build/tools
+./make_standalone_toolchain.py --arch arm --api 14 --stl=libc++ --force --install-dir ../../toolchains/arm-linux-androideabi-clang/prebuilt/linux-x86_64
+./make_standalone_toolchain.py --arch arm64 --api 21 --stl=libc++ --force --install-dir ../../toolchains/aarch64-linux-android-clang/prebuilt/linux-x86_64
+./make_standalone_toolchain.py --arch x86 --api 14 --stl=libc++ --force --install-dir ../../toolchains/x86-clang/prebuilt/linux-x86_64

@@ -30,11 +30,11 @@ buildArch()
 {
 	local arch=$1
 	
-	local bakedDir="${PROJECTS_ROOT}/baked/${arch}-android-gcc-${BUILD_TYPE}.make"
+	local bakedDir="${PROJECTS_ROOT}/baked/${arch}-android-clang-${BUILD_TYPE}.make"
 	echo "Building SDK for '$arch':"
 	if [[ ! -d "$bakedDir" ]]; then
 		echo -e "\tBaking in '$bakedDir"
-		"${PROJECTS_ROOT}/build/${arch}-android-gcc.sh" $BUILD_TYPE
+		"${PROJECTS_ROOT}/build/${arch}-android-clang.sh" $BUILD_TYPE
 		retcode=$?
 		if [[ $retcode -ne 0 ]]; then
 			echo "Failed to bake ($retcode), aborting..."
@@ -54,13 +54,6 @@ buildArch()
 	fi
 }
 
-buildArch "armeabi"
-retcode=$?
-if [[ $retcode -ne 0 ]]; then
-	echo "buildArch(armeabi) failed with $retcode, exiting..."
-	exit $retcode
-fi
-
 buildArch "armeabi-v7a"
 retcode=$?
 if [[ $retcode -ne 0 ]]; then
@@ -68,16 +61,16 @@ if [[ $retcode -ne 0 ]]; then
 	exit $retcode
 fi
 
+buildArch "arm64-v8a"
+retcode=$?
+if [[ $retcode -ne 0 ]]; then
+	echo "buildArch(arm64-v8a) failed with $retcode, exiting..."
+	exit $retcode
+fi
+
 buildArch "x86"
 retcode=$?
 if [[ $retcode -ne 0 ]]; then
 	echo "buildArch(x86) failed with $retcode, exiting..."
-	exit $retcode
-fi
-
-buildArch "mips"
-retcode=$?
-if [[ $retcode -ne 0 ]]; then
-	echo "buildArch(mips) failed with $retcode, exiting..."
 	exit $retcode
 fi

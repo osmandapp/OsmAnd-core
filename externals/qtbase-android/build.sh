@@ -19,12 +19,12 @@ if [[ "$targetOS" != "android" ]]; then
 	echo "'android' is the only supported target, while '${targetOS}' was specified"
 	exit 1
 fi
-if [[ "$compiler" != "gcc" ]]; then
-	echo "'gcc' is the only supported compilers, while '${compiler}' was specified"
+if [[ "$compiler" != "clang" ]]; then
+	echo "'clang' is the only supported compilers, while '${compiler}' was specified"
 	exit 1
 fi
-if [[ "$targetArch" != "armeabi" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]] && [[ "$targetArch" != "mips" ]]; then
-	echo "'armeabi', 'armeabi-v7a', 'x86', 'mips' are the only supported target architectures, while '${targetArch}' was specified"
+if [[ "$targetArch" != "arm64-v8a" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]]; then
+	echo "'arm64-v8a', 'armeabi-v7a', 'x86' are the only supported target architectures, while '${targetArch}' was specified"
 	exit 1
 fi
 echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
@@ -86,7 +86,28 @@ if [[ -z "$ANDROID_SDK" ]]; then
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
-export ANDROID_NDK_PLATFORM=android-9
+if [[ "$compiler" == "clang" ]]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+fi
+echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
+
+TOOLCHAIN_PATH=""
+if [[ "$targetArch" == "armeabi-v7a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch" == "arm64-v8a" ]]; then
+	export ANDROID_NDK_PLATFORM=android-21
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/aarch64-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch" == "x86" ]]; then
+	export ANDROID_NDK_PLATFORM=android-14
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+fi
+if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
+	echo "Toolchain at '$TOOLCHAIN_PATH' not found"
+	exit 1
+fi
+echo "Using toolchain '${TOOLCHAIN_PATH}'"
+
 if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
 	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
 	exit 1
@@ -95,12 +116,12 @@ echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
 
 export ANDROID_TARGET_ARCH=$targetArch
 targetArchFamily=""
-if [[ "$targetArch"=="armeabi" ]] || [[ "$targetArch"=="armeabi-v7a" ]]; then
+if [[ "$targetArch" == "armeabi-v7a" ]]; then
 	targetArchFamily="arm"
-elif [[ "$targetArch"=="x86" ]]; then
+elif [[ "$targetArch" == "arm64-v8a" ]]; then
+	targetArchFamily="arm64"
+elif [[ "$targetArch" == "x86" ]]; then
 	targetArchFamily="x86"
-elif [[ "$targetArch"=="mips" ]]; then
-	targetArchFamily="mips"
 fi
 if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}" ]]; then
 	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}' does not exist"
@@ -108,39 +129,16 @@ if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFa
 fi
 echo "Using ANDROID_TARGET_ARCH '${ANDROID_TARGET_ARCH}'"
 
-if [[ "$compiler" == "gcc" ]]; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
-fi
-echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
-
-TOOLCHAIN_PATH=""
-if [[ "$targetArch"=="armeabi" ]] || [[ "$targetArch"=="armeabi-v7a" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="x86" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="mips" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/mipsel-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-fi
-if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
-	echo "Toolchain at '$TOOLCHAIN_PATH' not found"
-	exit 1
-fi
-echo "Using toolchain '${TOOLCHAIN_PATH}'"
-
 # Prepare configuration
 QTBASE_CONFIGURATION=$(echo "
-	-release -opensource -confirm-license -c++std c++11 -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
-	-no-opengl -no-evdev
-	-v
+	-release -opensource -confirm-license -c++std c++11 -sql-sqlite -qt-sqlite
+	-qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre -no-use-gold-linker -nomake tests
+	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
+	-no-opengl -no-evdev 
+	-no-warnings-are-errors -v
 " | tr '\n' ' ')
-if [[ "$compiler"=="gcc" ]]; then
-	QTBASE_CONFIGURATION="-xplatform android-g++ ${QTBASE_CONFIGURATION}"
-fi
-if [[ "$targetArch"=="mips" ]]; then
-	QTBASE_CONFIGURATION="${QTBASE_CONFIGURATION} -no-use-gold-linker"
-fi
+
+# -no-gcc-sysroot -qt-xcb
 
 # Function: makeFlavor(type)
 makeFlavor()
@@ -153,7 +151,7 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		(cd "$path" && ./configure $QTBASE_CONFIGURATION -$type -prefix $path)
+		(cd "$path" && ./configure -xplatform android-clang -android-toolchain-version 4.9 -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."

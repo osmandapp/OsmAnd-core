@@ -10,7 +10,7 @@ set(target_specific_private_definitions "")
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	add_definitions(-DPNG_ARM_NEON_OPT=0)
 endif()
-if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm64" OR
 	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/arm/arm_init.c"

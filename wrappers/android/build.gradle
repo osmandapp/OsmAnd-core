@@ -1,15 +1,19 @@
 buildscript {
     repositories {
+        google()
         mavenCentral()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:3.1.4'
     }
 }
 
 allprojects {
     repositories {
+        google()
         mavenCentral()
+        jcenter()
     }
 }
 
@@ -41,7 +45,7 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        minSdkVersion 9
+        minSdkVersion 14
         targetSdkVersion 21
     }
 
@@ -110,11 +114,10 @@ task copyNdkSharedLibs(type: Copy) {
 
     dependsOn cleanupNdkSharedLibs
 
-    from("$System.env.ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs") {
-        include "armeabi/libgnustl_shared.so"
-        include "armeabi-v7a/libgnustl_shared.so"
-        include "mips/libgnustl_shared.so"
-        include "x86/libgnustl_shared.so"
+    from("$System.env.ANDROID_NDK/sources/cxx-stl/llvm-libc++/libs") {
+        include "armeabi-v7a/libc++_shared.so"
+        include "arm64-v8a/libc++_shared.so"
+        include "x86/libc++_shared.so"
     }
 
     into "./jniLibs/NDK"
@@ -137,11 +140,11 @@ task copyQtSharedLibs(type: Copy) {
     dependsOn cleanupQtSharedLibs
 
     from("../../externals/qtbase-android") {
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
-        include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Core.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Network.so"
+        include "upstream.patched.android.clang-*.shared/lib/libQt5Sql.so"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.clang\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
         }
     }
 
@@ -165,9 +168,9 @@ task copyQtJarLibs(type: Copy) {
     dependsOn cleanupQtJarLibs
 
     from("../../externals/qtbase-android") {
-        include "upstream.patched.android.gcc-*.shared/jar/*-bundled.jar"
+        include "upstream.patched.android.clang-*.shared/jar/*-bundled.jar"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-.*\.shared\/jar\/(.*)/, '$1')
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.clang\-.*\.shared\/jar\/(.*)/, '$1')
         }
     }
 
@@ -387,7 +390,7 @@ tasks.withType(JavaCompile) {
 
 // Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
 artifacts {
-    archives(file("build/intermediates/bundles/release/classes.jar")) {
+    archives(file("build/intermediates/packaged-classes/release/classes.jar")) {
         name "OsmAndCore_android"
         type "jar"
     }

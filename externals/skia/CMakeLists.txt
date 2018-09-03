@@ -94,7 +94,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR
 endif()
 
 set(target_specific_sources__arm "")
-if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
+set(target_specific_sources__arm64 "")
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm64" OR
 	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 
@@ -132,8 +133,31 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
 		"upstream.patched/src/opts/SkTextureCompression_opts_neon.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
 	)
-	set(target_specific_sources "${target_specific_sources}"
-		"${target_specific_sources__arm}")
+	set(target_specific_sources__arm64
+		# ARM64
+		"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+        "upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+        "upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+        "upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+        "upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
+        "upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+        "upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+        "upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
+        "upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
+        "upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
+        "upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+        "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
+        "upstream.patched/src/opts/SkUtils_opts_none.cpp"
+        "upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
+        "upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
+	)
+	if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm64")
+		set(target_specific_sources "${target_specific_sources}"
+			"${target_specific_sources__arm64}")
+	else()
+		set(target_specific_sources "${target_specific_sources}"
+			"${target_specific_sources__arm}")
+	endif()
 	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
 			# ARM
@@ -144,6 +168,26 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
 			"upstream.patched/src/opts/memset16_neon.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
+	elseif (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm64")
+		set_source_files_properties(
+			# ARM64
+			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+	        "upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+	        "upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
+	        "upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+	        "upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
+	        "upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+	        "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
+	        "upstream.patched/src/opts/SkUtils_opts_none.cpp"
+	        "upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
+	        "upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
+	        PROPERTIES
+				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon -fomit-frame-pointer")
 	else()
 		set_source_files_properties(
 			# ARM
@@ -515,7 +559,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 
 	set(ios_iphoneos_arm64_exclude_list
 		"${target_specific_sources__x86}"
-		"${target_specific_sources__arm}")
+		"${target_specific_sources__arm}"
+		"${target_specific_sources__arm64}")
 	list(REMOVE_ITEM ios_iphoneos_arm64_exclude_list "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp")
 	string(REPLACE ";" " " ios_iphoneos_arm64_exclude "${ios_iphoneos_arm64_exclude_list}")
 	set_target_properties(skia_static
@@ -524,6 +569,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 
 	set(ios_iphonesimulator_exclude_list
 		"${target_specific_sources__arm}"
+		"${target_specific_sources__arm64}"
 		"${target_specific_sources__none}")
 	list(REMOVE_ITEM ios_iphonesimulator_exclude_list "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
