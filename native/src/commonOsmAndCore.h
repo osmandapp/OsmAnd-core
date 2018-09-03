@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <cstdint>
+#include <stdint.h>
 #include <limits>
 
 #include <SkPath.h>
