@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cstdint>
 #include <limits>
 
 #include <SkPath.h>
