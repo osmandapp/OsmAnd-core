@@ -17,3 +17,6 @@
 /libs
 /assets
 /gen
+/net.osmand
+/NativeCoreRelease/net.osmand
+/NativeCoreDebug/net.osmand
