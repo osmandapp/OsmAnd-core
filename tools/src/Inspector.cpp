@@ -194,7 +194,7 @@ void dump(std::ostream &output, const QString& filePath, const OsmAndTools::Insp
         const auto& section = *itSection;
 
         output << idx << xT(". Transport data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
-        output << "\tBounds " << formatBounds(section->area24.left() << (31 - 24), section->area24.right() << (31 - 24), section->area24.top() << (31 - 24), section->area24.bottom() << (31 - 24)) << std::endl;
+        output << "\tBounds " << formatBounds(section->area31.left() << (31 - 24), section->area31.right() << (31 - 24), section->area31.top() << (31 - 24), section->area31.bottom() << (31 - 24)) << std::endl;
     }
     for (auto itSection = obfInfo->routingSections.cbegin(); itSection != obfInfo->routingSections.cend(); ++itSection, idx++)
     {
