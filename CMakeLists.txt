@@ -13,9 +13,11 @@ set(target_specific_dependencies "")
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
 	find_library(rt_LIBRARY rt)
+        find_library(z_LIBRARY z)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${dl_LIBRARY}
 		${rt_LIBRARY}
+		${z_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(objc_LIBRARY objc)
