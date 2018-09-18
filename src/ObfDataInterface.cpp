@@ -663,8 +663,8 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     return true;
 }
 
-bool OsmAnd::ObfDataInterface::findAmenityById(
-    const ObfObjectId id,
+bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
+    const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
     std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
     const AreaI* const pBbox31 /*= nullptr*/,
     const TileAcceptorFunction tileFilter /*= nullptr*/,
@@ -673,15 +673,22 @@ bool OsmAnd::ObfDataInterface::findAmenityById(
 {
     std::shared_ptr<const OsmAnd::Amenity> foundAmenity;
 
-    uint64_t obfId = id.id >> 7;
+    uint64_t obfId = obfMapObject->id.id >> 7;
     const auto visitor =
-        [obfId, &foundAmenity]
+        [obfId, &foundAmenity, obfMapObject]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
             // todo: wrong IF since mapObject->id != amenity->id
             if (amenity->id >> 1 == obfId)
                 foundAmenity = amenity;
 
+            for (const auto& caption : obfMapObject->captions.values())
+            {
+                if (amenity->nativeName == caption || amenity->localizedNames.values().contains(caption)) {
+                    foundAmenity = amenity;
+                    break;
+                }
+            }
             return false;
         };
 
@@ -749,8 +756,8 @@ bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
     alignedBBox.bottom() |= alignMask;
     alignedBBox.right() |= alignMask;
 
-    return findAmenityById(
-        obfMapObject->id,
+    return findAmenityByObfMapObject(
+        obfMapObject,
         outAmenity,
         &alignedBBox,
         nullptr,

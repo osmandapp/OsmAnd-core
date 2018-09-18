@@ -103,8 +103,8 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool findAmenityById(
-            const ObfObjectId id,
+        bool findAmenityByObfMapObject(
+            const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
             std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
             const AreaI* const bbox31 = nullptr,
             const TileAcceptorFunction tileFilter = nullptr,
