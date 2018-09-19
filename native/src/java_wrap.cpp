@@ -1333,6 +1333,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
     std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
     if (!gen) {
 		this->nativeOperations.Start();
+		env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 		env->DeleteLocalRef(javaIconRawData);
 
 		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
@@ -1350,6 +1351,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 		delete iconBitmap;
 
 		this->nativeOperations.Start();
+		env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 		env->DeleteLocalRef(javaIconRawData);
 
 		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
@@ -1357,6 +1359,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
     	return NULL;
 	}
 
+	env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 	env->DeleteLocalRef(javaIconRawData);
 
 	return iconBitmap;
