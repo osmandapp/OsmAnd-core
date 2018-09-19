@@ -35,7 +35,10 @@ TextDrawInfo::TextDrawInfo(std::string itext, MapDataObject* mo)
 }
 
 bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst) {
-    sk_sp<SkData> resourceData(SkData::MakeFromFileName(resourcePath));
+    sk_sp<SkData> resourceData = SkData::MakeFromFileName(resourcePath);
+    if (resourceData == nullptr) {
+        return false;
+    }
     std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
     if (!gen) {
         return false;

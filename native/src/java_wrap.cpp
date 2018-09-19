@@ -1329,7 +1329,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 
 	// Decode bitmap
 	//TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
-    sk_sp<SkData> resourceData((SkData::MakeFromMalloc(bitmapBuffer, bufferLen)));
+    sk_sp<SkData> resourceData(SkData::MakeWithoutCopy(bitmapBuffer, bufferLen));
     std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
     if (!gen) {
 		this->nativeOperations.Start();
