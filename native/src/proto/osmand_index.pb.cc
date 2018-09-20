@@ -12,6 +12,9 @@
 #include <google/protobuf/wire_format_lite_inl.h>
 // @@protoc_insertion_point(includes)
 
+namespace OsmAnd {
+namespace OBF {
+
 void protobuf_ShutdownFile_osmand_5findex_2eproto() {
   delete OsmAndStoredIndex::default_instance_;
   delete FileIndex::default_instance_;
@@ -167,7 +170,7 @@ bool OsmAndStoredIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .FileIndex fileIndex = 7;
+      // repeated .OsmAnd.OBF.FileIndex fileIndex = 7;
       case 7: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -220,7 +223,7 @@ void OsmAndStoredIndex::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->version(), output);
   }
 
-  // repeated .FileIndex fileIndex = 7;
+  // repeated .OsmAnd.OBF.FileIndex fileIndex = 7;
   for (int i = 0; i < this->fileindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       7, this->fileindex(i), output);
@@ -252,7 +255,7 @@ int OsmAndStoredIndex::ByteSize() const {
     }
 
   }
-  // repeated .FileIndex fileIndex = 7;
+  // repeated .OsmAnd.OBF.FileIndex fileIndex = 7;
   total_size += 1 * this->fileindex_size();
   for (int i = 0; i < this->fileindex_size(); i++) {
     total_size +=
@@ -310,7 +313,7 @@ void OsmAndStoredIndex::Swap(OsmAndStoredIndex* other) {
 }
 
 ::std::string OsmAndStoredIndex::GetTypeName() const {
-  return "OsmAndStoredIndex";
+  return "OsmAnd.OBF.OsmAndStoredIndex";
 }
 
 
@@ -473,7 +476,7 @@ bool FileIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .AddressPart addressIndex = 8;
+      // repeated .OsmAnd.OBF.AddressPart addressIndex = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -488,7 +491,7 @@ bool FileIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .TransportPart transportIndex = 9;
+      // repeated .OsmAnd.OBF.TransportPart transportIndex = 9;
       case 9: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -503,7 +506,7 @@ bool FileIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .PoiPart poiIndex = 10;
+      // repeated .OsmAnd.OBF.PoiPart poiIndex = 10;
       case 10: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -518,7 +521,7 @@ bool FileIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .MapPart mapIndex = 11;
+      // repeated .OsmAnd.OBF.MapPart mapIndex = 11;
       case 11: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -533,7 +536,7 @@ bool FileIndex::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .RoutingPart routingIndex = 12;
+      // repeated .OsmAnd.OBF.RoutingPart routingIndex = 12;
       case 12: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -586,31 +589,31 @@ void FileIndex::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->version(), output);
   }
 
-  // repeated .AddressPart addressIndex = 8;
+  // repeated .OsmAnd.OBF.AddressPart addressIndex = 8;
   for (int i = 0; i < this->addressindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       8, this->addressindex(i), output);
   }
 
-  // repeated .TransportPart transportIndex = 9;
+  // repeated .OsmAnd.OBF.TransportPart transportIndex = 9;
   for (int i = 0; i < this->transportindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       9, this->transportindex(i), output);
   }
 
-  // repeated .PoiPart poiIndex = 10;
+  // repeated .OsmAnd.OBF.PoiPart poiIndex = 10;
   for (int i = 0; i < this->poiindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       10, this->poiindex(i), output);
   }
 
-  // repeated .MapPart mapIndex = 11;
+  // repeated .OsmAnd.OBF.MapPart mapIndex = 11;
   for (int i = 0; i < this->mapindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       11, this->mapindex(i), output);
   }
 
-  // repeated .RoutingPart routingIndex = 12;
+  // repeated .OsmAnd.OBF.RoutingPart routingIndex = 12;
   for (int i = 0; i < this->routingindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       12, this->routingindex(i), output);
@@ -651,7 +654,7 @@ int FileIndex::ByteSize() const {
     }
 
   }
-  // repeated .AddressPart addressIndex = 8;
+  // repeated .OsmAnd.OBF.AddressPart addressIndex = 8;
   total_size += 1 * this->addressindex_size();
   for (int i = 0; i < this->addressindex_size(); i++) {
     total_size +=
@@ -659,7 +662,7 @@ int FileIndex::ByteSize() const {
         this->addressindex(i));
   }
 
-  // repeated .TransportPart transportIndex = 9;
+  // repeated .OsmAnd.OBF.TransportPart transportIndex = 9;
   total_size += 1 * this->transportindex_size();
   for (int i = 0; i < this->transportindex_size(); i++) {
     total_size +=
@@ -667,7 +670,7 @@ int FileIndex::ByteSize() const {
         this->transportindex(i));
   }
 
-  // repeated .PoiPart poiIndex = 10;
+  // repeated .OsmAnd.OBF.PoiPart poiIndex = 10;
   total_size += 1 * this->poiindex_size();
   for (int i = 0; i < this->poiindex_size(); i++) {
     total_size +=
@@ -675,7 +678,7 @@ int FileIndex::ByteSize() const {
         this->poiindex(i));
   }
 
-  // repeated .MapPart mapIndex = 11;
+  // repeated .OsmAnd.OBF.MapPart mapIndex = 11;
   total_size += 1 * this->mapindex_size();
   for (int i = 0; i < this->mapindex_size(); i++) {
     total_size +=
@@ -683,7 +686,7 @@ int FileIndex::ByteSize() const {
         this->mapindex(i));
   }
 
-  // repeated .RoutingPart routingIndex = 12;
+  // repeated .OsmAnd.OBF.RoutingPart routingIndex = 12;
   total_size += 1 * this->routingindex_size();
   for (int i = 0; i < this->routingindex_size(); i++) {
     total_size +=
@@ -769,7 +772,7 @@ void FileIndex::Swap(FileIndex* other) {
 }
 
 ::std::string FileIndex::GetTypeName() const {
-  return "FileIndex";
+  return "OsmAnd.OBF.FileIndex";
 }
 
 
@@ -950,7 +953,7 @@ bool AddressPart::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .CityBlock cities = 8;
+      // repeated .OsmAnd.OBF.CityBlock cities = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -1024,7 +1027,7 @@ void AddressPart::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->indexnameoffset(), output);
   }
 
-  // repeated .CityBlock cities = 8;
+  // repeated .OsmAnd.OBF.CityBlock cities = 8;
   for (int i = 0; i < this->cities_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       8, this->cities(i), output);
@@ -1078,7 +1081,7 @@ int AddressPart::ByteSize() const {
     }
 
   }
-  // repeated .CityBlock cities = 8;
+  // repeated .OsmAnd.OBF.CityBlock cities = 8;
   total_size += 1 * this->cities_size();
   for (int i = 0; i < this->cities_size(); i++) {
     total_size +=
@@ -1157,7 +1160,7 @@ void AddressPart::Swap(AddressPart* other) {
 }
 
 ::std::string AddressPart::GetTypeName() const {
-  return "AddressPart";
+  return "OsmAnd.OBF.AddressPart";
 }
 
 
@@ -1395,7 +1398,7 @@ void CityBlock::Swap(CityBlock* other) {
 }
 
 ::std::string CityBlock::GetTypeName() const {
-  return "CityBlock";
+  return "OsmAnd.OBF.CityBlock";
 }
 
 
@@ -1779,7 +1782,7 @@ void PoiPart::Swap(PoiPart* other) {
 }
 
 ::std::string PoiPart::GetTypeName() const {
-  return "PoiPart";
+  return "OsmAnd.OBF.PoiPart";
 }
 
 
@@ -2192,7 +2195,7 @@ void MapLevel::Swap(MapLevel* other) {
 }
 
 ::std::string MapLevel::GetTypeName() const {
-  return "MapLevel";
+  return "OsmAnd.OBF.MapLevel";
 }
 
 
@@ -2328,7 +2331,7 @@ bool MapPart::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .MapLevel levels = 5;
+      // repeated .OsmAnd.OBF.MapLevel levels = 5;
       case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -2376,7 +2379,7 @@ void MapPart::SerializeWithCachedSizes(
       3, this->name(), output);
   }
 
-  // repeated .MapLevel levels = 5;
+  // repeated .OsmAnd.OBF.MapLevel levels = 5;
   for (int i = 0; i < this->levels_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       5, this->levels(i), output);
@@ -2410,7 +2413,7 @@ int MapPart::ByteSize() const {
     }
 
   }
-  // repeated .MapLevel levels = 5;
+  // repeated .OsmAnd.OBF.MapLevel levels = 5;
   total_size += 1 * this->levels_size();
   for (int i = 0; i < this->levels_size(); i++) {
     total_size +=
@@ -2472,7 +2475,7 @@ void MapPart::Swap(MapPart* other) {
 }
 
 ::std::string MapPart::GetTypeName() const {
-  return "MapPart";
+  return "OsmAnd.OBF.MapPart";
 }
 
 
@@ -2883,7 +2886,7 @@ void RoutingSubregion::Swap(RoutingSubregion* other) {
 }
 
 ::std::string RoutingSubregion::GetTypeName() const {
-  return "RoutingSubregion";
+  return "OsmAnd.OBF.RoutingSubregion";
 }
 
 
@@ -3019,7 +3022,7 @@ bool RoutingPart::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .RoutingSubregion subregions = 5;
+      // repeated .OsmAnd.OBF.RoutingSubregion subregions = 5;
       case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -3067,7 +3070,7 @@ void RoutingPart::SerializeWithCachedSizes(
       3, this->name(), output);
   }
 
-  // repeated .RoutingSubregion subregions = 5;
+  // repeated .OsmAnd.OBF.RoutingSubregion subregions = 5;
   for (int i = 0; i < this->subregions_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       5, this->subregions(i), output);
@@ -3101,7 +3104,7 @@ int RoutingPart::ByteSize() const {
     }
 
   }
-  // repeated .RoutingSubregion subregions = 5;
+  // repeated .OsmAnd.OBF.RoutingSubregion subregions = 5;
   total_size += 1 * this->subregions_size();
   for (int i = 0; i < this->subregions_size(); i++) {
     total_size +=
@@ -3163,7 +3166,7 @@ void RoutingPart::Swap(RoutingPart* other) {
 }
 
 ::std::string RoutingPart::GetTypeName() const {
-  return "RoutingPart";
+  return "OsmAnd.OBF.RoutingPart";
 }
 
 
@@ -3693,10 +3696,13 @@ void TransportPart::Swap(TransportPart* other) {
 }
 
 ::std::string TransportPart::GetTypeName() const {
-  return "TransportPart";
+  return "OsmAnd.OBF.TransportPart";
 }
 
 
 // @@protoc_insertion_point(namespace_scope)
+
+}  // namespace OBF
+}  // namespace OsmAnd
 
 // @@protoc_insertion_point(global_scope)

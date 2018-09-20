@@ -25,6 +25,9 @@
 #include <google/protobuf/extension_set.h>
 // @@protoc_insertion_point(includes)
 
+namespace OsmAnd {
+namespace OBF {
+
 // Internal implementation detail -- do not call these.
 void  protobuf_AddDesc_osmand_5findex_2eproto();
 void protobuf_AssignDesc_osmand_5findex_2eproto();
@@ -110,19 +113,19 @@ class OsmAndStoredIndex : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int64 datecreated() const;
   inline void set_datecreated(::google::protobuf::int64 value);
 
-  // repeated .FileIndex fileIndex = 7;
+  // repeated .OsmAnd.OBF.FileIndex fileIndex = 7;
   inline int fileindex_size() const;
   inline void clear_fileindex();
   static const int kFileIndexFieldNumber = 7;
-  inline const ::FileIndex& fileindex(int index) const;
-  inline ::FileIndex* mutable_fileindex(int index);
-  inline ::FileIndex* add_fileindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::FileIndex >&
+  inline const ::OsmAnd::OBF::FileIndex& fileindex(int index) const;
+  inline ::OsmAnd::OBF::FileIndex* mutable_fileindex(int index);
+  inline ::OsmAnd::OBF::FileIndex* add_fileindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::FileIndex >&
       fileindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::FileIndex >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::FileIndex >*
       mutable_fileindex();
 
-  // @@protoc_insertion_point(class_scope:OsmAndStoredIndex)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndStoredIndex)
  private:
   inline void set_has_version();
   inline void clear_has_version();
@@ -130,7 +133,7 @@ class OsmAndStoredIndex : public ::google::protobuf::MessageLite {
   inline void clear_has_datecreated();
 
   ::google::protobuf::int64 datecreated_;
-  ::google::protobuf::RepeatedPtrField< ::FileIndex > fileindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::FileIndex > fileindex_;
   ::google::protobuf::uint32 version_;
 
   mutable int _cached_size_;
@@ -235,67 +238,67 @@ class FileIndex : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 version() const;
   inline void set_version(::google::protobuf::int32 value);
 
-  // repeated .AddressPart addressIndex = 8;
+  // repeated .OsmAnd.OBF.AddressPart addressIndex = 8;
   inline int addressindex_size() const;
   inline void clear_addressindex();
   static const int kAddressIndexFieldNumber = 8;
-  inline const ::AddressPart& addressindex(int index) const;
-  inline ::AddressPart* mutable_addressindex(int index);
-  inline ::AddressPart* add_addressindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::AddressPart >&
+  inline const ::OsmAnd::OBF::AddressPart& addressindex(int index) const;
+  inline ::OsmAnd::OBF::AddressPart* mutable_addressindex(int index);
+  inline ::OsmAnd::OBF::AddressPart* add_addressindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressPart >&
       addressindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::AddressPart >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressPart >*
       mutable_addressindex();
 
-  // repeated .TransportPart transportIndex = 9;
+  // repeated .OsmAnd.OBF.TransportPart transportIndex = 9;
   inline int transportindex_size() const;
   inline void clear_transportindex();
   static const int kTransportIndexFieldNumber = 9;
-  inline const ::TransportPart& transportindex(int index) const;
-  inline ::TransportPart* mutable_transportindex(int index);
-  inline ::TransportPart* add_transportindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::TransportPart >&
+  inline const ::OsmAnd::OBF::TransportPart& transportindex(int index) const;
+  inline ::OsmAnd::OBF::TransportPart* mutable_transportindex(int index);
+  inline ::OsmAnd::OBF::TransportPart* add_transportindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportPart >&
       transportindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::TransportPart >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportPart >*
       mutable_transportindex();
 
-  // repeated .PoiPart poiIndex = 10;
+  // repeated .OsmAnd.OBF.PoiPart poiIndex = 10;
   inline int poiindex_size() const;
   inline void clear_poiindex();
   static const int kPoiIndexFieldNumber = 10;
-  inline const ::PoiPart& poiindex(int index) const;
-  inline ::PoiPart* mutable_poiindex(int index);
-  inline ::PoiPart* add_poiindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::PoiPart >&
+  inline const ::OsmAnd::OBF::PoiPart& poiindex(int index) const;
+  inline ::OsmAnd::OBF::PoiPart* mutable_poiindex(int index);
+  inline ::OsmAnd::OBF::PoiPart* add_poiindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::PoiPart >&
       poiindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::PoiPart >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::PoiPart >*
       mutable_poiindex();
 
-  // repeated .MapPart mapIndex = 11;
+  // repeated .OsmAnd.OBF.MapPart mapIndex = 11;
   inline int mapindex_size() const;
   inline void clear_mapindex();
   static const int kMapIndexFieldNumber = 11;
-  inline const ::MapPart& mapindex(int index) const;
-  inline ::MapPart* mutable_mapindex(int index);
-  inline ::MapPart* add_mapindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::MapPart >&
+  inline const ::OsmAnd::OBF::MapPart& mapindex(int index) const;
+  inline ::OsmAnd::OBF::MapPart* mutable_mapindex(int index);
+  inline ::OsmAnd::OBF::MapPart* add_mapindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapPart >&
       mapindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::MapPart >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapPart >*
       mutable_mapindex();
 
-  // repeated .RoutingPart routingIndex = 12;
+  // repeated .OsmAnd.OBF.RoutingPart routingIndex = 12;
   inline int routingindex_size() const;
   inline void clear_routingindex();
   static const int kRoutingIndexFieldNumber = 12;
-  inline const ::RoutingPart& routingindex(int index) const;
-  inline ::RoutingPart* mutable_routingindex(int index);
-  inline ::RoutingPart* add_routingindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::RoutingPart >&
+  inline const ::OsmAnd::OBF::RoutingPart& routingindex(int index) const;
+  inline ::OsmAnd::OBF::RoutingPart* mutable_routingindex(int index);
+  inline ::OsmAnd::OBF::RoutingPart* add_routingindex();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingPart >&
       routingindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::RoutingPart >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingPart >*
       mutable_routingindex();
 
-  // @@protoc_insertion_point(class_scope:FileIndex)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.FileIndex)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -309,11 +312,11 @@ class FileIndex : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 size_;
   ::google::protobuf::int64 datemodified_;
   ::std::string* filename_;
-  ::google::protobuf::RepeatedPtrField< ::AddressPart > addressindex_;
-  ::google::protobuf::RepeatedPtrField< ::TransportPart > transportindex_;
-  ::google::protobuf::RepeatedPtrField< ::PoiPart > poiindex_;
-  ::google::protobuf::RepeatedPtrField< ::MapPart > mapindex_;
-  ::google::protobuf::RepeatedPtrField< ::RoutingPart > routingindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressPart > addressindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportPart > transportindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::PoiPart > poiindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapPart > mapindex_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingPart > routingindex_;
   ::google::protobuf::int32 version_;
 
   mutable int _cached_size_;
@@ -430,16 +433,16 @@ class AddressPart : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 indexnameoffset() const;
   inline void set_indexnameoffset(::google::protobuf::int32 value);
 
-  // repeated .CityBlock cities = 8;
+  // repeated .OsmAnd.OBF.CityBlock cities = 8;
   inline int cities_size() const;
   inline void clear_cities();
   static const int kCitiesFieldNumber = 8;
-  inline const ::CityBlock& cities(int index) const;
-  inline ::CityBlock* mutable_cities(int index);
-  inline ::CityBlock* add_cities();
-  inline const ::google::protobuf::RepeatedPtrField< ::CityBlock >&
+  inline const ::OsmAnd::OBF::CityBlock& cities(int index) const;
+  inline ::OsmAnd::OBF::CityBlock* mutable_cities(int index);
+  inline ::OsmAnd::OBF::CityBlock* add_cities();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock >&
       cities() const;
-  inline ::google::protobuf::RepeatedPtrField< ::CityBlock >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock >*
       mutable_cities();
 
   // repeated string additionalTags = 9;
@@ -458,7 +461,7 @@ class AddressPart : public ::google::protobuf::MessageLite {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& additionaltags() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_additionaltags();
 
-  // @@protoc_insertion_point(class_scope:AddressPart)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.AddressPart)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -475,7 +478,7 @@ class AddressPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 offset_;
   ::std::string* name_;
   ::std::string* nameen_;
-  ::google::protobuf::RepeatedPtrField< ::CityBlock > cities_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock > cities_;
   ::google::protobuf::RepeatedPtrField< ::std::string> additionaltags_;
   ::google::protobuf::int32 indexnameoffset_;
 
@@ -569,7 +572,7 @@ class CityBlock : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 type() const;
   inline void set_type(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:CityBlock)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityBlock)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -705,7 +708,7 @@ class PoiPart : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 bottom() const;
   inline void set_bottom(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:PoiPart)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.PoiPart)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -855,7 +858,7 @@ class MapLevel : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 maxzoom() const;
   inline void set_maxzoom(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:MapLevel)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.MapLevel)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -978,19 +981,19 @@ class MapPart : public ::google::protobuf::MessageLite {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // repeated .MapLevel levels = 5;
+  // repeated .OsmAnd.OBF.MapLevel levels = 5;
   inline int levels_size() const;
   inline void clear_levels();
   static const int kLevelsFieldNumber = 5;
-  inline const ::MapLevel& levels(int index) const;
-  inline ::MapLevel* mutable_levels(int index);
-  inline ::MapLevel* add_levels();
-  inline const ::google::protobuf::RepeatedPtrField< ::MapLevel >&
+  inline const ::OsmAnd::OBF::MapLevel& levels(int index) const;
+  inline ::OsmAnd::OBF::MapLevel* mutable_levels(int index);
+  inline ::OsmAnd::OBF::MapLevel* add_levels();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapLevel >&
       levels() const;
-  inline ::google::protobuf::RepeatedPtrField< ::MapLevel >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapLevel >*
       mutable_levels();
 
-  // @@protoc_insertion_point(class_scope:MapPart)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.MapPart)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -1002,7 +1005,7 @@ class MapPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 size_;
   ::google::protobuf::int64 offset_;
   ::std::string* name_;
-  ::google::protobuf::RepeatedPtrField< ::MapLevel > levels_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapLevel > levels_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
@@ -1129,7 +1132,7 @@ class RoutingSubregion : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::uint32 shiftodata() const;
   inline void set_shiftodata(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:RoutingSubregion)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.RoutingSubregion)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -1252,19 +1255,19 @@ class RoutingPart : public ::google::protobuf::MessageLite {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // repeated .RoutingSubregion subregions = 5;
+  // repeated .OsmAnd.OBF.RoutingSubregion subregions = 5;
   inline int subregions_size() const;
   inline void clear_subregions();
   static const int kSubregionsFieldNumber = 5;
-  inline const ::RoutingSubregion& subregions(int index) const;
-  inline ::RoutingSubregion* mutable_subregions(int index);
-  inline ::RoutingSubregion* add_subregions();
-  inline const ::google::protobuf::RepeatedPtrField< ::RoutingSubregion >&
+  inline const ::OsmAnd::OBF::RoutingSubregion& subregions(int index) const;
+  inline ::OsmAnd::OBF::RoutingSubregion* mutable_subregions(int index);
+  inline ::OsmAnd::OBF::RoutingSubregion* add_subregions();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingSubregion >&
       subregions() const;
-  inline ::google::protobuf::RepeatedPtrField< ::RoutingSubregion >*
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingSubregion >*
       mutable_subregions();
 
-  // @@protoc_insertion_point(class_scope:RoutingPart)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.RoutingPart)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -1276,7 +1279,7 @@ class RoutingPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 size_;
   ::google::protobuf::int64 offset_;
   ::std::string* name_;
-  ::google::protobuf::RepeatedPtrField< ::RoutingSubregion > subregions_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingSubregion > subregions_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
@@ -1429,7 +1432,7 @@ class TransportPart : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::uint32 stopstablelength() const;
   inline void set_stopstablelength(::google::protobuf::uint32 value);
 
-  // @@protoc_insertion_point(class_scope:TransportPart)
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportPart)
  private:
   inline void set_has_size();
   inline void clear_has_size();
@@ -1531,27 +1534,27 @@ inline void OsmAndStoredIndex::set_datecreated(::google::protobuf::int64 value) 
   datecreated_ = value;
 }
 
-// repeated .FileIndex fileIndex = 7;
+// repeated .OsmAnd.OBF.FileIndex fileIndex = 7;
 inline int OsmAndStoredIndex::fileindex_size() const {
   return fileindex_.size();
 }
 inline void OsmAndStoredIndex::clear_fileindex() {
   fileindex_.Clear();
 }
-inline const ::FileIndex& OsmAndStoredIndex::fileindex(int index) const {
+inline const ::OsmAnd::OBF::FileIndex& OsmAndStoredIndex::fileindex(int index) const {
   return fileindex_.Get(index);
 }
-inline ::FileIndex* OsmAndStoredIndex::mutable_fileindex(int index) {
+inline ::OsmAnd::OBF::FileIndex* OsmAndStoredIndex::mutable_fileindex(int index) {
   return fileindex_.Mutable(index);
 }
-inline ::FileIndex* OsmAndStoredIndex::add_fileindex() {
+inline ::OsmAnd::OBF::FileIndex* OsmAndStoredIndex::add_fileindex() {
   return fileindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::FileIndex >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::FileIndex >&
 OsmAndStoredIndex::fileindex() const {
   return fileindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::FileIndex >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::FileIndex >*
 OsmAndStoredIndex::mutable_fileindex() {
   return &fileindex_;
 }
@@ -1696,127 +1699,127 @@ inline void FileIndex::set_version(::google::protobuf::int32 value) {
   version_ = value;
 }
 
-// repeated .AddressPart addressIndex = 8;
+// repeated .OsmAnd.OBF.AddressPart addressIndex = 8;
 inline int FileIndex::addressindex_size() const {
   return addressindex_.size();
 }
 inline void FileIndex::clear_addressindex() {
   addressindex_.Clear();
 }
-inline const ::AddressPart& FileIndex::addressindex(int index) const {
+inline const ::OsmAnd::OBF::AddressPart& FileIndex::addressindex(int index) const {
   return addressindex_.Get(index);
 }
-inline ::AddressPart* FileIndex::mutable_addressindex(int index) {
+inline ::OsmAnd::OBF::AddressPart* FileIndex::mutable_addressindex(int index) {
   return addressindex_.Mutable(index);
 }
-inline ::AddressPart* FileIndex::add_addressindex() {
+inline ::OsmAnd::OBF::AddressPart* FileIndex::add_addressindex() {
   return addressindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::AddressPart >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressPart >&
 FileIndex::addressindex() const {
   return addressindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::AddressPart >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressPart >*
 FileIndex::mutable_addressindex() {
   return &addressindex_;
 }
 
-// repeated .TransportPart transportIndex = 9;
+// repeated .OsmAnd.OBF.TransportPart transportIndex = 9;
 inline int FileIndex::transportindex_size() const {
   return transportindex_.size();
 }
 inline void FileIndex::clear_transportindex() {
   transportindex_.Clear();
 }
-inline const ::TransportPart& FileIndex::transportindex(int index) const {
+inline const ::OsmAnd::OBF::TransportPart& FileIndex::transportindex(int index) const {
   return transportindex_.Get(index);
 }
-inline ::TransportPart* FileIndex::mutable_transportindex(int index) {
+inline ::OsmAnd::OBF::TransportPart* FileIndex::mutable_transportindex(int index) {
   return transportindex_.Mutable(index);
 }
-inline ::TransportPart* FileIndex::add_transportindex() {
+inline ::OsmAnd::OBF::TransportPart* FileIndex::add_transportindex() {
   return transportindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::TransportPart >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportPart >&
 FileIndex::transportindex() const {
   return transportindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::TransportPart >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportPart >*
 FileIndex::mutable_transportindex() {
   return &transportindex_;
 }
 
-// repeated .PoiPart poiIndex = 10;
+// repeated .OsmAnd.OBF.PoiPart poiIndex = 10;
 inline int FileIndex::poiindex_size() const {
   return poiindex_.size();
 }
 inline void FileIndex::clear_poiindex() {
   poiindex_.Clear();
 }
-inline const ::PoiPart& FileIndex::poiindex(int index) const {
+inline const ::OsmAnd::OBF::PoiPart& FileIndex::poiindex(int index) const {
   return poiindex_.Get(index);
 }
-inline ::PoiPart* FileIndex::mutable_poiindex(int index) {
+inline ::OsmAnd::OBF::PoiPart* FileIndex::mutable_poiindex(int index) {
   return poiindex_.Mutable(index);
 }
-inline ::PoiPart* FileIndex::add_poiindex() {
+inline ::OsmAnd::OBF::PoiPart* FileIndex::add_poiindex() {
   return poiindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::PoiPart >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::PoiPart >&
 FileIndex::poiindex() const {
   return poiindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::PoiPart >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::PoiPart >*
 FileIndex::mutable_poiindex() {
   return &poiindex_;
 }
 
-// repeated .MapPart mapIndex = 11;
+// repeated .OsmAnd.OBF.MapPart mapIndex = 11;
 inline int FileIndex::mapindex_size() const {
   return mapindex_.size();
 }
 inline void FileIndex::clear_mapindex() {
   mapindex_.Clear();
 }
-inline const ::MapPart& FileIndex::mapindex(int index) const {
+inline const ::OsmAnd::OBF::MapPart& FileIndex::mapindex(int index) const {
   return mapindex_.Get(index);
 }
-inline ::MapPart* FileIndex::mutable_mapindex(int index) {
+inline ::OsmAnd::OBF::MapPart* FileIndex::mutable_mapindex(int index) {
   return mapindex_.Mutable(index);
 }
-inline ::MapPart* FileIndex::add_mapindex() {
+inline ::OsmAnd::OBF::MapPart* FileIndex::add_mapindex() {
   return mapindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::MapPart >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapPart >&
 FileIndex::mapindex() const {
   return mapindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::MapPart >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapPart >*
 FileIndex::mutable_mapindex() {
   return &mapindex_;
 }
 
-// repeated .RoutingPart routingIndex = 12;
+// repeated .OsmAnd.OBF.RoutingPart routingIndex = 12;
 inline int FileIndex::routingindex_size() const {
   return routingindex_.size();
 }
 inline void FileIndex::clear_routingindex() {
   routingindex_.Clear();
 }
-inline const ::RoutingPart& FileIndex::routingindex(int index) const {
+inline const ::OsmAnd::OBF::RoutingPart& FileIndex::routingindex(int index) const {
   return routingindex_.Get(index);
 }
-inline ::RoutingPart* FileIndex::mutable_routingindex(int index) {
+inline ::OsmAnd::OBF::RoutingPart* FileIndex::mutable_routingindex(int index) {
   return routingindex_.Mutable(index);
 }
-inline ::RoutingPart* FileIndex::add_routingindex() {
+inline ::OsmAnd::OBF::RoutingPart* FileIndex::add_routingindex() {
   return routingindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::RoutingPart >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingPart >&
 FileIndex::routingindex() const {
   return routingindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::RoutingPart >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingPart >*
 FileIndex::mutable_routingindex() {
   return &routingindex_;
 }
@@ -2031,27 +2034,27 @@ inline void AddressPart::set_indexnameoffset(::google::protobuf::int32 value) {
   indexnameoffset_ = value;
 }
 
-// repeated .CityBlock cities = 8;
+// repeated .OsmAnd.OBF.CityBlock cities = 8;
 inline int AddressPart::cities_size() const {
   return cities_.size();
 }
 inline void AddressPart::clear_cities() {
   cities_.Clear();
 }
-inline const ::CityBlock& AddressPart::cities(int index) const {
+inline const ::OsmAnd::OBF::CityBlock& AddressPart::cities(int index) const {
   return cities_.Get(index);
 }
-inline ::CityBlock* AddressPart::mutable_cities(int index) {
+inline ::OsmAnd::OBF::CityBlock* AddressPart::mutable_cities(int index) {
   return cities_.Mutable(index);
 }
-inline ::CityBlock* AddressPart::add_cities() {
+inline ::OsmAnd::OBF::CityBlock* AddressPart::add_cities() {
   return cities_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::CityBlock >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock >&
 AddressPart::cities() const {
   return cities_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::CityBlock >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock >*
 AddressPart::mutable_cities() {
   return &cities_;
 }
@@ -2674,27 +2677,27 @@ inline void MapPart::set_allocated_name(::std::string* name) {
   }
 }
 
-// repeated .MapLevel levels = 5;
+// repeated .OsmAnd.OBF.MapLevel levels = 5;
 inline int MapPart::levels_size() const {
   return levels_.size();
 }
 inline void MapPart::clear_levels() {
   levels_.Clear();
 }
-inline const ::MapLevel& MapPart::levels(int index) const {
+inline const ::OsmAnd::OBF::MapLevel& MapPart::levels(int index) const {
   return levels_.Get(index);
 }
-inline ::MapLevel* MapPart::mutable_levels(int index) {
+inline ::OsmAnd::OBF::MapLevel* MapPart::mutable_levels(int index) {
   return levels_.Mutable(index);
 }
-inline ::MapLevel* MapPart::add_levels() {
+inline ::OsmAnd::OBF::MapLevel* MapPart::add_levels() {
   return levels_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::MapLevel >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapLevel >&
 MapPart::levels() const {
   return levels_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::MapLevel >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapLevel >*
 MapPart::mutable_levels() {
   return &levels_;
 }
@@ -2997,27 +3000,27 @@ inline void RoutingPart::set_allocated_name(::std::string* name) {
   }
 }
 
-// repeated .RoutingSubregion subregions = 5;
+// repeated .OsmAnd.OBF.RoutingSubregion subregions = 5;
 inline int RoutingPart::subregions_size() const {
   return subregions_.size();
 }
 inline void RoutingPart::clear_subregions() {
   subregions_.Clear();
 }
-inline const ::RoutingSubregion& RoutingPart::subregions(int index) const {
+inline const ::OsmAnd::OBF::RoutingSubregion& RoutingPart::subregions(int index) const {
   return subregions_.Get(index);
 }
-inline ::RoutingSubregion* RoutingPart::mutable_subregions(int index) {
+inline ::OsmAnd::OBF::RoutingSubregion* RoutingPart::mutable_subregions(int index) {
   return subregions_.Mutable(index);
 }
-inline ::RoutingSubregion* RoutingPart::add_subregions() {
+inline ::OsmAnd::OBF::RoutingSubregion* RoutingPart::add_subregions() {
   return subregions_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::RoutingSubregion >&
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingSubregion >&
 RoutingPart::subregions() const {
   return subregions_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::RoutingSubregion >*
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RoutingSubregion >*
 RoutingPart::mutable_subregions() {
   return &subregions_;
 }
@@ -3318,6 +3321,9 @@ inline void TransportPart::set_stopstablelength(::google::protobuf::uint32 value
 
 
 // @@protoc_insertion_point(namespace_scope)
+
+}  // namespace OBF
+}  // namespace OsmAnd
 
 // @@protoc_insertion_point(global_scope)
 

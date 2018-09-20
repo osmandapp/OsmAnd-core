@@ -32,7 +32,7 @@ static uint zoomForBaseRouteRendering  = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::vector<BinaryMapFile* > openFiles;
-OsmAndStoredIndex* cache = NULL;
+OsmAnd::OBF::OsmAndStoredIndex* cache = NULL;
 
 #ifdef MALLOC_H 
 #include <malloc.h>
@@ -1910,12 +1910,12 @@ bool initMapFilesFromCache(std::string inputName) {
 	FileInputStream input(fileDescriptor);
 	CodedInputStream cis(&input);
 	cis.SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
-	OsmAndStoredIndex* c = new OsmAndStoredIndex();
+	OsmAnd::OBF::OsmAndStoredIndex* c = new OsmAnd::OBF::OsmAndStoredIndex();
 	if(c->MergeFromCodedStream(&cis)){
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native Cache file initialized %s", inputName.c_str());
 		cache = c;
 		for (int i = 0; i < cache->fileindex_size(); i++) {
-			FileIndex fi = cache->fileindex(i);
+			OsmAnd::OBF::FileIndex fi = cache->fileindex(i);
 		}
 		return true;
 	}
@@ -1954,12 +1954,12 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 	mapFile->liveMap = inputName.find("live/") != string::npos;
 	mapFile->inputName = inputName;
 	mapFile->roadOnly = inputName.find(".road") != string::npos;
-	FileIndex* fo = NULL;
+	OsmAnd::OBF::FileIndex* fo = NULL;
 	if (cache != NULL) {
 		struct stat stat;
 		fstat(fileDescriptor, &stat);
 		for (int i = 0; i < cache->fileindex_size(); i++) {
-			FileIndex fi = cache->fileindex(i);
+			OsmAnd::OBF::FileIndex fi = cache->fileindex(i);
 			if (hasEnding(inputName, fi.filename()) && fi.size() == stat.st_size) {
 				fo = cache->mutable_fileindex(i);
 				break;
@@ -1971,12 +1971,12 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 		mapFile->dateCreated = fo->datemodified();
 		for (int i = 0; i < fo->mapindex_size(); i++) {
 			MapIndex mi;
-			MapPart mp = fo->mapindex(i);
+			OsmAnd::OBF::MapPart mp = fo->mapindex(i);
 			mi.filePointer = mp.offset();
 			mi.length = mp.size();
 			mi.name = mp.name();
 			for (int j = 0; j < mp.levels_size(); j++) {
-				MapLevel ml = mp.levels(j);
+				OsmAnd::OBF::MapLevel ml = mp.levels(j);
 				MapRoot mr;
 				mr.bottom = ml.bottom();
 				mr.left = ml.left();
@@ -1995,12 +1995,12 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 
 		for (int i = 0; i < fo->routingindex_size() && (!mapFile->liveMap || useLive); i++) {
 			RoutingIndex *mi = new RoutingIndex();
-			RoutingPart mp = fo->routingindex(i);
+			OsmAnd::OBF::RoutingPart mp = fo->routingindex(i);
 			mi->filePointer = mp.offset();
 			mi->length = mp.size();
 			mi->name = mp.name();
 			for (int j = 0; j < mp.subregions_size(); j++) {
-				RoutingSubregion ml = mp.subregions(j);
+				OsmAnd::OBF::RoutingSubregion ml = mp.subregions(j);
 				RouteSubregion mr(mi);
 				mr.bottom = ml.bottom();
 				mr.left = ml.left();
