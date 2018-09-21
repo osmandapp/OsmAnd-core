@@ -22,6 +22,7 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include "CachedOsmandIndexes.h"
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(
     ResourcesManager* owner_,

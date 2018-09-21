@@ -9,6 +9,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
+#include <OsmAndCore/CachedOsmandIndexes.h>
 
 namespace OsmAnd {
 
@@ -45,6 +46,7 @@ namespace OsmAnd {
 
         friend class OsmAnd::ObfTransportSectionReader_P;
         friend class OsmAnd::ObfReader_P;
+        friend class OsmAnd::CachedOsmandIndexes;
     };
 
 } // namespace OsmAnd

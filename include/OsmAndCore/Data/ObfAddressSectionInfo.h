@@ -19,6 +19,26 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfAddressSectionInfo : public ObfSectionInfo
     {
         Q_DISABLE_COPY_AND_MOVE(ObfAddressSectionInfo)
+        
+    public:
+        class OSMAND_CORE_API CitiesBlock
+        {
+            Q_DISABLE_COPY_AND_MOVE(CitiesBlock);
+        private:
+        protected:
+        public:
+            CitiesBlock(const QString& name,
+                        const uint32_t offset,
+                        const uint32_t length,
+                        const int type);
+            virtual ~CitiesBlock();
+            
+            const QString name;
+            const uint32_t offset;
+            const uint32_t length;
+            const int type;
+        };
+        
     private:
     protected:
     public:
@@ -30,7 +50,7 @@ namespace OsmAnd
         QStringList attributeTagsTable;
 
         uint32_t nameIndexInnerOffset;
-        uint32_t firstStreetGroupInnerOffset;
+        QList<std::shared_ptr<const CitiesBlock>> cities;
 
     friend class OsmAnd::ObfAddressSectionReader_P;
     };

@@ -20,6 +20,7 @@
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
 #include "Utilities.h"
+#include "DataCommonTypes.h"
 
 OsmAnd::ObfAddressSectionReader_P::ObfAddressSectionReader_P()
 {
@@ -91,10 +92,35 @@ void OsmAnd::ObfAddressSectionReader_P::read(
                 break;
             }
             case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
-                if (section->firstStreetGroupInnerOffset == 0)
-                    section->firstStreetGroupInnerOffset = tagPos - section->offset;
-                ObfReaderUtilities::skipUnknownField(cis, tag);
+            {
+                auto name = QString::null;
+                auto offset = tagPos;
+                auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                uint32_t type = 1;
+                while (true)
+                {
+                    const auto tt = cis->ReadTag();
+                    const auto ttag = gpb::internal::WireFormatLite::GetTagFieldNumber(tt);
+                    if (ttag == 0)
+                    {
+                        break;
+                    }
+                    else if (ttag == OBF::OsmAndAddressIndex_CitiesIndex::kTypeFieldNumber)
+                    {
+                        type = ObfReaderUtilities::readLength(cis);
+                        break;
+                    }
+                    else
+                    {
+                        ObfReaderUtilities::skipUnknownField(cis, tt);
+                    }
+                }
+                auto block = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(name, offset, length, type);
+                section->cities.push_back(block);
+                
+                cis->Seek(block->offset + block->length);
                 break;
+            }
             case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
                 section->nameIndexInnerOffset = tagPos - section->offset;
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -1294,14 +1320,17 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetGroups(
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->offset);
-    const auto oldLimit = cis->PushLimit(section->length);
-    cis->Skip(section->firstStreetGroupInnerOffset);
-
-    readStreetGroups(reader, section, resultOut, bbox31, streetGroupTypesFilter, visitor, queryController);
-
-    ObfReaderUtilities::ensureAllDataWasRead(cis);
-    cis->PopLimit(oldLimit);
+    for (auto block : section->cities)
+    {
+        if (block->type == (int)ObfAddressStreetGroupType::CityOrTown)
+        {
+            cis->Seek(block->offset);
+            const auto oldLimit = cis->PushLimit(block->length);
+            readStreetGroups(reader, section, resultOut, bbox31, streetGroupTypesFilter, visitor, queryController);
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
+            cis->PopLimit(oldLimit);
+        }
+    }
 }
 
 void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
