@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 151
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 152
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -283,6 +283,7 @@ set(merged_sources
 	${legacy_shared_sources}
     ${legacy_sources}
 	"protos/OBF.pb.h"
+	"protos/osmand_index.pb.h"
 )
 set(merged_dependencies
 	skia_static
