@@ -104,3 +104,8 @@ target_include_directories(protobuf_static
 		"upstream.patched/src"
 		"${CMAKE_CURRENT_BINARY_DIR}"
 )
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+    set_target_properties(protobuf_static
+        PROPERTIES
+            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+endif()

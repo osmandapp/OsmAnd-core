@@ -580,3 +580,8 @@ target_link_libraries(archive_static
 		z_static
 		${BZIP2_LIBRARIES}
 )
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+    set_target_properties(archive_static
+        PROPERTIES
+            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+endif()

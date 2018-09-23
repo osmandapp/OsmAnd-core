@@ -47,3 +47,8 @@ target_link_libraries(glew_static
 		${OPENGL_glu_LIBRARY}
 		${target_specific_public_libraries}
 )
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+    set_target_properties(glew_static
+        PROPERTIES
+            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+endif()

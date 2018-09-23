@@ -76,3 +76,9 @@ target_include_directories(expat_static
 	PUBLIC
 		"upstream.patched/lib"
 )
+
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+	set_target_properties(expat_static
+		PROPERTIES
+			XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+endif()
