@@ -176,7 +176,7 @@ file(GLOB legacy_shared_sources
     "${LEGACY_SRC}/proto/osmand_index.pb.h"
     "${LEGACY_SRC}/proto/osmand_index.pb.cc"
     "${LEGACY_SRC}/proto/OBF.pb.h"
-// "${LEGACY_SRC}/proto/OBF.pb.cc"
+    "${LEGACY_SRC}/proto/OBF.pb.cc"
 
 )
 
@@ -217,8 +217,8 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/routingConfiguration.cpp"
 		"${LEGACY_SRC}/precalculatedRouteDirection.h"
 		"${LEGACY_SRC}/precalculatedRouteDirection.cpp"
-        "${LEGACY_SRC}/routePlannerFrontEnd.h"
-        "${LEGACY_SRC}/routePlannerFrontEnd.cpp"
+		"${LEGACY_SRC}/routePlannerFrontEnd.h"
+		"${LEGACY_SRC}/routePlannerFrontEnd.cpp"
 		"${LEGACY_SRC}/routingContext.h"
 		"${LEGACY_SRC}/routingContext.cpp"
 
