@@ -173,6 +173,11 @@ set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 file(GLOB legacy_shared_sources
     "${LEGACY_SRC}/openingHoursParser.h"
     "${LEGACY_SRC}/openingHoursParser.cpp"
+    "${LEGACY_SRC}/proto/osmand_index.pb.h"
+    "${LEGACY_SRC}/proto/osmand_index.pb.cc"
+    "${LEGACY_SRC}/proto/OBF.pb.h"
+// "${LEGACY_SRC}/proto/OBF.pb.cc"
+
 )
 
 set(legacy_shared_dirs_public
@@ -219,10 +224,6 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
-		"${LEGACY_SRC}/proto/osmand_index.pb.h"
-		"${LEGACY_SRC}/proto/osmand_index.pb.cc"
-		"${LEGACY_SRC}/proto/OBF.pb.h"
-		"${LEGACY_SRC}/proto/OBF.pb.cc"
 
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
@@ -281,9 +282,7 @@ set(merged_sources
 	${sources_map}
 	${target_specific_sources}
 	${legacy_shared_sources}
-    ${legacy_sources}
-	"protos/OBF.pb.h"
-	"protos/osmand_index.pb.h"
+    	${legacy_sources}
 )
 set(merged_dependencies
 	skia_static
