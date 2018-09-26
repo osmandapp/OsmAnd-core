@@ -46,6 +46,12 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> >OsmAnd::ObfsCollection::getObfFil
 }
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface(
+    const std::shared_ptr<const ObfFile> obfFile) const
+{
+    return _p->obtainDataInterface(obfFile);
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface(
     const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const
 {
     return _p->obtainDataInterface(localResources);

@@ -14,6 +14,7 @@ namespace OsmAnd
 {
     class ObfInfo;
     class ObfReader_P;
+    class CachedOsmandIndexes_P;
 
     class ObfFile_P;
     class OSMAND_CORE_API ObfFile
@@ -25,6 +26,7 @@ namespace OsmAnd
     public:
         ObfFile(const QString& filePath);
         ObfFile(const QString& filePath, const uint64_t fileSize);
+        ObfFile(const QString& filePath, const std::shared_ptr<const ObfInfo>& obfInfo);
         virtual ~ObfFile();
 
         const QString filePath;
@@ -34,6 +36,7 @@ namespace OsmAnd
         const QString getRegionName() const;
 
     friend class OsmAnd::ObfReader_P;
+    friend class OsmAnd::CachedOsmandIndexes_P;
     };
 }
 

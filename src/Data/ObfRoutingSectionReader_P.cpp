@@ -1150,3 +1150,52 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         metric->elapsedTimeForOnlyAcceptedRoads += localMetric.elapsedTimeForOnlyAcceptedRoads;
     }
 }
+
+void OsmAnd::ObfRoutingSectionReader_P::loadTreeNodes(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+    const RoutingDataLevel dataLevel,
+    QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut)
+{
+    const auto cis = reader.getCodedInputStream().get();
+    
+    // Check if tree nodes were loaded for specified data level
+    auto& container = section->_p->_levelContainers[static_cast<unsigned int>(dataLevel)];
+    {
+        QMutexLocker scopedLocker(&container.mutex);
+        
+        if (!container.level)
+        {
+            cis->Seek(section->offset);
+            auto oldLimit = cis->PushLimit(section->length);
+            
+            std::shared_ptr<ObfRoutingSectionLevel> level(new ObfRoutingSectionLevel(dataLevel));
+            readLevelTreeNodes(reader, section, level);
+            container.level = level;
+            
+            cis->PopLimit(oldLimit);
+        }
+    }
+    
+    // Collect all tree nodes that contain data
+    QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> > treeNodesWithData;
+    for (const auto& rootNode : constOf(container.level->rootNodes))
+    {
+        if (rootNode->dataOffset > 0)
+            treeNodesWithData.push_back(rootNode);
+        
+        if (rootNode->hasChildrenDataBoxes)
+        {
+            cis->Seek(rootNode->offset);
+            auto oldLimit = cis->PushLimit(rootNode->length);
+            
+            cis->Skip(rootNode->firstDataBoxInnerOffset);
+            readLevelTreeNodeChildren(reader, section, rootNode, &treeNodesWithData, nullptr, nullptr, nullptr);
+            
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
+            cis->PopLimit(oldLimit);
+        }
+    }
+
+    resultOut->append(treeNodesWithData);
+}

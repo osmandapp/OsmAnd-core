@@ -33,6 +33,8 @@ namespace OsmAnd
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
         virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
             const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const = 0;
+        virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+            const std::shared_ptr<const ObfFile> obfFile) const = 0;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
             const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,

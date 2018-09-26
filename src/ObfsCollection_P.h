@@ -92,6 +92,8 @@ namespace OsmAnd
 
         QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
         std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+            const std::shared_ptr<const ObfFile> obfFile) const;
+        std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
             const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const;
         std::shared_ptr<ObfDataInterface> obtainDataInterface(
             const AreaI* const pBbox31,

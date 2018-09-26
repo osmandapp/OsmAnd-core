@@ -226,6 +226,26 @@ bool OsmAnd::ObfDataInterface::loadRoads(
     return true;
 }
 
+bool OsmAnd::ObfDataInterface::loadRoutingTreeNodes(
+    const RoutingDataLevel dataLevel,
+    QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& routingSection : constOf(obfInfo->routingSections))
+        {
+            OsmAnd::ObfRoutingSectionReader::loadTreeNodes(
+                obfReader,
+                routingSection,
+                dataLevel,
+                resultOut);
+        }
+    }
+    
+    return true;
+}
+
 bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* outBinaryMapObjects,
     QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,

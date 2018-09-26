@@ -6,6 +6,14 @@
 #include <OsmAndCore/Data/ObfInfo.h>
 #include <OsmAndCore/Utilities.h>
 
+OsmAnd::ObfFile::ObfFile(const QString& filePath_, const std::shared_ptr<const ObfInfo>& obfInfo_)
+    : _p(new ObfFile_P(this, obfInfo_))
+    , filePath(filePath_)
+    , fileSize(QFile(filePath).size())
+    , obfInfo(_p->_obfInfo)
+{
+}
+
 OsmAnd::ObfFile::ObfFile(const QString& filePath_)
     : _p(new ObfFile_P(this))
     , filePath(filePath_)

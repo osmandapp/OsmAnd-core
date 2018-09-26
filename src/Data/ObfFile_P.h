@@ -22,6 +22,7 @@ namespace OsmAnd
     private:
     protected:
         ObfFile_P(ObfFile* owner);
+        ObfFile_P(ObfFile* owner, const std::shared_ptr<const ObfInfo>& obfInfo_);
 
         ImplementationInterface<ObfFile> owner;
 

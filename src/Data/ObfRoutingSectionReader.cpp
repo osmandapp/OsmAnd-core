@@ -38,6 +38,20 @@ void OsmAnd::ObfRoutingSectionReader::loadRoads(
         metric);
 }
 
+void OsmAnd::ObfRoutingSectionReader::loadTreeNodes(
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+    const RoutingDataLevel dataLevel,
+    QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut)
+{
+    ObfRoutingSectionReader_P::loadTreeNodes(
+        *reader->_p,
+        section,
+        dataLevel,
+        resultOut);
+}
+
+
 OsmAnd::ObfRoutingSectionReader::DataBlock::DataBlock(
     const DataBlockId id_,
     const RoutingDataLevel dataLevel_,

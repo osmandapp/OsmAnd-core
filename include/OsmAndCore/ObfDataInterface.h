@@ -63,6 +63,10 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
 
+        bool loadRoutingTreeNodes(
+            const RoutingDataLevel dataLevel,
+            QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut);
+
         bool loadMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* outBinaryMapObjects,
             QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,

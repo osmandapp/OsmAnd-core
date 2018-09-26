@@ -17,6 +17,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfRoutingSectionInfo;
+    class ObfRoutingSectionLevelTreeNode;
     class Road;
     class IQueryController;
     namespace ObfRoutingSectionReader_Metrics
@@ -88,6 +89,12 @@ namespace OsmAnd
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
+        
+        static void loadTreeNodes(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+            const RoutingDataLevel dataLevel,
+            QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut);
     };
 }
 

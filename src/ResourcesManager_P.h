@@ -23,6 +23,8 @@
 
 namespace OsmAnd
 {
+    class CachedOsmandIndexes;
+    
     class ResourcesManager_P Q_DECL_FINAL
     {
     public:
@@ -61,6 +63,7 @@ namespace OsmAnd
 
         void loadLocalResourcesFromPath_Obf(
             const QString& storagePath,
+            const std::shared_ptr<CachedOsmandIndexes>& cachedOsmandIndexes,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
             const QString& filenameMask,
             const ResourceType resourceType) const;
@@ -165,6 +168,8 @@ namespace OsmAnd
             ResourcesManager_P* const owner;
 
             virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
+            virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+                const std::shared_ptr<const ObfFile> obfFile) const;
             virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
                 const QList< std::shared_ptr<const LocalResource> > localResources) const;
             virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(

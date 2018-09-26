@@ -46,7 +46,7 @@ namespace OsmAnd {
 
         friend class OsmAnd::ObfTransportSectionReader_P;
         friend class OsmAnd::ObfReader_P;
-        friend class OsmAnd::CachedOsmandIndexes;
+        friend class OsmAnd::CachedOsmandIndexes_P;
     };
 
 } // namespace OsmAnd

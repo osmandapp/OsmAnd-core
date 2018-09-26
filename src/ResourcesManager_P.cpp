@@ -265,9 +265,23 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
 {
     if (!isUnmanagedStorage)
     {
+        auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>(obfsCollection);
+        QFile indCache(QDir(owner->localStoragePath).absoluteFilePath(QLatin1String("ind.cache")));
+        //indCache.remove();
+        if (indCache.exists())
+        {
+            cachedOsmandIndexes->readFromFile(indCache.fileName(), CachedOsmandIndexes::VERSION);
+        }
+        else
+        {
+            indCache.open(QIODevice::ReadWrite);
+            if (indCache.isOpen())
+                indCache.close();
+        }
         // Find ResourceType::MapRegion -> "*.map.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
+            cachedOsmandIndexes,
             outResult,
             QLatin1String("*.map.obf"),
             ResourceType::MapRegion);
@@ -275,6 +289,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         // Find ResourceType::RoadMapRegion -> "*.road.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
+            cachedOsmandIndexes,
             outResult,
             QLatin1String("*.road.obf"),
             ResourceType::RoadMapRegion);
@@ -282,6 +297,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         // Find ResourceType::SrtmMapRegion -> "*.srtm.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
+            cachedOsmandIndexes,
             outResult,
             QLatin1String("*.srtm.obf"),
             ResourceType::SrtmMapRegion);
@@ -289,9 +305,13 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         // Find ResourceType::WikiMapRegion -> "*.wiki.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
+            cachedOsmandIndexes,
             outResult,
             QLatin1String("*.wiki.obf"),
             ResourceType::WikiMapRegion);
+        
+        if (outResult.size() > 0)
+            cachedOsmandIndexes->writeToFile(indCache.fileName());
     }
     else
     {
@@ -338,6 +358,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
 
 void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
     const QString& storagePath,
+    const std::shared_ptr<CachedOsmandIndexes>& cachedOsmandIndexes,
     QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
     const QString& filenameMask,
     const ResourceType resourceType) const
@@ -349,8 +370,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         const auto filePath = obfFileInfo.absoluteFilePath();
 
         // Read information from OBF
-        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
-        if (!ObfReader(obfFile).obtainInfo())
+        const auto obfFile = cachedOsmandIndexes->getObfFile(filePath);
+        if (!obfFile->obfInfo)
         {
             LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
             continue;
@@ -1624,10 +1645,14 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
 }
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
+    const std::shared_ptr<const ObfFile> obfFile) const
+{
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy({ std::make_shared<ObfReader>(obfFile) }, {}));
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
     const QList< std::shared_ptr<const LocalResource> > localResources) const
 {
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-    
     bool otherBasemapPresent = false;
     QList< std::shared_ptr<const InstalledResource> > lockedResources;
     QList< std::shared_ptr<const ObfReader> > obfReaders;
