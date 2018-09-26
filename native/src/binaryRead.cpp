@@ -1914,9 +1914,6 @@ bool initMapFilesFromCache(std::string inputName) {
 	if(c->MergeFromCodedStream(&cis)){
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native Cache file initialized %s", inputName.c_str());
 		cache = c;
-		for (int i = 0; i < cache->fileindex_size(); i++) {
-			OsmAnd::OBF::FileIndex fi = cache->fileindex(i);
-		}
 		return true;
 	}
 	return false;
