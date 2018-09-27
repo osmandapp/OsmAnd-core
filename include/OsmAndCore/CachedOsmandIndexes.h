@@ -32,12 +32,10 @@ namespace OsmAnd
         PrivateImplementation<CachedOsmandIndexes_P> _p;
         
     public:
-        CachedOsmandIndexes(const std::shared_ptr<const IObfsCollection>& obfsCollection);
+        CachedOsmandIndexes();
         virtual ~CachedOsmandIndexes();
 
-        const std::shared_ptr<const IObfsCollection> obfsCollection;
-
-        const std::shared_ptr<const ObfFile> getObfFile(const QString& filePath);
+        const std::shared_ptr<ObfFile> getObfFile(const QString& filePath);
         void readFromFile(const QString& filePath, int version);
         void writeToFile(const QString& filePath);
     };

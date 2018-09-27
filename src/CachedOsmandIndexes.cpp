@@ -12,9 +12,8 @@
 #include <OsmAndCore/Data/ObfRoutingSectionInfo.h>
 #include <OsmAndCore/Data/ObfTransportSectionInfo.h>
 
-OsmAnd::CachedOsmandIndexes::CachedOsmandIndexes(const std::shared_ptr<const IObfsCollection>& obfsCollection_)
+OsmAnd::CachedOsmandIndexes::CachedOsmandIndexes()
     : _p(new CachedOsmandIndexes_P(this))
-    , obfsCollection(obfsCollection_)
 {
 }
 
@@ -22,7 +21,7 @@ OsmAnd::CachedOsmandIndexes::~CachedOsmandIndexes()
 {
 }
 
-const std::shared_ptr<const OsmAnd::ObfFile> OsmAnd::CachedOsmandIndexes::getObfFile(const QString& filePath)
+const std::shared_ptr<OsmAnd::ObfFile> OsmAnd::CachedOsmandIndexes::getObfFile(const QString& filePath)
 {
     return _p->getObfFile(filePath);
 }

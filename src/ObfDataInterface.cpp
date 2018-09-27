@@ -227,6 +227,8 @@ bool OsmAnd::ObfDataInterface::loadRoads(
 }
 
 bool OsmAnd::ObfDataInterface::loadRoutingTreeNodes(
+    const std::shared_ptr<const ObfReader>& obfReader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& routingSection,
     const RoutingDataLevel dataLevel,
     QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut)
 {

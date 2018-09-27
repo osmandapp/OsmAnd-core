@@ -101,10 +101,10 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         addr->set_size(index->length);
         addr->set_offset(index->offset);
         addr->set_name(index->name.toStdString());
-        if (index->localizedNames.contains(QLatin1String("en"))) {
+        if (index->localizedNames.contains(QLatin1String("en")))
             addr->set_nameen(index->localizedNames[QLatin1String("en")].toStdString());
-        }
-        addr->set_indexnameoffset(index->nameIndexInnerOffset + index->offset);
+
+        addr->set_indexnameoffset(index->nameIndexInnerOffset);
         for (auto& mr : index->cities)
         {
             auto cblock = addr->add_cities();
@@ -144,7 +144,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         transport->set_stringtableoffset(index->stringTable->fileOffset);
     }
     
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(file);
+    auto obfReader = std::make_shared<const ObfReader>(file);
     for (auto index : obfInfo->routingSections)
     {
         auto routing = fileIndex->add_routingindex();
@@ -153,9 +153,18 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         routing->set_name(index->name.toStdString());
 
         QList<std::shared_ptr<const ObfRoutingSectionLevelTreeNode>> baseNodes;
+        OsmAnd::ObfRoutingSectionReader::loadTreeNodes(
+            obfReader,
+            index,
+            RoutingDataLevel::Basemap,
+            &baseNodes);
+
         QList<std::shared_ptr<const ObfRoutingSectionLevelTreeNode>> detailedNodes;
-        obfDataInterface->loadRoutingTreeNodes(RoutingDataLevel::Basemap, &baseNodes);
-        obfDataInterface->loadRoutingTreeNodes(RoutingDataLevel::Detailed, &detailedNodes);
+        OsmAnd::ObfRoutingSectionReader::loadTreeNodes(
+            obfReader,
+            index,
+            RoutingDataLevel::Detailed,
+            &detailedNodes);
 
         for (auto node : baseNodes)
             addRouteSubregion(routing, node, true);
@@ -187,14 +196,14 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
     for (int i = 0; i < found->mapindex_size(); i++)
     {
         auto index = found->mapindex(i);
-        auto mi = std::make_shared<ObfMapSectionInfo>(obfInfo);
+        Ref<ObfMapSectionInfo> mi(new ObfMapSectionInfo(obfInfo));
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
         
         for (int m = 0; m < index.levels_size(); m++) {
             auto mr = index.levels(m);
-            auto root = std::make_shared<ObfMapSectionLevel>();
+            Ref<ObfMapSectionLevel> root(new ObfMapSectionLevel());
             root->length = (unsigned int) mr.size();
             root->offset = (unsigned int) mr.offset();
             root->area31 = AreaI(mr.top(), mr.left(), mr.bottom(), mr.right());
@@ -202,19 +211,23 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
             root->maxZoom = (ZoomLevel) mr.maxzoom();
             mi->levels.push_back(qMove(root));
         }
+        mi->isBasemap = mi->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
+        mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
         obfInfo->isBasemap = obfInfo->isBasemap || mi->isBasemap;
+        obfInfo->isBasemapWithCoastlines = obfInfo->isBasemapWithCoastlines || mi->isBasemapWithCoastlines;
+
         obfInfo->mapSections.push_back(qMove(mi));
     }
     
     for (int i = 0; i < found->addressindex_size(); i++)
     {
         auto index = found->addressindex(i);
-        auto mi = std::make_shared<ObfAddressSectionInfo>(obfInfo);
+        Ref<ObfAddressSectionInfo> mi(new ObfAddressSectionInfo(obfInfo));
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
         mi->localizedNames.insert(QLatin1String("en"), QString::fromStdString(index.nameen()));
-        mi->nameIndexInnerOffset = index.indexnameoffset() - mi->offset;
+        mi->nameIndexInnerOffset = index.indexnameoffset();
         for (int m = 0; m < index.cities_size(); m++) {
             auto mr = index.cities(m);
             auto cblock = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(QString::null, mr.offset(), mr.size(), mr.type());
@@ -224,24 +237,24 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
             const auto& s = index.additionaltags(m);
             mi->attributeTagsTable.push_back(QString::fromStdString(s));
         }
-        obfInfo->addressSections.push_back(mi);
+        obfInfo->addressSections.push_back(qMove(mi));
     }
     
     for (int i = 0; i < found->poiindex_size(); i++)
     {
         auto index = found->poiindex(i);
-        auto mi = std::make_shared<ObfPoiSectionInfo>(obfInfo);
+        Ref<ObfPoiSectionInfo> mi(new ObfPoiSectionInfo(obfInfo));
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
         mi->area31 = AreaI(index.top(), index.left(), index.bottom(), index.right());
-        obfInfo->poiSections.push_back(mi);
+        obfInfo->poiSections.push_back(qMove(mi));
     }
     
     for (int i = 0; i < found->transportindex_size(); i++)
     {
         auto index = found->transportindex(i);
-        const std::shared_ptr<ObfTransportSectionInfo> mi(new ObfTransportSectionInfo(obfInfo));
+        Ref<ObfTransportSectionInfo> mi(new ObfTransportSectionInfo(obfInfo));
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
@@ -252,18 +265,18 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         stringTable.fileOffset = index.stringtableoffset();
         stringTable.length = index.stringtablelength();
         mi->_stringTable = stringTable;
-        obfInfo->transportSections.push_back(mi);
+        obfInfo->transportSections.push_back(qMove(mi));
     }
     
     for (int i = 0; i < found->routingindex_size(); i++)
     {
         auto index = found->routingindex(i);
-        auto mi = std::make_shared<ObfRoutingSectionInfo>(obfInfo);
+        Ref<ObfRoutingSectionInfo> mi(new ObfRoutingSectionInfo(obfInfo));
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
         
-        /* Looks like we do not need to cache subrigions since we do not cache routeEncodingRules. Thus subregions will be read from obf file anyway.
+        /*
         for(RoutingSubregion mr : index.getSubregionsList()) {
             RouteSubregion sub = new RouteSubregion(mi);
             sub.length = (int) mr.getSize();
@@ -281,13 +294,13 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         }
         */
         
-        obfInfo->routingSections.push_back(mi);
+        obfInfo->routingSections.push_back(qMove(mi));
     }
     
     return obfInfo;
 }
 
-const std::shared_ptr<const OsmAnd::ObfFile> OsmAnd::CachedOsmandIndexes_P::getObfFile(const QString& filePath)
+const std::shared_ptr<OsmAnd::ObfFile> OsmAnd::CachedOsmandIndexes_P::getObfFile(const QString& filePath)
 {
     //RandomAccessFile mf = new RandomAccessFile(f.getPath(), "r");
     QFileInfo f(filePath);

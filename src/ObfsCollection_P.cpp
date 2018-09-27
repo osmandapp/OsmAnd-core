@@ -14,6 +14,7 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "CachedOsmandIndexes.h"
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P(ObfsCollection* owner_)
     : owner(owner_)
@@ -56,6 +57,32 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
     const Stopwatch collectSourcesStopwatch(true);
 
+    std::shared_ptr<CachedOsmandIndexes> cachedOsmandIndexes = nullptr;
+    QFile* indCache = NULL;
+    if (_sourcesOrigins.size() > 0)
+    {
+        auto origin = _sourcesOrigins.values()[0];
+        if (origin->type == SourceOriginType::Directory)
+        {
+            const auto& directory = std::static_pointer_cast<const DirectoryAsSourceOrigin>(origin);
+            indCache = new QFile(directory->directory.absoluteFilePath(QLatin1String("ind_core.cache")));
+        }
+    }
+    if (indCache)
+    {
+        cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
+        if (indCache->exists())
+        {
+            cachedOsmandIndexes->readFromFile(indCache->fileName(), CachedOsmandIndexes::VERSION);
+        }
+        else
+        {
+            indCache->open(QIODevice::ReadWrite);
+            if (indCache->isOpen())
+                indCache->close();
+        }
+    }
+    
     // Check all previously collected sources
     auto itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
     while(itCollectedSourcesEntry.hasNext())
@@ -130,7 +157,8 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                     continue;
                 
-                auto obfFile = new ObfFile(obfFilePath, obfFileInfo.size());
+                //auto obfFile = new ObfFile(obfFilePath, obfFileInfo.size());
+                auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
                 collectedSources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
             }
 
@@ -160,10 +188,16 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                 continue;
 
-            auto obfFile = new ObfFile(obfFilePath, fileAsSourceOrigin->fileInfo.size());
+            //auto obfFile = new ObfFile(obfFilePath, fileAsSourceOrigin->fileInfo.size());
+            auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
             collectedSources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
         }
     }
+
+    if (cachedOsmandIndexes && _collectedSources.size() > 0)
+        cachedOsmandIndexes->writeToFile(indCache->fileName());
+    if (indCache)
+        delete indCache;
 
     // Decrement invalidations counter with number of processed onces
     _collectedSourcesInvalidated.fetchAndAddOrdered(-invalidationsToProcess);

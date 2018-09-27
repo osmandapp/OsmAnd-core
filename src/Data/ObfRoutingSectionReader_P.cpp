@@ -1178,24 +1178,6 @@ void OsmAnd::ObfRoutingSectionReader_P::loadTreeNodes(
     }
     
     // Collect all tree nodes that contain data
-    QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> > treeNodesWithData;
     for (const auto& rootNode : constOf(container.level->rootNodes))
-    {
-        if (rootNode->dataOffset > 0)
-            treeNodesWithData.push_back(rootNode);
-        
-        if (rootNode->hasChildrenDataBoxes)
-        {
-            cis->Seek(rootNode->offset);
-            auto oldLimit = cis->PushLimit(rootNode->length);
-            
-            cis->Skip(rootNode->firstDataBoxInnerOffset);
-            readLevelTreeNodeChildren(reader, section, rootNode, &treeNodesWithData, nullptr, nullptr, nullptr);
-            
-            ObfReaderUtilities::ensureAllDataWasRead(cis);
-            cis->PopLimit(oldLimit);
-        }
-    }
-
-    resultOut->append(treeNodesWithData);
+        resultOut->push_back(rootNode);
 }

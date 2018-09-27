@@ -64,6 +64,8 @@ namespace OsmAnd
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
 
         bool loadRoutingTreeNodes(
+            const std::shared_ptr<const ObfReader>& obfReader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& routingSection,
             const RoutingDataLevel dataLevel,
             QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* resultOut);
 

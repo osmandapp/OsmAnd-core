@@ -265,9 +265,8 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
 {
     if (!isUnmanagedStorage)
     {
-        auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>(obfsCollection);
+        auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
         QFile indCache(QDir(owner->localStoragePath).absoluteFilePath(QLatin1String("ind.cache")));
-        //indCache.remove();
         if (indCache.exists())
         {
             cachedOsmandIndexes->readFromFile(indCache.fileName(), CachedOsmandIndexes::VERSION);

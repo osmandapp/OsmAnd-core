@@ -47,7 +47,7 @@ namespace OsmAnd
 
         ImplementationInterface<CachedOsmandIndexes> owner;
         
-        const std::shared_ptr<const ObfFile> getObfFile(const QString& filePath);
+        const std::shared_ptr<ObfFile> getObfFile(const QString& filePath);
         void readFromFile(const QString& filePath, int version);
         void writeToFile(const QString& filePath);
         
