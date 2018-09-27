@@ -694,7 +694,7 @@ void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& 
 
 ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound, int& renderedState);
 
-BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive);
+BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routingOnly);
 
 bool initMapFilesFromCache(std::string inputName) ;
 

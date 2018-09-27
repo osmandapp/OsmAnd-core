@@ -598,10 +598,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 	return true;
 }
 
-
-//display google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
-// display google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)
-bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive) {
+bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive, bool initRoutingOnly) {
 	uint32_t tag;
 	uint32_t versionConfirm = -2;
 	file->external = file->inputName.find("osmand_ext") != string::npos;
@@ -621,7 +618,9 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive
 			readInt(input, &mapIndex.length);
 			mapIndex.filePointer = input->TotalBytesRead();
 			int oldLimit = input->PushLimit(mapIndex.length);
-			readMapIndex(input, &mapIndex, false);
+            if (!initRoutingOnly) {
+                readMapIndex(input, &mapIndex, false);
+            }
 			input->PopLimit(oldLimit);
 			input->Seek(mapIndex.filePointer + mapIndex.length);
 			file->mapIndexes.push_back(mapIndex);
@@ -1928,7 +1927,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending)
     }
 }
 
-BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
+BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routingOnly) {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	std::map<std::string, BinaryMapFile*>::iterator iterator;
 	closeBinaryMapFile(inputName);
@@ -1966,29 +1965,31 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 	if (fo != NULL) {
 		mapFile->version = fo->version();
 		mapFile->dateCreated = fo->datemodified();
-		for (int i = 0; i < fo->mapindex_size(); i++) {
-			MapIndex mi;
-			OsmAnd::OBF::MapPart mp = fo->mapindex(i);
-			mi.filePointer = mp.offset();
-			mi.length = mp.size();
-			mi.name = mp.name();
-			for (int j = 0; j < mp.levels_size(); j++) {
-				OsmAnd::OBF::MapLevel ml = mp.levels(j);
-				MapRoot mr;
-				mr.bottom = ml.bottom();
-				mr.left = ml.left();
-				mr.right = ml.right();
-				mr.top = ml.top();
-				mr.maxZoom = ml.maxzoom();
-				mr.minZoom = ml.minzoom();
-				mr.filePointer = ml.offset();
-				mr.length = ml.size();
-				mi.levels.push_back(mr);
-			}
-			mapFile->basemap = mapFile->basemap || mi.name.find("basemap") != string::npos;
-			mapFile->mapIndexes.push_back(mi);
-			mapFile->indexes.push_back(&mapFile->mapIndexes.back());
-		}
+        if (!routingOnly) {
+            for (int i = 0; i < fo->mapindex_size(); i++) {
+                MapIndex mi;
+                OsmAnd::OBF::MapPart mp = fo->mapindex(i);
+                mi.filePointer = mp.offset();
+                mi.length = mp.size();
+                mi.name = mp.name();
+                for (int j = 0; j < mp.levels_size(); j++) {
+                    OsmAnd::OBF::MapLevel ml = mp.levels(j);
+                    MapRoot mr;
+                    mr.bottom = ml.bottom();
+                    mr.left = ml.left();
+                    mr.right = ml.right();
+                    mr.top = ml.top();
+                    mr.maxZoom = ml.maxzoom();
+                    mr.minZoom = ml.minzoom();
+                    mr.filePointer = ml.offset();
+                    mr.length = ml.size();
+                    mi.levels.push_back(mr);
+                }
+                mapFile->basemap = mapFile->basemap || mi.name.find("basemap") != string::npos;
+                mapFile->mapIndexes.push_back(mi);
+                mapFile->indexes.push_back(&mapFile->mapIndexes.back());
+            }
+        }
 
 		for (int i = 0; i < fo->routingindex_size() && (!mapFile->liveMap || useLive); i++) {
 			RoutingIndex *mi = new RoutingIndex();
@@ -2022,7 +2023,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 		CodedInputStream cis(&input);
 		cis.SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File not initialized from cache : %s", inputName.c_str());
-		if (!initMapStructure(&cis, mapFile, useLive)) {
+		if (!initMapStructure(&cis, mapFile, useLive, routingOnly)) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File not initialised : %s", inputName.c_str());
 			delete mapFile;
 			return NULL;
