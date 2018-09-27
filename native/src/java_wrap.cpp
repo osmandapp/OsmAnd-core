@@ -89,7 +89,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initBinaryMa
 	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
 	std::string inputName(utf);
 	ienv->ReleaseStringUTFChars((jstring) path, utf);
-	BinaryMapFile* fl = initBinaryMapFile(inputName, useLive);
+	BinaryMapFile* fl = initBinaryMapFile(inputName, useLive, false);
 	if(fl == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File %s was not initialized", inputName.c_str());
 	}
