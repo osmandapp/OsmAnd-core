@@ -70,18 +70,31 @@ else()
 endif()
 
 add_library(protobuf_static STATIC
+	"upstream.patched/src/google/protobuf/descriptor.cc"
+	"upstream.patched/src/google/protobuf/descriptor_database.cc"
+	"upstream.patched/src/google/protobuf/descriptor.pb.cc"
+	"upstream.patched/src/google/protobuf/dynamic_message.cc"
 	"upstream.patched/src/google/protobuf/extension_set.cc"
+	"upstream.patched/src/google/protobuf/extension_set_heavy.cc"
+	"upstream.patched/src/google/protobuf/generated_message_reflection.cc"
 	"upstream.patched/src/google/protobuf/generated_message_util.cc"
+	"upstream.patched/src/google/protobuf/message.cc"
+	"upstream.patched/src/google/protobuf/message_lite.cc"
+	"upstream.patched/src/google/protobuf/reflection_ops.cc"
+	"upstream.patched/src/google/protobuf/repeated_field.cc"
+	"upstream.patched/src/google/protobuf/service.cc"
+	"upstream.patched/src/google/protobuf/text_format.cc"
+	"upstream.patched/src/google/protobuf/unknown_field_set.cc"
+	"upstream.patched/src/google/protobuf/wire_format.cc"
+	"upstream.patched/src/google/protobuf/wire_format_lite.cc"
 	"upstream.patched/src/google/protobuf/io/coded_stream.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc"
-	"upstream.patched/src/google/protobuf/message_lite.cc"
-	"upstream.patched/src/google/protobuf/repeated_field.cc"
 	"upstream.patched/src/google/protobuf/stubs/common.cc"
 	"upstream.patched/src/google/protobuf/stubs/once.cc"
 	"upstream.patched/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc"
-	"upstream.patched/src/google/protobuf/wire_format_lite.cc"	
+
 )
 
 set(target_specific_private_definitions "")
