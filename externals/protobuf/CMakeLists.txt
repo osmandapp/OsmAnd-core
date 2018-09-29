@@ -88,13 +88,20 @@ add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/wire_format.cc"
 	"upstream.patched/src/google/protobuf/wire_format_lite.cc"
 	"upstream.patched/src/google/protobuf/io/coded_stream.cc"
-	"upstream.patched/src/google/protobuf/io/zero_copy_stream.cc"
-	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl.cc"
-	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc"
 	"upstream.patched/src/google/protobuf/stubs/common.cc"
 	"upstream.patched/src/google/protobuf/stubs/once.cc"
 	"upstream.patched/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc"
-
+	"upstream.patched/src/google/protobuf/stubs/stringprintf.cc"
+	"upstream.patched/src/google/protobuf/stubs/structurally_valid.cc"
+	"upstream.patched/src/google/protobuf/stubs/strutil.cc"
+	"upstream.patched/src/google/protobuf/stubs/substitute.cc"
+	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl.cc"
+	"upstream.patched/src/google/protobuf/io/printer.cc"
+	"upstream.patched/src/google/protobuf/io/tokenizer.cc"
+	"upstream.patched/src/google/protobuf/io/gzip_stream.cc"
+	"upstream.patched/src/google/protobuf/io/coded_stream.cc"
+	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc"
+	"upstream.patched/src/google/protobuf/io/zero_copy_stream.cc"
 )
 
 set(target_specific_private_definitions "")
