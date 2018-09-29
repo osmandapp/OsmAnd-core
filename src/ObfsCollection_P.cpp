@@ -157,9 +157,8 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                 if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                     continue;
                 
-                //auto obfFile = new ObfFile(obfFilePath, obfFileInfo.size());
                 auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
-                collectedSources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
+                collectedSources.insert(obfFilePath, obfFile);
             }
 
             if (directoryAsSourceOrigin->isRecursive)
@@ -188,9 +187,8 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
                 continue;
 
-            //auto obfFile = new ObfFile(obfFilePath, fileAsSourceOrigin->fileInfo.size());
             auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
-            collectedSources.insert(obfFilePath, std::shared_ptr<ObfFile>(obfFile));
+            collectedSources.insert(obfFilePath, obfFile);
         }
     }
 

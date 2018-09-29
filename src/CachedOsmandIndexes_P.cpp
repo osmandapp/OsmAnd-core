@@ -184,7 +184,10 @@ void OsmAnd::CachedOsmandIndexes_P::addRouteSubregion(OBF::RoutingPart* routing,
     rpart->set_top(node->area31.top());
     rpart->set_basemap(base);
     rpart->set_bottom(node->area31.bottom());
-    rpart->set_shiftodata((unsigned int)(node->dataOffset - node->offset));
+    if (node->dataOffset > node->offset)
+        rpart->set_shiftodata((unsigned int)(node->dataOffset - node->offset));
+    else
+        rpart->set_shiftodata(0);
 }
 
 std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIndex(const std::shared_ptr<const OBF::FileIndex>& found)
