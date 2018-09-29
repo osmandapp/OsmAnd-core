@@ -1179,13 +1179,29 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
     if (!archive.extractItemToFile(obfArchiveItem.name, localFileName))
         return false;
 
+    auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
+    QFile indCache(QDir(owner->localStoragePath).absoluteFilePath(QLatin1String("ind.cache")));
+    if (indCache.exists())
+    {
+        cachedOsmandIndexes->readFromFile(indCache.fileName(), CachedOsmandIndexes::VERSION);
+    }
+    else
+    {
+        indCache.open(QIODevice::ReadWrite);
+        if (indCache.isOpen())
+            indCache.close();
+    }
     // Read information from OBF
-    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
-    if (!ObfReader(obfFile).obtainInfo())
+    const auto obfFile = cachedOsmandIndexes->getObfFile(localFileName);
+    if (!obfFile->obfInfo)
     {
         LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(localFileName));
         QFile(filePath).remove();
         return false;
+    }
+    else
+    {
+        cachedOsmandIndexes->writeToFile(indCache.fileName());
     }
 
     // Create local resource entry
