@@ -98,7 +98,7 @@ add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl.cc"
 	"upstream.patched/src/google/protobuf/io/printer.cc"
 	"upstream.patched/src/google/protobuf/io/tokenizer.cc"
-	"upstream.patched/src/google/protobuf/io/gzip_stream.cc"
+#	"upstream.patched/src/google/protobuf/io/gzip_stream.cc"
 	"upstream.patched/src/google/protobuf/io/coded_stream.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc"
 	"upstream.patched/src/google/protobuf/io/zero_copy_stream.cc"
