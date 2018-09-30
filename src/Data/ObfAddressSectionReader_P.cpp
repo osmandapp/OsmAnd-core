@@ -94,8 +94,8 @@ void OsmAnd::ObfAddressSectionReader_P::read(
             case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
                 auto name = QString::null;
-                auto offset = cis->CurrentPosition();
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                auto offset = cis->CurrentPosition();
                 uint32_t type = 1;
                 while (true)
                 {
