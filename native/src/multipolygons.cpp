@@ -4,6 +4,18 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
+void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
+	if(true) {
+		// avoid printing for now
+		return;
+	}
+	OsmAnd::LogPrintf(level, "%s %lld sx=%d sy=%d ex=%d ey=%d at [%d, %d] in [%d, %d]", msg.c_str(), id, 
+			c.at(0).first-leftX, c.at(0).second - topY,
+			c.at(c.size()-1).first-leftX, c.at(c.size()-1).second - topY,
+			leftX, topY, rightX - leftX, bottomY - topY);
+}
+
+
 // returns true if coastlines were added!
 bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
 		bool showIfThereIncompleted, bool addDebugIncompleted, std::vector<MapDataObject*>& res) {
@@ -40,6 +52,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 			bool inside = leftX <= x && x <= rightX && y >= topY && y <= bottomY;
 			bool lineEnded = calculateLineCoordinates(inside, x, y, pinside, px, py, leftX, rightX, bottomY, topY, cs);
 			if (lineEnded) {
+				printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean: line ", -dbId, cs, leftX, rightX, bottomY, topY);
 				combineMultipolygonLine(completedRings, uncompletedRings, cs);
 				// create new line if it goes outside
 				cs.clear();
@@ -48,13 +61,16 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 			py = y;
 			pinside = inside;
 		}
+		if(cs.size() > 0) {
+			printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean: line ", -dbId, cs, leftX, rightX, bottomY, topY);
+		}
 		combineMultipolygonLine(completedRings, uncompletedRings, cs);
 	}
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
 		// printf("No completed & uncompleted");
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: no completed & incompleted coastlines %d",
 			coastLines.size());
-		// return false; // Fix 5833
+		//return false; // Fix 5833
 		return coastLines.size() != 0;
 	}
 	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
@@ -260,6 +276,7 @@ int safelyAddDelta(int number, int delta) {
 	return res;
 }
 
+
 void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std::vector<std::vector<int_pair> >& completedRings,
 		int leftX, int rightX, int bottomY, int topY, int64_t dbId, int zoom) {
 	std::set<int> nonvisitedRings;
@@ -279,7 +296,8 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		// However this situation could happen because of broken multipolygons (so it should data causes app error)
 		// that's why these exceptions could be replaced with return; statement.
 		if (!end || !st) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Error processing multipolygon");
+			 printLine(OsmAnd::LogSeverityLevel::Error, 
+			 	"Error processing multipolygon", 0, *ir, leftX, rightX, bottomY, topY);
 			toProccess.push_back(*ir);
 		} else {
 			nonvisitedRings.insert(j);
