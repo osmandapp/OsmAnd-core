@@ -52,7 +52,10 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	}
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
 		// printf("No completed & uncompleted");
-		return false;
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: no completed & incompleted coastlines %d",
+			coastLines.size());
+		// return false; // Fix 5833
+		return coastLines.size() != 0;
 	}
 	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
 	if (coastlineCrossScreen) {
@@ -77,6 +80,8 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	}
 	if (!showIfThereIncompleted && uncompletedRings.size() > 0) {
 		// printf("There are ignored uncompleted");
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: incompleted coastlines %d from %d",
+			uncompletedRings.size(), coastLines.size());
 		return false;
 	}
 	int landFound = 0;
@@ -96,7 +101,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		o->area = true;
 		res.push_back(o);
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Islands %d, closed water %d, coastline touches screen %d",
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: islands %d, closed water %d, coastline touches screen %d",
 			landFound, waterFound, coastlineCrossScreen);
 	if (!waterFound && !coastlineCrossScreen) {
 		// add complete water tile
