@@ -2,7 +2,7 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 98e0f234362687147312442ea6f3faa468b1825f (Fix #5198)
+//  git revision 5fff22dac6a0afc2dccdfc239f02cf50928f6985
 
 #include <string>
 #include <vector>
@@ -66,11 +66,13 @@ private:
     struct Token
     {
         Token(TokenType tokenType, const std::string& string);
+        Token(TokenType tokenType, int mainNumber);
         virtual ~Token();
         
         int mainNumber;
         TokenType type;
         std::string text;
+        std::shared_ptr<Token> parent;
         
         std::string toString() const;
     };
@@ -186,6 +188,7 @@ public:
          * Day number 0 is MONDAY
          */
         std::vector<bool> _days;
+        bool _hasDays;
         
         /**
          * represents the list on which month it is open.
@@ -196,7 +199,8 @@ public:
         /**
          * represents the list on which day it is open.
          */
-        std::vector<bool> _dayMonths;
+        std::vector<std::vector<bool>> _dayMonths;
+        bool _hasDayMonths;
         
         /**
          * lists of equal size representing the start and end times
@@ -248,8 +252,14 @@ public:
         /**
          * represents the list on which day it is open.
          */
-        std::vector<bool>& getDayMonths();
-        
+        std::vector<std::vector<bool>>& getDayMonths();
+        std::vector<bool>& getDayMonths(int month);
+
+        bool hasDays() const;
+        void setHasDays(bool value);
+        bool hasDayMonths() const;
+        void setHasDayMonths(bool value);
+
         bool appliesToPublicHolidays() const;
         bool appliesEaster() const;
         bool appliesToSchoolHolidays() const;
@@ -594,6 +604,7 @@ private:
     static std::shared_ptr<OpeningHours> parseOpenedHoursHandleErrors(const std::string& format);
 
     static void buildRule(std::shared_ptr<BasicOpeningHourRule>& basic, std::vector<std::shared_ptr<Token>>& tokens, std::vector<std::shared_ptr<OpeningHoursRule>>& rules);
+    static void fillRuleArray(std::vector<bool>* array, const std::shared_ptr<std::vector<std::shared_ptr<Token>>>& pair);
 
 public:
     
