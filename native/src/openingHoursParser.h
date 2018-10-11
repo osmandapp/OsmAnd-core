@@ -2,7 +2,7 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 5fff22dac6a0afc2dccdfc239f02cf50928f6985
+//  git revision 5c3985d1fbd584c4a8e9a4e9582bab9d281442a6
 
 #include <string>
 #include <vector>
@@ -200,7 +200,6 @@ public:
          * represents the list on which day it is open.
          */
         std::vector<std::vector<bool>> _dayMonths;
-        bool _hasDayMonths;
         
         /**
          * lists of equal size representing the start and end times
@@ -252,13 +251,11 @@ public:
         /**
          * represents the list on which day it is open.
          */
-        std::vector<std::vector<bool>>& getDayMonths();
         std::vector<bool>& getDayMonths(int month);
+        bool hasDayMonths() const;
 
         bool hasDays() const;
         void setHasDays(bool value);
-        bool hasDayMonths() const;
-        void setHasDayMonths(bool value);
 
         bool appliesToPublicHolidays() const;
         bool appliesEaster() const;

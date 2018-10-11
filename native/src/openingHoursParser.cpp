@@ -226,16 +226,6 @@ void OpeningHoursParser::BasicOpeningHourRule::init()
     for (int i = 0; i < 12; i++)
         _months.push_back(false);
     
-    _hasDayMonths = false;
-    for (int i = 0; i < 12; i++)
-    {
-        std::vector<bool> days;
-        for (int k = 0; k < 31; k++)
-            days.push_back(false);
-
-        _dayMonths.push_back(days);
-    }
-    
     _publicHoliday = false;
     _schoolHoliday = false;
     _easter = false;
@@ -257,13 +247,24 @@ std::vector<bool>& OpeningHoursParser::BasicOpeningHourRule::getMonths()
     return _months;
 }
 
-std::vector<std::vector<bool>>& OpeningHoursParser::BasicOpeningHourRule::getDayMonths()
+bool OpeningHoursParser::BasicOpeningHourRule::hasDayMonths() const
 {
-    return _dayMonths;
+    return !_dayMonths.empty();
 }
 
 std::vector<bool>& OpeningHoursParser::BasicOpeningHourRule::getDayMonths(int month)
 {
+    if (_dayMonths.empty())
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            std::vector<bool> days;
+            for (int k = 0; k < 31; k++)
+                days.push_back(false);
+            
+            _dayMonths.push_back(days);
+        }
+    }
     return _dayMonths[month];
 }
 
@@ -275,16 +276,6 @@ bool OpeningHoursParser::BasicOpeningHourRule::hasDays() const
 void OpeningHoursParser::BasicOpeningHourRule::setHasDays(bool value)
 {
     _hasDays = value;
-}
-
-bool OpeningHoursParser::BasicOpeningHourRule::hasDayMonths() const
-{
-    return _hasDayMonths;
-}
-
-void OpeningHoursParser::BasicOpeningHourRule::setHasDayMonths(bool value)
-{
-    _hasDayMonths = value;
 }
 
 bool OpeningHoursParser::BasicOpeningHourRule::appliesToPublicHolidays() const
@@ -599,7 +590,7 @@ std::string OpeningHoursParser::BasicOpeningHourRule::toRuleString(const std::ve
         }
     }
 
-    bool allDays = !_hasDayMonths;
+    bool allDays = !hasDayMonths();
     if (!allDays)
     {
         bool dash = false;
@@ -953,16 +944,16 @@ int OpeningHoursParser::BasicOpeningHourRule::calculate(const tm& dateTime) cons
     int i = dateTime.tm_wday + 1;
     int day = (i + 5) % 7;
     int previous = (day + 6) % 7;
-    bool thisDay = _hasDays || _hasDayMonths;
-    if (thisDay && _hasDayMonths) {
+    bool thisDay = _hasDays || hasDayMonths();
+    if (thisDay && hasDayMonths()) {
         thisDay = _dayMonths[month][dmonth];
     }
     if (thisDay && _hasDays) {
         thisDay = _days[day];
     }
     // potential error for Dec 31 12:00-01:00
-    bool previousDay = _hasDays || _hasDayMonths;
-    if (previousDay && _hasDayMonths && dmonth > 0) {
+    bool previousDay = _hasDays || hasDayMonths();
+    if (previousDay && hasDayMonths() && dmonth > 0) {
         previousDay = _dayMonths[month][dmonth - 1];
     }
     if (previousDay && _hasDays) {
@@ -1690,7 +1681,6 @@ void OpeningHoursParser::parseRuleV2(const std::string& rl, int sequenceIndex, s
     basic->setComment(comment);
     auto& days = basic->getDays();
     auto& months = basic->getMonths();
-    auto& dayMonths = basic->getDayMonths();
     if ("24/7" == localRuleString)
     {
         std::fill(days.begin(), days.end(), true);
@@ -1972,11 +1962,6 @@ void OpeningHoursParser::buildRule(std::shared_ptr<BasicOpeningHourRule>& basic,
     {
         auto& months = basic->getMonths();
         std::fill(months.begin(), months.end(), true);
-    }
-    else
-    {
-        if (presentTokens.find(TokenType::TOKEN_DAY_MONTH) != presentTokens.end())
-            basic->setHasDayMonths(true);
     }
     if (presentTokens.find(TokenType::TOKEN_DAY_WEEK) == presentTokens.end() && presentTokens.find(TokenType::TOKEN_HOLIDAY) == presentTokens.end() && presentTokens.find(TokenType::TOKEN_DAY_MONTH) == presentTokens.end())
     {
