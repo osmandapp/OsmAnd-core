@@ -14,7 +14,7 @@
 
 //
 //  OsmAnd-java/src/net/osmand/binary/GeocodingUtilities.java
-//  git revision 5da5d0d41d977acc31473eb7051b4ff0f4f8d118
+//  git revision c0fc23f823862a2290e84577b6a944e49cc87c33
 //
 
 // Location to test parameters http://www.openstreetmap.org/#map=18/53.896473/27.540071 (hno 44)
@@ -68,7 +68,7 @@ void addWord(QStringList &ls, QString word, bool addCommonWords)
 {
     const QString w = word.trimmed().toLower();
     if (!w.isEmpty()) {
-        if (!addCommonWords && OsmAnd::CommonWords::getCommonGeocoding(word) != -1)
+        if (!addCommonWords && OsmAnd::CommonWords::getCommonGeocoding(w) != -1)
             return;
         
         ls << w;
@@ -110,10 +110,10 @@ QStringList prepareStreetName(const QString &s, bool addCommonWords)
     return ls;
 }
 
-QString extractMainWord(const QStringList &streetNamesPacked)
+QString extractMainWord(const QStringList &streetNamesUsed)
 {
     QString mainWord = "";
-    for (QString word : streetNamesPacked)
+    for (QString word : streetNamesUsed)
         if (word.length() > mainWord.length())
             mainWord = word;
 
@@ -126,11 +126,17 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<ResultEntry>> streetList{};
     QVector<std::shared_ptr<const ResultEntry>> result{};
-    QStringList streetNamesUsed = prepareStreetName(road->streetName, true);
-    QStringList streetNamesPacked = streetNamesUsed.size() == 0 ? prepareStreetName(road->streetName, false) : streetNamesUsed;
-    if (!streetNamesPacked.isEmpty())
+
+    bool addCommonWords = false;
+    auto streetNamesUsed = prepareStreetName(road->streetName, addCommonWords);
+    if (streetNamesUsed.size() == 0)
     {
-        QString mainWord = extractMainWord(streetNamesPacked);
+        addCommonWords = true;
+        streetNamesUsed = prepareStreetName(road->streetName, addCommonWords);
+    }
+    if (!streetNamesUsed.isEmpty())
+    {
+        QString mainWord = extractMainWord(streetNamesUsed);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
         criteria.includeStreets = true;
@@ -138,13 +144,13 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
-                    [&streetList, streetNamesUsed, streetNamesPacked, road](const OsmAnd::ISearch::Criteria& criteria,
+                    [&streetList, addCommonWords, streetNamesUsed, road](const OsmAnd::ISearch::Criteria& criteria,
                     const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
             auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
             if (address->addressType == OsmAnd::AddressType::Street)
             {
                 auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
-                if (prepareStreetName(street->nativeName, true) == streetNamesUsed)
+                if (prepareStreetName(street->nativeName, addCommonWords) == streetNamesUsed)
                 {
                     if (road->searchPoint31().isSet())
                     {
