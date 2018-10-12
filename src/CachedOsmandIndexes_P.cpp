@@ -196,6 +196,8 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
     obfInfo->version = found->version();
     obfInfo->creationTimestamp = found->datemodified();
     
+    Nullable<AreaI> globalBBox31;
+    
     for (int i = 0; i < found->mapindex_size(); i++)
     {
         auto index = found->mapindex(i);
@@ -213,6 +215,11 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
             root->minZoom = (ZoomLevel) mr.minzoom();
             root->maxZoom = (ZoomLevel) mr.maxzoom();
             mi->levels.push_back(qMove(root));
+            
+            if (globalBBox31.isSet())
+                globalBBox31->enlargeToInclude(root->area31);
+            else
+                globalBBox31 = root->area31;
         }
         mi->isBasemap = mi->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
         mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
@@ -220,27 +227,6 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         obfInfo->isBasemapWithCoastlines = obfInfo->isBasemapWithCoastlines || mi->isBasemapWithCoastlines;
 
         obfInfo->mapSections.push_back(qMove(mi));
-    }
-    
-    for (int i = 0; i < found->addressindex_size(); i++)
-    {
-        auto index = found->addressindex(i);
-        Ref<ObfAddressSectionInfo> mi(new ObfAddressSectionInfo(obfInfo));
-        mi->length = (unsigned int) index.size();
-        mi->offset = (unsigned int) index.offset();
-        mi->name = QString::fromStdString(index.name());
-        mi->localizedNames.insert(QLatin1String("en"), QString::fromStdString(index.nameen()));
-        mi->nameIndexInnerOffset = index.indexnameoffset();
-        for (int m = 0; m < index.cities_size(); m++) {
-            auto mr = index.cities(m);
-            auto cblock = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(QString::null, mr.offset(), mr.size(), mr.type());
-            mi->cities.push_back(cblock);
-        }
-        for (int m = 0; m < index.additionaltags_size(); m++) {
-            const auto& s = index.additionaltags(m);
-            mi->attributeTagsTable.push_back(QString::fromStdString(s));
-        }
-        obfInfo->addressSections.push_back(qMove(mi));
     }
     
     for (int i = 0; i < found->poiindex_size(); i++)
@@ -252,6 +238,11 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->name = QString::fromStdString(index.name());
         mi->area31 = AreaI(index.top(), index.left(), index.bottom(), index.right());
         obfInfo->poiSections.push_back(qMove(mi));
+
+        if (globalBBox31.isSet())
+            globalBBox31->enlargeToInclude(mi->area31);
+        else
+            globalBBox31 = mi->area31;
     }
     
     for (int i = 0; i < found->transportindex_size(); i++)
@@ -269,6 +260,11 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         stringTable.length = index.stringtablelength();
         mi->_stringTable = stringTable;
         obfInfo->transportSections.push_back(qMove(mi));
+        
+        if (globalBBox31.isSet())
+            globalBBox31->enlargeToInclude(mi->_area31);
+        else
+            globalBBox31 = mi->_area31;
     }
     
     for (int i = 0; i < found->routingindex_size(); i++)
@@ -278,6 +274,31 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
+        
+        Nullable<AreaI> bbox31;
+        for (int k = 0; k < index.subregions_size(); k++)
+        {
+            auto subregion = index.subregions(k);
+            auto nodeBbox31 = AreaI(subregion.top(), subregion.left(), subregion.bottom(), subregion.right());
+            if (bbox31.isSet())
+                bbox31->enlargeToInclude(nodeBbox31);
+            else
+                bbox31 = nodeBbox31;
+        }
+        if (bbox31.isSet())
+        {
+            mi->area31 = *bbox31;
+
+            if (globalBBox31.isSet())
+                globalBBox31->enlargeToInclude(mi->area31);
+            else
+                globalBBox31 = mi->area31;
+        }
+        else
+        {
+            AreaI empty;
+            mi->area31 = empty;
+        }
         
         /*
         for(RoutingSubregion mr : index.getSubregionsList()) {
@@ -298,6 +319,30 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         */
         
         obfInfo->routingSections.push_back(qMove(mi));
+    }
+    
+    for (int i = 0; i < found->addressindex_size(); i++)
+    {
+        auto index = found->addressindex(i);
+        Ref<ObfAddressSectionInfo> mi(new ObfAddressSectionInfo(obfInfo));
+        mi->length = (unsigned int) index.size();
+        mi->offset = (unsigned int) index.offset();
+        if (globalBBox31.isSet())
+            mi->area31 = *globalBBox31;
+
+        mi->name = QString::fromStdString(index.name());
+        mi->localizedNames.insert(QLatin1String("en"), QString::fromStdString(index.nameen()));
+        mi->nameIndexInnerOffset = index.indexnameoffset();
+        for (int m = 0; m < index.cities_size(); m++) {
+            auto mr = index.cities(m);
+            auto cblock = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(QString::null, mr.offset(), mr.size(), mr.type());
+            mi->cities.push_back(cblock);
+        }
+        for (int m = 0; m < index.additionaltags_size(); m++) {
+            const auto& s = index.additionaltags(m);
+            mi->attributeTagsTable.push_back(QString::fromStdString(s));
+        }
+        obfInfo->addressSections.push_back(qMove(mi));
     }
     
     return obfInfo;
