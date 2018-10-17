@@ -358,7 +358,9 @@ bool checkIfInitialMovementAllowedOnSegment(RoutingContext* ctx, bool reverseWay
 	}
 	VISITED_MAP::iterator mit = visitedSegments.find(calculateRoutePointId(segment, segment->isPositive()));
 	if(directionAllowed && mit != visitedSegments.end() && mit->second.get() != NULL) {
-		directionAllowed = false;
+		if(mit->second.get()->distanceFromStart <= segment->distanceFromStart) {
+			directionAllowed = false;
+		}
 	}
 
 	return directionAllowed;
