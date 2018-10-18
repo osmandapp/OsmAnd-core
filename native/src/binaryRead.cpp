@@ -31,6 +31,7 @@ using google::protobuf::internal::WireFormatLite;
 static uint zoomForBaseRouteRendering  = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
+static uint zoomDetailedForCoastlines = 17;
 std::vector<BinaryMapFile* > openFiles;
 OsmAnd::OBF::OsmAndStoredIndex* cache = NULL;
 
@@ -974,11 +975,15 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		}
 	}
 	if(oceanTag >= 0) {
-		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
-		//		oceanTag, current->left >> 19, current->top >> 19);
-		req->oceanTiles++;
-		if(oceanTag == 1) {
-			req->ocean++;
+		if (current->right < (uint)req->oceanLeft || current->left > (uint)req->oceanRight || 
+				current->top > (uint)req->oceanBottom || current->bottom < (uint)req->oceanTop) {
+			//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
+			//		oceanTag, current->left >> 19, current->top >> 19);
+		} else {
+			req->oceanTiles++;
+			if(oceanTag == 1) {
+				req->ocean++;
+			}
 		}
 	}
 	return true;
@@ -1323,20 +1328,29 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		basemapExists |= file->isBasemap();
 	}
 	i = openFiles.begin();
-	int sleft = q->left;
-	int sright = q->right;
-	int stop = q->top;
-	int sbottom = q->bottom;
-	int bleft = q->left;
-	int bright = q->right;
-	int btop = q->top;
-	int bbottom = q->bottom;
+	int oleft, sleft, bleft;
+	int otop, stop, btop;
+	int oright, sright, bright;
+	int obottom, sbottom, bbottom;
+	q->oceanLeft = sleft = oleft = bleft = q->left;
+	q->oceanBottom = sbottom = obottom = bbottom = q->left;
+	q->oceanTop = stop = otop = btop = q->top;
+	q->oceanRight = sright = oright = bright = q->right;
 	if(q->zoom > zoomOnlyForBasemaps) {
+		// expand area to include 11-zoom coastlines for bbox
 		int shift = (31 - zoomOnlyForBasemaps);
 		bleft = (q->left >> shift) << shift;
 		bright = ((q->right >> shift) + 1) << shift;
 		btop = (q->top >> shift) << shift;
 		bbottom = ((q->bottom >> shift) + 1) << shift;
+	}
+	if(q->zoom > zoomDetailedForCoastlines) {
+		// expand area to include more coastlines for bbox
+		int shift = (31 - zoomDetailedForCoastlines);
+		sleft = (q->left >> shift) << shift;
+		sright = ((q->right >> shift) + 1) << shift;
+		stop = (q->top >> shift) << shift;
+		sbottom = ((q->bottom >> shift) + 1) << shift;
 	}
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
@@ -1397,6 +1411,10 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 			q->publisher->clear();
 		}
 	}
+	q->left = oleft;
+	q->right = oright;
+	q->top = otop;
+	q->bottom = obottom;
 }
 
 ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound,
@@ -1448,7 +1466,18 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		bool coastlinesWereAdded = false;
 		bool detailedCoastlinesWereAdded = false;
 		if (!coastLines.empty()) {
-			coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+			int bleft = q->left;
+			int bright = q->right;
+			int btop = q->top;
+			int bbottom = q->bottom;
+			if(q->zoom > zoomDetailedForCoastlines + 1) {
+				int shift = (31 - zoomDetailedForCoastlines + 1);
+				bleft = (q->left >> shift) << shift;
+				bright = ((q->right >> shift) + 1) << shift;
+				btop = (q->top >> shift) << shift;
+				bbottom = ((q->bottom >> shift) + 1) << shift;
+			}
+			coastlinesWereAdded = processCoastlines(coastLines, bleft, bright, bbottom, btop, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
 			//addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
 			addBasemapCoastlines = !coastlinesWereAdded;

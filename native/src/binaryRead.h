@@ -656,6 +656,10 @@ struct SearchQuery {
 	int right;
 	int top;
 	int bottom;
+	int oceanLeft;
+	int oceanRight;
+	int oceanTop;
+	int oceanBottom;
 	uint zoom;
 	ResultPublisher* publisher;
 

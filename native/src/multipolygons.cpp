@@ -70,8 +70,9 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		// printf("No completed & uncompleted");
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: no completed & incompleted coastlines %d",
 			coastLines.size());
-		//return false; // Fix 5833
-		return coastLines.size() != 0;
+		return false; // Fix 5833
+		// fix is not fully correct cause now zoom in causes land 
+		// return coastLines.size() != 0;
 	}
 	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
 	if (coastlineCrossScreen) {
