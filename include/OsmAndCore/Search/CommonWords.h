@@ -14,6 +14,10 @@
 
 namespace OsmAnd
 {
+    const static QStringList FREQUENTWORDS {
+           QStringLiteral("saint")
+    };
+    
     const static QStringList WORDS {
         
         QStringLiteral("la"),
