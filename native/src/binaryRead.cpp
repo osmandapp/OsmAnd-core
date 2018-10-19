@@ -1333,7 +1333,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	int oright, sright, bright;
 	int obottom, sbottom, bbottom;
 	q->oceanLeft = sleft = oleft = bleft = q->left;
-	q->oceanBottom = sbottom = obottom = bbottom = q->left;
+	q->oceanBottom = sbottom = obottom = bbottom = q->bottom;
 	q->oceanTop = stop = otop = btop = q->top;
 	q->oceanRight = sright = oright = bright = q->right;
 	if(q->zoom > zoomOnlyForBasemaps) {
@@ -1493,7 +1493,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			int btop = q->top;
 			int bbottom = q->bottom;
 			if(q->zoom > zoomOnlyForBasemaps) {
-				int shift = (31 - zoomOnlyForBasemaps);
+				int shift = (31 - zoomOnlyForBasemaps );
 				bleft = (q->left >> shift) << shift;
 				bright = ((q->right >> shift) + 1) << shift;
 				btop = (q->top >> shift) << shift;
