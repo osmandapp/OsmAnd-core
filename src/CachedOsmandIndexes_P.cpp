@@ -416,6 +416,10 @@ void OsmAnd::CachedOsmandIndexes_P::readFromFile(const QString& filePath, int ve
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Osmand Cache file initialized %s in %fs", qPrintable(filePath), totalStopwatch.elapsed());
         }
     }
+    else
+    {
+        _storedIndex.reset();
+    }
 }
 
 void OsmAnd::CachedOsmandIndexes_P::writeToFile(const QString& filePath)
