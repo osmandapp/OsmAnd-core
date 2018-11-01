@@ -468,7 +468,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
     return result;
 }
 
-std::shared_ptr<QMap<QString, int>> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
+QMap<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
 {
     int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
     float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
@@ -502,5 +502,5 @@ std::shared_ptr<QMap<QString, int>> OsmAnd::MapPresentationEnvironment_P::getLin
     map.insert(QString::fromStdString("strokeWidth_3"), strokeWidth_3);
     map.insert(QString::fromStdString("color_3"), color_3);
 
-    return std::make_shared<QMap<QString, int>>(map);
+    return map;
 }

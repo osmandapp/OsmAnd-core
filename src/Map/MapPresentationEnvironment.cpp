@@ -132,7 +132,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getTransportRouteColor(con
     return _p->getTransportRouteColor(nightMode, renderAttrName);
 }
 
-std::shared_ptr<QMap<QString, int>> OsmAnd::MapPresentationEnvironment::getLineRenderingAttributes(const QString &renderAttrName) const
+QMap<QString, int> OsmAnd::MapPresentationEnvironment::getLineRenderingAttributes(const QString &renderAttrName) const
 {
     return _p->getLineRenderingAttributes(renderAttrName);
 }
