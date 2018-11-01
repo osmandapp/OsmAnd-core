@@ -131,3 +131,8 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getTransportRouteColor(con
 {
     return _p->getTransportRouteColor(nightMode, renderAttrName);
 }
+
+QMap<QString, int> OsmAnd::MapPresentationEnvironment::getLineRenderingAttributes(const QString &renderAttrName) const
+{
+    return _p->getLineRenderingAttributes(renderAttrName);
+}

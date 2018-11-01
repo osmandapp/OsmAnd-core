@@ -468,3 +468,39 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
     return result;
 }
 
+QMap<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
+{
+    int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
+    float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
+    
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    applyTo(evaluator);
+    auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
+    MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+
+    if (renderAttr)
+    {
+        if (evaluator.evaluate(renderAttr, &evalResult))
+        {
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR, color);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH, strokeWidth);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2, strokeWidth_2);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_2, color_2);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3, strokeWidth_3);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3);
+        }
+    }
+    QMap<QString, int> map;
+    map.insert(QString::fromStdString("color"), color);
+    map.insert(QString::fromStdString("strokeWidth"), strokeWidth);
+    map.insert(QString::fromStdString("shadowRadius"), shadowRadius);
+    map.insert(QString::fromStdString("shadowColor"), shadowColor);
+    map.insert(QString::fromStdString("strokeWidth_2"), strokeWidth_2);
+    map.insert(QString::fromStdString("color_2"), color_2);
+    map.insert(QString::fromStdString("strokeWidth_3"), strokeWidth_3);
+    map.insert(QString::fromStdString("color_3"), color_3);
+
+    return map;
+}
