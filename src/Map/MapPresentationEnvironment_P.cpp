@@ -468,3 +468,39 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
     return result;
 }
 
+std::shared_ptr<std::map<QString, int>> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
+{
+    int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
+    float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
+    
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    applyTo(evaluator);
+    auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
+    MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+
+    if (renderAttr)
+    {
+        if (evaluator.evaluate(renderAttr, &evalResult))
+        {
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR, color);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH, strokeWidth);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2, strokeWidth_2);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_2, color_2);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3, strokeWidth_3);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3);
+        }
+    }
+    std::map<QString, int> map = {
+        {QString::fromStdString("color"), color},
+        {QString::fromStdString("strokeWidth"), strokeWidth},
+        {QString::fromStdString("shadowRadius"), shadowRadius},
+        {QString::fromStdString("shadowColor"), shadowColor},
+        {QString::fromStdString("strokeWidth_2"), strokeWidth_2},
+        {QString::fromStdString("color_2"), color_2},
+        {QString::fromStdString("strokeWidth_3"), strokeWidth_3},
+        {QString::fromStdString("color_3"), color_3}};
+
+    return std::make_shared<std::map<QString, int>>(map);
+}
