@@ -151,7 +151,7 @@ namespace OsmAnd
         virtual bool isPositionVisible(const PointI64& position) const = 0;
         virtual bool isPositionVisible(const PointI& position31) const = 0;
         virtual bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const = 0;
-        virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint) const = 0;
+        virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const = 0;
 
         virtual double getCurrentTileSizeInMeters() const = 0;
         virtual double getCurrentPixelsToMetersScaleFactor() const = 0;

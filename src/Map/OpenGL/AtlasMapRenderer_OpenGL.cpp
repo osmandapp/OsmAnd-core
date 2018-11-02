@@ -639,7 +639,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint) const
+bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen) const
 {
     const auto state = getState();
 
@@ -648,7 +648,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     if (!ok)
         return false;
 
-    if (!internalState.globalFrustum2D31.test(position31))
+    if (!internalState.globalFrustum2D31.test(position31) && !checkOffScreen)
         return false;
 
     const auto offsetFromTarget31 = position31 - state.target31;
