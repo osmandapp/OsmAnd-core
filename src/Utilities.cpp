@@ -560,3 +560,40 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
 
     return value;
 }
+
+/**
+ * Returns the destination point having travelled along a rhumb line from ‘this’ point the given
+ * distance on the  given bearing.
+ *
+ * @param   {number} distance - Distance travelled, in same units as earth radius (default: metres).
+ * @param   {number} bearing - Bearing in degrees from north.
+ * @param   {number} [radius=6371e3] - (Mean) radius of earth (defaults to radius in metres).
+ * @returns {LatLon} Destination point.
+ *
+ * @example
+ *     rhumbDestinationPoint(LatLon(51.127, 1.338), 40300, 116.7); // 50.9642°N, 001.8530°E
+ */
+OsmAnd::LatLon OsmAnd::Utilities::rhumbDestinationPoint(LatLon latLon, double distance, double bearing)
+{
+    double radius = 6371e3;
+    
+    double d = distance / radius; // angular distance in radians
+    double phi1 = qDegreesToRadians(latLon.latitude);
+    double lambda1 = qDegreesToRadians(latLon.longitude);
+    double theta = qDegreesToRadians(bearing);
+    
+    double deltaPhi = d * cos(theta);
+    double phi2 = phi1 + deltaPhi;
+    
+    // check for some daft bugger going past the pole, normalise latitude if so
+    //if (ABS(phi2) > M_PI_2)
+    //    phi2 = phi2>0 ? M_PI-phi2 : -M_PI-phi2;
+    
+    double deltaPsi = log(tan(phi2 / 2 + M_PI_4) / tan(phi1 / 2 + M_PI_4));
+    double q = abs(deltaPsi) > 10e-12 ? deltaPhi / deltaPsi : cos(phi1); // E-W course becomes incorrect with 0/0
+    
+    double deltalambda = d * sin(theta) / q;
+    double lambda2 = lambda1 + deltalambda;
+    
+    return LatLon(qRadiansToDegrees(phi2), qRadiansToDegrees(lambda2));
+}

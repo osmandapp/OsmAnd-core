@@ -954,6 +954,8 @@ namespace OsmAnd
             const float spacing = 0.0f);
 
         static QString resolveColorFromPalette(const QString& input, const bool usePalette6);
+        static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
+
     private:
         Utilities();
         ~Utilities();
