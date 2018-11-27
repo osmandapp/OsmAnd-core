@@ -42,6 +42,7 @@ namespace OsmAnd
             WikiMapRegion,
             HillshadeRegion,
             HeightmapRegion,
+            LiveUpdateRegion,
             VoicePack,
             MapStyle,
             MapStylesPresets,

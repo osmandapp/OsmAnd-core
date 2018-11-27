@@ -284,6 +284,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             outResult,
             QLatin1String("*.map.obf"),
             ResourceType::MapRegion);
+        
+        // Find ResourceType::LiveUpdateRegion -> "*.live.obf" files
+        loadLocalResourcesFromPath_Obf(
+            storagePath + "/live",
+            cachedOsmandIndexes,
+            outResult,
+            QLatin1String("*.live.obf"),
+            ResourceType::LiveUpdateRegion);
 
         // Find ResourceType::RoadMapRegion -> "*.road.obf" files
         loadLocalResourcesFromPath_Obf(
@@ -420,6 +428,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::RoadMapRegion;
         else if (fileName.endsWith(".wiki.obf"))
             resourceType = ResourceType::WikiMapRegion;
+        else if (fileName.endsWith(".live.obf"))
+            resourceType = ResourceType::LiveUpdateRegion;
         else
         {
             resourceType = ResourceType::MapRegion;
@@ -727,6 +737,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         auto resourceType = ResourceType::Unknown;
         if (resourceTypeValue == QLatin1String("map"))
             resourceType = ResourceType::MapRegion;
+        if (resourceTypeValue == QLatin1String("live_map"))
+            resourceType = ResourceType::LiveUpdateRegion;
         else if (resourceTypeValue == QLatin1String("road_map"))
             resourceType = ResourceType::RoadMapRegion;
         else if (resourceTypeValue == QLatin1String("srtm_map"))
@@ -792,6 +804,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?file=") +
                     QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::LiveUpdateRegion:
+                // '[region]_hh_mm_ss.obf.zip' -> '[region]_hh_mm_ss.live.obf'
+                resourceId = QString(name)
+                .remove(QLatin1String(".obf.zip"))
+                .toLower()
+                .append(QLatin1String(".live.obf"));
+                downloadUrl =
+                owner->repositoryBaseUrl +
+                QLatin1String("/download.php?aosmc=") +
+                QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::RoadMapRegion:
                 // '[region]_2.obf.zip' -> '[region].road.obf'
@@ -1054,6 +1077,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     switch (resource->type)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1117,6 +1141,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
     switch (resourceType)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1462,6 +1487,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
     switch (localResource->type)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1641,6 +1667,7 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
     for (const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
@@ -1674,6 +1701,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     for (const auto& localResource : localResources)
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
@@ -1720,6 +1748,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     for (const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
