@@ -420,8 +420,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         }
 
         // Determine resource type and id
-        auto resourceId = fileName.toLower().remove("_2");
         auto resourceType = ResourceType::Unknown;
+        auto resourceId = fileName.toLower();
         if (fileName.endsWith(".srtm.obf"))
             resourceType = ResourceType::SrtmMapRegion;
         else if (fileName.endsWith(".road.obf"))
@@ -435,6 +435,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::MapRegion;
             resourceId.replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
         }
+        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove("_2");
 
         if (resourceType == ResourceType::Unknown)
         {
@@ -737,8 +738,6 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         auto resourceType = ResourceType::Unknown;
         if (resourceTypeValue == QLatin1String("map"))
             resourceType = ResourceType::MapRegion;
-        if (resourceTypeValue == QLatin1String("live_map"))
-            resourceType = ResourceType::LiveUpdateRegion;
         else if (resourceTypeValue == QLatin1String("road_map"))
             resourceType = ResourceType::RoadMapRegion;
         else if (resourceTypeValue == QLatin1String("srtm_map"))
