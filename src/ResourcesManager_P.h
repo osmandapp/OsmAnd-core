@@ -160,6 +160,7 @@ namespace OsmAnd
         class ObfsCollectionProxy : public IObfsCollection
         {
         private:
+            void sortReaders(QList<std::shared_ptr<const ObfReader> > &obfReaders) const;
         protected:
             ObfsCollectionProxy(ResourcesManager_P* owner);
         public:

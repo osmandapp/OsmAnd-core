@@ -1733,6 +1733,22 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
+void OsmAnd::ResourcesManager_P::ObfsCollectionProxy::sortReaders(QList<std::shared_ptr<const ObfReader> > &obfReaders) const
+{
+    std::sort(obfReaders.begin(), obfReaders.end(), [](const std::shared_ptr<const ObfReader> first, std::shared_ptr<const ObfReader> second) -> bool
+              {
+                  QFileInfo firstInfo(first->obfFile->filePath);
+                  QFileInfo secondInfo(second->obfFile->filePath);
+                  QString firstName = firstInfo.fileName();
+                  QString secondName = secondInfo.fileName();
+                  firstName = firstName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+                  secondName = secondName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+                  firstName = firstName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? firstName : firstName + QStringLiteral("_00_00_00");
+                  secondName = secondName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? secondName : secondName + QStringLiteral("_00_00_00");
+                  return firstName.compare(secondName) > 0;
+              });
+}
+
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
@@ -1785,6 +1801,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         obfReaders.push_back(qMove(obfReader));
     }
 
+    sortReaders(obfReaders);
+    
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
