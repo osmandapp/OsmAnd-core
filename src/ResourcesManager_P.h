@@ -24,6 +24,7 @@
 namespace OsmAnd
 {
     class CachedOsmandIndexes;
+    class IncrementalChangesManager;
     
     class ResourcesManager_P Q_DECL_FINAL
     {
@@ -212,6 +213,8 @@ namespace OsmAnd
         virtual ~ResourcesManager_P();
 
         ImplementationInterface<ResourcesManager> owner;
+        
+        const std::shared_ptr<IncrementalChangesManager> changesManager;
 
         // Generic accessors:
         std::shared_ptr<const Resource> getResource(const QString& id) const;
@@ -237,6 +240,7 @@ namespace OsmAnd
         // Install / Uninstall:
         bool isResourceInstalled(const QString& id) const;
         bool uninstallResource(const QString& id);
+        bool uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(

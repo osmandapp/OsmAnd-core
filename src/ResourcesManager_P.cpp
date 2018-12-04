@@ -23,6 +23,7 @@
 #include "Logging.h"
 #include "Utilities.h"
 #include "CachedOsmandIndexes.h"
+#include "IncrementalChangesManager.h"
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(
     ResourcesManager* owner_,
@@ -32,6 +33,9 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
     , _webClient(webClient_)
+    , changesManager(std::shared_ptr<IncrementalChangesManager>(new OsmAnd::IncrementalChangesManager(
+                                                                                                      webClient_,
+                                                                                                      std::shared_ptr<ResourcesManager>(owner_))))
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
     , obfsCollection(new ObfsCollectionProxy(this))
@@ -285,14 +289,16 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QLatin1String("*.map.obf"),
             ResourceType::MapRegion);
         
-        // Find ResourceType::LiveUpdateRegion -> "*.live.obf" files
+        QHash< QString, std::shared_ptr<const LocalResource> > liveUpdates;
         loadLocalResourcesFromPath_Obf(
-            storagePath + "/live",
-            cachedOsmandIndexes,
-            outResult,
-            QLatin1String("*.live.obf"),
-            ResourceType::LiveUpdateRegion);
-
+                                       storagePath + QStringLiteral("/live"),
+                                       cachedOsmandIndexes,
+                                       liveUpdates,
+                                       QStringLiteral("*.live.obf"),
+                                       ResourceType::LiveUpdateRegion);
+        
+        changesManager->addValidIncrementalUpdates(liveUpdates, outResult);
+        
         // Find ResourceType::RoadMapRegion -> "*.road.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
@@ -1055,24 +1061,13 @@ bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
     return (resource->origin == ResourceOrigin::Installed);
 }
 
-bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
-{
+bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource) {
     QWriteLocker scopedLocker(&_localResourcesLock);
     bool ok;
-
-    const auto itResource = _localResources.find(id);
-    if (itResource == _localResources.end())
-        return false;
-
-    const auto resource = *itResource;
-    if (resource->origin != ResourceOrigin::Installed)
-        return false;
-    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
-
     // Lock for writing, this lock will never be released
     if (!installedResource->_lock.lockForWriting())
         return false;
-
+    
     switch (resource->type)
     {
         case ResourceType::MapRegion:
@@ -1094,16 +1089,31 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     }
     if (!ok)
         return false;
-
-    _localResources.erase(itResource);
-
+    
     scopedLocker.unlock();
     owner->localResourcesChangeObservable.postNotify(owner,
-        QList<QString>(),
-        QList<QString>() << resource->id,
-        QList<QString>());
-
+                                                     QList<QString>(),
+                                                     QList<QString>() << resource->id,
+                                                     QList<QString>());
+    
     return true;
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
+{
+
+    const auto itResource = _localResources.find(id);
+    if (itResource == _localResources.end())
+        return false;
+
+    const auto resource = *itResource;
+    if (resource->origin != ResourceOrigin::Installed)
+        return false;
+    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
+    
+    _localResources.erase(itResource);
+    
+    return uninstallResource(installedResource, resource);
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallObf(const std::shared_ptr<const InstalledResource>& resource)
