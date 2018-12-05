@@ -26,6 +26,7 @@ namespace OsmAnd
     class IObfsCollection;
     class UnresolvedMapStyle;
     class OnlineTileSources;
+    class IncrementalChangesManager;
 
     class ResourcesManager_P;
     class OSMAND_CORE_API ResourcesManager
@@ -42,6 +43,7 @@ namespace OsmAnd
             WikiMapRegion,
             HillshadeRegion,
             HeightmapRegion,
+            LiveUpdateRegion,
             VoicePack,
             MapStyle,
             MapStylesPresets,
@@ -262,6 +264,7 @@ namespace OsmAnd
         // Install / Uninstall:
         bool isResourceInstalled(const QString& id) const;
         bool uninstallResource(const QString& id);
+        bool uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(
@@ -293,6 +296,7 @@ namespace OsmAnd
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
+        const std::shared_ptr<IncrementalChangesManager>& changesManager;
     };
 }
 

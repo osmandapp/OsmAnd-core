@@ -26,6 +26,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)
+    , changesManager(_p->changesManager)
 {
     QDir(localStoragePath).mkpath(QLatin1String("."));
     QDir(userStoragePath).mkpath(QLatin1String("."));
@@ -123,6 +124,11 @@ bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& id) const
 bool OsmAnd::ResourcesManager::uninstallResource(const QString& id)
 {
     return _p->uninstallResource(id);
+}
+
+bool OsmAnd::ResourcesManager::uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource)
+{
+    return _p->uninstallResource(installedResource, resource);
 }
 
 bool OsmAnd::ResourcesManager::installFromFile(const QString& filePath, const ResourceType resourceType)

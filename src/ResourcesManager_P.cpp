@@ -23,6 +23,7 @@
 #include "Logging.h"
 #include "Utilities.h"
 #include "CachedOsmandIndexes.h"
+#include "IncrementalChangesManager.h"
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(
     ResourcesManager* owner_,
@@ -32,6 +33,7 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
     , _webClient(webClient_)
+    , changesManager(new OsmAnd::IncrementalChangesManager(webClient_, owner_))
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
     , obfsCollection(new ObfsCollectionProxy(this))
@@ -284,7 +286,17 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             outResult,
             QLatin1String("*.map.obf"),
             ResourceType::MapRegion);
-
+        
+        QHash< QString, std::shared_ptr<const LocalResource> > liveUpdates;
+        loadLocalResourcesFromPath_Obf(
+                                       storagePath + QStringLiteral("/live"),
+                                       cachedOsmandIndexes,
+                                       liveUpdates,
+                                       QStringLiteral("*.live.obf"),
+                                       ResourceType::LiveUpdateRegion);
+        
+        changesManager->addValidIncrementalUpdates(liveUpdates, outResult);
+        
         // Find ResourceType::RoadMapRegion -> "*.road.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
@@ -412,19 +424,22 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         }
 
         // Determine resource type and id
-        auto resourceId = fileName.toLower().remove("_2");
         auto resourceType = ResourceType::Unknown;
+        auto resourceId = fileName.toLower();
         if (fileName.endsWith(".srtm.obf"))
             resourceType = ResourceType::SrtmMapRegion;
         else if (fileName.endsWith(".road.obf"))
             resourceType = ResourceType::RoadMapRegion;
         else if (fileName.endsWith(".wiki.obf"))
             resourceType = ResourceType::WikiMapRegion;
+        else if (fileName.endsWith(".live.obf"))
+            resourceType = ResourceType::LiveUpdateRegion;
         else
         {
             resourceType = ResourceType::MapRegion;
             resourceId.replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
         }
+        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove("_2");
 
         if (resourceType == ResourceType::Unknown)
         {
@@ -793,6 +808,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     QLatin1String("/download.php?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
+            case ResourceType::LiveUpdateRegion:
+                // '[region]_hh_mm_ss.obf.zip' -> '[region]_hh_mm_ss.live.obf'
+                resourceId = QString(name)
+                .remove(QLatin1String(".obf.zip"))
+                .toLower()
+                .append(QLatin1String(".live.obf"));
+                downloadUrl =
+                owner->repositoryBaseUrl +
+                QLatin1String("/download.php?aosmc=") +
+                QUrl::toPercentEncoding(name);
+                break;
             case ResourceType::RoadMapRegion:
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
@@ -1033,27 +1059,17 @@ bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
     return (resource->origin == ResourceOrigin::Installed);
 }
 
-bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
-{
+bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource) {
     QWriteLocker scopedLocker(&_localResourcesLock);
     bool ok;
-
-    const auto itResource = _localResources.find(id);
-    if (itResource == _localResources.end())
-        return false;
-
-    const auto resource = *itResource;
-    if (resource->origin != ResourceOrigin::Installed)
-        return false;
-    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
-
     // Lock for writing, this lock will never be released
     if (!installedResource->_lock.lockForWriting())
         return false;
-
+    
     switch (resource->type)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1071,16 +1087,31 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     }
     if (!ok)
         return false;
-
-    _localResources.erase(itResource);
-
+    
     scopedLocker.unlock();
     owner->localResourcesChangeObservable.postNotify(owner,
-        QList<QString>(),
-        QList<QString>() << resource->id,
-        QList<QString>());
-
+                                                     QList<QString>(),
+                                                     QList<QString>() << resource->id,
+                                                     QList<QString>());
+    
     return true;
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
+{
+
+    const auto itResource = _localResources.find(id);
+    if (itResource == _localResources.end())
+        return false;
+
+    const auto resource = *itResource;
+    if (resource->origin != ResourceOrigin::Installed)
+        return false;
+    const auto& installedResource = std::static_pointer_cast<const InstalledResource>(resource);
+    
+    _localResources.erase(itResource);
+    
+    return uninstallResource(installedResource, resource);
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallObf(const std::shared_ptr<const InstalledResource>& resource)
@@ -1117,6 +1148,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
     switch (resourceType)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1462,6 +1494,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
     switch (localResource->type)
     {
         case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
@@ -1641,6 +1674,7 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
     for (const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
@@ -1674,6 +1708,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     for (const auto& localResource : localResources)
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
@@ -1706,6 +1741,22 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
+void OsmAnd::ResourcesManager_P::ObfsCollectionProxy::sortReaders(QList<std::shared_ptr<const ObfReader> > &obfReaders) const
+{
+    std::sort(obfReaders.begin(), obfReaders.end(), [](const std::shared_ptr<const ObfReader> first, std::shared_ptr<const ObfReader> second) -> bool
+              {
+                  QFileInfo firstInfo(first->obfFile->filePath);
+                  QFileInfo secondInfo(second->obfFile->filePath);
+                  QString firstName = firstInfo.fileName();
+                  QString secondName = secondInfo.fileName();
+                  firstName = firstName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+                  secondName = secondName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+                  firstName = firstName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? firstName : firstName + QStringLiteral("_00_00_00");
+                  secondName = secondName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? secondName : secondName + QStringLiteral("_00_00_00");
+                  return firstName.compare(secondName) > 0;
+              });
+}
+
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
@@ -1720,6 +1771,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     for (const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::WikiMapRegion)
@@ -1757,6 +1809,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         obfReaders.push_back(qMove(obfReader));
     }
 
+    sortReaders(obfReaders);
+    
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
