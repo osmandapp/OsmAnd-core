@@ -296,6 +296,7 @@ namespace OsmAnd
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
+        const std::shared_ptr<IncrementalChangesManager>& changesManager;
     };
 }
 

@@ -26,6 +26,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)
+    , changesManager(_p->changesManager)
 {
     QDir(localStoragePath).mkpath(QLatin1String("."));
     QDir(userStoragePath).mkpath(QLatin1String("."));
