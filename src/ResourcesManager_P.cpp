@@ -33,7 +33,7 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
     , _webClient(webClient_)
-    , changesManager(new OsmAnd::IncrementalChangesManager(webClient_, owner_))
+    , changesManager(new IncrementalChangesManager(webClient_, owner_))
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
     , obfsCollection(new ObfsCollectionProxy(this))
