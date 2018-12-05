@@ -214,7 +214,7 @@ namespace OsmAnd
 
         ImplementationInterface<ResourcesManager> owner;
         
-        IncrementalChangesManager* changesManager;
+        const std::shared_ptr<IncrementalChangesManager> changesManager;
 
         // Generic accessors:
         std::shared_ptr<const Resource> getResource(const QString& id) const;

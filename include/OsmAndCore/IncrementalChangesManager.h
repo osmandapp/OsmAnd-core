@@ -31,11 +31,11 @@ namespace OsmAnd
 
     private:
         PrivateImplementation<IncrementalChangesManager_P> _p;
-        
-    protected:
         IncrementalChangesManager(
                                   const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
                                   ResourcesManager* resourcesManager = nullptr);
+        
+    protected:
     public:
         
         virtual ~IncrementalChangesManager();
