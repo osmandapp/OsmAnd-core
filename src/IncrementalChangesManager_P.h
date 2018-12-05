@@ -28,21 +28,15 @@ namespace OsmAnd
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
     private:
-        QFileSystemWatcher* const _fileSystemWatcher;
-
-        mutable QReadWriteLock _localResourcesLock;
-
-
         const std::shared_ptr<const IWebClient> _webClient;
-        const std::shared_ptr<ResourcesManager> _resourcesManager;
+        ResourcesManager* _resourcesManager;
         
-        mutable QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > _localResources;
-        mutable QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > _incrementalUpdatesResources;
+        mutable QHash< QString, QList<std::shared_ptr<const ResourcesManager::LocalResource>> > _incrementalUpdatesResources;
     protected:
         IncrementalChangesManager_P(
             IncrementalChangesManager* owner,
             const std::shared_ptr<const IWebClient>& webClient,
-            const std::shared_ptr<ResourcesManager>& resourcesManager);
+            ResourcesManager* resourcesManager);
         void initialize();
     public:
         virtual ~IncrementalChangesManager_P();

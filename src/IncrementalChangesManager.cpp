@@ -8,7 +8,7 @@
 
 OsmAnd::IncrementalChangesManager::IncrementalChangesManager(
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/,
-    const std::shared_ptr<ResourcesManager>& resourcesManager)
+    ResourcesManager* resourcesManager)
     : _p(new IncrementalChangesManager_P(this, webClient, resourcesManager))
     , repositoryBaseUrl(QStringLiteral("http://download.osmand.net"))
 {

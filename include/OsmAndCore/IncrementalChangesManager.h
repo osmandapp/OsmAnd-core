@@ -33,16 +33,18 @@ namespace OsmAnd
         PrivateImplementation<IncrementalChangesManager_P> _p;
         
     protected:
-    public:
         IncrementalChangesManager(
-            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
-            const std::shared_ptr<ResourcesManager>& resourcesManager = nullptr);
+                                  const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
+                                  ResourcesManager* resourcesManager = nullptr);
+    public:
+        
         virtual ~IncrementalChangesManager();
 
         const QString repositoryBaseUrl;
         
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
+    friend class OsmAnd::ResourcesManager_P;
     };
 }
 

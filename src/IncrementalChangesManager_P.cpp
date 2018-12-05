@@ -28,19 +28,15 @@
 OsmAnd::IncrementalChangesManager_P::IncrementalChangesManager_P(
     IncrementalChangesManager* owner_,
     const std::shared_ptr<const IWebClient>& webClient_,
-    const std::shared_ptr<ResourcesManager>& resourcesManager_)
+    ResourcesManager* resourcesManager_)
     : owner(owner_)
-    , _fileSystemWatcher(new QFileSystemWatcher())
-    , _localResourcesLock(QReadWriteLock::Recursive)
     , _webClient(webClient_)
     , _resourcesManager(resourcesManager_)
 {
-    _fileSystemWatcher->moveToThread(gMainThread);
 }
 
 OsmAnd::IncrementalChangesManager_P::~IncrementalChangesManager_P()
 {
-    _fileSystemWatcher->deleteLater();
 }
 
 void OsmAnd::IncrementalChangesManager_P::initialize()
