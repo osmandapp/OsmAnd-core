@@ -808,17 +808,6 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     QLatin1String("/download.php?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
-            case ResourceType::LiveUpdateRegion:
-                // '[region]_hh_mm_ss.obf.zip' -> '[region]_hh_mm_ss.live.obf'
-                resourceId = QString(name)
-                .remove(QLatin1String(".obf.zip"))
-                .toLower()
-                .append(QLatin1String(".live.obf"));
-                downloadUrl =
-                owner->repositoryBaseUrl +
-                QLatin1String("/download.php?aosmc=") +
-                QUrl::toPercentEncoding(name);
-                break;
             case ResourceType::RoadMapRegion:
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
@@ -1183,13 +1172,14 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
     std::shared_ptr<const InstalledResource>& outResource,
     const QString& localPath_ /*= QString::null*/)
 {
-    assert(id.endsWith(".obf"));
+    assert(id.endsWith(QStringLiteral(".obf")));
+    const bool isLive = (id.endsWith(QStringLiteral(".live.obf")));
 
     ArchiveReader archive(filePath);
 
     // List items
     bool ok = false;
-    const auto archiveItems = archive.getItems(&ok);
+    const auto archiveItems = archive.getItems(&ok, isLive);
     if (!ok)
         return false;
 
@@ -1197,7 +1187,7 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
     ArchiveReader::Item obfArchiveItem;
     for (const auto& archiveItem : constOf(archiveItems))
     {
-        if (!archiveItem.isValid() || !archiveItem.name.endsWith(QLatin1String(".obf")))
+        if (!archiveItem.isValid() || (!archiveItem.name.endsWith(QLatin1String(".obf")) && !isLive))
             continue;
 
         obfArchiveItem = archiveItem;
@@ -1207,8 +1197,9 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
         return false;
 
     // Extract that file without keeping directory structure
-    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
-    if (!archive.extractItemToFile(obfArchiveItem.name, localFileName))
+    QString localPath = owner->localStoragePath;
+    const auto localFileName = localPath_.isNull() ? QDir(isLive ? localPath + QStringLiteral("/live") : localPath).absoluteFilePath(id) : localPath_;
+    if (!archive.extractItemToFile(obfArchiveItem.name, localFileName, isLive))
         return false;
 
     auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
@@ -1372,14 +1363,15 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(
 
 bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const QString& filePath)
 {
-    if (isResourceInstalled(id))
+    bool isLive = id.contains(QStringLiteral(".live.obf"));
+    if (!isLive && isResourceInstalled(id))
         return false;
 
     const auto& resourceInRepository = getResourceInRepository(id);
-    if (!resourceInRepository)
+    if (!resourceInRepository && !isLive)
         return false;
 
-    return installFromFile(id, filePath, resourceInRepository->type);
+    return installFromFile(id, filePath, isLive ? ResourceType::LiveUpdateRegion : resourceInRepository->type);
 }
 
 bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) const

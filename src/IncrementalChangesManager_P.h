@@ -25,13 +25,28 @@ namespace OsmAnd
     class IncrementalChangesManager_P Q_DECL_FINAL
     {
     public:
+        typedef IncrementalChangesManager::IncrementalUpdate IncrementalUpdate;
+        typedef IncrementalChangesManager::RegionUpdateFiles RegionUpdateFiles;
+        typedef IncrementalChangesManager::IncrementalUpdateGroupByMonth IncrementalUpdateGroupByMonth;
+        typedef IncrementalChangesManager::IncrementalUpdateList IncrementalUpdateList;
+        
+    private:
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
-    private:
         const std::shared_ptr<const IWebClient> _webClient;
         ResourcesManager* _resourcesManager;
-        
         mutable QHash< QString, QList<std::shared_ptr<const ResourcesManager::LocalResource>> > _incrementalUpdatesResources;
+        
+        bool getIncrementalUpdatesForRegion(
+                                            QString &region,
+                                            long timestamp,
+                                            QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
+        bool parseRepository(QXmlStreamReader& xmlReader,
+                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
+        
+        mutable QHash< QString, std::shared_ptr<RegionUpdateFiles> > _updatesStructure;
+        
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
     protected:
         IncrementalChangesManager_P(
             IncrementalChangesManager* owner,

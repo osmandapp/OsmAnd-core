@@ -27,7 +27,93 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(IncrementalChangesManager);
     public:
+        class OSMAND_CORE_API RegionUpdateFiles
+        {
+            Q_DISABLE_COPY_AND_MOVE(RegionUpdateFiles);
+        protected:
+            RegionUpdateFiles(QString& name, std::shared_ptr<const ResourcesManager::InstalledResource> mainFile);
+            
+        private:
+            
+        public:
+            virtual ~RegionUpdateFiles();
+            QString name;
+            std::shared_ptr<const ResourcesManager::InstalledResource> mainFile;
+            QHash<QString, QList< std::shared_ptr<const ResourcesManager::InstalledResource> > > dailyUpdates;
+            QHash<QString, std::shared_ptr<const ResourcesManager::InstalledResource> > monthlyUpdates;
+            bool addUpdate(std::shared_ptr<const ResourcesManager::InstalledResource>);
+            long getTimestamp() const;
+            bool isEmpty() const;
+            
+            friend class IncrementalChangesManager_P;
+        };
         
+        class OSMAND_CORE_API IncrementalUpdate
+        {
+        protected:
+            
+            QString sizeText;
+        private:
+            
+        public:
+            virtual ~IncrementalUpdate();
+            
+            QString date;
+            long timestamp;
+            long containerSize;
+            long contentSize;
+            QString fileName;
+            QUrl url;
+            QString resId;
+            
+            bool isMonth() const;
+            
+            friend class IncrementalChangesManager_P;
+        };
+        
+        class OSMAND_CORE_API IncrementalUpdateGroupByMonth
+        {
+
+        protected:
+
+        private:
+
+        public:
+            virtual ~IncrementalUpdateGroupByMonth();
+            
+            bool monthUpdateInitialized = false;
+            QList<std::shared_ptr<const IncrementalUpdate> > dayUpdates;
+            std::shared_ptr<const IncrementalUpdate> monthUpdate;
+            QString monthYearPart;
+            bool isMonthUpdateApplicable() const;
+            bool isDayUpdateApplicable() const;
+            QList<std::shared_ptr<const IncrementalUpdate> > getMonthUpdate() const;
+            
+            
+            friend class IncrementalChangesManager_P;
+        };
+        
+        class OSMAND_CORE_API IncrementalUpdateList
+        {
+
+        protected:
+            
+        private:
+            
+        public:
+            QHash<QString, std::shared_ptr<IncrementalUpdateGroupByMonth> > updatesByMonth;
+            QString errorMessage;
+            std::shared_ptr<const RegionUpdateFiles> updateFiles;
+            
+            bool isPreferrableLimitForDayUpdates(const QString &monthYearPart) const;
+            void addUpdate(const std::shared_ptr<const IncrementalUpdate>& update);
+            QList<std::shared_ptr<const IncrementalUpdate> > getItemsForUpdate() const;
+            
+        public:
+            virtual ~IncrementalUpdateList();
+            
+            friend class IncrementalChangesManager_P;
+        };
 
     private:
         PrivateImplementation<IncrementalChangesManager_P> _p;
@@ -44,6 +130,8 @@ namespace OsmAnd
         
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
+        
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
     friend class OsmAnd::ResourcesManager_P;
     };
 }

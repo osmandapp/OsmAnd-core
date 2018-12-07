@@ -57,6 +57,7 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
         const uint64_t timestamp = installedResource->timestamp;
         QString regionName = QString(installedResource->id).remove(QStringLiteral(".map.obf"));
         regionMaps.insert(regionName, timestamp);
+        _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName, installedResource)));
     }
     
     for (const auto &liveRes : liveResources)
@@ -70,7 +71,10 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
         if (regionMaps.contains(regionName))
         {
             if (liveResource->timestamp > regionMaps.value(regionName))
+            {
                 mapResources.insert(liveRes->id, qMove(liveRes));
+                _updatesStructure.value(regionName)->addUpdate(liveResource);
+            }
             else
                 _resourcesManager->uninstallResource(liveResource, liveRes);
         }
@@ -79,4 +83,136 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
     return true;
 }
 
+bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(QString &region,
+                                                                         long timestamp,
+                                                                         QList< std::shared_ptr<const IncrementalUpdate> >& resources) const
+{
+    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
+    const auto& downloadResult = _webClient->downloadData(
+                                                          owner->repositoryBaseUrl +
+                                                          QStringLiteral("check_live?aosmc=true&timestamp=") +
+                                                          QString::number(timestamp) +
+                                                          "&file=" + QUrl::toPercentEncoding(region),
+                                                          &requestResult);
+    if (downloadResult.isNull() || !requestResult->isSuccessful())
+        return false;
+    // Parse XML
+    QXmlStreamReader xmlReader(downloadResult);
+    bool ok = parseRepository(xmlReader, resources);
+    if (!ok)
+        return false;
+    
+    
+    return true;
+}
 
+bool OsmAnd::IncrementalChangesManager_P::parseRepository(
+                                                 QXmlStreamReader& xmlReader,
+                                                 QList< std::shared_ptr<const IncrementalUpdate> >& repository) const
+{
+    bool ok = false;
+    while (!xmlReader.atEnd() && !xmlReader.hasError())
+    {
+        xmlReader.readNext();
+        if (!xmlReader.isStartElement())
+            continue;
+        const auto tagName = xmlReader.name();
+        const auto& attribs = xmlReader.attributes();
+        
+        if (tagName.isNull() || tagName != QStringLiteral("update"))
+            continue;
+        
+        const auto& dateValue = attribs.value(QStringLiteral("updateDate"));
+        if (dateValue.isNull())
+            continue;
+        const auto& containerSizeValue = attribs.value(QStringLiteral("containerSize"));
+        if (containerSizeValue.isNull())
+            continue;
+        const auto& contentSizeValue = attribs.value(QStringLiteral("contentSize"));
+        if (contentSizeValue.isNull())
+            continue;
+        const auto& timestampValue = attribs.value(QStringLiteral("timestamp"));
+        if (timestampValue.isNull())
+            continue;
+        const auto& sizeTextValue = attribs.value(QStringLiteral("size"));
+        if (sizeTextValue.isNull())
+            continue;
+        const auto& nameValue = attribs.value(QStringLiteral("name"));
+        if (nameValue.isNull())
+            continue;
+        
+        const auto name = nameValue.toString();
+        
+        
+        const auto timestamp = timestampValue.toULongLong(&ok);
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                      "Invalid timestamp '%s' for '%s'",
+                      qPrintableRef(timestampValue),
+                      qPrintable(name));
+            continue;
+        }
+        
+        const auto containerSize = containerSizeValue.toULongLong(&ok);
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                      "Invalid container size '%s' for '%s'",
+                      qPrintableRef(containerSizeValue),
+                      qPrintable(name));
+            continue;
+        }
+        
+        const auto contentSize = contentSizeValue.toULongLong(&ok);
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                      "Invalid content size '%s' for '%s'",
+                      qPrintableRef(contentSizeValue),
+                      qPrintable(name));
+            continue;
+        }
+        QString resourceId = QString(name)
+        .remove(QLatin1String(".obf.gz"))
+        .toLower()
+        .append(QLatin1String(".live.obf"));
+        
+        QString urlString = owner->repositoryBaseUrl +
+        QLatin1String("download.php?file=") +
+        QUrl::toPercentEncoding(name) +
+        QStringLiteral("&aosmc=yes");
+        
+        IncrementalUpdate update;
+        update.fileName = name;
+        update.containerSize = containerSize;
+        update.contentSize = contentSize;
+        update.sizeText = sizeTextValue.toString();
+        update.date = dateValue.toString();
+        update.timestamp = timestamp;
+        update.resId = resourceId;
+        update.url = QUrl(urlString);
+        
+        repository.append(std::make_shared<const IncrementalUpdate>(update));
+    }
+    
+    return true;
+}
+
+std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList> OsmAnd::IncrementalChangesManager_P::getUpdatesByMonth(QString &regionName) const
+{
+    IncrementalUpdateList updateList;
+    std::shared_ptr<RegionUpdateFiles> ruf = _updatesStructure.value(regionName);
+    updateList.updateFiles = ruf;
+//    if(ruf->isEmpty()) {
+//        updateList.errorMessage = QStringLiteral("No installed updates for this region");
+//        return std::make_shared<const IncrementalUpdateList>(updateList);
+//    }
+    long timestamp = ruf->getTimestamp();
+    QList< std::shared_ptr<const IncrementalUpdate> > resources;
+    getIncrementalUpdatesForRegion(regionName, timestamp, resources);
+    for(const auto& res : resources)
+        updateList.addUpdate(res);
+    
+    return std::make_shared<const IncrementalUpdateList>(updateList);
+}
