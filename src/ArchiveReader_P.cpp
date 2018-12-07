@@ -18,7 +18,7 @@ OsmAnd::ArchiveReader_P::~ArchiveReader_P()
 {
 }
 
-QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* const ok_, const bool isLive) const
+QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* const ok_, const bool isGzip) const
 {
     QList<Item> result;
 
@@ -38,7 +38,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
 
             result.push_back(item);
             return true;
-        }, isLive);
+        }, isGzip);
 
     if (ok_)
         *ok_ = ok;
@@ -51,7 +51,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, co
     return extractItemToFile(itemName, fileName, extractedBytes);
 }
 
-bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_, const bool isLive) const
+bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_, const bool isGzip) const
 {
     uint64_t extractedBytes = 0;
     bool ok = processArchive(owner->fileName, 
@@ -65,7 +65,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
             // Item was found, so stop on this item regardless of result
             doStop = true;
             return extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
-        }, isLive);
+        }, isGzip);
     if (!ok)
         return false;
 
@@ -100,20 +100,20 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
     return true;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isLive)
+bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isGzip)
 {
     QFile archiveFile(fileName);
     if (!archiveFile.exists())
         return false;
 
-    bool ok = processArchive(&archiveFile, handler, isLive);
+    bool ok = processArchive(&archiveFile, handler, isGzip);
 
     archiveFile.close();
 
     return ok;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isLive)
+bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip)
 {
     auto archive = archive_read_new();
     if (!archive)
@@ -127,7 +127,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     // Open archive
     for(;;)
     {
-        if (isLive)
+        if (isGzip)
         {
             res = archive_read_support_filter_gzip(archive);
             if (res != ARCHIVE_OK)

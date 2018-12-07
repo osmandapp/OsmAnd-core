@@ -42,8 +42,8 @@ namespace OsmAnd
             QHash<QString, QList< std::shared_ptr<const ResourcesManager::InstalledResource> > > dailyUpdates;
             QHash<QString, std::shared_ptr<const ResourcesManager::InstalledResource> > monthlyUpdates;
             bool addUpdate(std::shared_ptr<const ResourcesManager::InstalledResource>);
-            long getTimestamp();
-            bool isEmpty();
+            long getTimestamp() const;
+            bool isEmpty() const;
             
             friend class IncrementalChangesManager_P;
         };
@@ -131,7 +131,7 @@ namespace OsmAnd
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
         
-        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName);
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
     friend class OsmAnd::ResourcesManager_P;
     };
 }

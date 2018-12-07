@@ -31,8 +31,8 @@ namespace OsmAnd
             uint8_t* buffer;
         };
         typedef std::function<bool(archive* archive, archive_entry* entry, bool& doStop)> ArchiveEntryHander;
-        static bool processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isLive = false);
-        static bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isLive = false);
+        static bool processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isGzip = false);
+        static bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip = false);
 
         static bool extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName, uint64_t& bytesExtracted);
 
@@ -52,10 +52,10 @@ namespace OsmAnd
 
         ImplementationInterface<ArchiveReader> owner;
 
-        QList<Item> getItems(bool* const ok, const bool isLive) const;
+        QList<Item> getItems(bool* const ok, const bool isGzip) const;
 
         bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const;
-        bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes, const bool isLive = false) const;
+        bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes, const bool isGzip = false) const;
         bool extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes) const;
 
     friend class OsmAnd::ArchiveReader;

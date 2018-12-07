@@ -47,10 +47,10 @@ namespace OsmAnd
 
         const QString fileName;
 
-        QList<Item> getItems(bool* const ok = nullptr, const bool isLive = false) const;
+        QList<Item> getItems(bool* const ok = nullptr, const bool isGzip = false) const;
 
         bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure = false, uint64_t* const extractedBytes = nullptr) const;
-        bool extractItemToFile(const QString& itemName, const QString& fileName, const bool isLive = false, uint64_t* const extractedBytes = nullptr) const;
+        bool extractItemToFile(const QString& itemName, const QString& fileName, const bool isGzip = false, uint64_t* const extractedBytes = nullptr) const;
         bool extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes = nullptr) const;
     };
 }

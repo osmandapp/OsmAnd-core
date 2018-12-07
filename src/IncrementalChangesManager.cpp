@@ -28,7 +28,7 @@ bool OsmAnd::IncrementalChangesManager::addValidIncrementalUpdates(QHash< QStrin
     return _p->addValidIncrementalUpdates(liveResources, mapResources);
 }
 
-std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdateList> OsmAnd::IncrementalChangesManager::getUpdatesByMonth(QString& regionName)
+std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdateList> OsmAnd::IncrementalChangesManager::getUpdatesByMonth(QString& regionName) const
 {
     return _p->getUpdatesByMonth(regionName);
 }
@@ -61,7 +61,7 @@ bool OsmAnd::IncrementalChangesManager::RegionUpdateFiles::addUpdate(std::shared
     return true;
 }
 
-long OsmAnd::IncrementalChangesManager::RegionUpdateFiles::getTimestamp()
+long OsmAnd::IncrementalChangesManager::RegionUpdateFiles::getTimestamp() const
 {
     long timestamp = mainFile->timestamp;
     for (const auto& monthlyUpdate : monthlyUpdates.values())
@@ -78,7 +78,7 @@ long OsmAnd::IncrementalChangesManager::RegionUpdateFiles::getTimestamp()
     return timestamp;
 }
 
-bool OsmAnd::IncrementalChangesManager::RegionUpdateFiles::isEmpty()
+bool OsmAnd::IncrementalChangesManager::RegionUpdateFiles::isEmpty() const
 {
     return dailyUpdates.isEmpty() && monthlyUpdates.isEmpty();
 }
