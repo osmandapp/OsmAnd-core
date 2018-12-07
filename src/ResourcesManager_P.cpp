@@ -1132,13 +1132,6 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
     if (itResource != _localResources.end())
         return false;
 
-    LogPrintf(
-    LogSeverityLevel::Warning,
-    "Trying to install ftom file %s path %s, res type is Live: %s",
-    qPrintable(id),
-    qPrintable(filePath),
-    resourceType == ResourceType::LiveUpdateRegion ? qPrintable("true") : qPrintable("false"));
-    
     bool ok = false;
     std::shared_ptr<const InstalledResource> resource;
     switch (resourceType)
