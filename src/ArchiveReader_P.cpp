@@ -18,11 +18,11 @@ OsmAnd::ArchiveReader_P::~ArchiveReader_P()
 {
 }
 
-QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* const ok_) const
+QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* const ok_, const bool isLive) const
 {
     QList<Item> result;
 
-    const auto ok = processArchive(owner->fileName, 
+    const auto ok = processArchive(owner->fileName,
         [&result]
         (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/) -> bool
         {
@@ -38,7 +38,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
 
             result.push_back(item);
             return true;
-        });
+        }, isLive);
 
     if (ok_)
         *ok_ = ok;
@@ -51,7 +51,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, co
     return extractItemToFile(itemName, fileName, extractedBytes);
 }
 
-bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_) const
+bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_, const bool isLive) const
 {
     uint64_t extractedBytes = 0;
     bool ok = processArchive(owner->fileName, 
@@ -65,7 +65,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
             // Item was found, so stop on this item regardless of result
             doStop = true;
             return extractArchiveEntryAsFile(archive, entry, fileName, extractedBytes);
-        });
+        }, isLive);
     if (!ok)
         return false;
 
@@ -100,20 +100,20 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
     return true;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler)
+bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isLive)
 {
     QFile archiveFile(fileName);
     if (!archiveFile.exists())
         return false;
 
-    bool ok = processArchive(&archiveFile, handler);
+    bool ok = processArchive(&archiveFile, handler, isLive);
 
     archiveFile.close();
 
     return ok;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler)
+bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isLive)
 {
     auto archive = archive_read_new();
     if (!archive)
@@ -127,9 +127,23 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     // Open archive
     for(;;)
     {
-        res = archive_read_support_compression_all(archive);
-        if (res != ARCHIVE_OK)
-            break;
+        if (isLive)
+        {
+            res = archive_read_support_filter_gzip(archive);
+            if (res != ARCHIVE_OK)
+                break;
+            
+            res = archive_read_support_format_raw(archive);
+            if (res != ARCHIVE_OK)
+                break;
+        }
+        else
+        {
+            res = archive_read_support_compression_all(archive);
+            if (res != ARCHIVE_OK)
+                break;
+        }
+        
 
         res = archive_read_support_format_all(archive);
         if (res != ARCHIVE_OK)
