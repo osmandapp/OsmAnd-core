@@ -31,22 +31,17 @@ namespace OsmAnd
         typedef IncrementalChangesManager::IncrementalUpdateList IncrementalUpdateList;
         
     private:
-        bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
-                                        QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
         const std::shared_ptr<const IWebClient> _webClient;
         ResourcesManager* _resourcesManager;
         mutable QHash< QString, QList<std::shared_ptr<const ResourcesManager::LocalResource>> > _incrementalUpdatesResources;
         
+        bool parseRepository(QXmlStreamReader& xmlReader,
+                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
         bool getIncrementalUpdatesForRegion(
                                             QString &region,
                                             long timestamp,
                                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
-        bool parseRepository(QXmlStreamReader& xmlReader,
-                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
-        
         mutable QHash< QString, std::shared_ptr<RegionUpdateFiles> > _updatesStructure;
-        
-        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
     protected:
         IncrementalChangesManager_P(
             IncrementalChangesManager* owner,
@@ -57,6 +52,10 @@ namespace OsmAnd
         virtual ~IncrementalChangesManager_P();
 
         ImplementationInterface<IncrementalChangesManager> owner;
+        
+        bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
+                                        QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
 
     friend class OsmAnd::IncrementalChangesManager;
     };
