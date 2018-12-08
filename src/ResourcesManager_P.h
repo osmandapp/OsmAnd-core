@@ -239,6 +239,7 @@ namespace OsmAnd
 
         // Install / Uninstall:
         bool isResourceInstalled(const QString& id) const;
+        uint64_t getResourceTimestamp(const QString& id) const;
         bool uninstallResource(const QString& id);
         bool uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);

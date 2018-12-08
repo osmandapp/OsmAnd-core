@@ -43,9 +43,59 @@ void OsmAnd::IncrementalChangesManager_P::initialize()
 {
 }
 
+const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> OsmAnd::IncrementalChangesManager_P::getInstalledResource(const QString &id) const
+{
+    const auto& resource = _resourcesManager->getResource(id);
+    if (!resource || resource->origin != ResourcesManager::ResourceOrigin::Installed)
+        return nullptr;
+    
+    const auto& installedResource = std::static_pointer_cast<const ResourcesManager::InstalledResource>(resource);
+    return installedResource;
+}
+
+void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed)
+{
+    for (auto & addedFile : added)
+    {
+        if (addedFile.endsWith(QStringLiteral(".map.obf")))
+        {
+            QString regionName = QString(addedFile).remove(QStringLiteral(".map.obf"));
+            const auto& installedResource = getInstalledResource(addedFile);
+            _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName, installedResource)));
+        }
+        else if (addedFile.endsWith(QStringLiteral(".live.obf")))
+        {
+            QString regionName = QString(addedFile).remove(QRegExp(QStringLiteral("_([0-9]+_){2}[0-9]+\\.live\\.obf")));
+            const auto& installedResource = getInstalledResource(addedFile);
+            const auto& ruf = _updatesStructure.value(regionName);
+            if (ruf == nullptr)
+                _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName,
+                                                                                                              getInstalledResource(regionName + QStringLiteral(".map.obf")))));
+            ruf->addUpdate(installedResource);
+        }
+    }
+    for (auto & removedFile : removed)
+    {
+        if (removedFile.endsWith(QStringLiteral(".map.obf")))
+        {
+            QString regionName = QString(removedFile).remove(QStringLiteral(".map.obf"));
+            deleteUpdates(regionName);
+        }
+    }
+}
+
 bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                                                      QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources)
 {
+    _resourcesManager->localResourcesChangeObservable.attach(this,
+                                                             [this]
+                                                             (const OsmAnd::ResourcesManager* const resourcesManager,
+                                                              const QList< QString >& added,
+                                                              const QList< QString >& removed,
+                                                              const QList< QString >& updated)
+                                                             {
+                                                                 onLocalResourcesChanged(added, removed);
+                                                             });
     QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > result(mapResources);
     QHash<QString, uint64_t> regionMaps;
     for (const auto &res : mapResources)
@@ -83,7 +133,7 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
     return true;
 }
 
-bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(QString &region,
+bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(const QString &region,
                                                                          long timestamp,
                                                                          QList< std::shared_ptr<const IncrementalUpdate> >& resources) const
 {
@@ -199,7 +249,7 @@ bool OsmAnd::IncrementalChangesManager_P::parseRepository(
     return true;
 }
 
-std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList> OsmAnd::IncrementalChangesManager_P::getUpdatesByMonth(QString &regionName) const
+std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList> OsmAnd::IncrementalChangesManager_P::getUpdatesByMonth(const QString &regionName) const
 {
     IncrementalUpdateList updateList;
     std::shared_ptr<RegionUpdateFiles> ruf = _updatesStructure.value(regionName);
@@ -215,4 +265,22 @@ std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList
         updateList.addUpdate(res);
     
     return std::make_shared<const IncrementalUpdateList>(updateList);
+}
+
+void OsmAnd::IncrementalChangesManager_P::deleteUpdates(const QString& regionName)
+{
+    std::shared_ptr<RegionUpdateFiles> ruf = _updatesStructure.value(regionName);
+    if(ruf->isEmpty())
+        return;
+    
+    for (const auto& dayUpdates : ruf->dailyUpdates.values()) {
+        for (const auto& update : dayUpdates) {
+            _resourcesManager->uninstallResource(update->id);
+        }
+    }
+    for (const auto& update : ruf->monthlyUpdates.values()) {
+         _resourcesManager->uninstallResource(update->id);
+    }
+    ruf->dailyUpdates.clear();
+    ruf->monthlyUpdates.clear();
 }
