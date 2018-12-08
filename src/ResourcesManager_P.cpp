@@ -1096,10 +1096,14 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         return false;
     
     scopedLocker.unlock();
+    QList<QString> deleted ;
+    deleted << resource->id;
     owner->localResourcesChangeObservable.postNotify(owner,
                                                      QList<QString>(),
-                                                     QList<QString>() << resource->id,
+                                                     deleted,
                                                      QList<QString>());
+    
+    changesManager->onLocalResourcesChanged(QList<QString>(), deleted);
     
     return true;
 }
@@ -1174,10 +1178,14 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
 
     if (ok)
     {
+        QList<QString> added;
+        added << resource->id;
         owner->localResourcesChangeObservable.postNotify(owner,
-            QList<QString>() << resource->id,
+            added,
             QList<QString>(),
             QList<QString>());
+        
+        changesManager->onLocalResourcesChanged(added, QList<QString>());
     }
 
     return ok;
