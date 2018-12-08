@@ -35,8 +35,6 @@ namespace OsmAnd
         ResourcesManager* _resourcesManager;
         mutable QHash< QString, QList<std::shared_ptr<const ResourcesManager::LocalResource>> > _incrementalUpdatesResources;
         
-        const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &extracted(const QString &addedFile);
-        
         void onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed);
         bool parseRepository(QXmlStreamReader& xmlReader,
                              QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
