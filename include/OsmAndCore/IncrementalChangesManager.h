@@ -120,6 +120,7 @@ namespace OsmAnd
         IncrementalChangesManager(
                                   const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()),
                                   ResourcesManager* resourcesManager = nullptr);
+        void onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed);
         
     protected:
     public:
@@ -131,7 +132,8 @@ namespace OsmAnd
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
         
-        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(const QString& regionName) const;
+        void deleteUpdates(const QString &regionName);
     friend class OsmAnd::ResourcesManager_P;
     };
 }

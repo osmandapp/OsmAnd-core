@@ -121,6 +121,11 @@ bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& id) const
     return _p->isResourceInstalled(id);
 }
 
+uint64_t OsmAnd::ResourcesManager::getResourceTimestamp(const QString& id) const
+{
+    return _p->getResourceTimestamp(id);
+}
+
 bool OsmAnd::ResourcesManager::uninstallResource(const QString& id)
 {
     return _p->uninstallResource(id);

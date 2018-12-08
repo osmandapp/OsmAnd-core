@@ -28,9 +28,19 @@ bool OsmAnd::IncrementalChangesManager::addValidIncrementalUpdates(QHash< QStrin
     return _p->addValidIncrementalUpdates(liveResources, mapResources);
 }
 
-std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdateList> OsmAnd::IncrementalChangesManager::getUpdatesByMonth(QString& regionName) const
+std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdateList> OsmAnd::IncrementalChangesManager::getUpdatesByMonth(const QString& regionName) const
 {
     return _p->getUpdatesByMonth(regionName);
+}
+
+void OsmAnd::IncrementalChangesManager::deleteUpdates(const QString &regionName)
+{
+    _p->deleteUpdates(regionName);
+}
+
+void OsmAnd::IncrementalChangesManager::onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed)
+{
+    _p->onLocalResourcesChanged(added, removed);
 }
 
 

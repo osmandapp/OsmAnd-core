@@ -1048,6 +1048,24 @@ bool OsmAnd::ResourcesManager_P::isResourceInstalled(const QString& id) const
     return (resource->origin == ResourceOrigin::Installed);
 }
 
+uint64_t OsmAnd::ResourcesManager_P::getResourceTimestamp(const QString& id) const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+    
+    const auto citResource = _localResources.constFind(id);
+    if (citResource == _localResources.cend())
+        return -1;
+    
+    const auto& resource = *citResource;
+    
+    if (resource->origin == ResourceOrigin::Installed)
+    {
+        const auto& installedResource = std::static_pointer_cast<const ResourcesManager::InstalledResource>(resource);
+        return installedResource->timestamp;
+    }
+    return -1;
+}
+
 bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource) {
     QWriteLocker scopedLocker(&_localResourcesLock);
     bool ok;
@@ -1078,10 +1096,14 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         return false;
     
     scopedLocker.unlock();
+    QList<QString> deleted ;
+    deleted << resource->id;
     owner->localResourcesChangeObservable.postNotify(owner,
                                                      QList<QString>(),
-                                                     QList<QString>() << resource->id,
+                                                     deleted,
                                                      QList<QString>());
+    
+    changesManager->onLocalResourcesChanged(QList<QString>(), deleted);
     
     return true;
 }
@@ -1156,10 +1178,14 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
 
     if (ok)
     {
+        QList<QString> added;
+        added << resource->id;
         owner->localResourcesChangeObservable.postNotify(owner,
-            QList<QString>() << resource->id,
+            added,
             QList<QString>(),
             QList<QString>());
+        
+        changesManager->onLocalResourcesChanged(added, QList<QString>());
     }
 
     return ok;

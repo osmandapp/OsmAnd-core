@@ -35,12 +35,14 @@ namespace OsmAnd
         ResourcesManager* _resourcesManager;
         mutable QHash< QString, QList<std::shared_ptr<const ResourcesManager::LocalResource>> > _incrementalUpdatesResources;
         
+        void onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed);
         bool parseRepository(QXmlStreamReader& xmlReader,
                              QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
         bool getIncrementalUpdatesForRegion(
-                                            QString &region,
+                                            const QString &region,
                                             long timestamp,
                                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
+        const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> getInstalledResource(const QString &id) const;
         mutable QHash< QString, std::shared_ptr<RegionUpdateFiles> > _updatesStructure;
     protected:
         IncrementalChangesManager_P(
@@ -55,7 +57,9 @@ namespace OsmAnd
         
         bool addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                         QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources);
-        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(QString& regionName) const;
+        std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(const QString& regionName) const;
+        
+        void deleteUpdates(const QString &regionName);
 
     friend class OsmAnd::IncrementalChangesManager;
     };
