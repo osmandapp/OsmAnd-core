@@ -133,6 +133,7 @@ namespace OsmAnd
         
         std::shared_ptr<const IncrementalUpdateList> getUpdatesByMonth(const QString& regionName) const;
         void deleteUpdates(const QString &regionName);
+        void onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed);
     friend class OsmAnd::ResourcesManager_P;
     };
 }

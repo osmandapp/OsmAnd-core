@@ -71,7 +71,7 @@ void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< Q
             if (ruf == nullptr)
                 _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName,
                                                                                                               getInstalledResource(regionName + QStringLiteral(".map.obf")))));
-            ruf->addUpdate(installedResource);
+            _updatesStructure.value(regionName)->addUpdate(installedResource);
         }
     }
     for (auto & removedFile : removed)
@@ -87,15 +87,6 @@ void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< Q
 bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &liveResources,
                                                                      QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > &mapResources)
 {
-    _resourcesManager->localResourcesChangeObservable.attach(this,
-                                                             [this]
-                                                             (const OsmAnd::ResourcesManager* const resourcesManager,
-                                                              const QList< QString >& added,
-                                                              const QList< QString >& removed,
-                                                              const QList< QString >& updated)
-                                                             {
-                                                                 onLocalResourcesChanged(added, removed);
-                                                             });
     QHash< QString, std::shared_ptr<const ResourcesManager::LocalResource> > result(mapResources);
     QHash<QString, uint64_t> regionMaps;
     for (const auto &res : mapResources)

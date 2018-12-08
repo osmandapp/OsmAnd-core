@@ -38,6 +38,11 @@ void OsmAnd::IncrementalChangesManager::deleteUpdates(const QString &regionName)
     _p->deleteUpdates(regionName);
 }
 
+void OsmAnd::IncrementalChangesManager::onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed)
+{
+    _p->onLocalResourcesChanged(added, removed);
+}
+
 
 OsmAnd::IncrementalChangesManager::RegionUpdateFiles::RegionUpdateFiles(QString& name, std::shared_ptr<const ResourcesManager::InstalledResource> mainFile):
     name(name),
