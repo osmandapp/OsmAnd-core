@@ -106,7 +106,7 @@ bool OsmAnd::IncrementalChangesManager::IncrementalUpdateGroupByMonth::isDayUpda
     return dayUpdates.size() > 0 && dayUpdates.size() < 4;
 }
 
-QList<std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdate> > OsmAnd::IncrementalChangesManager_P::IncrementalUpdateGroupByMonth::getMonthUpdate() const
+QList<std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdate> > OsmAnd::IncrementalChangesManager::IncrementalUpdateGroupByMonth::getMonthUpdate() const
 {
     QList<std::shared_ptr<const IncrementalUpdate> > result;
     if(!monthUpdateInitialized) {
