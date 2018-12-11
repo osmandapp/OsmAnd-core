@@ -40,7 +40,7 @@ namespace OsmAnd
                              QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
         bool getIncrementalUpdatesForRegion(
                                             const QString &region,
-                                            long timestamp,
+                                            uint64_t timestamp,
                                             QList< std::shared_ptr<const IncrementalUpdate> >& repository) const;
         const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> getInstalledResource(const QString &id) const;
         mutable QHash< QString, std::shared_ptr<RegionUpdateFiles> > _updatesStructure;
