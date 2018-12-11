@@ -154,10 +154,9 @@ QList<std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdate
             if(!n->isMonthUpdateApplicable()) {
                 return result;
             }
-            const auto& fileUpdates = n->getMonthUpdate();
-            for (const auto& update : fileUpdates)
+            for (const auto& monthUpdate : n->getMonthUpdate())
             {
-                result.append(update);
+                result.append(monthUpdate);
             }
         } else {
             if(n->isDayUpdateApplicable() && isPreferrableLimitForDayUpdates(n->monthYearPart))
