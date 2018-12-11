@@ -42,7 +42,7 @@ namespace OsmAnd
             QHash<QString, QList< std::shared_ptr<const ResourcesManager::InstalledResource> > > dailyUpdates;
             QHash<QString, std::shared_ptr<const ResourcesManager::InstalledResource> > monthlyUpdates;
             bool addUpdate(std::shared_ptr<const ResourcesManager::InstalledResource>);
-            long getTimestamp() const;
+            uint64_t getTimestamp() const;
             bool isEmpty() const;
             
             friend class IncrementalChangesManager_P;
@@ -59,7 +59,7 @@ namespace OsmAnd
             virtual ~IncrementalUpdate();
             
             QString date;
-            long timestamp;
+            uint64_t timestamp;
             long containerSize;
             long contentSize;
             QString fileName;

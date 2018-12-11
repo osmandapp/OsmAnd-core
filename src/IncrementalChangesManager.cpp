@@ -71,18 +71,18 @@ bool OsmAnd::IncrementalChangesManager::RegionUpdateFiles::addUpdate(std::shared
     return true;
 }
 
-long OsmAnd::IncrementalChangesManager::RegionUpdateFiles::getTimestamp() const
+uint64_t OsmAnd::IncrementalChangesManager::RegionUpdateFiles::getTimestamp() const
 {
-    long timestamp = mainFile->timestamp;
+    uint64_t timestamp = mainFile->timestamp;
     for (const auto& monthlyUpdate : monthlyUpdates.values())
     {
-        timestamp = qMax(timestamp, (long) monthlyUpdate->timestamp);
+        timestamp = qMax(timestamp, monthlyUpdate->timestamp);
     }
     for (const auto& dailyUpdateList : dailyUpdates.values())
     {
         for (const auto& dailyUpdate : dailyUpdateList)
         {
-            timestamp = qMax(timestamp, (long) dailyUpdate->timestamp);
+            timestamp = qMax(timestamp, dailyUpdate->timestamp);
         }
     }
     return timestamp;

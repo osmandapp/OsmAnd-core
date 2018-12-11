@@ -125,7 +125,7 @@ bool OsmAnd::IncrementalChangesManager_P::addValidIncrementalUpdates(QHash< QStr
 }
 
 bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(const QString &region,
-                                                                         long timestamp,
+                                                                         uint64_t timestamp,
                                                                          QList< std::shared_ptr<const IncrementalUpdate> >& resources) const
 {
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
@@ -249,7 +249,7 @@ std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList
 //        updateList.errorMessage = QStringLiteral("No installed updates for this region");
 //        return std::make_shared<const IncrementalUpdateList>(updateList);
 //    }
-    long timestamp = ruf->getTimestamp();
+    uint64_t timestamp = ruf->getTimestamp();
     QList< std::shared_ptr<const IncrementalUpdate> > resources;
     getIncrementalUpdatesForRegion(regionName, timestamp, resources);
     for(const auto& res : resources)
