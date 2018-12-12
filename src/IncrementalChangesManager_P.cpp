@@ -275,3 +275,24 @@ void OsmAnd::IncrementalChangesManager_P::deleteUpdates(const QString& regionNam
     ruf->dailyUpdates.clear();
     ruf->monthlyUpdates.clear();
 }
+
+uint64_t OsmAnd::IncrementalChangesManager_P::getUpdatesSize(const QString& regionName)
+{
+    const auto& files = _updatesStructure.value(regionName);
+    if (files->isEmpty())
+        return 0;
+    
+    uint64_t size = 0;
+    for (const auto& dailyUpdates : files->dailyUpdates.values())
+    {
+        for (const auto& dailyUpdate : dailyUpdates)
+        {
+            size += dailyUpdate->size;
+        }
+    }
+    for (const auto& monthlyUpdate : files->monthlyUpdates.values())
+    {
+        size += monthlyUpdate->size;
+    }
+    return size;
+}
