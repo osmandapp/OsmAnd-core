@@ -43,6 +43,11 @@ void OsmAnd::IncrementalChangesManager::onLocalResourcesChanged(const QList< QSt
     _p->onLocalResourcesChanged(added, removed);
 }
 
+uint64_t OsmAnd::IncrementalChangesManager::getUpdatesSize(const QString& regionName)
+{
+    return _p->getUpdatesSize(regionName);
+}
+
 
 OsmAnd::IncrementalChangesManager::RegionUpdateFiles::RegionUpdateFiles(QString& name, std::shared_ptr<const ResourcesManager::InstalledResource> mainFile):
     name(name),
