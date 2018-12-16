@@ -146,7 +146,6 @@ void OsmAnd::ObfTransportSectionReader_P::initializeStringTable(
                 break;
         }
     }
-    ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
 }
 
