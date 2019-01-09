@@ -14,7 +14,8 @@
 
 namespace OsmAnd
 {
-    const static QStringList FREQUENTWORDS {
+    const static QStringList FREQUENTLY_USED_WORDS
+    {
            QStringLiteral("santa"),
            QStringLiteral("west"),
            QStringLiteral("east"),
@@ -741,8 +742,8 @@ namespace OsmAnd
 
     };
     
-    const static QStringList WORDS {
-        
+    const static QStringList COMMON_WORDS
+    {
         QStringLiteral("la"),
         QStringLiteral("via"),
         QStringLiteral("rua"),
@@ -1229,17 +1230,23 @@ namespace OsmAnd
     {
         static inline int getCommon(const QString name)
         {
-            return WORDS.indexOf(name);
+            return COMMON_WORDS.indexOf(name);
         }
 
+        static inline int getFrequentlyUsed(const QString name)
+        {
+            return FREQUENTLY_USED_WORDS.indexOf(name);
+        }
+        
         static inline int getCommonSearch(const QString name)
         {
-            return WORDS.indexOf(name);
+            int i = COMMON_WORDS.indexOf(name);
+            return i == -1 ? getFrequentlyUsed(name) : i + FREQUENTLY_USED_WORDS.size();
         }
 
         static inline int getCommonGeocoding(const QString name)
         {
-            return WORDS.indexOf(name);
+            return COMMON_WORDS.indexOf(name);
         }
     };
 }
