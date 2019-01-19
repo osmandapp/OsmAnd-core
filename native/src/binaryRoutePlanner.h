@@ -23,6 +23,8 @@ struct RouteSegmentPoint;
 
 SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx);
 
+SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx, bool transportStop);
+
 vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation);
 
 #endif /*_OSMAND_BINARY_ROUTE_PLANNER_H*/

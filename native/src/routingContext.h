@@ -104,8 +104,11 @@ struct RoutingContext {
 
 	int startX;
 	int startY;
+	bool startTransportStop;
 	int targetX;
 	int targetY;
+	bool targetTransportStop;
+	bool publicTransport;
 	bool basemap;
 
     vector<SHARED_PTR<RouteSegmentResult> > previouslyCalculatedRoute;
@@ -122,6 +125,9 @@ struct RoutingContext {
         this->config = cp->config;
         this->calculationMode = cp->calculationMode;
         this->leftSideNavigation = cp->leftSideNavigation;
+        this->startTransportStop = cp->startTransportStop;
+        this->targetTransportStop = cp->targetTransportStop;
+        this->publicTransport = cp->publicTransport;
         this->basemap = cp->basemap;
         // copy local data and clear caches
         auto it = cp->subregionTiles.begin();
@@ -144,8 +150,19 @@ struct RoutingContext {
         }
     }
     
-    RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL) :
-		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), leftSideNavigation(false), precalcRoute(new PrecalculatedRouteDirection()) {
+    RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL)
+		: calculationMode(calcMode)
+		, routingTime(0)
+		, visitedSegments(0)
+		, loadedTiles(0)
+		, firstRoadDirection(0)
+		, firstRoadId(0)
+		, config(config)
+		, leftSideNavigation(false)
+		, startTransportStop(false)
+		, targetTransportStop(false)
+		, publicTransport(false)
+		, precalcRoute(new PrecalculatedRouteDirection()) {
             this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
 

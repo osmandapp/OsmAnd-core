@@ -338,6 +338,8 @@ struct RouteDataObject {
     
     string getHighway();
 
+    bool platform();
+
     bool roundabout();
 
     double simplifyDistance(int x, int y, int px, int py) {

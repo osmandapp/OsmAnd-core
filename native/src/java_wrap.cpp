@@ -1129,7 +1129,8 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
 		jobject obj, 
 		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
-		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap) {
+		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap,
+		bool publicTransport, bool startTransportStop, bool targetTransportStop) {
 	SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
 	parseRouteConfiguration(ienv, config, jRouteConfig);
 	RoutingContext c(config);
@@ -1140,6 +1141,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	c.targetX = data[2];
 	c.targetY = data[3];
 	c.basemap = basemap;
+	c.publicTransport = publicTransport;
+	c.startTransportStop = startTransportStop;
+	c.targetTransportStop = targetTransportStop;
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(&c, false);

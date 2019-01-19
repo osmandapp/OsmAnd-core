@@ -124,8 +124,8 @@ void updateResult(SHARED_PTR<RouteSegmentResult> routeSegmentResult, int px, int
 }
 
 
-bool addSegment(int x31, int y31, RoutingContext* ctx, int indexNotFound, vector<SHARED_PTR<RouteSegmentPoint>>& res) {
-    auto f = findRouteSegment(x31, y31, ctx);
+bool addSegment(int x31, int y31, RoutingContext* ctx, int indexNotFound, vector<SHARED_PTR<RouteSegmentPoint>>& res, bool transportStop) {
+    auto f = findRouteSegment(x31, y31, ctx, transportStop);
     if (!f) {
         ctx->progress->segmentNotFound = indexNotFound;
         return false;
@@ -342,19 +342,19 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
     }
     int indexNotFound = 0;
     vector<SHARED_PTR<RouteSegmentPoint> > points;
-    if (!addSegment(startX, startY, ctx.get(), indexNotFound++, points)) {
+    if (!addSegment(startX, startY, ctx.get(), indexNotFound++, points, ctx->startTransportStop)) {
         return vector<SHARED_PTR<RouteSegmentResult> >();
     }
     if (!intermediatesX.empty()) {
         for (int i = 0; i < intermediatesX.size(); i++) {
             int x31 = intermediatesX[i];
             int y31 = intermediatesY[i];
-            if (!addSegment(x31, y31, ctx.get(), indexNotFound++, points)) {
+            if (!addSegment(x31, y31, ctx.get(), indexNotFound++, points, false)) {
                 return vector<SHARED_PTR<RouteSegmentResult> >();
             }
         }
     }
-    if (!addSegment(endX, endY, ctx.get(), indexNotFound++, points)) {
+    if (!addSegment(endX, endY, ctx.get(), indexNotFound++, points, ctx->targetTransportStop)) {
         return vector<SHARED_PTR<RouteSegmentResult> >();
     }
     auto res = searchRoute(ctx.get(), points, routeDirection);

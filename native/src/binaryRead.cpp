@@ -180,6 +180,19 @@ string RouteDataObject::getHighway() {
     return "";
 }
 
+bool RouteDataObject::platform() {
+	auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->decodingRules[types[i]];
+        if (r.getTag() == "railway" && r.getValue() == "platform") {
+            return true;
+        } else if (r.getTag() == "public_transport" && r.getValue() == "platform") {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool RouteDataObject::roundabout() {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {
