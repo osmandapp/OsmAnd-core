@@ -468,7 +468,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
     return result;
 }
 
-QMap<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
+QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
 {
     int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
     float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
@@ -492,15 +492,46 @@ QMap<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttribu
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3);
         }
     }
-    QMap<QString, int> map;
-    map.insert(QString::fromStdString("color"), color);
-    map.insert(QString::fromStdString("strokeWidth"), strokeWidth);
-    map.insert(QString::fromStdString("shadowRadius"), shadowRadius);
-    map.insert(QString::fromStdString("shadowColor"), shadowColor);
-    map.insert(QString::fromStdString("strokeWidth_2"), strokeWidth_2);
-    map.insert(QString::fromStdString("color_2"), color_2);
-    map.insert(QString::fromStdString("strokeWidth_3"), strokeWidth_3);
-    map.insert(QString::fromStdString("color_3"), color_3);
+    QHash<QString, int> map;
+    map.insert(QStringLiteral("color"), color);
+    map.insert(QStringLiteral("strokeWidth"), strokeWidth);
+    map.insert(QStringLiteral("shadowRadius"), shadowRadius);
+    map.insert(QStringLiteral("shadowColor"), shadowColor);
+    map.insert(QStringLiteral("strokeWidth_2"), strokeWidth_2);
+    map.insert(QStringLiteral("color_2"), color_2);
+    map.insert(QStringLiteral("strokeWidth_3"), strokeWidth_3);
+    map.insert(QStringLiteral("color_3"), color_3);
 
     return map;
+}
+
+QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getGpxColors() const
+{
+    QHash<QString, int> result;
+    const auto &renderAttr = owner->mapStyle->getAttribute(QStringLiteral("gpx"));
+    const auto &ruleNode = renderAttr->getRootNodeRef()->getOneOfConditionalSubnodesRef();
+    if (ruleNode.isEmpty())
+        return result;
+    
+    const auto &switchNode = ruleNode.first();
+    const auto &conditionals = switchNode->getOneOfConditionalSubnodesRef();
+    for (const auto& conditional : constOf(conditionals))
+    {
+        const auto& ruleNodeValues = conditional->getValuesRef();
+        QString colorName = QStringLiteral("");
+        int colorValue = 0;
+        for (const auto &ruleValueEntry : rangeOf(constOf(ruleNodeValues)))
+        {
+            const auto valueDefId = ruleValueEntry.key();
+            const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
+            if (valueDef->dataType == MapStyleValueDataType::String)
+                colorName = owner->mapStyle->getStringById(ruleValueEntry.value().asConstantValue.asSimple.asUInt);
+            else if (valueDef->dataType == MapStyleValueDataType::Color)
+                colorValue = ruleValueEntry.value().asConstantValue.asSimple.asInt;
+                
+        }
+        if (!colorName.isEmpty() && colorValue != 0)
+            result.insert(colorName, colorValue);
+    }
+    return result;
 }

@@ -132,7 +132,14 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getTransportRouteColor(con
     return _p->getTransportRouteColor(nightMode, renderAttrName);
 }
 
-QMap<QString, int> OsmAnd::MapPresentationEnvironment::getLineRenderingAttributes(const QString &renderAttrName) const
+QHash<QString, int> OsmAnd::MapPresentationEnvironment::getLineRenderingAttributes(const QString &renderAttrName) const
 {
     return _p->getLineRenderingAttributes(renderAttrName);
 }
+
+QHash<QString, int> OsmAnd::MapPresentationEnvironment::getGpxColors() const
+{
+    return _p->getGpxColors();
+}
+
+

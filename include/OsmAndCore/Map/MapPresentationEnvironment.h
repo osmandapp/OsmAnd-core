@@ -108,7 +108,8 @@ namespace OsmAnd
         float getGlobalPathPadding() const;
         MapStubStyle getDesiredStubsStyle() const;
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
-        QMap<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
+        QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
+        QHash<QString, int> getGpxColors() const;
 
         enum {
             DefaultShadowLevelMin = 0,
