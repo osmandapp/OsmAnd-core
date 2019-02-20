@@ -395,9 +395,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 ///////////////////////////////////////////////
 //////////  JNI Rendering Context //////////////
 
-jclass jclass_JUnidecode;
 jclass jclass_Reshaper;
-jmethodID jmethod_JUnidecode_unidecode;
+jclass jclass_TransliterationHelper;
+jmethodID jmethod_TransliterationHelper_transliterate;
 jmethodID jmethod_Reshaper_reshape;
 jmethodID jmethod_Reshaper_reshapebytes;
 jclass jclass_RouteCalculationProgress = NULL;
@@ -660,8 +660,8 @@ void loadJniRenderingContext(JNIEnv* env)
 					"toString", "()Ljava/lang/String;");
 
 
-	jclass_JUnidecode = findGlobalClass(env, "net/sf/junidecode/Junidecode");
-    jmethod_JUnidecode_unidecode = env->GetStaticMethodID(jclass_JUnidecode, "unidecode", "(Ljava/lang/String;)Ljava/lang/String;");
+	jclass_TransliterationHelper = findGlobalClass(env, "net/osmand/util/TransliterationHelper");
+	jmethod_TransliterationHelper_transliterate = env->GetStaticMethodID(jclass_TransliterationHelper, "transliterate","(Ljava/lang/String;)Ljava/lang/String;");
     jclass_Reshaper = findGlobalClass(env, "net/osmand/Reshaper");
     jmethod_Reshaper_reshape = env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
     jmethod_Reshaper_reshapebytes = env->GetStaticMethodID(jclass_Reshaper, "reshape", "([B)Ljava/lang/String;");
@@ -1372,7 +1372,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
 	if (this->getPreferredLocale() == "en" || this->getTransliterate()) {
 		jstring n = this->env->NewStringUTF(name.c_str());
-		jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_JUnidecode, jmethod_JUnidecode_unidecode, n);
+		jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_TransliterationHelper, jmethod_TransliterationHelper_transliterate, n);
 		std::string res = getString(this->env, translate);
 		this->env->DeleteLocalRef(translate);
 		this->env->DeleteLocalRef(n);
