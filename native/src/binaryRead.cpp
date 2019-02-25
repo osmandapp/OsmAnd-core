@@ -1430,7 +1430,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	q->bottom = obottom;
 }
 
-void uniq(std::vector<MapDataObject*> r, std::vector<MapDataObject*> uniq) {
+void uniq(std::vector<MapDataObject*>& r, std::vector<MapDataObject*>& uniq) {
 	UNORDERED(set)<uint64_t > ids;
 	for(uint i = 0; i < r.size(); i++) {
 		if(r[i]->id > 0 && !ids.insert(r[i]->id).second) {
