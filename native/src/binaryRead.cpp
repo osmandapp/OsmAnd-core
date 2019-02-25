@@ -1430,6 +1430,18 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	q->bottom = obottom;
 }
 
+void uniq(std::vector<MapDataObject*> r, std::vector<MapDataObject*> uniq) {
+	UNORDERED(set)<uint64_t > ids;
+	for(uint i = 0; i < r.size(); i++) {
+		if(r[i]->id > 0 && !ids.insert(r[i]->id).second) {
+			continue;
+		} else {
+			uniq.push_back(r[i]);
+		}
+
+	}
+}
+
 ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound,
 	 int& renderedState) {
 	int count = 0;
@@ -1437,6 +1449,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	std::vector<MapDataObject*> tempResult;
 	std::vector<MapDataObject*> extResult;
 	std::vector<MapDataObject*> coastLines;
+	std::vector<MapDataObject*> uniqCoastLines;
 	std::vector<MapDataObject*> basemapCoastLines;
 
 	bool basemapExists = false;
@@ -1490,7 +1503,8 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 				btop = (q->top >> shift) << shift;
 				bbottom = ((q->bottom >> shift) + 1) << shift;
 			}
-			coastlinesWereAdded = processCoastlines(coastLines, bleft, bright, bbottom, btop, q->zoom,
+			uniq(coastLines, uniqCoastLines);
+			coastlinesWereAdded = processCoastlines(uniqCoastLines, bleft, bright, bbottom, btop, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
 			//addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
 			addBasemapCoastlines = !coastlinesWereAdded;
