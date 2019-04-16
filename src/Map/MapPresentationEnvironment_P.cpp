@@ -461,6 +461,9 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
     evaluator.setBooleanValue(owner->styleBuiltinValueDefs->id_INPUT_NIGHT_MODE, nightMode);
     
     auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
+    
+    if (renderAttr == nullptr)
+        return result;
     MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
     if (evaluator.evaluate(renderAttr, &evalResult))
         evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
