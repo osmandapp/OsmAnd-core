@@ -70,7 +70,8 @@ static RouteDataObjectAttribute parseRouteDataObjectAttribute(string attr, Route
 enum class GeneralRouterProfile {
 	CAR,
 	PEDESTRIAN,
-	BICYCLE
+	BICYCLE,
+    BOAT
 };
 
 static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRouterProfile def) {

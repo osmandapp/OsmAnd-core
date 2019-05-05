@@ -24,6 +24,7 @@ struct RouteTypeRule {
     const static int TRAFFIC_SIGNALS = 6;
     const static int RAILWAY_CROSSING = 7;
     const static int LANES = 8;
+    const static int TUNNEL = 9;
     
 private:
     std::string t;

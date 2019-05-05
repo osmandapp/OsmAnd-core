@@ -85,5 +85,7 @@ void RouteTypeRule::analyze() {
                 intValue = 0;
             }
         }
+    } else if (tl == "tunnel" && !v.empty()) {
+        type = TUNNEL;
     }
 }
