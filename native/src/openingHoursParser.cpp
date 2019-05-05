@@ -518,7 +518,7 @@ bool OpeningHoursParser::BasicOpeningHourRule::contains(const tm& dateTime) cons
 
 bool OpeningHoursParser::BasicOpeningHourRule::isOpened24_7() const
 {
-    bool opened24_7 = true;
+    bool opened24_7 = isOpenedEveryDay();
     for (int i = 0; i < 7; i++)
     {
         if (!_days[i]) {
@@ -545,6 +545,20 @@ bool OpeningHoursParser::BasicOpeningHourRule::isOpened24_7() const
         }
     }
     return false;
+}
+
+bool OpeningHoursParser::BasicOpeningHourRule::isOpenedEveryDay() const
+{
+    bool openedEveryDay = true;
+    for (int i = 0; i < 7; i++)
+    {
+        if (!_days[i])
+        {
+            openedEveryDay = false;
+            break;
+        }
+    }
+    return openedEveryDay;
 }
 
 void OpeningHoursParser::BasicOpeningHourRule::addArray(const std::vector<bool>& array, const std::vector<std::string>& arrayNames, std::stringstream& b) const

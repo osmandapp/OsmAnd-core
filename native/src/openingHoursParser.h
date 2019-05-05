@@ -400,6 +400,7 @@ public:
         bool contains(const tm& dateTime) const;
         
         bool isOpened24_7() const;
+        bool isOpenedEveryDay() const;
 
         std::string getTime(const tm& dateTime, bool checkAnotherDay, int limit, bool opening) const;
 
