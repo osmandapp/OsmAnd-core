@@ -18,6 +18,7 @@
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
 #include "Utilities.h"
+#include "CollatorStringMatcher.h"
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 
@@ -870,6 +871,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QHash<int, QVariant> intValues;
     QHash<int, QVariant> stringOrDataValues;
     auto categoriesFilterChecked = false;
+    const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
 
     for (;;)
     {
@@ -901,10 +903,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 if (!query.isNull())
                 {
                     bool accept = false;
-                    accept = accept || nativeName.contains(query, Qt::CaseInsensitive);
+                    accept = accept || matcher.matches(nativeName);
                     for (const auto& localizedName : constOf(localizedNames))
                     {
-                        accept = accept || localizedName.contains(query, Qt::CaseInsensitive);
+                        accept = accept || matcher.matches(localizedName);
 
                         if (accept)
                             break;
@@ -913,7 +915,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     {
                         for (const auto& additionalName : additionalNames)
                         {
-                            accept = accept || additionalName.contains(query, Qt::CaseInsensitive);
+                            accept = accept || matcher.matches(additionalName);
                             
                             if (accept)
                                 break;

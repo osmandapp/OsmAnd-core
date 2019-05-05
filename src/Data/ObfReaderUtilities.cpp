@@ -13,6 +13,7 @@
 
 #include "ObfSectionInfo.h"
 #include "Logging.h"
+#include "CollatorStringMatcher.h"
 
 bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QString& output)
 {
@@ -109,26 +110,28 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                if (key.startsWith(query, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                if (CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
+                //if (key.startsWith(query, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
-                    if (query.size() > matchedCharactersCount)
+                    if (query.length() > matchedCharactersCount)
                     {
                         matchedCharactersCount = query.length();
                         outValues.clear();
                     }
-                    else if (query.size() < matchedCharactersCount)
+                    else if (query.length() < matchedCharactersCount)
                     {
                         key = QString::null;
                     }
                 }
-                else if (query.startsWith(key, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                else if (CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
+                //else if (query.startsWith(key, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
-                    if (key.size() > matchedCharactersCount)
+                    if (key.length() > matchedCharactersCount)
                     {
                         matchedCharactersCount = key.length();
                         outValues.clear();
                     }
-                    else if (key.size() < matchedCharactersCount)
+                    else if (key.length() < matchedCharactersCount)
                     {
                         key = QString::null;
                     }
