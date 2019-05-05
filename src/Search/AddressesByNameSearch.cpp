@@ -173,6 +173,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                                            criteria.bbox31.getValuePtrOrNullptr(),
                                            criteria.streetGroupTypesMask,
                                            criteria.includeStreets,
+                                           criteria.strictMatch,
                                            visitorFunction,
                                            queryController);
     }
@@ -195,6 +196,7 @@ OsmAnd::AddressesByNameSearch::Criteria::Criteria()
     : streetGroupTypesMask(fullObfAddressStreetGroupTypesMask())
     , includeStreets(true)
     , matcherMode(StringMatcherMode::CHECK_STARTS_FROM_SPACE)
+    , strictMatch(false)
 {
 }
 

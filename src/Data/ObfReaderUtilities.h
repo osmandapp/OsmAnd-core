@@ -36,6 +36,7 @@ namespace OsmAnd
             gpb::io::CodedInputStream* cis,
             const QString& query,
             QVector<uint32_t>& outValues,
+            const bool strictMatch = false,
             const QString& keysPrefix = QString::null,
             const int matchedCharactersCount = 0);
         static void readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea);

@@ -143,6 +143,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
+            const bool strictMatch,
             const ObfAddressSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
         static void scanNameIndex(
@@ -152,6 +153,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
+            const bool strictMatch,
             const std::shared_ptr<const IQueryController>& queryController);
         static void readNameIndexData(
             const ObfReader_P& reader,
@@ -212,6 +214,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
             const bool includeStreets,
+            const bool strictMatch,
             const ObfAddressSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
 

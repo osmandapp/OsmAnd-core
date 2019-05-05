@@ -41,6 +41,7 @@ namespace OsmAnd
             QString postcode;
             std::shared_ptr<const Address> addressFilter;
             StringMatcherMode matcherMode;
+            bool strictMatch;
             QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
         };
 

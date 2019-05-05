@@ -140,6 +140,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
         criteria.includeStreets = true;
+        criteria.strictMatch = true;
         criteria.streetGroupTypesMask = ObfAddressStreetGroupTypesMask().set(ObfAddressStreetGroupType::CityOrTown);
         criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(

@@ -794,6 +794,7 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
     const bool includeStreets /*= true*/,
+    const bool strictMatch /*= false*/,
     const ObfAddressSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -828,6 +829,7 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
                 bbox31,
                 streetGroupTypesFilter,
                 includeStreets,
+                strictMatch,
                 visitor,
                 queryController);
         }

@@ -924,6 +924,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
+    const bool strictMatch,
     const ObfAddressSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -955,6 +956,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                     bbox31,
                     streetGroupTypesFilter,
                     includeStreets,
+                    strictMatch,
                     queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -1113,6 +1115,7 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
+    const bool strictMatch,
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -1136,7 +1139,7 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
+                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -1419,6 +1422,7 @@ void OsmAnd::ObfAddressSectionReader_P::scanAddressesByName(
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
+    const bool strictMatch,
     const ObfAddressSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1436,6 +1440,7 @@ void OsmAnd::ObfAddressSectionReader_P::scanAddressesByName(
         bbox31,
         streetGroupTypesFilter,
         includeStreets,
+        strictMatch,
         visitor,
         queryController);
 

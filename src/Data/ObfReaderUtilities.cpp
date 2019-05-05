@@ -88,6 +88,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     gpb::io::CodedInputStream* cis,
     const QString& query,
     QVector<uint32_t>& outValues,
+    const bool strictMatch /*= false*/,
     const QString& keysPrefix /*= QString::null*/,
     const int matchedCharactersCount_ /*= 0*/)
 {
@@ -110,8 +111,22 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                if (CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
-                //if (key.startsWith(query, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                bool matchesForward = false;
+                bool matchesBackward = false;
+                if (strictMatch)
+                    matchesForward = key.startsWith(query, Qt::CaseInsensitive);
+                else
+                    matchesForward = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
+
+                if (!matchesForward)
+                {
+                    if (strictMatch)
+                        matchesBackward = query.startsWith(key, Qt::CaseInsensitive);
+                    else
+                        matchesBackward = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
+                }
+
+                if (matchesForward)
                 {
                     if (query.length() > matchedCharactersCount)
                     {
@@ -123,8 +138,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                         key = QString::null;
                     }
                 }
-                else if (CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
-                //else if (query.startsWith(key, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                else if (matchesBackward)
                 {
                     if (key.length() > matchedCharactersCount)
                     {
@@ -156,7 +170,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 const auto oldLimit = cis->PushLimit(length);
 
                 if (!key.isNull())
-                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, key, matchedCharactersCount);
+                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, strictMatch, key, matchedCharactersCount);
                 else
                     cis->Skip(cis->BytesUntilLimit());
 
