@@ -44,6 +44,8 @@ namespace OsmAnd
         };
 
     private:
+        std::shared_ptr<const SkBitmap> emptyImage;
+        const std::shared_ptr<const SkBitmap> getEmptyImage();
     protected:
         ImageMapLayerProvider();
     public:
