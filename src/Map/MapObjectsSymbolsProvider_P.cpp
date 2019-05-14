@@ -208,7 +208,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             const auto computedPinPoints = computePinPoints(
                 mapObject->points31,
                 env->getGlobalPathPadding(),
-                env->getDefaultBlockPathSpacing(),
+                env->getDefaultBlockPathSpacing() * 10,
                 env->getDefaultSymbolPathSpacing(),
                 symbolsWidthsInPixels,
                 mapObject->getMinZoomLevel(),

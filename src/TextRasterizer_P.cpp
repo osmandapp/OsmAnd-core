@@ -201,6 +201,7 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
             *pWidth += -textPaint.bounds.left();
 
             ///////
+            /*
             const float totalWidth = textPaint.paint.measureText(
                 textPaint.text.constData(),
                 textPaint.text.length()*sizeof(QChar));
@@ -214,6 +215,7 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 LogPrintf(LogSeverityLevel::Error, "totalWidth = %f, widthsSum = %f", totalWidth, widthsSum);
                 int i = 5;
             }
+            */
             ////////
         }
     }
