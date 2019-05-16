@@ -405,17 +405,18 @@ struct RoutingContext {
 		return original;
 	}
 
-
-	bool isInterrupted(){
-		return false;
+	bool isInterrupted() {
+        return progress != nullptr ? progress->isCancelled() : false;
 	}
-	float getHeuristicCoefficient(){
+    
+	float getHeuristicCoefficient() {
 		return config->heurCoefficient;
 	}
 
 	bool planRouteIn2Directions() {
 		return getPlanRoadDirection() == 0;
 	}
+    
 	int getPlanRoadDirection() {
 		return config->planRoadDirection;
 	}
@@ -424,6 +425,7 @@ struct RoutingContext {
         targetX = end->road->pointsX[end->segmentStart];
         targetY = end->road->pointsY[end->segmentStart];
     }
+    
     void initStartAndTargetPoints(SHARED_PTR<RouteSegment> start, SHARED_PTR<RouteSegment> end) {
         initTargetPoint(end);
         startX = start->road->pointsX[start->segmentStart];

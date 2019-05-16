@@ -129,6 +129,9 @@ struct RouteDataObject {
 	UNORDERED(map)<int, std::string > names;
 	vector<pair<uint32_t, uint32_t> > namesIds;
 
+    RouteDataObject() : region(NULL), id(0) {
+    }
+    
 	inline string getName() {
 		if(names.size() > 0) {
 			return names.begin()->second;

@@ -674,7 +674,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 	// Calculate possible ways to put into priority queue
 	SHARED_PTR<RouteSegment> next = inputNext;
 	bool hasNext = !thereAreRestrictions? next.get() != NULL : nextIterator != ctx->segmentsToVisitPrescripted.end();
-	while (hasNext) {
+	while (hasNext && !ctx->isInterrupted()) {
 		if (thereAreRestrictions) {
 			next = *nextIterator;
 		}		
@@ -715,6 +715,9 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 			hasNext = next.get() != NULL;
 		}
 	}
+    if (ctx->isInterrupted())
+        *processFurther = false;
+    
 	return itself;
 }
 
