@@ -163,7 +163,7 @@ public:
     RouteAttributeEvalRule() : selectValue(0), selectValueDef(""), selectType("") {
     }
 
-    RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule> original);
+    RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule>& original);
 
 	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt); 
 
@@ -220,7 +220,7 @@ public:
         }
     }
     
-    bool checkParameter(SHARED_PTR<RouteAttributeEvalRule> r) {
+    bool checkParameter(SHARED_PTR<RouteAttributeEvalRule>& r) {
         if (r->parameters.size() > 0) {
             for (string p : r->parameters) {
                 bool _not = false;
@@ -277,12 +277,12 @@ private:
 
 	dynbitset convert(RoutingIndex* reg, std::vector<uint32_t>& types);
 
-	double evaluate(SHARED_PTR<RouteDataObject> ro) {
+	double evaluate(SHARED_PTR<RouteDataObject>& ro) {
 		dynbitset local =  convert(ro->region, ro->types);
 		return evaluate(local);
 	}
 
-	int evaluateInt(SHARED_PTR<RouteDataObject> ro, int defValue) {
+	int evaluateInt(SHARED_PTR<RouteDataObject>& ro, int defValue) {
 		double d = evaluate(ro);
 		if(d == DOUBLE_MISSING) {
 			return defValue;
@@ -299,7 +299,7 @@ private:
 		return d;
 	}
 
-	double evaluateDouble(SHARED_PTR<RouteDataObject> ro, double defValue) {
+	double evaluateDouble(SHARED_PTR<RouteDataObject>& ro, double defValue) {
 		double d = evaluate(ro);
 		if(d == DOUBLE_MISSING) {
 			return defValue;
@@ -421,48 +421,48 @@ public:
 	/**
 	 * return if the road is accepted for routing
 	 */
-	bool acceptLine(SHARED_PTR<RouteDataObject> way);
+	bool acceptLine(SHARED_PTR<RouteDataObject>& way);
 	
 	/**
 	 * return oneway +/- 1 if it is oneway and 0 if both ways
 	 */
-	int isOneWay(SHARED_PTR<RouteDataObject> road);
+	int isOneWay(SHARED_PTR<RouteDataObject>& road);
 	
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	double defineObstacle(SHARED_PTR<RouteDataObject> road, uint point);
+	double defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point);
 
 
   	/**
  	 * return delay in seconds for height obstacles
  	 */
- 	double defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uint startIndex, uint endIndex);
+ 	double defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, uint startIndex, uint endIndex);
 	
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	double defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, uint point);
+	double defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point);
 
 	/**
 	 * return routing speed in m/s for vehicle for specified road
 	 */
-	double defineRoutingSpeed(SHARED_PTR<RouteDataObject> road);
+	double defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road);
 
 	/*
 	* return transition penalty between different road classes in seconds
 	*/
-	double definePenaltyTransition(SHARED_PTR<RouteDataObject> road);
+	double definePenaltyTransition(SHARED_PTR<RouteDataObject>& road);
 	
 	/**
 	 * return real speed in m/s for vehicle for specified road
 	 */
-	double defineVehicleSpeed(SHARED_PTR<RouteDataObject> road);
+	double defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road);
 	
 	/**
 	 * define priority to multiply the speed for g(x) A* 
 	 */
-	double defineSpeedPriority(SHARED_PTR<RouteDataObject> road);
+	double defineSpeedPriority(SHARED_PTR<RouteDataObject>& road);
 
 	/**
 	 * Used for A* routing to calculate g(x)
@@ -488,8 +488,8 @@ public:
 	/**
 	 * Calculate turn time 
 	 */
-	double calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
-		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd);
+	double calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int segmentEnd, 
+		SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd);
 
     void printRules();
     

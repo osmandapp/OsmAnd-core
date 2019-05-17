@@ -33,17 +33,17 @@ private:
         return def;
     }
     
-    static SHARED_PTR<GeneralRouter> parseRoutingProfile(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder> config) {
+    static SHARED_PTR<GeneralRouter> parseRoutingProfile(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder>& config) {
         string currentSelectedRouter = attrValue(attrsMap, "name");
         UNORDERED(map)<string, string> attrs;
         attrs.insert(attrsMap.begin(), attrsMap.end());
         GeneralRouterProfile c = parseGeneralRouterProfile(attrValue(attrsMap, "baseProfile"), GeneralRouterProfile::CAR);
-        SHARED_PTR<GeneralRouter> currentRouter = SHARED_PTR<GeneralRouter>(new GeneralRouter(c, attrs));
+        SHARED_PTR<GeneralRouter> currentRouter = std::make_shared<GeneralRouter>(c, attrs);
         config->addRouter(currentSelectedRouter, currentRouter);
         return currentRouter;
     }
     
-    static void parseAttribute(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder> config, SHARED_PTR<GeneralRouter> currentRouter) {
+    static void parseAttribute(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder>& config, SHARED_PTR<GeneralRouter>& currentRouter) {
         if (currentRouter != nullptr) {
             currentRouter->addAttribute(attrValue(attrsMap, "name"), attrValue(attrsMap, "value"));
         } else {
@@ -51,7 +51,7 @@ private:
         }
     }
     
-    static void parseRoutingParameter(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter> currentRouter) {
+    static void parseRoutingParameter(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter>& currentRouter) {
         string description = attrValue(attrsMap, "description");
         string group = attrValue(attrsMap, "group");
         string name = attrValue(attrsMap, "name");
@@ -77,7 +77,7 @@ private:
         || "gt" == pname || "le" == pname || "eq" == pname;
     }
     
-    static void addSubclause(RoutingRule* rr, RouteAttributeContext& ctx, SHARED_PTR<GeneralRouter> currentRouter) {
+    static void addSubclause(RoutingRule* rr, RouteAttributeContext& ctx, SHARED_PTR<GeneralRouter>& currentRouter) {
         bool no = "ifnot" == rr->tagName;
         if (!rr->param.empty()) {
             ctx.getLastRule()->registerAndParamCondition(rr->param, no);
@@ -94,7 +94,7 @@ private:
         }
     }
     
-    static void parseRoutingRule(const string& pname, UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter> currentRouter, RouteDataObjectAttribute& attr, string parentType, vector<RoutingRule*>& stack) {
+    static void parseRoutingRule(const string& pname, UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter>& currentRouter, RouteDataObjectAttribute& attr, string parentType, vector<RoutingRule*>& stack) {
         if (checkTag(pname)) {
             RoutingRule* rr = new RoutingRule();
             rr->tagName = pname;
@@ -164,7 +164,7 @@ public:
 SHARED_PTR<RoutingConfigurationBuilder> parseRoutingConfigurationFromXml(const char* filename) {
     
     XML_Parser parser = XML_ParserCreate(NULL);
-    SHARED_PTR<RoutingConfigurationBuilder> config = SHARED_PTR<RoutingConfigurationBuilder>(new RoutingConfigurationBuilder());
+    SHARED_PTR<RoutingConfigurationBuilder> config = std::make_shared<RoutingConfigurationBuilder>();
     RoutingRulesHandler* handler = new RoutingRulesHandler(config);
     XML_SetUserData(parser, handler);
     XML_SetElementHandler(parser, RoutingRulesHandler::startElementHandler, RoutingRulesHandler::endElementHandler);

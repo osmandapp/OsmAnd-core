@@ -29,17 +29,17 @@ struct RoutingSubregionTile {
 	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
 		size = sizeof(RoutingSubregionTile);
 	}
-	~RoutingSubregionTile(){
+	~RoutingSubregionTile() {
 	}
-	bool isLoaded(){
+	bool isLoaded() {
 		return loaded > 0;
 	}
 
-	void setLoaded(){
+	void setLoaded() {
 		loaded = abs(loaded) + 1;
 	}
 
-	void unload(){
+	void unload() {
 		routes.clear();
 		size = 0;
 		loaded = - abs(loaded);
@@ -49,17 +49,17 @@ struct RoutingSubregionTile {
 		return abs(loaded);
 	}
 
-	int getSize(){
+	int getSize() {
 		return size + routes.size() * sizeof(std::pair<int64_t, SHARED_PTR<RouteSegment> >);
 	}
 
-	void add(SHARED_PTR<RouteDataObject> o) {
-		size += o->getSize() + sizeof(RouteSegment)* o->pointsX.size();
+	void add(SHARED_PTR<RouteDataObject>& o) {
+		size += o->getSize() + sizeof(RouteSegment) * o->pointsX.size();
 		for (uint i = 0; i < o->pointsX.size(); i++) {
 			uint64_t x31 = o->pointsX[i];
 			uint64_t y31 = o->pointsY[i];
 			uint64_t l = (((uint64_t) x31) << 31) + (uint64_t) y31;
-			SHARED_PTR<RouteSegment> segment =  SHARED_PTR<RouteSegment>(new RouteSegment(o, i));
+            SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(o, i);
 			if (routes[l].get() == NULL) {
 				routes[l] = segment;
 			} else {
@@ -75,13 +75,21 @@ struct RoutingSubregionTile {
 	}
 };
 
-static int64_t calcRouteId(SHARED_PTR<RouteDataObject> o, int ind) {
+static int64_t calcRouteId(SHARED_PTR<RouteDataObject>& o, int ind) {
     return ((int64_t) o->id << 10) + ind;
 }
 
-inline bool compareRoutingSubregionTile(SHARED_PTR<RoutingSubregionTile> o1, SHARED_PTR<RoutingSubregionTile> o2) {
-    int v1 = (o1->access + 1) * pow((float)10, o1->getUnloadCount() -1);
-    int v2 = (o2->access + 1) * pow((float)10, o2->getUnloadCount() -1);
+inline int intpow(int base, int pw) {
+    int r = 1;
+    for (int i = 0; i < pw; i++) {
+        r *= base;
+    }
+    return r;
+}
+
+inline int compareRoutingSubregionTile(SHARED_PTR<RoutingSubregionTile>& o1, SHARED_PTR<RoutingSubregionTile>& o2) {
+    int v1 = (o1->access + 1) * intpow(10, o1->getUnloadCount() - 1);
+    int v2 = (o2->access + 1) * intpow(10, o2->getUnloadCount() - 1);
     return v1 < v2;
 }
 
@@ -168,7 +176,7 @@ struct RoutingContext {
 
     void unloadAllData(RoutingContext* except = NULL) {
         auto it = subregionTiles.begin();
-        for(;it != subregionTiles.end(); it++) {
+        for (;it != subregionTiles.end(); it++) {
             auto tl = it->second;
             if (tl->isLoaded()) {
                 if (except == NULL || except->searchSubregionTile(tl->subregion) < 0) {
@@ -184,7 +192,7 @@ struct RoutingContext {
         auto it = subregionTiles.begin();
         int i = 0;
         int ind = -1;
-        for(;it != subregionTiles.end(); it++, i++) {
+        for (;it != subregionTiles.end(); it++, i++) {
             auto tl = it->second;
             if (ind == -1 && tl->subregion.left == subregion.left) {
                 ind = i;
@@ -203,7 +211,7 @@ struct RoutingContext {
         return ind;
     }
     
-	bool acceptLine(SHARED_PTR<RouteDataObject> r) {
+	bool acceptLine(SHARED_PTR<RouteDataObject>& r) {
 		return config->router->acceptLine(r);
 	}
 
@@ -211,7 +219,7 @@ struct RoutingContext {
 		// multiply 2 for to maps
 		int sz = subregionTiles.size() * sizeof(pair< int64_t, SHARED_PTR<RoutingSubregionTile> >)  * 2;
 		MAP_SUBREGION_TILES::iterator it = subregionTiles.begin();
-		for(;it != subregionTiles.end(); it++) {
+		for (;it != subregionTiles.end(); it++) {
 			sz += it->second->getSize();
 		}
 		return sz;
@@ -220,7 +228,7 @@ struct RoutingContext {
 	void unloadUnusedTiles(int memoryLimit) {
 		int sz = getSize();
 		float critical = 0.9f * memoryLimit * 1024 * 1024;
-		if(sz < critical) {
+		if (sz < critical) {
 			return;
 		}
 		float occupiedBefore = sz / (1024. * 1024.);
@@ -229,22 +237,22 @@ struct RoutingContext {
 		MAP_SUBREGION_TILES::iterator it = subregionTiles.begin();
 		int loaded = 0;
 		int unloadedTiles = 0;
-		for(;it != subregionTiles.end(); it++) {
-			if(it->second->isLoaded()) {
+		for (;it != subregionTiles.end(); it++) {
+			if (it->second->isLoaded()) {
 				list.push_back(it->second);
 				loaded++;
 			}
 		}
 		sort(list.begin(), list.end(), compareRoutingSubregionTile);
 		uint i = 0;
-		while(sz >= desirableSize && i < list.size()) {
+		while (sz >= desirableSize && i < list.size()) {
 			SHARED_PTR<RoutingSubregionTile> unload = list[i];
 			i++;
 			sz -= unload->getSize();
 			unload->unload();
 			unloadedTiles ++;
 		}
-		for(i = 0; i<list.size(); i++) {
+		for (i = 0; i < list.size(); i++) {
 			list[i]->access /= 3;
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Run GC (before %f Mb after %f Mb) unload %d of %d tiles",
@@ -254,42 +262,44 @@ struct RoutingContext {
 
 	void loadHeaderObjects(int64_t tileId) {
         const auto itSubregions = indexedSubregions.find(tileId);
-        if(itSubregions == indexedSubregions.end())
+        if (itSubregions == indexedSubregions.end())
             return;
         auto& subregions = itSubregions->second;
         bool gc = false;
-		for(uint j = 0; j<subregions.size() && !gc; j++) {
-			if(!subregions[j]->isLoaded()) {
+		for (uint j = 0; j < subregions.size(); j++) {
+			if (!subregions[j]->isLoaded()) {
 				gc = true;
+                break;
 			}
 		}
-		if(gc) {
+		if (gc) {
 			unloadUnusedTiles(config->memoryLimitation);
 		}
 		bool load = false;
-		for(uint j = 0; j<subregions.size(); j++) {
-			if(!subregions[j]->isLoaded()) {
+		for (uint j = 0; j < subregions.size(); j++) {
+			if (!subregions[j]->isLoaded()) {
 				load = true;
+                break;
 			}
 		}
-		if(load) {
+		if (load) {
 			UNORDERED(set)<int64_t > excludedIds;
-			for(uint j = 0; j<subregions.size(); j++) {
-				if(!subregions[j]->isLoaded()) {
+			for (uint j = 0; j < subregions.size(); j++) {
+				if (!subregions[j]->isLoaded()) {
 					loadedTiles++;
 					subregions[j]->setLoaded();
 					SearchQuery q;
 					vector<RouteDataObject*> res;
 					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion);
 					vector<RouteDataObject*>::iterator i = res.begin();
-					for(;i!=res.end(); i++) {
-						if(*i != NULL) {
+					for (;i != res.end(); i++) {
+						if (*i != NULL) {
 							SHARED_PTR<RouteDataObject> o(*i);
-							if(acceptLine(o)) {
-								if(excludedIds.find(o->getId()) == excludedIds.end()) {
+							if (acceptLine(o)) {
+								if (excludedIds.find(o->getId()) == excludedIds.end()) {
 									subregions[j]->add(o);
 								}
-							} else if(o->getId() > 0) {
+							} else if (o->getId() > 0) {
 								excludedIds.insert(o->getId());
 								subregions[j]->excludedIds.insert(o->getId());
 							}
@@ -314,11 +324,11 @@ struct RoutingContext {
 			std::vector<RouteSubregion> tempResult;
 			searchRouteSubregions(&q, tempResult, basemap);
 			std::vector<SHARED_PTR<RoutingSubregionTile> > collection;
-			for(uint i = 0; i<tempResult.size(); i++) {
+			for (uint i = 0; i < tempResult.size(); i++) {
 				RouteSubregion& rs = tempResult[i];
 				int64_t key = ((int64_t)rs.left << 31)+ rs.filePointer;
-				if(subregionTiles.find(key) == subregionTiles.end()) {
-					subregionTiles[key] = SHARED_PTR<RoutingSubregionTile>(new RoutingSubregionTile(rs));
+				if (subregionTiles.find(key) == subregionTiles.end()) {
+					subregionTiles[key] = std::make_shared<RoutingSubregionTile>(rs);
 				}
 				collection.push_back(subregionTiles[key]);
 			}
@@ -332,7 +342,7 @@ struct RoutingContext {
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
-		if(t <= 0) {
+		if (t <= 0) {
 			t = 1;
 			coordinatesShift = (1 << (31 - zoomAround));
 		} else {
@@ -340,17 +350,17 @@ struct RoutingContext {
 		}
 		UNORDERED(set)<int64_t> ids;
 		int z  = config->zoomToLoad;
-		for(int i = -t; i <= t; i++) {
-			for(int j = -t; j <= t; j++) {
+		for (int i = -t; i <= t; i++) {
+			for (int j = -t; j <= t; j++) {
 				uint32_t xloc = (x31 + i*coordinatesShift) >> (31 - z);
 				uint32_t yloc = (y31+j*coordinatesShift) >> (31 - z);
 				int64_t tileId = (xloc << z) + yloc;
 				loadHeaders(xloc, yloc);
                 const auto itSubregions = indexedSubregions.find(tileId);
-                if(itSubregions == indexedSubregions.end())
+                if (itSubregions == indexedSubregions.end())
                     continue;
                 auto& subregions = itSubregions->second;
-				for(uint j = 0; j<subregions.size(); j++) {
+				for (uint j = 0; j<subregions.size(); j++) {
 					if(subregions[j]->isLoaded()) {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
 						while(s != subregions[j]->routes.end()) {
@@ -393,7 +403,7 @@ struct RoutingContext {
 					SHARED_PTR<RouteDataObject> toCmp = excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
 					if (toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] =  ro;
-						SHARED_PTR<RouteSegment> s = SHARED_PTR<RouteSegment>(new RouteSegment(ro, segment->getSegmentStart()));
+						SHARED_PTR<RouteSegment> s = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 						s->next = original;
 						original = 	s;
 					}
@@ -421,7 +431,7 @@ struct RoutingContext {
 		return config->planRoadDirection;
 	}
     
-    void initTargetPoint(SHARED_PTR<RouteSegment> end) {
+    void initTargetPoint(SHARED_PTR<RouteSegment>& end) {
         targetX = end->road->pointsX[end->segmentStart];
         targetY = end->road->pointsY[end->segmentStart];
     }

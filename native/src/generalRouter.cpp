@@ -229,7 +229,7 @@ RouteAttributeExpression::RouteAttributeExpression(vector<string>&vls, int type,
 	}
 }
 
-RouteAttributeEvalRule::RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule> original) {
+RouteAttributeEvalRule::RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule>& original) {
     parameters = original->parameters;
     selectValue = original->selectValue;
     selectValueDef = original->selectValueDef;
@@ -319,7 +319,7 @@ string GeneralRouter::getAttribute(string attribute) {
 	return attributes[attribute];
 }
 
-bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject> way) {
+bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject>& way) {
 	int res = getObjContext(RouteDataObjectAttribute::ACCESS).evaluateInt(way, 0);
 	if(impassableRoadIds.find(way->id) != impassableRoadIds.end()) {
 		return false;
@@ -327,18 +327,18 @@ bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject> way) {
 	return res >= 0;
 }
 
-int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject> road) {
+int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
 	return getObjContext(RouteDataObjectAttribute::ONEWAY).evaluateInt(road, 0);
 }
 
-double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject> road, uint point) {
+double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
 		return getObjContext(RouteDataObjectAttribute::OBSTACLES).evaluateDouble(road->region, road->pointTypes[point], 0);
 	}
 	return 0;
 }
 
-double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uint startIndex, uint endIndex) {
+double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, uint startIndex, uint endIndex) {
 	if(!heightObstacles) {
  		return 0;
  	}
@@ -371,22 +371,22 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uin
 
 
 
-double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, uint point) {
+double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
 		return getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES).evaluateDouble(road->region, road->pointTypes[point], 0);
 	}
 	return 0;
 }
 
-double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject> road) {
+double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
 	return min(defineVehicleSpeed(road), maxDefaultSpeed);
 }
 
-double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject> road) {
+double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
 	return getObjContext(RouteDataObjectAttribute::ROAD_SPEED) .evaluateDouble(road, getMinDefaultSpeed());
 }
 
-double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject> road) {
+double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {
 	if(!isObjContextAvailable(RouteDataObjectAttribute::PENALTY_TRANSITION)) {
 		return 0;
 	}
@@ -394,7 +394,7 @@ double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject> road) 
 }
 
 
-double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject> road) {
+double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject>& road) {
 	return getObjContext(RouteDataObjectAttribute::ROAD_PRIORITIES).evaluateDouble(road, 1.);
 }
 
@@ -411,8 +411,8 @@ bool GeneralRouter::restrictionsAware() {
 }
 
 
-double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
-		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd) {
+double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int segmentEnd,
+		SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd) {
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
 	if(prevTs != ts) {

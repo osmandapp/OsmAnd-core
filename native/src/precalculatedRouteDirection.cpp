@@ -152,7 +152,7 @@ SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::adopt(Routi
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Illegal argument ");
         return nullptr;
     }
-    SHARED_PTR<PrecalculatedRouteDirection> routeDirection = SHARED_PTR<PrecalculatedRouteDirection>(new PrecalculatedRouteDirection(*this, ind1, ind2));
+    SHARED_PTR<PrecalculatedRouteDirection> routeDirection = std::make_shared<PrecalculatedRouteDirection>(*this, ind1, ind2);
     routeDirection->startPoint = calc(ctx->startX, ctx->startY);
     routeDirection->startFinishTime = (float) squareRootDist31(pointsX[ind1], pointsY[ind1], ctx->startX, ctx->startY) / maxSpeed;
     //		routeDirection.startX31 = ctx.startX;

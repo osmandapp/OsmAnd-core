@@ -253,7 +253,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 }
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
-		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
+		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo>& ico) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
 	while (it != obj->namesOrder.end()) {
@@ -896,13 +896,13 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		}
 	}
 }
-bool iconOrder(SHARED_PTR<IconDrawInfo> text1, SHARED_PTR<IconDrawInfo> text2) {
+bool iconOrder(SHARED_PTR<IconDrawInfo>& text1, SHARED_PTR<IconDrawInfo>& text2) {
 	if(text1->order == text2->order)  
 		return text1->secondOrder < text2->secondOrder;
 	return text1->order < text2->order;
 }
 
-SkRect makeRect(RenderingContext* rc,  SHARED_PTR<IconDrawInfo> icon, SkBitmap* ico, SkRect* rm) {
+SkRect makeRect(RenderingContext* rc,  SHARED_PTR<IconDrawInfo>& icon, SkBitmap* ico, SkRect* rm) {
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	float cx = icon->x;
 	float cy = icon->y;

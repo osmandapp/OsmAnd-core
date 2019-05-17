@@ -31,7 +31,6 @@ public:
         init();
     }
 
-private:
     PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed);
     PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed);
     PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2);

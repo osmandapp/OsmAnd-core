@@ -31,7 +31,7 @@ struct MergeTurnLaneTurn {
     int activeEndIndex;
     int activeLen;
     
-    MergeTurnLaneTurn(SHARED_PTR<RouteSegmentResult> segment) : activeStartIndex(-1), activeEndIndex(-1), activeLen(0) {
+    MergeTurnLaneTurn(SHARED_PTR<RouteSegmentResult>& segment) : activeStartIndex(-1), activeEndIndex(-1), activeLen(0) {
         turn = segment->turnType;
         if (turn) {
             originalLanes = turn->getLanes();
@@ -61,11 +61,11 @@ struct MergeTurnLaneTurn {
     }
 };
 
-long getPoint(SHARED_PTR<RouteDataObject> road, int pointInd) {
+long getPoint(SHARED_PTR<RouteDataObject>& road, int pointInd) {
     return (((long) road->pointsX[pointInd]) << 31) + (long) road->pointsY[pointInd];
 }
 
-bool isMotorway(SHARED_PTR<RouteSegmentResult> s) {
+bool isMotorway(SHARED_PTR<RouteSegmentResult>& s) {
     string h = s->object->getHighway();
     return "motorway" == h || "motorway_link" == h  || "trunk" == h || "trunk_link" == h;
 }
@@ -109,7 +109,7 @@ void validateAllPointsConnected(vector<SHARED_PTR<RouteSegmentResult> >& result)
 }
 
 // try to attach all segments except with current id
-void attachSegments(RoutingContext* ctx, SHARED_PTR<RouteSegment> routeSegment, SHARED_PTR<RouteDataObject> road, SHARED_PTR<RouteSegmentResult> rr, long previousRoadId, int pointInd, long prevL, long nextL) {
+void attachSegments(RoutingContext* ctx, SHARED_PTR<RouteSegment>& routeSegment, SHARED_PTR<RouteDataObject>& road, SHARED_PTR<RouteSegmentResult>& rr, long previousRoadId, int pointInd, long prevL, long nextL) {
     if (routeSegment->road->getId() != road->getId() && routeSegment->road->getId() != previousRoadId) {
         auto addRoad = routeSegment->road;
         //checkAndInitRouteRegion(ctx, addRoad); ? TODO
@@ -297,7 +297,7 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
     }
 }
 
-SHARED_PTR<TurnType> processRoundaboutTurn(vector<SHARED_PTR<RouteSegmentResult> >& result, int i, bool leftSide, SHARED_PTR<RouteSegmentResult> prev, SHARED_PTR<RouteSegmentResult> rr) {
+SHARED_PTR<TurnType> processRoundaboutTurn(vector<SHARED_PTR<RouteSegmentResult> >& result, int i, bool leftSide, SHARED_PTR<RouteSegmentResult>& prev, SHARED_PTR<RouteSegmentResult>& rr) {
     int exit = 1;
     auto last = rr;
     auto firstRoundabout = rr;
@@ -338,7 +338,7 @@ SHARED_PTR<TurnType> processRoundaboutTurn(vector<SHARED_PTR<RouteSegmentResult>
     return t;
 }
 
-string getTurnLanesString(SHARED_PTR<RouteSegmentResult> segment) {
+string getTurnLanesString(SHARED_PTR<RouteSegmentResult>& segment) {
     if (segment->object->getOneway() == 0) {
         if (segment->isForwardDirection()) {
             return segment->object->getValue("turn:lanes:forward");
@@ -392,7 +392,7 @@ bool setAllowedLanes(int mainTurnType, vector<int>& lanesArray) {
     return turnSet;
 }
 
-vector<int> getTurnLanesInfo(SHARED_PTR<RouteSegmentResult> prevSegm, int mainTurnType) {
+vector<int> getTurnLanesInfo(SHARED_PTR<RouteSegmentResult>& prevSegm, int mainTurnType) {
     string turnLanes = getTurnLanesString(prevSegm);
     vector<int> lanesArray;
     if (turnLanes.empty()) {
@@ -469,7 +469,7 @@ int countOccurrences(const string& haystack, char needle) {
     return count;
 }
 
-int countLanesMinOne(SHARED_PTR<RouteSegmentResult> attached) {
+int countLanesMinOne(SHARED_PTR<RouteSegmentResult>& attached) {
     bool oneway = attached->object->getOneway() != 0;
     int lns = attached->object->getLanes();
     if (lns == 0) {
@@ -541,7 +541,7 @@ vector<int> parseLanes(const SHARED_PTR<RouteDataObject>& ro, double dirToNorthE
     return vector<int>();
 }
 
-RoadSplitStructure calculateRoadSplitStructure(SHARED_PTR<RouteSegmentResult> prevSegm, SHARED_PTR<RouteSegmentResult> currentSegm, vector<SHARED_PTR<RouteSegmentResult> >& attachedRoutes) {
+RoadSplitStructure calculateRoadSplitStructure(SHARED_PTR<RouteSegmentResult>& prevSegm, SHARED_PTR<RouteSegmentResult>& currentSegm, vector<SHARED_PTR<RouteSegmentResult> >& attachedRoutes) {
     RoadSplitStructure rs;
     int speakPriority = max(highwaySpeakPriority(prevSegm->object->getHighway()), highwaySpeakPriority(currentSegm->object->getHighway()));
     for (auto attached : attachedRoutes) {
@@ -748,8 +748,8 @@ int inferSlightTurnFromLanes(vector<int>& oLanes, RoadSplitStructure& rs) {
     return infer;
 }
 
-SHARED_PTR<TurnType> createSimpleKeepLeftRightTurn(bool leftSide, SHARED_PTR<RouteSegmentResult> prevSegm,
-                                                 SHARED_PTR<RouteSegmentResult> currentSegm, RoadSplitStructure& rs) {
+SHARED_PTR<TurnType> createSimpleKeepLeftRightTurn(bool leftSide, SHARED_PTR<RouteSegmentResult>& prevSegm,
+                                                 SHARED_PTR<RouteSegmentResult>& currentSegm, RoadSplitStructure& rs) {
     int current = countLanesMinOne(currentSegm);
     int ls = current + rs.leftLanes + rs.rightLanes;
     vector<int> lanes(ls);
@@ -781,8 +781,8 @@ SHARED_PTR<TurnType> createSimpleKeepLeftRightTurn(bool leftSide, SHARED_PTR<Rou
     return t;
 }
 
-SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure& rs, SHARED_PTR<RouteSegmentResult> prevSegm,
-                                                           SHARED_PTR<RouteSegmentResult> currentSegm, string turnLanes, bool leftSide) {
+SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure& rs, SHARED_PTR<RouteSegmentResult>& prevSegm,
+                                                           SHARED_PTR<RouteSegmentResult>& currentSegm, string turnLanes, bool leftSide) {
     // Maybe going straight at a 90-degree intersection
     auto t = TurnType::ptrValueOf(TurnType::C, leftSide);
     auto rawLanes = calculateRawTurnLanes(turnLanes, TurnType::C);
@@ -868,7 +868,7 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
     return t;
 }
 
-SHARED_PTR<TurnType> attachKeepLeftInfoAndLanes(bool leftSide, SHARED_PTR<RouteSegmentResult> prevSegm, SHARED_PTR<RouteSegmentResult> currentSegm) {
+SHARED_PTR<TurnType> attachKeepLeftInfoAndLanes(bool leftSide, SHARED_PTR<RouteSegmentResult>& prevSegm, SHARED_PTR<RouteSegmentResult>& currentSegm) {
     auto attachedRoutes = currentSegm->getAttachedRoutes(currentSegm->getStartPointIndex());
     if (attachedRoutes.empty()) {
         return nullptr;
@@ -951,7 +951,7 @@ SHARED_PTR<TurnType> getTurnInfo(vector<SHARED_PTR<RouteSegmentResult> >& result
     return t;
 }
 
-bool mergeTurnLanes(bool leftSide, SHARED_PTR<RouteSegmentResult> currentSegment, SHARED_PTR<RouteSegmentResult> nextSegment) {
+bool mergeTurnLanes(bool leftSide, SHARED_PTR<RouteSegmentResult>& currentSegment, SHARED_PTR<RouteSegmentResult>& nextSegment) {
     MergeTurnLaneTurn active(currentSegment);
     MergeTurnLaneTurn target(nextSegment);
     if (active.activeLen < 2) {
@@ -1248,7 +1248,7 @@ void addTurnInfoDescriptions(vector<SHARED_PTR<RouteSegmentResult> >& result) {
     }
 }
 
-float calcRoutingTime(float parentRoutingTime, const SHARED_PTR<RouteSegment>& finalSegment, const SHARED_PTR<RouteSegment>& segment, SHARED_PTR<RouteSegmentResult> res) {
+float calcRoutingTime(float parentRoutingTime, const SHARED_PTR<RouteSegment>& finalSegment, const SHARED_PTR<RouteSegment>& segment, SHARED_PTR<RouteSegmentResult>& res) {
     if (segment != finalSegment) {
         if (parentRoutingTime != -1) {
             res->routingTime = parentRoutingTime - segment->distanceFromStart;
@@ -1258,7 +1258,7 @@ float calcRoutingTime(float parentRoutingTime, const SHARED_PTR<RouteSegment>& f
     return parentRoutingTime;
 }
 
-bool combineTwoSegmentResult(SHARED_PTR<RouteSegmentResult> toAdd, SHARED_PTR<RouteSegmentResult> previous, bool reverse) {
+bool combineTwoSegmentResult(SHARED_PTR<RouteSegmentResult>& toAdd, SHARED_PTR<RouteSegmentResult>& previous, bool reverse) {
     bool ld = previous->getEndPointIndex() > previous->getStartPointIndex();
     bool rd = toAdd->getEndPointIndex() > toAdd->getStartPointIndex();
     if (rd == ld) {
@@ -1275,7 +1275,7 @@ bool combineTwoSegmentResult(SHARED_PTR<RouteSegmentResult> toAdd, SHARED_PTR<Ro
     return false;
 }
 
-void addRouteSegmentToResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result, SHARED_PTR<RouteSegmentResult> res, bool reverse) {
+void addRouteSegmentToResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result, SHARED_PTR<RouteSegmentResult>& res, bool reverse) {
     if (res->getStartPointIndex() != res->getEndPointIndex()) {
         if (result.size() > 0) {
             auto last = result.back();
@@ -1326,7 +1326,7 @@ vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingCont
     return result;
 }
 
-void printAdditionalPointInfo(SHARED_PTR<RouteSegmentResult> res) {
+void printAdditionalPointInfo(SHARED_PTR<RouteSegmentResult>& res) {
     bool plus = res->getStartPointIndex() < res->getEndPointIndex();
     for(int k = res->getStartPointIndex(); k != res->getEndPointIndex(); ) {
         if (res->object->pointTypes.size() > k || res->object->pointNameTypes.size() > k) {

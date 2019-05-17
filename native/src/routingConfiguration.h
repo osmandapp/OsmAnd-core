@@ -75,7 +75,7 @@ public:
         if (routers.find(router) == routers.end()) {
             router = defaultRouter;
         }
-        SHARED_PTR<RoutingConfiguration> i = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration());
+        SHARED_PTR<RoutingConfiguration> i = std::make_shared<RoutingConfiguration>();
         if (routers.find(router) != routers.end()) {
             i->router = routers[router]->build(params);
             i->routerName = router;

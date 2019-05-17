@@ -26,13 +26,13 @@ public:
     // this make not possible to make turns in between segment result for now
     SHARED_PTR<TurnType> turnType;
 
-	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex) :
+	RouteSegmentResult(SHARED_PTR<RouteDataObject>& object, int startPointIndex, int endPointIndex) :
 		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), segmentTime(0), segmentSpeed(0), routingTime(0), distance(0), description("") {
             updateCapacity();
 	}
     
-    void attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult> r);
-    void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift);
+    void attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult>& r);
+    void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult>& toCopy, int shift);
     vector<SHARED_PTR<RouteSegmentResult> > getPreAttachedRoutes(int routeInd);
     vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
 

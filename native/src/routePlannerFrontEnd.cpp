@@ -29,7 +29,7 @@ SHARED_PTR<RouteSegment> RoutePlannerFrontEnd::getRecalculationEnd(RoutingContex
             SHARED_PTR<RouteSegment> previous;
             for (int i = 0; i <= rlist.size() - 1; i++) {
                 auto rr = rlist[i];
-                SHARED_PTR<RouteSegment> segment = SHARED_PTR<RouteSegment>(new RouteSegment(rr->object, rr->getEndPointIndex()));
+                SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(rr->object, rr->getEndPointIndex());
                 if (previous) {
                     previous->parentRoute = segment;
                     previous->parentSegmentEnd = rr->getStartPointIndex();
@@ -63,7 +63,7 @@ double projectDistance(vector<SHARED_PTR<RouteSegmentResult> >& res, int k, int 
     return currentsDist;
 }
 
-void updateResult(SHARED_PTR<RouteSegmentResult> routeSegmentResult, int px, int py, bool st) {
+void updateResult(SHARED_PTR<RouteSegmentResult>& routeSegmentResult, int px, int py, bool st) {
     int pind = st ? routeSegmentResult->getStartPointIndex() : routeSegmentResult->getEndPointIndex();
     
     auto r = routeSegmentResult->object;
@@ -287,7 +287,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int>& intermediatesX, vector<int>& intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
     
     if (!ctx->progress) {
-        ctx->progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgress());
+        ctx->progress = std::make_shared<RouteCalculationProgress>();
     }
     bool intermediatesEmpty = intermediatesX.empty();
     /* TODO
