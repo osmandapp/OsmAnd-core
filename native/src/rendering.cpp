@@ -253,7 +253,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 }
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
-		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo>& ico) {
+		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
 	while (it != obj->namesOrder.end()) {
