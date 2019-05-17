@@ -110,3 +110,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToColl
 {
     return _p->buildAndAddToCollection(collection);
 }
+
+std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::build()
+{
+    return _p->build();
+}

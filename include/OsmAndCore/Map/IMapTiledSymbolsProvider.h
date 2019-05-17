@@ -14,6 +14,7 @@
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+#include <OsmAndCore/Map/MapRendererState.h>
 
 namespace OsmAnd
 {
@@ -52,6 +53,8 @@ namespace OsmAnd
 
         struct OSMAND_CORE_API Request : public IMapTiledDataProvider::Request
         {
+            MapState mapState;
+            
             Request();
             Request(const IMapDataProvider::Request& that);
             virtual ~Request();

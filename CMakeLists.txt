@@ -177,6 +177,8 @@ file(GLOB legacy_shared_sources
     "${LEGACY_SRC}/proto/osmand_index.pb.cc"
     "${LEGACY_SRC}/proto/OBF.pb.h"
     "${LEGACY_SRC}/proto/OBF.pb.cc"
+    "${LEGACY_SRC}/proto/vector_tile.pb.h"
+    "${LEGACY_SRC}/proto/vector_tile.pb.cc"
 
 )
 
