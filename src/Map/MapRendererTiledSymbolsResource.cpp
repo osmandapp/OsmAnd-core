@@ -73,6 +73,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     request.queryController = queryController;
     request.tileId = tileId;
     request.zoom = zoom;
+    const auto& mapState = resourcesManager->renderer->getMapState();
+    request.mapState = mapState;
     request.filterCallback =
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool

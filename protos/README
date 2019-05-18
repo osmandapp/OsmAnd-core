@@ -1,3 +1,7 @@
 Execute
 ../../resources/protos/proto_generate.sh
 ../externals/protobuf/patches/3-rename-namespace.sh 
+
+Vector tiles cpp for core:
+protoc --proto_path=../../resources/protos/ ../../resources/protos/vector_tile.proto --cpp_out=./
+

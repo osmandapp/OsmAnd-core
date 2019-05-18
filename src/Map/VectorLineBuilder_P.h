@@ -75,6 +75,7 @@ namespace OsmAnd
         void setPathIconStep(const float step);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
+        std::shared_ptr<VectorLine> build();
 
     friend class OsmAnd::VectorLineBuilder;
     };

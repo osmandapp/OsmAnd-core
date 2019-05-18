@@ -141,20 +141,30 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCo
     QReadLocker scopedLocker(&_lock);
 
     // Construct map symbols group for this line
-    const std::shared_ptr<VectorLine> line(new VectorLine(
-        _lineId,
-        _baseOrder,
-        _lineWidth,
-        _fillColor,
-        _pathIcon,
-        _pathIconStep));
-    line->setIsHidden(_isHidden);
-    line->setPoints(_points);
-    line->applyChanges();
+    const std::shared_ptr<VectorLine> line(build());
 
     // Add line to collection and return it if adding was successful
     if (!collection->_p->addLine(line))
         return nullptr;
+    
+    return line;
+}
+
+std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    // Construct map symbols group for this line
+    const std::shared_ptr<VectorLine> line(new VectorLine(
+                                                          _lineId,
+                                                          _baseOrder,
+                                                          _lineWidth,
+                                                          _fillColor,
+                                                          _pathIcon,
+                                                          _pathIconStep));
+    line->setIsHidden(_isHidden);
+    line->setPoints(_points);
+    line->applyChanges();
     
     return line;
 }
