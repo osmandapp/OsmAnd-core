@@ -38,7 +38,7 @@ void OsmAnd::MvtReader::Geometry::setUserData(QHash<QString, QString> data)
     userData = data;
 }
 
-OsmAnd::MvtReader::Point::Point(OsmAnd::PointI coordinate)
+OsmAnd::MvtReader::Point::Point(OsmAnd::PointI &coordinate)
 : point(coordinate)
 {
 }
@@ -68,7 +68,7 @@ OsmAnd::MvtReader::LineString::~LineString()
 
 OsmAnd::MvtReader::GeomType OsmAnd::MvtReader::LineString::getType() const
 {
-    return  LINE_STRING;
+    return LINE_STRING;
 }
 
 QList<OsmAnd::PointI> OsmAnd::MvtReader::LineString::getCoordinateSequence() const
@@ -76,7 +76,7 @@ QList<OsmAnd::PointI> OsmAnd::MvtReader::LineString::getCoordinateSequence() con
     return points;
 }
 
-OsmAnd::MvtReader::MultiLineString::MultiLineString(QList<std::shared_ptr<const LineString>> lines)
+OsmAnd::MvtReader::MultiLineString::MultiLineString(QList<std::shared_ptr<const LineString>> &lines)
 : lines(lines)
 {
 }

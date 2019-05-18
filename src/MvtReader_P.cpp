@@ -2,9 +2,7 @@
 #include "MvtReader_P.h"
 #include "QtCommon.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include "google/protobuf/io/zero_copy_stream_impl.h"
-#include "restore_internal_warnings.h"
+#include "Logging.h"
 
 #include <QString>
 #include <QFile>
@@ -41,32 +39,48 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
     QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry>> result;
     if (!tile.ParseFromString(message))
     {
-        std::clog << "failed to parse protobuf\n";
+        LogPrintf(OsmAnd::LogSeverityLevel::Debug,
+                  "Failed to parse protobuf");
         return result;
     }
     for (int i = 0; i < static_cast<std::size_t>(tile.layers_size()); ++i)
     {
         const auto& layer = tile.layers(i);
-        const auto& keys = layer.keys();
         
         for (int j = 0; j < static_cast<std::size_t>(layer.features_size()); ++j)
         {
             const auto& feature = layer.features(j);
-            const uint64_t id = feature.has_id() ? feature.id() : -1;
             
             if (feature.type() == VectorTile::Tile_GeomType_UNKNOWN)
                 continue;
             
             const auto& geomCmds = feature.geometry();
-            result << readGeometry(geomCmds, feature.type());
+            const auto& geom = readGeometry(geomCmds, feature.type());
+            if (geom != nullptr)
+            {
+                std::shared_ptr<OsmAnd::MvtReader::Geometry> unconst(std::const_pointer_cast<OsmAnd::MvtReader::Geometry>(geom));
+                unconst->setUserData(parseUserData(layer.keys(), layer.values()));
+                
+                result << geom;
+            }
         }
     }
     return result;
 }
 
-std::shared_ptr<OsmAnd::MvtReader::Geometry const> OsmAnd::MvtReader_P::readGeometry(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, VectorTile::Tile_GeomType type) const
+QHash<QString, QString> OsmAnd::MvtReader_P::parseUserData(const ::google::protobuf::RepeatedPtrField< ::std::string> &keys, const google::protobuf::RepeatedPtrField<::OsmAnd::VectorTile::Tile_Value> &values) const
 {
-    std::shared_ptr<OsmAnd::MvtReader::Geometry const> res = nullptr;
+    QHash<QString, QString> result;
+    for (int i = 0; i < keys.size(); i++)
+    {
+        result.insert(QString::fromStdString(keys.Get(i)), QString::fromStdString(values.Get(i).string_value()));
+    }
+    return result;
+}
+
+std::shared_ptr<const OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readGeometry(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, VectorTile::Tile_GeomType type) const
+{
+    std::shared_ptr<const OsmAnd::MvtReader::Geometry> res = nullptr;
     
     switch (type) {
         case VectorTile::Tile_GeomType_POINT:
@@ -85,7 +99,7 @@ std::shared_ptr<OsmAnd::MvtReader::Geometry const> OsmAnd::MvtReader_P::readGeom
     return res;
 }
 
-void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<OsmAnd::MvtReader::Geometry const> &res) const
+void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const
 {
     if (geometry.size() == 0)
         return;
@@ -127,12 +141,12 @@ void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::g
  * @param n zig-zag encoded integer to decode
  * @return decoded integer
  */
-int OsmAnd::MvtReader_P::zigZagDecode(int n) const
+int OsmAnd::MvtReader_P::zigZagDecode(const int &n) const
 {
     return (n >> 1) ^ (-(n & 1));
 }
 
-OsmAnd::CommandType OsmAnd::MvtReader_P::getCommandType(int cmdHdr) const
+OsmAnd::CommandType OsmAnd::MvtReader_P::getCommandType(const int &cmdHdr) const
 {
     int cmdId = cmdHdr & 0x7;
     CommandType geomCmd;
@@ -153,7 +167,7 @@ OsmAnd::CommandType OsmAnd::MvtReader_P::getCommandType(int cmdHdr) const
     
 }
 
-void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<OsmAnd::MvtReader::Geometry const> &res) const
+void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const
 {
     // Guard: must have header
     if (geometry.size() == 0)
@@ -167,10 +181,10 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
     int cmdHdr;
     int cmdLength;
     QList<std::shared_ptr<const OsmAnd::MvtReader::LineString>> geoms;
-    QList<OsmAnd::PointI> points;
+    
+    int nextX = 0, nextY = 0;
     
     while (i <= geometry.size() - MIN_LINE_STRING_LEN) {
-        
         // --------------------------------------------
         // Expected: MoveTo command of length 1
         // --------------------------------------------
@@ -184,8 +198,8 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
         if (cmd != SEG_MOVETO || cmdLength != 1)
             break;
         
-        int x = zigZagDecode(geometry.Get(i++));
-        int y = zigZagDecode(geometry.Get(i++));
+        nextX += zigZagDecode(geometry.Get(i++));
+        nextY += zigZagDecode(geometry.Get(i++));
         
         // --------------------------------------------
         // Expected: LineTo command of length > 0
@@ -204,24 +218,21 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
         //  (require at least (1 value * 2 params) + current_index)
         if ((cmdLength * 2) + i > geometry.size())
             break;
+        QList<OsmAnd::PointI> points;
+        points << OsmAnd::PointI(nextX, nextY);
         
-        points << OsmAnd::PointI(x, y);
-        int nextX = x, nextY = y;
         // Set remaining points from LineTo command
         for (int lineToIndex = 0; lineToIndex < cmdLength; ++lineToIndex) {
-            
-            // Update cursor position with relative line delta
             nextX += zigZagDecode(geometry.Get(i++));
             nextY += zigZagDecode(geometry.Get(i++));
             points << OsmAnd::PointI(nextX, nextY);
         }
-        
+
         geoms << std::make_shared<const OsmAnd::MvtReader::LineString>(points);
-        points.clear();
     }
     
     if (geoms.count() == 1)
-        res = geoms.first();
+        res = std::move(geoms.first());
     else
         res.reset(new OsmAnd::MvtReader::MultiLineString(geoms));
 }

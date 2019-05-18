@@ -44,7 +44,7 @@ namespace OsmAnd
             virtual ~Geometry();
             virtual GeomType getType() const;
             
-            void setUserData(QHash<QString, QString>);
+            void setUserData(QHash<QString, QString> data);
             QHash<QString, QString> getUserData() const;
             
             friend class OsmAnd::MvtReader_P;
@@ -58,7 +58,7 @@ namespace OsmAnd
         protected:
         public:
             GeomType getType() const override;
-            Point(OsmAnd::PointI coordinates);
+            Point(OsmAnd::PointI &coordinates);
             virtual ~Point();
             OsmAnd::PointI getCoordinate() const;
         };
@@ -84,7 +84,7 @@ namespace OsmAnd
         protected:
         public:
             GeomType getType() const override;
-            MultiLineString(QList< std::shared_ptr<const LineString> > lines);
+            MultiLineString(QList< std::shared_ptr<const LineString> > &lines);
             virtual ~MultiLineString();
             QList< std::shared_ptr<const LineString> > getLines() const;
         };
