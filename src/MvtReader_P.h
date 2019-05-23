@@ -30,13 +30,16 @@ namespace OsmAnd
     private:
         std::shared_ptr<const OsmAnd::MvtReader::Geometry> readGeometry(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, VectorTile::Tile_GeomType type) const;
         
-        QHash<QString, QString> parseUserData(const ::google::protobuf::RepeatedPtrField< ::std::string> &keys, const google::protobuf::RepeatedPtrField<::OsmAnd::VectorTile::Tile_Value> &values) const;
+        QHash<QString, QString> parseUserData(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > &tags,
+                                              const ::google::protobuf::RepeatedPtrField< ::std::string> &keys,
+                                              const google::protobuf::RepeatedPtrField<::OsmAnd::VectorTile::Tile_Value> &values) const;
         
         void readPoint(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const;
         void readLineString(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const;
         
         CommandType getCommandType(const int &cmdHdr) const;
         int zigZagDecode(const int &n) const;
+        QString tileValueToString(const OsmAnd::VectorTile::Tile_Value &value) const;
     protected:
     public:
         MvtReader_P();
