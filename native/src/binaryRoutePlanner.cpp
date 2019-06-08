@@ -10,7 +10,7 @@
 //	static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 
 static const bool TRACE_ROUTING = false;
-
+static const double GPS_POSSIBLE_ERROR = 12;
 
 inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToEnd, float o2DistanceFromStart,
 		float o2DistanceToEnd, float heuristicCoefficient) {
@@ -747,14 +747,19 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 				int pry = p.second;
 				double currentsDist = squareDist31TileMetric(prx, pry, px, py);
 				if (road.get() == NULL || currentsDist < road->dist) {
-                    road = std::make_shared<RouteSegmentPoint>(r, j);
+					road = std::make_shared<RouteSegmentPoint>(r, j);
 					road->preciseX = prx;
 					road->preciseY = pry;
 					road->dist = currentsDist;
 				}
 			}
 			if (road.get() != NULL) {
-				list.push_back(road);
+				float prio = ctx->config->router->defineSpeedPriority(road->road);
+				if (prio > 0) {
+					road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
+					list.push_back(road);
+				}
+				
 			}
 		}		
 	}	
