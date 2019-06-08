@@ -120,7 +120,7 @@ void OsmAnd::ObfTransportSectionReader_P::initializeStringTable(
     const auto oldLimit = cis->PushLimit(section->stringTable->length);
     int current = 0;
     int i = 0;
-    while (i < values.size())
+    while (i < values.size() && cis->BytesUntilLimit() > 0)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
