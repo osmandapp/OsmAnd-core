@@ -9,7 +9,10 @@ void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coor
 		// avoid printing for now
 		return;
 	}
-	OsmAnd::LogPrintf(level, "%s %lld sx=%d sy=%d ex=%d ey=%d at [%d, %d] in [%d, %d]", msg.c_str(), id, 
+	if(c.size() == 0) {
+		return;
+	}
+	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%d sy=%d ex=%d ey=%d at [%d, %d] in [%d, %d]", msg.c_str(), id, id/128, 
 			c.at(0).first-leftX, c.at(0).second - topY,
 			c.at(c.size()-1).first-leftX, c.at(c.size()-1).second - topY,
 			leftX, topY, rightX - leftX, bottomY - topY);

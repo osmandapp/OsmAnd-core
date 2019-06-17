@@ -1365,6 +1365,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		stop = (q->top >> shift) << shift;
 		sbottom = ((q->bottom >> shift) + 1) << shift;
 	}
+	UNORDERED(set)<uint64_t > deletedIds;
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
 		if (q->req != NULL) {
@@ -1402,12 +1403,17 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 				}
 
 				count++;
+				if(!basemap && (*r)->contains("osmand_change", "delete") ) {
+					deletedIds.insert((*r)->id);
+				}
 				if ((*r)->contains("natural", "coastline") ) {
 					//&& !(*r)->contains("place", "island")
 					if (basemap) {
 						basemapCoastLines.push_back(*r);
 					} else {
-						coastLines.push_back(*r);
+						if(deletedIds.find((*r)->id) == deletedIds.end()) {
+							coastLines.push_back(*r);
+						}
 					}
 				} else {
 					// do not mess coastline and other types
