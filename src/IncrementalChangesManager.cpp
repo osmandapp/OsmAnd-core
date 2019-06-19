@@ -48,6 +48,10 @@ uint64_t OsmAnd::IncrementalChangesManager::getUpdatesSize(const QString& region
     return _p->getUpdatesSize(regionName);
 }
 
+uint64_t OsmAnd::IncrementalChangesManager::getUpdatesSize()
+{
+    return _p->getUpdatesSize();
+}
 
 OsmAnd::IncrementalChangesManager::RegionUpdateFiles::RegionUpdateFiles(QString& name, std::shared_ptr<const ResourcesManager::InstalledResource> mainFile):
     name(name),

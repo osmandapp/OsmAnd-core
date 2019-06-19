@@ -296,3 +296,21 @@ uint64_t OsmAnd::IncrementalChangesManager_P::getUpdatesSize(const QString& regi
     }
     return size;
 }
+
+uint64_t OsmAnd::IncrementalChangesManager_P::getUpdatesSize()
+{
+    uint64_t size = 0;
+    for (const auto& files : _updatesStructure.values())
+    {
+        if (files->isEmpty())
+            continue;
+        
+        for (const auto& dailyUpdates : files->dailyUpdates.values())
+            for (const auto& dailyUpdate : dailyUpdates)
+                size += dailyUpdate->size;
+
+        for (const auto& monthlyUpdate : files->monthlyUpdates.values())
+            size += monthlyUpdate->size;
+    }
+    return size;
+}

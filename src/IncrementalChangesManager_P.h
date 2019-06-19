@@ -61,6 +61,7 @@ namespace OsmAnd
         
         void deleteUpdates(const QString &regionName);
         uint64_t getUpdatesSize(const QString& regionName);
+        uint64_t getUpdatesSize();
 
     friend class OsmAnd::IncrementalChangesManager;
     };
