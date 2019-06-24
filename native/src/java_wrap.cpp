@@ -434,8 +434,8 @@ jfieldID jfield_GeneralRouter_restrictionsAware = NULL;
 jfieldID jfield_GeneralRouter_leftTurn = NULL;
 jfieldID jfield_GeneralRouter_roundaboutTurn = NULL;
 jfieldID jfield_GeneralRouter_rightTurn = NULL;
-jfieldID jfield_GeneralRouter_minDefaultSpeed = NULL;
-jfieldID jfield_GeneralRouter_maxDefaultSpeed = NULL;
+jfieldID jfield_GeneralRouter_defaultSpeed = NULL;
+jfieldID jfield_GeneralRouter_maxSpeed = NULL;
 jfieldID jfield_GeneralRouter_heightObstacles = NULL;
 jfieldID jfield_GeneralRouter_objectAttributes = NULL;
 jmethodID jmethod_GeneralRouter_getImpassableRoadIds = NULL;
@@ -568,8 +568,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_leftTurn = getFid(env, jclass_GeneralRouter, "leftTurn", "F");
 	jfield_GeneralRouter_roundaboutTurn = getFid(env, jclass_GeneralRouter, "roundaboutTurn", "F");
 	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
-	jfield_GeneralRouter_minDefaultSpeed = getFid(env, jclass_GeneralRouter, "minDefaultSpeed", "F");
-	jfield_GeneralRouter_maxDefaultSpeed = getFid(env, jclass_GeneralRouter, "maxDefaultSpeed", "F");
+	jfield_GeneralRouter_defaultSpeed = getFid(env, jclass_GeneralRouter, "defaultSpeed", "F");
+	jfield_GeneralRouter_maxSpeed = getFid(env, jclass_GeneralRouter, "maxSpeed", "F");
 	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "Z");
 	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
 		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
@@ -1070,8 +1070,8 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	rConfig->router->leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
 	rConfig->router->roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
 	rConfig->router->rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
-	rConfig->router->minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minDefaultSpeed);
-	rConfig->router->maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxDefaultSpeed);
+	rConfig->router->minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
+	rConfig->router->maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 	rConfig->router->heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
 	
 	// Map<String, String> attributes; // Attributes are not sync not used for calculation
