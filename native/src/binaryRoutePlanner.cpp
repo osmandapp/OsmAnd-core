@@ -49,7 +49,7 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment>& segm, bool direction) {
 
 static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist31(begX, begY,  endX, endY);
-	double result = distToFinalPoint /  ctx->config->router->getMaxDefaultSpeed();
+	double result = distToFinalPoint /  ctx->config->router->getMaxSpeed();
 	if(ctx->precalcRoute != nullptr){
 		float te = ctx->precalcRoute->timeEstimate(begX, begY,  endX, endY);
 		if(te > 0) return te;
@@ -371,14 +371,14 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	float priority = ctx->config->router->defineSpeedPriority(road);
 	float speed = ctx->config->router->defineRoutingSpeed(road) * priority;
 	if (speed == 0) {
-		speed = ctx->config->router->getMinDefaultSpeed();
+		speed = ctx->config->router->getDefaultSpeed();
 		if(priority > 0) {
 			speed *= priority;
 		}
 	}
 	// speed can not exceed max default speed according to A*
-	if(speed > ctx->config->router->getMaxDefaultSpeed()) {
-		speed = ctx->config->router->getMaxDefaultSpeed();
+	if(speed > ctx->config->router->getMaxSpeed()) {
+		speed = ctx->config->router->getMaxSpeed();
 	}
 	return obstaclesTime + distOnRoadToPass / speed;
 }

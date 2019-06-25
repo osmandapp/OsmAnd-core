@@ -142,8 +142,9 @@ void PrecalculatedRouteDirection::init(vector<SHARED_PTR<RouteSegmentResult> >& 
 SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::adopt(RoutingContext* ctx) {
     int ind1 = getIndex(ctx->startX, ctx->startY);
     int ind2 = getIndex(ctx->targetX, ctx->targetY);
-    minSpeed = ctx->config->router->minDefaultSpeed;
-    maxSpeed = ctx->config->router->maxDefaultSpeed;
+    minSpeed = ctx->config->router->minSpeed;
+    defaultSpeed = ctx->config->router->defaultSpeed;
+    maxSpeed = ctx->config->router->maxSpeed;
     if (ind1 == -1) {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Illegal argument ");
         return nullptr;

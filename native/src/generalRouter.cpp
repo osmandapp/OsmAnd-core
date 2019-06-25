@@ -17,10 +17,10 @@ const char* GeneralRouterConstants::USE_HEIGHT_OBSTACLES = "height_obstacles";
 const char* GeneralRouterConstants::ALLOW_PRIVATE = "allow_private";
 
 
-GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minSpeed(10), defaultSpeed(10), maxSpeed(10), shortestRoute(false), allowPrivate(false) {
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minSpeed(10), defaultSpeed(10), maxSpeed(10), shortestRoute(false), allowPrivate(false) {
     
     this->profile = profile;
     MAP_STR_STR::const_iterator it = attributes.begin();
@@ -32,7 +32,7 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_S
     }
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minSpeed(10), defaultSpeed(10), maxSpeed(10), shortestRoute(false), allowPrivate(false) {
     
     this->profile = parent.profile;
     MAP_STR_STR::const_iterator it = parent.attributes.begin();
@@ -55,7 +55,7 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
     this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
     this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
     if (shortestRoute) {
-        maxDefaultSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxDefaultSpeed);
+        maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
     }
 }
 
@@ -150,10 +150,15 @@ void GeneralRouter::addAttribute(string k, string v) {
 		rightTurn = parseFloat(attributes, k, rightTurn);
 	} else if (k == "roundaboutTurn") {
 		roundaboutTurn = parseFloat(attributes, k, roundaboutTurn);
-	} else if (k == "minDefaultSpeed") {
-		minDefaultSpeed = parseFloat(attributes, k, minDefaultSpeed * 3.6f) / 3.6f;
-	} else if (k =="maxDefaultSpeed") {
-		maxDefaultSpeed = parseFloat(attributes, k, maxDefaultSpeed * 3.6f) / 3.6f;
+    } else if (k == "defaultSpeed") {
+        defaultSpeed = parseFloat(attributes, k, defaultSpeed * 3.6f) / 3.6f;
+	} else if (k == "minDefaultSpeed" || k == "minSpeed") {
+		minSpeed = parseFloat(attributes, k, minSpeed * 3.6f) / 3.6f;
+        if (k == "minDefaultSpeed") {
+            defaultSpeed = minSpeed;
+        }
+	} else if (k =="maxDefaultSpeed" || k =="maxSpeed") {
+		maxSpeed = parseFloat(attributes, k, maxSpeed * 3.6f) / 3.6f;
 	}
 }
 
@@ -379,11 +384,11 @@ double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, u
 }
 
 double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
-	return min(defineVehicleSpeed(road), maxDefaultSpeed);
+	return min(defineVehicleSpeed(road), maxSpeed);
 }
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
-	return getObjContext(RouteDataObjectAttribute::ROAD_SPEED) .evaluateDouble(road, getMinDefaultSpeed());
+	return getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateDouble(road, getDefaultSpeed());
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {
@@ -398,12 +403,16 @@ double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject>& road) {
 	return getObjContext(RouteDataObjectAttribute::ROAD_PRIORITIES).evaluateDouble(road, 1.);
 }
 
-double GeneralRouter::getMinDefaultSpeed() {
-	return minDefaultSpeed;
+double GeneralRouter::getDefaultSpeed() {
+	return defaultSpeed;
 }
 
-double GeneralRouter::getMaxDefaultSpeed() {
-	return maxDefaultSpeed;
+double GeneralRouter::getMinSpeed() {
+    return minSpeed;
+}
+
+double GeneralRouter::getMaxSpeed() {
+	return maxSpeed;
 }
 
 bool GeneralRouter::restrictionsAware() {

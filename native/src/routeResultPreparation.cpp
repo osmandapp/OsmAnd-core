@@ -244,7 +244,7 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
         double distOnRoadToPass = 0;
         double speed = ctx->config->router->defineVehicleSpeed(road);
         if (speed == 0) {
-            speed = ctx->config->router->getMinDefaultSpeed();
+            speed = ctx->config->router->getDefaultSpeed();
         } else {
             if (speed > 15) {
                 // decrease speed proportionally from 15ms=50kmh -

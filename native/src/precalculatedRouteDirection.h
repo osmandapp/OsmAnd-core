@@ -11,6 +11,7 @@ struct PrecalculatedRouteDirection {
 	vector<uint32_t> pointsY;
 	vector<float> times;
 	float minSpeed;
+    float defaultSpeed;
 	float maxSpeed;
 	float startFinishTime;
 	float endFinishTime;

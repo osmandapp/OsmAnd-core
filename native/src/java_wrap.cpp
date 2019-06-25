@@ -434,6 +434,7 @@ jfieldID jfield_GeneralRouter_restrictionsAware = NULL;
 jfieldID jfield_GeneralRouter_leftTurn = NULL;
 jfieldID jfield_GeneralRouter_roundaboutTurn = NULL;
 jfieldID jfield_GeneralRouter_rightTurn = NULL;
+jfieldID jfield_GeneralRouter_minSpeed = NULL;
 jfieldID jfield_GeneralRouter_defaultSpeed = NULL;
 jfieldID jfield_GeneralRouter_maxSpeed = NULL;
 jfieldID jfield_GeneralRouter_heightObstacles = NULL;
@@ -568,6 +569,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_leftTurn = getFid(env, jclass_GeneralRouter, "leftTurn", "F");
 	jfield_GeneralRouter_roundaboutTurn = getFid(env, jclass_GeneralRouter, "roundaboutTurn", "F");
 	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
+    jfield_GeneralRouter_minSpeed = getFid(env, jclass_GeneralRouter, "minSpeed", "F");
 	jfield_GeneralRouter_defaultSpeed = getFid(env, jclass_GeneralRouter, "defaultSpeed", "F");
 	jfield_GeneralRouter_maxSpeed = getFid(env, jclass_GeneralRouter, "maxSpeed", "F");
 	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "Z");
@@ -1070,8 +1072,9 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	rConfig->router->leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
 	rConfig->router->roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
 	rConfig->router->rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
-	rConfig->router->minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
-	rConfig->router->maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
+    rConfig->router->minSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minSpeed);
+	rConfig->router->defaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
+	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 	rConfig->router->heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
 	
 	// Map<String, String> attributes; // Attributes are not sync not used for calculation

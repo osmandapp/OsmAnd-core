@@ -50,7 +50,7 @@ void refreshProgressDistance(RoutingContext* ctx) {
         ctx->progress->reverseSegmentQueueSize = 0;
         ctx->progress->directSegmentQueueSize = 0;
         float rd = (float) squareRootDist31(ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
-        float speed = 0.9f * ctx->config->router->maxDefaultSpeed;
+        float speed = 0.9f * ctx->config->router->maxSpeed;
         ctx->progress->totalEstimatedDistance = (float) (rd / speed);
     }
 }
@@ -318,7 +318,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
         SHARED_PTR<RoutingContext> nctx = buildRoutingContext(ctx->config, RouteCalculationMode::BASE);
         nctx->progress = ctx->progress;
         vector<SHARED_PTR<RouteSegmentResult> > ls = searchRoute(nctx, startX, startY, endX, endY, intermediatesX, intermediatesY);
-        routeDirection = PrecalculatedRouteDirection::build(ls, ctx->config->DEVIATION_RADIUS, ctx->config->router->maxDefaultSpeed);
+        routeDirection = PrecalculatedRouteDirection::build(ls, ctx->config->DEVIATION_RADIUS, ctx->config->router->maxSpeed);
     }
     
     if (intermediatesEmpty) {

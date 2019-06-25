@@ -343,8 +343,9 @@ public:
 	double leftTurn;
 	double roundaboutTurn;
 	double rightTurn;
-	double minDefaultSpeed ;
-	double maxDefaultSpeed ;
+	double minSpeed;
+    double defaultSpeed;
+	double maxSpeed;
 	UNORDERED(set)<int64_t> impassableRoadIds;
     bool shortestRoute;
     bool allowPrivate;
@@ -464,21 +465,26 @@ public:
 	 */
 	double defineSpeedPriority(SHARED_PTR<RouteDataObject>& road);
 
-	/**
-	 * Used for A* routing to calculate g(x)
-	 * 
-	 * @return minimal speed at road in m/s
-	 */
-	double getMinDefaultSpeed();
-
-
-
+    /**
+     * Used for A* routing to calculate g(x)
+     *
+     * @return minimal speed at road in m/s
+     */
+    double getDefaultSpeed();
+    
+    /**
+     * Used as minimal threshold of default speed
+     *
+     * @return minimal speed at road in m/s
+     */
+    double getMinSpeed();
+    
 	/**
 	 * Used for A* routing to predict h(x) : it should be great any g(x)
 	 * 
 	 * @return maximum speed to calculate shortest distance
 	 */
-	double getMaxDefaultSpeed();
+	double getMaxSpeed();
 	
 	/**
 	 * aware of road restrictions
