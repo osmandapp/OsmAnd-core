@@ -228,7 +228,7 @@ void OsmAnd::RoutePlanner::calculateTimeSpeedInRoute( OsmAnd::RoutePlannerContex
         float distOnRoadToPass = 0;
         float speed = context->owner->profileContext->getSpeed(segment->road);
         if (qFuzzyCompare(speed, 0))
-            speed = context->owner->profileContext->profile->minDefaultSpeed;
+            speed = context->owner->profileContext->profile->defaultSpeed;
 
         const auto isIncrement = segment->startPointIndex < segment->endPointIndex;
         

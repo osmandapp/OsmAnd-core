@@ -64,8 +64,9 @@ namespace OsmAnd {
         float _leftTurn;
         float _roundaboutTurn;
         float _rightTurn;
-        float _minDefaultSpeed;
-        float _maxDefaultSpeed;
+        float _minSpeed;
+        float _defaultSpeed;
+        float _maxSpeed;
     protected:
         QHash< QString, std::shared_ptr<Parameter> > _parameters;
 
@@ -92,8 +93,9 @@ namespace OsmAnd {
         const float& leftTurn;
         const float& roundaboutTurn;
         const float& rightTurn;
-        const float& minDefaultSpeed;
-        const float& maxDefaultSpeed;
+        const float& minSpeed;
+        const float& defaultSpeed;
+        const float& maxSpeed;
 
         std::shared_ptr<OsmAnd::RoutingRuleset> getRuleset(const OsmAnd::RoutingRuleset::Type type) const;
         void addAttribute(const QString& key, const QString& value);

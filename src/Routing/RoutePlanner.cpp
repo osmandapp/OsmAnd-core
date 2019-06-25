@@ -740,7 +740,7 @@ uint64_t OsmAnd::RoutePlanner::encodeRoutePointId( const std::shared_ptr<const M
 float OsmAnd::RoutePlanner::estimateTimeDistance( OsmAnd::RoutePlannerContext::CalculationContext* context, const PointI& from, const PointI& to )
 {
     auto distance = Utilities::distance31(from.x, from.y, to.x, to.y);
-    return distance / context->owner->profileContext->profile->maxDefaultSpeed;
+    return distance / context->owner->profileContext->profile->maxSpeed;
 }
 
 int OsmAnd::RoutePlanner::roadPriorityComparator( double aDistanceFromStart, double aDistanceToEnd, double bDistanceFromStart, double bDistanceToEnd, double heuristicCoefficient )
@@ -1024,11 +1024,11 @@ float OsmAnd::RoutePlanner::calculateTimeWithObstacles(
     auto priority = context->owner->profileContext->getSpeedPriority(road);
     auto speed = context->owner->profileContext->getSpeed(road) * priority;
     if (qFuzzyCompare(speed, 0.0f))
-        speed = context->owner->profileContext->profile->minDefaultSpeed * priority;
+        speed = context->owner->profileContext->profile->defaultSpeed * priority;
 
     // Speed can not exceed max default speed according to A*
-    if (speed > context->owner->profileContext->profile->maxDefaultSpeed)
-        speed = context->owner->profileContext->profile->maxDefaultSpeed;
+    if (speed > context->owner->profileContext->profile->maxSpeed)
+        speed = context->owner->profileContext->profile->maxSpeed;
 
     auto distStartObstacles = obstaclesTime + distOnRoadToPass / speed;
     return distStartObstacles;
@@ -1471,6 +1471,6 @@ double OsmAnd::RoutePlanner::h(
     }
     */
 
-    auto res = distanceToFinalPoint / context->owner->profileContext->profile->maxDefaultSpeed;
+    auto res = distanceToFinalPoint / context->owner->profileContext->profile->maxSpeed;
     return res;
 }

@@ -50,7 +50,7 @@ float OsmAnd::RoutingProfileContext::getSpeedPriority( const std::shared_ptr<con
 
 float OsmAnd::RoutingProfileContext::getSpeed( const std::shared_ptr<const OsmAnd::Model::Road>& road )
 {
-    auto value = getRulesetContext(RoutingRuleset::RoadSpeed)->evaluateAsFloat(road, profile->minDefaultSpeed);
+    auto value = getRulesetContext(RoutingRuleset::RoadSpeed)->evaluateAsFloat(road, profile->defaultSpeed);
     return value;
 }
 

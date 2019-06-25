@@ -9,8 +9,9 @@ OsmAnd::RoutingProfile::RoutingProfile()
     : _restrictionsAware(true)
     , _oneWayAware(true)
     , _followSpeedLimitations(true)
-    , _minDefaultSpeed(10)
-    , _maxDefaultSpeed(10)
+    , _minSpeed(10)
+    , _defaultSpeed(10)
+    , _maxSpeed(10)
     , name(_name)
     , attributes(_attributes)
     , parameters(_parameters)
@@ -18,8 +19,9 @@ OsmAnd::RoutingProfile::RoutingProfile()
     , leftTurn(_leftTurn)
     , roundaboutTurn(_roundaboutTurn)
     , rightTurn(_rightTurn)
-    , minDefaultSpeed(_minDefaultSpeed)
-    , maxDefaultSpeed(_maxDefaultSpeed)
+    , minSpeed(_minSpeed)
+    , defaultSpeed(_defaultSpeed)
+    , maxSpeed(_maxSpeed)
 {
     for(auto type = 0; type < RoutingRuleset::TypesCount; type++)
         _rulesets[type].reset(new OsmAnd::RoutingRuleset(this, static_cast<RoutingRuleset::Type>(type)));
@@ -58,19 +60,29 @@ void OsmAnd::RoutingProfile::addAttribute( const QString& key, const QString& va
         if (ok)
             _roundaboutTurn = parsed;
     }
-    else if (key == "minDefaultSpeed")
+    else if (key == "defaultSpeed")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
         if (ok)
-            _minDefaultSpeed = parsed / 3.6f;
+            _defaultSpeed = parsed / 3.6f;
     }
-    else if (key == "maxDefaultSpeed")
+    else if (key == "minDefaultSpeed" || key == "minSpeed")
     {
         bool ok;
         auto parsed = value.toFloat(&ok);
         if (ok)
-            _maxDefaultSpeed = parsed / 3.6f;
+            _minSpeed = parsed / 3.6f;
+        if (key == "minDefaultSpeed")
+            _defaultSpeed = _minSpeed;
+        
+    }
+    else if (key == "maxDefaultSpeed" || key == "maxSpeed")
+    {
+        bool ok;
+        auto parsed = value.toFloat(&ok);
+        if (ok)
+            _maxSpeed = parsed / 3.6f;
     }
 }
 
