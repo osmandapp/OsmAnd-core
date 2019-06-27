@@ -26,6 +26,9 @@ struct GeneralRouterConstants {
     static const char* USE_SHORTEST_WAY;
     static const char* USE_HEIGHT_OBSTACLES;
     static const char* ALLOW_PRIVATE;
+    static const char* DEFAULT_SPEED;
+    static const char* MIN_SPEED;
+    static const char* MAX_SPEED;
 };
 
 enum class RouteDataObjectAttribute : unsigned int {
