@@ -429,6 +429,81 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
 	}
 }
 
+int assignOnewayColor(MapDataObject* mObj, RenderingRuleSearchRequest* req, RenderingContext* rc, 
+	std::string tag, std::string value, int& onewayColor) {
+	int oneway = 0;
+	if (rc->getZoom() >= 16 && tag == "highway" && rc->getNoHighwayOnewayArrows() < 1) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+		} else if (mObj->containsAdditional("oneway", "-1")) {
+			oneway = -1;
+		}
+	}
+
+	if(rc->getZoom() >= 15 && tag == "route" && value == "ferry") {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+		} else if (mObj->containsAdditional("oneway", "-1")) {
+			oneway = -1;
+		}
+	}
+
+	if(tag == "waterway" && rc->getWaterwayArrows() > 0 && (
+		(rc->getZoom() >= 15 && value == "stream") ||
+		(rc->getZoom() >= 12 && value == "river") ||
+		(rc->getZoom() >= 14 && value == "canal")
+		)) {
+			oneway = 1;
+			onewayColor = 0xff6286ff;
+	}
+	if(tag == "seamark:type" && rc->getWaterwayArrows() > 0 && (
+		(rc->getZoom() >= 9 && value == "separation_lane") ||
+		(rc->getZoom() >= 9 && value == "separation_line")
+		)) {
+			oneway = 1;
+			onewayColor = 0xff6286ff;
+	}
+	if(tag == "piste:type" && rc->getZoom() >= 14) {
+		if (!mObj->containsAdditional("oneway", "no") && (
+			mObj->containsAdditional("piste:oneway", "yes") || mObj->containsAdditional("oneway", "yes") ||
+			value == "downhill" || value == "sled")) {
+			oneway = 1;
+			onewayColor = 0xff000000;
+		}
+	}
+	if(tag == "aerialway" && rc->getZoom() >= 14 && (
+		value == "chair_lift" ||
+		value == "t-bar" ||
+		value == "j-bar" ||
+		value == "platter" ||
+		value == "magic_carpet" ||
+		value == "rope_tow" ||
+		value == "zip_line" ||
+		value == "drag_lift"
+		)) {
+		if (!(mObj->containsAdditional("oneway", "no"))) {
+			oneway = 1;
+			onewayColor = 0xff5959ff;
+		}
+	}
+	if(tag == "aerialway" && rc->getZoom() >= 14 && (
+		value == "gondola" ||
+		value == "cable_car" ||
+		value == "mixed_lift"
+		)) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			onewayColor = 0xff5959ff;
+		}
+	}
+	if(tag == "highway" && value == "via_ferrata" && rc->getZoom() >= 15) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;	
+			onewayColor = 0xff5959ff;
+		}
+	}
+	return oneway;
+}
 
 
 void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
@@ -454,189 +529,90 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	if(shadowColor == 0) {
 		shadowColor = rc->getShadowRenderingColor();
 	}
-	int oneway = 0;
-	int onewayColor = 0xff3a3e9c;
-	if (rc->getZoom() >= 16 && pair.first == "highway" && rc->getNoHighwayOnewayArrows() < 1) {
-		if (mObj->containsAdditional("oneway", "yes")) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			}
-		} else if (mObj->containsAdditional("oneway", "-1")) {
-			oneway = -1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			}
-		}
-	}
-
-	if(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") {
-		if (mObj->containsAdditional("oneway", "yes")) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			}
-		} else if (mObj->containsAdditional("oneway", "-1")) {
-			oneway = -1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			}
-		}
-	}
-
-	if(pair.first == "waterway" && rc->getWaterwayArrows() > 0 && (
-		(rc->getZoom() >= 15 && pair.second == "stream") ||
-		(rc->getZoom() >= 12 && pair.second == "river") ||
-		(rc->getZoom() >= 14 && pair.second == "canal")
-		)) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff6286ff;
-	}
-	if(pair.first == "seamark:type" && rc->getWaterwayArrows() > 0 && (
-		(rc->getZoom() >= 9 && pair.second == "separation_lane") ||
-		(rc->getZoom() >= 9 && pair.second == "separation_line")
-		)) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff6286ff;
-	}
-	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
-		(pair.second == "downhill" || pair.second == "sled"))
-		{
-		if (!(mObj->containsAdditional("oneway", "no"))) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff000000;
-		}
-	}
-	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
-		{
-		if (mObj->containsAdditional("piste:oneway", "yes") || mObj->containsAdditional("oneway", "yes")) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff000000;
-		}
-	}
-	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
-		pair.second == "chair_lift" ||
-		pair.second == "t-bar" ||
-		pair.second == "j-bar" ||
-		pair.second == "platter" ||
-		pair.second == "magic_carpet" ||
-		pair.second == "rope_tow" ||
-		pair.second == "zip_line" ||
-		pair.second == "drag_lift"
-		)) {
-		if (!(mObj->containsAdditional("oneway", "no"))) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff5959ff;
-		}
-	}
-	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
-		pair.second == "gondola" ||
-		pair.second == "cable_car" ||
-		pair.second == "mixed_lift"
-		)) {
-		if (mObj->containsAdditional("oneway", "yes")) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff5959ff;
-		}
-	}
-	if(pair.first == "highway" && pair.second == "via_ferrata" && rc->getZoom() >= 15) {
-		if (mObj->containsAdditional("oneway", "yes")) {
-			oneway = 1;
-			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
-				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
-			} else onewayColor = 0xff5959ff;
-		}
-	}
-
 	rc->visible++;
 	SkPath path;
 	SkPoint middlePoint;
 	bool intersect = false;
-	uint prevCross = 0;
-	
 	uint middle = length / 2;
-	uint i = 0;
-	for (; i < length; i++) {
-		calcPoint(mObj->points.at(i), rc);
-		if (i == 0) {
-			path.moveTo(rc->calcX, rc->calcY);
+	uint prevCross = 15, pprevCross = 15;
+	int x, y, px, py, ppx, ppy;
+	int cnt = 0;
+	for (uint i = 0; i <= length; i++) {
+		uint cross = 0;
+		if(i == length) {
+			cross = 15;
 		} else {
-			if (i == middle) {
-				middlePoint.set(rc->calcX, rc->calcY);
-			}
-			path.lineTo(rc->calcX, rc->calcY);
+			calcPoint(mObj->points.at(i), rc);
+			cross |= (rc->calcX < 0 ? 1 : 0);
+			cross |= (rc->calcX > rc->getWidth() ? 2 : 0);
+			cross |= (rc->calcY < 0 ? 4 : 0);
+			cross |= (rc->calcY > rc->getHeight() ? 8 : 0);
 		}
-		if (!intersect) {
-			if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
-				intersect = true;
+		if (i == middle) {
+			middlePoint.set(rc->calcX, rc->calcY);
+		}
+		// calculate if previous point is outside on same as side as point before and next point (skip it)
+		if( (pprevCross & prevCross & cross) == 0 && i > 0) {
+			if (cnt++ == 0) {
+				path.moveTo(x, y);
 			} else {
-				uint cross = 0;
-				cross |= (rc->calcX < 0 ? 1 : 0);
-				cross |= (rc->calcX > rc->getWidth() ? 2 : 0);
-				cross |= (rc->calcY < 0 ? 4 : 0);
-				cross |= (rc->calcY > rc->getHeight() ? 8 : 0);
-				if(i > 0) {
-					if((prevCross & cross) == 0) {
-						intersect = true;
-					}
-				}
-				prevCross = cross;
+				path.lineTo(x, y);
 			}
 		}
+		if (!intersect && (prevCross & cross) == 0) {
+			intersect = true;
+		}
+
+		pprevCross = prevCross;
+		prevCross = cross;
+
+		x = rc->calcX;
+		y = rc->calcY;
 	}
 
 	if (!intersect) {
 		return;
 	}
 
-	if (i > 0) {
-		if (drawOnlyShadow) {
-			drawPolylineShadow(cv, paint, rc, &path, shadowColor, shadowRadius);
-		} else {
-			if (updatePaint(req, paint, -3, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+	if (drawOnlyShadow) {
+		drawPolylineShadow(cv, paint, rc, &path, shadowColor, shadowRadius);
+	} else {
+		if (updatePaint(req, paint, -3, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, -2, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, -1, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, 0, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		// looks like double drawing (check if there are any issues)
+		// PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		if (updatePaint(req, paint, 1, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, 2, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, 3, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		if (updatePaint(req, paint, 4, 0, rc)) {
+			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		}
+		int onewayColor = 0xff3a3e9c;
+		int oneway = assignOnewayColor(mObj, req, rc, tag, value, onewayColor);
+		if (oneway != 0 && !drawOnlyShadow) {
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
 			}
-			if (updatePaint(req, paint, -2, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (updatePaint(req, paint, -1, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (updatePaint(req, paint, 0, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			// looks like double drawing (check if there are any issues)
-			// PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			if (updatePaint(req, paint, 1, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (updatePaint(req, paint, 2, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (updatePaint(req, paint, 3, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (updatePaint(req, paint, 4, 0, rc)) {
-				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
-			}
-			if (oneway && !drawOnlyShadow) {
-				drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
-			}
-			if (!drawOnlyShadow) {
-				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path, NULL);
-			}
+			drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
+		}
+		if (!drawOnlyShadow) {
+			renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path, NULL);
 		}
 	}
 }
