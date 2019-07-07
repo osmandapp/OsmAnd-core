@@ -403,7 +403,7 @@ bool checkViaRestrictions(SHARED_PTR<RouteSegment>& from, SHARED_PTR<RouteSegmen
     return true;
 }
 
-SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment>& s) {
+SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment> s) {
     while(s->parentRoute.get() != NULL && s->parentRoute->getRoad()->id == s->getRoad()->id) {
             s = s->parentRoute;
     }
