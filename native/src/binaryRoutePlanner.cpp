@@ -732,6 +732,9 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	ctx->loadTileData(px, py, 17, dataObjects);
 	if (dataObjects.size() == 0) {
 		ctx->loadTileData(px, py, 15, dataObjects);
+	}
+	if (dataObjects.size() == 0) {
+		ctx->loadTileData(px, py, 14, dataObjects);
 	}	
 	
 	vector<SHARED_PTR<RouteSegmentPoint> > list ;
