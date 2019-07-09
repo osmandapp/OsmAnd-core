@@ -535,8 +535,8 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	bool intersect = false;
 	uint middle = length / 2;
 	uint prevCross = 15, pprevCross = 15;
-	int x, y, px, py, ppx, ppy;
-	int cnt = 0;
+	int x, y, px, py;
+	bool startPoint = true;
 	for (uint i = 0; i <= length; i++) {
 		uint cross = 0;
 		if(i == length) {
@@ -553,11 +553,41 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		}
 		// calculate if previous point is outside on same as side as point before and next point (skip it)
 		if( (pprevCross & prevCross & cross) == 0 && i > 0) {
-			if (cnt++ == 0) {
+			// we could speed up rendering for far away points to calculate projection
+			if(prevCross != 0) {
+				int targetx = x, targety = y;
+				if((pprevCross & prevCross) != 0) {
+					// point before is on the same side outside so we can move point along the line to next one
+					targetx = rc->calcX;
+					targetx = rc->calcY;
+				} else if((cross & prevCross) != 0) {
+					// point next is on the same side outside so we can move point along the line to prev one
+					targetx = px;
+					targety = py;
+				}
+				//// we need to check that average point is not inside rectangle
+				int nx = x, ny = y;
+				int crs = prevCross;
+				while (crs == prevCross && abs(targetx - nx) > 50 && abs(targety - ny) > 50) {
+					x = nx;
+					nx = (x + targetx) / 2;
+					y = ny;
+					ny = (y + targety) / 2;
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  
+						"Simplify %d %d to %d %d (crs %d = prevCross %d)", x, y, targetx, targety, crs, prevCross);
+					crs = (nx < 0 ? 1 : 0) + (nx > rc->getWidth() ? 2 : 0) + 
+							(ny < 0 ? 4 : 0) + (ny > rc->getHeight() ? 8 : 0);
+				}
+			}
+			if (startPoint) {
 				path.moveTo(x, y);
+				startPoint = false;
 			} else {
 				path.lineTo(x, y);
 			}
+		} else {
+			// all 3 points are on same side outside of visible area
+			startPoint = true;
 		}
 		if (!intersect && (prevCross & cross) == 0) {
 			intersect = true;
@@ -566,6 +596,8 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		pprevCross = prevCross;
 		prevCross = cross;
 
+		px = x;
+		py = y;
 		x = rc->calcX;
 		y = rc->calcY;
 	}
