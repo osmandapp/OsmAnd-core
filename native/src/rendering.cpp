@@ -573,8 +573,6 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 					nx = (x + targetx) / 2;
 					y = ny;
 					ny = (y + targety) / 2;
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  
-						"Simplify %d %d to %d %d (crs %d = prevCross %d)", x, y, targetx, targety, crs, prevCross);
 					crs = (nx < 0 ? 1 : 0) + (nx > rc->getWidth() ? 2 : 0) + 
 							(ny < 0 ? 4 : 0) + (ny > rc->getHeight() ? 8 : 0);
 				}
