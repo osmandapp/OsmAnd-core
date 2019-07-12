@@ -532,8 +532,8 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	rc->visible++;
 	SkPath path;
 	SkPoint middlePoint;
+	bool middleSet = false;
 	bool intersect = false;
-	uint middle = length / 2;
 	uint prevCross = 15, pprevCross = 15;
 	int x, y, px, py;
 	bool startPoint = true;
@@ -548,7 +548,10 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			cross |= (rc->calcY < 0 ? 4 : 0);
 			cross |= (rc->calcY > rc->getHeight() ? 8 : 0);
 		}
-		if (i == middle) {
+		if (prevCross == 0 && cross == 0) {
+			middlePoint.set(px, py);
+			middleSet = true;
+		} else if(!middleSet && cross == 0) {
 			middlePoint.set(rc->calcX, rc->calcY);
 		}
 		// calculate if previous point is outside on same as side as point before and next point (skip it)
