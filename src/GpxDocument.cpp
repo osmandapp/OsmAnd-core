@@ -1777,6 +1777,50 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::trkseg);
             }
+            else if (tagName == QLatin1String("csvattributes"))
+            {
+                if (!trkseg)
+                {
+                    LogPrintf(
+                              LogSeverityLevel::Warning,
+                              "XML warning (%" PRIi64 ", %" PRIi64 "): <trkpt> not in <trkseg>",
+                              xmlReader.lineNumber(),
+                              xmlReader.columnNumber());
+                    xmlReader.skipCurrentElement();
+                    continue;
+                }
+                if (trkpt)
+                {
+                    LogPrintf(
+                              LogSeverityLevel::Warning,
+                              "XML warning (%" PRIi64 ", %" PRIi64 "): nested <trkpt>",
+                              xmlReader.lineNumber(),
+                              xmlReader.columnNumber());
+                    xmlReader.skipCurrentElement();
+                    continue;
+                }
+                
+                QString points = xmlReader.readElementText();
+                QStringList list = points.split(QStringLiteral("\n"), QString::SkipEmptyParts);
+
+                for (int i = 0; i < list.count(); i++)
+                {
+                    QStringList coords = list[i].split(QStringLiteral(","), QString::SkipEmptyParts);
+                    int arrLength = coords.count();
+                    if (arrLength > 1)
+                    {
+                        trkpt.reset(new GpxTrkPt());
+                        trkpt->position.longitude = coords[0].toDouble();
+                        trkpt->position.latitude = coords[1].toDouble();
+                        
+                        if (arrLength > 2)
+                            trkpt->elevation = coords[2].toDouble();
+                        
+                        trkseg->points.append(trkpt);
+                    }
+                }
+                trkpt = nullptr;
+            }
             else if (tagName == QLatin1String("rtept"))
             {
                 if (!rte)
@@ -1887,6 +1931,10 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 document->locationMarks.append(wpt);
                 wpt = nullptr;
+            }
+            else if (tagName == QLatin1String("csvattributes"))
+            {
+                // Do nothing
             }
             else if (tagName == QLatin1String("trk"))
             {

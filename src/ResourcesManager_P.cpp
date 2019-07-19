@@ -439,7 +439,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::MapRegion;
             resourceId.replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
         }
-        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove("_2");
+        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove(QStringLiteral("_2"));
 
         if (resourceType == ResourceType::Unknown)
         {
