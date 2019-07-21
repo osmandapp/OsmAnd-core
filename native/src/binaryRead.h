@@ -90,7 +90,7 @@ struct BinaryPartIndex {
 };
 
 struct RoutingIndex : BinaryPartIndex {
-	UNORDERED(map)< uint32_t, RouteTypeRule > decodingRules;
+	vector<RouteTypeRule>  routeEncodingRules;
 	std::vector< RouteSubregion > subregions;
 	std::vector< RouteSubregion > basesubregions;
     
@@ -103,9 +103,13 @@ struct RoutingIndex : BinaryPartIndex {
 	}
 
     void initRouteEncodingRule(uint32_t id, std::string tag, std::string val);
+
+    void completeRouteEncodingRules();
+
+    uint32_t findOrCreateRouteType(const std::string& tag, const std::string& value );
     
     RouteTypeRule& quickGetEncodingRule(uint32_t id) {
-        return decodingRules[id];
+        return routeEncodingRules[id];
     }
 };
 
@@ -146,8 +150,8 @@ struct RouteDataObject {
             }
             for (auto it = names.begin(); it != names.end(); ++it) {
                 int k = it->first;
-                if (region->decodingRules.size() > k) {
-                    if (("name:" + lang) == region->decodingRules[k].getTag()) {
+                if (region->routeEncodingRules.size() > k) {
+                    if (("name:" + lang) == region->routeEncodingRules[k].getTag()) {
                         return names[k];
                     }
                 }
@@ -172,8 +176,8 @@ struct RouteDataObject {
             }
             for (auto it = names.begin(); it != names.end(); ++it) {
                 int k = it->first;
-                if (region->decodingRules.size() > k) {
-                    if (("ref:" + lang) == region->decodingRules[k].getTag()) {
+                if (region->routeEncodingRules.size() > k) {
+                    if (("ref:" + lang) == region->routeEncodingRules[k].getTag()) {
                         return names[k];
                     }
                 }
@@ -195,11 +199,11 @@ struct RouteDataObject {
             
             for (auto it = names.begin(); it != names.end(); ++it) {
                 int k = it->first;
-                if (region->decodingRules.size() > k) {
-                    if (refTag == region->decodingRules[k].getTag()) {
+                if (region->routeEncodingRules.size() > k) {
+                    if (refTag == region->routeEncodingRules[k].getTag()) {
                         return names[k];
                     }
-                    if (refTagDefault == region->decodingRules[k].getTag()) {
+                    if (refTagDefault == region->routeEncodingRules[k].getTag()) {
                         refDefault = names[k];
                     }
                 }
@@ -211,10 +215,15 @@ struct RouteDataObject {
         }
         return "";
     }
+
+    inline const string& transliterate(const string& s) {
+        // TODO
+        return s;
+    }
     
-    inline string getDestinationName(string& lang, bool transliterate, bool direction) {
+    inline string getDestinationName(string& lang, bool translit, bool direction) {
         //Issue #3289: Treat destination:ref like a destination, not like a ref
-        string destRef = ((getDestinationRef(direction) == "") || getDestinationRef(direction) == getRef(lang, transliterate, direction)) ? "" : getDestinationRef(direction);
+        string destRef = ((getDestinationRef(direction) == "") || getDestinationRef(direction) == getRef(lang, translit, direction)) ? "" : getDestinationRef(direction);
         string destRef1 = ("" == destRef ? "" : destRef + ", ");
         
         if (!names.empty()) {
@@ -238,24 +247,24 @@ struct RouteDataObject {
             
             for (auto it = names.begin(); it != names.end(); ++it) {
                 int k = it->first;
-                if (region->decodingRules.size() > k) {
+                if (region->routeEncodingRules.size() > k) {
 
-                    if (!lang.empty() && destinationTagLangFB == region->decodingRules[k].getTag()) {
-                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    if (!lang.empty() && destinationTagLangFB == region->routeEncodingRules[k].getTag()) {
+                        return destRef1 + (translit ? transliterate(names[k]) : names[k]); 
                     }
-                    if (destinationTagFB == region->decodingRules[k].getTag()) {
-                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    if (destinationTagFB == region->routeEncodingRules[k].getTag()) {
+                        return destRef1 + (translit ? transliterate(names[k]) : names[k]); 
                     }
-                    if (!lang.empty() && destinationTagLang == region->decodingRules[k].getTag()) {
-                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    if (!lang.empty() && destinationTagLang == region->routeEncodingRules[k].getTag()) {
+                        return destRef1 + (translit ? transliterate(names[k]) : names[k]); 
                     }
-                    if (destinationTagDefault == region->decodingRules[k].getTag()) {
+                    if (destinationTagDefault == region->routeEncodingRules[k].getTag()) {
                         destinationDefault = names[k];
                     }
                 }
             }
             if (!destinationDefault.empty()) {
-                return destRef1 + /*((transliterate) ? Junidecode.unidecode(destinationDefault) :*/ destinationDefault; // TODO
+                return destRef1 + (translit ? transliterate(destinationDefault) : destinationDefault); 
             }
         }
         return "" == destRef ? "" : destRef;

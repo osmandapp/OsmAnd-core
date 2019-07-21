@@ -43,9 +43,40 @@ void print_dump(const char* msg1, const char* msg2) {
 }
 #endif
 
+uint32_t RoutingIndex::findOrCreateRouteType(const std::string& tag, const std::string& value ) {
+	uint32_t i = 0;
+	for(; i < routeEncodingRules.size(); i++) {
+		RouteTypeRule& rtr = routeEncodingRules[i];
+		if(tag == rtr.getTag() && value == rtr.getValue()) {
+			return i;
+		}
+	}
+	RouteTypeRule rtr(tag, value);
+	routeEncodingRules.push_back(rtr);
+	return i;
+}
+
+void RoutingIndex::completeRouteEncodingRules() {
+	for(uint32_t i = 0; i < routeEncodingRules.size(); i++) {
+		RouteTypeRule& rtr = routeEncodingRules[i];
+		if(rtr.conditional()) {
+			std::string tag = rtr.getNonConditionalTag();
+			for(auto& c : rtr.getConditions() ) {
+				if(tag != "" && c.value != "") {
+					c.ruleid = findOrCreateRouteType(tag, c.value);
+				}
+			}
+		}
+	}
+}
+
 void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::string val) {
     RouteTypeRule rule(tag, val);
-    decodingRules[id] = rule;
+    while(routeEncodingRules.size() > id) {
+    	RouteTypeRule empty(tag, val);
+    	routeEncodingRules.push_back(empty);
+    }
+    routeEncodingRules[id] = rule;
     
     if (tag == "name") {
         nameTypeRule = id;
@@ -88,7 +119,7 @@ int RouteDataObject::getOneway() {
 string RouteDataObject::getValue(const string& tag) {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {
-        auto& r = region->decodingRules[types[i]];
+        auto& r = region->routeEncodingRules[types[i]];
         if (r.getTag() == tag) {
             return r.getValue();
         }
@@ -128,7 +159,7 @@ std::vector<double> RouteDataObject::calculateHeightArray() {
                 if(pointTypes.size() > k && pointTypes[k].size() > 0) {
                     auto sz = pointTypes[k].size();
                     for(int sti = 0; sti < sz; sti++) {
-                        auto& r = region->decodingRules[pointTypes[k][sti]];
+                        auto& r = region->routeEncodingRules[pointTypes[k][sti]];
                         if (r.getTag() == "osmand_ele_asc") {
                             height = (prevHeight + atof(r.getValue().c_str()));
                             break;
@@ -172,7 +203,7 @@ std::vector<double> RouteDataObject::calculateHeightArray() {
 string RouteDataObject::getHighway() {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {
-        auto& r = region->decodingRules[types[i]];
+        auto& r = region->routeEncodingRules[types[i]];
         if (r.getTag() == "highway") {
             return r.getValue();
         }
@@ -183,7 +214,7 @@ string RouteDataObject::getHighway() {
 bool RouteDataObject::platform() {
 	auto sz = types.size();
     for (int i = 0; i < sz; i++) {
-        auto& r = region->decodingRules[types[i]];
+        auto& r = region->routeEncodingRules[types[i]];
         if (r.getTag() == "railway" && r.getValue() == "platform") {
             return true;
         } else if (r.getTag() == "public_transport" && r.getValue() == "platform") {
@@ -196,7 +227,7 @@ bool RouteDataObject::platform() {
 bool RouteDataObject::roundabout() {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {
-        auto& r = region->decodingRules[types[i]];
+        auto& r = region->routeEncodingRules[types[i]];
         if (r.getTag() == "roundabout" || r.getValue() == "roundabout") {
             return true;
         } else if(r.getTag() == "oneway" && r.getValue() != "no" && loop()) {
@@ -558,6 +589,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 		}
 		}
 	}
+	routingIndex->completeRouteEncodingRules();
 	return true;
 }
 
@@ -1147,8 +1179,8 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 		std::vector<uint32_t>::iterator typeIt = r->types.begin();
 		for (; typeIt != r->types.end(); typeIt++) {
 			uint32_t k = (*typeIt);
-			if (k < r->region->decodingRules.size()) {
-				auto& t = r->region->decodingRules[k];
+			if (k < r->region->routeEncodingRules.size()) {
+				auto& t = r->region->routeEncodingRules[k];
 				if (t.getTag() == "highway" || t.getTag() == "route" || t.getTag() == "railway" || t.getTag() == "aeroway"
 						|| t.getTag() == "aerialway") {
 					obj->types.push_back(tag_value(t.getTag(), t.getValue()));
@@ -1164,7 +1196,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
-				std::string ruleId = r->region->decodingRules[nameIterator->first].getTag();
+				std::string ruleId = r->region->routeEncodingRules[nameIterator->first].getTag();
 				obj->objectNames[ruleId] = nameIterator->second;
 				
 			}
@@ -1172,7 +1204,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			for (auto nIterator = r->namesIds.begin();
 				nIterator != r->namesIds.end(); nIterator++) {
 				obj->namesOrder.push_back(
-					r->region->decodingRules[nIterator->first].getTag());
+					r->region->routeEncodingRules[nIterator->first].getTag());
 			}
 			
 			obj->area = false;
@@ -1189,7 +1221,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 
 void checkAndInitRouteRegionRules(int fileInd, RoutingIndex* routingIndex){
 	// init decoding rules
-	if (routingIndex->decodingRules.size() == 0) {
+	if (routingIndex->routeEncodingRules.size() == 0) {
 		lseek(fileInd, 0, SEEK_SET);
 		FileInputStream input(fileInd);
 		input.SetCloseOnDelete(false);

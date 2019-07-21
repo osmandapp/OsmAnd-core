@@ -3,15 +3,16 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 #include "openingHoursParser.h"
 
 struct RouteTypeCondition {
     std::string condition;
     std::shared_ptr<OpeningHoursParser::OpeningHours> hours;
-    float floatValue;
-    
-    RouteTypeCondition() : condition(""), hours(nullptr), floatValue(0) {
+    std::string value;
+    uint32_t ruleid;
+    RouteTypeCondition() : condition(""), hours(nullptr), value(""), ruleid(0) {
     }
 };
 
@@ -64,7 +65,19 @@ public:
     inline const std::string& getValue() {
         return v;
     }
+
+    inline std::vector<RouteTypeCondition>& getConditions() {
+        return conditions;
+    }
     
+    inline const std::string getNonConditionalTag() {
+        int ind = t.find(":conditional");
+        if (ind >= 0) {
+            return t.substr(0, ind);
+        }
+        return t;
+    }
+
     inline bool roundabout() {
         return type == ROUNDABOUT;
     }
@@ -85,6 +98,8 @@ public:
     }
     
     float maxSpeed();
+
+    const uint32_t conditionalValue(const tm& dateTime);
     
     inline int lanes() {
         if (type == LANES) {

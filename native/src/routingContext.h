@@ -295,6 +295,7 @@ struct RoutingContext {
 					for (;i != res.end(); i++) {
 						if (*i != NULL) {
 							SHARED_PTR<RouteDataObject> o(*i);
+							// TODO conditional here we could process 
 							if (acceptLine(o)) {
 								if (excludedIds.find(o->getId()) == excludedIds.end()) {
 									subregions[j]->add(o);
