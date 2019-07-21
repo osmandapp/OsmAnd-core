@@ -426,6 +426,7 @@ jclass jclass_RoutingConfiguration = NULL;
 jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
 jfieldID jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
 jfieldID jfield_RoutingConfiguration_planRoadDirection = NULL;
+jfieldID jfield_RoutingConfiguration_routeCalculationTime = NULL;
 jfieldID jfield_RoutingConfiguration_routerName = NULL;
 jfieldID jfield_RoutingConfiguration_router = NULL;
 
@@ -561,6 +562,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
 	jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_RoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
 	jfield_RoutingConfiguration_planRoadDirection = getFid(env, jclass_RoutingConfiguration, "planRoadDirection", "I");
+	jfield_RoutingConfiguration_routeCalculationTime = getFid(env, jclass_RoutingConfiguration, "routeCalculationTime", "J");
 	jfield_RoutingConfiguration_routerName = getFid(env, jclass_RoutingConfiguration, "routerName", "Ljava/lang/String;");
 	jfield_RoutingConfiguration_router = getFid(env, jclass_RoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
 
@@ -1063,6 +1065,7 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	rConfig->planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
 	rConfig->heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
 	rConfig->zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
+	rConfig->routeCalculationTime = ienv->GetLongField(jRouteConfig, jfield_RoutingConfiguration_routeCalculationTime) / 1000;
 	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
 	rConfig->routerName = getString(ienv, rName);
 
@@ -1144,6 +1147,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	c.targetX = data[2];
 	c.targetY = data[3];
 	c.basemap = basemap;
+	c.setConditionalTime(config->routeCalculationTime);
 	c.publicTransport = publicTransport;
 	c.startTransportStop = startTransportStop;
 	c.targetTransportStop = targetTransportStop;
