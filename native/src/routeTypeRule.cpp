@@ -5,7 +5,7 @@
 
 const uint32_t RouteTypeRule::conditionalValue(const tm& dateTime) {
     if (!conditions.empty()) {
-        for (const auto& c : conditions) {
+    for (const auto& c : conditions) {
             if (c.hours != nullptr && c.hours->isOpened()) {
                 return c.ruleid;
             }
@@ -49,7 +49,7 @@ void RouteTypeRule::analyze() {
             auto ch = c.find("@");
             if (ch != std::string::npos) {
                 RouteTypeCondition cond;
-                cond.value = trim(c.substr(0, ch), 0);
+                cond.value = trim(c.substr(0, ch));
                 cond.condition = trim(c.substr(ch + 1));
                 if (startsWith(cond.condition, "(")) {
                     cond.condition = trim(cond.condition.substr(1, cond.condition.length() - 1));
