@@ -195,10 +195,10 @@ struct RoutingContext {
     }
 
     void setConditionalTime(time_t tm) {
-    	conditionalTime = tm;
-    	if(conditionalTime != 0) {
-    		conditionalTimeStr = *localtime(&conditionalTime);
-    	}
+        conditionalTime = tm;
+        if(conditionalTime != 0) {
+            conditionalTimeStr = *localtime(&conditionalTime);
+        }
     }
     
     int searchSubregionTile(RouteSubregion& subregion) {

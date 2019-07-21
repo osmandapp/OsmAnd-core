@@ -1065,7 +1065,7 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	rConfig->planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
 	rConfig->heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
 	rConfig->zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
-	rConfig->routeCalculationTime = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_routeCalculationTime) / 1000;
+	rConfig->routeCalculationTime = ienv->GetLongField(jRouteConfig, jfield_RoutingConfiguration_routeCalculationTime) / 1000;
 	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
 	rConfig->routerName = getString(ienv, rName);
 

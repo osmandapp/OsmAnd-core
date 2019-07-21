@@ -90,13 +90,13 @@ void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::stri
 }
 
 void RouteDataObject::processConditionalTags(const tm& time) {
-	 auto sz = types.size();
+     auto sz = types.size();
      for (uint32_t i = 0; i < sz; i++) {
         auto& r = region->quickGetEncodingRule(types[i]);
         if (r.conditional()) {
             uint32_t vl = r.conditionalValue(time);
             if(vl > 0) {
-                auto& rtr = region->quickGetEncodingRule(types[i]);
+                auto& rtr = region->quickGetEncodingRule(vl);
                 std::string nonCondTag = rtr.getTag();
                 for (uint32_t ks = 0; ks < sz; ks++) {
                     auto& toReplace = region->quickGetEncodingRule(types[ks]);

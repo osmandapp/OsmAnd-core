@@ -5,8 +5,8 @@
 
 const uint32_t RouteTypeRule::conditionalValue(const tm& dateTime) {
     if (!conditions.empty()) {
-    for (const auto& c : conditions) {
-            if (c.hours != nullptr && c.hours->isOpened()) {
+        for (const auto& c : conditions) {
+            if (c.hours != nullptr && c.hours->isOpenedForTime(dateTime)) {
                 return c.ruleid;
             }
         }
