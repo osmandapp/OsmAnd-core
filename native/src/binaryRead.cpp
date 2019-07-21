@@ -89,6 +89,27 @@ void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::stri
     }
 }
 
+void RouteDataObject::processConditionalTags(const tm& time) {
+	 auto sz = types.size();
+     for (uint32_t i = 0; i < sz; i++) {
+        auto& r = region->quickGetEncodingRule(types[i]);
+        if (r.conditional()) {
+            uint32_t vl = r.conditionalValue(time);
+            if(vl > 0) {
+                auto& rtr = region->quickGetEncodingRule(types[i]);
+                std::string nonCondTag = rtr.getTag();
+                for (uint32_t ks = 0; ks < sz; ks++) {
+                    auto& toReplace = region->quickGetEncodingRule(types[ks]);
+                    if(toReplace.getTag() == nonCondTag) {
+                        types[ks] = vl;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool RouteDataObject::tunnel() {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {
@@ -105,7 +126,7 @@ bool RouteDataObject::tunnel() {
 
 int RouteDataObject::getOneway() {
     auto sz = types.size();
-    for (int i = 0; i < sz; i++) {
+    for (uint32_t i = 0; i < sz; i++) {
         auto& r = region->quickGetEncodingRule(types[i]);
         if (r.onewayDirection() != 0) {
             return r.onewayDirection();
@@ -118,11 +139,44 @@ int RouteDataObject::getOneway() {
 
 string RouteDataObject::getValue(const string& tag) {
     auto sz = types.size();
-    for (int i = 0; i < sz; i++) {
+    for (uint32_t i = 0; i < sz; i++) {
         auto& r = region->routeEncodingRules[types[i]];
         if (r.getTag() == tag) {
             return r.getValue();
         }
+    }
+    for (auto it = names.begin(); it != names.end(); ++it) {
+        uint32_t k = it->first;
+        if (region->routeEncodingRules.size() > k) {
+        	auto& r = region->routeEncodingRules[k];
+        	if (r.getTag() == tag) {
+            	return it->second;
+        	}
+        }
+    }
+    return "";
+}
+
+string RouteDataObject::getValue(uint32_t pnt, const string& tag) {
+    if(pointTypes.size() > pnt) {
+    	auto tps = pointTypes[pnt];
+    	auto sz = tps.size();
+    	for (uint32_t i = 0; i < sz; i++) {
+        	auto& r = region->routeEncodingRules[tps[i]];
+        	if (r.getTag() == tag) {
+            	return r.getValue();
+        	}
+    	}
+	}
+	if(pointNameTypes.size() > pnt) {
+    	auto tps = pointNameTypes[pnt];
+    	auto sz = tps.size();
+    	for (uint32_t i = 0; i < sz; i++) {
+        	auto& r = region->routeEncodingRules[namesIds[i].first];
+        	if (r.getTag() == tag) {
+            	return pointNames[pnt][i];
+        	}
+    	}
     }
     return "";
 }
@@ -156,19 +210,16 @@ std::vector<double> RouteDataObject::calculateHeightArray() {
             if(k == getPointsLength() - 1) {
                 height = endHeight;
             } else {
-                if(pointTypes.size() > k && pointTypes[k].size() > 0) {
-                    auto sz = pointTypes[k].size();
-                    for(int sti = 0; sti < sz; sti++) {
-                        auto& r = region->routeEncodingRules[pointTypes[k][sti]];
-                        if (r.getTag() == "osmand_ele_asc") {
-                            height = (prevHeight + atof(r.getValue().c_str()));
-                            break;
-                        } else if (r.getTag() == "osmand_ele_desc") {
-                            height = (prevHeight - atof(r.getValue().c_str()));
-                            break;
-                        }
-                    }
-                }
+				string asc = getValue(k, "osmand_ele_asc");
+				if(asc != "") {
+					height = (prevHeight + atof(asc.c_str()));
+				} else {
+					string desc = getValue(k, "osmand_ele_desc");
+					if(desc != "") {
+						height = (prevHeight - atof(desc.c_str()));
+					}
+				}
+                
             }
             heightDistanceArray[2*k] = dd;
             heightDistanceArray[2*k+1] = height;

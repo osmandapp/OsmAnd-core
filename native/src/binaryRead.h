@@ -216,8 +216,10 @@ struct RouteDataObject {
         return "";
     }
 
+    void processConditionalTags(const tm& time);
+
     inline const string& transliterate(const string& s) {
-        // TODO
+        // TODO transliteration
         return s;
     }
     
@@ -328,6 +330,7 @@ struct RouteDataObject {
     bool tunnel();
     int getOneway();
     string getValue(const string& tag);
+    string getValue(uint32_t pnt, const string& tag);
 
 	inline int getPointsLength() {
 		return (int)pointsX.size();
@@ -381,17 +384,18 @@ struct RouteDataObject {
         float maxSpeed = 0;
         for (int i = 0; i < sz; i++) {
             auto& r = region->quickGetEncodingRule(types[i]);
-            if (r.isForward() != 0) {
-                if ((r.isForward() == 1) != direction) {
-                    continue;
-                }
-            }
             float mx = r.maxSpeed();
             if (mx > 0) {
-                maxSpeed = mx;
-                // conditional has priority
-                if (r.conditional()) {
-                    break;
+                if (r.isForward() != 0) {
+                    if ((r.isForward() == 1) != direction) {
+                        continue;
+                    } else {
+                        // priority over default
+                        maxSpeed = mx;
+                        break;
+                    }
+                } else {
+                    maxSpeed = mx;
                 }
             }
         }
