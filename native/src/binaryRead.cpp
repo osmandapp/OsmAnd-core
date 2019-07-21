@@ -72,7 +72,7 @@ void RoutingIndex::completeRouteEncodingRules() {
 
 void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::string val) {
     RouteTypeRule rule(tag, val);
-    while(routeEncodingRules.size() > id) {
+    while(!(routeEncodingRules.size() > id)) {
     	RouteTypeRule empty(tag, val);
     	routeEncodingRules.push_back(empty);
     }
