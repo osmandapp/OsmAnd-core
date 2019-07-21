@@ -143,7 +143,7 @@ struct RouteDataObject {
 		return "";
 	}
     
-    inline string getName(string& lang, bool transliterate) {
+    inline string getName(string& lang, bool transliter) {
         if (!names.empty()) {
             if (lang.empty()) {
                 return names[region->nameTypeRule];
@@ -157,8 +157,8 @@ struct RouteDataObject {
                 }
             }
             string nmDef = names[region->nameTypeRule];
-            if (transliterate && !nmDef.empty()) {
-                //return Junidecode.unidecode(nmDef); TODO
+            if (transliter && !nmDef.empty()) {
+                return transliterate(nmDef);
             }
             return nmDef;
         }
@@ -169,7 +169,7 @@ struct RouteDataObject {
         return getName(lang, false);
     }
     
-    inline string getRef(string& lang, bool transliterate, bool direction) {
+    inline string getRef(string& lang, bool transliter, bool direction) {
         if (!names.empty()) {
             if (lang.empty()) {
                 return names[region->refTypeRule];
@@ -183,8 +183,8 @@ struct RouteDataObject {
                 }
             }
             string refDefault = names[region->refTypeRule];
-            if (transliterate && !refDefault.empty() && refDefault.length() > 0) {
-                //return Junidecode.unidecode(refDefault); TODO
+            if (transliter && !refDefault.empty() && refDefault.length() > 0) {
+                return transliterate(refDefault); 
             }
             return refDefault;
         }
