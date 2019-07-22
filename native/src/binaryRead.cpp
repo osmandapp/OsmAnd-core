@@ -172,7 +172,7 @@ string RouteDataObject::getValue(uint32_t pnt, const string& tag) {
     	auto tps = pointNameTypes[pnt];
     	auto sz = tps.size();
     	for (uint32_t i = 0; i < sz; i++) {
-        	auto& r = region->routeEncodingRules[pointNameTypes[i]];
+        	auto& r = region->routeEncodingRules[tps[i]];
         	if (r.getTag() == tag) {
             	return pointNames[pnt][i];
         	}
