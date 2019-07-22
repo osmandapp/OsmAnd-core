@@ -498,7 +498,7 @@ dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t
 		MAP_INT_INT::iterator nid = map.find(types[k]);
 		int vl;
 		if(nid == map.end()){
-			auto& r = reg->decodingRules[types[k]];
+			auto& r = reg->routeEncodingRules[types[k]];
 			vl = router->registerTagValueAttribute(tag_value(r.getTag(), r.getValue()));
 			map[types[k]] = vl;
 		} else {

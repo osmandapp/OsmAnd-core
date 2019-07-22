@@ -2,15 +2,20 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 
-float RouteTypeRule::maxSpeed() {
-    if (type == MAXSPEED) {
-        if (!conditions.empty()) {
-            for (const auto& c : conditions) {
-                if (c.hours != nullptr && c.hours->isOpened()) {
-                    return c.floatValue;
-                }
+
+const uint32_t RouteTypeRule::conditionalValue(const tm& dateTime) {
+    if (!conditions.empty()) {
+        for (const auto& c : conditions) {
+            if (c.hours != nullptr && c.hours->isOpenedForTime(dateTime)) {
+                return c.ruleid;
             }
         }
+    }
+    return 0;
+}
+
+float RouteTypeRule::maxSpeed() {
+    if (type == MAXSPEED) {
         return floatValue;
     }
     return -1;
@@ -37,16 +42,14 @@ void RouteTypeRule::analyze() {
         type = ROUNDABOUT;
     } else if (tl == "highway" && !v.empty()) {
         type = HIGHWAY_TYPE;
-    } else if (startsWith(t, "access") && !v.empty()) {
-        type = ACCESS;
-    } else if (tl == "maxspeed:conditional" && !v.empty()) {
+    } else if (endsWith(t, ":conditional") && !v.empty()) {
         conditions.clear();
         std::vector<std::string> cts = split_string(v, ";");
         for(auto& c : cts) {
             auto ch = c.find("@");
             if (ch != std::string::npos) {
                 RouteTypeCondition cond;
-                cond.floatValue = parseSpeed(c.substr(0, ch), 0);
+                cond.value = trim(c.substr(0, ch));
                 cond.condition = trim(c.substr(ch + 1));
                 if (startsWith(cond.condition, "(")) {
                     cond.condition = trim(cond.condition.substr(1, cond.condition.length() - 1));
@@ -58,7 +61,6 @@ void RouteTypeRule::analyze() {
                 conditions.push_back(cond);
             }
         }
-        type = MAXSPEED;
     } else if (tl == "maxspeed" && !v.empty()){
         type = MAXSPEED;
         floatValue = parseSpeed(v, 0);
@@ -70,6 +72,8 @@ void RouteTypeRule::analyze() {
         type = MAXSPEED;
         forward = -1;
         floatValue = parseSpeed(v, 0);
+    } else if (startsWith(t, "access") && !v.empty()) {
+        type = ACCESS;
     } else if (tl == "lanes" && !v.empty()) {
         intValue = -1;
         int i = 0;

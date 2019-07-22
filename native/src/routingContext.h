@@ -10,6 +10,7 @@
 #include "precalculatedRouteDirection.h"
 #include <algorithm>
 #include "Logging.h"
+#include <ctime>
 
 enum class RouteCalculationMode {
     BASE,
@@ -119,6 +120,9 @@ struct RoutingContext {
 	bool publicTransport;
 	bool basemap;
 
+	time_t conditionalTime;
+	tm conditionalTimeStr;
+
     vector<SHARED_PTR<RouteSegmentResult> > previouslyCalculatedRoute;
     SHARED_PTR<PrecalculatedRouteDirection> precalcRoute;
 	SHARED_PTR<RouteSegment> finalRouteSegment;
@@ -136,6 +140,7 @@ struct RoutingContext {
         this->startTransportStop = cp->startTransportStop;
         this->targetTransportStop = cp->targetTransportStop;
         this->publicTransport = cp->publicTransport;
+        this->conditionalTime = cp->conditionalTime;
         this->basemap = cp->basemap;
         // copy local data and clear caches
         auto it = cp->subregionTiles.begin();
@@ -170,6 +175,7 @@ struct RoutingContext {
 		, startTransportStop(false)
 		, targetTransportStop(false)
 		, publicTransport(false)
+		, conditionalTime(0)
 		, precalcRoute(new PrecalculatedRouteDirection()) {
             this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
@@ -186,6 +192,13 @@ struct RoutingContext {
         }
         subregionTiles.clear();
         indexedSubregions.clear();
+    }
+
+    void setConditionalTime(time_t tm) {
+        conditionalTime = tm;
+        if(conditionalTime != 0) {
+            conditionalTimeStr = *localtime(&conditionalTime);
+        }
     }
     
     int searchSubregionTile(RouteSubregion& subregion) {
@@ -295,6 +308,9 @@ struct RoutingContext {
 					for (;i != res.end(); i++) {
 						if (*i != NULL) {
 							SHARED_PTR<RouteDataObject> o(*i);
+							if(conditionalTime != 0) {
+								o->processConditionalTags(conditionalTimeStr);
+							}
 							if (acceptLine(o)) {
 								if (excludedIds.find(o->getId()) == excludedIds.end()) {
 									subregions[j]->add(o);
