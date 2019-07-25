@@ -1,9 +1,0 @@
--keep public class net.osmand.RenderingContext
--keep public class net.osmand.router.RouteCalculationProgress
--keep public class net.osmand.NativeLibrary
--keep public class net.osmand.render.RenderingRuleSearchRequest
--keep public class net.osmand.render.RenderingRulesStorage
--keep public class net.osmand.binary.BinaryMapRouteReaderAdapter$RouteRegion
--keep public class net.osmand.binary.BinaryMapRouteReaderAdapter$RouteSubregion
--keep public class net.osmand.NativeLibrary$RenderingGenerationResult
--keepclassmembers class net.osmand.NativeLibrary { !static <fields>; }
