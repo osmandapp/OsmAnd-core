@@ -36,6 +36,7 @@ private:
         TOKEN_COMMA,
         TOKEN_DASH,
         // order is important
+        TOKEN_YEAR,
         TOKEN_MONTH,
         TOKEN_DAY_MONTH,
         TOKEN_HOLIDAY,
@@ -52,12 +53,13 @@ private:
             case TokenType::TOKEN_COLON:        return 1;
             case TokenType::TOKEN_COMMA:        return 2;
             case TokenType::TOKEN_DASH:         return 3;
-            case TokenType::TOKEN_MONTH:        return 4;
-            case TokenType::TOKEN_DAY_MONTH:    return 5;
-            case TokenType::TOKEN_HOLIDAY:      return 6;
-            case TokenType::TOKEN_DAY_WEEK:     return 6;
-            case TokenType::TOKEN_HOUR_MINUTES: return 7;
-            case TokenType::TOKEN_OFF_ON:       return 8;
+            case TokenType::TOKEN_YEAR:         return 4;
+            case TokenType::TOKEN_MONTH:        return 5;
+            case TokenType::TOKEN_DAY_MONTH:    return 6;
+            case TokenType::TOKEN_HOLIDAY:      return 7;
+            case TokenType::TOKEN_DAY_WEEK:     return 7;
+            case TokenType::TOKEN_HOUR_MINUTES: return 8;
+            case TokenType::TOKEN_OFF_ON:       return 9;
             
             default: return 0;
         }
@@ -137,6 +139,14 @@ public:
         virtual bool containsMonth(const tm& dateTime) const = 0;
         
         /**
+         * Check if the year of "date" is part of this rule
+         *
+         * @param cal the time to check
+         * @return true if the year is part of the rule
+         */
+        virtual bool containsYear(const tm& dateTime) const = 0;
+        
+        /**
          * @return true if the rule overlap to the next day
          */
         virtual bool hasOverlapTimes() const = 0;
@@ -197,6 +207,14 @@ public:
         std::vector<bool> _months;
         
         /**
+         * represents the list on which year / month it is open.
+         */
+        std::vector<int> _firstYearMonths;
+        std::vector<int> _lastYearMonths;
+        int _fullYears;
+        int _year;
+        
+        /**
          * represents the list on which day it is open.
          */
         std::vector<std::vector<bool>> _dayMonths;
@@ -248,6 +266,13 @@ public:
          */
         std::vector<bool>& getMonths();
         
+        std::vector<int>& getFirstYearMonths();
+        std::vector<int>& getLastYearMonths();
+        int getFullYears() const;
+        void setFullYears(int value);
+        int getYear() const;
+        void setYear(int year);
+
         /**
          * represents the list on which day it is open.
          */
@@ -389,6 +414,14 @@ public:
         bool containsMonth(const tm& dateTime) const;
         
         /**
+         * Check if the year of "date" is part of this rule
+         *
+         * @param cal the time to check
+         * @return true if the year is part of the rule
+         */
+        bool containsYear(const tm& dateTime) const;
+        
+        /**
          * Check if this rule says the feature is open at time "date"
          *
          * @param date the time to check
@@ -410,7 +443,8 @@ public:
         
         void appendDaysString(std::stringstream& builder) const;
         void appendDaysString(std::stringstream& builder, const std::vector<std::string>& daysNames) const;
-        
+        bool appendYearString(std::stringstream& builder, const std::vector<int>& yearMonths, int month) const;
+
         /**
          * Add a time range (startTime-endTime) to this rule
          *
@@ -440,6 +474,7 @@ public:
         bool containsDay(const tm& dateTime) const;
         bool containsNextDay(const tm& dateTime) const;
         bool containsMonth(const tm& dateTime) const;
+        bool containsYear(const tm& dateTime) const;
 
         int getSequenceIndex() const;
 
