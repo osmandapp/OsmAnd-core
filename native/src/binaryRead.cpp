@@ -101,7 +101,7 @@ void RouteDataObject::processConditionalTags(const tm& time) {
                 uint32_t ks = 0;
                 for (; ks < sz; ks++) {
                     auto& toReplace = region->quickGetEncodingRule(types[ks]);
-                    if(toReplace.getTag() == nonCondTag) {
+                    if (toReplace.getTag() == nonCondTag) {
                         types[ks] = vl;
                         break;
                     }

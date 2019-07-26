@@ -44,7 +44,7 @@ void RouteTypeRule::analyze() {
         type = HIGHWAY_TYPE;
     } else if (endsWith(t, ":conditional") && !v.empty()) {
         conditions.clear();
-        std::vector<std::string> cts = split_string(v, ";");
+        std::vector<std::string> cts = split_string(v, ");");
         for(auto& c : cts) {
             auto ch = c.find("@");
             if (ch != std::string::npos) {
