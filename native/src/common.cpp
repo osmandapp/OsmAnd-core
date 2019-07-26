@@ -297,7 +297,7 @@ std::vector<std::string> split_string( const std::string& str, const std::string
     std::string::size_type pos, lastPos = 0, length = str.length();
     
     while (lastPos < length + 1) {
-        pos = str.find_first_of(delimiters, lastPos);
+        pos = str.find(delimiters, lastPos);
         if (pos == std::string::npos) {
             pos = length;
         }

@@ -351,7 +351,7 @@ string getTurnLanesString(SHARED_PTR<RouteSegmentResult>& segment) {
 }
 
 vector<int> calculateRawTurnLanes(string turnLanes, int calcTurnType) {
-    vector<string> splitLaneOptions = split_string(turnLanes, "\\|");
+    vector<string> splitLaneOptions = split_string(turnLanes, "|");
     vector<int> lanes(splitLaneOptions.size());
     for (int i = 0; i < splitLaneOptions.size(); i++) {
         vector<string> laneOptions = split_string(splitLaneOptions[i], ";");
@@ -803,7 +803,7 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
     t->setPossibleLeftTurn(possiblyLeftTurn);
     t->setPossibleRightTurn(possiblyRightTurn);
     if (rs.keepLeft || rs.keepRight) {
-        vector<string> splitLaneOptions = split_string(turnLanes, "\\|");
+        vector<string> splitLaneOptions = split_string(turnLanes, "|");
         int activeBeginIndex = findActiveIndex(rawLanes, splitLaneOptions, rs.leftLanes, true,
                                                rs.leftLanesInfo, rs.roadsOnLeft, rs.addRoadsOnLeft);
         
