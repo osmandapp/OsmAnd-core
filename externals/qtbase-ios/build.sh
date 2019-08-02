@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 if [ -z "$BASH_VERSION" ]; then
 	echo "Invalid shell, re-running using bash..."
@@ -16,7 +16,7 @@ targetOS=$1
 compiler=$2
 
 QTBASE_CONFIGURATION=$(echo "
-	-release -opensource -confirm-license -c++std c++11 -static -largefile -no-accessibility -qt-sql-sqlite
+	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -largefile -no-accessibility -qt-sql-sqlite
 	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
