@@ -84,35 +84,6 @@ diff -rupN upstream.original/lib/gif_font.c upstream.patched/lib/gif_font.c
  
  #include "gif_lib.h"
  
-diff -rupN upstream.original/lib/gif_hash.c upstream.patched/lib/gif_hash.c
---- upstream.original/lib/gif_hash.c	2013-09-03 16:41:31.000000000 +0300
-+++ upstream.patched/lib/gif_hash.c	2015-03-01 12:59:12.527618800 +0200
-@@ -16,11 +16,21 @@
- * 14 Jun 89 - Version 1.0 by Gershon Elber.
- *****************************************************************************/
- 
--#include <unistd.h>
--#include <stdint.h>
--#include <fcntl.h>
-+#include "config.h"
-+
-+#ifdef HAVE_UNISTD_H
-+#   include <unistd.h>
-+#endif
-+#ifdef HAVE_STDINT_H
-+#   include <stdint.h>
-+#endif
-+#ifdef HAVE_FCNTL_H
-+#   include <fcntl.h>
-+#endif
- #include <stdio.h>
--#include <string.h>
-+#ifdef HAVE_STRING_H
-+#   include <string.h>
-+#endif
- 
- #include "gif_lib.h"
- #include "gif_hash.h"
 diff -rupN upstream.original/lib/gif_hash.h upstream.patched/lib/gif_hash.h
 --- upstream.original/lib/gif_hash.h	2013-09-03 16:41:31.000000000 +0300
 +++ upstream.patched/lib/gif_hash.h	2015-03-01 13:01:48.990397400 +0200
@@ -153,4 +124,36 @@ diff -rupN upstream.original/lib/gifalloc.c upstream.patched/lib/gifalloc.c
 +#endif
  
  #include "gif_lib.h"
+
+diff -rupN upstream.original/lib/gif_hash.c upstream.patched/lib/gif_hash.c 
+--- upstream.original/lib/gif_hash.c	2013-09-03 15:41:31.000000000 +0200
++++ upstream.patched/lib/gif_hash.c	2019-08-02 18:22:00.000000000 +0200
+@@ -16,12 +16,22 @@
+ * 14 Jun 89 - Version 1.0 by Gershon Elber.
+ *****************************************************************************/
+ 
+-#include <unistd.h>
+-#include <stdint.h>
+-#include <fcntl.h>
+-#include <stdio.h>
+-#include <string.h>
++#include "config.h"
+ 
++#ifdef HAVE_UNISTD_H
++#   include <unistd.h>
++#endif
++#ifdef HAVE_STDINT_H
++#   include <stdint.h>
++#endif
++#ifdef HAVE_FCNTL_H
++#   include <fcntl.h>
++#endif
++#include <stdio.h>
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
++#include <stdlib.h>
+ #include "gif_lib.h"
+ #include "gif_hash.h"
+ #include "gif_lib_private.h"
  
