@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash
 
 if [ -z "$BASH_VERSION" ]; then
 	echo "Invalid shell, re-running using bash..."
