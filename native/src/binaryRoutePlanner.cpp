@@ -335,6 +335,7 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 			, (int)ctx->timeToCalculate.GetElapsedMs(), ctx->loadedTiles);
 	int sz = calculateSizeOfSearchMaps(graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Memory occupied (Routing context %d Kb, search %d Kb)", ctx->getSize()/ 1024, sz/1024);
+	ctx->visitedSegments = visitedDirectSegments.size() + visitedOppositeSegments.size();
 	return finalSegment;
 }
 
