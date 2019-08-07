@@ -103,6 +103,7 @@ struct RoutingContext {
 	int loadedTiles;
 	OsmAnd::ElapsedTimer timeToLoad;
 	OsmAnd::ElapsedTimer timeToCalculate;
+	OsmAnd::ElapsedTimer timeExtra;
 	int firstRoadDirection;
 	int64_t firstRoadId;
 	SHARED_PTR<RoutingConfiguration> config;

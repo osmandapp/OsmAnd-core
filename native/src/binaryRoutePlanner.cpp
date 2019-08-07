@@ -270,7 +270,7 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 			break;
 		}
 
-		ctx->visitedSegments++;		
+		ctx->visitedSegments++;	
 		if (forwardSearch) {
 			bool doNotAddIntersections = onlyBackward;
 			processRouteSegment(ctx, false, graphDirectSegments, visitedDirectSegments, 
@@ -331,8 +331,9 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Result visited (visited roads %d, visited segments %d / %d , queue sizes %d / %d ) ",
 			ctx-> visitedSegments, visitedDirectSegments.size(), visitedOppositeSegments.size(),
 			graphDirectSegments.size(),graphReverseSegments.size());
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Result timing (time to load %d, time to calc %d, loaded tiles %d) ", (int)ctx->timeToLoad.GetElapsedMs()
-			, (int)ctx->timeToCalculate.GetElapsedMs(), ctx->loadedTiles);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Result timing (time to load %.3f, time to calc %.3f, extra timer %.3f, loaded tiles %d) ", 
+			ctx->timeToLoad.GetElapsedMicros() / 1000000.0, ctx->timeToCalculate.GetElapsedMicros() / 1000000.0, 
+			ctx->timeExtra.GetElapsedMicros() / 1000000.0,  ctx->loadedTiles);
 	int sz = calculateSizeOfSearchMaps(graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Memory occupied (Routing context %d Kb, search %d Kb)", ctx->getSize()/ 1024, sz/1024);
 	ctx->visitedSegments = visitedDirectSegments.size() + visitedOppositeSegments.size();
@@ -369,6 +370,7 @@ bool checkIfInitialMovementAllowedOnSegment(RoutingContext* ctx, bool reverseWay
 
 
 float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject>& road, float distOnRoadToPass, float obstaclesTime) {
+	// ctx->timeExtra.Start();
 	float priority = ctx->config->router->defineSpeedPriority(road);
 	float speed = ctx->config->router->defineRoutingSpeed(road) * priority;
 	if (speed == 0) {
@@ -381,6 +383,7 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	if(speed > ctx->config->router->getMaxSpeed()) {
 		speed = ctx->config->router->getMaxSpeed();
 	}
+	// ctx->timeExtra.Pause();
 	return obstaclesTime + distOnRoadToPass / speed;
 }
 
@@ -524,9 +527,11 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			distStartObstacles = ctx->precalcRoute->getDeviationDistance(x, y) / ctx->precalcRoute->maxSpeed;
 		}
 		// We don't check if there are outgoing connections
+		
 		bool processFurther = true;
 		prev = processIntersections(ctx, graphSegments, visitedSegments, distStartObstacles,
 					segment, segmentPoint, roadNext, reverseWaySearch, doNotAddIntersections, &processFurther);
+		
 		if (!processFurther) {
 			directionAllowed = false;
 			continue;

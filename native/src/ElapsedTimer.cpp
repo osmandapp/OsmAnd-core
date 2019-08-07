@@ -9,12 +9,20 @@ OsmAnd::ElapsedTimer::ElapsedTimer()
 void OsmAnd::ElapsedTimer::Enable()
 {
 	isEnabled = true;
+	elapsed = high_resolution_clock::duration(0);
 }
 
 void OsmAnd::ElapsedTimer::Disable()
 {
 	Pause();
 	isEnabled = false;
+	elapsed = high_resolution_clock::duration(0);
+}
+
+void OsmAnd::ElapsedTimer::Reset()
+{
+	elapsed = high_resolution_clock::duration(0);
+	isRunning = false;
 }
 
 void OsmAnd::ElapsedTimer::Start()
@@ -30,7 +38,7 @@ void OsmAnd::ElapsedTimer::Pause()
 {
 	if (!isRunning)
 		return;
-    elapsed = (high_resolution_clock::now() - startPoint);
+    elapsed += (high_resolution_clock::now() - startPoint);
 	isRunning = false;
 }
 
@@ -38,6 +46,14 @@ const high_resolution_clock::duration& OsmAnd::ElapsedTimer::GetElapsed()
 {
 	Pause();
 	return elapsed;
+}
+
+
+
+uint64_t OsmAnd::ElapsedTimer::GetElapsedMicros()
+{
+    Pause();
+    return std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }
 
 uint64_t OsmAnd::ElapsedTimer::GetElapsedMs()
