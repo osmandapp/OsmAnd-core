@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "includePath": [
+                "native/include/",
+                "native/src/",
+                "externals/jpeg/",
+                "externals/protobuf/upstream.patched/src/",
+                "externals/skia/upstream.patched/include/**"
+            ],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "/usr/local/bin/gcc-6",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
