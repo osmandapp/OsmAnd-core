@@ -1769,8 +1769,6 @@ void OsmAnd::ResourcesManager_P::ObfsCollectionProxy::sortReaders(QList<std::sha
                   QString secondName = secondInfo.fileName();
                   firstName = firstName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
                   secondName = secondName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
-                  firstName = firstName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? firstName : firstName + QStringLiteral("_00_00_00");
-                  secondName = secondName.contains(QRegExp(QStringLiteral("([0-9]+_){2}[0-9]+"))) ? secondName : secondName + QStringLiteral("_00_00_00");
                   return firstName.compare(secondName) > 0;
               });
 }
