@@ -3,6 +3,7 @@
 OsmAnd::ElapsedTimer::ElapsedTimer()
     : isEnabled(true)
     , isRunning(false)
+	, elapsed (high_resolution_clock::duration(0))
 {
 }
 
@@ -38,7 +39,7 @@ void OsmAnd::ElapsedTimer::Pause()
 {
 	if (!isRunning)
 		return;
-    elapsed += (high_resolution_clock::now() - startPoint);
+    elapsed = elapsed + (high_resolution_clock::now() - startPoint);
 	isRunning = false;
 }
 
