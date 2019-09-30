@@ -25,7 +25,8 @@ struct RoutingSubregionTile {
 	int loaded;
 	uint size ;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
-	UNORDERED(set)<int64_t > excludedIds;
+	UNORDERED(set)<int64_t> excludedIds;
+	
 
 	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
 		size = sizeof(RoutingSubregionTile);
@@ -73,6 +74,7 @@ struct RoutingSubregionTile {
 				orig->next = segment;
 			}
 		}
+		excludedIds.insert(o->id);
 	}
 };
 
@@ -297,7 +299,7 @@ struct RoutingContext {
 			}
 		}
 		if (load) {
-			UNORDERED(set)<int64_t > excludedIds;
+			UNORDERED(set)<int64_t> excludedIds;
 			for (uint j = 0; j < subregions.size(); j++) {
 				if (!subregions[j]->isLoaded()) {
 					loadedTiles++;
@@ -410,6 +412,7 @@ struct RoutingContext {
             return SHARED_PTR<RouteSegment>();
         auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
+		UNORDERED(set)<int64_t> excludedIds;
 		SHARED_PTR<RouteSegment> original;
 		for(uint j = 0; j<subregions.size(); j++) {
 			if(subregions[j]->isLoaded()) {
@@ -418,18 +421,49 @@ struct RoutingContext {
 				while (segment.get() != NULL) {
 					SHARED_PTR<RouteDataObject> ro = segment->road;
 					SHARED_PTR<RouteDataObject> toCmp = excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
-					if (toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) {
+					if ((toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) && !excludedIds.count(ro->id)) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] =  ro;
 						SHARED_PTR<RouteSegment> s = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 						s->next = original;
 						original = 	s;
 					}
+					
 					segment = segment->next;
 				}
+				excludedIds.insert(subregions[j]->excludedIds.begin(), subregions[j]->excludedIds.end());
 			}
 		}
 
 		return original;
+	}
+
+		// private RouteSegment loadRouteSegment(int x31, int y31, RoutingContext ctx,
+		// 		TLongObjectHashMap<RouteDataObject> excludeDuplications, TLongSet excludeIds, RouteSegment original) {
+		// 	access++;
+		// 	if (routes != null) {
+		// 		long l = (((long) x31) << 31) + (long) y31;
+		// 		RouteSegment segment = routes.get(l);
+		// 		while (segment != null) {
+		// 			RouteDataObject ro = segment.road;
+		// 			RouteDataObject toCmp = excludeDuplications.get(calcRouteId(ro, segment.getSegmentStart()));
+		// 			if ((toCmp == null || toCmp.getPointsLength() < ro.getPointsLength())
+		// 					&& !excludeIds.contains(ro.id)) {
+		// 				excludeDuplications.put(calcRouteId(ro, segment.getSegmentStart()), ro);
+		// 				RouteSegment s = new RouteSegment(ro, segment.getSegmentStart());
+		// 				s.next = original;
+		// 				original = s;
+		// 			}
+		// 			segment = segment.next;
+		// 		}
+		// 	} else {
+		// 		throw new UnsupportedOperationException("Not clear how it could be used with native");
+		// 	}
+		// 	return original;
+		// }
+
+	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31, UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications, 
+	UNORDERED(set)<int64_t> excludedIds, SHARED_PTR<RouteSegment> original) {
+			
 	}
 
 	bool isInterrupted() {
