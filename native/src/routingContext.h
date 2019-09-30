@@ -25,7 +25,8 @@ struct RoutingSubregionTile {
 	int loaded;
 	uint size ;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
-	UNORDERED(set)<int64_t > excludedIds;
+	UNORDERED(set)<int64_t> excludedIds;
+	
 
 	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
 		size = sizeof(RoutingSubregionTile);
@@ -73,6 +74,7 @@ struct RoutingSubregionTile {
 				orig->next = segment;
 			}
 		}
+		excludedIds.insert(o->id);
 	}
 };
 
@@ -297,7 +299,7 @@ struct RoutingContext {
 			}
 		}
 		if (load) {
-			UNORDERED(set)<int64_t > excludedIds;
+			UNORDERED(set)<int64_t> excludedIds;
 			for (uint j = 0; j < subregions.size(); j++) {
 				if (!subregions[j]->isLoaded()) {
 					loadedTiles++;
@@ -355,7 +357,6 @@ struct RoutingContext {
 		timeToLoad.Pause();
 	}
 
-
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
@@ -410,6 +411,7 @@ struct RoutingContext {
             return SHARED_PTR<RouteSegment>();
         auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
+		UNORDERED(set)<int64_t> excludedIds;
 		SHARED_PTR<RouteSegment> original;
 		for(uint j = 0; j<subregions.size(); j++) {
 			if(subregions[j]->isLoaded()) {
@@ -418,14 +420,16 @@ struct RoutingContext {
 				while (segment.get() != NULL) {
 					SHARED_PTR<RouteDataObject> ro = segment->road;
 					SHARED_PTR<RouteDataObject> toCmp = excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
-					if (toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) {
+					if ((toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) && !excludedIds.count(ro->id)) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] =  ro;
 						SHARED_PTR<RouteSegment> s = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 						s->next = original;
 						original = 	s;
 					}
+					
 					segment = segment->next;
 				}
+				excludedIds.insert(subregions[j]->excludedIds.begin(), subregions[j]->excludedIds.end());
 			}
 		}
 
