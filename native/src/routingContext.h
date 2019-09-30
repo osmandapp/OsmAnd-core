@@ -357,7 +357,6 @@ struct RoutingContext {
 		timeToLoad.Pause();
 	}
 
-
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
@@ -435,35 +434,6 @@ struct RoutingContext {
 		}
 
 		return original;
-	}
-
-		// private RouteSegment loadRouteSegment(int x31, int y31, RoutingContext ctx,
-		// 		TLongObjectHashMap<RouteDataObject> excludeDuplications, TLongSet excludeIds, RouteSegment original) {
-		// 	access++;
-		// 	if (routes != null) {
-		// 		long l = (((long) x31) << 31) + (long) y31;
-		// 		RouteSegment segment = routes.get(l);
-		// 		while (segment != null) {
-		// 			RouteDataObject ro = segment.road;
-		// 			RouteDataObject toCmp = excludeDuplications.get(calcRouteId(ro, segment.getSegmentStart()));
-		// 			if ((toCmp == null || toCmp.getPointsLength() < ro.getPointsLength())
-		// 					&& !excludeIds.contains(ro.id)) {
-		// 				excludeDuplications.put(calcRouteId(ro, segment.getSegmentStart()), ro);
-		// 				RouteSegment s = new RouteSegment(ro, segment.getSegmentStart());
-		// 				s.next = original;
-		// 				original = s;
-		// 			}
-		// 			segment = segment.next;
-		// 		}
-		// 	} else {
-		// 		throw new UnsupportedOperationException("Not clear how it could be used with native");
-		// 	}
-		// 	return original;
-		// }
-
-	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31, UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications, 
-	UNORDERED(set)<int64_t> excludedIds, SHARED_PTR<RouteSegment> original) {
-			
 	}
 
 	bool isInterrupted() {
