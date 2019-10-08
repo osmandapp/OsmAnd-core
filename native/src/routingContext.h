@@ -26,6 +26,7 @@ struct RoutingSubregionTile {
 	uint size ;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
 	UNORDERED(set)<int64_t> excludedIds;
+
 	
 
 	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
@@ -74,7 +75,6 @@ struct RoutingSubregionTile {
 				orig->next = segment;
 			}
 		}
-		excludedIds.insert(o->id);
 	}
 };
 
@@ -411,7 +411,6 @@ struct RoutingContext {
             return SHARED_PTR<RouteSegment>();
         auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
-		UNORDERED(set)<int64_t> excludedIds;
 		SHARED_PTR<RouteSegment> original;
 		for(uint j = 0; j<subregions.size(); j++) {
 			if(subregions[j]->isLoaded()) {
@@ -420,20 +419,26 @@ struct RoutingContext {
 				while (segment.get() != NULL) {
 					SHARED_PTR<RouteDataObject> ro = segment->road;
 					SHARED_PTR<RouteDataObject> toCmp = excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
-					if ((toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size()) && !excludedIds.count(ro->id)) {
+					if (!isExcluded(ro->id, j, subregions) && (toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size())) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] =  ro;
 						SHARED_PTR<RouteSegment> s = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 						s->next = original;
 						original = 	s;
 					}
-					
 					segment = segment->next;
 				}
-				excludedIds.insert(subregions[j]->excludedIds.begin(), subregions[j]->excludedIds.end());
 			}
 		}
-
 		return original;
+	}
+
+	bool isExcluded(int64_t roadId, uint subIndex, vector<shared_ptr<RoutingSubregionTile>>& subregions) {
+		for (uint j = 0; j < subIndex; j++) {
+			if (subregions.at(j)->excludedIds.count(roadId) > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	bool isInterrupted() {
