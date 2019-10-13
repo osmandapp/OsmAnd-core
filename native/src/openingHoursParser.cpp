@@ -1479,12 +1479,21 @@ std::string OpeningHoursParser::OpeningHours::getOpeningTomorrow(const tm& dateT
     std::string openingTime("");
     cal.tm_mday += 1;
     std::mktime(&cal);
-    
+    time_t calTime = std::mktime(&cal);
+    time_t openingCalTime = 0;
+
     const auto& rules = getRules(sequenceIndex);
     for (const auto r : rules)
     {
         if (r->containsDay(cal) && r->containsMonth(cal))
-            openingTime = r->getTime(cal, false, WITHOUT_TIME_LIMIT, true);
+        {
+            std::string time = r->getTime(cal, false, WITHOUT_TIME_LIMIT, true);
+            if (time.empty() || openingCalTime == 0 || difftime(calTime, openingCalTime) < 0)
+            {
+                openingTime = time;
+            }
+            openingCalTime = calTime;
+        }
     }
     return openingTime;
 }
@@ -1499,12 +1508,20 @@ std::string OpeningHoursParser::OpeningHours::getOpeningDay(const tm& dateTime, 
     for (int i = 0; i < 7; i++)
     {
         cal.tm_mday += 1;
-        std::mktime(&cal);
+        time_t calTime = std::mktime(&cal);
+        time_t openingCalTime = 0;
 
         for (const auto r : rules)
         {
             if (r->containsDay(cal) && r->containsMonth(cal))
-                openingTime = r->getTime(cal, false, WITHOUT_TIME_LIMIT, true);
+            {
+                std::string time = r->getTime(cal, false, WITHOUT_TIME_LIMIT, true);
+                if (time.empty() || openingCalTime == 0 || difftime(calTime, openingCalTime) < 0)
+                {
+                    openingTime = time;
+                }
+                openingCalTime = calTime;
+            }
         }
         
         if (!openingTime.empty())
@@ -1669,14 +1686,18 @@ void replaceString(std::string& s, const std::string& oldString, const std::stri
         s.replace(f, oldString.length(), newString);
 }
 
-void replaceStringAll(std::string& s, const std::string& oldString, const std::string& newString)
+void replaceStringAll(std::string& str, const std::string& oldString, const std::string& newString)
 {
     size_t f;
+    std::string s = ohp_to_lowercase(str);
     do
     {
         f = s.find(oldString);
         if (f != std::string::npos)
+        {
             s.replace(f, oldString.length(), newString);
+            str.replace(f, oldString.length(), newString);
+        }
     }
     while (f != std::string::npos);
 }
@@ -1745,25 +1766,7 @@ std::vector<std::vector<std::string>> OpeningHoursParser::splitSequences(const s
 
 void OpeningHoursParser::parseRuleV2(const std::string& rl, int sequenceIndex, std::vector<std::shared_ptr<OpeningHoursRule>>& rules)
 {
-    std::string r(rl);
-    std::string comment("");
-    std::size_t q1Index = r.find('"');
-    if (q1Index != std::string::npos)
-    {
-        int q2Index = r.find('"', q1Index + 1);
-        if (q2Index != std::string::npos)
-        {
-            comment = r.substr(q1Index + 1, q2Index - (q1Index + 1));
-            std::string a = r.substr(0, q1Index);
-            std::string b("");
-            if (r.length() > q2Index + 1)
-                b = r.substr(q2Index + 1);
-            
-            r = a + b;
-        }
-    }
-    r = ohp_to_lowercase(r);
-    r = ohp_trim(r);
+    std::string r = ohp_trim(rl);
     
     std::vector<std::string> daysStr = { "mo", "tu", "we", "th", "fr", "sa", "su" };
     std::vector<std::string> monthsStr = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
@@ -1779,7 +1782,6 @@ void OpeningHoursParser::parseRuleV2(const std::string& rl, int sequenceIndex, s
     std::string localRuleString = r;
     
     auto basic = std::make_shared<BasicOpeningHourRule>(sequenceIndex);
-    basic->setComment(comment);
     auto& days = basic->getDays();
     auto& months = basic->getMonths();
     if ("24/7" == localRuleString)
@@ -1793,25 +1795,56 @@ void OpeningHoursParser::parseRuleV2(const std::string& rl, int sequenceIndex, s
     }
     std::vector<std::shared_ptr<Token>> tokens;
     int startWord = 0;
-    for(int i = 0; i <= localRuleString.length(); i++)
+    std::stringstream commentStr;
+    bool comment = false;
+    for (int i = 0; i <= localRuleString.length(); i++)
     {
         unsigned char ch = i == localRuleString.length() ? ' ' : localRuleString[i];
         bool delimiter = false;
         std::shared_ptr<Token> del = nullptr;
         if (std::isspace(ch))
+        {
             delimiter = true;
+        }
         else if (ch == ':')
+        {
             del = std::make_shared<Token>(TokenType::TOKEN_COLON, ":");
+        }
         else if (ch == '-')
+        {
             del = std::make_shared<Token>(TokenType::TOKEN_DASH, "-");
+        }
         else if (ch == ',')
+        {
             del = std::make_shared<Token>(TokenType::TOKEN_COMMA, ",");
-
-        if (delimiter || del != nullptr)
+        }
+        else if (ch == '"')
+        {
+            if (comment)
+            {
+                std::string s = commentStr.str();
+                if (s.length() > 0)
+                    tokens.push_back(std::make_shared<Token>(TokenType::TOKEN_COMMENT, s));
+                
+                startWord = i + 1;
+                commentStr.str("");
+                comment = false;
+            }
+            else
+            {
+                comment = true;
+                continue;
+            }
+        }
+        if (comment)
+        {
+            commentStr << ch;
+        }
+        else if (delimiter || del != nullptr)
         {
             std::string wrd = ohp_trim(localRuleString.substr(startWord, i - startWord));
             if (wrd.length() > 0)
-                tokens.push_back(std::make_shared<Token>(TokenType::TOKEN_UNKNOWN, wrd));
+                tokens.push_back(std::make_shared<Token>(TokenType::TOKEN_UNKNOWN, ohp_to_lowercase(wrd)));
             
             startWord = i + 1;
             if (del != nullptr)
@@ -2076,6 +2109,12 @@ void OpeningHoursParser::buildRule(std::shared_ptr<BasicOpeningHourRule>& basic,
                 auto l = listOfPairs[0];
                 if (l->at(0) != nullptr && l->at(0)->mainNumber == 0)
                     basic->setOff(true);
+            }
+            else if (currentParse == TokenType::TOKEN_COMMENT)
+            {
+                auto l = listOfPairs[0];
+                if (l->at(0) != nullptr && !l->at(0)->text.empty())
+                    basic->setComment(l->at(0)->text);
             }
             else if (currentParse == TokenType::TOKEN_YEAR)
             {
@@ -2449,7 +2488,11 @@ void OpeningHoursParser::runTest()
     // 0. not properly supported
     // hours = parseOpenedHours("Mo-Su (sunrise-00:30)-(sunset+00:30)");
     
-    auto hours = parseOpenedHours("2019 Apr 1 - 2020 Apr 1");
+    auto hours = parseOpenedHours("Mo-Fr 08:00-12:30, Mo-We 12:30-16:30 \"Sur rendez-vous\", Fr 12:30-15:30 \"Sur rendez-vous\"");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testInfo("13.10.2019 18:00", hours, "Will open tomorrow at 08:00");
+
+    hours = parseOpenedHours("2019 Apr 1 - 2020 Apr 1");
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
     testOpened("01.04.2018 15:00", hours, false);
     testOpened("01.04.2019 15:00", hours, true);
@@ -2861,6 +2904,11 @@ void OpeningHoursParser::runTest()
     testInfo("16.02.2018 16:00", hours, "Will open at 17:00");
     testInfo("16.02.2018 18:00", hours, "Open till 23:00");
     
+    hours = parseOpenedHours("Mo-Fr 08:00-12:00, Mo,Tu,Th 15:00-17:00; PH off");
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "%s", hours->toString().c_str());
+    testOpened("09.08.2019 15:00", hours, false);
+    testInfo("09.08.2019 15:00", hours, "Will open on 08:00 Mon.");
+
     hours = parseOpenedHours("Mo-Fr 10:00-21:00; Sa 12:00-23:00; PH \"Wird auf der Homepage bekannt gegeben.\"");
     testParsedAndAssembledCorrectly("Mo-Fr 10:00-21:00; Sa 12:00-23:00; PH - Wird auf der Homepage bekannt gegeben.", hours);
     

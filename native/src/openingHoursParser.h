@@ -2,7 +2,7 @@
 #define _OPENINGHOURSPARSER_H
 
 //  OsmAnd-java/src/net/osmand/util/OpeningHoursParser.java
-//  git revision 5c3985d1fbd584c4a8e9a4e9582bab9d281442a6
+//  git revision 0a298dc9c818a12c50441303601ad71d5845eec8
 
 #include <string>
 #include <vector>
@@ -42,7 +42,8 @@ private:
         TOKEN_HOLIDAY,
         TOKEN_DAY_WEEK,
         TOKEN_HOUR_MINUTES,
-        TOKEN_OFF_ON
+        TOKEN_OFF_ON,
+        TOKEN_COMMENT
     };
     
     inline static int getTokenTypeOrd(TokenType tokenType)
@@ -60,7 +61,8 @@ private:
             case TokenType::TOKEN_DAY_WEEK:     return 7;
             case TokenType::TOKEN_HOUR_MINUTES: return 8;
             case TokenType::TOKEN_OFF_ON:       return 9;
-            
+            case TokenType::TOKEN_COMMENT:      return 10;
+
             default: return 0;
         }
     }
