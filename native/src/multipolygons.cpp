@@ -272,9 +272,9 @@ void combineMultipolygonLine(std::vector<coordinates>& completedRings, std::vect
 
 int safelyAddDelta(int number, int delta) {
 	int res = number + delta;
-	if (delta > 0 && res < number) {
+	if (delta > 0 && INT_MAX - delta < number) {
 		return INT_MAX;
-	} else if (delta < 0 && res > number) {
+	} else if (delta < 0 && INT_MAX - delta > number) {
 		return INT_MIN;
 	}
 	return res;
