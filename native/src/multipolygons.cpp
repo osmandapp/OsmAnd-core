@@ -274,8 +274,8 @@ int safelyAddDelta(int number, int delta) {
 	int res = number + delta;
 	if (delta > 0 && INT_MAX - delta < number) {
 		return INT_MAX;
-	} else if (delta < 0 && INT_MIN - delta > number) {
-		return INT_MIN;
+	} else if (delta < 0 && -delta > number) {
+		return 0;
 	}
 	return res;
 }
