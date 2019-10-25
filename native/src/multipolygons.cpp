@@ -4,15 +4,16 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
+const bool DEBUG_LINE = false;
+
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
-	if(true) {
-		// avoid printing for now
+	if(!DEBUG_LINE) {
 		return;
 	}
 	if(c.size() == 0) {
 		return;
 	}
-	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%d sy=%d ex=%d ey=%d at [%d, %d] in [%d, %d]", msg.c_str(), id, id/128, 
+	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%d sy=%d ex=%d ey=%d - top/left [%d, %d] width/height [%d, %d]", msg.c_str(), id, id/128, 
 			c.at(0).first-leftX, c.at(0).second - topY,
 			c.at(c.size()-1).first-leftX, c.at(c.size()-1).second - topY,
 			leftX, topY, rightX - leftX, bottomY - topY);
@@ -304,6 +305,9 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			 	"Error processing multipolygon", 0, *ir, leftX, rightX, bottomY, topY);
 			toProccess.push_back(*ir);
 		} else {
+			if(DEBUG_LINE) {
+				printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean line touch:  ", -dbId, *ir, leftX, rightX, bottomY, topY);
+			}
 			nonvisitedRings.insert(j);
 		}
 	}
@@ -315,8 +319,13 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 6 << (23 - zoom);
+		const int EVAL_DELTA =  6 << (23 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
+		if(DEBUG_LINE) {
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
+				ir->at(0).first - leftX, ir->at(0).first -topY,
+			 	x - leftX, y - topY);
+		}
 		while (true) {
 			int st = 0; // st already checked to be one of the four
 			if (y == topY) {
@@ -403,11 +412,14 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			} // END go clockwise around rectangle
 			if (nextRingIndex == -1) {
 				// error - current start should always be found
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring");
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX, y - topY);
 				ir->push_back(ir->at(0));
 				nonvisitedRings.erase(j);
 				break;
 			} else if (nextRingIndex == j) {
+				if(DEBUG_LINE) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Ring is closed as island");
+				}
 				ir->push_back(ir->at(0));
 				nonvisitedRings.erase(j);
 				break;
@@ -418,6 +430,10 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				// get last point and start again going clockwise
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
+				if(DEBUG_LINE) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line endingto %d %d", 
+						x - leftX, y - topY);
+				}
 			}
 		}
 
