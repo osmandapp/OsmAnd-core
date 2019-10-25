@@ -112,6 +112,33 @@ void RouteDataObject::processConditionalTags(const tm& time) {
             }
         }
     }
+
+	for (uint32_t i = 0; i < pointTypes.size(); i++) {
+		std::vector<uint32_t> ptypes = pointTypes[i];
+		auto pSz = ptypes.size();
+		for (uint32_t j = 0; j < pSz; j++) {
+			auto& r = region->quickGetEncodingRule(ptypes[j]);
+			if (r.conditional()) {
+				uint32_t vl = r.conditionalValue(time);
+				if (vl > 0) {
+					auto& rtr = region->quickGetEncodingRule(vl);
+					std::string nonCondTag = rtr.getTag();
+					uint32_t ks = 0;
+					for (; ks < pSz; ks++) {
+						auto& toReplace = region->quickGetEncodingRule(ptypes[ks]);
+						if (toReplace.getTag() == nonCondTag) {
+							ptypes[ks] = vl;
+							break;
+						}
+					}
+					if (ks == pSz) {
+						ptypes.push_back(vl);
+					}
+				}
+			}
+		}
+		pointTypes[i] = ptypes;
+	} 
 }
 
 bool RouteDataObject::tunnel() {
