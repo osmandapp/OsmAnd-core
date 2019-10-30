@@ -3,7 +3,7 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
-const bool DEBUG_LINE = true;
+const bool DEBUG_LINE = false;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -309,7 +309,6 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			nonvisitedRings.insert(j);
 		}
 	}
-	// std::reverse(incompletedRings.begin(), incompletedRings.end());
 	ir = incompletedRings.begin();
 	for (j = 0; ir != incompletedRings.end(); ir++, j++) {
 		if (nonvisitedRings.find(j) == nonvisitedRings.end()) {
@@ -318,8 +317,8 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 6 << (21 - zoom);
-		const int UNDEFINED_MIN_DIFF = - 1 - EVAL_DELTA;
+		const int EVAL_DELTA = 6 << (23 - zoom);
+		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		if(DEBUG_LINE) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
 				ir->at(0).first - leftX, ir->at(0).second - topY,
