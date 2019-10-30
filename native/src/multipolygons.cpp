@@ -1,6 +1,5 @@
 #ifndef _MULTIPOLYGONS_CPP
 #define _MULTIPOLYGONS_CPP
-
 #include "Logging.h"
 #include "multipolygons.h"
 
@@ -281,7 +280,6 @@ int safelyAddDelta(int number, int delta) {
 	return res;
 }
 
-
 void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std::vector<std::vector<int_pair> >& completedRings,
 		int leftX, int rightX, int bottomY, int topY, int64_t dbId, int zoom) {
 	std::set<int> nonvisitedRings;
@@ -311,6 +309,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			nonvisitedRings.insert(j);
 		}
 	}
+	// std::reverse(incompletedRings.begin(), incompletedRings.end());
 	ir = incompletedRings.begin();
 	for (j = 0; ir != incompletedRings.end(); ir++, j++) {
 		if (nonvisitedRings.find(j) == nonvisitedRings.end()) {
@@ -319,8 +318,8 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 0;// 1 << (23 - zoom);
-		const int UNDEFINED_MIN_DIFF = 0; //-1 - EVAL_DELTA;
+		const int EVAL_DELTA = 6 << (21 - zoom);
+		const int UNDEFINED_MIN_DIFF = - 1 - EVAL_DELTA;
 		if(DEBUG_LINE) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
 				ir->at(0).first - leftX, ir->at(0).second - topY,
@@ -339,8 +338,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			}
 			int nextRingIndex = -1;
 			// BEGIN go clockwise around rectangle
-			for (int h = st; h < st + 4; h++) {
-
+			for (int h = st; h <= st + 4; h++) {
 				// BEGIN find closest nonvisited start (including current)
 				int mindiff = UNDEFINED_MIN_DIFF;
 				std::vector<std::vector<int_pair> >::iterator cni = incompletedRings.begin();
@@ -351,33 +349,54 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 					}
 					int csx = cni->at(0).first;
 					int csy = cni->at(0).second;
-					if (h % 4 == 0) {
+					bool lastLine = h == st + 4;
+					if (h % 4 == 0 && csy == topY) {
 						// top
-						if (csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
+						if (lastLine && csx <= safelyAddDelta(x, -EVAL_DELTA)) {
+							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
+								mindiff = (x - csx);
+								nextRingIndex = cnik;
+							}
+						} else if (csx >= safelyAddDelta(x, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
 								mindiff = (csx - x);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 1) {
+					} else if (h % 4 == 1 && csx == rightX) {
 						// right
-						if (csx == rightX && csy >= safelyAddDelta(y, -EVAL_DELTA)) {
+						if (lastLine && csy <= safelyAddDelta(y, -EVAL_DELTA)) {
+							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
+								mindiff = (y - csy);
+								nextRingIndex = cnik;
+							}
+						} else if (csy >= safelyAddDelta(y, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
 								mindiff = (csy - y);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 2) {
+					} else if (h % 4 == 2 && csy == bottomY) {
 						// bottom
-						if (csy == bottomY && csx <= safelyAddDelta(x, EVAL_DELTA)) {
+						if (lastLine && csx >= safelyAddDelta(x, EVAL_DELTA)) {
+							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
+								mindiff = (csx - x);
+								nextRingIndex = cnik;
+							}
+						} else if (csx <= safelyAddDelta(x, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
 								mindiff = (x - csx);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 3) {
+					} else if (h % 4 == 3 && csx == leftX ) {
 						// left
-						if (csx == leftX && csy <= safelyAddDelta(y, EVAL_DELTA)) {
+						if (lastLine && csy >= safelyAddDelta(y, EVAL_DELTA)) {
+							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
+								mindiff = (csy - y);
+								nextRingIndex = cnik;
+							}
+						} else if (csy <= safelyAddDelta(y, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
 								mindiff = (y - csy);
 								nextRingIndex = cnik;
@@ -412,7 +431,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			} // END go clockwise around rectangle
 			if (nextRingIndex == -1) {
 				// error - current start should always be found
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d %d %d", x - leftX, y - topY, leftX, topY);
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX, y - topY);
 				ir->push_back(ir->at(0));
 				nonvisitedRings.erase(j);
 				break;
@@ -431,7 +450,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
 				if(DEBUG_LINE) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line endingto %d %d", 
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line ending to %d %d", 
 						x - leftX, y - topY);
 				}
 			}
