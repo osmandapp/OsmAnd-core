@@ -4,7 +4,7 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
-const bool DEBUG_LINE = true;
+const bool DEBUG_LINE = false;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -319,7 +319,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA =  6 << (23 - zoom);
+		const int EVAL_DELTA = 0;// 6 << (23 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		if(DEBUG_LINE) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
@@ -359,22 +359,22 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 						// top
 						currentStartPoint = csx;
 						prevEndPoint = x;
-						currentStartPointIsGreater = lastSegment ? 0 : 1;
+						currentStartPointIsGreater = 1;
 					} else if (h % 4 == 1 && csx == rightX) {
 						// right
 						currentStartPoint = csy;
 						prevEndPoint = y;
-						currentStartPointIsGreater = lastSegment ? 0 : 1;
+						currentStartPointIsGreater = 1;
 					} else if (h % 4 == 2 && csy == bottomY) {
 						// bottom
 						currentStartPoint = csx;
 						prevEndPoint = x;
-						currentStartPointIsGreater = lastSegment ? 1 : 0;
+						currentStartPointIsGreater = 0;
 					} else if (h % 4 == 3 && csx == leftX) {
 						// left
 						currentStartPoint = csy;
 						prevEndPoint = y;
-						currentStartPointIsGreater = lastSegment ? 1 : 0;
+						currentStartPointIsGreater = 0;
 					}
 					if(currentStartPointIsGreater >= 0) {
 						bool checkMinDiff = currentStartPointIsGreater == 1 ?
@@ -429,14 +429,16 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				break;
 			} else {
 				std::vector<int_pair> p = incompletedRings.at(nextRingIndex);
+				int csx = p.at(0).first;
+				int csy = p.at(0).second;
 				ir->insert(ir->end(), p.begin(), p.end());
 				nonvisitedRings.erase(nextRingIndex);
 				// get last point and start again going clockwise
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
 				if(DEBUG_LINE) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line ending to %d %d", 
-						x - leftX, y - topY);
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line from %d %d to %d %d", 
+						csx - leftX, csy - topY, x - leftX, y - topY);
 				}
 			}
 		}
