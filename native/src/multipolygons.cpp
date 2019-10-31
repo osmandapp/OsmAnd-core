@@ -3,7 +3,7 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
-const bool DEBUG_LINE = true;
+const bool DEBUG_LINE = false;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -12,10 +12,12 @@ void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coor
 	if(c.size() == 0) {
 		return;
 	}
-	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%d sy=%d ex=%d ey=%d - top/left [%d, %d] width/height [%d, %d]", msg.c_str(), id, id/128, 
-			c.at(0).first-leftX, c.at(0).second - topY,
-			c.at(c.size()-1).first-leftX, c.at(c.size()-1).second - topY,
-			leftX, topY, rightX - leftX, bottomY - topY);
+	double h = bottomY - topY;
+	double w = rightX - leftX;
+	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%.4f sy=%.4f ex=%.4f ey=%.4f - top/left [%d, %d] width/height [%.0f, %.0f]", msg.c_str(), id, id/128, 
+			(c.at(0).first-leftX)/w, (c.at(0).second - topY)/h,
+			(c.at(c.size()-1).first-leftX)/w, (c.at(c.size()-1).second - topY)/h,
+			leftX, topY, w, h);
 }
 
 
@@ -317,12 +319,16 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 0; //6 << (23 - zoom);
+		const int EVAL_DELTA = 6 << (23 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
+		const double h = bottomY - topY;
+		const double w = rightX - leftX;
+
 		if(DEBUG_LINE) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
-				ir->at(0).first - leftX, ir->at(0).second - topY,
-			 	x - leftX, y - topY);
+			 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %.4f %.4f %.4f %.4f", 
+					(ir->at(0).first - leftX) / w, (ir->at(0).second - topY) / h,
+					(x - leftX) / w, (y - topY) / h);
+
 		}
 		while (true) {
 			int st = 0; // st already checked to be one of the four
@@ -348,34 +354,33 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 					}
 					int csx = cni->at(0).first;
 					int csy = cni->at(0).second;
-					bool lastLine = h == st + 4;
-					if (h % 4 == 0 && csy == topY) {
+					if (h % 4 == 0) {
 						// top
-						if(csx >= safelyAddDelta(x, -EVAL_DELTA)) {
+						if(csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
 								mindiff = (csx - x);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 1 && csx == rightX) {
+					} else if (h % 4 == 1) {
 						// right
-						if (csy >= safelyAddDelta(y, -EVAL_DELTA)) {
+						if (csx == rightX && csy >= safelyAddDelta(y, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
 								mindiff = (csy - y);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 2 && csy == bottomY) {
+					} else if (h % 4 == 2) {
 						// bottom
-						if (csx <= safelyAddDelta(x, EVAL_DELTA)) {
+						if (csy == bottomY && csx <= safelyAddDelta(x, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
 								mindiff = (x - csx);
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 3 && csx == leftX ) {
+					} else if (h % 4 == 3 ) {
 						// left
-						if (csy <= safelyAddDelta(y, EVAL_DELTA)) {
+						if (csx == leftX && csy <= safelyAddDelta(y, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
 								mindiff = (y - csy);
 								nextRingIndex = cnik;
@@ -423,14 +428,17 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				break;
 			} else {
 				std::vector<int_pair> p = incompletedRings.at(nextRingIndex);
+				int csx = p.at(0).first;
+				int csy = p.at(0).second;
 				ir->insert(ir->end(), p.begin(), p.end());
 				nonvisitedRings.erase(nextRingIndex);
 				// get last point and start again going clockwise
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
 				if(DEBUG_LINE) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line ending to %d %d", 
-						x - leftX, y - topY);
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line from %.4f %.4f to %.4f %.4f", 
+						(csx - leftX) / w, (csy - topY) / h, (x - leftX) / w, (y - topY) / h);
+
 				}
 			}
 		}
