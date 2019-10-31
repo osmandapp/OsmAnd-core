@@ -4,7 +4,7 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
-const bool DEBUG_LINE = false;
+const bool DEBUG_LINE = true;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -347,44 +347,44 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				int cnik = 0;
 				for (; cni != incompletedRings.end(); cni++, cnik++) {
 					if (nonvisitedRings.find(cnik) == nonvisitedRings.end()) {
-                		continue;
-            		}
-            		int csx = cni -> at(0).first;
-            		int csy = cni -> at(0).second;
-            		bool lastSegment = h == st + 4;
-            		int currentStartPoint = 0;
-            		int prevEndPoint = 0;
-            		int currentStartPointIsGreater = -1;
-            		if (h % 4 == 0 && csy == topY) {
-                		// top
-                		currentStartPoint = csx;
-                		prevEndPoint = x;
-                		currentStartPointIsGreater = lastSegment ? 0 : 1;
-            		} else if (h % 4 == 1 && csx == rightX) {
-                		// right
-                		currentStartPoint = csy;
-                		prevEndPoint = y;
-                		currentStartPointIsGreater = lastSegment ? 0 : 1;
-            		} else if (h % 4 == 2 && csy == bottomY) {
-                		// bottom
-                		currentStartPoint = csx;
-                		prevEndPoint = x;
-                		currentStartPointIsGreater = lastSegment ? 1 : 0;
-            		} else if (h % 4 == 3 && csx == leftX) {
-                		// left
-                		currentStartPoint = csy;
-                		prevEndPoint = y;
-                		currentStartPointIsGreater = lastSegment ? 1 : 0;
-            		}
+						continue;
+					}
+					int csx = cni -> at(0).first;
+					int csy = cni -> at(0).second;
+					bool lastSegment = h == st + 4;
+					int currentStartPoint = 0;
+					int prevEndPoint = 0;
+					int currentStartPointIsGreater = -1;
+					if (h % 4 == 0 && csy == topY) {
+						// top
+						currentStartPoint = csx;
+						prevEndPoint = x;
+						currentStartPointIsGreater = lastSegment ? 0 : 1;
+					} else if (h % 4 == 1 && csx == rightX) {
+						// right
+						currentStartPoint = csy;
+						prevEndPoint = y;
+						currentStartPointIsGreater = lastSegment ? 0 : 1;
+					} else if (h % 4 == 2 && csy == bottomY) {
+						// bottom
+						currentStartPoint = csx;
+						prevEndPoint = x;
+						currentStartPointIsGreater = lastSegment ? 1 : 0;
+					} else if (h % 4 == 3 && csx == leftX) {
+						// left
+						currentStartPoint = csy;
+						prevEndPoint = y;
+						currentStartPointIsGreater = lastSegment ? 1 : 0;
+					}
 					if(currentStartPointIsGreater >= 0) {
-            			bool checkMinDiff = currentStartPointIsGreater == 1 ?
-                    		prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA):
-                    		safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
+						bool checkMinDiff = currentStartPointIsGreater == 1 ?
+							prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA):
+							safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
 						int delta = abs(currentStartPoint - prevEndPoint);
-            			if (checkMinDiff && (mindiff == UNDEFINED_MIN_DIFF || delta <= mindiff)) {
-                			mindiff = delta;
-                			nextRingIndex = cnik;
-            			}
+						if (checkMinDiff && (mindiff == UNDEFINED_MIN_DIFF || delta <= mindiff)) {
+							mindiff = delta;
+							nextRingIndex = cnik;
+						}
 					}
 				}
 				// END find closest start (including current)
