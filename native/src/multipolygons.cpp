@@ -323,7 +323,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		if(DEBUG_LINE) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
-				ir->at(0).first - leftX, ir->at(0).first -topY,
+				ir->at(0).first - leftX, ir->at(0).second - topY,
 			 	x - leftX, y - topY);
 		}
 		while (true) {
@@ -339,52 +339,55 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 			}
 			int nextRingIndex = -1;
 			// BEGIN go clockwise around rectangle
-			for (int h = st; h < st + 4; h++) {
+			for (int h = st; h <= st + 4; h++) {
 
 				// BEGIN find closest nonvisited start (including current)
 				int mindiff = UNDEFINED_MIN_DIFF;
 				std::vector<std::vector<int_pair> >::iterator cni = incompletedRings.begin();
 				int cnik = 0;
-				for (;cni != incompletedRings.end(); cni++, cnik ++) {
+				for (; cni != incompletedRings.end(); cni++, cnik++) {
 					if (nonvisitedRings.find(cnik) == nonvisitedRings.end()) {
-						continue;
+                		continue;
+            		}
+            		int csx = cni -> at(0).first;
+            		int csy = cni -> at(0).second;
+            		bool lastSegment = h == st + 4;
+            		int currentStartPoint = 0;
+            		int prevEndPoint = 0;
+            		int currentStartPointIsGreater = -1;
+            		if (h % 4 == 0 && csy == topY) {
+                		// top
+                		currentStartPoint = csx;
+                		prevEndPoint = x;
+                		currentStartPointIsGreater = lastSegment ? 0 : 1;
+            		} else if (h % 4 == 1 && csx == rightX) {
+                		// right
+                		currentStartPoint = csy;
+                		prevEndPoint = y;
+                		currentStartPointIsGreater = lastSegment ? 0 : 1;
+            		} else if (h % 4 == 2 && csy == bottomY) {
+                		// bottom
+                		currentStartPoint = csx;
+                		prevEndPoint = x;
+                		currentStartPointIsGreater = lastSegment ? 1 : 0;
+            		} else if (h % 4 == 3 && csx == leftX) {
+                		// left
+                		currentStartPoint = csy;
+                		prevEndPoint = y;
+                		currentStartPointIsGreater = lastSegment ? 1 : 0;
+            		}
+					if(currentStartPointIsGreater >= 0) {
+            			bool checkMinDiff = currentStartPointIsGreater == 1 ?
+                    		prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA):
+                    		safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
+						int delta = abs(currentStartPoint - prevEndPoint);
+            			if (checkMinDiff && (mindiff == UNDEFINED_MIN_DIFF || delta <= mindiff)) {
+                			mindiff = delta;
+                			nextRingIndex = cnik;
+            			}
 					}
-					int csx = cni->at(0).first;
-					int csy = cni->at(0).second;
-					if (h % 4 == 0) {
-						// top
-						if (csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
-								mindiff = (csx - x);
-								nextRingIndex = cnik;
-							}
-						}
-					} else if (h % 4 == 1) {
-						// right
-						if (csx == rightX && csy >= safelyAddDelta(y, -EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
-								mindiff = (csy - y);
-								nextRingIndex = cnik;
-							}
-						}
-					} else if (h % 4 == 2) {
-						// bottom
-						if (csy == bottomY && csx <= safelyAddDelta(x, EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
-								mindiff = (x - csx);
-								nextRingIndex = cnik;
-							}
-						}
-					} else if (h % 4 == 3) {
-						// left
-						if (csx == leftX && csy <= safelyAddDelta(y, EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
-								mindiff = (y - csy);
-								nextRingIndex = cnik;
-							}
-						}
-					}
-				} // END find closest start (including current)
+				}
+				// END find closest start (including current)
 
 				// we found start point
 				if (mindiff != UNDEFINED_MIN_DIFF) {
@@ -410,6 +413,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				}
 
 			} // END go clockwise around rectangle
+
 			if (nextRingIndex == -1) {
 				// error - current start should always be found
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX, y - topY);
@@ -431,7 +435,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
 				if(DEBUG_LINE) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line endingto %d %d", 
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line ending to %d %d", 
 						x - leftX, y - topY);
 				}
 			}
