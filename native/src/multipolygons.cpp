@@ -3,7 +3,7 @@
 #include "Logging.h"
 #include "multipolygons.h"
 
-const bool DEBUG_LINE = false;
+const bool DEBUG_LINE = true;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -317,7 +317,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 6 << (23 - zoom);
+		const int EVAL_DELTA = 0; //6 << (23 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		if(DEBUG_LINE) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %d %d %d %d", 
@@ -351,12 +351,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 					bool lastLine = h == st + 4;
 					if (h % 4 == 0 && csy == topY) {
 						// top
-						if (lastLine && csx <= safelyAddDelta(x, -EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
-								mindiff = (x - csx);
-								nextRingIndex = cnik;
-							}
-						} else if (csx >= safelyAddDelta(x, -EVAL_DELTA)) {
+						if(csx >= safelyAddDelta(x, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
 								mindiff = (csx - x);
 								nextRingIndex = cnik;
@@ -364,12 +359,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 						}
 					} else if (h % 4 == 1 && csx == rightX) {
 						// right
-						if (lastLine && csy <= safelyAddDelta(y, -EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
-								mindiff = (y - csy);
-								nextRingIndex = cnik;
-							}
-						} else if (csy >= safelyAddDelta(y, -EVAL_DELTA)) {
+						if (csy >= safelyAddDelta(y, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
 								mindiff = (csy - y);
 								nextRingIndex = cnik;
@@ -377,12 +367,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 						}
 					} else if (h % 4 == 2 && csy == bottomY) {
 						// bottom
-						if (lastLine && csx >= safelyAddDelta(x, EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
-								mindiff = (csx - x);
-								nextRingIndex = cnik;
-							}
-						} else if (csx <= safelyAddDelta(x, EVAL_DELTA)) {
+						if (csx <= safelyAddDelta(x, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
 								mindiff = (x - csx);
 								nextRingIndex = cnik;
@@ -390,12 +375,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 						}
 					} else if (h % 4 == 3 && csx == leftX ) {
 						// left
-						if (lastLine && csy >= safelyAddDelta(y, EVAL_DELTA)) {
-							if (mindiff == UNDEFINED_MIN_DIFF || (csy - y) <= mindiff) {
-								mindiff = (csy - y);
-								nextRingIndex = cnik;
-							}
-						} else if (csy <= safelyAddDelta(y, EVAL_DELTA)) {
+						if (csy <= safelyAddDelta(y, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
 								mindiff = (y - csy);
 								nextRingIndex = cnik;
