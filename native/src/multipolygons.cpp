@@ -348,13 +348,17 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				int mindiff = UNDEFINED_MIN_DIFF;
 				std::vector<std::vector<int_pair> >::iterator cni = incompletedRings.begin();
 				int cnik = 0;
-				for (;cni != incompletedRings.end(); cni++, cnik++) {
+				for (; cni != incompletedRings.end(); cni++, cnik++) {
 					if (nonvisitedRings.find(cnik) == nonvisitedRings.end()) {
 						continue;
 					}
-					int csx = cni->at(0).first;
-					int csy = cni->at(0).second;
-					if (h % 4 == 0) {
+					int csx = cni -> at(0).first;
+					int csy = cni -> at(0).second;
+					bool lastSegment = h == st + 4;
+					int currentStartPoint = 0;
+					int prevEndPoint = 0;
+					int currentStartPointIsGreater = -1;
+					if (h % 4 == 0 && csy == topY) {
 						// top
 						if(csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
@@ -370,7 +374,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 2) {
+					} else if (h % 4 == 2 && csy == bottomY) {
 						// bottom
 						if (csy == bottomY && csx <= safelyAddDelta(x, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (x - csx) <= mindiff) {
@@ -387,7 +391,18 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 							}
 						}
 					}
-				} // END find closest start (including current)
+					if(currentStartPointIsGreater >= 0) {
+						bool checkMinDiff = currentStartPointIsGreater == 1 ?
+							prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA):
+							safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
+						int delta = abs(currentStartPoint - prevEndPoint);
+						if (checkMinDiff && (mindiff == UNDEFINED_MIN_DIFF || delta <= mindiff)) {
+							mindiff = delta;
+							nextRingIndex = cnik;
+						}
+					}
+				}
+				// END find closest start (including current)
 
 				// we found start point
 				if (mindiff != UNDEFINED_MIN_DIFF) {
@@ -413,6 +428,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				}
 
 			} // END go clockwise around rectangle
+
 			if (nextRingIndex == -1) {
 				// error - current start should always be found
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX, y - topY);
@@ -438,7 +454,6 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				if(DEBUG_LINE) {
 					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line from %.4f %.4f to %.4f %.4f", 
 						(csx - leftX) / w, (csy - topY) / h, (x - leftX) / w, (y - topY) / h);
-
 				}
 			}
 		}

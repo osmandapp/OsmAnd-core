@@ -1,6 +1,6 @@
 {
-    "configurations": [
-        {
+    "configurations": [{
+            "name":"osmand-legacy-core",
             "includePath": [
                 "native/include/",
                 "native/src/",
