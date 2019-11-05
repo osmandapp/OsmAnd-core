@@ -387,7 +387,7 @@ double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, u
 
 double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
 	double spd = getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateDouble(road, defaultSpeed);
-	return spd;
+	return max(min(spd, maxSpeed), minSpeed);
 }
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
