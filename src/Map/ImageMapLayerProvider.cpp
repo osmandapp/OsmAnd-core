@@ -24,6 +24,14 @@ _threadPool(new QThreadPool())
 
 OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 {
+    waitForTasksDone();
+    delete _threadPool;
+}
+
+void OsmAnd::ImageMapLayerProvider::waitForTasksDone(bool clear /* = true*/)
+{
+    _threadPool->clear();
+    _threadPool->waitForDone();
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()

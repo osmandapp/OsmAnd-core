@@ -51,13 +51,14 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         ZoomLevel _lastRequestedZoom;
+        QThreadPool *_threadPool;
         
         int getAndDecreasePriority();
         ZoomLevel getLastRequestedZoom() const;
         void setLastRequestedZoom(const ZoomLevel zoomLevel);
     protected:
         ImageMapLayerProvider();
-        QThreadPool *_threadPool;
+        void waitForTasksDone(bool clear = true);
     public:
         virtual ~ImageMapLayerProvider();
 
