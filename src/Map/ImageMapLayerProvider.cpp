@@ -1,18 +1,37 @@
 #include "ImageMapLayerProvider.h"
+#include "Logging.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkImageDecoder.h>
 #include <SkStream.h>
 #include "restore_internal_warnings.h"
 
+#include "QtExtensions.h"
+#include <QStandardPaths>
+
+#include "OsmAndCore.h"
+#include "MapDataProviderHelpers.h"
+#include "QRunnableFunctor.h"
+
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() : emptyImage(nullptr)
+OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() : emptyImage(nullptr),
+_priority(0),
+_lastRequestedZoom(ZoomLevel0),
+_threadPool(new QThreadPool())
 {
 }
 
 OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 {
+    waitForTasksDone();
+    delete _threadPool;
+}
+
+void OsmAnd::ImageMapLayerProvider::waitForTasksDone(bool clear /* = true*/)
+{
+    _threadPool->clear();
+    _threadPool->waitForDone();
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()
@@ -72,13 +91,21 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         return true;
     }
-
+    
     // Decode image data
-    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkMemoryStream imageStream(image.constData(), image.length(), false);
-    if (!SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
-        return false;
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (!SkImageDecoder::DecodeMemory(
+            image.constData(), image.size(),
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode image tile");
 
+        return false;
+    }
+    
     // Return tile
     outData.reset(new IRasterMapLayerProvider::Data(
         request.tileId,
@@ -95,11 +122,54 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
     const bool collectMetric /*= false*/)
 {
     const auto& request = MapDataProviderHelpers::castRequest<Request>(request_);
+    setLastRequestedZoom(request.zoom);
+    
+    const auto requestClone = request_.clone();
+    const QRunnableFunctor::Callback task =
+    [this, requestClone, callback, collectMetric]
+    (const QRunnableFunctor* const runnable)
+    {
+        std::shared_ptr<IMapDataProvider::Data> data;
+        std::shared_ptr<Metric> metric;
+        const auto& r = MapDataProviderHelpers::castRequest<Request>(*requestClone);
+        
+        bool requestSucceeded = false;
+        if (r.zoom == getLastRequestedZoom())
+            requestSucceeded = this->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
 
-    if (!supportsNaturalObtainDataAsync())
-        return MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+        callback(this, requestSucceeded, data, metric);
+    };
+    
+    const auto taskRunnable = new QRunnableFunctor(task);
+    taskRunnable->setAutoDelete(true);
+    int priority = getAndDecreasePriority();
+    _threadPool->start(taskRunnable, priority);
+}
 
-    obtainImageAsync(request, new AsyncImage(this, request, callback));
+OsmAnd::ZoomLevel OsmAnd::ImageMapLayerProvider::getLastRequestedZoom() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _lastRequestedZoom;
+}
+
+void OsmAnd::ImageMapLayerProvider::setLastRequestedZoom(const ZoomLevel zoomLevel)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_lastRequestedZoom != zoomLevel)
+        _priority = 0;
+    
+    _lastRequestedZoom = zoomLevel;
+}
+
+int OsmAnd::ImageMapLayerProvider::getAndDecreasePriority()
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _priority--;
+    
+    return _priority;
 }
 
 OsmAnd::ImageMapLayerProvider::AsyncImage::AsyncImage(

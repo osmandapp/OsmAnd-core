@@ -44,6 +44,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
 
 OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
 {
+    _threadPool->clear();
     _threadPool->waitForDone();
     delete _threadPool;
 }
