@@ -5,6 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
+#include <QThreadPool>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -46,8 +47,17 @@ namespace OsmAnd
     private:
         std::shared_ptr<const SkBitmap> emptyImage;
         const std::shared_ptr<const SkBitmap> getEmptyImage();
+        
+        mutable QReadWriteLock _lock;
+        int _priority;
+        ZoomLevel _lastRequestedZoom;
+        
+        int getAndDecreasePriority();
+        ZoomLevel getLastRequestedZoom() const;
+        void setLastRequestedZoom(const ZoomLevel zoomLevel);
     protected:
         ImageMapLayerProvider();
+        QThreadPool *_threadPool;
     public:
         virtual ~ImageMapLayerProvider();
 
