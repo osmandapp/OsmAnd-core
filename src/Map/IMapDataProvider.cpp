@@ -14,6 +14,8 @@ OsmAnd::IMapDataProvider::RetainableCacheMetadata::~RetainableCacheMetadata()
 
 OsmAnd::IMapDataProvider::Data::Data(const RetainableCacheMetadata* const pRetainableCacheMetadata /*= nullptr*/)
 {
+    if (pRetainableCacheMetadata != nullptr)
+        retainableCacheMetadata = std::shared_ptr<const RetainableCacheMetadata>(pRetainableCacheMetadata);
 }
 
 OsmAnd::IMapDataProvider::Data::~Data()
