@@ -15,7 +15,7 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() : emptyImage(nullptr),
+OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() :
 _priority(0),
 _lastRequestedZoom(ZoomLevel0),
 _threadPool(new QThreadPool())
