@@ -15,7 +15,7 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() : emptyImage(nullptr),
+OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() :
 _priority(0),
 _lastRequestedZoom(ZoomLevel0),
 _threadPool(new QThreadPool())
@@ -36,17 +36,13 @@ void OsmAnd::ImageMapLayerProvider::waitForTasksDone(bool clear /* = true*/)
 
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()
 {
-    if (emptyImage)
-        return emptyImage;
-    
     SkBitmap bitmap;
     // Create a bitmap that will be hold entire symbol (if target is empty)
     const auto tileSize = getTileSize();
     if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
     {
         bitmap.eraseColor(SK_ColorTRANSPARENT);
-        emptyImage = std::make_shared<SkBitmap>(bitmap);
-        return emptyImage;
+        return std::make_shared<SkBitmap>(bitmap);
     }
     return nullptr;
 }

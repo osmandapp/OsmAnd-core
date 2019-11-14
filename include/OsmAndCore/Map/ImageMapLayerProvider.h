@@ -45,7 +45,6 @@ namespace OsmAnd
         };
 
     private:
-        std::shared_ptr<const SkBitmap> emptyImage;
         const std::shared_ptr<const SkBitmap> getEmptyImage();
         
         mutable QReadWriteLock _lock;
