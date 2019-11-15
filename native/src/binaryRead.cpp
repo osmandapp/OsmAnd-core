@@ -960,10 +960,10 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 				}
 			}
 			input->PopLimit(old);
-			bool acceptTps = acceptTypes(req, types, root);	
-			if (!acceptTps) {
-				return NULL;
-			}
+			//bool acceptTps = acceptTypes(req, types, root);	
+			//if (!acceptTps) {
+			//	return NULL;
+			//}
 			break;
 		}
 		case OsmAnd::OBF::MapData::kIdFieldNumber:
