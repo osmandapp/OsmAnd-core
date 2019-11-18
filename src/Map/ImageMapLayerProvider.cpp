@@ -12,6 +12,7 @@
 #include "OsmAndCore.h"
 #include "MapDataProviderHelpers.h"
 #include "QRunnableFunctor.h"
+#include "IQueryController.h"
 
 #include "MapDataProviderHelpers.h"
 
@@ -66,8 +67,15 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (!supportsNaturalObtainData())
         return MapDataProviderHelpers::nonNaturalObtainData(this, request, outData, pOutMetric);
 
+    if (request.queryController != nullptr && request.queryController->isAborted())
+        return false;
+    
     // Obtain image data
     const auto image = obtainImage(request);
+    
+    if (request.queryController != nullptr && request.queryController->isAborted())
+        return false;
+
     if (image.isNull())
     {
         const auto emptyImage = getEmptyImage();

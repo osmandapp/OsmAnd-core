@@ -6,6 +6,8 @@
 
 #include <QString>
 #include <QFile>
+#include <QFileDeviceInputStream.h>
+#include <QIODeviceInputStream.h>
 #include <QTextStream>
 #include <QIODevice>
 #include <OsmAndCore/Utilities.h>
@@ -32,17 +34,36 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     
     std::string filename = pathToFile.toStdString();
-    std::ifstream stream(filename.c_str(),std::ios_base::in|std::ios_base::binary);
     OsmAnd::VectorTile::Tile tile;
-    std::string message(std::istreambuf_iterator<char>(stream.rdbuf()),(std::istreambuf_iterator<char>()));
-    stream.close();
     QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry>> result;
-    if (!tile.ParseFromString(message))
+    
+    const auto input = std::shared_ptr<QIODevice>(new QFile(pathToFile));
+    // Create zero-copy input stream
+    ::google::protobuf::io::ZeroCopyInputStream* zcis = nullptr;
+    if (const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(input))
+        zcis = new QFileDeviceInputStream(inputFileDevice);
+    else
+        zcis = new QIODeviceInputStream(input);
+    
+    const auto cis = new ::google::protobuf::io::CodedInputStream(zcis);
+    cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+
+    LogPrintf(OsmAnd::LogSeverityLevel::Debug,
+              "!!! Reading %s", qPrintable(pathToFile));
+
+    
+    bool res = tile.MergeFromCodedStream(cis);
+    delete cis;
+    delete zcis;
+
+    if (!res)
     {
         LogPrintf(OsmAnd::LogSeverityLevel::Debug,
                   "Failed to parse protobuf");
         return result;
     }
+    int geomCount = 0;
+    int geomSize = 0;
     for (int i = 0; i < static_cast<std::size_t>(tile.layers_size()); ++i)
     {
         const auto& layer = tile.layers(i);
@@ -62,9 +83,16 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
                 unconst->setUserData(parseUserData(feature.tags(), layer.keys(), layer.values()));
                 
                 result << geom;
+                
+                geomCount++;
+                geomSize += sizeof(geom);
             }
         }
     }
+    
+    LogPrintf(OsmAnd::LogSeverityLevel::Debug,
+              "!!! geomCount %d = %d", geomCount, geomSize);
+    
     return result;
 }
 

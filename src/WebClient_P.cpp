@@ -292,6 +292,8 @@ OsmAnd::WebClient_P::Request::Request(
 
 OsmAnd::WebClient_P::Request::~Request()
 {
+    if (_lastNetworkReply != nullptr)
+        _lastNetworkReply->deleteLater();
 }
 
 void OsmAnd::WebClient_P::Request::run()
