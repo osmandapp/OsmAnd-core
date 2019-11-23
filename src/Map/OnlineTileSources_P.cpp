@@ -167,7 +167,7 @@ int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes
     QString val = attributes.value(attributeName).toString();
     bool ok;
     int integerValue = val.toInt(&ok);
-    if (val.isEmpty() || !ok)
+    if (!ok)
         return defaultValue;
     
     return integerValue;
@@ -178,7 +178,7 @@ long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attribut
     QString val = attributes.value(attributeName).toString();
     bool ok;
     long longValue = val.toLong(&ok);
-    if (val.isEmpty() || !ok)
+    if (!ok)
         return defaultValue;
     
     return longValue;
