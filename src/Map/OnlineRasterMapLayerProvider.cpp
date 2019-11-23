@@ -12,30 +12,20 @@
 #include <Logging.h>
 
 OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
-    const QString& name_,
-    const QString& urlPattern_,
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
-    const uint32_t maxConcurrentDownloads_ /*= 1*/,
-    const uint32_t tileSize_ /*= 256*/,
-    const AlphaChannelPresence alphaChannelPresence_ /*= AlphaChannelPresence::Undefined*/,
-    const float tileDensityFactor_ /*= 1.0f*/,
+    const std::shared_ptr<const IOnlineTileSources::Source> tileSource,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new OnlineRasterMapLayerProvider_P(this, webClient))
     , _threadPool(new QThreadPool())
+    , _tileSource(tileSource)
     , _lastRequestedZoom(ZoomLevel0)
     , _priority(0)
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
-    , name(name_)
+    , name(tileSource->name)
     , pathSuffix(QString(name).replace(QRegExp(QLatin1String("\\W+")), QLatin1String("_")))
-    , urlPattern(urlPattern_)
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
-    , maxConcurrentDownloads(maxConcurrentDownloads_)
-    , tileSize(tileSize_)
-    , alphaChannelPresence(alphaChannelPresence_)
-    , tileDensityFactor(tileDensityFactor_)
+    , maxConcurrentDownloads(0)
+    , alphaChannelPresence(AlphaChannelPresence::NotPresent)
+    , tileDensityFactor(tileSource->bitDensity / 16.0)
 {
     _p->_localCachePath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix);
     if (_p->_localCachePath.isEmpty())
@@ -76,7 +66,7 @@ float OsmAnd::OnlineRasterMapLayerProvider::getTileDensityFactor() const
 
 uint32_t OsmAnd::OnlineRasterMapLayerProvider::getTileSize() const
 {
-    return tileSize;
+    return _tileSource->tileSize;
 }
 
 bool OsmAnd::OnlineRasterMapLayerProvider::supportsNaturalObtainData() const
@@ -157,10 +147,10 @@ int OsmAnd::OnlineRasterMapLayerProvider::getAndDecreasePriority()
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMinZoom() const
 {
-    return minZoom;
+    return _tileSource->minZoom;
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMaxZoom() const
 {
-    return maxZoom;
+    return _tileSource->maxZoom;
 }

@@ -2,6 +2,7 @@
 #include "OnlineTileSources_P.h"
 
 #include <QFile>
+#include <QRegularExpression>
 
 OsmAnd::OnlineTileSources::OnlineTileSources()
     : _p(new OnlineTileSources_P(this))
@@ -76,4 +77,18 @@ const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_h
 std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources::getBuiltIn()
 {
     return OnlineTileSources_P::getBuiltIn();
+}
+
+const QString OsmAnd::OnlineTileSources::normalizeUrl(QString &url)
+{
+    if (url != nullptr)
+    {
+        url = url.replace(QRegularExpression("\\{\\$z\\}"), "{0}");
+        url = url.replace(QRegularExpression("\\{\\$x\\}"), "{1}");
+        url = url.replace(QRegularExpression("\\{\\$y\\}"), "{2}");
+        url = url.replace(QRegularExpression("\\{z\\}"), "{0}");
+        url = url.replace(QRegularExpression("\\{x\\}"), "{1}");
+        url = url.replace(QRegularExpression("\\{y\\}"), "{2}");
+    }
+    return url;
 }

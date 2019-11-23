@@ -47,6 +47,8 @@ namespace OsmAnd
 
         static std::shared_ptr<const OnlineTileSources> getBuiltIn();
         static const QString BuiltInOsmAndHD;
+        
+        static const QString normalizeUrl(QString &url);
     };
 }
 

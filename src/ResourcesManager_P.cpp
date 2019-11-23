@@ -122,7 +122,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
 
     // Built-in online tile sources
     const std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
-        QLatin1String("default.online_tile_sources.xml"),
+        QLatin1String("tile_sources.xml"),
         ResourceType::OnlineTileSources,
         std::shared_ptr<const Resource::Metadata>(new OnlineTileSourcesMetadata(OnlineTileSources::getBuiltIn()))));
     _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
@@ -651,7 +651,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_OnlineTileSourcesRes
     QFileInfoList onlineTileSourcesFileInfos;
     Utilities::findFiles(
         storagePath,
-        QStringList() << QLatin1String("*.online_tile_sources.xml"),
+        QStringList() << QLatin1String("tile_sources.xml"),
         onlineTileSourcesFileInfos,
         false);
     for (const auto& onlineTileSourcesFileInfo : constOf(onlineTileSourcesFileInfos))

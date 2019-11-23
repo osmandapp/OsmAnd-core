@@ -13,6 +13,177 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 {
 }
 
+std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+{
+    std::shared_ptr<const Source> tileSource = nullptr;
+    if (attributes.hasAttribute("rule"))
+    {
+        const QString rule = attributes.value(QStringLiteral("rule")).toString();
+        if (rule.isEmpty() || rule == QStringLiteral("template:1"))
+            tileSource = createSimpleTileSourceTemplate(attributes, rule);
+        else if (rule == QStringLiteral("wms_tile"))
+            tileSource = createWmsTileSourceTemplate(attributes);
+    }
+    else
+    {
+        tileSource = createSimpleTileSourceTemplate(attributes, QStringLiteral(""));
+    }
+    return tileSource;
+}
+
+std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+{
+    const QString name = attributes.value(QStringLiteral("name")).toString();
+    const QString layer = attributes.value(QStringLiteral("layer")).toString();
+    QString urlTemplate = attributes.value(QStringLiteral("url_template")).toString();
+    
+    if (name.isEmpty() || urlTemplate.isEmpty() || layer.isEmpty())
+        return nullptr;
+    
+    std::shared_ptr<Source> source(new Source(name));
+    
+    source->maxZoom = ZoomLevel(parseInt(attributes, QStringLiteral("max_zoom"), 18));
+    source->minZoom = ZoomLevel(parseInt(attributes, QStringLiteral("min_zoom"), 5));
+    source->tileSize = parseInt(attributes, QStringLiteral("tile_size"), 256);
+    const QString ext = !attributes.hasAttribute(QStringLiteral("ext")) ? QStringLiteral(".jpg") : attributes.value(QStringLiteral("ext")).toString();
+    source->ext = ext;
+    source->bitDensity = parseInt(attributes, QStringLiteral("img_density"), 16);
+    source->avgSize = parseInt(attributes, QStringLiteral("avg_img_size"), 18000);
+    const QString randoms = attributes.value(QStringLiteral("randoms")).toString();
+    source->randoms = randoms;
+    source->randomsArray = parseRandoms(randoms);
+    urlTemplate = QStringLiteral("http://whoots.mapwarper.net/tms/{0}/{1}/{2}/") + layer + QStringLiteral("/") + urlTemplate;
+    source->urlToLoad = urlTemplate;
+    source->rule = QStringLiteral("wms_tile");
+    
+    return std::const_pointer_cast<const Source>(source);
+}
+
+std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule) const
+{
+    QString urlTemplate = attributes.value(QStringLiteral("url_template")).toString();
+    QString name = attributes.value(QStringLiteral("name")).toString();
+    // TODO: change when we start supporting elliptic correction
+    
+    bool ellipticCorrection = attributes.value(QStringLiteral("ellipsoid")).toString() == QStringLiteral("true");
+    if (name.isEmpty() || urlTemplate.isEmpty() || ellipticCorrection)
+        return nullptr;
+    
+    urlTemplate = OnlineTileSources::normalizeUrl(urlTemplate);
+    
+    std::shared_ptr<Source> source(new Source(name));
+    
+    source->urlToLoad = urlTemplate;
+    source->maxZoom = ZoomLevel(parseInt(attributes, QStringLiteral("max_zoom"), 18));
+    source->minZoom = ZoomLevel(parseInt(attributes, QStringLiteral("min_zoom"), 5));
+    source->tileSize = parseInt(attributes, QStringLiteral("tile_size"), 256);
+    long expirationTimeMinutes = parseLong(attributes, QStringLiteral("expiration_time_minutes"), -1);
+    if (expirationTimeMinutes > 0)
+        source->expirationTimeMillis = expirationTimeMinutes * 60 * 1000l;
+    const QString ext = !attributes.hasAttribute(QStringLiteral("ext")) ? QStringLiteral(".jpg") : attributes.value(QStringLiteral("ext")).toString();
+    source->ext = ext;
+    source->bitDensity = parseInt(attributes, QStringLiteral("img_density"), 16);
+    source->avgSize = parseInt(attributes, QStringLiteral("avg_img_size"), 18000);
+    source->ellipticYTile = ellipticCorrection /*Always false for now*/;
+    source->invertedYTile = attributes.value(QStringLiteral("inverted_y")).toString() == QStringLiteral("true");
+    
+    const QString randoms = attributes.value(QStringLiteral("randoms")).toString();
+    source->randoms = randoms;
+    source->randomsArray = parseRandoms(randoms);
+    source->rule = rule;
+    
+    return std::const_pointer_cast<const Source>(source);
+}
+
+QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms) const
+{
+    QList<QString> result;
+    if (!randoms.isEmpty())
+    {
+        if (randoms == QStringLiteral("wikimapia"))
+        {
+            result.append(QStringLiteral("wikimapia"));
+            return result;
+        }
+    
+        QStringList valuesArray = randoms.split(QStringLiteral(","));
+        for (const auto& s : valuesArray)
+        {
+            QStringList rangeArray = s.split(QStringLiteral("-"));
+            if (rangeArray.count() == 2)
+            {
+                QString s1 = rangeArray[0];
+                QString s2 = rangeArray[1];
+                bool rangeValid = false;
+                bool ok1, ok2;
+                
+                int a = s1.toInt(&ok1);
+                int b = s2.toInt(&ok2);
+                if (ok1 && ok2)
+                {
+                   if (b > a)
+                   {
+                        for (int i = a; i <= b; i++)
+                        {
+                            result.append(QString::number(i));
+                        }
+                        rangeValid = true;
+                    }
+                }
+                else
+                {
+                    if (s1.length() == 1 && s2.length() == 1)
+                    {
+                        char a = s1.at(0).toLatin1();
+                        char b = s2.at(0).toLatin1();
+                        if (b > a)
+                        {
+                            for (char i = a; i <= b; i++)
+                            {
+                                result.append(QString(i));
+                            }
+                            rangeValid = true;
+                        }
+                    }
+                }
+                
+                if (!rangeValid)
+                {
+                    result.append(s1);
+                    result.append(s2);
+                }
+            }
+            else
+            {
+                result.append(s);
+            }
+        }
+    }
+    return result;
+}
+
+int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes, const QString attributeName, int defaultValue) const
+{
+    QString val = attributes.value(attributeName).toString();
+    bool ok;
+    int integerValue = val.toInt(&ok);
+    if (!ok)
+        return defaultValue;
+    
+    return integerValue;
+}
+
+long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attributes, const QString attributeName, long defaultValue) const
+{
+    QString val = attributes.value(attributeName).toString();
+    bool ok;
+    long longValue = val.toLong(&ok);
+    if (!ok)
+        return defaultValue;
+    
+    return longValue;
+}
+
 bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
 {
     QHash< QString, std::shared_ptr<const Source> > collection;
@@ -34,75 +205,9 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
                 continue;
             }
 
-            // Original format of the tile sources, used in the Android application
-            if (xmlReader.attributes().hasAttribute("rule"))
-            {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "'%s' online tile source is not supported since it uses special rule, possibly quadkey",
-                    qPrintable(name));
-                continue;
-            }
-
-            const auto originalUrlTemplate = xmlReader.attributes().value(QLatin1String("url_template")).toString();
-            const auto urlPattern = QString(originalUrlTemplate)
-                .replace(QLatin1String("{0}"), QLatin1String("${osm_zoom}"))
-                .replace(QLatin1String("{1}"), QLatin1String("${osm_x}"))
-                .replace(QLatin1String("{2}"), QLatin1String("${osm_y}"));
-            const auto minZoom = static_cast<ZoomLevel>(xmlReader.attributes().value(QLatin1String("min_zoom")).toUInt());
-            const auto maxZoom = static_cast<ZoomLevel>(xmlReader.attributes().value(QLatin1String("max_zoom")).toUInt());
-            const auto tileSize = xmlReader.attributes().value(QLatin1String("tile_size")).toUInt();
-            
-            std::shared_ptr<Source> newSource(new Source(name));
-            newSource->urlPattern = urlPattern;
-            newSource->minZoom = minZoom;
-            newSource->maxZoom = maxZoom;
-            newSource->maxConcurrentDownloads = 1;
-            newSource->tileSize = tileSize;
-            newSource->alphaChannelPresence = AlphaChannelPresence::Unknown;
-            newSource->tileDensityFactor = 1.0f;
-            collection.insert(name, newSource);
-        }
-        else if (tagName == QLatin1String("onlineTileSource"))
-        {
-            const auto name = xmlReader.attributes().value(QLatin1String("name")).toString();
-            if (collection.contains(name))
-            {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "Ignored duplicate online tile source with name '%s'",
-                    qPrintable(name));
-                continue;
-            }
-
-            const auto title = xmlReader.attributes().value(QLatin1String("title")).toString();
-            const auto urlPattern = xmlReader.attributes().value(QLatin1String("urlPattern")).toString();
-            const auto minZoom = static_cast<ZoomLevel>(xmlReader.attributes().value(QLatin1String("minZoom")).toUInt());
-            const auto maxZoom = static_cast<ZoomLevel>(xmlReader.attributes().value(QLatin1String("maxZoom")).toUInt());
-            const auto maxConcurrentDownloads = xmlReader.attributes().value(QLatin1String("maxConcurrentDownloads")).toUInt();
-            const auto tileSize = xmlReader.attributes().value(QLatin1String("tileSize")).toUInt();
-            const auto alphaChannelPresenceValue =
-                xmlReader.attributes().value(QLatin1String("alphaChannelPresence")).toString();
-            auto alphaChannelPresence = AlphaChannelPresence::Unknown;
-            if (QString::compare(alphaChannelPresenceValue, QLatin1String("notPresent"), Qt::CaseInsensitive) == 0)
-                alphaChannelPresence = AlphaChannelPresence::NotPresent;
-            else if (QString::compare(alphaChannelPresenceValue, QLatin1String("present"), Qt::CaseInsensitive) == 0)
-                alphaChannelPresence = AlphaChannelPresence::Present;
-            else if (QString::compare(alphaChannelPresenceValue, QLatin1String("unknown"), Qt::CaseInsensitive) != 0)
-            {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "Unknown alphaChannelPresence value '%s'",
-                    qPrintable(alphaChannelPresenceValue));
-            }
-            const auto tileDensityFactor = xmlReader.attributes().value(QLatin1String("tileDensityFactor")).toFloat();
-
-            std::shared_ptr<Source> newSource(new Source(name, title));
-            newSource->urlPattern = urlPattern;
-            newSource->minZoom = minZoom;
-            newSource->maxZoom = maxZoom;
-            newSource->maxConcurrentDownloads = maxConcurrentDownloads;
-            newSource->tileSize = tileSize;
-            newSource->alphaChannelPresence = alphaChannelPresence;
-            newSource->tileDensityFactor = tileDensityFactor;
-            collection.insert(name, newSource);
+            const auto& source = createTileSourceTemplate(xmlReader.attributes());
+            if (source != nullptr)
+                collection.insert(name, source);
         }
     }
     if (xmlReader.hasError())
@@ -184,7 +289,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
         bool ok = true;
         _builtIn.reset(new OnlineTileSources());
         _builtIn->loadFrom(getCoreResourcesProvider()->getResource(
-            QLatin1String("misc/default.online_tile_sources.xml"),
+            QLatin1String("misc/tile_sources.xml"),
             &ok));
         assert(ok);
     }
