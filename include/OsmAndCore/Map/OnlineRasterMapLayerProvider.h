@@ -15,6 +15,7 @@
 #include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/IOnlineTileSources.h>
 
 namespace OsmAnd
 {
@@ -37,30 +38,14 @@ namespace OsmAnd
         int getAndDecreasePriority();
     public:
         OnlineRasterMapLayerProvider(
-            const QString& name,
-            const QString& urlPattern,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
-            const unsigned int maxConcurrentDownloads = 1,
-            const unsigned int tileSize = 256,
-            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown,
-            const float tileDensityFactor = 1.0f,
+            const std::shared_ptr<const IOnlineTileSources::Source> tileSource,
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~OnlineRasterMapLayerProvider();
 
         const QString name;
         const QString pathSuffix;
-        QString urlPattern;
-#if !defined(SWIG)
-        //NOTE: This stuff breaks SWIG due to conflict with get*();
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
-#endif // !defined(SWIG)
+        const std::shared_ptr<const IOnlineTileSources::Source> _tileSource;
         const unsigned int maxConcurrentDownloads;
-#if !defined(SWIG)
-        //NOTE: This stuff breaks SWIG due to conflict with get*();
-        const unsigned int tileSize;
-#endif // !defined(SWIG)
         const AlphaChannelPresence alphaChannelPresence;
 #if !defined(SWIG)
         //NOTE: This stuff breaks SWIG due to conflict with get*();

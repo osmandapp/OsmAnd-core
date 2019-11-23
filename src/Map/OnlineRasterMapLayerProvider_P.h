@@ -25,6 +25,9 @@ namespace OsmAnd
     class OnlineRasterMapLayerProvider_P Q_DECL_FINAL
     {
     private:
+        static const QString buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom);
+        static const QString eqtBingQuadKey(ZoomLevel z, int32_t x, int32_t y);
+        const QString getUrlToLoad(int32_t x, int32_t y, const ZoomLevel zoom) const;
     protected:
         OnlineRasterMapLayerProvider_P(
             OnlineRasterMapLayerProvider* owner,

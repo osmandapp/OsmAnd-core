@@ -42,7 +42,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         pOutMetric->reset();
 
     // Check provider can supply this zoom level
-    if (request.zoom > owner->maxZoom || request.zoom < owner->minZoom)
+    if (request.zoom > owner->getMaxZoom() || request.zoom < owner->getMinZoom())
     {
         outData.reset();
         return true;
@@ -94,7 +94,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         }
 
         assert(bitmap->width() == bitmap->height());
-        assert(bitmap->width() == owner->tileSize);
+        assert(bitmap->width() == owner->getTileSize());
 
         // Return tile
         outData.reset(new OnlineRasterMapLayerProvider::Data(
@@ -120,14 +120,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Perform synchronous download
-    const auto tileSize = (1u << request.zoom);
-    const auto tileUrl = QString(owner->urlPattern)
-        .replace(QLatin1String("${osm_zoom}"), QString::number(request.zoom))
-        .replace(QLatin1String("${osm_x}"), QString::number(request.tileId.x))
-        .replace(QLatin1String("${osm_x_inv}"), QString::number(tileSize - request.tileId.x - 1))
-        .replace(QLatin1String("${osm_y}"), QString::number(request.tileId.y))
-        .replace(QLatin1String("${osm_y_inv}"), QString::number(tileSize - request.tileId.y - 1))
-        .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(request.tileId.x, request.tileId.y, request.zoom));
+    const auto tileUrl = getUrlToLoad(request.tileId.x, request.tileId.y, request.zoom);
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
     const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult);
 
@@ -217,7 +210,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     assert(bitmap->width() == bitmap->height());
-    assert(bitmap->width() == owner->tileSize);
+    assert(bitmap->width() == owner->getTileSize());
 
     // Return tile
     outData.reset(new OnlineRasterMapLayerProvider::Data(
@@ -246,4 +239,61 @@ void OsmAnd::OnlineRasterMapLayerProvider_P::unlockTile(const TileId tileId, con
     _tilesInProcess[zoom].remove(tileId);
 
     _waitUntilAnyTileIsProcessed.wakeAll();
+}
+
+const QString OsmAnd::OnlineRasterMapLayerProvider_P::getUrlToLoad(int32_t x, int32_t y, const ZoomLevel zoom) const
+{
+    const auto& source = owner->_tileSource;
+    if (source->urlToLoad.isNull() || source->urlToLoad.isEmpty()) {
+        return QString::null;
+    }
+    if (source->invertedYTile)
+        y = (1 << zoom) - 1 - y;
+    
+    return buildUrlToLoad(source->urlToLoad, source->randomsArray, x, y, zoom);
+}
+
+const QString OsmAnd::OnlineRasterMapLayerProvider_P::buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom)
+{
+    QString finalUrl = QString(urlToLoad);
+    if (randomsArray.count() > 0)
+    {
+        QString rand;
+        if (randomsArray[0] == QStringLiteral("wikimapia"))
+            rand = QString::number(x % 4 + (y % 4) * 4);
+        else
+            rand = randomsArray[(x + y) % randomsArray.count()];
+        
+        finalUrl = finalUrl.replace(QLatin1String("{rnd}"), rand);
+    }
+    else if (urlToLoad.contains(QLatin1String("{rnd}")))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+                  "Failed to resolve randoms for url '%s'",
+                  qPrintable(urlToLoad));
+        return QString::null;
+    }
+    
+    int bingQuadKeyParamIndex = urlToLoad.indexOf(QStringLiteral("{q}"));
+    if (bingQuadKeyParamIndex != -1)
+        return finalUrl.replace(QStringLiteral("{q}"), eqtBingQuadKey(zoom, x, y));
+    
+    return finalUrl.replace(QLatin1String("{0}"), QString::number(zoom)).replace(QLatin1String("{1}"), QString::number(x)).replace(QLatin1String("{2}"), QString::number(y));
+}
+
+const QString OsmAnd::OnlineRasterMapLayerProvider_P::eqtBingQuadKey(ZoomLevel z, int32_t x, int32_t y)
+{
+    char NUM_CHAR[] = {'0', '1', '2', '3'};
+    char tn[z];
+    for (int i = z - 1; i >= 0; i--)
+    {
+        int num = (x % 2) | ((y % 2) << 1);
+        tn[i] = NUM_CHAR[num];
+        x >>= 1;
+        y >>= 1;
+    }
+    QString res;
+    for (char &ch : tn)
+        res = res.append(ch);
+    return res;
 }

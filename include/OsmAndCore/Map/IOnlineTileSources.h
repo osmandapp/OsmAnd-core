@@ -26,18 +26,24 @@ namespace OsmAnd
         struct OSMAND_CORE_API Source
         {
             Source(const QString& name);
-            Source(const QString& name, const QString& title);
             virtual ~Source();
-
-            const QString name;
-            QString title;
-            QString urlPattern;
-            ZoomLevel minZoom;
+            
             ZoomLevel maxZoom;
-            unsigned int maxConcurrentDownloads;
+            ZoomLevel minZoom;
+            const QString name;
             unsigned int tileSize;
-            AlphaChannelPresence alphaChannelPresence;
-            float tileDensityFactor;
+            QString urlToLoad;
+            QString ext;
+            unsigned int avgSize;
+            unsigned int bitDensity;
+            // -1 never expires,
+            long expirationTimeMillis = -1;
+            bool ellipticYTile;
+            bool invertedYTile;
+            QString randoms;
+            QList<QString> randomsArray;
+            QString rule;
+            bool hidden; // if hidden in configure map settings, for example mapillary sources
 
         private:
             Q_DISABLE_COPY_AND_MOVE(Source);
