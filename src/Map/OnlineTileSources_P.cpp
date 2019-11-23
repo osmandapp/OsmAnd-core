@@ -165,21 +165,23 @@ QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms)
 int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes, const QString attributeName, int defaultValue) const
 {
     QString val = attributes.value(attributeName).toString();
-    QRegExp re(QStringLiteral("\\d+"));
-    if (val.isEmpty() || !re.exactMatch(val))
+    bool ok;
+    int integerValue = val.toInt(&ok);
+    if (val.isEmpty() || !ok)
         return defaultValue;
     
-    return val.toInt();
+    return integerValue;
 }
 
 long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attributes, const QString attributeName, long defaultValue) const
 {
     QString val = attributes.value(attributeName).toString();
-    QRegExp re(QStringLiteral("\\d+"));
-    if (val.isEmpty() || !re.exactMatch(val))
+    bool ok;
+    long longValue = val.toLong(&ok);
+    if (val.isEmpty() || !ok)
         return defaultValue;
     
-    return val.toLong();
+    return longValue;
 }
 
 bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
