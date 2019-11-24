@@ -1744,8 +1744,11 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
         // If resource request is being processed, keep the entry until processing is complete.
 
         // Cancel the task
-        assert(resource->_cancelRequestCallback != nullptr);
-        resource->_cancelRequestCallback();
+        if (resource->type == MapRendererResourceType::MapLayer)
+        {
+            assert(resource->_cancelRequestCallback != nullptr);
+            resource->_cancelRequestCallback();
+        }
 
         return false;
     }

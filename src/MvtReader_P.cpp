@@ -29,13 +29,14 @@ OsmAnd::MvtReader_P::~MvtReader_P()
 {
 }
 
-QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::parseTile(const QString &pathToFile) const
+std::shared_ptr<const OsmAnd::MvtReader::Tile> OsmAnd::MvtReader_P::parseTile(const QString &pathToFile) const
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     
+    auto geometryTile = std::make_shared<OsmAnd::MvtReader::Tile>();
+    
     std::string filename = pathToFile.toStdString();
     OsmAnd::VectorTile::Tile tile;
-    QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry>> result;
     
     const auto input = std::shared_ptr<QIODevice>(new QFile(pathToFile));
     // Create zero-copy input stream
@@ -47,10 +48,6 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
     
     const auto cis = new ::google::protobuf::io::CodedInputStream(zcis);
     cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-
-    LogPrintf(OsmAnd::LogSeverityLevel::Debug,
-              "!!! Reading %s", qPrintable(pathToFile));
-
     
     bool res = tile.MergeFromCodedStream(cis);
     delete cis;
@@ -58,12 +55,10 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
 
     if (!res)
     {
-        LogPrintf(OsmAnd::LogSeverityLevel::Debug,
-                  "Failed to parse protobuf");
-        return result;
+        LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Failed to parse protobuf");
+        return geometryTile;
     }
-    int geomCount = 0;
-    int geomSize = 0;
+    
     for (int i = 0; i < static_cast<std::size_t>(tile.layers_size()); ++i)
     {
         const auto& layer = tile.layers(i);
@@ -76,77 +71,76 @@ QList<std::shared_ptr<const OsmAnd::MvtReader::Geometry> > OsmAnd::MvtReader_P::
                 continue;
             
             const auto& geomCmds = feature.geometry();
-            const auto& geom = readGeometry(geomCmds, feature.type());
-            if (geom != nullptr)
-            {
-                std::shared_ptr<OsmAnd::MvtReader::Geometry> unconst(std::const_pointer_cast<OsmAnd::MvtReader::Geometry>(geom));
-                unconst->setUserData(parseUserData(feature.tags(), layer.keys(), layer.values()));
-                
-                result << geom;
-                
-                geomCount++;
-                geomSize += sizeof(geom);
-            }
+            readGeometry(geometryTile, geomCmds, feature, layer);
         }
     }
-    
-    LogPrintf(OsmAnd::LogSeverityLevel::Debug,
-              "!!! geomCount %d = %d", geomCount, geomSize);
-    
-    return result;
+
+    return geometryTile;
 }
 
-QHash<QString, QString> OsmAnd::MvtReader_P::parseUserData(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > &tags,
-                                                           const ::google::protobuf::RepeatedPtrField< ::std::string > &keys,
-                                                           const google::protobuf::RepeatedPtrField< ::OsmAnd::VectorTile::Tile_Value > &values) const
+QHash<uint8_t, QVariant> OsmAnd::MvtReader_P::parseUserData(const std::shared_ptr<OsmAnd::MvtReader::Tile>& geometryTile,
+                                                            const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > &tags,
+                                                            const ::google::protobuf::RepeatedPtrField< ::std::string > &keys,
+                                                            const google::protobuf::RepeatedPtrField< ::OsmAnd::VectorTile::Tile_Value > &values) const
 {
-    QHash<QString, QString> result;
-    
+    QHash<uint8_t, QVariant> result;
     uint32_t keyIndex, valIndex;
-    bool valid;
-    
-    for(int i = 0; i < tags.size() - 1; i += 2)
+    for (int i = 0; i < tags.size() - 1; i += 2)
     {
         keyIndex = tags.Get(i);
         valIndex = tags.Get(i + 1);
         
-        valid = keyIndex >= 0 && keyIndex < keys.size()
-        && valIndex >= 0 && valIndex < values.size();
-        
-        if(valid)
-            result.insert(QString::fromStdString(keys.Get(keyIndex)), tileValueToString(values.Get(valIndex)));
+        if (keyIndex >= 0 && keyIndex < keys.size() && valIndex >= 0 && valIndex < values.size())
+        {
+            auto userDataId = MvtReader::getUserDataId(keys.Get(keyIndex));
+            if (userDataId != UNKNOWN_ID)
+            {
+                QVariant var = tileValueToVariant(values.Get(valIndex));
+                if (userDataId == USERKEY_ID)
+                    result[userDataId] = geometryTile->addUserKey(var.toString());
+                else if (userDataId == SKEY_ID)
+                     result[userDataId] = geometryTile->addSequenceKey(var.toString());
+                else
+                    result[userDataId] = var;
+            }
+        }
     }
     return result;
 }
 
-QString OsmAnd::MvtReader_P::tileValueToString(const OsmAnd::VectorTile::Tile_Value &value) const
+QVariant OsmAnd::MvtReader_P::tileValueToVariant(const OsmAnd::VectorTile::Tile_Value &value) const
 {
-    QString res;
-    if (value.has_string_value())
-        res = QString::fromStdString(value.string_value());
-    else if (value.has_int_value())
-        res = QString::number(value.int_value());
-    else if (value.has_double_value())
-        res = QString::number(value.double_value(), 'f', 10);
+    QVariant res;
+    if (value.has_double_value())
+        res = QVariant(value.double_value());
     else if (value.has_float_value())
-        res = QString::number(value.float_value(), 'f', 10);
-    else if (value.has_uint_value())
-        res = QString::number(value.uint_value());
+        res = QVariant(value.float_value());
+    else if (value.has_int_value())
+        res = QVariant(value.int_value());
+    else if (value.has_bool_value())
+        res = QVariant(value.int_value());
+    else if (value.has_string_value())
+        res = QVariant(value.string_value().c_str());
     else if (value.has_sint_value())
-        res = QString::number(value.sint_value());
+        res = QVariant(value.sint_value());
+    else if (value.has_uint_value())
+        res = QVariant(value.uint_value());
+
     return res;
 }
 
-std::shared_ptr<const OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readGeometry(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, VectorTile::Tile_GeomType type) const
+void OsmAnd::MvtReader_P::readGeometry(const std::shared_ptr<OsmAnd::MvtReader::Tile>& geometryTile,
+                                       const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry,
+                                       const VectorTile::Tile_Feature& feature,
+                                       const VectorTile::Tile_Layer& layer) const
 {
-    std::shared_ptr<const OsmAnd::MvtReader::Geometry> res = nullptr;
-    
-    switch (type) {
+    std::shared_ptr<OsmAnd::MvtReader::Geometry> geom = nullptr;
+    switch (feature.type()) {
         case VectorTile::Tile_GeomType_POINT:
-            readPoint(geometry, res);
+            geom = readPoint(geometry);
             break;
         case VectorTile::Tile_GeomType_LINESTRING:
-            readLineString(geometry, res);
+            geom = readLineString(geometry);
             break;
 //        case VectorTile::Tile_GeomType_POLYGON:
 //            readMultiLineString(geometry, res);
@@ -154,14 +148,17 @@ std::shared_ptr<const OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readGeom
         default:
             break;
     }
-    
-    return res;
+    if (geom != nullptr)
+    {
+        geom->setUserData(parseUserData(geometryTile, feature.tags(), layer.keys(), layer.values()));
+        geometryTile->addGeometry(geom);
+    }
 }
 
-void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const
+std::shared_ptr<OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry) const
 {
     if (geometry.size() == 0)
-        return;
+        return nullptr;
     
     /** Geometry command index */
     int i = 0;
@@ -173,16 +170,16 @@ void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::g
     
     // Guard: command type
     if (cmd != SEG_MOVETO)
-        return;
+        return nullptr;
     
     // Guard: minimum command length
     if (cmdLength < 1)
-        return;
+        return nullptr;
     
     // Guard: header data unsupported by geometry command buffer
     //  (require header and at least 1 value * 2 params)
     if (cmdLength * 2 + 1 > geometry.size())
-        return;
+        return nullptr;
     
     OsmAnd::PointI nextCoord;
     
@@ -191,7 +188,7 @@ void OsmAnd::MvtReader_P::readPoint(const ::google::protobuf::RepeatedField< ::g
         int y = zigZagDecode(geometry.Get(i++));
         nextCoord = OsmAnd::PointI(x, y);
     }
-    res.reset(new OsmAnd::MvtReader::Point(nextCoord));
+    return std::make_shared<OsmAnd::MvtReader::Point>(nextCoord);
 }
 
 /**
@@ -226,11 +223,11 @@ OsmAnd::CommandType OsmAnd::MvtReader_P::getCommandType(const int &cmdHdr) const
     
 }
 
-void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry, std::shared_ptr<const OsmAnd::MvtReader::Geometry> &res) const
+std::shared_ptr<OsmAnd::MvtReader::Geometry> OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >& geometry) const
 {
     // Guard: must have header
     if (geometry.size() == 0)
-        return;
+        return nullptr;
     
     /** Geometry command index */
     int i = 0;
@@ -239,7 +236,7 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
     OsmAnd::CommandType cmd;
     int cmdHdr;
     int cmdLength;
-    QList<std::shared_ptr<const OsmAnd::MvtReader::LineString>> geoms;
+    QVector<std::shared_ptr<const OsmAnd::MvtReader::LineString>> geoms;
     
     int nextX = 0, nextY = 0;
     
@@ -277,7 +274,7 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
         //  (require at least (1 value * 2 params) + current_index)
         if ((cmdLength * 2) + i > geometry.size())
             break;
-        QList<OsmAnd::PointI> points;
+        QVector<OsmAnd::PointI> points;
         points << OsmAnd::PointI(nextX, nextY);
         
         // Set remaining points from LineTo command
@@ -287,13 +284,13 @@ void OsmAnd::MvtReader_P::readLineString(const ::google::protobuf::RepeatedField
             points << OsmAnd::PointI(nextX, nextY);
         }
 
-        geoms << std::make_shared<const OsmAnd::MvtReader::LineString>(points);
+        geoms << std::make_shared<OsmAnd::MvtReader::LineString>(points);
     }
     
     if (geoms.count() == 1)
-        res = std::move(geoms.first());
+        return std::const_pointer_cast<OsmAnd::MvtReader::LineString>(geoms.first());
     else
-        res.reset(new OsmAnd::MvtReader::MultiLineString(geoms));
+        return std::make_shared<OsmAnd::MvtReader::MultiLineString>(geoms);
 }
     
 
