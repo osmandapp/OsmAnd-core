@@ -1743,6 +1743,13 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 
         // If resource request is being processed, keep the entry until processing is complete.
 
+        // Cancel the task
+        if (resource->type == MapRendererResourceType::MapLayer)
+        {
+            assert(resource->_cancelRequestCallback != nullptr);
+            resource->_cancelRequestCallback();
+        }
+
         return false;
     }
     else if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))

@@ -5,8 +5,18 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QList>
+#include <QVector>
+#include <QVariant>
 
 #include <OsmAndCore/PrivateImplementation.h>
+
+static const int UNKNOWN_ID = 0;     // Unsupported id
+static const int CA_ID = 1;          // number  Camera heading. -1 if not found.
+static const int CAPTURED_AT_ID = 2; // number  When the image was captured, expressed as UTC epoch time in milliseconds. Must be non-negative integer; 0 if not found.
+static const int KEY_ID = 3;         // Key     Image key.
+static const int PANO_ID = 4;        // number  Whether the image is panorama (1), or not (0).
+static const int SKEY_ID = 5;        // Key     Sequence key.
+static const int USERKEY_ID = 6;     // Key     User key. Empty if not found.
 
 namespace OsmAnd
 {
@@ -36,16 +46,15 @@ namespace OsmAnd
             
         public:
         private:
-            QHash<QString, QString> userData;
-            GeomType type;
+            QHash<uint8_t, QVariant> _userData;
         protected:
         public:
             Geometry();
             virtual ~Geometry();
             virtual GeomType getType() const;
             
-            void setUserData(QHash<QString, QString> data);
-            QHash<QString, QString> getUserData() const;
+            void setUserData(const QHash<uint8_t, QVariant> data);
+            QHash<uint8_t, QVariant> getUserData() const;
             
             friend class OsmAnd::MvtReader_P;
         };
@@ -67,30 +76,57 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(LineString);
         private:
-            QList<OsmAnd::PointI> points;
+            QVector<OsmAnd::PointI> points;
         protected:
         public:
             GeomType getType() const override;
-            LineString(QList<OsmAnd::PointI> &points);
+            LineString(QVector<OsmAnd::PointI> &points);
             virtual ~LineString();
-            QList<OsmAnd::PointI> getCoordinateSequence() const;
+            QVector<OsmAnd::PointI> getCoordinateSequence() const;
         };
         
         class OSMAND_CORE_API MultiLineString : public Geometry
         {
             Q_DISABLE_COPY_AND_MOVE(MultiLineString);
         private:
-            QList< std::shared_ptr<const LineString> > lines;
+            QVector< std::shared_ptr<const LineString> > lines;
         protected:
         public:
             GeomType getType() const override;
-            MultiLineString(QList< std::shared_ptr<const LineString> > &lines);
+            MultiLineString(QVector< std::shared_ptr<const LineString> > &lines);
             virtual ~MultiLineString();
-            QList< std::shared_ptr<const LineString> > getLines() const;
+            QVector< std::shared_ptr<const LineString> > getLines() const;
         };
         
-        QList<std::shared_ptr<const Geometry> > parseTile(const QString &pathToFile) const;
+        class OSMAND_CORE_API Tile
+        {
+            Q_DISABLE_COPY_AND_MOVE(Tile);
             
+        public:
+        private:
+            QStringList _userKeys;
+            QStringList _sequenceKeys;
+            QVector<std::shared_ptr<const Geometry> > _geometry;
+            
+            int addUserKey(const QString& userKey);
+            int addSequenceKey(const QString& sequenceKey);
+            void addGeometry(const std::shared_ptr<const Geometry> geometry);
+
+        protected:
+        public:
+            Tile();
+            virtual ~Tile();
+            
+            const bool empty() const;
+            const QVector<std::shared_ptr<const Geometry> > getGeometry() const;
+            QString getUserKey(const uint32_t userKeyId) const;
+            QString getSequenceKey(const uint32_t sequenceKeyId) const;
+
+            friend class OsmAnd::MvtReader_P;
+        };
+        
+        static uint8_t getUserDataId(const std::string& key);
+        std::shared_ptr<const Tile> parseTile(const QString &pathToFile) const;
     };
 }
 
