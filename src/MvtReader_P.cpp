@@ -116,15 +116,15 @@ QVariant OsmAnd::MvtReader_P::tileValueToVariant(const OsmAnd::VectorTile::Tile_
     else if (value.has_float_value())
         res = QVariant(value.float_value());
     else if (value.has_int_value())
-        res = QVariant(value.int_value());
+        res = QVariant((qlonglong)value.int_value());
     else if (value.has_bool_value())
-        res = QVariant(value.int_value());
+        res = QVariant(value.bool_value());
     else if (value.has_string_value())
         res = QVariant(value.string_value().c_str());
     else if (value.has_sint_value())
-        res = QVariant(value.sint_value());
+        res = QVariant((qlonglong)value.sint_value());
     else if (value.has_uint_value())
-        res = QVariant(value.uint_value());
+        res = QVariant((qulonglong)value.uint_value());
 
     return res;
 }
