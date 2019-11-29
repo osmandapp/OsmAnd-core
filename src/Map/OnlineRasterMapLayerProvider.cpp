@@ -22,7 +22,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
     , name(tileSource->name)
-    , pathSuffix(QString(name).replace(QRegExp(QLatin1String("\\W+")), QLatin1String("_")))
+    , pathSuffix(QString(name))
     , maxConcurrentDownloads(0)
     , alphaChannelPresence(AlphaChannelPresence::NotPresent)
     , tileDensityFactor(tileSource->bitDensity / 16.0)

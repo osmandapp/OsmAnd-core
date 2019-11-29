@@ -42,13 +42,15 @@ namespace OsmAnd
 
         virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const;
         virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const;
-        bool addSource(const std::shared_ptr<Source>& source);
+        bool addSource(const std::shared_ptr<const Source>& source);
         bool removeSource(const QString& sourceName);
 
-        static std::shared_ptr<const OnlineTileSources> getBuiltIn();
         static const QString BuiltInOsmAndHD;
         
         static const QString normalizeUrl(QString &url);
+        
+        static bool createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source);
+        static void installTileSource(const std::shared_ptr<const Source> toInstall, const QString& cachePath);
     };
 }
 

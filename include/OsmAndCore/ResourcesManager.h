@@ -18,6 +18,7 @@
 #include <OsmAndCore/AccessLockCounter.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
+#include <OsmAndCore/Map/IOnlineTileSources.h>
 
 namespace OsmAnd
 {
@@ -27,6 +28,7 @@ namespace OsmAnd
     class UnresolvedMapStyle;
     class OnlineTileSources;
     class IncrementalChangesManager;
+    class OnlineTileSources;
 
     class ResourcesManager_P;
     class OSMAND_CORE_API ResourcesManager
@@ -229,6 +231,8 @@ namespace OsmAnd
             const QList<QString>& readonlyExternalStoragePaths = QList<QString>(),
             const QString& miniBasemapFilename = QString::null,
             const QString& localTemporaryPath = QString::null,
+            const QString& localCachePath = QString::null,
+            const QString& appVersion = QString::null,
             const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~ResourcesManager();
@@ -239,6 +243,8 @@ namespace OsmAnd
         const QString miniBasemapFilename;
         const QString localTemporaryPath;
         const QString repositoryBaseUrl;
+        const QString localCachePath;
+        const QString appVersion;
 
         // Generic accessors:
         std::shared_ptr<const Resource> getResource(const QString& id) const;
@@ -266,6 +272,8 @@ namespace OsmAnd
         uint64_t getResourceTimestamp(const QString& id) const;
         bool uninstallResource(const QString& id);
         bool uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource);
+        bool uninstallTilesResource(const QString& name);
+        bool installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(
@@ -282,6 +290,8 @@ namespace OsmAnd
             const QString& id,
             const IWebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool updateFromRepository(const QString& id, const QString& filePath);
+        
+        const std::shared_ptr<const OnlineTileSources> downloadOnlineTileSources() const;
 
         // Observables
         OSMAND_OBSERVER_CALLABLE(LocalResourcesChanged,
