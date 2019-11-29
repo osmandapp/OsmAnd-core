@@ -88,6 +88,8 @@ namespace OsmAnd
         void loadLocalResourcesFromPath_VoicePack(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        
+        const std::shared_ptr<const OnlineTileSources> downloadOnlineTileSources() const;
 
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
 
@@ -103,7 +105,9 @@ namespace OsmAnd
         bool uninstallObf(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallTilesResource(const QString& name);
 
+        bool installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source);
         bool installObfFromFile(
             const QString& id,
             const QString& filePath,

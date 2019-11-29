@@ -119,13 +119,6 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         ResourceType::MapStyle,
         std::shared_ptr<const Resource::Metadata>(new MapStyleMetadata(defaultMapStyle))));
     _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
-
-    // Built-in online tile sources
-    const std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
-        QLatin1String("tile_sources.xml"),
-        ResourceType::OnlineTileSources,
-        std::shared_ptr<const Resource::Metadata>(new OnlineTileSourcesMetadata(OnlineTileSources::getBuiltIn()))));
-    _builtinResources.insert(defaultOnlineTileSourcesResource->id, defaultOnlineTileSourcesResource);
 }
 
 std::shared_ptr<const OsmAnd::ResourcesManager_P::Resource> OsmAnd::ResourcesManager_P::getResource(const QString& id) const
@@ -345,6 +338,9 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             outResult,
             QLatin1String("*.heightmap.sqlitedb"),
             ResourceType::HeightmapRegion);
+        
+        // Find ResourceType::OnlineTileSources -> ".metainfo" files
+        loadLocalResourcesFromPath_OnlineTileSourcesResource(owner->localCachePath, outResult);
     }
     else
     {
@@ -361,8 +357,8 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         loadLocalResourcesFromPath_MapStyleResource(storagePath, outResult);
 
     // Find ResourceType::OnlineTileSourcesResource -> "*.online_tile_sources.xml" files (only in unmanaged storage)
-    if (isUnmanagedStorage)
-        loadLocalResourcesFromPath_OnlineTileSourcesResource(storagePath, outResult);
+//    if (isUnmanagedStorage)
+//        loadLocalResourcesFromPath_OnlineTileSourcesResource(storagePath, outResult);
 
     return true;
 }
@@ -648,38 +644,53 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_OnlineTileSourcesRes
     const QString& storagePath,
     QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const
 {
-    QFileInfoList onlineTileSourcesFileInfos;
-    Utilities::findFiles(
+    QFileInfoList onlineTileSourcesDirectories;
+    Utilities::findDirectories(
         storagePath,
-        QStringList() << QLatin1String("tile_sources.xml"),
-        onlineTileSourcesFileInfos,
+        QStringList() << QLatin1String("*"),
+        onlineTileSourcesDirectories,
         false);
-    for (const auto& onlineTileSourcesFileInfo : constOf(onlineTileSourcesFileInfos))
+
+    const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
+    // Create local resource entry
+    const auto& resourceId = QStringLiteral("online_tiles");
+    const auto& pLocalResource = new InstalledResource(
+        resourceId,
+        ResourceType::OnlineTileSources,
+        storagePath,
+        0,
+        0);
+    
+    for (const auto& onlineTileSourcesDirInfo : constOf(onlineTileSourcesDirectories))
     {
-        const auto filePath = onlineTileSourcesFileInfo.absoluteFilePath();
-        const auto fileSize = onlineTileSourcesFileInfo.size();
-
-        // Load resource
-        const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
-        if (!sources->loadFrom(filePath))
+        QString metadataPath = QDir(onlineTileSourcesDirInfo.absoluteFilePath()).absoluteFilePath(QStringLiteral(".metainfo"));
+        
+        if (QFile::exists(metadataPath))
         {
-            LogPrintf(LogSeverityLevel::Warning, "Failed to load online tile sources from '%s'", qPrintable(filePath));
-            continue;
+            std::shared_ptr<OsmAnd::OnlineTileSources::Source> source = nullptr;
+            bool ok = OsmAnd::OnlineTileSources::createTileSourceTemplate(metadataPath, source);
+            if (ok)
+                sources->addSource(source);
         }
-
-        // Create local resource entry
-        const auto fileName = onlineTileSourcesFileInfo.fileName();
-        const auto resourceId = fileName.toLower();
-        const auto pLocalResource = new UnmanagedResource(
-            resourceId,
-            ResourceType::OnlineTileSources,
-            filePath,
-            fileSize,
-            fileName);
-        pLocalResource->_metadata.reset(new OnlineTileSourcesMetadata(sources));
-        std::shared_ptr<const LocalResource> localResource(pLocalResource);
-        outResult.insert(resourceId, qMove(localResource));
     }
+    pLocalResource->_metadata.reset(new OnlineTileSourcesMetadata(sources));
+    std::shared_ptr<const LocalResource> localResource(pLocalResource);
+    outResult.insert(resourceId, qMove(localResource));
+}
+
+const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager_P::downloadOnlineTileSources() const
+{
+    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
+    const auto& downloadResult = _webClient->downloadData(
+        QLatin1String("https://test.osmand.net/tile_sources?osmandver=") + owner->appVersion,
+        &requestResult);
+    if (downloadResult.isNull() || !requestResult->isSuccessful())
+        return nullptr;
+    
+    const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
+    sources->loadFrom(downloadResult);
+    
+    return std::const_pointer_cast<const OnlineTileSources>(sources);
 }
 
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> >
@@ -1124,6 +1135,33 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const QString& id)
     
     return uninstallResource(installedResource, resource);
 }
+
+bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
+{
+    const auto itResource = _localResources.find(QStringLiteral("online_tiles"));
+    if (itResource == _localResources.end())
+        return false;
+    
+    const auto& resource = *itResource;
+    const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
+    const auto& sourcesListCopy = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
+    sourcesListCopy->removeSource(name);
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source)
+{
+    const auto itResource = _localResources.find(QStringLiteral("online_tiles"));
+    if (itResource == _localResources.end())
+        return false;
+    
+    const auto& resource = *itResource;
+    const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
+    const auto& sourcesListCopy = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
+    sourcesListCopy->addSource(source);
+    return true;
+}
+
 
 bool OsmAnd::ResourcesManager_P::uninstallObf(const std::shared_ptr<const InstalledResource>& resource)
 {

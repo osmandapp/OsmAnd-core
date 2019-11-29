@@ -12,6 +12,8 @@ OsmAnd::ResourcesManager::ResourcesManager(
     const QList<QString>& readonlyExternalStoragePaths_ /*= QList<QString>()*/,
     const QString& miniBasemapFilename_ /*= QString::null*/,
     const QString& localTemporaryPath_ /*= QString::null*/,
+    const QString& localCachePath_ /*= QString::null*/,
+    const QString& appVersion_ /*= QString::null*/,
     const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new ResourcesManager_P(this, webClient))
@@ -23,6 +25,10 @@ OsmAnd::ResourcesManager::ResourcesManager(
         ? localTemporaryPath_
         : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
+    , localCachePath(!localCachePath_.isNull()
+        ? localCachePath_
+        : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+    , appVersion(appVersion_)
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
     , obfsCollection(_p->obfsCollection)
@@ -131,6 +137,16 @@ bool OsmAnd::ResourcesManager::uninstallResource(const QString& id)
     return _p->uninstallResource(id);
 }
 
+bool OsmAnd::ResourcesManager::uninstallTilesResource(const QString& name)
+{
+    return _p->uninstallTilesResource(name);
+}
+
+bool OsmAnd::ResourcesManager::installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source)
+{
+    return _p->installTilesResource(source);
+}
+
 bool OsmAnd::ResourcesManager::uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource)
 {
     return _p->uninstallResource(installedResource, resource);
@@ -189,6 +205,11 @@ bool OsmAnd::ResourcesManager::updateFromRepository(
 bool OsmAnd::ResourcesManager::updateFromRepository(const QString& id, const QString& filePath)
 {
     return _p->updateFromRepository(id, filePath);
+}
+
+const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager::downloadOnlineTileSources() const
+{
+    return _p->downloadOnlineTileSources();
 }
 
 OsmAnd::ResourcesManager::Resource::Metadata::Metadata()

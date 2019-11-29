@@ -22,7 +22,7 @@ namespace OsmAnd
         typedef OnlineTileSources::Source Source;
 
     private:
-        static std::shared_ptr<OnlineTileSources> _builtIn;
+        static QList<QString> parseRandoms(const QString &randoms);
     protected:
         OnlineTileSources_P(OnlineTileSources* owner);
 
@@ -31,7 +31,6 @@ namespace OsmAnd
         std::shared_ptr<const OsmAnd::OnlineTileSources::Source> createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const;
         int parseInt(const QXmlStreamAttributes &attributes, QString attributeName, int defaultValue) const;
         long parseLong(const QXmlStreamAttributes &attributes, QString attributeName, long defaultValue) const;
-        QList<QString> parseRandoms(const QString &randoms) const;
         
         bool deserializeFrom(QXmlStreamReader& xmlReader);
         bool serializeTo(QXmlStreamWriter& xmlWriter) const;
@@ -48,10 +47,11 @@ namespace OsmAnd
 
         QHash< QString, std::shared_ptr<const Source> > getCollection() const;
         std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const;
-        bool addSource(const std::shared_ptr<Source>& source);
+        bool addSource(const std::shared_ptr<const Source>& source);
         bool removeSource(const QString& sourceName);
 
-        static std::shared_ptr<const OnlineTileSources> getBuiltIn();
+        static bool createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source);
+        static void installTileSource(const std::shared_ptr<const OnlineTileSources::Source> toInstall, const QString& cachePath);
 
     friend class OsmAnd::OnlineTileSources;
     };

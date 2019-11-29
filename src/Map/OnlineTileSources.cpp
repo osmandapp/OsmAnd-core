@@ -62,7 +62,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     return _p->getSourceByName(sourceName);
 }
 
-bool OsmAnd::OnlineTileSources::addSource(const std::shared_ptr<Source>& source)
+bool OsmAnd::OnlineTileSources::addSource(const std::shared_ptr<const Source>& source)
 {
     return _p->addSource(source);
 }
@@ -72,12 +72,12 @@ bool OsmAnd::OnlineTileSources::removeSource(const QString& sourceName)
     return _p->removeSource(sourceName);
 }
 
-const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_hd"));
-
-std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources::getBuiltIn()
+bool OsmAnd::OnlineTileSources::createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source)
 {
-    return OnlineTileSources_P::getBuiltIn();
+    return OnlineTileSources_P::createTileSourceTemplate(metaInfoPath, source);
 }
+
+const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_hd"));
 
 const QString OsmAnd::OnlineTileSources::normalizeUrl(QString &url)
 {
@@ -91,4 +91,9 @@ const QString OsmAnd::OnlineTileSources::normalizeUrl(QString &url)
         url = url.replace(QRegularExpression("\\{y\\}"), "{2}");
     }
     return url;
+}
+
+void OsmAnd::OnlineTileSources::installTileSource(const std::shared_ptr<const Source> toInstall, const QString& cachePath)
+{
+    OnlineTileSources_P::installTileSource(toInstall, cachePath);
 }

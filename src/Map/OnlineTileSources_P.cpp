@@ -4,6 +4,11 @@
 #include "ICoreResourcesProvider.h"
 #include "Logging.h"
 
+#include <QFile>
+#include <QDataStream>
+#include <QFileInfo>
+#include <QDir>
+
 OsmAnd::OnlineTileSources_P::OnlineTileSources_P(OnlineTileSources* owner_)
     : owner(owner_)
 {
@@ -51,7 +56,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     source->avgSize = parseInt(attributes, QStringLiteral("avg_img_size"), 18000);
     const QString randoms = attributes.value(QStringLiteral("randoms")).toString();
     source->randoms = randoms;
-    source->randomsArray = parseRandoms(randoms);
+    source->randomsArray = OnlineTileSources_P::parseRandoms(randoms);
     urlTemplate = QStringLiteral("http://whoots.mapwarper.net/tms/{0}/{1}/{2}/") + layer + QStringLiteral("/") + urlTemplate;
     source->urlToLoad = urlTemplate;
     source->rule = QStringLiteral("wms_tile");
@@ -89,13 +94,13 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     
     const QString randoms = attributes.value(QStringLiteral("randoms")).toString();
     source->randoms = randoms;
-    source->randomsArray = parseRandoms(randoms);
+    source->randomsArray = OnlineTileSources_P::parseRandoms(randoms);
     source->rule = rule;
     
     return std::const_pointer_cast<const Source>(source);
 }
 
-QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms) const
+QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms)
 {
     QList<QString> result;
     if (!randoms.isEmpty())
@@ -263,7 +268,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources_P::Source> OsmAnd::OnlineTileSou
     return *citSource;
 }
 
-bool OsmAnd::OnlineTileSources_P::addSource(const std::shared_ptr<Source>& source)
+bool OsmAnd::OnlineTileSources_P::addSource(const std::shared_ptr<const Source>& source)
 {
     if (_collection.constFind(source->name) != _collection.cend())
         return false;
@@ -278,21 +283,89 @@ bool OsmAnd::OnlineTileSources_P::removeSource(const QString& sourceName)
     return (_collection.remove(sourceName) > 0);
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::_builtIn;
-std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::getBuiltIn()
+bool OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source)
 {
-    static QMutex mutex;
-    QMutexLocker scopedLocker(&mutex);
-
-    if (!_builtIn)
+    QHash<QString, QString> metaInfo;
+    
+    QFile fileIn(metaInfoPath);
+    if (fileIn.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        bool ok = true;
-        _builtIn.reset(new OnlineTileSources());
-        _builtIn->loadFrom(getCoreResourcesProvider()->getResource(
-            QLatin1String("misc/tile_sources.xml"),
-            &ok));
-        assert(ok);
+        QTextStream in(&fileIn);
+        while (!in.atEnd())
+        {
+            QString firstLine = in.readLine();
+            if (!in.atEnd())
+            {
+                QString secondLine = in.readLine();
+                if (!firstLine.isNull() && !secondLine.isNull())
+                {
+                    metaInfo.insert(firstLine.replace(QRegExp(QLatin1String("[\\[\\]]+")), QLatin1String("")), secondLine);
+                }
+            }
+        }
+        in.flush();
+        fileIn.flush();
+        fileIn.close();
     }
+    if (metaInfo.count() > 0)
+    {
+        Source *newSource = new Source(QFileInfo(metaInfoPath).dir().dirName());
+        newSource->urlToLoad = metaInfo.value(QStringLiteral("url_template"), QStringLiteral(""));
+        newSource->minZoom = ZoomLevel(metaInfo.value(QStringLiteral("min_zoom"), QStringLiteral("5")).toLong());
+        newSource->maxZoom = ZoomLevel(metaInfo.value(QStringLiteral("max_zoom"), QStringLiteral("18")).toLong());
+        newSource->ellipticYTile = metaInfo.value(QStringLiteral("ellipsoid"), QStringLiteral("")) == QStringLiteral("true");
+        newSource->invertedYTile = metaInfo.value(QStringLiteral("inverted_y"), QStringLiteral("")) == QStringLiteral("true");
+        newSource->tileSize = metaInfo.value(QStringLiteral("tile_size"), QStringLiteral("256")).toUInt();
+        newSource->bitDensity = metaInfo.value(QStringLiteral("img_density"), QStringLiteral("16")).toUInt();
+        newSource->avgSize = metaInfo.value(QStringLiteral("avg_img_size"), QStringLiteral("18000")).toUInt();
+        newSource->ext = metaInfo.value(QStringLiteral("ext"), QStringLiteral(".jpg"));
+        newSource->expirationTimeMillis = metaInfo.value(QStringLiteral("expiration_time_minutes"), QStringLiteral("-1")).toLong();
+        newSource->randoms = metaInfo.value(QStringLiteral("randoms"), QStringLiteral(""));
+        newSource->randomsArray = OnlineTileSources_P::parseRandoms(newSource->randoms);
+        source.reset(newSource);
+        return true;
+    }
+    return false;
+}
 
-    return _builtIn;
+void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const OnlineTileSources::Source> toInstall, const QString& cachePath)
+{
+    QHash<QString, QString> params;
+    params.insert(QStringLiteral("url_template"), toInstall->urlToLoad);
+    params.insert(QStringLiteral("min_zoom"), QString::number(toInstall->minZoom));
+    params.insert(QStringLiteral("max_zoom"), QString::number(toInstall->maxZoom));
+    params.insert(QStringLiteral("ellipsoid"), toInstall->ellipticYTile ? QStringLiteral("true") : QStringLiteral("false"));
+    params.insert(QStringLiteral("tile_size"), QString::number(toInstall->tileSize));
+    params.insert(QStringLiteral("img_density"), QString::number(toInstall->bitDensity));
+    params.insert(QStringLiteral("avg_img_size"), QString::number(toInstall->avgSize));
+    params.insert(QStringLiteral("ext"), toInstall->ext);
+    params.insert(QStringLiteral("randoms"), toInstall->randoms);
+    params.insert(QStringLiteral("inverted_y"), toInstall->invertedYTile ? QStringLiteral("true") : QStringLiteral("false"));
+    if (toInstall->expirationTimeMillis != -1)
+        params.insert(QStringLiteral("expiration_time_minutes"), QString::number(toInstall->expirationTimeMillis));
+    
+    QString name = toInstall->name;
+    QString path = cachePath + QDir::separator() + name;
+    QDir dir;
+    if (!dir.exists(path))
+        dir.mkpath(path);
+    
+    QFile fileOut(path + QDir::separator() + QStringLiteral(".metainfo"));
+    
+    // remove old metainfo file
+    if (fileOut.exists())
+        fileOut.remove();
+    
+    if (fileOut.open(QFile::WriteOnly|QFile::Text))
+    {
+        QTextStream out(&fileOut);
+        QHashIterator<QString, QString> i (params);
+        while (i.hasNext())
+        {
+            i.next();
+            out << QStringLiteral("[") << i.key() << QStringLiteral("]") << endl << i.value() << endl;
+        }
+        fileOut.flush();
+        fileOut.close();
+    }
 }
