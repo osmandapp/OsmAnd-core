@@ -1144,8 +1144,8 @@ bool OsmAnd::ResourcesManager_P::uninstallTilesResource(const QString& name)
     
     const auto& resource = *itResource;
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
-    const auto& sourcesListCopy = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
-    sourcesListCopy->removeSource(name);
+    const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
+    sourcesList->removeSource(name);
     return true;
 }
 
@@ -1157,8 +1157,8 @@ bool OsmAnd::ResourcesManager_P::installTilesResource(const std::shared_ptr<cons
     
     const auto& resource = *itResource;
     const auto& onlineTileSources = std::static_pointer_cast<const OsmAnd::ResourcesManager::OnlineTileSourcesMetadata>(resource->metadata)->sources;
-    const auto& sourcesListCopy = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
-    sourcesListCopy->addSource(source);
+    const auto& sourcesList = std::const_pointer_cast<OnlineTileSources>(onlineTileSources);
+    sourcesList->addSource(source);
     return true;
 }
 
