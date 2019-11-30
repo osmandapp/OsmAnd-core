@@ -77,6 +77,8 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
+        
+        static const QString buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom);
     };
 }
 
