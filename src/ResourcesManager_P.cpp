@@ -693,6 +693,20 @@ const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager_
     return std::const_pointer_cast<const OnlineTileSources>(sources);
 }
 
+void OsmAnd::ResourcesManager_P::installOsmAndOnlineTileSource()
+{
+    const auto& mapnikSource = std::shared_ptr<OnlineTileSources::Source>(new OnlineTileSources::Source(QStringLiteral("OsmAnd (online tiles)")));
+    mapnikSource->ext = QStringLiteral(".png");
+    mapnikSource->urlToLoad = QStringLiteral("https://tile.osmand.net/hd/{0}/{1}/{2}.png");
+    mapnikSource->maxZoom = ZoomLevel19;
+    mapnikSource->minZoom = ZoomLevel1;
+    mapnikSource->tileSize = 512;
+    mapnikSource->bitDensity = 8;
+    mapnikSource->avgSize = 18000;
+    OnlineTileSources::installTileSource(mapnikSource, owner->localCachePath);
+    installTilesResource(mapnikSource);
+}
+
 QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> >
 OsmAnd::ResourcesManager_P::getLocalResources() const
 {
