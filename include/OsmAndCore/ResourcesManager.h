@@ -274,6 +274,7 @@ namespace OsmAnd
         bool uninstallResource(const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> &installedResource, const std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> &resource);
         bool uninstallTilesResource(const QString& name);
         bool installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source);
+        void installOsmAndOnlineTileSource();
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(
