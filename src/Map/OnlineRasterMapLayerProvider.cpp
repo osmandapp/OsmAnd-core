@@ -154,3 +154,8 @@ OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMaxZoom() const
 {
     return _tileSource->maxZoom;
 }
+
+const QString OsmAnd::OnlineRasterMapLayerProvider::buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom)
+{
+    return OnlineRasterMapLayerProvider_P::buildUrlToLoad(urlToLoad, randomsArray, x, y, zoom);
+}

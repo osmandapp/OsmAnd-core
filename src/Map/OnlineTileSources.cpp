@@ -97,3 +97,8 @@ void OsmAnd::OnlineTileSources::installTileSource(const std::shared_ptr<const So
 {
     OnlineTileSources_P::installTileSource(toInstall, cachePath);
 }
+
+QList<QString> OsmAnd::OnlineTileSources::parseRandoms(const QString &randoms)
+{
+    return OnlineTileSources_P::parseRandoms(randoms);
+}
