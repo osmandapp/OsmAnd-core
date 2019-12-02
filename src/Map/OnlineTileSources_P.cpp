@@ -8,6 +8,7 @@
 #include <QDataStream>
 #include <QFileInfo>
 #include <QDir>
+#include <QTextStream>
 
 OsmAnd::OnlineTileSources_P::OnlineTileSources_P(OnlineTileSources* owner_)
     : owner(owner_)

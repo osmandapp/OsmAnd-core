@@ -501,14 +501,14 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
         const auto filePath = sqlitedbFileInfo.absoluteFilePath();
         const auto fileName = sqlitedbFileInfo.fileName();
 
-        // Read information from OBF
-        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
-        const auto obfInfo = ObfReader(obfFile).obtainInfo();
-        if (!obfInfo)
-        {
-            LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
-            continue;
-        }
+//        // Read information from OBF
+//        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
+//        const auto obfInfo = ObfReader(obfFile).obtainInfo();
+//        if (!obfInfo)
+//        {
+//            LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
+//            continue;
+//        }
 
         // Determine resource type and id
         QString resourceId = fileName.toLower();
@@ -544,8 +544,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             resourceType,
             filePath,
             sqlitedbFileInfo.size(),
-            obfFile->obfInfo->creationTimestamp);
-        pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
+            std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
         std::shared_ptr<const LocalResource> localResource(pLocalResource);
         outResult.insert(resourceId, qMove(localResource));
     }
