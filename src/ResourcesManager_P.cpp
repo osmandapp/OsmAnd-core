@@ -90,7 +90,7 @@ void OsmAnd::ResourcesManager_P::onDirectoryChanged(const QString& path)
 {
     Q_UNUSED(path);
 
-    rescanUnmanagedStoragePaths();
+    //rescanUnmanagedStoragePaths(); // NOTE: Temporarily disable since sqlite online cause often rescan
 }
 
 void OsmAnd::ResourcesManager_P::onFileChanged(const QString& path)

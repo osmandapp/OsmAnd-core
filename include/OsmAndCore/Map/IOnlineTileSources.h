@@ -37,7 +37,7 @@ namespace OsmAnd
             unsigned int avgSize;
             unsigned int bitDensity;
             // -1 never expires,
-            long expirationTimeMillis = -1;
+            long expirationTimeMillis;
             bool ellipticYTile;
             bool invertedYTile;
             QString randoms;
