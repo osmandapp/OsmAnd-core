@@ -28,9 +28,10 @@ namespace OsmAnd
             Source(const QString& name);
             virtual ~Source();
             
+            const QString name;
+            int priority;
             ZoomLevel maxZoom;
             ZoomLevel minZoom;
-            const QString name;
             unsigned int tileSize;
             QString urlToLoad;
             QString ext;

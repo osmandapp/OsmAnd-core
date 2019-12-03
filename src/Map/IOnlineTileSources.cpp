@@ -23,9 +23,10 @@ std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources
 }
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_)
-: maxZoom(ZoomLevel0)
+: name(name_)
+, priority(0)
+, maxZoom(ZoomLevel0)
 , minZoom(ZoomLevel0)
-, name(name_)
 , tileSize(0)
 , avgSize(0)
 , bitDensity(0)

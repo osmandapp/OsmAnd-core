@@ -19,9 +19,9 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes) const
 {
-    std::shared_ptr<const Source> tileSource = nullptr;
+    std::shared_ptr<Source> tileSource = nullptr;
     if (attributes.hasAttribute("rule"))
     {
         const QString rule = attributes.value(QStringLiteral("rule")).toString();
@@ -37,7 +37,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     return tileSource;
 }
 
-std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const
 {
     const QString name = attributes.value(QStringLiteral("name")).toString();
     const QString layer = attributes.value(QStringLiteral("layer")).toString();
@@ -62,10 +62,10 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     source->urlToLoad = urlTemplate;
     source->rule = QStringLiteral("wms_tile");
     
-    return std::const_pointer_cast<const Source>(source);
+    return source;
 }
 
-std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule) const
 {
     QString urlTemplate = attributes.value(QStringLiteral("url_template")).toString();
     QString name = attributes.value(QStringLiteral("name")).toString();
@@ -98,7 +98,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSourc
     source->randomsArray = OnlineTileSources_P::parseRandoms(randoms);
     source->rule = rule;
     
-    return std::const_pointer_cast<const Source>(source);
+    return source;
 }
 
 QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms)
@@ -192,6 +192,7 @@ long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attribut
 
 bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
 {
+    int priority = 0;
     QHash< QString, std::shared_ptr<const Source> > collection;
 
     while(!xmlReader.atEnd() && !xmlReader.hasError())
@@ -211,9 +212,12 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
                 continue;
             }
 
-            const auto& source = createTileSourceTemplate(xmlReader.attributes());
+            auto source = createTileSourceTemplate(xmlReader.attributes());
             if (source != nullptr)
+            {
+                source->priority = priority++;
                 collection.insert(name, source);
+            }
         }
     }
     if (xmlReader.hasError())
