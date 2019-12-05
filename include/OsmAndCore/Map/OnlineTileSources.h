@@ -51,6 +51,7 @@ namespace OsmAnd
         
         static bool createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source);
         static void installTileSource(const std::shared_ptr<const Source> toInstall, const QString& cachePath);
+        static std::shared_ptr<const OnlineTileSources> getBuiltIn();
         
         static QList<QString> parseRandoms(const QString &randoms);
     };

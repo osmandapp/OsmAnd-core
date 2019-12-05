@@ -22,6 +22,7 @@ namespace OsmAnd
         typedef OnlineTileSources::Source Source;
 
     private:
+        static std::shared_ptr<OnlineTileSources> _builtIn;
         static QList<QString> parseRandoms(const QString &randoms);
     protected:
         OnlineTileSources_P(OnlineTileSources* owner);
@@ -52,6 +53,8 @@ namespace OsmAnd
 
         static bool createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source);
         static void installTileSource(const std::shared_ptr<const OnlineTileSources::Source> toInstall, const QString& cachePath);
+        
+        static std::shared_ptr<const OnlineTileSources> getBuiltIn();
 
     friend class OsmAnd::OnlineTileSources;
     };

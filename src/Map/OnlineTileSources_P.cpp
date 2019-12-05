@@ -374,3 +374,20 @@ void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const 
         fileOut.close();
     }
 }
+
+std::shared_ptr<OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::_builtIn;
+std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::getBuiltIn()
+{
+    static QMutex mutex;
+    QMutexLocker scopedLocker(&mutex);
+    if (!_builtIn)
+    {
+        bool ok = true;
+        _builtIn.reset(new OnlineTileSources());
+        _builtIn->loadFrom(getCoreResourcesProvider()->getResource(
+            QLatin1String("misc/tile_sources.xml"),
+            &ok));
+        assert(ok);
+    }
+    return _builtIn;
+}

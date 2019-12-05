@@ -102,3 +102,8 @@ QList<QString> OsmAnd::OnlineTileSources::parseRandoms(const QString &randoms)
 {
     return OnlineTileSources_P::parseRandoms(randoms);
 }
+
+std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources::getBuiltIn()
+{
+    return OnlineTileSources_P::getBuiltIn();
+}
