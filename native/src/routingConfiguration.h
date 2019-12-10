@@ -17,7 +17,7 @@ struct RoutingRule {
 
 struct RoutingConfiguration {
 
-    const static int DEFAULT_MEMORY_LIMIT = 30;
+    const static int DEFAULT_MEMORY_LIMIT = 100;
     const static int DEVIATION_RADIUS = 3000;
     MAP_STR_STR attributes;
 
@@ -35,7 +35,7 @@ struct RoutingConfiguration {
     float recalculateDistance;
     time_t routeCalculationTime;
 
-    RoutingConfiguration(float initDirection = -360, int memLimit = 64) : router(new GeneralRouter()), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
+    RoutingConfiguration(float initDirection = -360, int memLimit = DEFAULT_MEMORY_LIMIT) : router(new GeneralRouter()), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
     }
 
     string getAttribute(SHARED_PTR<GeneralRouter> router, string propertyName) {

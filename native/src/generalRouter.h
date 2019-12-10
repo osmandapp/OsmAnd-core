@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "boost/dynamic_bitset.hpp"
 #include "binaryRead.h"
+#include "boost/functional/hash.hpp"
 
 struct RouteSegment;
 class GeneralRouter;
@@ -13,9 +14,17 @@ class RouteAttributeContext;
 
 //#include "binaryRoutePlanner.h"
 
+template <typename Container> // we can make this generic for any container [1]
+struct container_hash {
+    std::size_t operator()(Container const& c) const {
+        return boost::hash_range(c.begin(), c.end());
+    }
+};
+
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
 typedef UNORDERED(map)<int, int> MAP_INT_INT;
+typedef UNORDERED(map)<vector<uint32_t>, float, container_hash<vector<uint32_t>>> MAP_INTV_FLOAT;
 typedef UNORDERED(map)<string, int> MAP_STR_INT;
 typedef boost::dynamic_bitset<> dynbitset;
 
@@ -280,19 +289,6 @@ private:
 
 	dynbitset convert(RoutingIndex* reg, std::vector<uint32_t>& types);
 
-	double evaluate(SHARED_PTR<RouteDataObject>& ro) {
-		dynbitset local =  convert(ro->region, ro->types);
-		return evaluate(local);
-	}
-
-	int evaluateInt(SHARED_PTR<RouteDataObject>& ro, int defValue) {
-		double d = evaluate(ro);
-		if(d == DOUBLE_MISSING) {
-			return defValue;
-		}
-		return (int)d;
-	}
-
 	double evaluateDouble(RoutingIndex* reg, std::vector<uint32_t>& types, double defValue) {
 		dynbitset local =  convert(reg, types);		
 		double d = evaluate(local);
@@ -302,13 +298,6 @@ private:
 		return d;
 	}
 
-	double evaluateDouble(SHARED_PTR<RouteDataObject>& ro, double defValue) {
-		double d = evaluate(ro);
-		if(d == DOUBLE_MISSING) {
-			return defValue;
-		}
-		return d;
-	}
 };
 
 float parseFloat(MAP_STR_STR attributes, string key, float def);
@@ -338,6 +327,7 @@ private:
 	vector<double> ruleToValue; // Object TODO;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
+	vector<UNORDERED(map)<RoutingIndex*, MAP_INTV_FLOAT>> cacheEval;
 		
 public:
 	// cached values
@@ -507,6 +497,9 @@ private:
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
 	uint registerTagValueAttribute(const tag_value& r);
+
+	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def);
+	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def);
 
 public:
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {

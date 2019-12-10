@@ -19,49 +19,56 @@ const char* GeneralRouterConstants::DEFAULT_SPEED = "default_speed";
 const char* GeneralRouterConstants::MIN_SPEED = "min_speed";
 const char* GeneralRouterConstants::MAX_SPEED = "max_speed";
 
-GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
+		heightObstacles(false), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), 
+		shortestRoute(false), allowPrivate(false) {
+	cacheEval.resize((std::size_t) RouteDataObjectAttribute::COUNT);
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
-    
-    this->profile = profile;
-    MAP_STR_STR::const_iterator it = attributes.begin();
-    for(;it != attributes.end(); it++) {
-        addAttribute(it->first, it->second);
-    }
-    for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
-        newRouteAttributeContext();
-    }
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, 
+		const MAP_STR_STR& attributes) : 
+		profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
+		heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), 
+		rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+	this->profile = profile;
+	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
+	MAP_STR_STR::const_iterator it = attributes.begin();
+	for (;it != attributes.end(); it++) {
+		addAttribute(it->first, it->second);
+	}
+	for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
+		newRouteAttributeContext();
+	}
 }
 
 GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
-    
-    this->profile = parent.profile;
-    MAP_STR_STR::const_iterator it = parent.attributes.begin();
-    for(;it != parent.attributes.end(); it++) {
-        addAttribute(it->first, it->second);
-    }
+	this->profile = parent.profile;
+	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
+	MAP_STR_STR::const_iterator it = parent.attributes.begin();
+	for (;it != parent.attributes.end(); it++) {
+		addAttribute(it->first, it->second);
+	}
 
-    universalRules = parent.universalRules;
-    universalRulesById = parent.universalRulesById;
-    tagRuleMask = parent.tagRuleMask;
-    ruleToValue = parent.ruleToValue;
-    parameters = parent.parameters;
-    parametersList = parent.parametersList;
+	universalRules = parent.universalRules;
+	universalRulesById = parent.universalRulesById;
+	tagRuleMask = parent.tagRuleMask;
+	ruleToValue = parent.ruleToValue;
+	parameters = parent.parameters;
+	parametersList = parent.parametersList;
 
-    for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
-        newRouteAttributeContext(parent.objectAttributes[i], params);
-    }
-        
-    this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
-    this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
-    this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
-    if (shortestRoute) {
-        maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
-    }
-    this->defaultSpeed = parseFloat(params, GeneralRouterConstants::DEFAULT_SPEED, this->defaultSpeed);
-    this->minSpeed = parseFloat(params, GeneralRouterConstants::MIN_SPEED, this->minSpeed);
-    this->maxSpeed = parseFloat(params, GeneralRouterConstants::MAX_SPEED, this->maxSpeed);
+	for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
+		newRouteAttributeContext(parent.objectAttributes[i], params);
+	}
+		
+	this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
+	this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
+	this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
+	if (shortestRoute) {
+		maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
+	}
+	this->defaultSpeed = parseFloat(params, GeneralRouterConstants::DEFAULT_SPEED, this->defaultSpeed);
+	this->minSpeed = parseFloat(params, GeneralRouterConstants::MIN_SPEED, this->minSpeed);
+	this->maxSpeed = parseFloat(params, GeneralRouterConstants::MAX_SPEED, this->maxSpeed);
 }
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
@@ -72,10 +79,10 @@ float parseFloat(MAP_STR_STR attributes, string key, float def) {
 }
 
 float parseFloat(string value, float def) {
-    if (value != "") {
-        return atof(value.c_str());
-    }
-    return def;
+	if (value != "") {
+		return atof(value.c_str());
+	}
+	return def;
 }
 
 bool parseBool(MAP_STR_STR attributes, string key, bool def) {
@@ -86,10 +93,10 @@ bool parseBool(MAP_STR_STR attributes, string key, bool def) {
 }
 
 bool parseBool(string value, bool def) {
-    if (value != "") {
-        return value == "true";
-    }
-    return def;
+	if (value != "") {
+		return value == "true";
+	}
+	return def;
 }
 
 string parseString(MAP_STR_STR attributes, string key, string def) {
@@ -100,10 +107,10 @@ string parseString(MAP_STR_STR attributes, string key, string def) {
 }
 
 string parseString(string value, string def) {
-    if (value != "") {
-        return value;
-    }
-    return def;
+	if (value != "") {
+		return value;
+	}
+	return def;
 }
 
 dynbitset& increaseSize(dynbitset& t, uint targetSize) {
@@ -114,12 +121,12 @@ dynbitset& increaseSize(dynbitset& t, uint targetSize) {
 }
 
 dynbitset& align(dynbitset& t, uint targetSize) {
-    if (t.size() < targetSize) {
-        t.resize(targetSize);
-    } else if (t.size() > targetSize) {
+	if (t.size() < targetSize) {
+		t.resize(targetSize);
+	} else if (t.size() > targetSize) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Bitset %d is longer than target %d", t.size(), targetSize);
 	}
-    return t;
+	return t;
 }
 
 
@@ -155,12 +162,12 @@ void GeneralRouter::addAttribute(string k, string v) {
 		rightTurn = parseFloat(attributes, k, rightTurn);
 	} else if (k == "roundaboutTurn") {
 		roundaboutTurn = parseFloat(attributes, k, roundaboutTurn);
-    } else if (k == "minDefaultSpeed" || k == "defaultSpeed") {
-        defaultSpeed = parseFloat(attributes, k, defaultSpeed * 3.6f) / 3.6f;
-    } else if (k == "minSpeed") {
-        minSpeed = parseFloat(attributes, k, minSpeed * 3.6f) / 3.6f;
-    } else if (k == "maxDefaultSpeed" || k == "maxSpeed") {
-        maxSpeed = parseFloat(attributes, k, maxSpeed * 3.6f) / 3.6f;
+	} else if (k == "minDefaultSpeed" || k == "defaultSpeed") {
+		defaultSpeed = parseFloat(attributes, k, defaultSpeed * 3.6f) / 3.6f;
+	} else if (k == "minSpeed") {
+		minSpeed = parseFloat(attributes, k, minSpeed * 3.6f) / 3.6f;
+	} else if (k == "maxDefaultSpeed" || k == "maxSpeed") {
+		maxSpeed = parseFloat(attributes, k, maxSpeed * 3.6f) / 3.6f;
 	}
 }
 
@@ -237,20 +244,20 @@ RouteAttributeExpression::RouteAttributeExpression(vector<string>&vls, int type,
 }
 
 RouteAttributeEvalRule::RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule>& original) {
-    parameters = original->parameters;
-    selectValue = original->selectValue;
-    selectValueDef = original->selectValueDef;
-    selectType = original->selectType;
-    filterTypes = original->filterTypes;
-    filterNotTypes = original->filterNotTypes;
-    
-    onlyTags = original->onlyTags;
-    onlyNotTags = original->onlyNotTags;
-    expressions = original->expressions;
-    
-    tagValueCondDefValue = original->tagValueCondDefValue;
-    tagValueCondDefTag = original->tagValueCondDefTag;
-    tagValueCondDefNot = original->tagValueCondDefNot;
+	parameters = original->parameters;
+	selectValue = original->selectValue;
+	selectValueDef = original->selectValueDef;
+	selectType = original->selectType;
+	filterTypes = original->filterTypes;
+	filterNotTypes = original->filterNotTypes;
+	
+	onlyTags = original->onlyTags;
+	onlyNotTags = original->onlyNotTags;
+	expressions = original->expressions;
+	
+	tagValueCondDefValue = original->tagValueCondDefValue;
+	tagValueCondDefTag = original->tagValueCondDefTag;
+	tagValueCondDefNot = original->tagValueCondDefNot;
 }
 
 void RouteAttributeEvalRule::registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt) {
@@ -279,8 +286,8 @@ void RouteAttributeEvalRule::registerParamConditions(vector<string>& params) {
 }
 
 void RouteAttributeEvalRule::registerAndParamCondition(string param, bool nt) {
-    param = nt ? "-" + param : param;
-    parameters.push_back(param);
+	param = nt ? "-" + param : param;
+	parameters.push_back(param);
 }
 
 void RouteAttributeEvalRule::registerSelectValue(string value, string type) {
@@ -326,8 +333,30 @@ string GeneralRouter::getAttribute(string attribute) {
 	return attributes[attribute];
 }
 
+double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def) {
+	return evaluateCache(attr, way->region, way->types, def );
+}
+
+double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def) {
+	auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
+	MAP_INTV_FLOAT* regCache;
+	if (regCacheIt == cacheEval[(unsigned int)attr].end()) {
+		cacheEval[(unsigned int)attr][reg] = MAP_INTV_FLOAT();
+		regCache = &cacheEval[(unsigned int)attr][reg];
+	} else {
+		regCache = &regCacheIt->second;
+	}
+	auto r = regCache->find(types);
+	if (r != regCache->end()) {
+		return r->second;
+	}
+	int res = getObjContext(attr).evaluateDouble(reg, types, def);
+	(*regCache)[types] = res;
+	return res;
+}
+
 bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject>& way) {
-	int res = getObjContext(RouteDataObjectAttribute::ACCESS).evaluateInt(way, 0);
+	int res = (int) evaluateCache(RouteDataObjectAttribute::ACCESS, way, 0);
 	if(impassableRoadIds.find(way->id) != impassableRoadIds.end()) {
 		return false;
 	}
@@ -335,12 +364,12 @@ bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject>& way) {
 }
 
 int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
-	return getObjContext(RouteDataObjectAttribute::ONEWAY).evaluateInt(road, 0);
+	return (int) evaluateCache(RouteDataObjectAttribute::ONEWAY, road, 0);
 }
 
 double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
-		return getObjContext(RouteDataObjectAttribute::OBSTACLES).evaluateDouble(road->region, road->pointTypes[point], 0);
+		return evaluateCache(RouteDataObjectAttribute::OBSTACLES, road->region, road->pointTypes[point], 0);
 	}
 	return 0;
 }
@@ -368,7 +397,7 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, ui
  			percentIncl = (percentIncl + 2)/ 3 * 3 - 2; // 1, 4, 7, 10, .   
  			if(percentIncl >= 1) {
  				objContext.paramContext.incline = diff > 0 ? percentIncl : -percentIncl;
- 				sum += objContext.evaluateDouble(road, 0) * (diff > 0 ? diff : -diff);
+ 				sum += objContext.evaluateDouble(road->region, road->types, 0) * (diff > 0 ? diff : -diff);
  			}
  		}
  	}
@@ -380,31 +409,31 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, ui
 
 double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
-		return getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES).evaluateDouble(road->region, road->pointTypes[point], 0);
+		return evaluateCache(RouteDataObjectAttribute::ROUTING_OBSTACLES, road->region, road->pointTypes[point], 0);
 	}
 	return 0;
 }
 
 double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
-	double spd = getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateDouble(road, defaultSpeed);
+	double spd = evaluateCache(RouteDataObjectAttribute::ROAD_SPEED, road, defaultSpeed);
 	return max(min(spd, maxSpeed), minSpeed);
 }
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
-    double spd = getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateDouble(road, defaultSpeed);
-    return max(min(spd, maxSpeed), minSpeed);
+	double spd = evaluateCache(RouteDataObjectAttribute::ROAD_SPEED, road, defaultSpeed);
+	return max(min(spd, maxSpeed), minSpeed);
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {
 	if(!isObjContextAvailable(RouteDataObjectAttribute::PENALTY_TRANSITION)) {
 		return 0;
 	}
-	return getObjContext(RouteDataObjectAttribute::PENALTY_TRANSITION) .evaluateDouble(road, 0);
+	return evaluateCache(RouteDataObjectAttribute::PENALTY_TRANSITION, road, 0);
 }
 
 
 double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject>& road) {
-	return getObjContext(RouteDataObjectAttribute::ROAD_PRIORITIES).evaluateDouble(road, 1.);
+	return evaluateCache(RouteDataObjectAttribute::ROAD_PRIORITIES, road, 1.);
 }
 
 double GeneralRouter::getDefaultSpeed() {
@@ -412,7 +441,7 @@ double GeneralRouter::getDefaultSpeed() {
 }
 
 double GeneralRouter::getMinSpeed() {
-    return minSpeed;
+	return minSpeed;
 }
 
 double GeneralRouter::getMaxSpeed() {
@@ -466,10 +495,10 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 }
 
 void GeneralRouter::printRules() {
-    for (uint k = 0; k < objectAttributes.size(); k++) {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
-        objectAttributes[k]->printRules();
-    }
+	for (uint k = 0; k < objectAttributes.size(); k++) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
+		objectAttributes[k]->printRules();
+	}
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
@@ -488,12 +517,12 @@ uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {
 	dynbitset b(router->universalRules.size());
-    MAP_INT_INT map;
-    if (router->regionConvert.find(reg) != router->regionConvert.end()) {
-        map = router->regionConvert[reg];
-    } else {
-        router->regionConvert[reg] = map;
-    }
+	MAP_INT_INT map;
+	if (router->regionConvert.find(reg) != router->regionConvert.end()) {
+		map = router->regionConvert[reg];
+	} else {
+		router->regionConvert[reg] = map;
+	}
 	for (uint k = 0; k < types.size(); k++) {
 		MAP_INT_INT::iterator nid = map.find(types[k]);
 		int vl;
@@ -524,14 +553,14 @@ double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContex
 	if (selectValueDef.length() > 0 && selectValueDef[0]=='$') {
 		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(selectValueDef.substr(1));
 		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
-        {
-            dynbitset findBit(ms->second.size());
-            findBit |= ms->second;
-            findBit &= types;
-            uint value = findBit.find_first();
-            double vd = router->parseValueFromTag(value, selectType, router);;
-            return vd;
-        }
+		{
+			dynbitset findBit(ms->second.size());
+			findBit |= ms->second;
+			findBit &= types;
+			uint value = findBit.find_first();
+			double vd = router->parseValueFromTag(value, selectType, router);;
+			return vd;
+		}
 	} else if (selectValueDef.length() > 0 && selectValueDef[0]==':') {
 		string p = selectValueDef.substr(1);
 		MAP_STR_STR::iterator it = paramContext.vars.find(p);
@@ -571,15 +600,15 @@ double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, Pa
 		return cacheValue;
 	}
 	if (value.length() > 0 && value[0]=='$') {
-        UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
-        if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
-        {
-            dynbitset findBit(ms->second.size());
-            findBit |= ms->second;
-            findBit &= types;
-            uint value = findBit.find_first();
-            return router->parseValueFromTag(value, valueType, router);
-        }
+		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
+		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
+		{
+			dynbitset findBit(ms->second.size());
+			findBit |= ms->second;
+			findBit &= types;
+			uint value = findBit.find_first();
+			return router->parseValueFromTag(value, valueType, router);
+		}
 	} else if(value == ":incline") {
 		return paramContext.incline;
 	} else if (value.length() > 0 && value[0]==':') {
