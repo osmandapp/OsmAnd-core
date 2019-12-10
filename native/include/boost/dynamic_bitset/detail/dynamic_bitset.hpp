@@ -1,7 +1,10 @@
 // -----------------------------------------------------------
 //
 //   Copyright (c) 2001-2002 Chuck Allison and Jeremy Siek
-//        Copyright (c) 2003-2006, 2008 Gennaro Prota
+//   Copyright (c) 2003-2006, 2008 Gennaro Prota
+//   Copyright (c) 2014 Glen Joseph Fernandes
+//       (glenjofe@gmail.com)
+//   Copyright (c) 2018 Evgeny Shulgin
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -12,10 +15,14 @@
 #ifndef BOOST_DETAIL_DYNAMIC_BITSET_HPP
 #define BOOST_DETAIL_DYNAMIC_BITSET_HPP
 
+#include <memory>
 #include <cstddef>
 #include "boost/config.hpp"
 #include "boost/detail/workaround.hpp"
 
+#if ((defined(BOOST_MSVC) && (BOOST_MSVC >= 1600)) || (defined(__clang__) && defined(__c2__)) || (defined(BOOST_INTEL) && defined(_MSC_VER))) && (defined(_M_IX86) || defined(_M_X64))
+#include <intrin.h>
+#endif
 
 namespace boost {
 
@@ -121,6 +128,68 @@ namespace boost {
      }
 
 
+     // Some platforms have fast popcount operation, that allow us to implement
+     // counting bits much more efficiently
+     //
+     template <typename ValueType>
+     BOOST_FORCEINLINE std::size_t popcount(ValueType value) BOOST_NOEXCEPT
+     {
+         std::size_t num = 0;
+         while (value) {
+             num += count_table<>::table[value & ((1u<<table_width) - 1)];
+             value >>= table_width;
+         }
+         return num;
+     }
+
+#if ((defined(BOOST_MSVC) && (BOOST_MSVC >= 1600)) || (defined(__clang__) && defined(__c2__)) || (defined(BOOST_INTEL) && defined(_MSC_VER))) && (defined(_M_IX86) || defined(_M_X64))
+
+/*
+     per https://github.com/boostorg/dynamic_bitset/issues/33
+     this code does not support older cpus properly...
+     it needs to check for cpuid support to avoid undefined behavior
+
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<unsigned short>(unsigned short value) BOOST_NOEXCEPT
+     {
+         return static_cast<std::size_t>(__popcnt16(value));
+     }
+
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<unsigned int>(unsigned int value) BOOST_NOEXCEPT
+     {
+         return static_cast<std::size_t>(__popcnt(value));
+     }
+
+#ifdef _M_X64
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<unsigned __int64>(unsigned __int64 value) BOOST_NOEXCEPT
+     {
+         return static_cast<std::size_t>(__popcnt64(value));
+     }
+#endif
+ */
+
+#elif defined(BOOST_GCC) || defined(__clang__) || (defined(BOOST_INTEL) && defined(__GNUC__))
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<unsigned int>(unsigned int value) BOOST_NOEXCEPT
+     {
+         return __builtin_popcount(value);
+     }
+
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<unsigned long>(unsigned long value) BOOST_NOEXCEPT
+     {
+         return __builtin_popcountl(value);
+     }
+
+     template <>
+     BOOST_FORCEINLINE std::size_t popcount<boost::ulong_long_type>(boost::ulong_long_type value) BOOST_NOEXCEPT
+     {
+         return __builtin_popcountll(value);
+     }
+#endif
+
      // overload for access by blocks
      //
      template <typename Iterator, typename ValueType>
@@ -129,13 +198,7 @@ namespace boost {
      {
          std::size_t num = 0;
          while (length){
-
-             ValueType value = *first;
-             while (value) {
-                 num += count_table<>::table[value & ((1u<<table_width) - 1)];
-                 value >>= table_width;
-             }
-
+             num += popcount<ValueType>(*first);
              ++first;
              --length;
          }
@@ -155,17 +218,25 @@ namespace boost {
     // meaningful info.
     //
     template <typename T>
-    typename T::size_type vector_max_size_workaround(const T & v) {
+    inline typename T::size_type vector_max_size_workaround(const T & v)
+        BOOST_NOEXCEPT
+    {
+        typedef typename T::allocator_type allocator_type;
 
-      typedef typename T::allocator_type allocator_type;
+        const allocator_type& alloc = v.get_allocator();
 
-      const typename allocator_type::size_type alloc_max =
-                                                  v.get_allocator().max_size();
-      const typename T::size_type container_max = v.max_size();
+#if !defined(BOOST_NO_CXX11_ALLOCATOR)
+        typedef std::allocator_traits<allocator_type> allocator_traits;
 
-      return alloc_max < container_max?
-                    alloc_max :
-                    container_max;
+        const typename allocator_traits::size_type alloc_max =
+            allocator_traits::max_size(alloc);
+#else
+        const typename allocator_type::size_type alloc_max = alloc.max_size();
+#endif
+
+        const typename T::size_type container_max = v.max_size();
+
+        return alloc_max < container_max ? alloc_max : container_max;
     }
 
     // for static_asserts
