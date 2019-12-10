@@ -350,8 +350,8 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 	if (r != regCache->end()) {
 		return r->second;
 	}
-	int res = getObjContext(attr).evaluateDouble(reg, types, def);
-	(*regCache)[types] = res;
+	double res = getObjContext(attr).evaluateDouble(reg, types, def);
+	// (*regCache)[types] = res;
 	return res;
 }
 
