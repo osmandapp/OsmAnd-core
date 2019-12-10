@@ -338,20 +338,20 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<Ro
 }
 
 double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def) {
-	auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
-	MAP_INTV_FLOAT* regCache;
-	if (regCacheIt == cacheEval[(unsigned int)attr].end()) {
-		cacheEval[(unsigned int)attr][reg] = MAP_INTV_FLOAT();
-		regCache = &cacheEval[(unsigned int)attr][reg];
-	} else {
-		regCache = &regCacheIt->second;
-	}
-	auto r = regCache->find(types);
-	if (r != regCache->end()) {
-		return r->second;
-	}
+	// auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
+	// MAP_INTV_DOUBLE* regCache;
+	// if (regCacheIt == cacheEval[(unsigned int)attr].end()) {
+	// 	cacheEval[(unsigned int)attr][reg] = MAP_INTV_DOUBLE();
+	// 	regCache = &cacheEval[(unsigned int)attr][reg];
+	// } else {
+	// 	regCache = &regCacheIt->second;
+	// }
+	// auto r = regCache->find(types);
+	// if (r != regCache->end()) {
+	// 	return r->second;
+	// }
 	double res = getObjContext(attr).evaluateDouble(reg, types, def);
-	(*regCache)[types] = res;
+	// (*regCache)[types] = res;
 	return res;
 }
 

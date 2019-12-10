@@ -24,7 +24,7 @@ struct container_hash {
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
 typedef UNORDERED(map)<int, int> MAP_INT_INT;
-typedef UNORDERED(map)<vector<uint32_t>, float, container_hash<vector<uint32_t>>> MAP_INTV_FLOAT;
+typedef UNORDERED(map)<vector<uint32_t>, double, container_hash<vector<uint32_t>>> MAP_INTV_DOUBLE;
 typedef UNORDERED(map)<string, int> MAP_STR_INT;
 typedef boost::dynamic_bitset<> dynbitset;
 
@@ -327,7 +327,7 @@ private:
 	vector<double> ruleToValue; // Object TODO;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
-	vector<UNORDERED(map)<RoutingIndex*, MAP_INTV_FLOAT>> cacheEval;
+	vector<UNORDERED(map)<RoutingIndex*, MAP_INTV_DOUBLE>> cacheEval;
 		
 public:
 	// cached values
