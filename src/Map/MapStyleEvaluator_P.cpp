@@ -185,7 +185,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         else if (valueDefId == _builtinValueDefs->id_INPUT_ADDITIONAL)
         {
             if (!mapObject)
-                evaluationResult = true;
+                evaluationResult = constantRuleValue.asSimple.asInt == inputValue.asInt;
             else
             {
                 assert(!constantRuleValue.isComplex);
