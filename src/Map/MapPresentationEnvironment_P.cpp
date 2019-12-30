@@ -75,58 +75,64 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< OsmAnd::IMap
     _settings = newSettings;
 }
 
-void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
+QHash<OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue> OsmAnd::MapPresentationEnvironment_P::resolveSettings(const QHash<QString, QString> &newSettings) const
 {
     QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > resolvedSettings;
     resolvedSettings.reserve(newSettings.size());
-
+    
     for (const auto& itSetting : rangeOf(newSettings))
     {
         const auto& name = itSetting.key();
         const auto& value = itSetting.value();
-
+        
         // Resolve input-value definition by name
         const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(name);
         const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
         if (!valueDef || valueDef->valueClass != MapStyleValueDefinition::Class::Input)
         {
             LogPrintf(LogSeverityLevel::Warning,
-                "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name",
-                qPrintable(name),
-                qPrintable(value));
+                      "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name",
+                      qPrintable(name),
+                      qPrintable(value));
             continue;
         }
-
+        
         // Parse value
         MapStyleConstantValue parsedValue;
         if (!owner->mapStyle->parseValue(value, valueDef, parsedValue))
         {
             LogPrintf(LogSeverityLevel::Warning,
-                "Setting of '%s' to '%s' impossible: failed to parse value",
-                qPrintable(name),
-                qPrintable(value));
+                      "Setting of '%s' to '%s' impossible: failed to parse value",
+                      qPrintable(name),
+                      qPrintable(value));
             continue;
         }
-
-        // Special case for night mode
-        if (valueDefId == MapStyleBuiltinValueDefinitions::get()->id_INPUT_NIGHT_MODE)
-        {
-            _desiredStubsStyle = (parsedValue.asSimple.asInt == 1)
-                ? MapStubStyle::Dark
-                : MapStubStyle::Light;
-        }
-
+        
         resolvedSettings.insert(valueDefId, parsedValue);
+    }
+    return resolvedSettings;
+}
+
+void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
+{
+    QHash<IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue> resolvedSettings = resolveSettings(newSettings);
+    
+    // Special case for night mode
+    if (resolvedSettings.contains(MapStyleBuiltinValueDefinitions::get()->id_INPUT_NIGHT_MODE))
+    {
+        _desiredStubsStyle = (resolvedSettings[MapStyleBuiltinValueDefinitions::get()->id_INPUT_NIGHT_MODE].asSimple.asInt == 1)
+        ? MapStubStyle::Dark
+        : MapStubStyle::Light;
     }
 
     setSettings(resolvedSettings);
 }
 
-void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator) const
+void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
-    for (const auto& settingEntry : rangeOf(constOf(_settings)))
+    for (const auto& settingEntry : rangeOf(constOf(settings)))
     {
         const auto& valueDefId = settingEntry.key();
         const auto& settingValue = settingEntry.value();
@@ -157,6 +163,11 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
                 break;
         }
     }
+}
+
+void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator) const
+{
+    applyTo(evaluator, _settings);
 }
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const
@@ -469,6 +480,31 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
         evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
     
     return result;
+}
+
+QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment_P::getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const
+{
+    QString name;
+    uint32_t argb = 0xFFFFFFFF;
+    
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    applyTo(evaluator);
+    const auto& resolvedAdditionalSettings = resolveSettings(additionalSettings);
+    applyTo(evaluator, resolvedAdditionalSettings);
+    
+    auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
+    MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
+
+    if (renderAttr)
+    {
+        if (evaluator.evaluate(renderAttr, &evalResult))
+        {
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, argb);
+            evalResult.getStringValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_STRING_VALUE, name);
+        }
+    }
+    
+    return QPair<QString, uint32_t>(name, argb);
 }
 
 QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const

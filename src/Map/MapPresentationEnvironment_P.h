@@ -38,6 +38,7 @@ namespace OsmAnd
         typedef MapPresentationEnvironment::ShadowMode ShadowMode;
 
     private:
+        QHash<IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue> resolveSettings(const QHash<QString, QString> &newSettings) const;
     protected:
         MapPresentationEnvironment_P(MapPresentationEnvironment* owner);
 
@@ -93,9 +94,11 @@ namespace OsmAnd
 
         QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
+        
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;
+        void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
         bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outBitmap) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
@@ -114,6 +117,7 @@ namespace OsmAnd
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
         QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
         QHash<QString, int> getGpxColors() const;
+        QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };
