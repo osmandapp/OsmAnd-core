@@ -1,6 +1,7 @@
 #include "WorldRegions.h"
 #include "WorldRegions_P.h"
 
+const QString OsmAnd::WorldRegions::AntarcticaRegionId(QLatin1String("antarctica"));
 const QString OsmAnd::WorldRegions::AfricaRegionId(QLatin1String("africa"));
 const QString OsmAnd::WorldRegions::AsiaRegionId(QLatin1String("asia"));
 const QString OsmAnd::WorldRegions::AustraliaAndOceaniaRegionId(QLatin1String("australia-oceania"));
@@ -9,6 +10,8 @@ const QString OsmAnd::WorldRegions::EuropeRegionId(QLatin1String("europe"));
 const QString OsmAnd::WorldRegions::NorthAmericaRegionId(QLatin1String("northamerica"));
 const QString OsmAnd::WorldRegions::RussiaRegionId(QLatin1String("russia"));
 const QString OsmAnd::WorldRegions::SouthAmericaRegionId(QLatin1String("southamerica"));
+const QString OsmAnd::WorldRegions::NauticalRegionId(QLatin1String("nautical"));
+const QString OsmAnd::WorldRegions::OthersRegionId(QLatin1String("others"));
 
 OsmAnd::WorldRegions::WorldRegions(const QString& ocbfFileName_)
     : _p(new WorldRegions_P(this))

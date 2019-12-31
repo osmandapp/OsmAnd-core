@@ -42,6 +42,7 @@ namespace OsmAnd
             MapRegion,
             RoadMapRegion,
             SrtmMapRegion,
+            DepthContourRegion,
             WikiMapRegion,
             HillshadeRegion,
             HeightmapRegion,

@@ -33,6 +33,7 @@ namespace OsmAnd
 
         const QString ocbfFileName;
 
+        static const QString AntarcticaRegionId;
         static const QString AfricaRegionId;
         static const QString AsiaRegionId;
         static const QString AustraliaAndOceaniaRegionId;
@@ -41,6 +42,8 @@ namespace OsmAnd
         static const QString NorthAmericaRegionId;
         static const QString RussiaRegionId;
         static const QString SouthAmericaRegionId;
+        static const QString NauticalRegionId;
+        static const QString OthersRegionId;
 
         bool loadWorldRegions(
             QList< std::shared_ptr<const WorldRegion> >* const outRegions,

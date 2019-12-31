@@ -290,6 +290,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         
         changesManager->addValidIncrementalUpdates(liveUpdates, outResult);
         
+        // Find ResourceType::MapRegion -> "*.depth.obf" files
+        loadLocalResourcesFromPath_Obf(
+            storagePath,
+            cachedOsmandIndexes,
+            outResult,
+            QLatin1String("*.depth.obf"),
+            ResourceType::DepthContourRegion);
+        
         // Find ResourceType::RoadMapRegion -> "*.road.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
@@ -430,6 +438,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::WikiMapRegion;
         else if (fileName.endsWith(".live.obf"))
             resourceType = ResourceType::LiveUpdateRegion;
+        else if (fileName.endsWith(".depth.obf"))
+            resourceType = ResourceType::DepthContourRegion;
         else
         {
             resourceType = ResourceType::MapRegion;
@@ -501,15 +511,6 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
         const auto filePath = sqlitedbFileInfo.absoluteFilePath();
         const auto fileName = sqlitedbFileInfo.fileName();
 
-//        // Read information from OBF
-//        const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
-//        const auto obfInfo = ObfReader(obfFile).obtainInfo();
-//        if (!obfInfo)
-//        {
-//            LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
-//            continue;
-//        }
-
         // Determine resource type and id
         QString resourceId = fileName.toLower();
         auto resourceType = ResourceType::Unknown;
@@ -523,7 +524,9 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
                 .replace(".sqlitedb", ".hillshade.sqlitedb");
         }
         else if (fileName.endsWith(".heightmap.sqlitedb"))
+        {
             resourceType = ResourceType::HeightmapRegion;
+        }
         else if (fileName.startsWith("Heightmap_"))
         {
             resourceType = ResourceType::HeightmapRegion;
@@ -778,6 +781,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             resourceType = ResourceType::HeightmapRegion;
         else if (resourceTypeValue == QLatin1String("voice"))
             resourceType = ResourceType::VoicePack;
+        else if (resourceTypeValue == QLatin1String("depth"))
+            resourceType = ResourceType::DepthContourRegion;
         else
         {
             LogPrintf(LogSeverityLevel::Verbose,
@@ -853,6 +858,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?srtmcountry=yes&file=") +
                     QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::DepthContourRegion:
+                // '[region]_2.obf.zip' -> '[region].depth.obf'
+                resourceId = QString(name)
+                .remove(QLatin1String("_2.obf.zip"))
+                .toLower()
+                .append(QLatin1String(".depth.obf"));
+                downloadUrl =
+                owner->repositoryBaseUrl +
+                QLatin1String("/download.php?inapp=depth&file=") +
+                QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::WikiMapRegion:
                 // '[region]_2.wiki.obf.zip' -> '[region].wiki.obf'
@@ -1104,6 +1120,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
+        case ResourceType::DepthContourRegion:
             ok = uninstallObf(installedResource);
             break;
         case ResourceType::HillshadeRegion:
@@ -1214,6 +1231,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
+        case ResourceType::DepthContourRegion:
             ok = installObfFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
@@ -1567,6 +1585,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
         case ResourceType::RoadMapRegion:
         case ResourceType::SrtmMapRegion:
         case ResourceType::WikiMapRegion:
+        case ResourceType::DepthContourRegion:
             ok = updateObfFromFile(installedResource, filePath);
             break;
         case ResourceType::HillshadeRegion:
@@ -1746,6 +1765,7 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
             localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
+            localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::WikiMapRegion)
         {
             continue;
@@ -1780,6 +1800,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
+            localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::WikiMapRegion)
         {
             continue;
@@ -1841,6 +1862,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::LiveUpdateRegion &&
             localResource->type != ResourceType::RoadMapRegion &&
             localResource->type != ResourceType::SrtmMapRegion &&
+            localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::WikiMapRegion)
         {
             continue;
