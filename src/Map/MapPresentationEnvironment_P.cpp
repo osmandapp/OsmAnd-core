@@ -484,7 +484,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getTransportRouteColor(c
 
 QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment_P::getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const
 {
-    QString name;
+    QString name = QStringLiteral("undefined");
     uint32_t argb = 0xFFFFFFFF;
     
     MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
