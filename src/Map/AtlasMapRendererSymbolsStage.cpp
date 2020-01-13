@@ -4,6 +4,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QLinkedList>
 #include <QSet>
+#include <QVector>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -955,15 +956,41 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         : onSurfaceMapSymbol->getDirection();
 
     // Test against visible frustum area (if allowed)
-    if (!debugSettings->disableSymbolsFastCheckByFrustum &&
-        mapSymbol->allowFastCheckByFrustum &&
-        !internalState.globalFrustum2D31.test(position31))
+    if (!debugSettings->disableSymbolsFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
-        if (metric)
-            metric->onSurfaceSymbolsRejectedByFrustum++;
-        return;
+        if (const auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol))
+        {
+            AreaI symbolArea;
+            QVector<PointI> symbolRect;
+            switch (vectorMapSymbol->scaleType)
+            {
+                case VectorMapSymbol::ScaleType::Raw:
+                    symbolRect << position31;
+                    break;
+                case VectorMapSymbol::ScaleType::In31:
+                    symbolArea = AreaI(position31.y - vectorMapSymbol->scale, position31.x - vectorMapSymbol->scale, position31.y + vectorMapSymbol->scale, position31.x + vectorMapSymbol->scale);
+                    symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
+                    break;
+                case VectorMapSymbol::ScaleType::InMeters:
+                    symbolArea = (AreaI)Utilities::boundingBox31FromAreaInMeters(vectorMapSymbol->scale, position31);
+                    symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
+                    break;
+            }
+            if (!internalState.globalFrustum2D31.test(symbolRect))
+            {
+                if (metric)
+                    metric->onSurfaceSymbolsRejectedByFrustum++;
+                return;
+            }
+        }
+        else if (!internalState.globalFrustum2D31.test(position31))
+        {
+            if (metric)
+                metric->onSurfaceSymbolsRejectedByFrustum++;
+            return;
+        }
     }
-
+    
     // Get GPU resource
     const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
     if (!gpuResource)

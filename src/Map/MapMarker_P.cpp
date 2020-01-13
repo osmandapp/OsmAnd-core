@@ -174,7 +174,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     // Construct new map symbols group for this marker
     const std::shared_ptr<MapMarker::SymbolsGroup> symbolsGroup(new MapMarker::SymbolsGroup(
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
-    symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
+    symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
 
     int order = owner->baseOrder;
 
