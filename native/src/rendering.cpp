@@ -1031,9 +1031,9 @@ double polygonArea(MapDataObject* obj, float mult) {
 	double area = 0.;
 	int j = obj->points.size() - 1;
 	for (uint i = 0; i < obj->points.size(); i++) {
-		int_pair x = obj->points[i] ;
-		int_pair y = obj->points[j];
-		area += (y.first + ((float) x.first) )* (y.second- ((float)x.second));
+		int_pair p1 = obj->points[i] ;
+		int_pair p2 = obj->points[j];
+		area += (p2.first + p1.first) * (p2.second - p1.second);
 		j = i;
 	}
 	return abs(area) * mult * mult * .5;
@@ -1159,7 +1159,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 								if(addPoint && (area > MAX_V_AREA || addTextForSmallAreas)) {
 									pointsArray.push_back(pointObj); 
 								}
-							}
+							} 
 						} else if(objectType == 1) {
 							pointsArray.push_back(mapObj);
 						} else {
