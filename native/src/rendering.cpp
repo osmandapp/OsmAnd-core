@@ -1033,7 +1033,7 @@ double polygonArea(MapDataObject* obj, float mult) {
 	for (uint i = 0; i < obj->points.size(); i++) {
 		int_pair p1 = obj->points[i] ;
 		int_pair p2 = obj->points[j];
-		area += (p2.first + p1.first) * (p2.second - p1.second);
+		area += (p2.first + p1.first) * (p2.second - ((float)p1.second));
 		j = i;
 	}
 	return abs(area) * mult * mult * .5;
