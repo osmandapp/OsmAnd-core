@@ -298,14 +298,13 @@ std::vector<std::string> split_string( const std::string& str, const std::string
     
     while (lastPos < length + 1) {
         pos = str.find(delimiters, lastPos);
-        if (pos == std::string::npos) {
+        if (pos == std::string::npos)
             pos = length;
-        }
         if (pos != lastPos)
             tokens.push_back(str.substr(lastPos, pos - lastPos));
-        
-        lastPos = pos + 1;
-    }
+
+		lastPos = pos + delimiters.length();
+	}
     return tokens;
 }
 
