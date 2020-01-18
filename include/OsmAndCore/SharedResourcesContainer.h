@@ -29,7 +29,7 @@ namespace OsmAnd
     public:
         typedef std::shared_ptr<RESOURCE_TYPE> ResourcePtr;
     protected:
-        mutable QReadWriteLock _lock;
+        mutable QMutex _containerMutex;
 
         struct AvailableResourceEntry
         {
@@ -87,7 +87,7 @@ namespace OsmAnd
     protected:
     public:
         SharedResourcesContainer()
-            : _lock(QReadWriteLock::Recursive)
+            : _containerMutex(QMutex::Recursive)
         {
         }
         virtual ~SharedResourcesContainer()
@@ -96,7 +96,7 @@ namespace OsmAnd
 
         void insert(const KEY_TYPE& key, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insert(%s, %p)",
@@ -123,7 +123,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         void insert(const KEY_TYPE& key, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insert(%s, %p)",
@@ -146,7 +146,7 @@ namespace OsmAnd
         
         void insertAndReference(const KEY_TYPE& key, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insertAndReference(%s, %p)",
@@ -167,7 +167,7 @@ namespace OsmAnd
 
         bool obtainReference(const KEY_TYPE& key, ResourcePtr& outResourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainReference(%s)",
@@ -208,7 +208,7 @@ namespace OsmAnd
 
         bool releaseReference(const KEY_TYPE& key, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must not be promised. Otherwise behavior is undefined
             assert(!_promisedResources.contains(key));
@@ -249,7 +249,7 @@ namespace OsmAnd
 
         void makePromise(const KEY_TYPE& key)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->makePromise(%s)",
@@ -269,7 +269,7 @@ namespace OsmAnd
 
         void breakPromise(const KEY_TYPE& key)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->breakPromise(%s)",
@@ -298,7 +298,7 @@ namespace OsmAnd
 
         void fulfilPromise(const KEY_TYPE& key, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must be promised and must not be already available.
             // Otherwise behavior is undefined
@@ -340,7 +340,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         void fulfilPromise(const KEY_TYPE& key, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must be promised and must not be already available.
             // Otherwise behavior is undefined
@@ -372,7 +372,7 @@ namespace OsmAnd
 
         void fulfilPromiseAndReference(const KEY_TYPE& key, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must be promised and must not be already available.
             // Otherwise behavior is undefined
@@ -406,7 +406,7 @@ namespace OsmAnd
 
         bool obtainFutureReference(const KEY_TYPE& key, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must not be already available.
             // Otherwise behavior is undefined
@@ -443,7 +443,7 @@ namespace OsmAnd
 
         bool releaseFutureReference(const KEY_TYPE& key)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             // Resource must not be already available.
             // Otherwise behavior is undefined
@@ -480,7 +480,7 @@ namespace OsmAnd
 
         bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             const auto itAvailableResourceEntry = _availableResources.find(key);
             if (itAvailableResourceEntry != _availableResources.end())
@@ -528,7 +528,7 @@ namespace OsmAnd
 
         uintmax_t getReferencesCount(const KEY_TYPE& key) const
         {
-            QReadLocker scopedLocker(&_lock);
+            QMutexLocker scopedLocker(&_containerMutex);
 
             const auto citAvailableResourceEntry = _availableResources.constFind(key);
             if (citAvailableResourceEntry != _availableResources.cend())

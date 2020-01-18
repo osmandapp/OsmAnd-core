@@ -76,7 +76,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
     request.filterCallback =
-        [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
+        [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
         {
             // If map symbols group is not shareable, just accept it

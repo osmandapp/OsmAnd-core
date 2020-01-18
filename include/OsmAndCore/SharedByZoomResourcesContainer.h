@@ -92,7 +92,7 @@ namespace OsmAnd
 
         void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
@@ -126,7 +126,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         void insert(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
@@ -156,7 +156,7 @@ namespace OsmAnd
 
         void insertAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insertAndReference(%s, [%s], %p)",
@@ -184,7 +184,7 @@ namespace OsmAnd
 
         bool obtainReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& outResourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainReference(%s, [%d],...)",
@@ -228,7 +228,7 @@ namespace OsmAnd
 
         bool releaseReference(const KEY_TYPE& key, const ZoomLevel level, ResourcePtr& resourcePtr, const bool autoClean = true, bool* outWasCleaned = nullptr, uintmax_t* outRemainingReferences = nullptr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->releaseReference(%s, [%d], %p, ...)",
@@ -279,7 +279,7 @@ namespace OsmAnd
         
         void makePromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->makePromise(%s, [%s])",
@@ -306,7 +306,7 @@ namespace OsmAnd
 
         void breakPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->breakPromise(%s, [%s])",
@@ -337,7 +337,7 @@ namespace OsmAnd
 
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
@@ -391,7 +391,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         void fulfilPromise(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, ResourcePtr&& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
@@ -441,7 +441,7 @@ namespace OsmAnd
 
         void fulfilPromiseAndReference(const KEY_TYPE& key, const QSet<ZoomLevel>& levels, const ResourcePtr& resourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromiseAndReference(%s, [%s], %p)",
@@ -486,7 +486,7 @@ namespace OsmAnd
 
         bool obtainFutureReference(const KEY_TYPE& key, const ZoomLevel level, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainFutureReference(%s, [%d], ...)",
@@ -514,7 +514,7 @@ namespace OsmAnd
 
         bool releaseFutureReference(const KEY_TYPE& key, const ZoomLevel level)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->releaseFutureReference(%s, [%d])",
@@ -542,7 +542,7 @@ namespace OsmAnd
 
         bool obtainReferenceOrFutureReferenceOrMakePromise(const KEY_TYPE& key, const ZoomLevel level, const QSet<ZoomLevel>& levels, ResourcePtr& outResourcePtr, proper::shared_future<ResourcePtr>& outFutureResourcePtr)
         {
-            QWriteLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
             LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...)",
@@ -587,7 +587,7 @@ namespace OsmAnd
 
         uintmax_t getReferencesCount(const KEY_TYPE& key, const ZoomLevel level = InvalidZoomLevel) const
         {
-            QReadLocker scopedLocker(&this->_lock);
+            QMutexLocker scopedLocker(&this->_containerMutex);
 
             uintmax_t result = 0;
             const auto firstZoom = (level == InvalidZoomLevel) ? MinZoomLevel : level;
