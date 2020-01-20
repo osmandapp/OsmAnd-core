@@ -700,17 +700,21 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
         [obfId, &foundAmenity, obfMapObject]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
+            if (foundAmenity)
+                return false;
+            
             // todo: wrong IF since mapObject->id != amenity->id
             if (amenity->id >> 1 == obfId)
                 foundAmenity = amenity;
-
-            for (const auto& caption : obfMapObject->captions.values())
-            {
-                if (amenity->nativeName == caption || amenity->localizedNames.values().contains(caption)) {
-                    foundAmenity = amenity;
-                    break;
+            else
+                for (const auto& caption : obfMapObject->captions.values())
+                {
+                    if (amenity->nativeName == caption || amenity->localizedNames.values().contains(caption)) {
+                        foundAmenity = amenity;
+                        break;
+                    }
                 }
-            }
+
             return false;
         };
 
