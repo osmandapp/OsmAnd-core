@@ -531,7 +531,8 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 		// shift to match alignment
 		text->bounds.offset(-text->bounds.width()/2, 0);
 	} else {
-		text->bounds.inset(0, -text->bounds.width()/3);	
+		//add more height to box to make uncalculated intersections after placing on path less frequent
+		text->bounds.inset(0, -text->bounds.width()/4);	
 		text->bounds.offset(text->centerX - text->bounds.width()/2, text->centerY - text->bounds.height()/2);
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
