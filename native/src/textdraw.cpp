@@ -517,8 +517,9 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->textBounds);
 	text->bounds = text->textBounds;
+	
 	// make wider and multiline
-	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(5) +
+	text->bounds.inset(-rc->getDensityValue(3), -(rc->getDensityValue(5) +
 		((text->text.length() - 1) / text1Line) * text->bounds.height()));
 	bool display = calculatePathToRotate(rc, text, db);
 	if (!display) {
@@ -530,13 +531,14 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 		// shift to match alignment
 		text->bounds.offset(-text->bounds.width()/2, 0);
 	} else {
+		text->bounds.inset(0, -text->bounds.width()/3);	
 		text->bounds.offset(text->centerX - text->bounds.width()/2, text->centerY - text->bounds.height()/2);
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
 	float cf = text->intersectionSizeFactor - 1;
 	text->bounds.inset(- cf * text->bounds.width() / 2, - cf * text->bounds.height() / 2);
 
-	// for text purposes
+	// for test purposes
 	if(db.debugTextDisplayBBox) {
 		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
 	}
@@ -871,6 +873,13 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 				drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
 			}
 		}
+
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "TextToDraw. text: %s, order: %d, intersects: %s, visible: %s, bounds: ", 
+		// textDrawInfo->text.c_str(), 
+		// textDrawInfo->textOrder,
+		// intersects ? "true" : "false",
+		// textDrawInfo->visible ? "true" : "false"
+		// );
 	}
 	// add all text for debug
 	for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
