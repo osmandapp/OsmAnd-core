@@ -24,7 +24,8 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
     QVector<SkScalar>* const outGlyphWidths /*= nullptr*/,
     float* const outExtraTopSpace /*= nullptr*/,
     float* const outExtraBottomSpace /*= nullptr*/,
-    float* const outLineSpacing /*= nullptr*/) const
+    float* const outLineSpacing /*= nullptr*/,
+    float* const outFontAscent /*= nullptr*/) const
 {
     return _p->rasterize(
         text,
@@ -32,7 +33,8 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
         outGlyphWidths,
         outExtraTopSpace,
         outExtraBottomSpace,
-        outLineSpacing);
+        outLineSpacing,
+        outFontAscent);
 }
 
 bool OsmAnd::TextRasterizer::rasterize(
@@ -42,7 +44,8 @@ bool OsmAnd::TextRasterizer::rasterize(
     QVector<SkScalar>* const outGlyphWidths /*= nullptr*/,
     float* const outExtraTopSpace /*= nullptr*/,
     float* const outExtraBottomSpace /*= nullptr*/,
-    float* const outLineSpacing /*= nullptr*/) const
+    float* const outLineSpacing /*= nullptr*/,
+    float* const outFontAscent /*= nullptr*/) const
 {
     return _p->rasterize(
         targetBitmap,
@@ -51,7 +54,8 @@ bool OsmAnd::TextRasterizer::rasterize(
         outGlyphWidths,
         outExtraTopSpace,
         outExtraBottomSpace,
-        outLineSpacing);
+        outLineSpacing,
+        outFontAscent);
 }
 
 static std::shared_ptr<const OsmAnd::TextRasterizer> s_defaultTextRasterizer;

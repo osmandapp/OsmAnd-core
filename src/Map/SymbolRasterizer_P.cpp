@@ -76,6 +76,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
         // This offset is computed only in case symbol is not on-path and not along-path
         PointI totalOffset;
+        bool textAfterIcon = false;
 
         for (const auto& symbol : constOf(symbolsGroup->symbols))
         {
@@ -128,6 +129,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
 
                 float lineSpacing;
+                float fontAscent;
                 float symbolExtraTopSpace;
                 float symbolExtraBottomSpace;
                 QVector<SkScalar> glyphsWidth;
@@ -137,7 +139,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     textSymbol->drawOnPath ? &glyphsWidth : nullptr,
                     &symbolExtraTopSpace,
                     &symbolExtraBottomSpace,
-                    &lineSpacing);
+                    &lineSpacing,
+                    &fontAscent);
                 if (!rasterizedText)
                     continue;
 
@@ -180,6 +183,9 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     {
                         localOffset.y += symbolExtraTopSpace;
                         localOffset.y += rasterizedText->height() / 2;
+                        if (textAfterIcon && symbolExtraTopSpace == 0)
+                            localOffset.y += qCeil(-fontAscent / 2);
+                        textAfterIcon = false;
                     }
 
                     // Increment total offset
@@ -354,7 +360,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 // Next symbol should also take into account:
                 //  - height / 2
                 if (!iconSymbol->drawAlongPath)
+                {
                     totalOffset.y += rasterizedIcon->height() / 2;
+                    textAfterIcon = true;
+                }
             }
         }
 

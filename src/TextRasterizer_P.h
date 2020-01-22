@@ -61,6 +61,7 @@ namespace OsmAnd
                 , maxFontBottom(0)
                 , minFontBottom(std::numeric_limits<SkScalar>::max())
                 , maxBoundsTop(0)
+                , fontAscent(0)
                 , minBoundsTop(std::numeric_limits<SkScalar>::max())
                 , width(0)
             {
@@ -76,6 +77,7 @@ namespace OsmAnd
             SkScalar minFontTop;
             SkScalar maxFontBottom;
             SkScalar minFontBottom;
+            SkScalar fontAscent;
             SkScalar maxBoundsTop;
             SkScalar minBoundsTop;
             SkScalar width;
@@ -103,7 +105,8 @@ namespace OsmAnd
             QVector<SkScalar>* const outGlyphWidths,
             float* const outExtraTopSpace,
             float* const outExtraBottomSpace,
-            float* const outLineSpacing) const;
+            float* const outLineSpacing,
+            float* const outFontAscent) const;
 
         bool rasterize(
             SkBitmap& targetBitmap,
@@ -112,7 +115,8 @@ namespace OsmAnd
             QVector<SkScalar>* const outGlyphWidths,
             float* const outExtraTopSpace,
             float* const outExtraBottomSpace,
-            float* const outLineSpacing) const;
+            float* const outLineSpacing,
+            float* const outFontAscent) const;
 
     friend class OsmAnd::TextRasterizer;
     };

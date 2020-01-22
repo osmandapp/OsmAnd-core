@@ -128,7 +128,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 pTextPaint->paint.setTypeface(font);
 
                 SkPaint::FontMetrics metrics;
-                pTextPaint->height = paint.getFontMetrics(&metrics);
+                pTextPaint->height = paint.getFontMetrics(&metrics) + 2.0f;
                 linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, pTextPaint->height);
                 linePaint.minFontHeight = qMin(linePaint.minFontHeight, pTextPaint->height);
                 linePaint.maxFontLineSpacing = qMax(linePaint.maxFontLineSpacing, metrics.fLeading);
@@ -137,6 +137,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.minFontTop = qMin(linePaint.minFontTop, -metrics.fTop);
                 linePaint.maxFontBottom = qMax(linePaint.maxFontBottom, metrics.fBottom);
                 linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
+                linePaint.fontAscent = metrics.fAscent;
 
                 if (style.bold && (!font || (font && font->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
                     pTextPaint->paint.setFakeBoldText(true);
@@ -241,7 +242,7 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
         for (auto& textPaint : linePaint.textPaints)
         {
             const auto haloPaint = getHaloPaint(textPaint.paint, style);
-
+            /*
             SkPaint::FontMetrics metrics;
             textPaint.height = haloPaint.getFontMetrics(&metrics);
             linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, textPaint.height);
@@ -252,7 +253,7 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
             linePaint.minFontTop = qMin(linePaint.minFontTop, -metrics.fTop);
             linePaint.maxFontBottom = qMax(linePaint.maxFontBottom, metrics.fBottom);
             linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
-
+            */
             SkRect haloBounds;
             haloPaint.measureText(
                 textPaint.text.constData(),
@@ -392,7 +393,8 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
     float* const outExtraBottomSpace,
-    float* const outLineSpacing) const
+    float* const outLineSpacing,
+    float* const outFontAscent) const
 {
     std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     const bool ok = rasterize(
@@ -402,7 +404,8 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
         outGlyphWidths,
         outExtraTopSpace,
         outExtraBottomSpace,
-        outLineSpacing);
+        outLineSpacing,
+        outFontAscent);
     if (!ok)
         return nullptr;
     return bitmap;
@@ -415,7 +418,8 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
     float* const outExtraBottomSpace,
-    float* const outLineSpacing) const
+    float* const outLineSpacing,
+    float* const outFontAscent) const
 {
     // Prepare text and break by lines
     const auto text = ICU::convertToVisualOrder(text_);
@@ -443,6 +447,16 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             measureHaloGlyphs(style, paints, *outGlyphWidths);
     }
 
+    // Set output font ascent
+    if (outFontAscent)
+    {
+        float fontAscent = 0.0f;
+        for (const auto& linePaint : constOf(paints))
+            fontAscent = qMin(fontAscent, linePaint.fontAscent);
+
+        *outFontAscent = fontAscent;
+    }
+    
     // Set output line spacing
     if (outLineSpacing)
     {

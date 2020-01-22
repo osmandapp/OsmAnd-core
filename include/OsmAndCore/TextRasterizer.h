@@ -151,7 +151,8 @@ namespace OsmAnd
             QVector<SkScalar>* const outGlyphWidths = nullptr,
             float* const outExtraTopSpace = nullptr,
             float* const outExtraBottomSpace = nullptr,
-            float* const outLineSpacing = nullptr) const;
+            float* const outLineSpacing = nullptr,
+            float* const outFontAscent = nullptr) const;
         
         bool rasterize(
             SkBitmap& targetBitmap,
@@ -160,7 +161,8 @@ namespace OsmAnd
             QVector<SkScalar>* const outGlyphWidths = nullptr,
             float* const outExtraTopSpace = nullptr,
             float* const outExtraBottomSpace = nullptr,
-            float* const outLineSpacing = nullptr) const;
+            float* const outLineSpacing = nullptr,
+            float* const outFontAscent = nullptr) const;
 
         static std::shared_ptr<const TextRasterizer> getDefault();
         static std::shared_ptr<const TextRasterizer> getOnlySystemFonts();
