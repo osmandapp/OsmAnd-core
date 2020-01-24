@@ -798,37 +798,35 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 	combineSimilarText(rc);
 
 	//2. Calculate intersections and choose what text to draw
-    for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
-    {
-        SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
+	for (auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi) {
+		SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
 
-        // Skip empty text
-	    if(textDrawInfo->text.length() <= 0)
-            continue;
-        if(textDrawInfo->combined)
-        	continue;
-        if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
-        	continue;
-        }
-        
-        globalFontRegistry.updateTypeface(&paintText, 
-        	rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
-			textDrawInfo->italic, sDefaultTypeface); 
-   		// sest text size before finding intersection (it is used there)
-		float textSize = textDrawInfo->textSize ;
+		// Skip empty text
+		if (textDrawInfo->text.length() <= 0)
+			continue;
+		if (textDrawInfo->combined)
+			continue;
+		if (textDrawInfo->icon && !textDrawInfo->icon->visible)
+			continue;
+
+		globalFontRegistry.updateTypeface(&paintText,
+			rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
+			textDrawInfo->italic, sDefaultTypeface);
+		// sest text size before finding intersection (it is used there)
+		float textSize = textDrawInfo->textSize;
 		paintText.setTextSize(textSize);
 		// align center y
 		paintText.getFontMetrics(&fm);
-		
+
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
-			db);
-		if(textDrawInfo->icon && textDrawInfo->icon->bmp) {
+											   db);
+		if (textDrawInfo->icon && textDrawInfo->icon->bmp) {
 			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
-			textDrawInfo->centerY += ((-fm.fAscent)) ;
-        }
+			textDrawInfo->centerY += ((-fm.fAscent));
+		}
 		if (!intersects) {
-			if(rc->interrupted()){
+			if (rc->interrupted()) {
 				return;
 			}
 			textDrawInfo->visible = true;
@@ -838,33 +836,31 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 	}
 
 	//3. Draw selected text in reverse order
-	for(auto itdi = rc->textToDraw.rbegin(); itdi != rc->textToDraw.rend(); ++itdi) {
+	for (auto itdi = rc->textToDraw.rbegin(); itdi != rc->textToDraw.rend(); ++itdi) {
 		SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
 
-        // Prepare font
-        sk_sp<SkTypeface> def = sDefaultTypeface;
-        if( textDrawInfo->bold && textDrawInfo->italic) {
-        	def = sBoldItalicTypeface;
-        } else if(textDrawInfo->italic) {
-        	def = sItalicTypeface;
-        } else if(textDrawInfo->bold) {
-        	def = sBoldTypeface;
-        }
-        globalFontRegistry.updateTypeface(&paintText, 
-        	rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
-			textDrawInfo->italic, def); 
-		float textSize = textDrawInfo->textSize ;
+		// Prepare font
+		sk_sp<SkTypeface> def = sDefaultTypeface;
+		if (textDrawInfo->bold && textDrawInfo->italic)
+			def = sBoldItalicTypeface;
+		else if (textDrawInfo->italic)
+			def = sItalicTypeface;
+		else if (textDrawInfo->bold)
+			def = sBoldTypeface;
+		globalFontRegistry.updateTypeface(&paintText,
+			rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
+			textDrawInfo->italic, def);
+		float textSize = textDrawInfo->textSize;
 		paintText.setTextSize(textSize);
-		
+
 		//paintText.setFakeBoldText(textDrawInfo->bold);
 		paintText.setColor(textDrawInfo->textColor);
 		// align center y
 		paintText.getFontMetrics(&fm);
 
 		if (textDrawInfo->visible) {
-			if(rc->interrupted()){
+			if (rc->interrupted())
 				return;
-			}
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
 				textDrawInfo->text = rc->getReshapedString(textDrawInfo->text);
 				if (textDrawInfo->textShadow > 0) {
@@ -874,7 +870,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 					rc->nativeOperations.Pause();
 					// textDrawInfo->vOffset
 					cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-							textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
+										 textDrawInfo->vOffset - fm.fTop / 4, paintText);
 					rc->nativeOperations.Start();
 					// reset
 					paintText.setStyle(SkPaint::kFill_Style);
@@ -884,7 +880,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 				rc->nativeOperations.Pause();
 				// textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent)
 				cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-						textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
+									 textDrawInfo->vOffset - fm.fTop / 4, paintText);
 				rc->nativeOperations.Start();
 			} else {
 				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r, fm);
@@ -895,12 +891,10 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 	}
 
 	// add all text for debug
-	for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
-    {
+	for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi) {
         SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
-        if(!textDrawInfo->visible) {
+        if(!textDrawInfo->visible)
         	boundsIntersect.insert(textDrawInfo, textDrawInfo->bounds);
-        }
     }
 	rc->textIntersect = boundsIntersect;
 }
