@@ -797,7 +797,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 
 	combineSimilarText(rc);
 
-	//Calculate intersections and choose what text to draw
+	//2. Calculate intersections and choose what text to draw
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
         SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
@@ -810,10 +810,15 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
         if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
         	continue;
         }
-
-   		// sets text size before finding intersection (it is used there)
+        
+        globalFontRegistry.updateTypeface(&paintText, 
+        	rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
+			textDrawInfo->italic, sDefaultTypeface); 
+   		// sest text size before finding intersection (it is used there)
 		float textSize = textDrawInfo->textSize ;
 		paintText.setTextSize(textSize);
+		// align center y
+		paintText.getFontMetrics(&fm);
 		
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
@@ -832,18 +837,9 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 		}
 	}
 
-	//Draw selected text in reverse order
+	//3. Draw selected text in reverse order
 	for(auto itdi = rc->textToDraw.rbegin(); itdi != rc->textToDraw.rend(); ++itdi) {
 		SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
-		
-        // Skip empty text
-	    if(textDrawInfo->text.length() <= 0)
-            continue;
-        if(textDrawInfo->combined)
-        	continue;
-        if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
-        	continue;
-        }
 
         // Prepare font
         sk_sp<SkTypeface> def = sDefaultTypeface;
