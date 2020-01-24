@@ -797,10 +797,45 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 
 	combineSimilarText(rc);
 
+	//Calculate intersections and choose what text to draw
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
         SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
 
+        // Skip empty text
+	    if(textDrawInfo->text.length() <= 0)
+            continue;
+        if(textDrawInfo->combined)
+        	continue;
+        if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
+        	continue;
+        }
+
+   		// sets text size before finding intersection (it is used there)
+		float textSize = textDrawInfo->textSize ;
+		paintText.setTextSize(textSize);
+		
+		// calculate if there is intersection
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
+			db);
+		if(textDrawInfo->icon && textDrawInfo->icon->bmp) {
+			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
+			textDrawInfo->centerY += ((-fm.fAscent)) ;
+        }
+		if (!intersects) {
+			if(rc->interrupted()){
+				return;
+			}
+			textDrawInfo->visible = true;
+		} else {
+			textDrawInfo->visible = false;
+		}
+	}
+
+	//Draw selected text in reverse order
+	for(auto itdi = rc->textToDraw.rbegin(); itdi != rc->textToDraw.rend(); ++itdi) {
+		SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
+		
         // Skip empty text
 	    if(textDrawInfo->text.length() <= 0)
             continue;
@@ -822,7 +857,6 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
         globalFontRegistry.updateTypeface(&paintText, 
         	rc->getReshapedString(textDrawInfo->text.c_str()), textDrawInfo->bold, //false,
 			textDrawInfo->italic, def); 
-   		// sest text size before finding intersection (it is used there)
 		float textSize = textDrawInfo->textSize ;
 		paintText.setTextSize(textSize);
 		
@@ -830,20 +864,11 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 		paintText.setColor(textDrawInfo->textColor);
 		// align center y
 		paintText.getFontMetrics(&fm);
-		
-		
-		// calculate if there is intersection
-		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
-			db);
-		if(textDrawInfo->icon && textDrawInfo->icon->bmp) {
-			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
-			textDrawInfo->centerY += ((-fm.fAscent)) ;
-        }
-		if (!intersects) {
+
+		if (textDrawInfo->visible) {
 			if(rc->interrupted()){
 				return;
 			}
-			textDrawInfo->visible = true;
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
 				textDrawInfo->text = rc->getReshapedString(textDrawInfo->text);
 				if (textDrawInfo->textShadow > 0) {
@@ -853,7 +878,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 					rc->nativeOperations.Pause();
 					// textDrawInfo->vOffset
 					cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-							 textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
+							textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
 					rc->nativeOperations.Start();
 					// reset
 					paintText.setStyle(SkPaint::kFill_Style);
@@ -863,7 +888,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 				rc->nativeOperations.Pause();
 				// textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent)
 				cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-						  textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
+						textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
 				rc->nativeOperations.Start();
 			} else {
 				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r, fm);
@@ -872,6 +897,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 			}
 		}
 	}
+
 	// add all text for debug
 	for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
