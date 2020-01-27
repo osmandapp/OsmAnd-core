@@ -57,8 +57,11 @@ class StreetIntersection;
 class BuildingIndex;
 class TransportRoutes;
 class TransportRoute;
+class TransportRouteSchedule;
+class TransportRouteScheduleException;
 class TransportRouteStop;
 class TransportStop;
+class TransportStopExit;
 class TransportStopsTree;
 class OsmAndTransportIndex;
 class OsmAndPoiIndex;
@@ -1377,6 +1380,18 @@ class MapData : public ::google::protobuf::Message {
   inline ::std::string* release_types();
   inline void set_allocated_types(::std::string* types);
 
+  // optional bytes labelcoordinates = 8;
+  inline bool has_labelcoordinates() const;
+  inline void clear_labelcoordinates();
+  static const int kLabelcoordinatesFieldNumber = 8;
+  inline const ::std::string& labelcoordinates() const;
+  inline void set_labelcoordinates(const ::std::string& value);
+  inline void set_labelcoordinates(const char* value);
+  inline void set_labelcoordinates(const void* value, size_t size);
+  inline ::std::string* mutable_labelcoordinates();
+  inline ::std::string* release_labelcoordinates();
+  inline void set_allocated_labelcoordinates(::std::string* labelcoordinates);
+
   // optional bytes stringNames = 10;
   inline bool has_stringnames() const;
   inline void clear_stringnames();
@@ -1418,6 +1433,8 @@ class MapData : public ::google::protobuf::Message {
   inline void clear_has_additionaltypes();
   inline void set_has_types();
   inline void clear_has_types();
+  inline void set_has_labelcoordinates();
+  inline void clear_has_labelcoordinates();
   inline void set_has_stringnames();
   inline void clear_has_stringnames();
   inline void set_has_id();
@@ -1432,12 +1449,13 @@ class MapData : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::std::string> polygoninnercoordinates_;
   ::std::string* additionaltypes_;
   ::std::string* types_;
+  ::std::string* labelcoordinates_;
   ::std::string* stringnames_;
   ::google::protobuf::int64 id_;
   ::std::string* rasterbytes_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3159,6 +3177,13 @@ class TransportRoute : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 distance() const;
   inline void set_distance(::google::protobuf::uint32 value);
 
+  // optional uint32 color = 9;
+  inline bool has_color() const;
+  inline void clear_color();
+  static const int kColorFieldNumber = 9;
+  inline ::google::protobuf::uint32 color() const;
+  inline void set_color(::google::protobuf::uint32 value);
+
   // repeated .OsmAnd.OBF.TransportRouteStop directStops = 15;
   inline int directstops_size() const;
   inline void clear_directstops();
@@ -3195,6 +3220,18 @@ class TransportRoute : public ::google::protobuf::Message {
   inline ::std::string* release_geometry();
   inline void set_allocated_geometry(::std::string* geometry);
 
+  // repeated .OsmAnd.OBF.TransportRouteSchedule scheduleTrip = 18;
+  inline int scheduletrip_size() const;
+  inline void clear_scheduletrip();
+  static const int kScheduleTripFieldNumber = 18;
+  inline const ::OsmAnd::OBF::TransportRouteSchedule& scheduletrip(int index) const;
+  inline ::OsmAnd::OBF::TransportRouteSchedule* mutable_scheduletrip(int index);
+  inline ::OsmAnd::OBF::TransportRouteSchedule* add_scheduletrip();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule >&
+      scheduletrip() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule >*
+      mutable_scheduletrip();
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRoute)
  private:
   inline void set_has_id();
@@ -3211,6 +3248,8 @@ class TransportRoute : public ::google::protobuf::Message {
   inline void clear_has_name_en();
   inline void set_has_distance();
   inline void clear_has_distance();
+  inline void set_has_color();
+  inline void clear_has_color();
   inline void set_has_geometry();
   inline void clear_has_geometry();
 
@@ -3222,13 +3261,15 @@ class TransportRoute : public ::google::protobuf::Message {
   ::std::string* ref_;
   ::google::protobuf::uint32 name_;
   ::google::protobuf::uint32 name_en_;
+  ::google::protobuf::uint32 distance_;
+  ::google::protobuf::uint32 color_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > directstops_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > reversestops_;
   ::std::string* geometry_;
-  ::google::protobuf::uint32 distance_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule > scheduletrip_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(12 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3236,6 +3277,296 @@ class TransportRoute : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static TransportRoute* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TransportRouteSchedule : public ::google::protobuf::Message {
+ public:
+  TransportRouteSchedule();
+  virtual ~TransportRouteSchedule();
+
+  TransportRouteSchedule(const TransportRouteSchedule& from);
+
+  inline TransportRouteSchedule& operator=(const TransportRouteSchedule& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TransportRouteSchedule& default_instance();
+
+  void Swap(TransportRouteSchedule* other);
+
+  // implements Message ----------------------------------------------
+
+  TransportRouteSchedule* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TransportRouteSchedule& from);
+  void MergeFrom(const TransportRouteSchedule& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional bytes avgStopIntervals = 1;
+  inline bool has_avgstopintervals() const;
+  inline void clear_avgstopintervals();
+  static const int kAvgStopIntervalsFieldNumber = 1;
+  inline const ::std::string& avgstopintervals() const;
+  inline void set_avgstopintervals(const ::std::string& value);
+  inline void set_avgstopintervals(const char* value);
+  inline void set_avgstopintervals(const void* value, size_t size);
+  inline ::std::string* mutable_avgstopintervals();
+  inline ::std::string* release_avgstopintervals();
+  inline void set_allocated_avgstopintervals(::std::string* avgstopintervals);
+
+  // optional bytes avgWaitIntervals = 2;
+  inline bool has_avgwaitintervals() const;
+  inline void clear_avgwaitintervals();
+  static const int kAvgWaitIntervalsFieldNumber = 2;
+  inline const ::std::string& avgwaitintervals() const;
+  inline void set_avgwaitintervals(const ::std::string& value);
+  inline void set_avgwaitintervals(const char* value);
+  inline void set_avgwaitintervals(const void* value, size_t size);
+  inline ::std::string* mutable_avgwaitintervals();
+  inline ::std::string* release_avgwaitintervals();
+  inline void set_allocated_avgwaitintervals(::std::string* avgwaitintervals);
+
+  // optional bytes tripIntervals = 3;
+  inline bool has_tripintervals() const;
+  inline void clear_tripintervals();
+  static const int kTripIntervalsFieldNumber = 3;
+  inline const ::std::string& tripintervals() const;
+  inline void set_tripintervals(const ::std::string& value);
+  inline void set_tripintervals(const char* value);
+  inline void set_tripintervals(const void* value, size_t size);
+  inline ::std::string* mutable_tripintervals();
+  inline ::std::string* release_tripintervals();
+  inline void set_allocated_tripintervals(::std::string* tripintervals);
+
+  // repeated .OsmAnd.OBF.TransportRouteScheduleException exceptions = 8;
+  inline int exceptions_size() const;
+  inline void clear_exceptions();
+  static const int kExceptionsFieldNumber = 8;
+  inline const ::OsmAnd::OBF::TransportRouteScheduleException& exceptions(int index) const;
+  inline ::OsmAnd::OBF::TransportRouteScheduleException* mutable_exceptions(int index);
+  inline ::OsmAnd::OBF::TransportRouteScheduleException* add_exceptions();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteScheduleException >&
+      exceptions() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteScheduleException >*
+      mutable_exceptions();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRouteSchedule)
+ private:
+  inline void set_has_avgstopintervals();
+  inline void clear_has_avgstopintervals();
+  inline void set_has_avgwaitintervals();
+  inline void clear_has_avgwaitintervals();
+  inline void set_has_tripintervals();
+  inline void clear_has_tripintervals();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* avgstopintervals_;
+  ::std::string* avgwaitintervals_;
+  ::std::string* tripintervals_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteScheduleException > exceptions_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static TransportRouteSchedule* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TransportRouteScheduleException : public ::google::protobuf::Message {
+ public:
+  TransportRouteScheduleException();
+  virtual ~TransportRouteScheduleException();
+
+  TransportRouteScheduleException(const TransportRouteScheduleException& from);
+
+  inline TransportRouteScheduleException& operator=(const TransportRouteScheduleException& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TransportRouteScheduleException& default_instance();
+
+  void Swap(TransportRouteScheduleException* other);
+
+  // implements Message ----------------------------------------------
+
+  TransportRouteScheduleException* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TransportRouteScheduleException& from);
+  void MergeFrom(const TransportRouteScheduleException& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated uint32 tripIndexes = 1;
+  inline int tripindexes_size() const;
+  inline void clear_tripindexes();
+  static const int kTripIndexesFieldNumber = 1;
+  inline ::google::protobuf::uint32 tripindexes(int index) const;
+  inline void set_tripindexes(int index, ::google::protobuf::uint32 value);
+  inline void add_tripindexes(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      tripindexes() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_tripindexes();
+
+  // repeated uint32 stopIndexes = 2;
+  inline int stopindexes_size() const;
+  inline void clear_stopindexes();
+  static const int kStopIndexesFieldNumber = 2;
+  inline ::google::protobuf::uint32 stopindexes(int index) const;
+  inline void set_stopindexes(int index, ::google::protobuf::uint32 value);
+  inline void add_stopindexes(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      stopindexes() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_stopindexes();
+
+  // optional bool available = 3;
+  inline bool has_available() const;
+  inline void clear_available();
+  static const int kAvailableFieldNumber = 3;
+  inline bool available() const;
+  inline void set_available(bool value);
+
+  // repeated uint32 delayArrival = 5;
+  inline int delayarrival_size() const;
+  inline void clear_delayarrival();
+  static const int kDelayArrivalFieldNumber = 5;
+  inline ::google::protobuf::uint32 delayarrival(int index) const;
+  inline void set_delayarrival(int index, ::google::protobuf::uint32 value);
+  inline void add_delayarrival(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      delayarrival() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_delayarrival();
+
+  // repeated int32 deltaWaitInterval = 6;
+  inline int deltawaitinterval_size() const;
+  inline void clear_deltawaitinterval();
+  static const int kDeltaWaitIntervalFieldNumber = 6;
+  inline ::google::protobuf::int32 deltawaitinterval(int index) const;
+  inline void set_deltawaitinterval(int index, ::google::protobuf::int32 value);
+  inline void add_deltawaitinterval(::google::protobuf::int32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+      deltawaitinterval() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+      mutable_deltawaitinterval();
+
+  // repeated uint32 dayOfWeekRestriction = 7;
+  inline int dayofweekrestriction_size() const;
+  inline void clear_dayofweekrestriction();
+  static const int kDayOfWeekRestrictionFieldNumber = 7;
+  inline ::google::protobuf::uint32 dayofweekrestriction(int index) const;
+  inline void set_dayofweekrestriction(int index, ::google::protobuf::uint32 value);
+  inline void add_dayofweekrestriction(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      dayofweekrestriction() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_dayofweekrestriction();
+
+  // repeated uint32 dayOfYearRestriction = 8;
+  inline int dayofyearrestriction_size() const;
+  inline void clear_dayofyearrestriction();
+  static const int kDayOfYearRestrictionFieldNumber = 8;
+  inline ::google::protobuf::uint32 dayofyearrestriction(int index) const;
+  inline void set_dayofyearrestriction(int index, ::google::protobuf::uint32 value);
+  inline void add_dayofyearrestriction(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      dayofyearrestriction() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_dayofyearrestriction();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRouteScheduleException)
+ private:
+  inline void set_has_available();
+  inline void clear_has_available();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > tripindexes_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > stopindexes_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > delayarrival_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > deltawaitinterval_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > dayofweekrestriction_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > dayofyearrestriction_;
+  bool available_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static TransportRouteScheduleException* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -3450,6 +3781,30 @@ class TransportStop : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 name_en() const;
   inline void set_name_en(::google::protobuf::uint32 value);
 
+  // optional bytes additionalNamePairs = 8;
+  inline bool has_additionalnamepairs() const;
+  inline void clear_additionalnamepairs();
+  static const int kAdditionalNamePairsFieldNumber = 8;
+  inline const ::std::string& additionalnamepairs() const;
+  inline void set_additionalnamepairs(const ::std::string& value);
+  inline void set_additionalnamepairs(const char* value);
+  inline void set_additionalnamepairs(const void* value, size_t size);
+  inline ::std::string* mutable_additionalnamepairs();
+  inline ::std::string* release_additionalnamepairs();
+  inline void set_allocated_additionalnamepairs(::std::string* additionalnamepairs);
+
+  // repeated .OsmAnd.OBF.TransportStopExit exits = 9;
+  inline int exits_size() const;
+  inline void clear_exits();
+  static const int kExitsFieldNumber = 9;
+  inline const ::OsmAnd::OBF::TransportStopExit& exits(int index) const;
+  inline ::OsmAnd::OBF::TransportStopExit* mutable_exits(int index);
+  inline ::OsmAnd::OBF::TransportStopExit* add_exits();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopExit >&
+      exits() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopExit >*
+      mutable_exits();
+
   // repeated uint32 routes = 16;
   inline int routes_size() const;
   inline void clear_routes();
@@ -3461,6 +3816,30 @@ class TransportStop : public ::google::protobuf::Message {
       routes() const;
   inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
       mutable_routes();
+
+  // repeated uint64 deletedRoutesIds = 20;
+  inline int deletedroutesids_size() const;
+  inline void clear_deletedroutesids();
+  static const int kDeletedRoutesIdsFieldNumber = 20;
+  inline ::google::protobuf::uint64 deletedroutesids(int index) const;
+  inline void set_deletedroutesids(int index, ::google::protobuf::uint64 value);
+  inline void add_deletedroutesids(::google::protobuf::uint64 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+      deletedroutesids() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+      mutable_deletedroutesids();
+
+  // repeated uint64 routesIds = 22;
+  inline int routesids_size() const;
+  inline void clear_routesids();
+  static const int kRoutesIdsFieldNumber = 22;
+  inline ::google::protobuf::uint64 routesids(int index) const;
+  inline void set_routesids(int index, ::google::protobuf::uint64 value);
+  inline void add_routesids(::google::protobuf::uint64 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+      routesids() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+      mutable_routesids();
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportStop)
  private:
@@ -3474,6 +3853,8 @@ class TransportStop : public ::google::protobuf::Message {
   inline void clear_has_name();
   inline void set_has_name_en();
   inline void clear_has_name_en();
+  inline void set_has_additionalnamepairs();
+  inline void clear_has_additionalnamepairs();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -3482,10 +3863,14 @@ class TransportStop : public ::google::protobuf::Message {
   ::google::protobuf::int64 id_;
   ::google::protobuf::uint32 name_;
   ::google::protobuf::uint32 name_en_;
+  ::std::string* additionalnamepairs_;
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopExit > exits_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > routes_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 > deletedroutesids_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint64 > routesids_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3493,6 +3878,108 @@ class TransportStop : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static TransportStop* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TransportStopExit : public ::google::protobuf::Message {
+ public:
+  TransportStopExit();
+  virtual ~TransportStopExit();
+
+  TransportStopExit(const TransportStopExit& from);
+
+  inline TransportStopExit& operator=(const TransportStopExit& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TransportStopExit& default_instance();
+
+  void Swap(TransportStopExit* other);
+
+  // implements Message ----------------------------------------------
+
+  TransportStopExit* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TransportStopExit& from);
+  void MergeFrom(const TransportStopExit& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required sint32 dx = 1;
+  inline bool has_dx() const;
+  inline void clear_dx();
+  static const int kDxFieldNumber = 1;
+  inline ::google::protobuf::int32 dx() const;
+  inline void set_dx(::google::protobuf::int32 value);
+
+  // required sint32 dy = 2;
+  inline bool has_dy() const;
+  inline void clear_dy();
+  static const int kDyFieldNumber = 2;
+  inline ::google::protobuf::int32 dy() const;
+  inline void set_dy(::google::protobuf::int32 value);
+
+  // required uint32 ref = 3;
+  inline bool has_ref() const;
+  inline void clear_ref();
+  static const int kRefFieldNumber = 3;
+  inline ::google::protobuf::uint32 ref() const;
+  inline void set_ref(::google::protobuf::uint32 value);
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportStopExit)
+ private:
+  inline void set_has_dx();
+  inline void clear_has_dx();
+  inline void set_has_dy();
+  inline void clear_has_dy();
+  inline void set_has_ref();
+  inline void clear_has_ref();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::int32 dx_;
+  ::google::protobuf::int32 dy_;
+  ::google::protobuf::uint32 ref_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static TransportStopExit* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -7629,15 +8116,85 @@ inline void MapData::set_allocated_types(::std::string* types) {
   }
 }
 
-// optional bytes stringNames = 10;
-inline bool MapData::has_stringnames() const {
+// optional bytes labelcoordinates = 8;
+inline bool MapData::has_labelcoordinates() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void MapData::set_has_stringnames() {
+inline void MapData::set_has_labelcoordinates() {
   _has_bits_[0] |= 0x00000020u;
 }
-inline void MapData::clear_has_stringnames() {
+inline void MapData::clear_has_labelcoordinates() {
   _has_bits_[0] &= ~0x00000020u;
+}
+inline void MapData::clear_labelcoordinates() {
+  if (labelcoordinates_ != &::google::protobuf::internal::kEmptyString) {
+    labelcoordinates_->clear();
+  }
+  clear_has_labelcoordinates();
+}
+inline const ::std::string& MapData::labelcoordinates() const {
+  return *labelcoordinates_;
+}
+inline void MapData::set_labelcoordinates(const ::std::string& value) {
+  set_has_labelcoordinates();
+  if (labelcoordinates_ == &::google::protobuf::internal::kEmptyString) {
+    labelcoordinates_ = new ::std::string;
+  }
+  labelcoordinates_->assign(value);
+}
+inline void MapData::set_labelcoordinates(const char* value) {
+  set_has_labelcoordinates();
+  if (labelcoordinates_ == &::google::protobuf::internal::kEmptyString) {
+    labelcoordinates_ = new ::std::string;
+  }
+  labelcoordinates_->assign(value);
+}
+inline void MapData::set_labelcoordinates(const void* value, size_t size) {
+  set_has_labelcoordinates();
+  if (labelcoordinates_ == &::google::protobuf::internal::kEmptyString) {
+    labelcoordinates_ = new ::std::string;
+  }
+  labelcoordinates_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* MapData::mutable_labelcoordinates() {
+  set_has_labelcoordinates();
+  if (labelcoordinates_ == &::google::protobuf::internal::kEmptyString) {
+    labelcoordinates_ = new ::std::string;
+  }
+  return labelcoordinates_;
+}
+inline ::std::string* MapData::release_labelcoordinates() {
+  clear_has_labelcoordinates();
+  if (labelcoordinates_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = labelcoordinates_;
+    labelcoordinates_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void MapData::set_allocated_labelcoordinates(::std::string* labelcoordinates) {
+  if (labelcoordinates_ != &::google::protobuf::internal::kEmptyString) {
+    delete labelcoordinates_;
+  }
+  if (labelcoordinates) {
+    set_has_labelcoordinates();
+    labelcoordinates_ = labelcoordinates;
+  } else {
+    clear_has_labelcoordinates();
+    labelcoordinates_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional bytes stringNames = 10;
+inline bool MapData::has_stringnames() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void MapData::set_has_stringnames() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void MapData::clear_has_stringnames() {
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void MapData::clear_stringnames() {
   if (stringnames_ != &::google::protobuf::internal::kEmptyString) {
@@ -7701,13 +8258,13 @@ inline void MapData::set_allocated_stringnames(::std::string* stringnames) {
 
 // required sint64 id = 12;
 inline bool MapData::has_id() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void MapData::set_has_id() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void MapData::clear_has_id() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void MapData::clear_id() {
   id_ = GOOGLE_LONGLONG(0);
@@ -7723,13 +8280,13 @@ inline void MapData::set_id(::google::protobuf::int64 value) {
 
 // optional bytes rasterBytes = 15;
 inline bool MapData::has_rasterbytes() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void MapData::set_has_rasterbytes() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void MapData::clear_has_rasterbytes() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void MapData::clear_rasterbytes() {
   if (rasterbytes_ != &::google::protobuf::internal::kEmptyString) {
@@ -10332,6 +10889,28 @@ inline void TransportRoute::set_distance(::google::protobuf::uint32 value) {
   distance_ = value;
 }
 
+// optional uint32 color = 9;
+inline bool TransportRoute::has_color() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void TransportRoute::set_has_color() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void TransportRoute::clear_has_color() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void TransportRoute::clear_color() {
+  color_ = 0u;
+  clear_has_color();
+}
+inline ::google::protobuf::uint32 TransportRoute::color() const {
+  return color_;
+}
+inline void TransportRoute::set_color(::google::protobuf::uint32 value) {
+  set_has_color();
+  color_ = value;
+}
+
 // repeated .OsmAnd.OBF.TransportRouteStop directStops = 15;
 inline int TransportRoute::directstops_size() const {
   return directstops_.size();
@@ -10384,13 +10963,13 @@ TransportRoute::mutable_reversestops() {
 
 // optional bytes geometry = 17;
 inline bool TransportRoute::has_geometry() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void TransportRoute::set_has_geometry() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void TransportRoute::clear_has_geometry() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void TransportRoute::clear_geometry() {
   if (geometry_ != &::google::protobuf::internal::kEmptyString) {
@@ -10450,6 +11029,446 @@ inline void TransportRoute::set_allocated_geometry(::std::string* geometry) {
     clear_has_geometry();
     geometry_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
+}
+
+// repeated .OsmAnd.OBF.TransportRouteSchedule scheduleTrip = 18;
+inline int TransportRoute::scheduletrip_size() const {
+  return scheduletrip_.size();
+}
+inline void TransportRoute::clear_scheduletrip() {
+  scheduletrip_.Clear();
+}
+inline const ::OsmAnd::OBF::TransportRouteSchedule& TransportRoute::scheduletrip(int index) const {
+  return scheduletrip_.Get(index);
+}
+inline ::OsmAnd::OBF::TransportRouteSchedule* TransportRoute::mutable_scheduletrip(int index) {
+  return scheduletrip_.Mutable(index);
+}
+inline ::OsmAnd::OBF::TransportRouteSchedule* TransportRoute::add_scheduletrip() {
+  return scheduletrip_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule >&
+TransportRoute::scheduletrip() const {
+  return scheduletrip_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule >*
+TransportRoute::mutable_scheduletrip() {
+  return &scheduletrip_;
+}
+
+// -------------------------------------------------------------------
+
+// TransportRouteSchedule
+
+// optional bytes avgStopIntervals = 1;
+inline bool TransportRouteSchedule::has_avgstopintervals() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void TransportRouteSchedule::set_has_avgstopintervals() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void TransportRouteSchedule::clear_has_avgstopintervals() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void TransportRouteSchedule::clear_avgstopintervals() {
+  if (avgstopintervals_ != &::google::protobuf::internal::kEmptyString) {
+    avgstopintervals_->clear();
+  }
+  clear_has_avgstopintervals();
+}
+inline const ::std::string& TransportRouteSchedule::avgstopintervals() const {
+  return *avgstopintervals_;
+}
+inline void TransportRouteSchedule::set_avgstopintervals(const ::std::string& value) {
+  set_has_avgstopintervals();
+  if (avgstopintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgstopintervals_ = new ::std::string;
+  }
+  avgstopintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_avgstopintervals(const char* value) {
+  set_has_avgstopintervals();
+  if (avgstopintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgstopintervals_ = new ::std::string;
+  }
+  avgstopintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_avgstopintervals(const void* value, size_t size) {
+  set_has_avgstopintervals();
+  if (avgstopintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgstopintervals_ = new ::std::string;
+  }
+  avgstopintervals_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TransportRouteSchedule::mutable_avgstopintervals() {
+  set_has_avgstopintervals();
+  if (avgstopintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgstopintervals_ = new ::std::string;
+  }
+  return avgstopintervals_;
+}
+inline ::std::string* TransportRouteSchedule::release_avgstopintervals() {
+  clear_has_avgstopintervals();
+  if (avgstopintervals_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = avgstopintervals_;
+    avgstopintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void TransportRouteSchedule::set_allocated_avgstopintervals(::std::string* avgstopintervals) {
+  if (avgstopintervals_ != &::google::protobuf::internal::kEmptyString) {
+    delete avgstopintervals_;
+  }
+  if (avgstopintervals) {
+    set_has_avgstopintervals();
+    avgstopintervals_ = avgstopintervals;
+  } else {
+    clear_has_avgstopintervals();
+    avgstopintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional bytes avgWaitIntervals = 2;
+inline bool TransportRouteSchedule::has_avgwaitintervals() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void TransportRouteSchedule::set_has_avgwaitintervals() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void TransportRouteSchedule::clear_has_avgwaitintervals() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void TransportRouteSchedule::clear_avgwaitintervals() {
+  if (avgwaitintervals_ != &::google::protobuf::internal::kEmptyString) {
+    avgwaitintervals_->clear();
+  }
+  clear_has_avgwaitintervals();
+}
+inline const ::std::string& TransportRouteSchedule::avgwaitintervals() const {
+  return *avgwaitintervals_;
+}
+inline void TransportRouteSchedule::set_avgwaitintervals(const ::std::string& value) {
+  set_has_avgwaitintervals();
+  if (avgwaitintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgwaitintervals_ = new ::std::string;
+  }
+  avgwaitintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_avgwaitintervals(const char* value) {
+  set_has_avgwaitintervals();
+  if (avgwaitintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgwaitintervals_ = new ::std::string;
+  }
+  avgwaitintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_avgwaitintervals(const void* value, size_t size) {
+  set_has_avgwaitintervals();
+  if (avgwaitintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgwaitintervals_ = new ::std::string;
+  }
+  avgwaitintervals_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TransportRouteSchedule::mutable_avgwaitintervals() {
+  set_has_avgwaitintervals();
+  if (avgwaitintervals_ == &::google::protobuf::internal::kEmptyString) {
+    avgwaitintervals_ = new ::std::string;
+  }
+  return avgwaitintervals_;
+}
+inline ::std::string* TransportRouteSchedule::release_avgwaitintervals() {
+  clear_has_avgwaitintervals();
+  if (avgwaitintervals_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = avgwaitintervals_;
+    avgwaitintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void TransportRouteSchedule::set_allocated_avgwaitintervals(::std::string* avgwaitintervals) {
+  if (avgwaitintervals_ != &::google::protobuf::internal::kEmptyString) {
+    delete avgwaitintervals_;
+  }
+  if (avgwaitintervals) {
+    set_has_avgwaitintervals();
+    avgwaitintervals_ = avgwaitintervals;
+  } else {
+    clear_has_avgwaitintervals();
+    avgwaitintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional bytes tripIntervals = 3;
+inline bool TransportRouteSchedule::has_tripintervals() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void TransportRouteSchedule::set_has_tripintervals() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void TransportRouteSchedule::clear_has_tripintervals() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void TransportRouteSchedule::clear_tripintervals() {
+  if (tripintervals_ != &::google::protobuf::internal::kEmptyString) {
+    tripintervals_->clear();
+  }
+  clear_has_tripintervals();
+}
+inline const ::std::string& TransportRouteSchedule::tripintervals() const {
+  return *tripintervals_;
+}
+inline void TransportRouteSchedule::set_tripintervals(const ::std::string& value) {
+  set_has_tripintervals();
+  if (tripintervals_ == &::google::protobuf::internal::kEmptyString) {
+    tripintervals_ = new ::std::string;
+  }
+  tripintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_tripintervals(const char* value) {
+  set_has_tripintervals();
+  if (tripintervals_ == &::google::protobuf::internal::kEmptyString) {
+    tripintervals_ = new ::std::string;
+  }
+  tripintervals_->assign(value);
+}
+inline void TransportRouteSchedule::set_tripintervals(const void* value, size_t size) {
+  set_has_tripintervals();
+  if (tripintervals_ == &::google::protobuf::internal::kEmptyString) {
+    tripintervals_ = new ::std::string;
+  }
+  tripintervals_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TransportRouteSchedule::mutable_tripintervals() {
+  set_has_tripintervals();
+  if (tripintervals_ == &::google::protobuf::internal::kEmptyString) {
+    tripintervals_ = new ::std::string;
+  }
+  return tripintervals_;
+}
+inline ::std::string* TransportRouteSchedule::release_tripintervals() {
+  clear_has_tripintervals();
+  if (tripintervals_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = tripintervals_;
+    tripintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void TransportRouteSchedule::set_allocated_tripintervals(::std::string* tripintervals) {
+  if (tripintervals_ != &::google::protobuf::internal::kEmptyString) {
+    delete tripintervals_;
+  }
+  if (tripintervals) {
+    set_has_tripintervals();
+    tripintervals_ = tripintervals;
+  } else {
+    clear_has_tripintervals();
+    tripintervals_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// repeated .OsmAnd.OBF.TransportRouteScheduleException exceptions = 8;
+inline int TransportRouteSchedule::exceptions_size() const {
+  return exceptions_.size();
+}
+inline void TransportRouteSchedule::clear_exceptions() {
+  exceptions_.Clear();
+}
+inline const ::OsmAnd::OBF::TransportRouteScheduleException& TransportRouteSchedule::exceptions(int index) const {
+  return exceptions_.Get(index);
+}
+inline ::OsmAnd::OBF::TransportRouteScheduleException* TransportRouteSchedule::mutable_exceptions(int index) {
+  return exceptions_.Mutable(index);
+}
+inline ::OsmAnd::OBF::TransportRouteScheduleException* TransportRouteSchedule::add_exceptions() {
+  return exceptions_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteScheduleException >&
+TransportRouteSchedule::exceptions() const {
+  return exceptions_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteScheduleException >*
+TransportRouteSchedule::mutable_exceptions() {
+  return &exceptions_;
+}
+
+// -------------------------------------------------------------------
+
+// TransportRouteScheduleException
+
+// repeated uint32 tripIndexes = 1;
+inline int TransportRouteScheduleException::tripindexes_size() const {
+  return tripindexes_.size();
+}
+inline void TransportRouteScheduleException::clear_tripindexes() {
+  tripindexes_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRouteScheduleException::tripindexes(int index) const {
+  return tripindexes_.Get(index);
+}
+inline void TransportRouteScheduleException::set_tripindexes(int index, ::google::protobuf::uint32 value) {
+  tripindexes_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_tripindexes(::google::protobuf::uint32 value) {
+  tripindexes_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRouteScheduleException::tripindexes() const {
+  return tripindexes_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRouteScheduleException::mutable_tripindexes() {
+  return &tripindexes_;
+}
+
+// repeated uint32 stopIndexes = 2;
+inline int TransportRouteScheduleException::stopindexes_size() const {
+  return stopindexes_.size();
+}
+inline void TransportRouteScheduleException::clear_stopindexes() {
+  stopindexes_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRouteScheduleException::stopindexes(int index) const {
+  return stopindexes_.Get(index);
+}
+inline void TransportRouteScheduleException::set_stopindexes(int index, ::google::protobuf::uint32 value) {
+  stopindexes_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_stopindexes(::google::protobuf::uint32 value) {
+  stopindexes_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRouteScheduleException::stopindexes() const {
+  return stopindexes_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRouteScheduleException::mutable_stopindexes() {
+  return &stopindexes_;
+}
+
+// optional bool available = 3;
+inline bool TransportRouteScheduleException::has_available() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void TransportRouteScheduleException::set_has_available() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void TransportRouteScheduleException::clear_has_available() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void TransportRouteScheduleException::clear_available() {
+  available_ = false;
+  clear_has_available();
+}
+inline bool TransportRouteScheduleException::available() const {
+  return available_;
+}
+inline void TransportRouteScheduleException::set_available(bool value) {
+  set_has_available();
+  available_ = value;
+}
+
+// repeated uint32 delayArrival = 5;
+inline int TransportRouteScheduleException::delayarrival_size() const {
+  return delayarrival_.size();
+}
+inline void TransportRouteScheduleException::clear_delayarrival() {
+  delayarrival_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRouteScheduleException::delayarrival(int index) const {
+  return delayarrival_.Get(index);
+}
+inline void TransportRouteScheduleException::set_delayarrival(int index, ::google::protobuf::uint32 value) {
+  delayarrival_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_delayarrival(::google::protobuf::uint32 value) {
+  delayarrival_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRouteScheduleException::delayarrival() const {
+  return delayarrival_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRouteScheduleException::mutable_delayarrival() {
+  return &delayarrival_;
+}
+
+// repeated int32 deltaWaitInterval = 6;
+inline int TransportRouteScheduleException::deltawaitinterval_size() const {
+  return deltawaitinterval_.size();
+}
+inline void TransportRouteScheduleException::clear_deltawaitinterval() {
+  deltawaitinterval_.Clear();
+}
+inline ::google::protobuf::int32 TransportRouteScheduleException::deltawaitinterval(int index) const {
+  return deltawaitinterval_.Get(index);
+}
+inline void TransportRouteScheduleException::set_deltawaitinterval(int index, ::google::protobuf::int32 value) {
+  deltawaitinterval_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_deltawaitinterval(::google::protobuf::int32 value) {
+  deltawaitinterval_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+TransportRouteScheduleException::deltawaitinterval() const {
+  return deltawaitinterval_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+TransportRouteScheduleException::mutable_deltawaitinterval() {
+  return &deltawaitinterval_;
+}
+
+// repeated uint32 dayOfWeekRestriction = 7;
+inline int TransportRouteScheduleException::dayofweekrestriction_size() const {
+  return dayofweekrestriction_.size();
+}
+inline void TransportRouteScheduleException::clear_dayofweekrestriction() {
+  dayofweekrestriction_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRouteScheduleException::dayofweekrestriction(int index) const {
+  return dayofweekrestriction_.Get(index);
+}
+inline void TransportRouteScheduleException::set_dayofweekrestriction(int index, ::google::protobuf::uint32 value) {
+  dayofweekrestriction_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_dayofweekrestriction(::google::protobuf::uint32 value) {
+  dayofweekrestriction_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRouteScheduleException::dayofweekrestriction() const {
+  return dayofweekrestriction_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRouteScheduleException::mutable_dayofweekrestriction() {
+  return &dayofweekrestriction_;
+}
+
+// repeated uint32 dayOfYearRestriction = 8;
+inline int TransportRouteScheduleException::dayofyearrestriction_size() const {
+  return dayofyearrestriction_.size();
+}
+inline void TransportRouteScheduleException::clear_dayofyearrestriction() {
+  dayofyearrestriction_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRouteScheduleException::dayofyearrestriction(int index) const {
+  return dayofyearrestriction_.Get(index);
+}
+inline void TransportRouteScheduleException::set_dayofyearrestriction(int index, ::google::protobuf::uint32 value) {
+  dayofyearrestriction_.Set(index, value);
+}
+inline void TransportRouteScheduleException::add_dayofyearrestriction(::google::protobuf::uint32 value) {
+  dayofyearrestriction_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRouteScheduleException::dayofyearrestriction() const {
+  return dayofyearrestriction_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRouteScheduleException::mutable_dayofyearrestriction() {
+  return &dayofyearrestriction_;
 }
 
 // -------------------------------------------------------------------
@@ -10680,6 +11699,101 @@ inline void TransportStop::set_name_en(::google::protobuf::uint32 value) {
   name_en_ = value;
 }
 
+// optional bytes additionalNamePairs = 8;
+inline bool TransportStop::has_additionalnamepairs() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void TransportStop::set_has_additionalnamepairs() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void TransportStop::clear_has_additionalnamepairs() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void TransportStop::clear_additionalnamepairs() {
+  if (additionalnamepairs_ != &::google::protobuf::internal::kEmptyString) {
+    additionalnamepairs_->clear();
+  }
+  clear_has_additionalnamepairs();
+}
+inline const ::std::string& TransportStop::additionalnamepairs() const {
+  return *additionalnamepairs_;
+}
+inline void TransportStop::set_additionalnamepairs(const ::std::string& value) {
+  set_has_additionalnamepairs();
+  if (additionalnamepairs_ == &::google::protobuf::internal::kEmptyString) {
+    additionalnamepairs_ = new ::std::string;
+  }
+  additionalnamepairs_->assign(value);
+}
+inline void TransportStop::set_additionalnamepairs(const char* value) {
+  set_has_additionalnamepairs();
+  if (additionalnamepairs_ == &::google::protobuf::internal::kEmptyString) {
+    additionalnamepairs_ = new ::std::string;
+  }
+  additionalnamepairs_->assign(value);
+}
+inline void TransportStop::set_additionalnamepairs(const void* value, size_t size) {
+  set_has_additionalnamepairs();
+  if (additionalnamepairs_ == &::google::protobuf::internal::kEmptyString) {
+    additionalnamepairs_ = new ::std::string;
+  }
+  additionalnamepairs_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TransportStop::mutable_additionalnamepairs() {
+  set_has_additionalnamepairs();
+  if (additionalnamepairs_ == &::google::protobuf::internal::kEmptyString) {
+    additionalnamepairs_ = new ::std::string;
+  }
+  return additionalnamepairs_;
+}
+inline ::std::string* TransportStop::release_additionalnamepairs() {
+  clear_has_additionalnamepairs();
+  if (additionalnamepairs_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = additionalnamepairs_;
+    additionalnamepairs_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void TransportStop::set_allocated_additionalnamepairs(::std::string* additionalnamepairs) {
+  if (additionalnamepairs_ != &::google::protobuf::internal::kEmptyString) {
+    delete additionalnamepairs_;
+  }
+  if (additionalnamepairs) {
+    set_has_additionalnamepairs();
+    additionalnamepairs_ = additionalnamepairs;
+  } else {
+    clear_has_additionalnamepairs();
+    additionalnamepairs_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// repeated .OsmAnd.OBF.TransportStopExit exits = 9;
+inline int TransportStop::exits_size() const {
+  return exits_.size();
+}
+inline void TransportStop::clear_exits() {
+  exits_.Clear();
+}
+inline const ::OsmAnd::OBF::TransportStopExit& TransportStop::exits(int index) const {
+  return exits_.Get(index);
+}
+inline ::OsmAnd::OBF::TransportStopExit* TransportStop::mutable_exits(int index) {
+  return exits_.Mutable(index);
+}
+inline ::OsmAnd::OBF::TransportStopExit* TransportStop::add_exits() {
+  return exits_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopExit >&
+TransportStop::exits() const {
+  return exits_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopExit >*
+TransportStop::mutable_exits() {
+  return &exits_;
+}
+
 // repeated uint32 routes = 16;
 inline int TransportStop::routes_size() const {
   return routes_.size();
@@ -10703,6 +11817,126 @@ TransportStop::routes() const {
 inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
 TransportStop::mutable_routes() {
   return &routes_;
+}
+
+// repeated uint64 deletedRoutesIds = 20;
+inline int TransportStop::deletedroutesids_size() const {
+  return deletedroutesids_.size();
+}
+inline void TransportStop::clear_deletedroutesids() {
+  deletedroutesids_.Clear();
+}
+inline ::google::protobuf::uint64 TransportStop::deletedroutesids(int index) const {
+  return deletedroutesids_.Get(index);
+}
+inline void TransportStop::set_deletedroutesids(int index, ::google::protobuf::uint64 value) {
+  deletedroutesids_.Set(index, value);
+}
+inline void TransportStop::add_deletedroutesids(::google::protobuf::uint64 value) {
+  deletedroutesids_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+TransportStop::deletedroutesids() const {
+  return deletedroutesids_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+TransportStop::mutable_deletedroutesids() {
+  return &deletedroutesids_;
+}
+
+// repeated uint64 routesIds = 22;
+inline int TransportStop::routesids_size() const {
+  return routesids_.size();
+}
+inline void TransportStop::clear_routesids() {
+  routesids_.Clear();
+}
+inline ::google::protobuf::uint64 TransportStop::routesids(int index) const {
+  return routesids_.Get(index);
+}
+inline void TransportStop::set_routesids(int index, ::google::protobuf::uint64 value) {
+  routesids_.Set(index, value);
+}
+inline void TransportStop::add_routesids(::google::protobuf::uint64 value) {
+  routesids_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >&
+TransportStop::routesids() const {
+  return routesids_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
+TransportStop::mutable_routesids() {
+  return &routesids_;
+}
+
+// -------------------------------------------------------------------
+
+// TransportStopExit
+
+// required sint32 dx = 1;
+inline bool TransportStopExit::has_dx() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void TransportStopExit::set_has_dx() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void TransportStopExit::clear_has_dx() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void TransportStopExit::clear_dx() {
+  dx_ = 0;
+  clear_has_dx();
+}
+inline ::google::protobuf::int32 TransportStopExit::dx() const {
+  return dx_;
+}
+inline void TransportStopExit::set_dx(::google::protobuf::int32 value) {
+  set_has_dx();
+  dx_ = value;
+}
+
+// required sint32 dy = 2;
+inline bool TransportStopExit::has_dy() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void TransportStopExit::set_has_dy() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void TransportStopExit::clear_has_dy() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void TransportStopExit::clear_dy() {
+  dy_ = 0;
+  clear_has_dy();
+}
+inline ::google::protobuf::int32 TransportStopExit::dy() const {
+  return dy_;
+}
+inline void TransportStopExit::set_dy(::google::protobuf::int32 value) {
+  set_has_dy();
+  dy_ = value;
+}
+
+// required uint32 ref = 3;
+inline bool TransportStopExit::has_ref() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void TransportStopExit::set_has_ref() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void TransportStopExit::clear_has_ref() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void TransportStopExit::clear_ref() {
+  ref_ = 0u;
+  clear_has_ref();
+}
+inline ::google::protobuf::uint32 TransportStopExit::ref() const {
+  return ref_;
+}
+inline void TransportStopExit::set_ref(::google::protobuf::uint32 value) {
+  set_has_ref();
+  ref_ = value;
 }
 
 // -------------------------------------------------------------------
