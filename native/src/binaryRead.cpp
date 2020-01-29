@@ -909,8 +909,8 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	std::vector< tag_value > types;
 	UNORDERED(map)< std::string, unsigned int> stringIds;
 	std::vector< std::string > namesOrder;
-	int32_t labelX;
-	int32_t labelY;
+	int32_t labelX = 0;
+	int32_t labelY = 0;
 	bool loop = true;
 	while (loop) {
 		uint32_t t = input->ReadTag();

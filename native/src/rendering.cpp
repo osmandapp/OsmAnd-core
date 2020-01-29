@@ -64,19 +64,6 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
         rc->pointInsideCount++;
 }
 
-void calcPolyPoint(int32_t labelX, int32_t labelY, RenderingContext* rc)
-{
-    rc->pointCount++;
-	double tx = labelX / (rc->tileDivisor);
-	double ty = labelY / (rc->tileDivisor);
-    float dTileX = tx - rc->getLeft();
-    float dTileY = ty - rc->getTop();
-    rc->calcX = rc->cosRotateTileSize * dTileX - rc->sinRotateTileSize * dTileY;
-    rc->calcY = rc->sinRotateTileSize * dTileX + rc->cosRotateTileSize * dTileY;
-    if (rc->calcX >= 0 && rc->calcX < rc->getWidth()&& rc->calcY >= 0 && rc->calcY < rc->getHeight())
-        rc->pointInsideCount++;
-}
-
 UNORDERED(map)<std::string, sk_sp<SkPathEffect>> pathEffects;
 sk_sp<SkPathEffect> getDashEffect(RenderingContext* rc, std::string input)
 {
@@ -746,6 +733,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	bool containsPoint = false;
 	std::vector< std::pair<int,int > > ps;
 	uint prevCross = 0;
+	
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		if (i == 0) {
@@ -787,10 +775,22 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 			}
 			prevCross = cross;
 		}
-
 	}
+
 	xText /= length;
 	yText /= length;
+
+	if (mObj->isLabelSpecified()) {
+		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
+		xText = rc->calcX;
+		yText = rc->calcY;
+		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
+			containsPoint = true;
+		} else {
+			containsPoint = false;
+		}
+	} 
+	
 
 	
 	if(!containsPoint){
@@ -857,7 +857,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	float px = 0;
 	float py = 0;
 	if (mObj->isLabelSpecified()) {
-		calcPolyPoint(mObj->getLabelX(), mObj->getLabelY(), rc);
+		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
 		px = rc->calcX;
 		py = rc->calcY;
 	} else {
