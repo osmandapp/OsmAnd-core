@@ -19,6 +19,8 @@
 	const double M_PI_2 = M_PI / 2.0;
 #endif
 
+static const int SHIFT_COORDINATES = 5;
+static const int LABEL_ZOOM_ENCODE = 31;
 // Better don't do this
 using namespace std;
 
@@ -189,6 +191,8 @@ public:
 	std::vector< std::string > namesOrder;
 	bool area;
 	int64_t id;
+	int32_t labelX;
+	int32_t labelY;
 
 	//
 
@@ -216,6 +220,34 @@ public:
 			it++;
 		}
 		return false;
+	}
+
+	bool isLabelSpecified() {
+		return (labelX != 0 || labelY != 0) && points.size() > 0;
+	}
+
+	int32_t getLabelX() {
+		int64_t sum = 0;
+		int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
+		int32_t len = points.size();
+		for (int32_t i = 0; i < len; i++) {
+			sum += points[i].first;
+		} 
+		int32_t average = ((sum >> SHIFT_COORDINATES) / len) << (SHIFT_COORDINATES - LABEL_SHIFT);
+		int32_t label31X = (average + labelX) << LABEL_SHIFT;
+		return label31X;
+	}
+
+	int32_t getLabelY() {
+		int64_t sum = 0;
+		int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
+		int32_t len = points.size();
+		for (int32_t i = 0; i < len; i++) {
+			sum += points[i].second;
+		}
+		int32_t average = ((sum >> SHIFT_COORDINATES) / len) << (SHIFT_COORDINATES - LABEL_SHIFT);
+		int32_t label31Y = (average + labelY) << LABEL_SHIFT;
+		return label31Y;
 	}
 
 	int getSimpleLayer() {
