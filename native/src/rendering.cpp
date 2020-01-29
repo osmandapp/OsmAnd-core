@@ -49,7 +49,7 @@ struct MapDataObjectPrimitive {
 
 
 void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
-{
+{	
     rc->pointCount++;
 
 	double tx = c.first/ (rc->tileDivisor);
@@ -64,6 +64,18 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
         rc->pointInsideCount++;
 }
 
+void calcPolyPoint(int32_t labelX, int32_t labelY, RenderingContext* rc)
+{
+    rc->pointCount++;
+	double tx = labelX / (rc->tileDivisor);
+	double ty = labelY / (rc->tileDivisor);
+    float dTileX = tx - rc->getLeft();
+    float dTileY = ty - rc->getTop();
+    rc->calcX = rc->cosRotateTileSize * dTileX - rc->sinRotateTileSize * dTileY;
+    rc->calcY = rc->sinRotateTileSize * dTileX + rc->cosRotateTileSize * dTileY;
+    if (rc->calcX >= 0 && rc->calcX < rc->getWidth()&& rc->calcY >= 0 && rc->calcY < rc->getHeight())
+        rc->pointInsideCount++;
+}
 
 UNORDERED(map)<std::string, sk_sp<SkPathEffect>> pathEffects;
 sk_sp<SkPathEffect> getDashEffect(RenderingContext* rc, std::string input)
@@ -844,16 +856,23 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	rc->visible++;
 	float px = 0;
 	float py = 0;
-	uint i = 0;
-	for (; i < length; i++) {
-		calcPoint(mObj->points.at(i), rc);
-		px += rc->calcX;
-		py += rc->calcY;
+	if (mObj->isLabelSpecified()) {
+		calcPolyPoint(mObj->getLabelX(), mObj->getLabelY(), rc);
+		px = rc->calcX;
+		py = rc->calcY;
+	} else {
+		uint i = 0;
+		for (; i < length; i++) {
+			calcPoint(mObj->points.at(i), rc);
+			px += rc->calcX;
+			py += rc->calcY;
+		}
+		if (length > 1) {
+			px /= length;
+			py /= length;
+		}
 	}
-	if (length > 1) {
-		px /= length;
-		py /= length;
-	}
+	
 
 	SHARED_PTR<IconDrawInfo> ico;
 	if (bmp != NULL) {

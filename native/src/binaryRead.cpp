@@ -992,9 +992,9 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 			u_int i = 0;
 			while(input->BytesUntilLimit() > 0) {
 				if (i == 0) {
-					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &labelX);
+					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &labelX);
 				} else if (i == 1) {
-					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &labelY);
+					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &labelY);
 				} else {
 					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &x);
 				}
@@ -1033,6 +1033,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	dataObject->stringIds = stringIds;
 	dataObject->namesOrder = namesOrder;
 	dataObject->polygonInnerCoordinates = innercoordinates;
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "raw labelX/labelY %d / %d", labelX, labelY);
 	dataObject->labelX = labelX;
 	dataObject->labelY = labelY;
 	return dataObject;
