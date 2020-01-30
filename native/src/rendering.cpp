@@ -693,7 +693,7 @@ int countIntersections(vector<pair<int,int> >& points, int x, int y) {
 	if(points.size() == 0) {
 		return 0;
 	}
-	for (u\int i = 0; i < points.size() - 1; i++) {
+	for (uint i = 0; i < points.size() - 1; i++) {
 		if (ray_intersect_x(points[i].first, points[i].second,
 				points[i + 1].first, points[i + 1].second, x, y)) {
 			intersections++;
