@@ -688,9 +688,12 @@ bool ray_intersect_x(int prevX, int prevY, int nx, int ny, int x, int y) {
 	return false;
 }
 
-int countIntersections(vector<pair<int,int> > points, int x, int y) {
+int countIntersections(vector<pair<int,int> >& points, int x, int y) {
 	int intersections = 0;
-	for (uint i = 0; i < points.size() - 1; i++) {
+	if(points.size() == 0) {
+		return 0;
+	}
+	for (u\int i = 0; i < points.size() - 1; i++) {
 		if (ray_intersect_x(points[i].first, points[i].second,
 				points[i + 1].first, points[i + 1].second, x, y)) {
 			intersections++;
@@ -705,7 +708,7 @@ int countIntersections(vector<pair<int,int> > points, int x, int y) {
 	return intersections;
 }
 
-bool contains(vector<pair<int,int> > points, int x, int y) {
+bool contains(vector<pair<int,int> >& points, int x, int y) {
 	return countIntersections(points, x, y) % 2 == 1;
 }
 

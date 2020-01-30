@@ -231,7 +231,7 @@ public:
 		int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
 		int32_t len = points.size();
 		for (int32_t i = 0; i < len; i++) {
-			sum += points[i].first;
+			sum += points.at(i).first;
 		} 
 		int32_t average = ((sum >> SHIFT_COORDINATES) / len) << (SHIFT_COORDINATES - LABEL_SHIFT);
 		int32_t label31X = (average + labelX) << LABEL_SHIFT;
@@ -243,7 +243,7 @@ public:
 		int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
 		int32_t len = points.size();
 		for (int32_t i = 0; i < len; i++) {
-			sum += points[i].second;
+			sum += points.at(i).second;
 		}
 		int32_t average = ((sum >> SHIFT_COORDINATES) / len) << (SHIFT_COORDINATES - LABEL_SHIFT);
 		int32_t label31Y = (average + labelY) << LABEL_SHIFT;
