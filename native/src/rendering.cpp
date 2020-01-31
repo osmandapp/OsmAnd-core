@@ -60,7 +60,6 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
     float dTileY = ty - rc->getTop();
     rc->calcX = rc->cosRotateTileSize * dTileX - rc->sinRotateTileSize * dTileY;
     rc->calcY = rc->sinRotateTileSize * dTileX + rc->cosRotateTileSize * dTileY;
-
     if (rc->calcX >= 0 && rc->calcX < rc->getWidth()&& rc->calcY >= 0 && rc->calcY < rc->getHeight())
         rc->pointInsideCount++;
 }
@@ -881,7 +880,6 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		}
 	}
 	
-
 	SHARED_PTR<IconDrawInfo> ico;
 	if (bmp != NULL) {
 		ico.reset(new IconDrawInfo(mObj));

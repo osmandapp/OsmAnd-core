@@ -25,9 +25,7 @@
 #include "renderRules.h"
 
 static const uint MAP_VERSION = 2;
-
 static const int SHIFT_ID = 6;
-
 
 struct MapTreeBounds {
 	uint32_t length;
