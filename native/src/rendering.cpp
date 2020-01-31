@@ -34,6 +34,7 @@ const int MAX_V_AREA = 2000;
 const int DEFAULT_POLYGON_MAX = 11;
 const int DEFAULT_LINE_MAX = 100;
 const int DEFAULT_POINTS_MAX = 200;
+const int POI_ZOOM_SHIFT = 7;
 #if defined(WIN32)
 #undef min
 #endif
@@ -49,7 +50,7 @@ struct MapDataObjectPrimitive {
 
 
 void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
-{
+{	
     rc->pointCount++;
 
 	double tx = c.first/ (rc->tileDivisor);
@@ -59,11 +60,9 @@ void calcPoint(std::pair<int, int>  c, RenderingContext* rc)
     float dTileY = ty - rc->getTop();
     rc->calcX = rc->cosRotateTileSize * dTileX - rc->sinRotateTileSize * dTileY;
     rc->calcY = rc->sinRotateTileSize * dTileX + rc->cosRotateTileSize * dTileY;
-
     if (rc->calcX >= 0 && rc->calcX < rc->getWidth()&& rc->calcY >= 0 && rc->calcY < rc->getHeight())
         rc->pointInsideCount++;
 }
-
 
 UNORDERED(map)<std::string, sk_sp<SkPathEffect>> pathEffects;
 sk_sp<SkPathEffect> getDashEffect(RenderingContext* rc, std::string input)
@@ -689,8 +688,11 @@ bool ray_intersect_x(int prevX, int prevY, int nx, int ny, int x, int y) {
 	return false;
 }
 
-int countIntersections(vector<pair<int,int> > points, int x, int y) {
+int countIntersections(vector<pair<int,int> >& points, int x, int y) {
 	int intersections = 0;
+	if(points.size() == 0) {
+		return 0;
+	}
 	for (uint i = 0; i < points.size() - 1; i++) {
 		if (ray_intersect_x(points[i].first, points[i].second,
 				points[i + 1].first, points[i + 1].second, x, y)) {
@@ -706,7 +708,7 @@ int countIntersections(vector<pair<int,int> > points, int x, int y) {
 	return intersections;
 }
 
-bool contains(vector<pair<int,int> > points, int x, int y) {
+bool contains(vector<pair<int,int> >& points, int x, int y) {
 	return countIntersections(points, x, y) % 2 == 1;
 }
 
@@ -734,6 +736,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	bool containsPoint = false;
 	std::vector< std::pair<int,int > > ps;
 	uint prevCross = 0;
+	
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		if (i == 0) {
@@ -775,11 +778,27 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 			}
 			prevCross = cross;
 		}
-
 	}
+
 	xText /= length;
 	yText /= length;
 
+	if (mObj->isLabelSpecified()) {
+		int rawX = (mObj->getLabelX() >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
+		int rawY = (mObj->getLabelY() >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
+		calcPoint(std::pair<int, int>(rawX, rawY), rc);
+		xText = rc->calcX;
+		yText = rc->calcY;
+		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Polylabel x: %f, y: %f; raw x/y: %d / %d; before shift x/y: %d / %d", 
+		// xText, yText,
+		// rawX, rawY,
+		// mObj->getLabelX(), mObj->getLabelY());
+		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
+			containsPoint = true;
+		} else {
+			containsPoint = false;
+		}
+	} 
 	
 	if(!containsPoint){
 		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
@@ -844,17 +863,23 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	rc->visible++;
 	float px = 0;
 	float py = 0;
-	uint i = 0;
-	for (; i < length; i++) {
-		calcPoint(mObj->points.at(i), rc);
-		px += rc->calcX;
-		py += rc->calcY;
+	if (mObj->isLabelSpecified()) {
+		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
+		px = rc->calcX;
+		py = rc->calcY;
+	} else {
+		uint i = 0;
+		for (; i < length; i++) {
+			calcPoint(mObj->points.at(i), rc);
+			px += rc->calcX;
+			py += rc->calcY;
+		}
+		if (length > 1) {
+			px /= length;
+			py /= length;
+		}
 	}
-	if (length > 1) {
-		px /= length;
-		py /= length;
-	}
-
+	
 	SHARED_PTR<IconDrawInfo> ico;
 	if (bmp != NULL) {
 		ico.reset(new IconDrawInfo(mObj));

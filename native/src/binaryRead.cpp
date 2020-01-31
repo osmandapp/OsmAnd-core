@@ -823,7 +823,7 @@ bool readStringTable(CodedInputStream* input, std::vector<std::string>& list) {
 	return true;
 }
 
-static const int SHIFT_COORDINATES = 5;
+
 static const int ROUTE_SHIFT_COORDINATES = 4;
 static const int MASK_TO_READ = ~((1 << SHIFT_COORDINATES) - 1);
 
@@ -909,6 +909,8 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	std::vector< tag_value > types;
 	UNORDERED(map)< std::string, unsigned int> stringIds;
 	std::vector< std::string > namesOrder;
+	int32_t labelX = 0;
+	int32_t labelY = 0;
 	bool loop = true;
 	while (loop) {
 		uint32_t t = input->ReadTag();
@@ -969,7 +971,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 		case OsmAnd::OBF::MapData::kIdFieldNumber:
 			WireFormatLite::ReadPrimitive<int64_t, WireFormatLite::TYPE_SINT64>(input, &id);
 			break;
-		case OsmAnd::OBF::MapData::kStringNamesFieldNumber:
+		case OsmAnd::OBF::MapData::kStringNamesFieldNumber: 
 			input->ReadVarint32(&size);
 			old = input->PushLimit(size);
 			while (input->BytesUntilLimit() > 0) {
@@ -983,6 +985,25 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 			}
 			input->PopLimit(old);
 			break;
+
+		case OsmAnd::OBF::MapData::kLabelcoordinatesFieldNumber: {
+			input->ReadVarint32(&size);
+			old = input->PushLimit(size);
+			u_int i = 0;
+			while(input->BytesUntilLimit() > 0) {
+				if (i == 0) {
+					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &labelX);
+				} else if (i == 1) {
+					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &labelY);
+				} else {
+					WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &x);
+				}
+				i++;
+			}
+			input->PopLimit(old);
+			break; 
+		}
+
 		default: {
 			if (WireFormatLite::GetTagWireType(t) == WireFormatLite::WIRETYPE_END_GROUP) {
 				return NULL;
@@ -991,7 +1012,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 				return NULL;
 			}
 			break;
-		}
+			}
 		}
 	}
 //	if(req->cacheCoordinates.size() > 100 && types.size() > 0 /*&& types[0].first == "admin_level"*/) {
@@ -1012,6 +1033,8 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	dataObject->stringIds = stringIds;
 	dataObject->namesOrder = namesOrder;
 	dataObject->polygonInnerCoordinates = innercoordinates;
+	dataObject->labelX = labelX;
+	dataObject->labelY = labelY;
 	return dataObject;
 
 }
