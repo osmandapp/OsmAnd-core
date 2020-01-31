@@ -20,7 +20,7 @@
 #endif
 
 static const int SHIFT_COORDINATES = 5;
-static const int LABEL_ZOOM_ENCODE = 31;
+static const int LABEL_ZOOM_ENCODE = 26;
 // Better don't do this
 using namespace std;
 

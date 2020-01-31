@@ -34,6 +34,7 @@ const int MAX_V_AREA = 2000;
 const int DEFAULT_POLYGON_MAX = 11;
 const int DEFAULT_LINE_MAX = 100;
 const int DEFAULT_POINTS_MAX = 200;
+const int POI_ZOOM_SHIFT = 7;
 #if defined(WIN32)
 #undef min
 #endif
@@ -784,17 +785,21 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	yText /= length;
 
 	if (mObj->isLabelSpecified()) {
-		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
+		int rawX = (mObj->getLabelX() >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
+		int rawY = (mObj->getLabelY() >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
+		calcPoint(std::pair<int, int>(rawX, rawY), rc);
 		xText = rc->calcX;
 		yText = rc->calcY;
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Polylabel x: %f, y: %f; raw x/y: %d / %d; before shift x/y: %d / %d", 
+		xText, yText,
+		rawX, rawY,
+		mObj->getLabelX(), mObj->getLabelY());
 		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
 			containsPoint = true;
 		} else {
 			containsPoint = false;
 		}
 	} 
-	
-
 	
 	if(!containsPoint){
 		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
