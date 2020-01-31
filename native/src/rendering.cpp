@@ -789,10 +789,10 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		calcPoint(std::pair<int, int>(rawX, rawY), rc);
 		xText = rc->calcX;
 		yText = rc->calcY;
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Polylabel x: %f, y: %f; raw x/y: %d / %d; before shift x/y: %d / %d", 
-		xText, yText,
-		rawX, rawY,
-		mObj->getLabelX(), mObj->getLabelY());
+		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Polylabel x: %f, y: %f; raw x/y: %d / %d; before shift x/y: %d / %d", 
+		// xText, yText,
+		// rawX, rawY,
+		// mObj->getLabelX(), mObj->getLabelY());
 		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
 			containsPoint = true;
 		} else {
