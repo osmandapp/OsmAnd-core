@@ -90,17 +90,35 @@ public:
         int end = max(startPointIndex, endPointIndex);
         int sz = (end - st + 1) * 2;
         std::vector<double> res(sz);
-        for (int k = 0; k < sz / 2; k++) {
-            int ind = reverse ? (2 * (end - k)) : (2 * (k + st));
-            if (k == 0) {
-                res[2 * k] = 0;
-            } else {
-                if (ind < pf.size()) {
-                    res[2 * k] = pf[k];
+
+        if (reverse)
+        {
+            for (int k = 1; k <= sz / 2; k++)
+            {
+                int ind = (2 * (end--));
+                if (ind < pf.size() && k < sz / 2)
+                {
+                    res[2 * k] = pf[ind];
+                }
+                if (ind < pf.size())
+                {
+                    res[2 * (k - 1) + 1] = pf[ind + 1];
                 }
             }
-            if (ind < pf.size()) {
-                res[2 * k + 1] = pf[ind + 1];
+        }
+        else
+        {
+            for (int k = 0; k < sz / 2; k++)
+            {
+                int ind = (2 * (st + k));
+                if (k > 0 && ind < pf.size())
+                {
+                    res[2 * k] = pf[ind];
+                }
+                if (ind < pf.size())
+                {
+                    res[2 * k + 1] = pf[ind + 1];
+                }
             }
         }
         return res;
