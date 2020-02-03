@@ -421,6 +421,8 @@ jmethodID jmethod_RenderedObject_setOrder = NULL;
 jmethodID jmethod_RenderedObject_setVisible = NULL;
 jmethodID jmethod_RenderedObject_setBbox = NULL;
 jmethodID jmethod_RenderedObject_init = NULL;
+jmethodID jmethod_RenderedObject_setLabelX = NULL;
+jmethodID jmethod_RenderedObject_setLabelY = NULL;
 
 jclass jclass_RoutingConfiguration = NULL;
 jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
@@ -592,6 +594,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RenderedObject_setName = env->GetMethodID(jclass_RenderedObject, "setName", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_setBbox = env->GetMethodID(jclass_RenderedObject, "setBbox", "(IIII)V");
 	jmethod_RenderedObject_init = env->GetMethodID(jclass_RenderedObject, "<init>", "()V");
+	jmethod_RenderedObject_setLabelX = env->GetMethodID(jclass_RenderedObject, "setLabelX", "(I)V");
+	jmethod_RenderedObject_setLabelY = env->GetMethodID(jclass_RenderedObject, "setLabelY", "(I)V");
 				
 
 	jclass_RouteAttributeContext = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
@@ -757,6 +761,10 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	{
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_addLocation, 
 			robj->points[i].first, robj->points[i].second);
+	}
+	if (robj->isLabelSpecified()) {
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setLabelX, robj->getLabelX());
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setLabelY, robj->getLabelY());
 	}
 		
 
