@@ -693,24 +693,25 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    std::shared_ptr<const OsmAnd::Amenity> foundAmenity;
+    std::shared_ptr<const OsmAnd::Amenity> foundAmenityById;
+    std::shared_ptr<const OsmAnd::Amenity> foundAmenityByName;
 
     uint64_t obfId = obfMapObject->id.id >> 7;
     const auto visitor =
-        [obfId, &foundAmenity, obfMapObject]
+        [obfId, &foundAmenityById, &foundAmenityByName, obfMapObject]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
-            if (foundAmenity)
+            if (foundAmenityById)
                 return false;
             
             // todo: wrong IF since mapObject->id != amenity->id
             if (amenity->id >> 1 == obfId)
-                foundAmenity = amenity;
+                foundAmenityById = amenity;
             else
                 for (const auto& caption : obfMapObject->captions.values())
                 {
                     if (amenity->nativeName == caption || amenity->localizedNames.values().contains(caption)) {
-                        foundAmenity = amenity;
+                        foundAmenityByName = amenity;
                         break;
                     }
                 }
@@ -719,10 +720,10 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
         };
 
     const auto subQueryController = std::make_shared<FunctorQueryController>(
-        [&foundAmenity]
+        [&foundAmenityById]
         (const FunctorQueryController* const queryController) -> bool
         {
-            return static_cast<bool>(foundAmenity);
+            return static_cast<bool>(foundAmenityById);
         });
 
     for (const auto& obfReader : constOf(obfReaders))
@@ -758,10 +759,16 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 visitor,
                 subQueryController);
 
-            if (foundAmenity)
+            if (foundAmenityById)
             {
                 if (outAmenity)
-                    *outAmenity = foundAmenity;
+                    *outAmenity = foundAmenityById;
+                return true;
+            }
+            else if (foundAmenityByName)
+            {
+                if (outAmenity)
+                    *outAmenity = foundAmenityByName;
                 return true;
             }
         }
