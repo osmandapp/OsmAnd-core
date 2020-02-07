@@ -719,6 +719,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
     {
         const auto debugSettings = renderer->getDebugSettings();
+        std::shared_ptr<IMapDataProvider> provider_;
+        obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
+        const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
 
         const auto isNotUnavailableResource =
             []
@@ -757,6 +760,66 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
 
             // If at least one underscaled/overscaled tile is usable, then no extra resources are needed
             bool atLeastOneScaledTileUsable = false;
+            
+            if (tiledProvider != nullptr)
+            {
+                if (activeZoom < tiledProvider->getMinZoom())
+                {
+                    ZoomLevel underscaledZoom = tiledProvider->getMinZoom();
+                    int zoomShift = underscaledZoom - activeZoom;
+                    const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                        activeTileId,
+                        zoomShift);
+
+                    const auto tilesCount = underscaledTileIdsN.size();
+                    auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                    for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                    {
+                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+
+                        const auto underscaledTilePresent = resourcesCollection->containsResource(
+                            underscaledTileId,
+                            underscaledZoom);
+                        if (!underscaledTilePresent)
+                        {
+                            std::shared_ptr<MapRendererBaseTiledResource> resource;
+                            resourcesCollection->obtainOrAllocateEntry(
+                                resource,
+                                underscaledTileId,
+                                underscaledZoom,
+                                resourceAllocator);
+                            requestNeededResource(resource);
+                        }
+                    }
+                    atLeastOneScaledTileUsable = true;
+                    break;
+                }
+                else if (activeZoom > tiledProvider->getMaxZoom())
+                {
+                    ZoomLevel overscaledZoom = tiledProvider->getMaxZoom();
+                    int zoomShift = activeZoom - tiledProvider->getMaxZoom();
+                    const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
+                        activeTileId,
+                        zoomShift);
+                    if (!resourcesCollection->containsResource(
+                        overscaledTileId,
+                        overscaledZoom))
+                    {
+                        std::shared_ptr<MapRendererBaseTiledResource> resource;
+                        resourcesCollection->obtainOrAllocateEntry(
+                            resource,
+                            overscaledTileId,
+                            overscaledZoom,
+                            resourceAllocator);
+                        requestNeededResource(resource);
+                    }
+                    atLeastOneScaledTileUsable = true;
+                }
+            }
+            
+            if (atLeastOneScaledTileUsable)
+                continue;
+            
             for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
             {
                 // Look for underscaled first. Only full match is accepted. Also, underscaled are limited to
