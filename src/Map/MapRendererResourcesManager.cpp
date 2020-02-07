@@ -757,9 +757,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             {
                 continue;
             }
-
-            // If at least one underscaled/overscaled tile is usable, then no extra resources are needed
-            bool atLeastOneScaledTileUsable = false;
             
             if (tiledProvider != nullptr)
             {
@@ -791,8 +788,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                             requestNeededResource(resource);
                         }
                     }
-                    atLeastOneScaledTileUsable = true;
-                    break;
+                    continue;
                 }
                 else if (activeZoom > tiledProvider->getMaxZoom())
                 {
@@ -813,13 +809,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                             resourceAllocator);
                         requestNeededResource(resource);
                     }
-                    atLeastOneScaledTileUsable = true;
+                    continue;
                 }
             }
             
-            if (atLeastOneScaledTileUsable)
-                continue;
-            
+            // If at least one underscaled/overscaled tile is usable, then no extra resources are needed
+            bool atLeastOneScaledTileUsable = false;
             for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
             {
                 // Look for underscaled first. Only full match is accepted. Also, underscaled are limited to
