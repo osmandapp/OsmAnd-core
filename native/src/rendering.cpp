@@ -803,11 +803,6 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		calcPoint(fixZoomPOI(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY())), rc);
 		xText = rc->calcX;
 		yText = rc->calcY;
-		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
-			containsPoint = true;
-		} else {
-			containsPoint = false;
-		}
 	} 
 	
 	std::vector<coordinates> polygonInnerCoordinates = mObj->polygonInnerCoordinates;
