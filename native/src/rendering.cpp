@@ -735,7 +735,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	if (!rendered || !updatePaint(req, paint, 0, 1, rc)) {
 		return;
 	}
-	bool ignoreTextInCenter = false;			
+	bool ignoreText = false;			
 	rc->visible++;
 	SkPath path;
 	uint i = 0;
@@ -794,15 +794,13 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		xText = rc->calcX;
 		yText = rc->calcY;
 		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
-			containsPoint = true;
-		} else {
-			containsPoint = false;
+			ignoreText = true;
 		}
 	} 
 	
 	if(!containsPoint){
 		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
-			ignoreTextInCenter = true;
+			ignoreText = true;
 			xText = rc->getWidth() / 2;
 			yText = rc->getHeight() / 2;
 		} else {
@@ -834,7 +832,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	}
 	bool addTextForSmallAreas = req->getBoolPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA);
 	// ignorePointArea = false;
-	if(!prim.pointAdded &&  (prim.area > MAX_V_AREA || addTextForSmallAreas) && !ignoreTextInCenter) {
+	if (!prim.pointAdded && (prim.area > MAX_V_AREA || addTextForSmallAreas) && !ignoreText) {
 		renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
 	}
 	
