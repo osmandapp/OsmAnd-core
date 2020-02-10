@@ -789,6 +789,16 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	xText /= length;
 	yText /= length;
 
+	if(!containsPoint){
+		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
+			ignoreTextInCenter = true;
+			xText = rc->getWidth() / 2;
+			yText = rc->getHeight() / 2;
+		} else {
+			return;
+		}		
+	}
+
 	if (mObj->isLabelSpecified()) {
 		calcPoint(fixZoomPOI(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY())), rc);
 		xText = rc->calcX;
@@ -800,15 +810,6 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		}
 	} 
 	
-	if(!containsPoint){
-		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
-			ignoreTextInCenter = true;
-			xText = rc->getWidth() / 2;
-			yText = rc->getHeight() / 2;
-		} else {
-			return;
-		}		
-	}
 	std::vector<coordinates> polygonInnerCoordinates = mObj->polygonInnerCoordinates;
 	if (polygonInnerCoordinates.size() > 0) {
 		path.setFillType(SkPath::kEvenOdd_FillType);
