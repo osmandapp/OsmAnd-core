@@ -90,7 +90,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
         // <ele>
         if (!qIsNaN(locationMark->elevation))
-            xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(locationMark->elevation, 'f', 12));
+            xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(locationMark->elevation, 'g', 7));
 
         // <time>
         if (!locationMark->timestamp.isNull())
@@ -218,10 +218,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
             // <src>
             if (!trk->source.isEmpty())
                 xmlWriter.writeTextElement(QLatin1String("src"), trk->source);
-
-            // <number>
-            if (trk->slotNumber >= 0)
-                xmlWriter.writeTextElement(QLatin1String("sat"), QString::number(trk->slotNumber));
         }
 
         // Write extensions
@@ -239,8 +235,8 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
             {
                 // <trkpt>
                 xmlWriter.writeStartElement(QLatin1String("trkpt"));
-                xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(trackPoint->position.latitude, 'f', 12));
-                xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(trackPoint->position.longitude, 'f', 12));
+                xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(trackPoint->position.latitude, 'f', 6));
+                xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(trackPoint->position.longitude, 'f', 6));
 
                 // <name>
                 if (!trackPoint->name.isEmpty())
@@ -252,7 +248,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
                 // <ele>
                 if (!qIsNaN(trackPoint->elevation))
-                    xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(trackPoint->elevation, 'f', 12));
+                    xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(trackPoint->elevation, 'g', 7));
 
                 // <time>
                 if (!trackPoint->timestamp.isNull())
@@ -392,10 +388,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
             // <src>
             if (!rte->source.isEmpty())
                 xmlWriter.writeTextElement(QLatin1String("src"), rte->source);
-
-            // <number>
-            if (rte->slotNumber >= 0)
-                xmlWriter.writeTextElement(QLatin1String("sat"), QString::number(rte->slotNumber));
         }
 
         // Write extensions
@@ -407,8 +399,8 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         {
             // <rtept>
             xmlWriter.writeStartElement(QLatin1String("rtept"));
-            xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(routePoint->position.latitude, 'f', 12));
-            xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(routePoint->position.longitude, 'f', 12));
+            xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(routePoint->position.latitude, 'f', 6));
+            xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(routePoint->position.longitude, 'f', 6));
 
             // <name>
             if (!routePoint->name.isEmpty())
@@ -420,7 +412,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
             // <ele>
             if (!qIsNaN(routePoint->elevation))
-                xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(routePoint->elevation, 'f', 12));
+                xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(routePoint->elevation, 'g', 7));
 
             // <time>
             if (!routePoint->timestamp.isNull())
@@ -555,6 +547,8 @@ void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStream
 
 void OsmAnd::GpxDocument::writeExtensions(const std::shared_ptr<const GpxExtensions>& extensions, QXmlStreamWriter& xmlWriter)
 {
+    if (extensions->extensions.count() == 0)
+        return;
     // <extensions>
     xmlWriter.writeStartElement(QLatin1String("extensions"));
     for (const auto attributeEntry : rangeOf(constOf(extensions->attributes)))
