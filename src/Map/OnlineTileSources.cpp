@@ -77,6 +77,11 @@ bool OsmAnd::OnlineTileSources::createTileSourceTemplate(const QString& metaInfo
     return OnlineTileSources_P::createTileSourceTemplate(metaInfoPath, source);
 }
 
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources::createTileSourceTemplate(const QXmlStreamAttributes &attributes)
+{
+    return OnlineTileSources_P::createTileSourceTemplate(attributes);
+}
+
 const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_hd"));
 
 const QString OsmAnd::OnlineTileSources::normalizeUrl(QString &url)

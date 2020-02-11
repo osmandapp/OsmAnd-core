@@ -27,11 +27,11 @@ namespace OsmAnd
     protected:
         OnlineTileSources_P(OnlineTileSources* owner);
 
-        std::shared_ptr<Source> createTileSourceTemplate(const QXmlStreamAttributes &attributes) const;
-        std::shared_ptr<Source> createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule) const;
-        std::shared_ptr<OsmAnd::OnlineTileSources::Source> createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const;
-        int parseInt(const QXmlStreamAttributes &attributes, QString attributeName, int defaultValue) const;
-        long parseLong(const QXmlStreamAttributes &attributes, QString attributeName, long defaultValue) const;
+        static std::shared_ptr<OnlineTileSources::Source> createTileSourceTemplate(const QXmlStreamAttributes &attributes);
+        static std::shared_ptr<Source> createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule);
+        static std::shared_ptr<OsmAnd::OnlineTileSources::Source> createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes);
+        static int parseInt(const QXmlStreamAttributes &attributes, QString attributeName, int defaultValue);
+        static long parseLong(const QXmlStreamAttributes &attributes, QString attributeName, long defaultValue);
         
         bool deserializeFrom(QXmlStreamReader& xmlReader);
         bool serializeTo(QXmlStreamWriter& xmlWriter) const;

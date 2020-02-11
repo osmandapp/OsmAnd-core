@@ -9,6 +9,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QIODevice>
+#include <QXmlStreamAttributes>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -52,6 +53,7 @@ namespace OsmAnd
         static bool createTileSourceTemplate(const QString& metaInfoPath, std::shared_ptr<Source>& source);
         static void installTileSource(const std::shared_ptr<const Source> toInstall, const QString& cachePath);
         static std::shared_ptr<const OnlineTileSources> getBuiltIn();
+        static std::shared_ptr<Source> createTileSourceTemplate(const QXmlStreamAttributes &attributes);
         
         static QList<QString> parseRandoms(const QString &randoms);
     };

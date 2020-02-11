@@ -94,7 +94,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         }
 
         assert(bitmap->width() == bitmap->height());
-        assert(bitmap->width() == owner->getTileSize());
+//        assert(bitmap->width() == owner->getTileSize());
 
         // Return tile
         outData.reset(new OnlineRasterMapLayerProvider::Data(
@@ -210,7 +210,8 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     assert(bitmap->width() == bitmap->height());
-    assert(bitmap->width() == owner->getTileSize());
+    // This assertion causes crash after converting an sqlite source to online tiles because sqlite source doesn't specify the tile size
+//    assert(bitmap->width() == owner->getTileSize());
 
     // Return tile
     outData.reset(new OnlineRasterMapLayerProvider::Data(
