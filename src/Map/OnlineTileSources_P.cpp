@@ -19,7 +19,7 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 {
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes)
 {
     std::shared_ptr<Source> tileSource = nullptr;
     if (attributes.hasAttribute("rule"))
@@ -37,7 +37,7 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     return tileSource;
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes)
 {
     const QString name = attributes.value(QStringLiteral("name")).toString();
     const QString layer = attributes.value(QStringLiteral("layer")).toString();
@@ -65,7 +65,7 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     return source;
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule) const
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule)
 {
     QString urlTemplate = attributes.value(QStringLiteral("url_template")).toString();
     QString name = attributes.value(QStringLiteral("name")).toString();
@@ -168,7 +168,7 @@ QList<QString> OsmAnd::OnlineTileSources_P::parseRandoms(const QString &randoms)
     return result;
 }
 
-int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes, const QString attributeName, int defaultValue) const
+int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes, const QString attributeName, int defaultValue)
 {
     QString val = attributes.value(attributeName).toString();
     bool ok;
@@ -179,7 +179,7 @@ int OsmAnd::OnlineTileSources_P::parseInt(const QXmlStreamAttributes &attributes
     return integerValue;
 }
 
-long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attributes, const QString attributeName, long defaultValue) const
+long OsmAnd::OnlineTileSources_P::parseLong(const QXmlStreamAttributes &attributes, const QString attributeName, long defaultValue)
 {
     QString val = attributes.value(attributeName).toString();
     bool ok;
