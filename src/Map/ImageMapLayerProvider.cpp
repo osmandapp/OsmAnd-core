@@ -160,7 +160,9 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     
     if (!bitmap)
         return false;
-    
+
+    performAdditionalChecks(bitmap);
+
     // Return tile
     outData.reset(new IRasterMapLayerProvider::Data(
         request.tileId,
@@ -225,6 +227,10 @@ int OsmAnd::ImageMapLayerProvider::getAndDecreasePriority()
     _priority--;
     
     return _priority;
+}
+
+void OsmAnd::ImageMapLayerProvider::performAdditionalChecks(std::shared_ptr<const SkBitmap> bitmap)
+{
 }
 
 OsmAnd::ImageMapLayerProvider::AsyncImage::AsyncImage(
