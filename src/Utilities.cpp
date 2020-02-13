@@ -689,3 +689,21 @@ OsmAnd::LatLon OsmAnd::Utilities::rhumbDestinationPoint(LatLon latLon, double di
     
     return LatLon(qRadiansToDegrees(phi2), qRadiansToDegrees(lambda2));
 }
+
+OsmAnd::PointD OsmAnd::Utilities::getTileEllipsoidNumberAndOffsetY(int zoom, double latitude, int tileSize)
+{
+    double E2 = (double) latitude * M_PI / 180;
+    long sradiusa = 6378137;
+    long sradiusb = 6356752;
+    double J2 = (double) sqrt(sradiusa * sradiusa - sradiusb * sradiusb) / sradiusa;
+    double M2 = (double) log((1 + sin(E2))
+            / (1 - sin(E2))) / 2 - J2 * log((1 + J2 * sin(E2)) / (1 - J2 * sin(E2))) / 2;
+    double B2 = getPowZoom(zoom);
+    PointD res;
+    res.x = B2 / 2 - M2 * B2 / 2 / M_PI;
+    
+    auto xTilesCountForThisZoom = (double)(1 << zoom);
+    auto yTileNumber = floor(xTilesCountForThisZoom / 2 - M2 * xTilesCountForThisZoom / 2 / M_PI);
+    res.y = floor(((xTilesCountForThisZoom / 2 - M2 * xTilesCountForThisZoom / 2 / M_PI) - yTileNumber) * tileSize);
+    return res;
+}

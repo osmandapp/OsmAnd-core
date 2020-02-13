@@ -58,13 +58,18 @@ namespace OsmAnd
     protected:
         ImageMapLayerProvider();
         void waitForTasksDone(bool clear = true);
+        const std::shared_ptr<const SkBitmap> decodeBitmap(const QByteArray& image);
     public:
         virtual ~ImageMapLayerProvider();
 
         virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
 
+        virtual bool supportsObtainImageBitmap() const;
         virtual QByteArray obtainImage(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request) = 0;
+        virtual const std::shared_ptr<const SkBitmap> obtainImageBitmap(
+            const IMapTiledDataProvider::Request& request);
+
         virtual bool obtainData(
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,

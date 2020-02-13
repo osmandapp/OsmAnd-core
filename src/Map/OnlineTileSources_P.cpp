@@ -72,7 +72,7 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     // TODO: change when we start supporting elliptic correction
     
     bool ellipticCorrection = attributes.value(QStringLiteral("ellipsoid")).toString() == QStringLiteral("true");
-    if (name.isEmpty() || urlTemplate.isEmpty() || ellipticCorrection)
+    if (name.isEmpty() || urlTemplate.isEmpty())
         return nullptr;
     
     urlTemplate = OnlineTileSources::normalizeUrl(urlTemplate);

@@ -35,6 +35,11 @@ void OsmAnd::ImageMapLayerProvider::waitForTasksDone(bool clear /* = true*/)
     _threadPool->waitForDone();
 }
 
+bool OsmAnd::ImageMapLayerProvider::supportsObtainImageBitmap() const
+{
+    return false;
+}
+
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()
 {
     SkBitmap bitmap;
@@ -45,6 +50,29 @@ const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyIma
         bitmap.eraseColor(SK_ColorTRANSPARENT);
         return std::make_shared<SkBitmap>(bitmap);
     }
+    return nullptr;
+}
+
+const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& image)
+{
+    // Decode image data
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (!SkImageDecoder::DecodeMemory(
+            image.constData(), image.size(),
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode image tile");
+
+        return nullptr;
+    }
+    return bitmap;
+}
+
+const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::obtainImageBitmap(const OsmAnd::IMapTiledDataProvider::Request& request)
+{
     return nullptr;
 }
 
@@ -70,45 +98,68 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (request.queryController != nullptr && request.queryController->isAborted())
         return false;
     
-    // Obtain image data
-    const auto image = obtainImage(request);
-    
-    if (request.queryController != nullptr && request.queryController->isAborted())
-        return false;
-
-    if (image.isNull())
+    std::shared_ptr<const SkBitmap> bitmap;
+    if (supportsObtainImageBitmap())
     {
-        const auto emptyImage = getEmptyImage();
-        if (emptyImage)
+        bitmap = obtainImageBitmap(request);
+
+        if (request.queryController != nullptr && request.queryController->isAborted())
+            return false;
+
+        if (!bitmap)
         {
-            // Return empty tile
-            outData.reset(new IRasterMapLayerProvider::Data(
-                request.tileId,
-                request.zoom,
-                getAlphaChannelPresence(),
-                getTileDensityFactor(),
-                emptyImage));
+            const auto emptyImage = getEmptyImage();
+            if (emptyImage)
+            {
+                // Return empty tile
+                outData.reset(new IRasterMapLayerProvider::Data(
+                    request.tileId,
+                    request.zoom,
+                    getAlphaChannelPresence(),
+                    getTileDensityFactor(),
+                    emptyImage));
+            }
+            else
+            {
+                outData.reset();
+            }
+            return true;
         }
-        else
+    }
+    else
+    {
+        // Obtain image data
+        const auto image = obtainImage(request);
+        
+        if (request.queryController != nullptr && request.queryController->isAborted())
+            return false;
+
+        if (image.isNull())
         {
-            outData.reset();
+            const auto emptyImage = getEmptyImage();
+            if (emptyImage)
+            {
+                // Return empty tile
+                outData.reset(new IRasterMapLayerProvider::Data(
+                    request.tileId,
+                    request.zoom,
+                    getAlphaChannelPresence(),
+                    getTileDensityFactor(),
+                    emptyImage));
+            }
+            else
+            {
+                outData.reset();
+            }
+            return true;
         }
-        return true;
+        
+        // Decode image data
+        bitmap = decodeBitmap(image);
     }
     
-    // Decode image data
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            image.constData(), image.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode image tile");
-
+    if (!bitmap)
         return false;
-    }
     
     // Return tile
     outData.reset(new IRasterMapLayerProvider::Data(

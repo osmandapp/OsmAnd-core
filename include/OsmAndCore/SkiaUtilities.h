@@ -27,6 +27,11 @@ namespace OsmAnd
             const float xOffset,
             const float yOffset);
 
+        static std::shared_ptr<SkBitmap> createTileBitmap(
+            const std::shared_ptr<const SkBitmap>& firstBitmap,
+            const std::shared_ptr<const SkBitmap>& secondBitmap,
+            const float yOffset);
+
         static SkTypeface* createTypefaceFromData(
             const QByteArray& data);
 

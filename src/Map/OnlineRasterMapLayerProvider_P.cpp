@@ -14,6 +14,8 @@
 #include <SkImageDecoder.h>
 #include "restore_internal_warnings.h"
 
+#include <OsmAndCore/SkiaUtilities.h>
+
 #include "MapDataProviderHelpers.h"
 #include "Logging.h"
 #include "Utilities.h"
@@ -29,6 +31,29 @@ OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(
 
 OsmAnd::OnlineRasterMapLayerProvider_P::~OnlineRasterMapLayerProvider_P()
 {
+}
+
+std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTileBitmap(const QFileInfo& fileInfo)
+{
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    SkFILEStream fileStream(qPrintable(fileInfo.absoluteFilePath()));
+    if (!SkImageDecoder::DecodeStream(
+            &fileStream,
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode tile file '%s'",
+            qPrintable(fileInfo.absoluteFilePath()));
+
+        QFile tileFile(fileInfo.absoluteFilePath());
+        if (tileFile.exists())
+            tileFile.remove();
+
+        return nullptr;
+    }
+    return bitmap;
 }
 
 bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
@@ -48,15 +73,28 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         return true;
     }
 
+    auto tileId = request.tileId;
+    auto zoom = request.zoom;
+    double offsetY = 0;
+    const auto& source = owner->_tileSource;
+    if (source->ellipticYTile)
+    {
+        double latitude = OsmAnd::Utilities::getLatitudeFromTile(zoom, tileId.y);
+        auto numberOffset = OsmAnd::Utilities::getTileEllipsoidNumberAndOffsetY(zoom, latitude, source->tileSize);
+        tileId.y = numberOffset.x + (outData ? 1 : 0);
+        offsetY = numberOffset.y;
+    }
+    bool shiftedTile = offsetY > 0;
+
     // Check if requested tile is already being processed, and wait until that's done
     // to mark that as being processed.
-    lockTile(request.tileId, request.zoom);
-
-    // Check if requested tile is already in local storage.
+    lockTile(tileId, zoom);
+    
     const auto tileLocalRelativePath =
-        QString::number(request.zoom) + QDir::separator() +
-        QString::number(request.tileId.x) + QDir::separator() +
-        QString::number(request.tileId.y) + QLatin1String(".tile");
+        QString::number(zoom) + QDir::separator() +
+        QString::number(tileId.x) + QDir::separator() +
+        QString::number(tileId.y) + QLatin1String(".tile");
+    
     QFileInfo localFile;
     {
         QMutexLocker scopedLocker(&_localCachePathMutex);
@@ -65,7 +103,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     if (localFile.exists())
     {
         // Since tile is in local storage, it's safe to unmark it as being processed
-        unlockTile(request.tileId, request.zoom);
+        unlockTile(tileId, zoom);
 
         // If local file is empty, it means that requested tile does not exist (has no data)
         if (localFile.size() == 0)
@@ -74,27 +112,21 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             return true;
         }
 
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
-        if (!SkImageDecoder::DecodeStream(
-                &fileStream,
-                bitmap.get(),
-                SkColorType::kUnknown_SkColorType,
-                SkImageDecoder::kDecodePixels_Mode))
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to decode tile file '%s'",
-                qPrintable(localFile.absoluteFilePath()));
-
-            QFile tileFile(localFile.absoluteFilePath());
-            if (tileFile.exists())
-                tileFile.remove();
-
+        auto bitmap = decodeTileBitmap(localFile);
+        if (!bitmap)
             return false;
-        }
 
         assert(bitmap->width() == bitmap->height());
 
+        bool shouldRequestNextTile = shiftedTile && !outData;
+        if (shiftedTile && outData)
+        {
+            if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
+            {
+                bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+            }
+        }
+        
         // Return tile
         outData.reset(new OnlineRasterMapLayerProvider::Data(
             request.tileId,
@@ -102,7 +134,10 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
             bitmap));
-        
+
+        if (shouldRequestNextTile)
+            return obtainData(request, outData, pOutMetric);
+
         return true;
     }
 
@@ -113,13 +148,12 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     if (!_networkAccessAllowed)
     {
         // Before returning, unlock tile
-        unlockTile(request.tileId, request.zoom);
-
+        unlockTile(tileId, zoom);
         return false;
     }
 
     // Perform synchronous download
-    const auto tileUrl = getUrlToLoad(request.tileId.x, request.tileId.y, request.zoom);
+    const auto tileUrl = getUrlToLoad(tileId.x, tileId.y, zoom);
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
     const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult);
 
@@ -146,7 +180,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
                 tileFile.close();
 
                 // Unlock the tile
-                unlockTile(request.tileId, request.zoom);
+                unlockTile(tileId, zoom);
                 return true;
             }
             else
@@ -156,13 +190,13 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
                     qPrintable(localFile.absoluteFilePath()));
 
                 // Unlock the tile
-                unlockTile(request.tileId, request.zoom);
+                unlockTile(tileId, zoom);
                 return false;
             }
         }
 
         // Unlock the tile
-        unlockTile(request.tileId, request.zoom);
+        unlockTile(tileId, zoom);
         return false;
     }
 
@@ -191,10 +225,10 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Unlock tile, since local storage work is done
-    unlockTile(request.tileId, request.zoom);
+    unlockTile(tileId, zoom);
 
     // Decode in-memory
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     if (!SkImageDecoder::DecodeMemory(
             downloadResult.constData(), downloadResult.size(),
             bitmap.get(),
@@ -210,6 +244,15 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
     assert(bitmap->width() == bitmap->height());
 
+    bool shouldRequestNextTile = shiftedTile && !outData;
+    if (shiftedTile && outData)
+    {
+        if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
+        {
+            bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+        }
+    }
+
     // Return tile
     outData.reset(new OnlineRasterMapLayerProvider::Data(
         request.tileId,
@@ -217,6 +260,10 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         owner->alphaChannelPresence,
         owner->getTileDensityFactor(),
         bitmap));
+
+    if (shouldRequestNextTile)
+        return obtainData(request, outData, pOutMetric);
+
     return true;
 }
 

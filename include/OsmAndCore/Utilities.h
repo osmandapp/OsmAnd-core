@@ -793,6 +793,8 @@ namespace OsmAnd
             return res;
         }
 
+        static PointD getTileEllipsoidNumberAndOffsetY(int zoom, double latitude, int tileSize);
+
         static TileId normalizeTileId(const TileId input, const ZoomLevel zoom);
         static PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom);
 #if !defined(SWIG)
