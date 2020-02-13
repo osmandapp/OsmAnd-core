@@ -77,6 +77,7 @@ namespace OsmAnd
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE Q_DECL_FINAL;
+        virtual void performAdditionalChecks(std::shared_ptr<const SkBitmap> bitmap);
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ImageMapLayerProvider);
