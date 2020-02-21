@@ -161,7 +161,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     localFile.dir().mkpath(QLatin1String("."));
 
     // If there was error, check what the error was
-    if (requestResult != nullptr && !requestResult->isSuccessful())
+    if (requestResult && !requestResult->isSuccessful())
     {
         const auto httpStatus = std::dynamic_pointer_cast<const IWebClient::IHttpRequestResult>(requestResult)->getHttpStatusCode();
 

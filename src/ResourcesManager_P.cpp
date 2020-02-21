@@ -686,7 +686,7 @@ const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager_
     const auto& downloadResult = _webClient->downloadData(
         QLatin1String("https://test.osmand.net/tile_sources?osmandver=") + owner->appVersion,
         &requestResult);
-    if (downloadResult.isNull() || !requestResult->isSuccessful())
+    if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
         return nullptr;
     
     const std::shared_ptr<OnlineTileSources> sources(new OnlineTileSources());
@@ -1017,7 +1017,7 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     const auto& downloadResult = _webClient->downloadData(
         owner->repositoryBaseUrl + QLatin1String("/get_indexes.php"),
         &requestResult);
-    if (downloadResult.isNull() || !requestResult->isSuccessful())
+    if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
         return false;
 
     // Parse XML

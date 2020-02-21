@@ -135,7 +135,7 @@ bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(const Q
                                                           QString::number(timestamp) +
                                                           "&file=" + QUrl::toPercentEncoding(region),
                                                           &requestResult);
-    if (downloadResult.isNull() || !requestResult->isSuccessful())
+    if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
         return false;
     // Parse XML
     QXmlStreamReader xmlReader(downloadResult);
