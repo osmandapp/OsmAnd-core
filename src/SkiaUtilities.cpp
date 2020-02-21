@@ -76,14 +76,17 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::createTileBitmap(
     const std::shared_ptr<const SkBitmap>& secondBitmap,
     const float yOffset)
 {
-    if (!firstBitmap || !secondBitmap || firstBitmap->width() <= 0 || firstBitmap->height() <= 0 || secondBitmap->width() <= 0 || secondBitmap->height() <= 0)
+    SkImageInfo imageInfo;
+    if (firstBitmap && firstBitmap->width() > 0 && firstBitmap->height() > 0)
+        imageInfo = firstBitmap->info();
+
+    if (secondBitmap && secondBitmap->width() > 0 && secondBitmap->height() > 0)
+        imageInfo = secondBitmap->info();
+
+    if (imageInfo.isEmpty())
         return nullptr;
 
-    const auto width = firstBitmap->width();
-    const auto height = firstBitmap->height();
-
     const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
-    auto imageInfo = firstBitmap->info().makeWH(width, height);
     if (imageInfo.colorType() == kIndex_8_SkColorType)
         imageInfo = imageInfo.makeColorType(kRGBA_8888_SkColorType);
     
@@ -92,8 +95,10 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::createTileBitmap(
     newBitmap->eraseColor(SK_ColorTRANSPARENT);
 
     SkCanvas canvas(*newBitmap);
-    canvas.drawBitmap(*firstBitmap, 0, -yOffset, NULL);
-    canvas.drawBitmap(*secondBitmap, 0, -yOffset + height, NULL);
+    if (firstBitmap)
+        canvas.drawBitmap(*firstBitmap, 0, -yOffset, NULL);
+    if (secondBitmap)
+        canvas.drawBitmap(*secondBitmap, 0, -yOffset + imageInfo.height(), NULL);
     canvas.flush();
 
     return newBitmap;
