@@ -764,6 +764,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 {
                     ZoomLevel underscaledZoom = tiledProvider->getMinZoom();
                     int zoomShift = underscaledZoom - activeZoom;
+                    if (zoomShift > MapRenderer::MaxMissingDataZoomShift)
+                        continue;
+                    
                     const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
                         activeTileId,
                         zoomShift);
@@ -810,135 +813,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                         requestNeededResource(resource);
                     }
                     continue;
-                }
-            }
-            
-            // If at least one underscaled/overscaled tile is usable, then no extra resources are needed
-            bool atLeastOneScaledTileUsable = false;
-            for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
-            {
-                // Look for underscaled first. Only full match is accepted. Also, underscaled are limited to
-                // MaxMissingDataZoomShift to avoid out-of-memory situations.
-                if (Q_LIKELY(!debugSettings->rasterLayersUnderscaleForbidden))
-                {
-                    const auto underscaledZoom = static_cast<int>(activeZoom) + absZoomShift;
-                    if (underscaledZoom <= static_cast<int>(MaxZoomLevel) &&
-                        absZoomShift <= MapRenderer::MaxMissingDataZoomShift)
-                    {
-                        const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
-                            activeTileId,
-                            absZoomShift);
-
-                        bool allUnderscaledPresent = true;
-                        const auto tilesCount = underscaledTileIdsN.size();
-                        auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                        for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
-                        {
-                            const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-
-                            const auto underscaledTilePresent = resourcesCollection->containsResource(
-                                underscaledTileId,
-                                static_cast<ZoomLevel>(underscaledZoom),
-                                isUsableResource);
-                            if (!underscaledTilePresent)
-                            {
-                                allUnderscaledPresent = false;
-                                break;
-                            }
-                        }
-                        if (allUnderscaledPresent)
-                        {
-                            atLeastOneScaledTileUsable = true;
-                            break;
-                        }
-                    }
-                }
-
-                // If underscaled was not found, look for overscaled. Overscaled are not limited by
-                // MaxMissingDataZoomShift.
-                if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden))
-                {
-                    const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
-                    if (overscaleZoom >= static_cast<int>(MinZoomLevel))
-                    {
-                        const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
-                            activeTileId,
-                            absZoomShift);
-                        if (resourcesCollection->containsResource(
-                            overscaledTileId,
-                            static_cast<ZoomLevel>(overscaleZoom),
-                            isUsableResource))
-                        {
-                            atLeastOneScaledTileUsable = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (atLeastOneScaledTileUsable)
-                continue;
-
-            // Request in priority order.
-            for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
-            {
-                // Look for underscaled first. Only full match is accepted. Also, underscaled are limited to
-                // MaxMissingDataZoomShift to avoid out-of-memory situations.
-                if (Q_LIKELY(!debugSettings->rasterLayersUnderscaleForbidden))
-                {
-                    const auto underscaledZoom = static_cast<int>(activeZoom) + absZoomShift;
-                    if (underscaledZoom <= static_cast<int>(MaxZoomLevel) &&
-                        absZoomShift <= MapRenderer::MaxMissingDataZoomShift)
-                    {
-                        const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
-                            activeTileId,
-                            absZoomShift);
-
-                        const auto tilesCount = underscaledTileIdsN.size();
-                        auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                        for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
-                        {
-                            const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-
-                            const auto underscaledTilePresent = resourcesCollection->containsResource(
-                                underscaledTileId,
-                                static_cast<ZoomLevel>(underscaledZoom));
-                            if (!underscaledTilePresent)
-                            {
-                                std::shared_ptr<MapRendererBaseTiledResource> resource;
-                                resourcesCollection->obtainOrAllocateEntry(
-                                    resource,
-                                    underscaledTileId,
-                                    static_cast<ZoomLevel>(underscaledZoom),
-                                    resourceAllocator);
-                                requestNeededResource(resource);
-                            }
-                        }
-                    }
-                }
-
-                // If underscaled was not found, look for overscaled. Overscaled are not limited by
-                // MaxMissingDataZoomShift.
-                if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden))
-                {
-                    const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
-                    if (overscaleZoom >= static_cast<int>(MinZoomLevel))
-                    {
-                        const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
-                            activeTileId,
-                            absZoomShift);
-                        if (!resourcesCollection->containsResource(
-                            overscaledTileId,
-                            static_cast<ZoomLevel>(overscaleZoom)))
-                        {
-                            std::shared_ptr<MapRendererBaseTiledResource> resource;
-                            resourcesCollection->obtainOrAllocateEntry(
-                                resource,
-                                overscaledTileId,
-                                static_cast<ZoomLevel>(overscaleZoom),
-                                resourceAllocator);
-                            requestNeededResource(resource);
-                        }
-                    }
                 }
             }
         }
@@ -1650,6 +1524,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     const auto state = entry->getState();
                     return state == MapRendererResourceState::Uploaded;
                 };
+            
+            std::shared_ptr<IMapDataProvider> provider_;
+            obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
+            const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
+            
             for (const auto& activeTileId : constOf(activeTiles))
             {
                 // If resources have exact match for this tile, use only that
@@ -1662,70 +1541,49 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     continue;
                 }
 
-                if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||
-                    resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
+                if (resourcesCollection->getType() == MapRendererResourceType::MapLayer
+                /* || resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
                 {
-                    // Exact match was not found, so now try to look for overscaled/underscaled resources.
-                    // It's better to show Z-"nearest" resource available, giving preference to underscaled resource.
-                    for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
+                    if (tiledProvider != nullptr)
                     {
-                        // Look for underscaled first. Only full match is accepted. Also, underscaled are limited to
-                        // MaxMissingDataZoomShift to avoid out-of-memory situations.
-                        if (Q_LIKELY(!debugSettings->rasterLayersUnderscaleForbidden))
+                        if (activeZoom < tiledProvider->getMinZoom())
                         {
-                            const auto underscaledZoom = static_cast<int>(activeZoom) + absZoomShift;
-                            if (underscaledZoom <= static_cast<int>(MaxZoomLevel) &&
-                                absZoomShift <= MapRenderer::MaxMissingDataZoomShift)
+                            ZoomLevel underscaledZoom = tiledProvider->getMinZoom();
+                            int zoomShift = underscaledZoom - activeZoom;
+                            if (zoomShift > MapRenderer::MaxMissingDataZoomShift)
+                                continue;
+                            
+                            const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(activeTileId,
+                                                                                                         zoomShift);
+                            
+                            const auto tilesCount = underscaledTileIdsN.size();
+                            auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                            for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
                             {
-                                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
-                                    activeTileId,
-                                    absZoomShift);
-
-                                bool atLeastOnePresent = false;
-                                const auto tilesCount = underscaledTileIdsN.size();
-                                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                                for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                                const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                                
+                                const auto underscaledTilePresent = tiledResourcesCollection->containsResource(underscaledTileId,
+                                                                                                               underscaledZoom);
+                                if (underscaledTilePresent)
                                 {
-                                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-
-                                    const auto underscaledTilePresent = tiledResourcesCollection->containsResource(
-                                        underscaledTileId,
-                                        static_cast<ZoomLevel>(underscaledZoom),
-                                        isUsableResource);
-                                    if (underscaledTilePresent)
-                                    {
-                                        neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
-
-                                        atLeastOnePresent = true;
-                                    }
+                                    neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
                                 }
-
-                                if (atLeastOnePresent)
-                                    break;
                             }
+                            continue;
                         }
-
-                        // If underscaled was not found, look for overscaled. Overscaled are not limited by
-                        // MaxMissingDataZoomShift.
-                        if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden))
+                        else if (activeZoom > tiledProvider->getMaxZoom())
                         {
-                            const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
-                            if (overscaleZoom >= static_cast<int>(MinZoomLevel))
+                            ZoomLevel overscaledZoom = tiledProvider->getMaxZoom();
+                            int zoomShift = activeZoom - tiledProvider->getMaxZoom();
+                            const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(activeTileId,
+                                                                                                    zoomShift);
+                            if (tiledResourcesCollection->containsResource(overscaledTileId,
+                                                                           overscaledZoom))
                             {
-                                const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
-                                    activeTileId,
-                                    absZoomShift);
-                                if (tiledResourcesCollection->containsResource(
-                                    overscaledTileId,
-                                    static_cast<ZoomLevel>(overscaleZoom),
-                                    isUsableResource))
-                                {
-                                    // It's needed only if present and ready
-                                    neededTilesMap[static_cast<ZoomLevel>(overscaleZoom)].insert(overscaledTileId);
-
-                                    break;
-                                }
+                                // It's needed only if present and ready
+                                neededTilesMap[static_cast<ZoomLevel>(overscaledZoom)].insert(overscaledTileId);
                             }
+                            continue;
                         }
                     }
                 }

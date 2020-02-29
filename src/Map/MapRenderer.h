@@ -45,7 +45,7 @@ namespace OsmAnd
         typedef QMap< int, PublishedMapSymbolsByGroup > PublishedMapSymbolsByOrder;
 
         enum {
-            MaxMissingDataZoomShift = 5,
+            MaxMissingDataZoomShift = 3,
         };
 
     private:
