@@ -1228,11 +1228,11 @@ void justifyUTurns(bool leftSide, vector<SHARED_PTR<RouteSegmentResult> >& resul
 void addTurnInfoDescriptions(vector<SHARED_PTR<RouteSegmentResult> >& result) {
     int prevSegment = -1;
     float dist = 0;
+    char distStr[32];
     for (int i = 0; i <= result.size(); i++) {
         if (i == result.size() || result[i]->turnType) {
             if (prevSegment >= 0) {
                 string turn = result[prevSegment]->turnType->toString();
-                char distStr[10];
                 sprintf(distStr, "%.2f", dist);
                 result[prevSegment]->description = turn + " and go " + distStr + " meters";
                 if (result[prevSegment]->turnType->isSkipToSpeak()) {
