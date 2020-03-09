@@ -10,7 +10,8 @@
 //	static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 
 static const bool TRACE_ROUTING = false;
-static const double GPS_POSSIBLE_ERROR = 10;
+// Check issue #8649
+static const double GPS_POSSIBLE_ERROR = 7;
 
 inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToEnd, float o2DistanceFromStart,
 		float o2DistanceToEnd, float heuristicCoefficient) {
