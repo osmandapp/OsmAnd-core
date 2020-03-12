@@ -424,6 +424,8 @@ jmethodID jmethod_RenderedObject_init = NULL;
 jmethodID jmethod_RenderedObject_setLabelX = NULL;
 jmethodID jmethod_RenderedObject_setLabelY = NULL;
 
+jclass jclass_TransportRoutingConfiguration = NULL;
+
 jclass jclass_RoutingConfiguration = NULL;
 jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
 jfieldID jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
@@ -559,6 +561,10 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
 	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
 	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
+
+
+	jclass_TransportRoutingConfiguration = findGlobalClass(env, "net/osmand/router/TransportRoutingConfiguration");
+	jfield_
 
 	jclass_RoutingConfiguration = findGlobalClass(env, "net/osmand/router/RoutingConfiguration");
 	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
@@ -702,7 +708,6 @@ void loadJniRenderingContext(JNIEnv* env)
     jfield_RouteSubregion_bottom= getFid(env,  jclass_RouteSubregion, "bottom", "I" );
     jfield_RouteSubregion_shiftToData= getFid(env,  jclass_RouteSubregion, "shiftToData", "I" );
 	// public final RouteRegion routeReg;
-
 }
 
 void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc)

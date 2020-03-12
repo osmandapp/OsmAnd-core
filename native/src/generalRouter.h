@@ -411,6 +411,10 @@ public:
 	bool containsAttribute(string attribute);
 	
 	string getAttribute(string attribute);
+
+	float getFloatAttribute(string attr, float defVal);
+
+	int getIntAttribute(string attr, float defVal);
     
 	/**
 	 * return if the road is accepted for routing
@@ -496,12 +500,11 @@ private:
 
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
-	uint registerTagValueAttribute(const tag_value& r);
-
 	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def);
 	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def);
 
 public:
+	uint registerTagValueAttribute(const tag_value& r);
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}

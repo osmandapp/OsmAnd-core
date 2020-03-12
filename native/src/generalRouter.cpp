@@ -333,6 +333,14 @@ string GeneralRouter::getAttribute(string attribute) {
 	return attributes[attribute];
 }
 
+float GeneralRouter::getFloatAttribute(string attr, float defVal) {
+	return parseFloat(getAttribute(attr), defVal);
+}
+
+int GeneralRouter::getIntAttribute(string attr, int defVal) {
+	return (int) parseFloat(getAttribute(attr), (float) defVal);
+}
+
 double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def) {
 	return evaluateCache(attr, way->region, way->types, def );
 }
