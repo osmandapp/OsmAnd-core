@@ -9,25 +9,25 @@ const static string KEY = "public_transport";
 
 struct TransportRoutingConfiguration {
     
-    int zoomToLoadTiles; // or ZOOM_TO_LOAD_TILES?
-    int walkRadius;
-    int walkChangeRadius;
-    int maxNumberOfChanges;
-    int finishTimeSeconds;
-    int maxRouteTime;
+    int32_t zoomToLoadTiles;
+    int32_t walkRadius;
+    int32_t walkChangeRadius;
+    int32_t maxNumberOfChanges;
+    int32_t finishTimeSeconds;
+    int32_t maxRouteTime = 60 * 60 * 10;
     SHARED_PTR<GeneralRouter> router;
     
     float walkSpeed;
     float defaulTravelSpeed;
-    int stopTime;
-    int changeTime;
-    int boardingTime;
+    int32_t stopTime;
+    int32_t changeTime;
+    int32_t boardingTime;
     
     bool useSchedule;
 
-    int scheduleTimeOfDay;
-    int scheduleMaxTime;
-    int scheduleDayNumber;
+    int32_t scheduleTimeOfDay;
+    int32_t scheduleMaxTime;
+    int32_t scheduleDayNumber;
 
     MAP_STR_INT rawTypes;
     MAP_STR_FLOAT speed;
@@ -37,21 +37,20 @@ struct TransportRoutingConfiguration {
         if (speed.find(routeType) != speed.end)
     };
     
-    int getChangeTime() {
+    int32_t getChangeTime() {
         return useSchedule ? 0 : changeTime;
     };
 
-    int getBoardingTime() {
+    int32_t getBoardingTime() {
         return boardingTime;
     };
 
-    uint getRawType(string tag, string val) {
+    int32_t getRawType(string tag, string val) {
         tag_value key = make_pair(tag,val);
         if (rawTypes.find(key) == rawTypes.end()) {
             uint at = router->registerTagValuetAttribute(key)
         }
     }
-
 
     string getAttribute(SHARED_PTR<GeneralRouter> router, string propertyName) {
         if (router->containsAttribute(propertyName)) {
@@ -61,13 +60,11 @@ struct TransportRoutingConfiguration {
     }
 }
 
-class TransportRouteConfigurationBuilder() {
-    private: 
-        SHARED_PTR<GeneralRouter> router;
-        MAP_STR_STR attributes;
-        GeneralRouter::Rout
-    public:
-        TransportRouteConfigurationBuilder();
+class TransportRouteConfigurationBuilder {
+
+    SHARED_PTR<GeneralRouter> router;
+    MAP_STR_STR attributes;
+    GeneralRouter router;
     
     SHARED_PTR<TransportRouteConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
         SHARED_PTR<TransportRouteConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
@@ -83,11 +80,13 @@ class TransportRouteConfigurationBuilder() {
         RouteAttributeContext& obstacles = i->router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
         RouteAttributeContext& spds = i->router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
         
-        //TODO write evaluateInt/Float methods like in java 
+//TODO write evaluateInt/Float methods like in java 
         i->stopTime = (int) obstacles.evalueateInt(i->getRawBitset("time", "stop"), i->stopTime);
         i->changeTime = (int) obstacles.evaluateInt(i->getRawBitSet("time", "change"), i->changeTime);
         i->boardingTime = (int) obstacles.evaluateInt(i->getRawBitSet("time", "boarding"), i->boardingTime);
         i->walkSpeed = spds.evaluateFloat(getRawBitset("route", "walk"), i->walkSpeed);
+
+        return i;
     }
 }
 
