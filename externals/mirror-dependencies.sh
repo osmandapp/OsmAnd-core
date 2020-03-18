@@ -32,7 +32,8 @@ fi
 
 mkdir -p "$DEPENDENCIES_MIRROR/"
 mkdir -p "$DEPENDENCIES_MIRROR/bak/"
-mv "$DEPENDENCIES_MIRROR/*" "$DEPENDENCIES_MIRROR/bak/" || true
+find "$DEPENDENCIES_MIRROR/" -maxdepth 1 -type f -exec mv {} "$DEPENDENCIES_MIRROR/bak/" \;
+
 
 download "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2/download" "$DEPENDENCIES_MIRROR/boost_1_56_0.tar.bz2"
 download "http://sourceforge.net/projects/expat/files/expat/2.1.0/expat-2.1.0.tar.gz/download" "$DEPENDENCIES_MIRROR/expat-2.1.0.tar.gz"
