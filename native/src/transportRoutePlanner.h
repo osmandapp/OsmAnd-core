@@ -56,7 +56,7 @@ struct TransportRouteResultSegment{
             route->forwardStops.at(end);
         }
 
-        //sublist?
+        
         vector<TransportStop> getTravelStops() {
             return vector<TransportStop> ts(route->forwardStops.at(start), route->forwardStops.at(end));
         };

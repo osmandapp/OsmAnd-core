@@ -91,7 +91,7 @@ class TransportRoutingConfigurationBuilder {
 
         return i;
     }
-}
+};
 
 
 #endif _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H

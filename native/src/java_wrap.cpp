@@ -425,21 +425,21 @@ jmethodID jmethod_RenderedObject_setLabelX = NULL;
 jmethodID jmethod_RenderedObject_setLabelY = NULL;
 
 jclass jclass_TransportRoutingConfiguration = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_walkRadius = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_walkChangeRadius = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_maxNumberOfChanges = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_finishTimeSeconds = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_maxRouteTime = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_router = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_walkSpeed = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_defaultTravelSpeed = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_stopTime = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_changeTime = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_boardingTime = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_useSchedule = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_scheduleTimeOfDay = NULL;
-jfield jfield_jclass_TransportRoutingConfiguration_scheduleMaxTime = NULL;
+jfield jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
+jfield jfield_TransportRoutingConfiguration_walkRadius = NULL;
+jfield jfield_TransportRoutingConfiguration_walkChangeRadius = NULL;
+jfield jfield_TransportRoutingConfiguration_maxNumberOfChanges = NULL;
+jfield jfield_TransportRoutingConfiguration_finishTimeSeconds = NULL;
+jfield jfield_TransportRoutingConfiguration_maxRouteTime = NULL;
+jfield jfield_TransportRoutingConfiguration_router = NULL;
+jfield jfield_TransportRoutingConfiguration_walkSpeed = NULL;
+jfield jfield_TransportRoutingConfiguration_defaultTravelSpeed = NULL;
+jfield jfield_TransportRoutingConfiguration_stopTime = NULL;
+jfield jfield_TransportRoutingConfiguration_changeTime = NULL;
+jfield jfield_TransportRoutingConfiguration_boardingTime = NULL;
+jfield jfield_TransportRoutingConfiguration_useSchedule = NULL;
+jfield jfield_TransportRoutingConfiguration_scheduleTimeOfDay = NULL;
+jfield jfield_TransportRoutingConfiguration_scheduleMaxTime = NULL;
 // jfield jfield_jclass_TransportRoutingConfiguration_rawTypes = NULL;
 // jfield jfield_jclass_TransportRoutingConfiguration_speed = NULL;
 
@@ -581,21 +581,21 @@ void loadJniRenderingContext(JNIEnv* env)
 
 
 	jclass_TransportRoutingConfiguration = findGlobalClass(env, "net/osmand/router/TransportRoutingConfiguration");
-	jfield_jclass_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_TransportRoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
-	jfield_jclass_TransportRoutingConfiguration_walkRadius = = getFid(env, jclass_TransportRoutingConfiguration, "walkRadius", "I");
-	jfield_jclass_TransportRoutingConfiguration_walkChangeRadius = getFid(env, jclass_TransportRoutingConfiguration, "walkChangeRadius", "I");
-	jfield_jclass_TransportRoutingConfiguration_maxNumberOfChanges = getFid(env, jclass_TransportRoutingConfiguration, "maxNumberOfChanges", "I");
-	jfield_jclass_TransportRoutingConfiguration_finishTimeSeconds = getFid(env, jclass_TransportRoutingConfiguration, "finishTimeSeconds", "I");
-	jfield_jclass_TransportRoutingConfiguration_maxRouteTime = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteTime", "I");
-	jfield_jclass_TransportRoutingConfiguration_router = getFid(env, jclass_TransportRoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
-	jfield_jclass_TransportRoutingConfiguration_walkSpeed = getFid(env, jclass_TransportRoutingConfiguration, "walkSpeed", "F");
-	jfield_jclass_TransportRoutingConfiguration_defaultTravelSpeed = getFid(env, jclass_TransportRoutingConfiguration, "defaultTravelSpeed", "F");
-	jfield_jclass_TransportRoutingConfiguration_stopTime = getFid(env, jclass_TransportRoutingConfiguration, "stopTime", "I");
-	jfield_jclass_TransportRoutingConfiguration_changeTime = getFid(env, jclass_TransportRoutingConfiguration, "changeTime", "I");
-	jfield_jclass_TransportRoutingConfiguration_boardingTime = getFid(env, jclass_TransportRoutingConfiguration, "boardingTime", "I");
-	jfield_jclass_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
-	jfield_jclass_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
-	jfield_jclass_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
+	jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_TransportRoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
+	jfield_TransportRoutingConfiguration_walkRadius = = getFid(env, jclass_TransportRoutingConfiguration, "walkRadius", "I");
+	jfield_TransportRoutingConfiguration_walkChangeRadius = getFid(env, jclass_TransportRoutingConfiguration, "walkChangeRadius", "I");
+	jfield_TransportRoutingConfiguration_maxNumberOfChanges = getFid(env, jclass_TransportRoutingConfiguration, "maxNumberOfChanges", "I");
+	jfield_TransportRoutingConfiguration_finishTimeSeconds = getFid(env, jclass_TransportRoutingConfiguration, "finishTimeSeconds", "I");
+	jfield_TransportRoutingConfiguration_maxRouteTime = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteTime", "I");
+	jfield_TransportRoutingConfiguration_router = getFid(env, jclass_TransportRoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
+	jfield_TransportRoutingConfiguration_walkSpeed = getFid(env, jclass_TransportRoutingConfiguration, "walkSpeed", "F");
+	jfield_TransportRoutingConfiguration_defaultTravelSpeed = getFid(env, jclass_TransportRoutingConfiguration, "defaultTravelSpeed", "F");
+	jfield_TransportRoutingConfiguration_stopTime = getFid(env, jclass_TransportRoutingConfiguration, "stopTime", "I");
+	jfield_TransportRoutingConfiguration_changeTime = getFid(env, jclass_TransportRoutingConfiguration, "changeTime", "I");
+	jfield_TransportRoutingConfiguration_boardingTime = getFid(env, jclass_TransportRoutingConfiguration, "boardingTime", "I");
+	jfield_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
+	jfield_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
+	jfield_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
 	// jfield_jclass_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "I");
 	// jfield_jclass_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "I");
 
@@ -1226,6 +1226,27 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	}
 	fflush(stdout);
 	return res;
+}
+
+void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutingConfiguration> rConfig, jobject jTransportConfig) {
+	rConfig->zoomToLoadTiles = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES);
+	rConfig->walkRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkRadius);
+	rConfig->walkChangeRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkChangeRadius);
+	rConfig->maxNumberOfChanges = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_maxNumberOfChanges);
+	rConfig->finishTimeSeconds = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_finishTimeSeconds);
+	rConfig->maxRouteTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_maxRouteTime);
+	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
+	rConfig->router = ienv->NewGlobalRef(lrouter);
+	rConfig->walkSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkSpeed);
+	rConfig->defaultTravelSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_defaultTravelSpeed);
+	rConfig->stopTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_stopTime);
+	rConfig->changeTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_changeTime);
+	rConfig->boardingTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_boardingTime);
+	rConfig->useSchedule = ienv->GetBooleanField(jTransportConfig,  jfield_TransportRoutingConfiguration_useSchedule);
+	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
+	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
+	ienv->DeleteGlobalRef(router);
+
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTransportRouting(JNIEnv* ienv,
