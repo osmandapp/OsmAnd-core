@@ -425,6 +425,23 @@ jmethodID jmethod_RenderedObject_setLabelX = NULL;
 jmethodID jmethod_RenderedObject_setLabelY = NULL;
 
 jclass jclass_TransportRoutingConfiguration = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_walkRadius = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_walkChangeRadius = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_maxNumberOfChanges = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_finishTimeSeconds = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_maxRouteTime = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_router = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_walkSpeed = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_defaultTravelSpeed = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_stopTime = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_changeTime = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_boardingTime = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_useSchedule = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_scheduleTimeOfDay = NULL;
+jfield jfield_jclass_TransportRoutingConfiguration_scheduleMaxTime = NULL;
+// jfield jfield_jclass_TransportRoutingConfiguration_rawTypes = NULL;
+// jfield jfield_jclass_TransportRoutingConfiguration_speed = NULL;
 
 jclass jclass_RoutingConfiguration = NULL;
 jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
@@ -564,7 +581,23 @@ void loadJniRenderingContext(JNIEnv* env)
 
 
 	jclass_TransportRoutingConfiguration = findGlobalClass(env, "net/osmand/router/TransportRoutingConfiguration");
-	jfield_
+	jfield_jclass_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_TransportRoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
+	jfield_jclass_TransportRoutingConfiguration_walkRadius = = getFid(env, jclass_TransportRoutingConfiguration, "walkRadius", "I");
+	jfield_jclass_TransportRoutingConfiguration_walkChangeRadius = getFid(env, jclass_TransportRoutingConfiguration, "walkChangeRadius", "I");
+	jfield_jclass_TransportRoutingConfiguration_maxNumberOfChanges = getFid(env, jclass_TransportRoutingConfiguration, "maxNumberOfChanges", "I");
+	jfield_jclass_TransportRoutingConfiguration_finishTimeSeconds = getFid(env, jclass_TransportRoutingConfiguration, "finishTimeSeconds", "I");
+	jfield_jclass_TransportRoutingConfiguration_maxRouteTime = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteTime", "I");
+	jfield_jclass_TransportRoutingConfiguration_router = getFid(env, jclass_TransportRoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
+	jfield_jclass_TransportRoutingConfiguration_walkSpeed = getFid(env, jclass_TransportRoutingConfiguration, "walkSpeed", "F");
+	jfield_jclass_TransportRoutingConfiguration_defaultTravelSpeed = getFid(env, jclass_TransportRoutingConfiguration, "defaultTravelSpeed", "F");
+	jfield_jclass_TransportRoutingConfiguration_stopTime = getFid(env, jclass_TransportRoutingConfiguration, "stopTime", "I");
+	jfield_jclass_TransportRoutingConfiguration_changeTime = getFid(env, jclass_TransportRoutingConfiguration, "changeTime", "I");
+	jfield_jclass_TransportRoutingConfiguration_boardingTime = getFid(env, jclass_TransportRoutingConfiguration, "boardingTime", "I");
+	jfield_jclass_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
+	jfield_jclass_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
+	jfield_jclass_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
+	// jfield_jclass_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "I");
+	// jfield_jclass_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "I");
 
 	jclass_RoutingConfiguration = findGlobalClass(env, "net/osmand/router/RoutingConfiguration");
 	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
@@ -1167,6 +1200,52 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(&c, false);
+	UNORDERED(map)<int64_t, int> indexes;
+	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
+		jobject oreg = ienv->GetObjectArrayElement(regions, t);
+		int64_t fp = ienv->GetIntField(oreg, jfield_RouteRegion_filePointer);
+		int64_t ln = ienv->GetIntField(oreg, jfield_RouteRegion_length);
+		ienv->DeleteLocalRef(oreg);
+		indexes[(fp <<31) + ln] = t;
+	}
+
+	// convert results
+	jobjectArray res = ienv->NewObjectArray(r.size(), jclass_RouteSegmentResult, NULL);
+	for (uint i = 0; i < r.size(); i++) {
+		jobject resobj = convertRouteSegmentResultToJava(ienv, r[i], indexes, regions);
+		ienv->SetObjectArrayElement(res, i, resobj);
+		ienv->DeleteLocalRef(resobj);
+	}
+	if(c.finalRouteSegment.get() != NULL) {
+		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime, c.finalRouteSegment->distanceFromStart);
+	}
+	ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
+	ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
+	if (r.size() == 0) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No route found");
+	}
+	fflush(stdout);
+	return res;
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTransportRouting(JNIEnv* ienv,
+		jobject obj, 
+		jintArray  coordinates, jobject jTransportRoutingConfig, jobject progress) {
+	SHARED_PTR<TransportRoutingConfiguration> trConfig = SHARED_PTR<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
+	parseTransportRoutingConfiguration(ienv, config, jTransportRoutingConfig);
+	TransportRoutingContext c(config);
+	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
+	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
+	c.startX = data[0];
+	c.startY = data[1];
+	c.targetX = data[2];
+	c.targetY = data[3];
+	
+	//c.setConditionalTime(config->routeCalculationTime);
+	
+	//parsePrecalculatedRoute(ienv, c, precalculatedRoute);
+	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
+	vector<SHARED_PTR<TransportRouteResult>> r = buildRoute(&c, false);
 	UNORDERED(map)<int64_t, int> indexes;
 	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
 		jobject oreg = ienv->GetObjectArrayElement(regions, t);

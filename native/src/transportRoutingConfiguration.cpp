@@ -1,6 +1,6 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_CONFIGUERATION_CPP
 #define _OSMAND_TRANSPORT_ROUTE_CONFIGUERATION_CPP
-#include "transportRoutePlanner.h"
+#include "transportRoutingConfiguration.h"
 
 
 #endif

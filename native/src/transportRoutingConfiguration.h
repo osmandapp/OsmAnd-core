@@ -5,10 +5,9 @@
 #include "generalRouter.h"
 #include <algorithm>
 
-const static string KEY = "public_transport";
-
 struct TransportRoutingConfiguration {
     
+    const static string KEY = "public_transport";
     int32_t zoomToLoadTiles;
     int32_t walkRadius;
     int32_t walkChangeRadius;
@@ -34,7 +33,11 @@ struct TransportRoutingConfiguration {
 
     float getSpeedByRouteType(std::string routeType) {
         float sl = speed.find(routeType);
-        if (speed.find(routeType) != speed.end)
+        if (speed.find(routeType) != speed.end) {
+            //??????
+            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat();
+            speed.inser
+        }
     };
     
     int32_t getChangeTime() {
@@ -60,14 +63,14 @@ struct TransportRoutingConfiguration {
     }
 }
 
-class TransportRouteConfigurationBuilder {
+class TransportRoutingConfigurationBuilder {
 
     SHARED_PTR<GeneralRouter> router;
     MAP_STR_STR attributes;
     GeneralRouter router;
     
-    SHARED_PTR<TransportRouteConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
-        SHARED_PTR<TransportRouteConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
+    SHARED_PTR<TransportRoutingConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
+        SHARED_PTR<TransportRoutingConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
         i->router = router->build(params);
         i->walkRadius = (int) i->router->parseFloat("walkRadius", 1500.f);
         i->walkChangeRadius = (int) i->router->parseFloat("walkChangeRadius", 300.f);

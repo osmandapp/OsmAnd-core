@@ -21,14 +21,14 @@ struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<Trans
     }
 };
 
-typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment> >, TransportSegmentPriorityComparator> TRANSPORT_SEGMENTS_QUEUE;
+typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 
-vector<SHARED_PTR<TransportRouteResult>> buildRoute(TransportRoutingContext* ctx, double startLat, double startLon, double endLat, double endLon) {
+vector<SHARED_PTR<TransportRouteResult>> buildRoute(TransportRoutingContext* ctx) {
     //todo add counter
 	TransportSegmentsComparator trSegmComp(ctx);
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
-    vector<SHARED_PTR<TransportRouteSegment>>& startStops = ctx->getTransportStops(startLat, startLon);
-    vector<SHARED_PTR<TransportRouteSegment>>& endStops = ctx->getTransportStops(endLat, endLon);
+    vector<SHARED_PTR<TransportRouteSegment>>& startStops = ctx->getTransportStops(ctx->startX, ctx->startY, false, vector<SHARED_PTR<TransportRouteSegment>>());
+    vector<SHARED_PTR<TransportRouteSegment>>& endStops = ctx->getTransportStops(ctx->targetX, ct->targetY, false, vector<SHARED_PTR<TransportRouteSegment>>());
     UNORDERED_map<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
 
     for (TransportRouteSegment& s : endStops) {
@@ -261,6 +261,7 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(TransportRoutingContext*
 	return lst;
 }
 
+//done
 bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute) {
 	if(testRoute->segments.size() < fastRoute->segments.size()) {
 		return false;
