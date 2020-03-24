@@ -1,8 +1,9 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
 #define _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
+#include "common.cpp"
 #include "Logging.h"
+
+const static int TRANSPORT_STOP_ZOOM = 24;
 
 struct MapObject {
     int64_t id;
@@ -62,13 +63,13 @@ struct TransportRoute : public MapObject {
 			changed = false;
 			for(int32_t k = 0; k < forwardWays.size(); ) {
 				// scan to merge with the next segment
-				SHARED_PTR<Way> first = forwardWays.get(k);
+				SHARED_PTR<Way> first = forwardWays.at(k);
 				double d = SAME_STOP;
 				bool reverseSecond = false;
 				bool reverseFirst = false;
 				int32_t secondInd = -1;
 				for (int32_t i = k + 1; i < forwardWays.size(); i++) {
-					SHARED_PTR<Way> w = forwardWays.get(i);
+					SHARED_PTR<Way> w = forwardWays.at(i);
 					double distAttachAfter = getDistance(first->getLastNode()->lat, first->getLastNode()->lon, w->getFirstNode()->lat, w->getFirstNode()->lon);
 					double distReverseAttach = getDistance(first->getLastNode()->lat, first->getLastNode()->lon, w->getLastNode()->lat, w->getLastNode()->lon);
 					double distAttachAfterReverse = getDistance(first->getFirstNode()->lat, first->getFirstNode()->lon, w->getFirstNode()->lat, w->getFirstNode()->lon);
@@ -128,7 +129,7 @@ struct TransportRoute : public MapObject {
 			for (SHARED_PTR<Way>& w : forwardWays) {
 				int pair[2] = {0, 0};
 				SHARED_PTR<Node> firstNode = w->getFirstNode();
-				SHARED_PTR<TransportStop> st = forwardStops.get(0);
+				SHARED_PTR<TransportStop> st = forwardStops.at(0);
 				double firstDistance = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
 				SHARED_PTR<Node> lastNode = w->getLastNode();
 				double lastDistance = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);
@@ -231,7 +232,7 @@ struct TransportStop : public MapObject {
     int32_t y31;
     vector<SHARED_PTR<TransportStopExit>> exits;
     vector<SHARED_PTR<TransportRoute>> routes;
-    map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
+    // map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
     
     bool isDeleted() {
         return referenceToRoutes.size() == 1 && referenceToRoutes.at(0) ==  DELETED_STOP;
@@ -291,7 +292,8 @@ struct TransportStop : public MapObject {
     void setLocation(int zoom, int32_t dx, int32_t dy) {
         x31 = dx << (31 - zoom);
         y31 = dy << (31 - zoom);
-        // setLocation(MapUtils.getLatitudeFromTile(zoom, dy), MapUtils.getLongitudeFromTile(zoom, dx));
+        lon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dy);
+        lat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dx);
     }
 
 }
@@ -328,8 +330,6 @@ struct TransportSchedule {
 }
 
 struct Way {
-    double lat;
-    double lon;
     int64_t id;
     vector<SHARED_PTR<Node>> nodes;
     vector<int64_t> nodeIds;

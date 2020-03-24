@@ -218,7 +218,7 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(TransportRoutingContext*
 		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
 			return vector<SHARED_PTR<TransportRouteResult>>();
 		}
-		SHARED_PTR<TransportRouteResult> route = make_shared<TransportRouteResult(TransportRouteResult(ctx));
+		SHARED_PTR<TransportRouteResult> route = make_shared<TransportRouteResult>(TransportRouteResult(ctx));
 		route->routeTime = res->distFromStart;
 		route->finishWalkDist = res->walkDist;
 		SHARED_PTR<TransportRouteSegment> p = res;
