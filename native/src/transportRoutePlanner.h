@@ -224,6 +224,14 @@ struct TransportRouteSegment {
     pair<double, double> getLocation() {
         return pair<double, double>(road->forwardStops.at(segStart).lat, road->forwardStops.at(segStart).lon);
     }
+    
+    double getLocationLat() {
+        return road->forwardStops.at(segStart).lat;
+    }
+
+    double getLocationLon() {
+        return road->forwardStops.at(segStart).lon;
+    }
 
     int32_t getLength() {
         return road->forwardStops.size();

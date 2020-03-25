@@ -6,26 +6,28 @@
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 #include "routeCalculationProgress.h"
-#include "common.cpp"
 #include "ElapsedTimer.h"
 #include "Logging.h"
 
 
 struct TransportRoutingContext {
-    struct map<
-
     SHARED_PTR<RouteCalculationProgress> calculationProgress;
-    UNORDERED_map<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
+    UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
     SHARED_PTR<TransportRoutingConfiguration> cfg;
 
     map<int64_t, vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
-    //Need BinaryMapIndexReader!!! and linked hashmap implementation/
+
     map<TransportIndex, map<int64_t, SHARED_PTR<TransportRoute>>> routeMap;
 
     int32_t startX;
     int32_t startY;
     int32_t targetX;
     int32_t targetY;
+
+    double startLat;
+    double startLon;
+    double endLat;
+    double endLon;
 
     int64_t startCalcTime;
     int32_t visitedRoutesCount;
@@ -39,34 +41,36 @@ struct TransportRoutingContext {
     const int32_t walkChangeRadiusIn31; 
 
     TransportRoutingContext(TransportRoutingConfiguration cfg_, vector<SHARED_PTR<TransportIndex>> indexes) {
-        cfg = make_shared<TransportRoutingConfiguration>(cfg_);
-        walkRadiusIn31 = (int) (cfg.walkRadius / getTileDistanceWidth(31));
-        walkChangeRadiusIn31 = (int) (cfg.walkChangeRadius / getTileDistanceWidth(31));
+        cfg = make_shared<TransportRoutingConfiguration>(cfg_);  
+        walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
+        walkChangeRadiusIn31 = (int) (cfg->walkChangeRadius / getTileDistanceWidth(31));
         for (SHARED_PTR<TransportIndex>& i : indexes)  {
             routeMap.insert({i, map<int64_t, SHARED_PTR<TransportRoute>>()});
         }
     }
-
-    // vector<SHARED_PTR<TransportRouteSegment>> getTransportStops(double lat, double lon) {
-    //     int32_t y = get31TileNumberY(lat);
-    //     int32_t x = get31TileNumberX(lon);
-    //     return getTransportStops(x, y, false, vector<<SHARED_PTR<TransportRouteSegment>>()); 
-    // }
+    
+    //todo need to be checked, unclear if its same result as in java
+    void calcLatLons() {
+        startLat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, startY);
+        startLon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, startX);
+        endLat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, targetY);
+        endLon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, targetX);
+    }
 
     vector<SHARED_PTR<TransportRouteSegment>> getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> res) {
         loadTime.Start();
         int32_t d = change ? walkChangeRadiusIn31 : walkRadiusIn31;
-        int32_t lx = (sx - d) >> (31 - cfg.zoomToLoadTiles);
-        int32_t rx = (sx + d ) >> (31 - cfg.zoomToLoadTiles);
-        int32_t ty = (sy - d ) >> (31 - cfg.zoomToLoadTiles);
-        int32_t by = (sy + d ) >> (31 - cfg.zoomToLoadTiles);
+        int32_t lx = (sx - d) >> (31 - cfg->zoomToLoadTiles);
+        int32_t rx = (sx + d) >> (31 - cfg->zoomToLoadTiles);
+        int32_t ty = (sy - d) >> (31 - cfg->zoomToLoadTiles);
+        int32_t by = (sy + d) >> (31 - cfg->zoomToLoadTiles);
         for(int32_t x = lx; x <= rx; x++) {
             for(int32_t y = ty; y <= by; y++) {
                 int64_t tileId = (((int64_t) x) << (cfg.zoomToLoadTiles + 1)) + y;
-                vector<SHARED_PTR<TransportRouteSegment>>& list = quadTree.find(tileId);
+                vector<SHARED_PTR<TransportRouteSegment>> list = quadTree.find(tileId);
                 if ( quadTree.find(tileId) = quadTree.end()) {
                     list = loadTile(x, y);
-                    quadTree.insert(std::pair<int64_t, vector<SHARED_PTR<TransportRouteSegment>>>(tileId, list));
+                    quadTree.insert({tileId, list});
                 }
                 for (SHARED_PTR<TransportRouteSegment>& it : list.begin) {
                     TransportStop& st = it->getStop(it->segStart);
@@ -84,25 +88,24 @@ struct TransportRoutingContext {
     }
 
     vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y) {
-        	
+        //long nanoTime = System.nanoTime();
         vector<SHARED_PTR<TransportRouteSegment>> lst;
-        int z = cfg->zoomToLoadTiles;
-        int pz = (31 - z);
-        int64_t tileId = (x << z) + y;
+        int pz = (31 - cfg->zoomToLoadTiles);
         
         SearchQuery q((uint32_t) (x << pz), (uint32_t) ((x + 1) << pz), (uint32_t)(y << pz), (uint32_t)((y+1) << pz)); 
         map<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
-        map<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
-
-
-        vector<SHARED_PTR<TransportStop>> stops = r.searchTransportIndex(&q, lst);
+        map<int32_t, SHARED_PTR<TransportRoute>> localFileRoutes;
+        
+        //check
+        vector<SHARED_PTR<TransportStop>> stops = searchTransportIndex(&q, lst);
 
         localFileRoutes.clear();
+        //readers... readers...
         mergeTransportStops(r, loadedTransportStops, stops, localFileRoutes, routeMap.at(r));
 
         for (SHARED_PTR<TransportStop>& stop : stops) {
             int64_t stopId = stop->id;
-            SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.get(stopId);
+            SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId);
             vector<int32_t> rrs = stop->referencesToRoutes;
             if (multifileStop == stop) {
                 // clear up so it won't be used as it is multi file stop
@@ -117,76 +120,27 @@ struct TransportRoutingContext {
                     if (!route.get()) {
                         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop %s", rr, stop));
                     } else if (multifileStop == stop ||
-                            (!multifileStop->hasRoute(route.getId()) &&
-                                    !multifileStop.isRouteDeleted(route.getId()))) {
+                            (!multifileStop->hasRoute(route->getId()) &&
+                                    !multifileStop->isRouteDeleted(route->getId()))) {
                         // duplicates won't be added
-                        multifileStop.addRouteId(route.getId());
+                        multifileStop.addRouteId(route->getId());
                         multifileStop.addRoute(route);
                     }
                 }
             }
         }
 			
-			loadTransportSegments(loadedTransportStops.valueCollection(), lst);
-			
-			// readTime += System.nanoTime() - nanoTime;
-			return lst;
+        loadTransportSegments(loadedTransportStops.valueCollection(), lst);
+        
+        // readTime += System.nanoTime() - nanoTime;
+        return lst;
     }
     
     
-    // vector<SHARED_PTR<TransportRouteSegment>> loadTile(int32_t x, int32_t y) {
-    //     	// long nanoTime = System.nanoTime();
-	// 		vector<SHARED_PTR<TransportRouteSegment>> lst;
-	// 		int32_t pz = (31 - cfg->zoomToLoadTiles);
-	// 		// SearchRequest<TransportStop> sr = BinaryMapIndexReader.buildSearchTransportRequest(x << pz, (x + 1) << pz,
-	// 		// 		y << pz, (y + 1) << pz, -1, null);
-			
-			
-	// 		UNORDERED_map<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
-	// 		UNORDERED_map<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
-	// 		for (BinaryMapIndexReader r : routeMap.keySet()) {
-    //             // 	sr.clearSearchResults();
-    //             vector<SHARED_PTR<TransportStop>> stops = r.searchTransportIndex(sr);
 
-    //             localFileRoutes.clear();
-    //             // mergeTransportStops(r, loadedTransportStops, stops, localFileRoutes, routeMap.at(r));
-
-    //             for (SHARED_PTR<TransportStop>& stop : stops) {
-    //                 int64_t stopId = stop->id;
-    //                 SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.get(stopId);
-    //                 vector<int32_t> rrs = stop->referencesToRoutes;
-    //                 if (multifileStop == stop) {
-    //                     // clear up so it won't be used as it is multi file stop
-    //                     stop->referencesToRoutes.clear();
-    //                 } else {
-    //                     // add other routes
-    //                     stop->referencesToRoutes.clear();
-    //                 }
-    //                 if (rrs.size() > 0 && !multifileStop->isDeleted()) {
-    //                     for (int32_t& rr : rrs) {
-    //                         SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
-    //                         if (!route.get()) {
-    //                             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop %s", rr, stop));
-    //                         } else if (multifileStop == stop ||
-    //                                 (!multifileStop->hasRoute(route.getId()) &&
-    //                                         !multifileStop.isRouteDeleted(route.getId()))) {
-    //                             // duplicates won't be added
-    //                             multifileStop.addRouteId(route.getId());
-    //                             multifileStop.addRoute(route);
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-			
-	// 		loadTransportSegments(loadedTransportStops.valueCollection(), lst);
-			
-	// 		// readTime += System.nanoTime() - nanoTime;
-	// 		return lst;
-    // }
     vector<TransportStop> mergeTransportStops( 
         //TODO change for native loading mechanic
-        BinaryMapIndexReader& reader, 
+        // BinaryMapIndexReader& reader, 
         UNORDERED_map<int64_t, SHARED_PTR<TransportStop>>& loadedTransportStops,
         vector<SHARED_PTR<TransportStop>>& stops,
         UNORDERED_map<int64_t, SHARED_PTR<TransportRoute>>& localFileRoutes,
@@ -251,7 +205,7 @@ struct TransportRoutingContext {
                     if (loadedRoutes.find(nxt) != loadedRoutes.end()) {
                         localFileRoutes.insert(std::pair<int64_t, SHARED_PTR<TransportRoute>>(nxt, loadedRoutes->find(nxt)));
                     } else {
-                        referencesToLoad.add(nxt);
+                        referencesToLoad.push_back(nxt);
                     }
                 }
                 itr++;

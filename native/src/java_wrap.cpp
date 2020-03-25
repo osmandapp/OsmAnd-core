@@ -1384,10 +1384,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c.startY = data[1];
 	c.targetX = data[2];
 	c.targetY = data[3];
-	
-	//c.setConditionalTime(config->routeCalculationTime);
-	
-	//parsePrecalculatedRoute(ienv, c, precalculatedRoute);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<SHARED_PTR<TransportRouteResult>> r = buildRoute(&c, false);
 

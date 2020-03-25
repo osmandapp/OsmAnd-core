@@ -33,6 +33,7 @@ static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 static uint zoomDetailedForCoastlines = 17;
 std::vector<BinaryMapFile* > openFiles;
+std::vector<TransportIndex*> transportIndexesList;
 OsmAnd::OBF::OsmAndStoredIndex* cache = NULL;
 
 #ifdef MALLOC_H 
@@ -1038,7 +1039,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 }
 
 //------ Transport Index Reading-----------------
-bool readTransportIndex(CodedInputStream* input, TransportIndex ind) {
+bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 	while(true) {
 		int t = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
@@ -1697,6 +1698,62 @@ TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int
 	}
 }
 
+void searchTransportIndex(SearchQuery* q, std::vector<TransportStop>& tempResult){
+	//
+	vector<BinaryMapFile*>::iterator i = openFiles.begin();
+	for(; i != openFiles.end() && !q->publisher->isCanceled(); i++) {
+		BinaryMapFile* file = *i;
+		std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
+		for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
+			bool contains = false;
+		}
+	}
+}
+
+// todo need to get codedInputStream here:::
+void loadTransportRoutes(CodedInputStream* input, int[] filePointers, map<int32_t, SHARED_PTR<TransportRoute>> result) {
+	std::map<TransportIndex*, vector<int32_t>> groupPoints;
+	for (int& filePointer : filePointers) {
+		TransportIndex ind = getTransportIndex(filePointer);
+		if (ind != null) {
+			if (!groupPoints.find(ind) == groupPoints.end()) {
+				groupPoints.insert({ind, new vector<int32_t>()});
+			}
+			groupPoints.find(ind).push_back(filePointer);
+		}
+	}
+	std::map<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
+	TransportIndex* ind = e->first;
+	vector<int32_t> pointers = e->second;
+	if (it++ != groupPoints.end()) {
+		std::sort(pointers.begin(), pointers.end());
+		map<int32_t, string> stringTable;
+		vector<SHARED_PTR<TransportRoute>> finishInit;
+		
+		for (int i = 0; i < pointers.size(); i++) {
+			int32_t filePointer = pointers.at(i);
+			//todo check:
+			TransportRoute transportRoute = readTransportRoute(filePointer, stringTable, false);
+			result.insert({filePointer, transportRoute});
+			finishInit.push_back(make_shared(transportRoute));	
+		}
+		map<int32_t, string> indexedStringTable = transportAdapter->initializeStringTable(ind, stringTable);
+		for(TransportRoute& transportRoute : finishInit ) {
+			transportAdapter.initializeNames(transportRoute, indexedStringTable);
+		}
+	}
+}
+
+TransportIndex getTransportIndex(int filePointer) {
+	TransportIndex ind;
+	for (TransportIndex& i : transportIndexesList) {
+		if (i->filePointer <= filePointer && (filePointer - i->filePointer) < i->length) {
+			ind = i;
+			break;
+		}
+	}
+	return ind;
+}
 //----------------------------
 
 bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTreeBounds* parent,
@@ -1993,18 +2050,6 @@ void checkAndInitRouteRegionRules(int fileInd, RoutingIndex* routingIndex){
 		uint32_t old = cis.PushLimit(routingIndex->length);
 		readRoutingIndex(&cis, routingIndex, true);
 		cis.PopLimit(old);
-	}
-}
-
-void searchTransportIndex(SearchQuery* q, std::vector<TransportStop>& tempResult){
-	//
-	vector<BinaryMapFile*>::iterator i = openFiles.begin();
-	for(; i != openFiles.end() && !q->publisher->isCanceled(); i++) {
-		BinaryMapFile* file = *i;
-		std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
-		for (; transportIndex ! = file->transportIndexes.end(); transportIndex++) {
-			bool 
-		}
 	}
 }
 

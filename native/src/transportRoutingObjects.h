@@ -2,6 +2,7 @@
 #define _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
 #include "common.cpp"
 #include "Logging.h"
+#include "commonOsmAndCore.h"
 
 const static int TRANSPORT_STOP_ZOOM = 24;
 
@@ -288,7 +289,7 @@ struct TransportStop : public MapObject {
 		}
 		return true;
     }
-
+    //todo check
     void setLocation(int zoom, int32_t dx, int32_t dy) {
         x31 = dx << (31 - zoom);
         y31 = dy << (31 - zoom);
