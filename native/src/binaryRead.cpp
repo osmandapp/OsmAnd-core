@@ -1156,25 +1156,25 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 			case OsmAnd::OBF::TransportStopsTree::kLeftFieldNumber: {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				cleft = si + pleft;
-				init |= 1;
+				init |= 2;
 				break;
 			}
 			case OsmAnd::OBF::TransportStopsTree::kRightFieldNumber:{
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				cright = si + pright;
-				init |= 2;
+				init |= 4;
 				break;
 			}
 			case OsmAnd::OBF::TransportStopsTree::kTopFieldNumber : {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				ctop = si + ptop;
-				init |= 4;
+				init |= 8;
 				break;
 			}
 			case OsmAnd::OBF::TransportStopsTree::kBottomFieldNumber: {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				cbottom = si + pbottom;
-				init |= 8;
+				init |= 1;
 				break;
 			}	
 			case OsmAnd::OBF::TransportStopsTree::kLeafsFieldNumber: {
@@ -1187,9 +1187,9 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 					lastIndexResult = req->transportResults.size();
 				}
 				req->numberOfVisitedObjects++;
-				TransportStop* transportStop = readTransportStop(stopOffset, cleft, cright, ctop, cbottom, req, stringTable);
+				TransportStop* transportStop = readTransportStop(stopOffset, input, cleft, cright, ctop, cbottom, req, stringTable);
 				if(transportStop.get()){
-					req->publish(transportStop); //TODO check
+					req->transportResilt.push_back(transportStop); //TODO check
 				}
 				input -> popLimit(oldLimit);
 				break;
@@ -1200,7 +1200,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				int filePointer = input->TotalBytesRead();
 				if (req->limit == -1 || req.limit >= req->transportResults.size()) {
 					int oldLimit = input->PushLimit(length);
-					searchTransportTreeBounds(cleft, cright, ctop, cbottom, req, stringTable);
+					searchTransportTreeBounds(input, cleft, cright, ctop, cbottom, req, stringTable);
 					input->PopLimit(oldLimit);
 				}
 				input->Seek(filePointer + length);				
@@ -1653,7 +1653,6 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 			}
 		}
 	}
-
 }
 
 TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int ctop, SearchQuery* req, map<int32_t, string>* stringTable) {
@@ -1698,24 +1697,55 @@ TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int
 	}
 }
 
-void searchTransportIndex(SearchQuery* q, std::vector<TransportStop>& tempResult){
-	//
-	vector<BinaryMapFile*>::iterator i = openFiles.begin();
-	for(; i != openFiles.end() && !q->publisher->isCanceled(); i++) {
-		BinaryMapFile* file = *i;
-		std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
-		for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
-			bool contains = false;
-		}
+vector<TransportStop*> searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
+	//todo is it ok to create CIS here?
+	lseek(file->fd, 0, SEEK_SET);
+	FileInputStream input(file->fd);
+	input.SetCloseOnDelete(false);
+	CodedInputStream cis(&input); 
+	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+	std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
+	for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
+
+		searchTransportIndex(*transportIndex, q, &cis);
 	}
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
+	return q->transportResults;
 }
 
-// todo need to get codedInputStream here:::
-void loadTransportRoutes(CodedInputStream* input, int[] filePointers, map<int32_t, SHARED_PTR<TransportRoute>> result) {
+vector<TransportStop*> searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStream* input) {
+	if (index->stopsFileLength == 0 || index->right < q->left || index->left > q->right || index->top > q->bottom
+			|| index->bottom < q->top) {
+		return q->transportResults;
+	}
+	input->Seek(index->stopsFileOffset);
+	int oldLimit = input->PushLimit(index->stopsFileLength);
+	int offset = q->transportResults.size();
+	map<int32_t, std::string> stringTable;
+	searchTransportTreeBounds(input, 0, 0, 0, 0, q, stringTable)
+	input->PopLimit(oldLimit);
+	map<int32_t, std::string> indexedStringTable = initializeStringTable(input, index, stringTable);
+	for (int i = offset; i < q->transportResults.size(); i++) {
+		TransportStop* st = q->transportResults.at(i);
+		initializeNames(indexedStringTable, st.get());
+	}
+	return q->transportResults;
+}
+
+
+void loadTransportRoutes(BinaryMapFile* file, int[] filePointers, map<int32_t, SHARED_PTR<TransportRoute>> result) {
+	//todo is it ok to create CIS here?
+	lseek(file->fd, 0, SEEK_SET);
+	FileInputStream input(file->fd);
+	input.SetCloseOnDelete(false);
+	CodedInputStream cis(&input); 
+	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+
 	std::map<TransportIndex*, vector<int32_t>> groupPoints;
 	for (int& filePointer : filePointers) {
-		TransportIndex ind = getTransportIndex(filePointer);
-		if (ind != null) {
+		TransportIndex* ind;
+		if (getTransportIndex(filePointer, ind)) {
 			if (!groupPoints.find(ind) == groupPoints.end()) {
 				groupPoints.insert({ind, new vector<int32_t>()});
 			}
@@ -1723,9 +1753,9 @@ void loadTransportRoutes(CodedInputStream* input, int[] filePointers, map<int32_
 		}
 	}
 	std::map<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
-	TransportIndex* ind = e->first;
-	vector<int32_t> pointers = e->second;
-	if (it++ != groupPoints.end()) {
+	if (it != groupPoints.end()) { //is it correct way to check like java's it.hasNext?
+		TransportIndex* ind = e->first;
+		vector<int32_t> pointers = e->second;
 		std::sort(pointers.begin(), pointers.end());
 		map<int32_t, string> stringTable;
 		vector<SHARED_PTR<TransportRoute>> finishInit;
@@ -1733,9 +1763,9 @@ void loadTransportRoutes(CodedInputStream* input, int[] filePointers, map<int32_
 		for (int i = 0; i < pointers.size(); i++) {
 			int32_t filePointer = pointers.at(i);
 			//todo check:
-			TransportRoute transportRoute = readTransportRoute(filePointer, stringTable, false);
-			result.insert({filePointer, transportRoute});
-			finishInit.push_back(make_shared(transportRoute));	
+			TransportRoute* transportRoute = readTransportRoute(&cis, filePointer, stringTable, false);
+			result.insert({filePointer, make_shared<TransportRoute>(&transportRoute)});
+			finishInit.push_back(make_shared(&transportRoute));	
 		}
 		map<int32_t, string> indexedStringTable = transportAdapter->initializeStringTable(ind, stringTable);
 		for(TransportRoute& transportRoute : finishInit ) {
@@ -1744,15 +1774,14 @@ void loadTransportRoutes(CodedInputStream* input, int[] filePointers, map<int32_
 	}
 }
 
-TransportIndex getTransportIndex(int filePointer) {
-	TransportIndex ind;
-	for (TransportIndex& i : transportIndexesList) {
+bool getTransportIndex(int filePointer, TransportIndex*& ind) {
+	for (TransportIndex*& i : transportIndexesList) {
 		if (i->filePointer <= filePointer && (filePointer - i->filePointer) < i->length) {
 			ind = i;
-			break;
+			return true;
 		}
 	}
-	return ind;
+	return false;
 }
 //----------------------------
 
@@ -2920,6 +2949,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 				ti->stopsFileLength = tp.stopstablelength();
 				mapFile->transportIndexes.push_back(ti);
 				mapFile->indexes.push_back(mapFile->transportIndexes.back());
+				transportIndexesList.push_back(ti)
 			}
         }
 

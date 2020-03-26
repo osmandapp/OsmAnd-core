@@ -741,7 +741,7 @@ struct SearchQuery {
 	uint numberOfReadSubtrees;
 	uint numberOfAcceptedSubtrees;
 	//change to generic
-	vector<TransportStop> transportResults;
+	vector<TransportStop*> transportResults;
 	
 	// cache information
 	vector<int32_t> cacheCoordinates;

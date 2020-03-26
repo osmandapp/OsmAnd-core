@@ -3,6 +3,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include "binaryRead.h"
+#include "binaryRead.cpp"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 #include "routeCalculationProgress.h"
@@ -95,41 +96,45 @@ struct TransportRoutingContext {
         SearchQuery q((uint32_t) (x << pz), (uint32_t) ((x + 1) << pz), (uint32_t)(y << pz), (uint32_t)((y+1) << pz)); 
         map<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
         map<int32_t, SHARED_PTR<TransportRoute>> localFileRoutes;
+        vector<SHARED_PTR> loadedTransportStopsVals;
         
-        //check
-        vector<SHARED_PTR<TransportStop>> stops = searchTransportIndex(&q, lst);
-
-        localFileRoutes.clear();
-        //readers... readers...
-        mergeTransportStops(r, loadedTransportStops, stops, localFileRoutes, routeMap.at(r));
-
-        for (SHARED_PTR<TransportStop>& stop : stops) {
-            int64_t stopId = stop->id;
-            SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId);
-            vector<int32_t> rrs = stop->referencesToRoutes;
-            if (multifileStop == stop) {
-                // clear up so it won't be used as it is multi file stop
-                stop->referencesToRoutes.clear();
-            } else {
-                // add other routes
-                stop->referencesToRoutes.clear();
-            }
-            if (rrs.size() > 0 && !multifileStop->isDeleted()) {
-                for (int32_t& rr : rrs) {
-                    SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
-                    if (!route.get()) {
-                        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop %s", rr, stop));
-                    } else if (multifileStop == stop ||
-                            (!multifileStop->hasRoute(route->getId()) &&
-                                    !multifileStop->isRouteDeleted(route->getId()))) {
-                        // duplicates won't be added
-                        multifileStop.addRouteId(route->getId());
-                        multifileStop.addRoute(route);
+        vector<TransportStop*> stops;
+        
+        std::vector<BinaryMapFile*>::iterator it, end;
+        for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it) {
+            q.transportResults.clear();
+            stops = searchTransportIndex(q, it); //check
+            localFileRoutes.clear();
+            mergeTransportStops(&it, loadedTransportStops, stops, localFileRoutes, routeMap.at(r)); //check
+        
+            for (SHARED_PTR<TransportStop>& stop : stops) {
+                int64_t stopId = stop->id;
+                SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId);
+                vector<int32_t> rrs = stop->referencesToRoutes;
+                if (multifileStop == stop) {
+                    // clear up so it won't be used as it is multi file stop
+                    stop->referencesToRoutes.clear();
+                } else {
+                    // add other routes
+                    stop->referencesToRoutes.clear();
+                }
+                if (rrs.size() > 0 && !multifileStop->isDeleted()) {
+                    for (int32_t& rr : rrs) {
+                        SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
+                        if (!route.get()) {
+                            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop %s", rr, stop));
+                        } else if (multifileStop == stop ||
+                                (!multifileStop->hasRoute(route->getId()) &&
+                                        !multifileStop->isRouteDeleted(route->getId()))) {
+                            // duplicates won't be added
+                            multifileStop.addRouteId(route->getId());
+                            multifileStop.addRoute(route);
+                        }
                     }
                 }
             }
         }
-			
+
         loadTransportSegments(loadedTransportStops.valueCollection(), lst);
         
         // readTime += System.nanoTime() - nanoTime;
@@ -140,8 +145,9 @@ struct TransportRoutingContext {
 
     vector<TransportStop> mergeTransportStops( 
         //TODO change for native loading mechanic
-        // BinaryMapIndexReader& reader, 
+        BinaryMapFile* file, 
         UNORDERED_map<int64_t, SHARED_PTR<TransportStop>>& loadedTransportStops,
+        vector<TransportStop>& loadedTransportStopsVals;
         vector<SHARED_PTR<TransportStop>>& stops,
         UNORDERED_map<int64_t, SHARED_PTR<TransportRoute>>& localFileRoutes,
         UNORDERED_map<int64_t, SHARED_PTR<TransportRoute>>& loadedRoutes) {
@@ -157,7 +163,8 @@ struct TransportRoutingContext {
             vector<int64_t> routesIds = *it->routesIds;
             vector<int64_t> delRIds = *it->deletedRoutesIds;
             if (loadedTransportStops->find(stopId) == loadedTransportStops->end()) {
-                loadedTransportStops->insert(std::pair<int64_t, SHARED_PTR<TransportStop>>(stopId, *it));
+                loadedTransportStops->insert({stopId, &it});
+                loadedTransportStopsVals->push_back(&it);
                 multifileStop = *it;
                 if (!(*it->isDeleted())) {
                     localRoutesToLoad.insert(localRoutesToLoad.end(), *it->referencesToRoutes.begin(), *it->referencesToRoutes.end());
@@ -190,7 +197,7 @@ struct TransportRoutingContext {
             routesToLoad.insert(routesToLoad.end(), localRoutesToLoad.begin(), localRoutesToLoad.end());
             
         //TODO get name of file. 
-            multifileStop->putReferenceToRoutes("placeholder_filename", localRoutesToLoad);
+            multifileStop->putReferenceToRoutes(file->inputName, localRoutesToLoad);
             it++;
         }
 
@@ -211,7 +218,8 @@ struct TransportRoutingContext {
                 itr++;
             }
         //todo: what to use?
-            reader->loadTransportRoutes(referencesToLoad, localFileRoutes);
+            
+            loadTransportRoutes(&file, referencesToLoad, localFileRoutes);
             loadedRoutes.insert(localFileRoutes.begin(), localFileRoutes.end());
         }
 
@@ -256,6 +264,6 @@ struct TransportRoutingContext {
 
     void loadScheduleRouteSegment(vector<TransportRouteSegment> lst, TransportRoute route, int stopIndex) {
     }
-}
+};
 
 #endif _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
