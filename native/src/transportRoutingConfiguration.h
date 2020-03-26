@@ -7,7 +7,7 @@
 
 struct TransportRoutingConfiguration {
     
-    const static string KEY = "public_transport";
+    const string KEY = "public_transport";
     int32_t zoomToLoadTiles;
     int32_t walkRadius;
     int32_t walkChangeRadius;
@@ -17,7 +17,7 @@ struct TransportRoutingConfiguration {
     SHARED_PTR<GeneralRouter> router;
     
     float walkSpeed;
-    float defaulTravelSpeed;
+    float defaultTravelSpeed;
     int32_t stopTime;
     int32_t changeTime;
     int32_t boardingTime;
@@ -31,14 +31,35 @@ struct TransportRoutingConfiguration {
     MAP_STR_INT rawTypes;
     MAP_STR_FLOAT speed;
 
-    float getSpeedByRouteType(std::string routeType) {
-        float sl = speed.find(routeType);
-        if (speed.find(routeType) != speed.end) {
-            //??????
-            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat();
-            speed.inser
+    float getSpeedByRouteType(std::string routeType)
+    {
+        float sl = speed[routeType];
+        if (speed.find(routeType) != speed.end())
+        {
+            std::string routeStr = std::string("route");
+            dynbitset bs = getRawBitset(routeStr, routeType);
+            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, defaultTravelSpeed);
         }
     };
+    
+    dynbitset getRawBitset(std::string& tg, std::string& vl)
+    {
+        dynbitset bs;
+        int rawType = getRawType(tg, vl);
+        bs.set(rawType);
+        return bs;
+    }
+    
+    int32_t getRawType(std::string& tg, std::string& vl)
+    {
+        std::string key = tg.append("$").append(vl);
+        if(rawTypes.find(key) == rawTypes.end())
+        {
+            uint at = router->registerTagValueAttribute(tag_value(tg, vl));
+            rawTypes.insert(std::pair<string, int>(key, at));
+        }
+        return rawTypes[key];
+    }
     
     int32_t getChangeTime() {
         return useSchedule ? 0 : changeTime;
@@ -47,51 +68,52 @@ struct TransportRoutingConfiguration {
     int32_t getBoardingTime() {
         return boardingTime;
     };
-
-    int32_t getRawType(string tag, string val) {
-        tag_value key = make_pair(tag,val);
-        if (rawTypes.find(key) == rawTypes.end()) {
-            uint at = router->registerTagValuetAttribute(key)
-        }
-    }
-
-    string getAttribute(SHARED_PTR<GeneralRouter> router, string propertyName) {
-        if (router->containsAttribute(propertyName)) {
-            return router->getAttribute(propertyName);
-        }
-        return attributes[propertyName];
-    }
-}
+};
 
 class TransportRoutingConfigurationBuilder {
 
     SHARED_PTR<GeneralRouter> router;
     MAP_STR_STR attributes;
-    GeneralRouter router;
     
     SHARED_PTR<TransportRoutingConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
         SHARED_PTR<TransportRoutingConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
         i->router = router->build(params);
-        i->walkRadius = (int) i->router->parseFloat("walkRadius", 1500.f);
-        i->walkChangeRadius = (int) i->router->parseFloat("walkChangeRadius", 300.f);
-        i->zoomToLoadTiles = (int) i->router->parseFloat("zoomToLoadTiles", 15.f);
-        i->maxNumberOfChanges = (int) i->router->parseFloat("maxNumberOfChanges", 3.f);
-        i->finishTimeSeconds = (int) i->router->parseFloat("delayForAlternativesRoutes", 1200.f);
-        i->maxNumberOfChanges = (int) i->router->parseFloat("max_num_changes", 3.f);
-        i->walkSpeed = i->router->parseFloat("minDefaultSpeed", 3.6f) / 3.6f;
-        i->defaultTravelSpeed = i->router->parseFloat("maxDefaultSpeed", 60) / 3.6f;
-        RouteAttributeContext& obstacles = i->router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
-        RouteAttributeContext& spds = i->router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
+        i->walkRadius = i->router->getIntAttribute("walkRadius", 1500.f);
+        i->walkChangeRadius = i->router->getIntAttribute("walkChangeRadius", 300.f);
+        i->zoomToLoadTiles = i->router->getIntAttribute("zoomToLoadTiles", 15.f);
+        i->finishTimeSeconds = i->router->getIntAttribute("delayForAlternativesRoutes", 1200.f);
+        i->walkSpeed = i->router->getIntAttribute("minDefaultSpeed", 3.6f) / 3.6f;
+        i->maxRouteTime = i->router->getIntAttribute("maxRouteTime", 60 * 60 * 10);
+        i->defaultTravelSpeed = i->router->getIntAttribute("maxDefaultSpeed", 60) / 3.6f;
+        string mn = i->router->getAttribute("max_num_changes");
+        int maxNumOfChanges = 3;
+        try
+        {
+            maxNumOfChanges = stoi(mn);
+        } catch (...)
+        {
+            // Ignore
+        }
+        i->maxNumberOfChanges = maxNumOfChanges;
         
-//TODO write evaluateInt/Float methods like in java 
-        i->stopTime = (int) obstacles.evalueateInt(i->getRawBitset("time", "stop"), i->stopTime);
-        i->changeTime = (int) obstacles.evaluateInt(i->getRawBitSet("time", "change"), i->changeTime);
-        i->boardingTime = (int) obstacles.evaluateInt(i->getRawBitSet("time", "boarding"), i->boardingTime);
-        i->walkSpeed = spds.evaluateFloat(getRawBitset("route", "walk"), i->walkSpeed);
+        RouteAttributeContext& obstacles = i->router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
+        string tag("time");
+        string value("stop");
+        i->stopTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 30);
+        value = "change";
+        i->changeTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 180);
+        value = "boarding";
+        i->boardingTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 180);
+        
+        tag = "route";
+        value = "walk";
+        RouteAttributeContext& spds = i->router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
+        dynbitset bs = i->getRawBitset(tag, value);
+        i->walkSpeed = spds.evaluateFloat(bs, 3.6f) / 3.6f;
 
         return i;
     }
 };
 
 
-#endif _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
+#endif //_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H

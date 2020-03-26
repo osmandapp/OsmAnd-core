@@ -274,6 +274,26 @@ public:
     SHARED_PTR<RouteAttributeEvalRule> getLastRule() {
         return rules.back();
     }
+    
+    int evaluateInt(BitSet rawTypes, int defValue)
+    {
+        double o = evaluate(rawTypes);
+        if(o == DOUBLE_MISSING)
+        {
+            return defValue;
+        }
+        return (int) o;
+    }
+    
+    float evaluateFloat(dynbitset& rawTypes, float defValue)
+    {
+        double o = evaluate(rawTypes);
+        if(o == DOUBLE_MISSING)
+        {
+            return defValue;
+        }
+        return (float) o;
+    }
 
 private:
 	double evaluate(dynbitset& types) {
