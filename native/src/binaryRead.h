@@ -27,7 +27,6 @@
 
 static const uint MAP_VERSION = 2;
 static const int SHIFT_ID = 6;
-static const int TRANSPORT_STOP_ZOOM = 24;
 struct MapTreeBounds {
 	uint32_t length;
 	uint32_t filePointer;
@@ -566,8 +565,8 @@ struct TransportIndex : BinaryPartIndex {
 	int top;
 	int bottom;
 
-	int stopsFileOffset;
-	int stopsFileLength;
+	uint32_t stopsFileOffset;
+	uint32_t stopsFileLength;
 
 	IndexStringTable* stringTable;
 
@@ -745,7 +744,6 @@ struct SearchQuery {
 	vector<TransportStop*> transportResults;
 	
 	// cache information
-	vector<int32_t> cacheCoordinates;
 	vector<int32_t> cacheTypes;
 	vector<int64_t> cacheIdsA;
 	vector<int64_t> cacheIdsB;

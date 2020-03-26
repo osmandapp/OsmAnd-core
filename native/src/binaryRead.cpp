@@ -772,6 +772,19 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive
 			}
 			break;
 		}
+		case OsmAnd::OBF::OsmAndStructure::kTransportIndexFieldNumber: {
+				TransportIndex* tIndex = new TransportIndex();
+				readInt(input, &tIndex->length);
+				tIndex->filePointer = input->TotalBytesRead();
+				
+				int oldLimit = input->PushLimit(tIndex->length);
+				readTransportIndex(input, tIndex);
+				input->PopLimit(oldLimit);
+				file->transportIndexes.push_back(tIndex);
+				file->indexes.push_back(tIndex);
+				
+				input->Seek(tIndex->filePointer + tIndex->length);
+		}
 		case OsmAnd::OBF::OsmAndStructure::kVersionConfirmFieldNumber: {
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &versionConfirm)));
 			break;
@@ -1041,7 +1054,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 //------ Transport Index Reading-----------------
 bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 	while(true) {
-		int t = input->ReadTag();			
+		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kRoutesFieldNumber : {
 				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
@@ -1060,8 +1073,8 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kStopsFieldNumber : {
 				readInt(input, &ind->stopsFileLength);
 				ind->stopsFileOffset = input->TotalBytesRead();
-				int old = codedIS->PushLimit(ind->stopsFileLength);
-				readTransportBounds(input, ind);
+				int old = input->PushLimit(ind->stopsFileLength);
+				readTransportBounds(input, &(*ind));
 				input->PopLimit(old);
 				break;
 			}
@@ -1090,7 +1103,7 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 bool readTransportBounds(CodedInputStream* input, TransportIndex* ind) {
 	while(true){
 		int si;
-		int t = input->ReadTag();			
+		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 			case OsmAnd::OBF::TransportStopsTree::kLeftFieldNumber : {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
@@ -2948,7 +2961,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 				ti->stopsFileOffset = tp.stopstableoffset();
 				ti->stopsFileLength = tp.stopstablelength();
 				mapFile->transportIndexes.push_back(ti);
-				mapFile->indexes.push_back(mapFile->transportIndexes.back());
+				mapFile->indexes.push_back(&mapFile->transportIndexes.back());
 				transportIndexesList.push_back(ti)
 			}
         }
