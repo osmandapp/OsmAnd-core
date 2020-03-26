@@ -29,11 +29,211 @@ struct MapObject {
         return names;
     }
 
-    string getName(string lang) {
-        return names.find(lang);
+    string getName(string lang)
+    {
+        if (names.find(lang) != names.end())
+            return names[lang];
+        return "";
     }
 
-}
+};
+
+struct TransportStopExit {
+    int x31;
+    int y31;
+    string ref;
+
+    void setLocation(int zoom, int32_t dx, int32_t dy) {
+        x31 = dx << (31 - zoom);
+        y31 = dy << (31 - zoom);
+        // setLocation(MapUtils.getLatitudeFromTile(zoom, dy), MapUtils.getLongitudeFromTile(zoom, dx));
+    }
+
+    bool compareExit(SHARED_PTR<TransportStopExit>& thatObj) {
+        return x31 == thatObj->x31 && y31 == thatObj->y31 && ref == thatObj->ref;
+    }
+
+};
+
+struct TransportRoute;
+
+struct TransportStop : public MapObject {
+    const static int32_t DELETED_STOP = -1;
+
+    vector<int32_t> referencesToRoutes;
+    vector<int64_t> deletedRoutesIds;
+    vector<int64_t> routesIds;
+    int32_t distance;
+    int32_t x31;
+    int32_t y31;
+    vector<SHARED_PTR<TransportStopExit>> exits;
+    vector<SHARED_PTR<TransportRoute>> routes;
+    map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
+    
+    bool isDeleted() {
+        return referencesToRoutes.size() == 1 && referencesToRoutes[0] ==  DELETED_STOP;
+    }
+
+    bool isRouteDeleted(int64_t routeId) {
+        return std::find(deletedRoutesIds.begin(), deletedRoutesIds.end(), routeId) != deletedRoutesIds.end();
+    }
+
+    bool hasReferencesToRoutes() {
+        return !isDeleted() && referencesToRoutes.size() > 0;
+    }
+
+    void putReferenceToRoutes(string &repositoryFileName, vector<int32_t>& referencesToRoutes) {
+        referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
+    }
+
+    bool compareStop(SHARED_PTR<TransportStop>& thatObj) {
+
+        if (this == thatObj.get()) {
+            return true;
+        } else {
+            if (!thatObj.get()) {
+                return false;
+            }
+        }
+
+        if (id == thatObj->id && lat == thatObj->lat && lon == thatObj->lon
+        && name == thatObj->name && getNamesMap(true) == thatObj->getNamesMap(true)
+        && exits.size() == thatObj->exits.size()) {
+            if (exits.size() > 0) {
+                for (SHARED_PTR<TransportStopExit>& exit1 : exits) {
+                    if(!exit1.get()) {
+                        return false;
+                    }
+                    bool contains = false;
+                    for (SHARED_PTR<TransportStopExit>& exit2 : thatObj->exits) {
+                        if (exit1 == exit2 ) {
+                            contains = true;
+                            if (!exit1->compareExit(exit2)) {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+                    if (!contains) {
+                        return false;
+                    }
+                }
+            }
+        } else {
+            return false;
+        }
+        return true;
+    }
+    //todo check
+    void setLocation(int zoom, int32_t dx, int32_t dy) {
+        x31 = dx << (31 - zoom);
+        y31 = dy << (31 - zoom);
+        lon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dy);
+        lat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dx);
+    }
+
+};
+
+struct TransportSchedule {
+    vector<int32_t> tripIntervals;
+    vector<int32_t> avgStopIntervals;
+    vector<int32_t> avgWaitIntervals;
+
+    bool compareSchedule (const SHARED_PTR<TransportSchedule>& thatObj) {
+        return tripIntervals == thatObj->tripIntervals
+        && avgStopIntervals == thatObj->avgStopIntervals
+        && avgWaitIntervals == thatObj->avgWaitIntervals;
+    }
+};
+
+struct Node {
+    int64_t id;
+    double lat;
+    double lon;
+
+    Node(double lat_, double lon_, int64_t id_) {
+        id = id_;
+        lat = lat_;
+        lon = lon_;
+    }
+
+    bool compareNode(SHARED_PTR<Node> thatObj) {
+         if (this == thatObj.get()) {
+            return true;
+        }
+        if (id == thatObj->id
+        && std::abs(lat - thatObj->lat) < 0.00001 && std::abs(lon - thatObj->lon) < 0.00001) {
+            return true;
+        }
+    }
+};
+
+struct Way {
+    int64_t id;
+    vector<SHARED_PTR<Node>> nodes;
+    vector<int64_t> nodeIds;
+    
+    Way(int64_t id_) {
+        id = id_;
+    }
+
+    void addNode(SHARED_PTR<Node> n) {
+        nodes.push_back(n);
+    }
+    SHARED_PTR<Node> getFirstNode() {
+        if (nodes.size() > 0) {
+            return nodes.at(0);
+        }
+        return NULL;
+    }
+
+    int64_t getFirstNodeId() {
+        if (nodes.size() > 0) {
+            return nodes.at(0)->id;
+        }
+        return -1;
+    }
+
+    SHARED_PTR<Node> getLastNode() {
+       if (nodes.size() > 0) {
+            return nodes.at(nodes.size()-1);
+        }
+        return NULL;
+    }
+
+    int64_t getLastNodeId() {
+        if (nodes.size() > 0) {
+            return nodes.at(nodes.size()-1)->id;
+        }
+        return -1;
+    }
+
+    void reverseNodes() {
+        reverse(nodes.begin(), nodes.end());
+        reverse(nodeIds.begin(), nodeIds.end());
+    }
+
+    bool compareWay(SHARED_PTR<Way> thatObj)
+    {
+        if (this == thatObj.get() &&
+                nodeIds == thatObj->nodeIds &&
+                (nodes.size() == thatObj->nodes.size()))
+        {
+            for (int i = 0; i < nodes.size(); i++)
+            {
+                if (!nodes[i]->compareNode(thatObj->nodes[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
 
 struct TransportRoute : public MapObject {
     vector<SHARED_PTR<TransportStop>> forwardStops;
@@ -44,7 +244,7 @@ struct TransportRoute : public MapObject {
     string color;
     vector<SHARED_PTR<Way>> forwardWays; //todo is there a Way or analogue?
     SHARED_PTR<TransportSchedule> schedule;
-    static const double SAME_STOP = 40; 
+    const double SAME_STOP = 40;
     
     TransportRoute() {
         dist = -1;
@@ -56,7 +256,7 @@ struct TransportRoute : public MapObject {
         } 
         return schedule;
     }
-
+    
     void mergeForwardWays() {
         bool changed = true;
 		// combine as many ways as possible
@@ -104,10 +304,11 @@ struct TransportRoute : public MapObject {
 					}
 				}
 				if (secondInd != -1) {
-                    if (secondInd = 0) {
-					    SHARED_PTR<Way> second = forwardWays.erase(forwardWays.begin());
+                    SHARED_PTR<Way> second = nullptr;
+                    if (secondInd == 0) {
+                        second = *forwardWays.erase(forwardWays.begin());
                     } else {
-					    SHARED_PTR<Way> second = forwardWays.erase(forwardWays.begin() + secondInd);
+					    second = *forwardWays.erase(forwardWays.begin() + secondInd);
                     }
 					if(reverseFirst) {
 						first->reverseNodes();
@@ -126,44 +327,44 @@ struct TransportRoute : public MapObject {
 		}
 		if (forwardStops.size() > 0) {
 			// resort ways to stops order 
-			const map<SHARED_PTR<Way>, int[]> orderWays;
-			for (SHARED_PTR<Way>& w : forwardWays) {
-				int pair[2] = {0, 0};
+            map<SHARED_PTR<Way>, pair<int, int>> orderWays;
+			for (SHARED_PTR<Way> w : forwardWays) {
+				pair<int, int> pair;
+                pair.first = 0;
+                pair.second = 0;
 				SHARED_PTR<Node> firstNode = w->getFirstNode();
 				SHARED_PTR<TransportStop> st = forwardStops.at(0);
 				double firstDistance = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
 				SHARED_PTR<Node> lastNode = w->getLastNode();
 				double lastDistance = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);
 				for (int i = 1; i < forwardStops.size(); i++) {
-					st = forwardStops.at(i);
+					st = forwardStops[i];
 					double firstd = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
 					double lastd = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);
 					if (firstd < firstDistance) {
-						pair[0] = i;
+                        pair.first = i;
 						firstDistance = firstd;
 					}
 					if (lastd < lastDistance) {
-						pair[1] = i;
+                        pair.second = i;
 						lastDistance = lastd;
 					}
 				}
-				orderWays.put(w, pair);
-				if(pair[0] > pair[1]) {
+                orderWays[w] = pair;
+                if(pair.first > pair.second) {
 					w->reverseNodes();
 				}
 			}
 			if(orderWays.size() > 1) {
-				sort(forwardWays.begin(), forwardWays.end(), compareOrderWays());
+                sort(forwardWays.begin(), forwardWays.end(), [orderWays](SHARED_PTR<Way>& w1, SHARED_PTR<Way>& w2) {
+                    const auto is1 = orderWays.find(w1);
+                    const auto is2 = orderWays.find(w2);
+                    int i1 = is1 != orderWays.end() ? min(is1->second.first, is1->second.second) : 0;
+                    int i2 = is2 != orderWays.end() ? min(is2->second.first, is2->second.second) : 0;
+                    return i1 < i2;
+                });
 			}
 		}
-    }
-
-    bool compareOrderWays(SHARED_PTR<Way>& w1, SHARED_PTR<Way>& w2, map<SHARED_PTR<Way>, int[]>& orderWays) {
-        int is1[] = orderWays.find(w1);
-        int is2[] = orderWays.find(w2);
-        int i1 = is1 != orderWays.end() ? min(is1[0], is1[1]) : 0;
-        int i2 = is2 != orderWays.end() ? min(is2[0], is2[1]) : 0;
-        return i1 < i2 ? true : false;
     }
 
     void addWay(SHARED_PTR<Way>& w) {
@@ -180,7 +381,7 @@ struct TransportRoute : public MapObject {
     }
 
     int32_t getDist() {
-        if (dist = -1) {
+        if (dist == -1) {
             dist = getAvgBothDistance();
         }
         return dist;
@@ -217,205 +418,9 @@ struct TransportRoute : public MapObject {
             }
             return true;
         } else {
-            return false
+            return false;
         }
     } 
-}
+};
 
-struct TransportStop : public MapObject {
-    const static int32_t DELETED_STOP = -1;
-
-    vector<int32_t> referencesToRoutes;
-    vector<int64_t> deletedRoutesIds;
-    vector<int64_t> routesIds;
-    int32_t distance;
-    int32_t x31;
-    int32_t y31;
-    vector<SHARED_PTR<TransportStopExit>> exits;
-    vector<SHARED_PTR<TransportRoute>> routes;
-    // map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
-    
-    bool isDeleted() {
-        return referenceToRoutes.size() == 1 && referenceToRoutes.at(0) ==  DELETED_STOP;
-    }
-
-    bool isRouteDeleted(int64_t routeId) {
-        return deletedRoutesIds.find(routeId) != deletedRoutesIds.end();
-    }
-
-    bool hasReferencesToRoutes() {
-        return !isDeleted() && referencesToRoutes.size() > 0;
-    }
-
-    void putReferenceToRoutes(string repositoryFileName&, vector<int32_t>& referencesToRoutes) {
-        referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
-    } 
-
-    bool compareStop(SHARED_PTR<TransportStop>& thatObj) {
-
-        if (this == thatObj.get()) {
-            return true;
-        } else {
-            if (!thatObj.get()) {
-                return false;
-            }
-        }
-
-        if (id == thatObj->id && lat == thatObj->lat && lon == thatObj->lon 
-        && name == thatObj->name && getNamesMap(true) == thatObj->getNamesMap(true)
-        && exits.size() == thatObj->exits.size()) {
-			if (exits.size() > 0) {
-				for (SHARED_PTR<TransportStopExit>& exit1 : exits) {
-					if(!exit1.get()) {
-						return false;
-					}
-					bool contains = false;
-					for (SHARED_PTR<TransportStopExit>& exit2 : thatObj->exits) {
-						if (exit1 == exit2 ) {
-							contains = true;
-							if (!exit1->compareExit(exit2)) {
-								return false;
-							}
-							break;
-						}
-					}
-					if (!contains) {
-						return false;
-					}
-				}
-			}
-		} else {
-			return false;
-		}
-		return true;
-    }
-    //todo check
-    void setLocation(int zoom, int32_t dx, int32_t dy) {
-        x31 = dx << (31 - zoom);
-        y31 = dy << (31 - zoom);
-        lon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, dy);
-        lat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, dx);
-    }
-
-}
-
-struct TransportStopExit {
-    int x31;
-    int y31;
-    string ref;
-
-    void setLocation;
-
-    void setLocation(int zoom, int32_t dx, int32_t dy) {
-        x31 = dx << (31 - zoom);
-        y31 = dy << (31 - zoom);
-        // setLocation(MapUtils.getLatitudeFromTile(zoom, dy), MapUtils.getLongitudeFromTile(zoom, dx));
-    }
-
-    bool compareExit(SHARED_PTR<TransportStopExit>& thatObj) {
-        return x31 == thatObj->x31 && y31 == thatObj->y31 && ref == thatObj->ref;
-    } 
-
-}
-
-struct TransportSchedule {
-    vector<int32_t> tripIntervals;
-    vector<int32_t> avgStopIntervals;
-    vector<int32_t> avgWaitIntervals;
-
-    bool compareSchedule (const SHARED_PTR<TransportSchedule>& thatObj) {
-        return tripIntervals == thatObj->tripIntervals 
-        && avgStopIntervals == thatObj->avgStopIntervals
-        && avgWaitIntervals == thatObj->avgWaitIntervals;
-    }
-}
-
-struct Way {
-    int64_t id;
-    vector<SHARED_PTR<Node>> nodes;
-    vector<int64_t> nodeIds;
-    
-    Way(int64_t id_) {
-        id = id_;
-    }
-
-    void addNode(SHARED_PTR<Node> n) {
-        nodes.push_back(n);
-    }
-    SHARED_PTR<Node> getFirstNode() {
-        if (nodes.size > 0) {
-            return nodes.at(0);
-        }
-        return NULL;
-    }
-
-    int64_t getFirstNodeId() {
-        if (nodes.size > 0) {
-            return nodes.at(0)->id;
-        }
-        return -1;
-    }
-
-    SHARED_PTR<Node> getLastNode() {
-       if (nodes.size > 0) {
-            return nodes.at(nodes.size()-1);
-        }
-        return NULL;
-    }
-
-    int64_t getLastNodeId() {
-        if (nodes.size > 0) {
-            return nodes.at(nodes.size()-1)->id;
-        }
-        return -1;
-    }
-
-    void reverseNodes() {
-        reverse(nodes.begin(), nodes.end());
-        reverse(nodeIds.begin(), nodeIds.end());
-    }
-
-    bool compareWay(SHARED_PTR<Way> thatObj){
-        if (this = thatObj.get()) {
-            return true;
-        }
-        if (id == thatObj->id 
-        && std::abs(lat - thatObj->lat) < 0.00001 && std::abs(lon - thatObj->lon) < 0.00001
-        && std::isEqual(nodeIds, thatObj->nodeIds) && std::isEqual(nodes, thatObj->nodes)) {
-			if (nodes.size() > 0) {
-				for (int i = 0; i < nodes.size(); i++) {
-					if (!nodes.at(i)->compareNode(thatObj->nodes.at(i))) {
-						return false;
-					}
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
-    }
-}
-
-struct Node {
-    int64_t id;
-    double lat;
-    double lon;
-
-    Node(double lat_, double lon_, int64_t id_) {
-        id = id_;
-        lat = lat_;
-        lon = lon_;
-    }
-
-    bool compareNode(SHARED_PTR<Node> thatObj) {
-         if (this = thatObj.get()) {
-            return true;
-        }
-        if (id == thatObj->id 
-        && std::abs(lat - thatObj->lat) < 0.00001 && std::abs(lon - thatObj->lon) < 0.00001) {
-            return true;
-        }
-    }
-}
-
-#endif _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
+#endif //_OSMAND_TRANSPORT_ROUTING_OBJECTS_H
