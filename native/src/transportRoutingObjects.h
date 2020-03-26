@@ -1,6 +1,5 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
 #define _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
-#include "common.cpp"
 #include "Logging.h"
 #include "commonOsmAndCore.h"
 

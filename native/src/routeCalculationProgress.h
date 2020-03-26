@@ -1,6 +1,8 @@
 #ifndef _OSMAND_ROUTE_CALCULATION_PROGRESS_H
 #define _OSMAND_ROUTE_CALCULATION_PROGRESS_H
 
+#include <algorithm>
+
 class RouteCalculationProgress {
 public:
 	int segmentNotFound;
@@ -32,8 +34,8 @@ public:
 
 	virtual void updateStatus(float distanceFromBegin,	int directSegmentQueueSize,	float distanceFromEnd,
 			int reverseSegmentQueueSize) {
-		this->distanceFromBegin = fmax(distanceFromBegin, this->distanceFromBegin );
-		this->distanceFromEnd = fmax(distanceFromEnd,this->distanceFromEnd);
+		this->distanceFromBegin = std::max(distanceFromBegin, this->distanceFromBegin);
+		this->distanceFromEnd = std::max(distanceFromEnd,this->distanceFromEnd);
 		this->directSegmentQueueSize = directSegmentQueueSize;
 		this->reverseSegmentQueueSize = reverseSegmentQueueSize;
 	}

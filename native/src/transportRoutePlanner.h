@@ -3,17 +3,14 @@
 #include "routeCalculationProgress.h"
 #include "binaryRead.h"
 #include "commonOsmAndCore.h"
-#include "common.cpp"
 #include "ElapsedTimer.h"
 #include "Logging.h"
 #include "transportRoutingContext.h"
 #include "transportRoutingConfiguration.h"
 
-static const bool MEASURE_TIME = false;
-static const int64_t GEOMETRY_WAY_ID = -1;
-static const int64_t STOPS_WAY_ID = -2;
-
-
+const bool MEASURE_TIME = false;
+const int64_t GEOMETRY_WAY_ID = -1;
+const int64_t STOPS_WAY_ID = -2;
 
 struct TransportRouteResultSegment{
     private:
@@ -281,4 +278,4 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(TransportRoutingContext&
 bool includeRoute(TransportRouteResult& fastRoute, TransportRouteResult& testRoute);
 
 
-#endif _OSMAND_TRANSPORT_ROUTE_PLANNER_H
+#endif // _OSMAND_TRANSPORT_ROUTE_PLANNER_H

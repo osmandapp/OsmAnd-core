@@ -275,7 +275,7 @@ public:
         return rules.back();
     }
     
-    int evaluateInt(BitSet rawTypes, int defValue)
+    int evaluateInt(dynbitset& rawTypes, int defValue)
     {
         double o = evaluate(rawTypes);
         if(o == DOUBLE_MISSING)

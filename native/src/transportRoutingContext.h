@@ -6,6 +6,7 @@
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 #include "routeCalculationProgress.h"
+#include "transportRoutePlanner.h"
 #include "ElapsedTimer.h"
 #include "Logging.h"
 
@@ -37,10 +38,11 @@ struct TransportRoutingContext {
     OsmAnd::ElapsedTimer loadTime;
     OsmAnd::ElapsedTimer readTime;
 
-    const int32_t walkRadiusIn31;
-    const int32_t walkChangeRadiusIn31; 
+    int32_t walkRadiusIn31;
+    int32_t walkChangeRadiusIn31;
 
-    TransportRoutingContext(TransportRoutingConfiguration cfg_, vector<SHARED_PTR<TransportIndex>> indexes) {
+    TransportRoutingContext(TransportRoutingConfiguration cfg_, vector<SHARED_PTR<TransportIndex>> indexes)
+    {
         cfg = make_shared<TransportRoutingConfiguration>(cfg_);  
         walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
         walkChangeRadiusIn31 = (int) (cfg->walkChangeRadius / getTileDistanceWidth(31));
