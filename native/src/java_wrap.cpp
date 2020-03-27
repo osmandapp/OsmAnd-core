@@ -13,6 +13,7 @@
 #include "rendering.h"
 #include "binaryRoutePlanner.h"
 #include "routingContext.h"
+#include "transportRoutingConfiguration.h"
 //#include "routingConfiguration.h"
 //#include "routeSegmentResult.h"
 //#include "routeSegment.h"

@@ -2,6 +2,8 @@
 #define _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
 #include "Logging.h"
 #include "commonOsmAndCore.h"
+#include <algorithm>
+
 
 const static int TRANSPORT_STOP_ZOOM = 24;
 
@@ -249,9 +251,11 @@ struct TransportRoute : public MapObject {
         dist = -1;
     }
 
-    SHARED_PTR<TransportSchedule> getOrCreateSchedule() {
+    SHARED_PTR<TransportSchedule>* getOrCreateSchedule() {
         if (!schedule.get()) {
-            schedule = make_shared<TransportSchedule>();
+            //todo check is it correct?
+            TransportSchedule* s = new TransportSchedule();
+            schedule = make_shared<TransportSchedule>(&s);
         } 
         return schedule;
     }

@@ -435,7 +435,7 @@ public:
 
 	float getFloatAttribute(string attr, float defVal);
 
-	int getIntAttribute(string attr, float defVal);
+	int getIntAttribute(string attr, int defVal);
     
 	/**
 	 * return if the road is accepted for routing
