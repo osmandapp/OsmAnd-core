@@ -251,7 +251,7 @@ struct TransportRoute : public MapObject {
         dist = -1;
     }
 
-    SHARED_PTR<TransportSchedule>* getOrCreateSchedule() {
+    SHARED_PTR<TransportSchedule> getOrCreateSchedule() {
         if (!schedule.get()) {
             //todo check is it correct?
             TransportSchedule* s = new TransportSchedule();

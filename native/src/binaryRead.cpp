@@ -1711,12 +1711,6 @@ void initializeNames(map<int32_t, string>& stringTable, TransportStop& s) {
 }
 
 
-
-
-
-
-
-
 vector<TransportStop*> searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	//todo is it ok to create CIS here?
 	lseek(file->fd, 0, SEEK_SET);
