@@ -42,7 +42,7 @@ struct TransportRoutingConfiguration {
         }
     };
     
-    dynbitset getRawBitset(std::string& tg, std::string& vl)
+    dynbitset getRawBitset(std::string tg, std::string vl)
     {
         dynbitset bs;
         int rawType = getRawType(tg, vl);
@@ -50,7 +50,7 @@ struct TransportRoutingConfiguration {
         return bs;
     }
     
-    int32_t getRawType(std::string& tg, std::string& vl)
+    int32_t getRawType(std::string tg, std::string vl)
     {
         std::string key = tg.append("$").append(vl);
         if(rawTypes.find(key) == rawTypes.end())
@@ -97,18 +97,15 @@ class TransportRoutingConfigurationBuilder {
         i->maxNumberOfChanges = maxNumOfChanges;
         
         RouteAttributeContext& obstacles = i->router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
-        string tag("time");
-        string value("stop");
-        i->stopTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 30);
-        value = "change";
-        i->changeTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 180);
-        value = "boarding";
-        i->boardingTime = obstacles.evaluateInt(i->getRawBitset(tag, value), 180);
+        dynbitset bs = i->getRawBitset("time", "stop");
+        i->stopTime = obstacles.evaluateInt(bs, 30);
+        bs = i->getRawBitset("time", "change");
+        i->changeTime = obstacles.evaluateInt(bs, 180);
+        bs = i->getRawBitset("time", "boarding");
+        i->boardingTime = obstacles.evaluateInt(bs, 180);
         
-        tag = "route";
-        value = "walk";
         RouteAttributeContext& spds = i->router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
-        dynbitset bs = i->getRawBitset(tag, value);
+        bs = i->getRawBitset("route", "walk");
         i->walkSpeed = spds.evaluateFloat(bs, 3.6f) / 3.6f;
 
         return i;

@@ -1,30 +1,31 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
-#include "transportRoutingContext.h"
 #include "transportRoutePlanner.h"
 #include "transportRoutingObjects.h"
+
+#include <queue>
 
 inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2DistFromStart) {
     if(o1DistFromStart == o2DistFromStart) {
         return 0;
     }
-    return f1 < f2 ? -1 : 1;
+    return o1DistFromStart < o2DistFromStart ? -1 : 1;
 }
 
 struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
 {
-	TransportRoutingContext* ctx;
-	TransportSegmentsComparator(TransportRoutingContext& c) : ctx(c) {}
+	SHARED_PTR<TransportRoutingContext> ctx;
+	TransportSegmentsComparator(SHARED_PTR<TransportRoutingContext>& c) : ctx(c) {}
 	bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
 	{
-		int cmp = TransportSegmentPriorityComparator(lhs.get()->distanceFromStart, rhs.get()->distanceFromStart);
+		int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
     	return cmp > 0;
     }
 };
 
 typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 
-vector<SHARED_PTR<TransportRouteResult>> buildRoute(TransportRoutingContext* ctx) {
+vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);
@@ -36,7 +37,7 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(TransportRoutingContext* ctx
 
 	ctx->calcLatLons();
 
-    for (TransportRouteSegment& s : endStops) {
+    for (SHARED_PTR<TransportRouteSegment> s : endStops) {
         endSegments.insert({s.getId(), s});
     }
     if (startStops->size() == 0) {
@@ -291,4 +292,4 @@ bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<Transp
 	return true;
 }
 
-#endif _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
+#endif //_OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
