@@ -25,12 +25,11 @@ struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<Trans
 
 typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 
-vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
+vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext> ctx) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
-	
     vector<SHARED_PTR<TransportRouteSegment>> startStops = ctx->getTransportStops(ctx->startX, ctx->startY, false, vector<SHARED_PTR<TransportRouteSegment>>());
     vector<SHARED_PTR<TransportRouteSegment>> endStops = ctx->getTransportStops(ctx->targetX, ctx->targetY, false, vector<SHARED_PTR<TransportRouteSegment>>());
     UNORDERED_map<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;

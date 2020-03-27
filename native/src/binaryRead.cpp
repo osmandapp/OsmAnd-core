@@ -1140,16 +1140,16 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 
 //------ Transport Index Reading-----------------
 
-string regStr(map<int32_t, string>& stringTable, CodedInputStream* input) {
+string regStr(UNORDERED(map)<int32_t, string>& stringTable, CodedInputStream* input) {
 	int32_t i = 0; 
-	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i)));
+	WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i);
 	stringTable.insert({i, ""});
 	string s;
 	s.push_back((char) i);
 	return s; 
 }
 
-string regStr(map<int32_t, string>& stringTable, int32_t i) {
+string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	stringTable.insert({i, ""});
 	string s;
 	s.push_back((char) i);
@@ -1158,8 +1158,7 @@ string regStr(map<int32_t, string>& stringTable, int32_t i) {
 
 
 
-TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int ctop, SearchQuery* req, map<int32_t, string>* stringTable) {
-	TransportStopExit* dataObject = new TransportStopExit();
+bool readTransportStopExit(CodedInputStream* input, TransportStopExit* exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int32_t x = 0;
 	int32_t y = 0;
 
@@ -1167,7 +1166,7 @@ TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int
 		int tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 		switch (tag) {
 			case OsmAnd::OBF::TransportStopExit::kRefFieldNumber:
-				dataObject->ref(regStr(stringTable, input));
+                exit->ref = regStr(stringTable, input);
 				break;
 			case OsmAnd::OBF::TransportStopExit::kDxFieldNumber: {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &x)));
@@ -1185,9 +1184,8 @@ TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int
 				// 	dataObject->enName(TransliterationHelper.transliterate(dataObject.getName()));
 				// }
 					if (x != 0 || y != 0) {
-						dataObject->setLocation(TRANSPORT_STOP_ZOOM, x, y);
+                        exit->setLocation(TRANSPORT_STOP_ZOOM, x, y);
 					}
-					return dataObject;
 				}
 				if (!skipUnknownFields(input, tag)) {
 					return NULL;
@@ -1198,7 +1196,7 @@ TransportStopExit* readTransportStopExit(CodedInputStream* input, int cleft, int
 	}
 }
 
-TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, map<int, string>* stringTable) {
+bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 
 	uint32_t tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 	if(OsmAnd::OBF::TransportStop::kDxFieldNumber != tag) {
@@ -1228,9 +1226,8 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 	req->cacheIdsB.clear();
 	uint32_t si32;
 	uint64_t si64;
-	TransportStop* dataObject = new TransportStop();
-	dataObject->setLocation(x, y);
-	dataObject->fileOffset = stopOffset;
+	stop->setLocation(TRANSPORT_STOP_ZOOM, x, y);
+	stop->fileOffset = stopOffset;
 	while(true) {
 		int t = input->ReadTag();
 		tag = WireFormatLite::GetTagFieldNumber(t);
@@ -1252,11 +1249,11 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kNameEnFieldNumber : {
-				dataObject->enName = regStr(stringTable, input);
+                stop->enName = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kNameFieldNumber : {	
-				dataObject->name = regStr(stringTable, input);
+				stop->name = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kAdditionalNamePairsFieldNumber : {
@@ -1270,7 +1267,7 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &l)));
 						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &n)));
 
-						dataObject->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
+						stop->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
 					}
 					input->PopLimit(oldRef);
 				// } else {
@@ -1281,30 +1278,30 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 			case OsmAnd::OBF::TransportStop::kIdFieldNumber : {
 				uint64_t id;
 				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &id)));
-				dataObject->id = id;
+				stop->id = id;
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kExitsFieldNumber : {
 				uint32_t length;
 				input->ReadVarint32(&length);
 				int oldLimit = input->PushLimit(length);
-				TransportStopExit* transportStopExit = readTransportStopExit(input, pleft, ptop, req, stringTable);
-				dataObject->exits.push_back(std::make_shared(&transportStopExit)); //todo check
+                TransportStopExit* transportStopExit = new TransportStopExit();
+                readTransportStopExit(input, transportStopExit, pleft, ptop, req, stringTable);
+                stop->exits.push_back(SHARED_PTR<TransportStopExit>(transportStopExit));
 				input->PopLimit(oldLimit);
 				break;
 			}
 			default: {
 				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					dataObject->referencesToRoutes = req->cacheTypes;
-					dataObject->deletedRoutesIds = req->cacheIdsA;
-					dataObject->routesIds = req->cacheIdsB;
+					stop->referencesToRoutes = req->cacheTypes;
+					stop->deletedRoutesIds = req->cacheIdsA;
+					stop->routesIds = req->cacheIdsB;
 					// if(dataObject->names.find("en").length() == 0){
 					// 	dataObject->enName = TransliterationHelper.transliterate(dataObject->name);
 					// }
-					return dataObject;
 				}
 				if (!skipUnknownFields(input, t)) {
-					return NULL;
+					return false;
 				}
 				break;
 			}
@@ -1312,7 +1309,7 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 	}
 }
 
-bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, map<int, string>* stringTable) {
+bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int init = 0;
 	int lastIndexResult = -1;
 	int cright = 0;
@@ -1371,20 +1368,21 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 				int oldLimit = input->PushLimit(length);
 				
-				if(lastIndexResult == -1){
+				if(lastIndexResult == -1) {
 					lastIndexResult = req->transportResults.size();
 				}
 				req->numberOfVisitedObjects++;
-				TransportStop* transportStop = readTransportStop(stopOffset, input, cleft, cright, ctop, cbottom, req, stringTable);
+                TransportStop* transportStop = new TransportStop();
+                readTransportStop(stopOffset, transportStop, input, cleft, cright, ctop, cbottom, req, stringTable);
 			
-				req->transportResult.push_back(transportStop); //TODO check
+				req->transportResults.push_back(SHARED_PTR<TransportStop>(transportStop)); //TODO check
 				
 				input -> PopLimit(oldLimit);
 				break;
 			}
 			case OsmAnd::OBF::TransportStopsTree::kSubtreesFieldNumber: {
-				int32_t length; 
-				readInt(input, length);
+				uint32_t length = 0;
+				readInt(input, &length);
 				int filePointer = input->TotalBytesRead();
 				if (req->limit == -1 || req->limit >= req->transportResults.size()) {
 					int oldLimit = input->PushLimit(length);
@@ -1402,8 +1400,8 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &baseId)));
 				if (lastIndexResult != -1) {
 					for (int i = lastIndexResult; i < req->transportResults.size(); i++) {
-						TransportStop* rs = req->transportResults.at(i);
-						rs->id(rs->id + baseId);
+						const auto rs = req->transportResults[i];
+                        rs->id = rs->id + baseId;
 					}
 				}
 				break;
@@ -1421,7 +1419,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 	}
 }
 
-bool readTransportSchedule(CodedInputStream* input, TransportSchedule& schedule){
+bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule> schedule) {
 	while(true){
 		int interval, sizeL, old;
 		int t = input->ReadTag();
@@ -1467,24 +1465,23 @@ bool readTransportSchedule(CodedInputStream* input, TransportSchedule& schedule)
 	}
 }
 
-TransportStop* readTransportRouteStop(CodedInputStream* input, int& dx[], int& dy[], 
-	int64_t did, map<int64_t, string>& stringTable, int32_t filePointer) {
-	TransportStop dataObject = new TransportStop();
-	dataObject.fileOffset = input->TotalBytesRead();
-	dataObject.referenceToRoutes.push_back(filePointer);
+bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportStop, int dx[], int dy[],
+	int64_t did, UNORDERED(map)<int32_t, string>& stringTable, int32_t filePointer) {
+	transportStop->fileOffset = input->TotalBytesRead();
+    transportStop->referencesToRoutes.push_back(filePointer);
 	bool end = false;
-	int32_t sm
-	int64_t tm;
+    int32_t sm = 0;
+	int64_t tm = 0;
 	while(!end){
 		int t = input->ReadTag();
-		int tag = WireFormatLite::GetTagFieldNumber();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch (tag) {
 			case OsmAnd::OBF::TransportRouteStop::kNameEnFieldNumber:
 				// DO_((WireFormatLite::ReadString(input, &value)));
-				dataObject.enName = regStr(stringTable, input);
+				transportStop->enName = regStr(stringTable, input);
 				break;
 			case OsmAnd::OBF::TransportRouteStop::kNameFieldNumber :
-				dataObject.name = regStr(stringTable, input);
+				transportStop->name = regStr(stringTable, input);
 				break;
 			case OsmAnd::OBF::TransportRouteStop::kIdFieldNumber :
 				DO_((WireFormatLite::ReadPrimitive<int64_t, WireFormatLite::TYPE_SINT64>(input, &tm)));
@@ -1496,7 +1493,7 @@ TransportStop* readTransportRouteStop(CodedInputStream* input, int& dx[], int& d
 				break;
 			case OsmAnd::OBF::TransportRouteStop::kDyFieldNumber :
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &sm)));
-				dy[0] += sm
+                dy[0] += sm;
 				break;
 			default: {
 				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
@@ -1507,19 +1504,18 @@ TransportStop* readTransportRouteStop(CodedInputStream* input, int& dx[], int& d
 			}
 		}
 	}
-	dataObject.setId(did);
-	dataObject.setLocation(BinaryMapIndexReader.TRANSPORT_STOP_ZOOM, dx[0], dy[0]);
-	return dataObject;
+	transportStop->id = did;
+	transportStop->setLocation(TRANSPORT_STOP_ZOOM, dx[0], dy[0]);
+	return true;
 	
 }
 
-TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map<int32_t, string>& stringTable, bool onlyDescription) {
+bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
 	input->Seek(filePointer);
 	int routeLength;
 	DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &routeLength)));
 	int old = input->PushLimit(routeLength);
-	TransportRoute* dataObject = new TransportRoute();
-	dataObject->fileOffset = filePointer;
+	transportRoute->fileOffset = filePointer;
 	bool end = false;
 	int64_t rid = 0;
 	int rx[] = {0};
@@ -1528,41 +1524,41 @@ TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map
 	int pold;
 	while(!end){
 		int t = input->ReadTag();
-		int tag = WireFormatLite::GetTagFieldNumber();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch (tag) {
 			case OsmAnd::OBF::TransportRoute::kDistanceFieldNumber : {
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &dataObject->distance)));
+				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &transportRoute->dist)));
 				break;
 			}
 			//todo check cast:
 			case OsmAnd::OBF::TransportRoute::kIdFieldNumber : {
-				uint64_t i;
+				uint32_t i;
 				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT64>(input, &i)));
-				dataObject->id = (int64_t) i;
+				transportRoute->id = (int64_t) i;
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kRefFieldNumber : {
-				DO_((WireFormatLite::ReadString(input, &dataObject->ref)));
+				DO_((WireFormatLite::ReadString(input, &transportRoute->ref)));
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kTypeFieldNumber : {
 
-				dataObject->type = regStr(stringTable, input); 
+				transportRoute->type = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kNameEnFieldNumber : {
-				dataObject->enName = regStr(stringTable, input);
+				transportRoute->enName = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kNameFieldNumber : {
-				dataObject->name = regStr(stringTable, input);
+				transportRoute->name = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kOperatorFieldNumber:
-				dataObject->routeOperator = regStr(stringTable, input);
+				transportRoute->routeOperator = regStr(stringTable, input);
 				break;
 			case OsmAnd::OBF::TransportRoute::kColorFieldNumber: {
-				dataObject->color = regStr(stringTable, input);
+				transportRoute->color = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kGeometryFieldNumber: {
@@ -1579,20 +1575,20 @@ TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map
 					ddx = ddx << SHIFT_COORDINATES;
 					ddy = ddy << SHIFT_COORDINATES;
 					if(ddx == 0 && ddy == 0) {
-						if(w.nodes().size() > 0) {
-							dataObject.addWay(w);
+						if(w->nodes.size() > 0) {
+							transportRoute->addWay(SHARED_PTR<Way>(w));
 						}
 						w = new Way(-1);
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
-						w.addNode(make_shared<Node>(get31LatitudeY(y), get31LongitudeX(x), -1)));
+						w->addNode(make_shared<Node>(get31LatitudeY(y), get31LongitudeX(x), -1));
 						px = x;
 						py = y;
 					}
 				}
-				if(w.nodes.size() > 0) {
-					dataObject->addWay(make_shared<Way>(w));
+				if(w->nodes.size() > 0) {
+					transportRoute->addWay(SHARED_PTR<Way>(w));
 				}
 				input->PopLimit(pold);
 				break;
@@ -1600,7 +1596,7 @@ TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map
 			case OsmAnd::OBF::TransportRoute::kScheduleTripFieldNumber: {
 				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
 				pold = input->PushLimit(sizeL);
-				readTransportSchedule(input, dataObject.getOrCreateSchedule());
+                readTransportSchedule(input, transportRoute->getOrCreateSchedule());
 				input->PopLimit(pold);
 				break;
 			}
@@ -1611,8 +1607,9 @@ TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map
 				}
 				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
 				pold = input->PushLimit(sizeL);
-				TransportStop* stop = readTransportRouteStop(rx, ry, rid, stringTable, filePointer);
-				rid = stop.id;
+                TransportStop* stop = new TransportStop();
+                readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
+				rid = stop->id;
 				input->PopLimit(pold);
 				break;
 			}
@@ -1621,24 +1618,21 @@ TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map
 					end = true;
 				}
 				if (!skipUnknownFields(input, t)) {
-					return NULL;
+					return false;
 				}
 				break;
 			}
 		}
 	}
 	input->PopLimit(old);
-	return dataObject;
+	return true;
 }
 
-
-
-UNORDERED(map)<int32_t, string> initializeStringTable(CodedInputStream* input, TransportIndex& ind, map<int32_t, string>& requested) {
-	if (!ind->stringTable->stringTable.size() == 0) {
+bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDERED(map)<int32_t, string>& requested) {
+    if (ind->stringTable->stringTable.size() == 0) {
 		input->Seek(ind->stringTable->fileOffset);
-		int oldLimit = input->PushLimit(ind->stringTable.length);
+        int oldLimit = input->PushLimit(ind->stringTable->length);
 		int current = 0;
-		int i = 0;
 		while (input->BytesUntilLimit() > 0) {
 			int t = input->ReadTag();
 			int tag = WireFormatLite::GetTagFieldNumber(t);
@@ -1651,9 +1645,6 @@ UNORDERED(map)<int32_t, string> initializeStringTable(CodedInputStream* input, T
 					break;
 				}
 				default: {
-					if (WireFormatLite::GetTagWireType(t) == WireFormatLite::WIRETYPE_END_GROUP) {
-						end = true;
-					}
 					skipUnknownFields(input, t);
 					break;
 				}
@@ -1661,144 +1652,144 @@ UNORDERED(map)<int32_t, string> initializeStringTable(CodedInputStream* input, T
 		input->PopLimit(oldLimit);
 		}
 	}
-	return ind->stringTable->stringTable;
+	return true;
 }
 
-void initializeNames(bool onlyDescription, TransportRoute& dataObject, map<int32_t, string>& stringTable) {
-	if(dataObject.name.size() > 0) {
-		dataObject.name = stringTable.find(dataObject.name.at(0));
+void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
+    for (SHARED_PTR<TransportStopExit> exit : s->exits)    {
+        if (exit->ref.size() > 0) {
+            exit->ref = stringTable.find(exit->ref.at(0))->second;
+        }
+    }
+    if (s->name.size() > 0) {
+        s->name = stringTable.find(s->name.at(0))->second;
+    }
+    if (s->enName.size() > 0) {
+        s->enName = stringTable.find(s->enName.at(0))->second;
+    }
+    map<string, string> namesMap;
+    if (s->names.size() > 0) {
+        namesMap.insert(s->names.begin(), s->names.end());
+        s->names.clear();
+        map<string, string>::iterator it = namesMap.begin();
+        while (it != namesMap.end()) {
+            s->names.insert({stringTable.find(it->first.at(0))->second, stringTable.find(it->second.at(0))->second});
+        }
+    }
+}
+
+void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute> dataObject, UNORDERED(map)<int32_t, string>& stringTable) {
+	if(dataObject->name.size() > 0) {
+        dataObject->name = stringTable.find(dataObject->name.at(0))->second;
 	}
-	if(dataObject.enName.size() > 0) {
-		dataObject.enName = stringTable.find(dataObject.enName.at(0));
+	if(dataObject->enName.size() > 0) {
+		dataObject->enName = stringTable.find(dataObject->enName.at(0))->second;
 	}
 	// if(dataObject->getName().length() > 0 && dataObject.getName("en").length() == 0){
 	// 	dataObject.setEnName(TransliterationHelper.transliterate(dataObject.getName()));
 	// }
-	if(dataObject.routeOperator.size() > 0) {
-		dataObject.routeOperator = stringTable.find(dataObject.routeOperator.at(0));
+	if(dataObject->routeOperator.size() > 0) {
+		dataObject->routeOperator = stringTable.find(dataObject->routeOperator.at(0))->second;
 	}
-	if(dataObject.color.size() > 0){
-		dataObject.color = stringTable.find(dataObject.color.at(0));
+	if(dataObject->color.size() > 0){
+		dataObject->color = stringTable.find(dataObject->color.at(0))->second;
 	}
-	if(dataObject.type.size() > 0){
-		dataObject.color = stringTable.find(dataObject.type.at(0));
+	if(dataObject->type.size() > 0){
+		dataObject->color = stringTable.find(dataObject->type.at(0))->second;
 	}
 	if (!onlyDescription) {
-		for (TransportStop& s : dataObject->forwardStops) {
-			initializeNames(onlyDescription, stringTable, s);
+        for (SHARED_PTR<TransportStop> s : dataObject->forwardStops) {
+			initializeNames(stringTable, s);
 		}
 	}
 }
 
-void initializeNames(map<int32_t, string>& stringTable, TransportStop& s) {
-	for (TransportStopExit& exit : s->exits)	{
-		if (exit.ref.size() > 0) {
-			exit.ref = stringTable.find(exit.ref.at(0));
-		}
-	}
-	if (s.name.size() > 0) {
-		s.name = stringTable.find(s.name.at(0));
-	}
-	if (s.enName.size() > 0) {
-		s.enName = stringTable.find(s.enName.at(0));
-	}
-	map<string, string> namesMap;
-	if (s.names.size() > 0) {
-		namesMap.insert(s.names.begin(), s.names.end());
-		s.names.clear();
-		map<string, string>::iterator it = namesMap.begin();
-		while (it != namesMap.end()) {
-			s.names.insert({stringTable.find(it->first.at(0)), stringTable.find(it->second.at(0))});
-		}
-	}
+void searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStream* input) {
+    if (index->stopsFileLength == 0 || index->right < q->left || index->left > q->right || index->top > q->bottom
+            || index->bottom < q->top) {
+        return;
+    }
+    input->Seek(index->stopsFileOffset);
+    int oldLimit = input->PushLimit(index->stopsFileLength);
+    int offset = q->transportResults.size();
+    UNORDERED(map)<int32_t, string> stringTable;
+    searchTransportTreeBounds(input, 0, 0, 0, 0, q, stringTable);
+    input->PopLimit(oldLimit);
+    initializeStringTable(input, index, stringTable);
+    UNORDERED(map)<int32_t, string> indexedStringTable = index->stringTable->stringTable;
+    for (int i = offset; i < q->transportResults.size(); i++) {
+        initializeNames(indexedStringTable, q->transportResults[i]);
+    }
+    return;
 }
 
-
-vector<TransportStop*> searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
+void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	//todo is it ok to create CIS here?
 	lseek(file->fd, 0, SEEK_SET);
 	FileInputStream input(file->fd);
 	input.SetCloseOnDelete(false);
-	CodedInputStream cis(&input); 
+	CodedInputStream cis(&input);
 	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
 	std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
 	for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
-
 		searchTransportIndex(*transportIndex, q, &cis);
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
-	return q->transportResults;
-}
-
-vector<TransportStop*> searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStream* input) {
-	if (index->stopsFileLength == 0 || index->right < q->left || index->left > q->right || index->top > q->bottom
-			|| index->bottom < q->top) {
-		return q->transportResults;
-	}
-	input->Seek(index->stopsFileOffset);
-	int oldLimit = input->PushLimit(index->stopsFileLength);
-	int offset = q->transportResults.size();
-	map<int32_t, std::string> stringTable;
-	searchTransportTreeBounds(input, 0, 0, 0, 0, q, stringTable)
-	input->PopLimit(oldLimit);
-	map<int32_t, std::string> indexedStringTable = initializeStringTable(input, index, stringTable);
-	for (int i = offset; i < q->transportResults.size(); i++) {
-		TransportStop* st = q->transportResults.at(i);
-		initializeNames(indexedStringTable, st.get());
-	}
-	return q->transportResults;
-}
-
-
-void loadTransportRoutes(BinaryMapFile* file, int[] filePointers, map<int32_t, SHARED_PTR<TransportRoute>> result) {
-	//todo is it ok to create CIS here?
-	lseek(file->fd, 0, SEEK_SET);
-	FileInputStream input(file->fd);
-	input.SetCloseOnDelete(false);
-	CodedInputStream cis(&input); 
-	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
-
-	std::map<TransportIndex*, vector<int32_t>> groupPoints;
-	for (int& filePointer : filePointers) {
-		TransportIndex* ind;
-		if (getTransportIndex(filePointer, ind)) {
-			if (!groupPoints.find(ind) == groupPoints.end()) {
-				groupPoints.insert({ind, new vector<int32_t>()});
-			}
-			groupPoints.find(ind).push_back(filePointer);
-		}
-	}
-	std::map<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
-	if (it != groupPoints.end()) { //is it correct way to check like java's it.hasNext?
-		TransportIndex* ind = e->first;
-		vector<int32_t> pointers = e->second;
-		std::sort(pointers.begin(), pointers.end());
-		map<int32_t, string> stringTable;
-		vector<SHARED_PTR<TransportRoute>> finishInit;
-		
-		for (int i = 0; i < pointers.size(); i++) {
-			int32_t filePointer = pointers.at(i);
-			//todo check:
-			TransportRoute* transportRoute = readTransportRoute(&cis, filePointer, stringTable, false);
-			result.insert({filePointer, make_shared<TransportRoute>(&transportRoute)});
-			finishInit.push_back(make_shared(&transportRoute));	
-		}
-		map<int32_t, string> indexedStringTable = transportAdapter->initializeStringTable(ind, stringTable);
-		for(TransportRoute& transportRoute : finishInit ) {
-			transportAdapter.initializeNames(&transportRoute, indexedStringTable);
-		}
-	}
+	return;
 }
 
 bool getTransportIndex(int filePointer, TransportIndex*& ind) {
-	for (TransportIndex*& i : transportIndexesList) {
-		if (i->filePointer <= filePointer && (filePointer - i->filePointer) < i->length) {
-			ind = i;
-			return true;
-		}
-	}
-	return false;
+    for (TransportIndex*& i : transportIndexesList) {
+        if (i->filePointer <= filePointer && (filePointer - i->filePointer) < i->length) {
+            ind = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+void loadTransportRoutes(BinaryMapFile* file, int filePointers[], UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& result) {
+    //todo is it ok to create CIS here?
+    lseek(file->fd, 0, SEEK_SET);
+    FileInputStream input(file->fd);
+    input.SetCloseOnDelete(false);
+    CodedInputStream cis(&input);
+    cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+
+    UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
+    int32_t filePointersSize = sizeof(&filePointers) / sizeof(filePointers[0]);
+    for (int i = 0; i < filePointersSize; i++) {
+        TransportIndex* ind;
+        if (getTransportIndex(filePointers[i], ind)) {
+            if (groupPoints.find(ind) == groupPoints.end()) {
+                groupPoints[ind] = vector<int32_t>();
+            }
+            groupPoints.find(ind)->second.push_back(filePointers[i]);
+        }
+    }
+    UNORDERED(map)<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
+    if (it != groupPoints.end()) { //is it correct way to check like java's it.hasNext?
+        TransportIndex* ind = it->first;
+        vector<int32_t> pointers = it->second;
+        sort(pointers.begin(), pointers.end());
+        UNORDERED(map)<int32_t, string> stringTable;
+        vector<SHARED_PTR<TransportRoute>> finishInit;
+        
+        for (int i = 0; i < pointers.size(); i++) {
+            int32_t filePointer = pointers.at(i);
+            //todo check:
+            TransportRoute* transportRoute = new TransportRoute();
+            readTransportRoute(&cis, transportRoute, filePointer, stringTable, false);
+            result.insert({filePointer, SHARED_PTR<TransportRoute>(transportRoute)});
+            finishInit.push_back(SHARED_PTR<TransportRoute>(transportRoute));
+        }
+        initializeStringTable(&cis, ind, stringTable);
+        UNORDERED(map)<int32_t, string> indexedStringTable = ind->stringTable->stringTable;
+        for(SHARED_PTR<TransportRoute> transportRoute : finishInit) {
+            initializeNames(false, transportRoute, indexedStringTable);
+        }
+    }
 }
 //----------------------------
 
@@ -2025,7 +2016,7 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 
 
 void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<MapDataObject*>& tempResult,
-		int& renderedState) {
+		int renderedState) {
 	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
@@ -2055,8 +2046,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			}
 		}
 		if (add) {
-				obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
-			}
+            obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
@@ -2955,7 +2945,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 				ti->length = tp.size();
 				ti->name = tp.name();
 				ti->left = tp.left();
-				ti->rigth = tp.right()
+                ti->right = tp.right();
 				ti->top = tp.top();
 				ti->bottom = tp.bottom();
 				IndexStringTable *st = new IndexStringTable();
@@ -2965,8 +2955,8 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 				ti->stopsFileOffset = tp.stopstableoffset();
 				ti->stopsFileLength = tp.stopstablelength();
 				mapFile->transportIndexes.push_back(ti);
-				mapFile->indexes.push_back(&mapFile->transportIndexes.back());
-				transportIndexesList.push_back(ti)
+				mapFile->indexes.push_back(mapFile->transportIndexes.back());
+                transportIndexesList.push_back(ti);
 			}
         }
 

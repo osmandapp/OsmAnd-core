@@ -17,9 +17,9 @@ struct TransportRoutingContext {
     UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
     SHARED_PTR<TransportRoutingConfiguration> cfg;
 
-    map<int64_t, vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
+    UNORDERED(map)<int64_t, vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
-    map<TransportIndex, map<int64_t, SHARED_PTR<TransportRoute>>> routeMap;
+    UNORDERED(map)<TransportIndex, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>> routeMap;
 
     int32_t startX;
     int32_t startY;
@@ -42,13 +42,13 @@ struct TransportRoutingContext {
     int32_t walkRadiusIn31;
     int32_t walkChangeRadiusIn31;
 
-    TransportRoutingContext(TransportRoutingConfiguration cfg_, vector<SHARED_PTR<TransportIndex>> indexes)
+    TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> cfg_, vector<SHARED_PTR<TransportIndex>>& indexes)
     {
-        cfg = make_shared<TransportRoutingConfiguration>(cfg_);  
+        cfg = cfg_;
         walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
         walkChangeRadiusIn31 = (int) (cfg->walkChangeRadius / getTileDistanceWidth(31));
-        for (SHARED_PTR<TransportIndex>& i : indexes)  {
-            routeMap.insert({i, map<int64_t, SHARED_PTR<TransportRoute>>()});
+        for (SHARED_PTR<TransportIndex> i : indexes)  {
+            routeMap.insert({i, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>()});
         }
     }
     
@@ -268,4 +268,4 @@ struct TransportRoutingContext {
     }
 };
 
-#endif _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
+#endif // _OSMAND_TRANSPORT_ROUTING_CONTEXT_H

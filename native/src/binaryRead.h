@@ -556,7 +556,7 @@ struct RouteDataObject {
 struct IndexStringTable {
     uint32_t fileOffset;
     uint32_t length;
-    UNORDERED(map)<int, string> stringTable;
+    UNORDERED(map)<int32_t, string> stringTable;
 };
 
 struct TransportIndex : BinaryPartIndex {
@@ -740,8 +740,10 @@ struct SearchQuery {
 	uint numberOfAcceptedObjects;
 	uint numberOfReadSubtrees;
 	uint numberOfAcceptedSubtrees;
-	//change to generic
-	vector<TransportStop*> transportResults;
+    
+    int limit;
+    
+	vector<SHARED_PTR<TransportStop>> transportResults;
 	
 	// cache information
 	vector<int32_t> cacheTypes;
@@ -754,6 +756,7 @@ struct SearchQuery {
 		numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
 		oceanTiles = 0;
 		ocean = 0;
+        limit = -1;
 	}
 	SearchQuery(int l, int r, int t, int b) :
 		left(l), right(r), top(t), bottom(b) {

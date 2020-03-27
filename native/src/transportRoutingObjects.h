@@ -17,10 +17,10 @@ struct MapObject {
 
     int32_t fileOffset;
 
-    map<string, string> getNamesMap (bool includeEn) {
+    UNORDERED(map)<string, string> getNamesMap (bool includeEn) {
         if (!includeEn || enName.size() == 0) {
             if (names.size()== 0) {
-                return map<string, string>();
+                return UNORDERED(map)<string, string>();
             }
             return names;
         }
@@ -370,7 +370,7 @@ struct TransportRoute : public MapObject {
 		}
     }
 
-    void addWay(SHARED_PTR<Way>& w) {
+    void addWay(SHARED_PTR<Way> w) {
         forwardWays.push_back(w);
     }
 
