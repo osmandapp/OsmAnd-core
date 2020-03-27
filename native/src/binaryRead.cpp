@@ -1141,15 +1141,19 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 //------ Transport Index Reading-----------------
 
 string regStr(map<int32_t, string>& stringTable, CodedInputStream* input) {
-	int32_t i; 
+	int32_t i = 0; 
 	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i)));
 	stringTable.insert({i, ""});
-	return ((char) i)+""; 
+	string s;
+	s.push_back((char) i);
+	return s; 
 }
 
 string regStr(map<int32_t, string>& stringTable, int32_t i) {
 	stringTable.insert({i, ""});
-	return ((char) i)+""; 
+	string s;
+	s.push_back((char) i);
+	return s; 
 }
 
 
@@ -1204,7 +1208,7 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &x)));
 	x += pleft;
 	
-	tag = WireFormatLite::TagFieldNumber(input->ReadTag());
+	tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 	if(OsmAnd::OBF::TransportStop::kDyFieldNumber != tag) {
 		return NULL;	
 	}
@@ -1222,7 +1226,7 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 	req->cacheTypes.clear();
 	req->cacheIdsA.clear();
 	req->cacheIdsB.clear();
-	uint64_t si32;
+	uint32_t si32;
 	uint64_t si64;
 	TransportStop* dataObject = new TransportStop();
 	dataObject->setLocation(x, y);
@@ -1252,7 +1256,7 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kNameFieldNumber : {	
-				dataObject->name = regStr(stringTable, input));
+				dataObject->name = regStr(stringTable, input);
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kAdditionalNamePairsFieldNumber : {
@@ -1260,14 +1264,13 @@ TransportStop* readTransportStop(int stopOffset, CodedInputStream* input, int pl
 					uint32_t sizeL;
 					input->ReadVarint32(&sizeL); 	
 					int32_t oldRef = input->PushLimit(sizeL);
-					while (input->input->BytesUntilLimit() > 0) {
+					while (input->BytesUntilLimit() > 0) {
 						int32_t l;
 						int32_t n;
 						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &l)));
 						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &n)));
 
-						dataObject->names.insert({regStr(stringTable, i),
-								regStr(stringTable, n));
+						dataObject->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
 					}
 					input->PopLimit(oldRef);
 				// } else {

@@ -13,7 +13,7 @@ struct MapObject {
     double lon;
     string name;
     string enName;
-    map<string,string> names;
+    UNORDERED(map)<string,string> names;
 
     int32_t fileOffset;
 
