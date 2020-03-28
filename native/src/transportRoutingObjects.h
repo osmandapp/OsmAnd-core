@@ -4,6 +4,8 @@
 #include "commonOsmAndCore.h"
 #include <algorithm>
 
+#define SAME_STOP 40
+
 
 const static int TRANSPORT_STOP_ZOOM = 24;
 
@@ -71,6 +73,10 @@ struct TransportStop : public MapObject {
     vector<SHARED_PTR<TransportRoute>> routes;
     map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
     
+    bool hasRoute(int64_t routeId) {
+        return std::find(routesIds.begin(), routesIds.end(), routeId) != deletedRoutesIds.end();
+    }
+    
     bool isDeleted() {
         return referencesToRoutes.size() == 1 && referencesToRoutes[0] ==  DELETED_STOP;
     }
@@ -85,6 +91,16 @@ struct TransportStop : public MapObject {
 
     void putReferenceToRoutes(string &repositoryFileName, vector<int32_t>& referencesToRoutes) {
         referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
+    }
+    
+    void addRouteId(int64_t routeId) {
+        // make assumption that ids are sorted
+        routesIds.push_back(routeId);
+        sort(routesIds.begin(), routesIds.end());
+    }
+    
+    void addRoute(SHARED_PTR<TransportRoute> rt) {
+        routes.push_back(rt);
     }
 
     bool compareStop(SHARED_PTR<TransportStop>& thatObj) {
@@ -245,17 +261,14 @@ struct TransportRoute : public MapObject {
     string color;
     vector<SHARED_PTR<Way>> forwardWays; //todo is there a Way or analogue?
     SHARED_PTR<TransportSchedule> schedule;
-    const double SAME_STOP = 40;
     
     TransportRoute() {
         dist = -1;
     }
 
     SHARED_PTR<TransportSchedule> getOrCreateSchedule() {
-        if (!schedule.get()) {
-            //todo check is it correct?
-            TransportSchedule* s = new TransportSchedule();
-            schedule = make_shared<TransportSchedule>(&s);
+        if (schedule == nullptr) {
+            schedule = make_shared<TransportSchedule>();
         } 
         return schedule;
     }

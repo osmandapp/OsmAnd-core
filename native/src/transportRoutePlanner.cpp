@@ -2,71 +2,221 @@
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #include "transportRoutePlanner.h"
 #include "transportRoutingObjects.h"
+#include "transportRoutingContext.h"
 
-#include <queue>
+struct TransportRouteResult {
+    vector<SHARED_PTR<TransportRouteResultSegment>> segments;
+    double finishWalkDist;
+    double routeTime;
+    SHARED_PTR<TransportRoutingConfiguration> config;
 
-inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2DistFromStart) {
-    if(o1DistFromStart == o2DistFromStart) {
-        return 0;
+    TransportRouteResult(TransportRoutingContext* ctx) {
+        config = ctx->cfg;
     }
-    return o1DistFromStart < o2DistFromStart ? -1 : 1;
-}
+    
+    //ui/logging
+    double getWalkDist() {
+        double d = finishWalkDist;
+        for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
+            d += (*it)->walkDist;
+        }
+        return d;
+    }
 
-struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
-{
-	SHARED_PTR<TransportRoutingContext> ctx;
-	TransportSegmentsComparator(SHARED_PTR<TransportRoutingContext>& c) : ctx(c) {}
-	bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
-	{
-		int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
-    	return cmp > 0;
+    //ui only
+    // double getWalkSpeed() {
+    //     cfg->walkSpeed;
+    // }
+    
+    //logging only
+    int getStops() {
+        int stops = 0;
+        for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
+            stops += ((*it)->end - (*it)->start);
+        }
+        return stops;
+    }
+
+    // ui only:
+    // bool isRouteStop (TransportStop stop) {
+    //     for (vector<TransportRouteResultSegment>::iterator it = segments.begin(); it != segments.end(); it++) {
+    //         if (find(*it->getTravelStops().begin(), *it->getTravelStops().end(), stop) != *it->getTravelStops().end()) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
+
+    //for ui/logs
+    double getTravelDist() {
+        double d = 0;
+        for (SHARED_PTR<TransportRouteResultSegment>& it : segments) {
+            d += it->getTravelDist();
+        }
+        return d;
+    }
+
+    //for ui/logs
+    double getTravelTime() {
+        double t = 0;
+        for (SHARED_PTR<TransportRouteResultSegment> seg : segments) {
+            if (config->useSchedule) {
+                SHARED_PTR<TransportSchedule> sts = seg->route->schedule;
+                for (int k = seg->start; k < seg->end; k++) {
+                    t += sts->avgStopIntervals[k] * 10;
+                }
+            } else {
+                t += config->getBoardingTime();
+                t += seg->travelTime;
+            }
+        }
+        return t;
+    }
+
+    //for ui/logs
+    double getWalkTime() {
+        return getWalkDist() / config->walkSpeed;
+    }
+    //for ui/logs
+    double getChangeTime() {
+        return config->changeTime;
+    }
+    //for ui/logs
+    double getBoardingTime() {
+        return config->boardingTime;
+    }
+    //for ui/logs
+    int getChanges() {
+        return segments.size() - 1;
+    }
+
+    string to_string() {
+        //todo add logs
+        return "";
     }
 };
 
-typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
+bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute) {
+    if(testRoute->segments.size() < fastRoute->segments.size()) {
+        return false;
+    }
+    int32_t j = 0;
+    for(int32_t i = 0; i < fastRoute->segments.size(); i++, j++) {
+        SHARED_PTR<TransportRouteResultSegment> fs = fastRoute->segments.at(i);
+            while(j < testRoute->segments.size()) {
+                SHARED_PTR<TransportRouteResultSegment> ts = testRoute->segments[j];
+                if(fs->route->id != ts->route->id) {
+                    j++;
+                } else {
+                    break;
+                }
+            }
+            if(j >= testRoute->segments.size()) {
+                return false;
+            }
+    }
+    return true;
+}
 
-vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext> ctx) {
+vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results) {
+    sort(results.begin(), results.end(), TransportSegmentsComparator(ctx));
+
+    vector<SHARED_PTR<TransportRouteResult>> lst;
+//         System.out.println(String.format("Calculated %.1f seconds, found %d results, visited %d routes / %d stops, loaded %d tiles (%d ms read, %d ms total), loaded ways %d (%d wrong)",
+//                 (System.currentTimeMillis() - ctx.startCalcTime) / 1000.0, results.size(),
+//                 ctx.visitedRoutesCount, ctx.visitedStops,
+//                 ctx.quadTree.size(), ctx.readTime / (1000 * 1000), ctx.loadTime / (1000 * 1000),
+//                 ctx.loadedWays, ctx.wrongLoadedWays));
+
+    for(SHARED_PTR<TransportRouteSegment>& res : results) {
+        if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
+            return vector<SHARED_PTR<TransportRouteResult>>();
+        }
+        SHARED_PTR<TransportRouteResult> route = make_shared<TransportRouteResult>(ctx.get());
+        route->routeTime = res->distFromStart;
+        route->finishWalkDist = res->walkDist;
+        SHARED_PTR<TransportRouteSegment> p = res;
+        while (p.get()) {
+            if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
+                return vector<SHARED_PTR<TransportRouteResult>>();
+            }
+            if (p->parentRoute != nullptr) {
+                SHARED_PTR<TransportRouteResultSegment> sg = make_shared<TransportRouteResultSegment>();
+                sg->route = p->parentRoute->road;
+                sg->start = p->parentRoute->segStart;
+                sg->end = p->parentStop;
+                sg->walkDist = p->parentRoute->walkDist;
+                sg->walkTime = sg->walkDist / ctx->cfg->walkSpeed;
+                sg->depTime = p->departureTime;
+                sg->travelDistApproximate = p->parentTravelDist;
+                sg->travelTime = p->parentTravelTime;
+                route->segments.insert(route->segments.begin(), sg);
+            }
+            p = p->parentRoute;
+        }
+        // test if faster routes fully included
+        bool include = false;
+        for(SHARED_PTR<TransportRouteResult>& s : lst) {
+            if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
+                return vector<SHARED_PTR<TransportRouteResult>>();
+            }
+            if(includeRoute(s, route)) {
+                include = true;
+                break;
+            }
+        }
+        if(!include) {
+            lst.push_back(route);
+            // System.out.println(route.toString());
+        } else {
+//                System.err.println(route.toString());
+        }
+    }
+    return lst;
+}
+
+vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext> ctx, double startLat, double startLon, double endLat, double endLon) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
     vector<SHARED_PTR<TransportRouteSegment>> startStops = ctx->getTransportStops(ctx->startX, ctx->startY, false, vector<SHARED_PTR<TransportRouteSegment>>());
     vector<SHARED_PTR<TransportRouteSegment>> endStops = ctx->getTransportStops(ctx->targetX, ctx->targetY, false, vector<SHARED_PTR<TransportRouteSegment>>());
-    UNORDERED_map<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
+    UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
 
 	ctx->calcLatLons();
 
-    for (SHARED_PTR<TransportRouteSegment> s : endStops) {
-        endSegments.insert({s.getId(), s});
+    for (SHARED_PTR<TransportRouteSegment>& s : endStops) {
+        endSegments.insert({s->getId(), s});
     }
-    if (startStops->size() == 0) {
-        return vector<TransportRouteResult>();
+    if (startStops.size() == 0) {
+        return vector<SHARED_PTR<TransportRouteResult>>();
     }
 	
     for (SHARED_PTR<TransportRouteSegment>& r : startStops) {
-        r->walkDist = getDistance(r.getLocationLat(), r.getLocationLon(), ctx->startLat, ctx->startLon);
-        r->distFromStart = r->walkDist / ctx->cfg.walkSpeed;
+        r->walkDist = getDistance(r->getLocationLat(), r->getLocationLon(), ctx->startLat, ctx->startLon);
+        r->distFromStart = r->walkDist / ctx->cfg->walkSpeed;
         queue.push(r);
     }
 
     double finishTime = ctx->cfg->maxRouteTime;
     double maxTravelTimeCmpToWalk = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) / ctx->cfg->changeTime;
-    vector<SHARED_PTR<TransportRouteResult>> results;
+    vector<SHARED_PTR<TransportRouteSegment>> results;
 	//initProgressBar(ctx, start, end); - ui
-    while (queue->size() > 0) {
+    while (queue.size() > 0) {
 	// 	long beginMs = MEASURE_TIME ? System.currentTimeMillis() : 0;
         if(ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
 			ctx->calculationProgress->setSegmentNotFound(0);
             return vector<SHARED_PTR<TransportRouteResult>>();
 		}
 		
-		SHARED_PTR<TransportRouteSegment> segment = queue->top();
+        SHARED_PTR<TransportRouteSegment> segment = queue.top();
         queue.pop();	
         SHARED_PTR<TransportRouteSegment> ex ;
         if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
-            ex = ctx->visitedSegments.find(segment->getId());
+            ex = ctx->visitedSegments.find(segment->getId())->second;
             if (ex->distFromStart > segment->distFromStart) {
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart, ex->to_string(), segment->distFromStart, segment->to_string());
+//                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart, ex->to_string(), segment->distFromStart, segment->to_string());
             }
             continue;
         }
@@ -83,7 +233,7 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
         }
 
         int64_t segmentId = segment->getId();
-        SHARED_PTR<TransportRouteSegment> finish = NULL;
+        SHARED_PTR<TransportRouteSegment> finish = nullptr;
         int64_t minDist = 0;
         int64_t travelDist = 0;
         double travelTime = 0;
@@ -93,10 +243,10 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
 			continue;
 		}
 		SHARED_PTR<TransportStop> prevStop = segment->getStop(segment->segStart);
-		vector<SHARED_PTR<TransportRouteSegment>> sgms = vector<SHARED_PTR<TransportRouteResult>>();
+		vector<SHARED_PTR<TransportRouteSegment>> sgms;
 		
 		for (int32_t ind = 1 + segment->segStart; ind < segment->getLength(); ind++) {
-			if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
+			if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 				return vector<SHARED_PTR<TransportRouteResult>>();
 			}
 			segmentId ++;
@@ -119,33 +269,33 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
 			sgms = ctx->getTransportStops(stop->x31, stop->y31, true, sgms);
 			ctx->visitedStops++;
 			for (SHARED_PTR<TransportRouteSegment>& sgm : sgms) {
-				if (ctx->calculationProgress.get() && ctx.calculationProgress.isCancelled) {
+				if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 					return vector<SHARED_PTR<TransportRouteResult>>();
 				}
 				if (segment->wasVisited(sgm)) {
 					continue;
 				}
-				SHARED_PTR<TransportRouteSegment> nextSegment = make_shared<TransportRouteSegment>(TransportRouteSegment());
+				SHARED_PTR<TransportRouteSegment> nextSegment = make_shared<TransportRouteSegment>(sgm);
 				nextSegment->parentRoute = segment;
 				nextSegment->parentStop = ind;
-				nextSegment->walkDist = MapUtils.getDistance(nextSegment.getLocation(), stop.getLocation());
+				nextSegment->walkDist = getDistance(nextSegment->getLocationLat(), nextSegment->getLocationLon(), stop->lat, stop->lon);
 				nextSegment->parentTravelTime = travelTime;
 				nextSegment->parentTravelDist = travelDist;
 				double walkTime = nextSegment->walkDist / ctx->cfg->walkSpeed
 						+ ctx->cfg->getChangeTime() + ctx->cfg->getBoardingTime();
-				nextSegment.distFromStart = segment->distFromStart + travelTime + walkTime;
+				nextSegment->distFromStart = segment->distFromStart + travelTime + walkTime;
 				if(ctx->cfg->useSchedule) {
-					int tm = (sgm.departureTime - ctx->cfg->scheduleTimeOfDay) * 10;
+					int tm = (sgm->departureTime - ctx->cfg->scheduleTimeOfDay) * 10;
 					if(tm >= nextSegment->distFromStart) {
 						nextSegment->distFromStart = tm;
-						queue.add(nextSegment);
+                        queue.push(nextSegment);
 					}
 				} else {
-					queue.add(nextSegment);
+					queue.push(nextSegment);
 				}
 			}
-			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments.find(segmentId);
-			double dist = getDistance(stop->lat, stop->lon, endLat, endLon);
+			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments.find(segmentId)->second;
+			double distToEnd = getDistance(stop->lat, stop->lon, endLat, endLon);
 
 			if (endSegments.find(segmentId) != endSegments.end() && distToEnd < ctx->cfg->walkRadius) {
 				if (finish == NULL || minDist > distToEnd) {
@@ -158,23 +308,23 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
 					finish->parentTravelDist = travelDist;
 
 					double walkTime = distToEnd / ctx->cfg->walkSpeed;
-					finish->distFromStart = segment.distFromStart + travelTime + walkTime;
+					finish->distFromStart = segment->distFromStart + travelTime + walkTime;
 
 				}
 			}	
 			prevStop = stop;
 		}
-		if (finish != NULL) {
+		if (finish != nullptr) {
 			if (finishTime > finish->distFromStart) {
 				finishTime = finish->distFromStart;
 			}
 			if(finish->distFromStart < finishTime + ctx->cfg->finishTimeSeconds && 
-					(finish.distFromStart < maxTravelTimeCmpToWalk || results.size() == 0)) {
+					(finish->distFromStart < maxTravelTimeCmpToWalk || results.size() == 0)) {
 				results.push_back(finish);
 			}
 		}
 		
-		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
+		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Route calculation interrupted");
 			return vector<SHARED_PTR<TransportRouteResult>>();
 		}
@@ -185,7 +335,7 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
 		// 				segment.road.getId()));
 		// 	}
 		// }
-		updateCalculationProgress(ctx, queue);
+//		updateCalculationProgress(ctx, queue);
     }
 
     return prepareResults(ctx, results);
@@ -201,94 +351,14 @@ vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingC
 // 	}
 // }
 
-void updateCalculationProgress(TransportRoutingContext* ctx, priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {
+void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {
 	if (ctx->calculationProgress.get()) {
 		ctx->calculationProgress->directSegmentQueueSize = queue.size();
 		if (queue.size() > 0) {
 			SHARED_PTR<TransportRouteSegment> peek = queue.top(); 
-			ctx->calculationProgress->distanceFromBegin = (float) max(peek->distFromStart, ctx->calculationProgress->distanceFromBegin);
+			ctx->calculationProgress->distanceFromBegin = (int64_t) fmax(peek->distFromStart, ctx->calculationProgress->distanceFromBegin);
 		}		
 	}
-}
-
-vector<SHARED_PTR<TransportRouteResult>> prepareResults(TransportRoutingContext* ctx, vector<TransportRouteSegment>& results) {
-	sort(results.begin(), result.end(), TransportSegmentPriorityComparator(ctx));
-
-	vector<SHARED_PTR<TransportRouteResult>> lst;
-// 		System.out.println(String.format("Calculated %.1f seconds, found %d results, visited %d routes / %d stops, loaded %d tiles (%d ms read, %d ms total), loaded ways %d (%d wrong)",
-// 				(System.currentTimeMillis() - ctx.startCalcTime) / 1000.0, results.size(), 
-// 				ctx.visitedRoutesCount, ctx.visitedStops, 
-// 				ctx.quadTree.size(), ctx.readTime / (1000 * 1000), ctx.loadTime / (1000 * 1000),
-// 				ctx.loadedWays, ctx.wrongLoadedWays));
-
-	for(SHARED_PTR<TransportRouteSegment>& res : results) {
-		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
-			return vector<SHARED_PTR<TransportRouteResult>>();
-		}
-		SHARED_PTR<TransportRouteResult> route = make_shared<TransportRouteResult>(TransportRouteResult(ctx));
-		route->routeTime = res->distFromStart;
-		route->finishWalkDist = res->walkDist;
-		SHARED_PTR<TransportRouteSegment> p = res;
-		while (p.get()) {
-			if (ctx->calculationProgress.get() && ctx.calculationProgress.isCancelled()) {
-				return vector<SHARED_PTR<TransportRouteResult>>();
-			}
-			if (p.parentRoute.get()) {
-				SHARED_PTR<TransportRouteResultSegment> sg = make_shared<TransportRouteResultSegment>(TransportRouteResultSegment());
-				sg->route = p->parentRoute->road;
-				sg->start = p->parentRoute->segStart;
-				sg->end = p->parentStop;
-				sg->walkDist = p->parentRoute->walkDist;
-				sg->walkTime = sg->walkDist / ctx->cfg->walkSpeed;
-				sg->depTime = p->departureTime;
-				sg->travelDistApproximate = p->parentTravelDist;
-				sg->travelTime = p->parentTravelTime;
-				route->segments.insert(0, sg);
-			}
-			p = p->parentRoute;
-		}
-		// test if faster routes fully included
-		bool include = false;
-		for(SHARED_PTR<TransportRouteResult>& s : lst) {
-			if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
-				return null;
-			}
-			if(includeRoute(s, route)) {
-				include = true;
-				break;
-			}
-		}
-		if(!include) {
-			lst.push_back(route);
-			// System.out.println(route.toString());
-		} else {
-//				System.err.println(route.toString());
-		}
-	}
-	return lst;
-}
-
-//done
-bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute) {
-	if(testRoute->segments.size() < fastRoute->segments.size()) {
-		return false;
-	}
-	int32_t j = 0;
-	for(int32_t i = 0; i < fastRoute->segments.size(); i++, j++) {
-		SHARED_PTR<TransportRouteResultSegment> fs = fastRoute->segments.at(i);
-			while(j < testRoute.segments.size()) {
-				TransportRouteResultSegment ts = testRoute.segments.get(j);
-				if(fs->route->getId() != ts->route->getId()) {
-					j++;	
-				} else {
-					break;
-				}
-			}
-			if(j >= testRoute->segments.size()) {
-				return false;
-			}
-	}	
-	return true;
 }
 
 #endif //_OSMAND_TRANSPORT_ROUTE_PLANNER_CPP

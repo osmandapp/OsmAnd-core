@@ -1749,7 +1749,7 @@ bool getTransportIndex(int filePointer, TransportIndex*& ind) {
     return false;
 }
 
-void loadTransportRoutes(BinaryMapFile* file, int filePointers[], UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& result) {
+void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
     //todo is it ok to create CIS here?
     lseek(file->fd, 0, SEEK_SET);
     FileInputStream input(file->fd);
@@ -1758,8 +1758,7 @@ void loadTransportRoutes(BinaryMapFile* file, int filePointers[], UNORDERED(map)
     cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
 
     UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
-    int32_t filePointersSize = sizeof(&filePointers) / sizeof(filePointers[0]);
-    for (int i = 0; i < filePointersSize; i++) {
+    for (int i = 0; i < filePointers.size(); i++) {
         TransportIndex* ind;
         if (getTransportIndex(filePointers[i], ind)) {
             if (groupPoints.find(ind) == groupPoints.end()) {
@@ -2016,7 +2015,7 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 
 
 void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<MapDataObject*>& tempResult,
-		int renderedState) {
+		int& renderedState) {
 	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
@@ -2032,6 +2031,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 		// 	ids.insert(r->id);
 		// }
 		MapDataObject* obj = new MapDataObject;
+        bool add = true;
 		std::vector<uint32_t>::iterator typeIt = r->types.begin();
 		for (; typeIt != r->types.end(); typeIt++) {
 			uint32_t k = (*typeIt);
@@ -2046,7 +2046,9 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			}
 		}
 		if (add) {
-            obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
+            for (uint32_t s = 0; s < r->pointsX.size(); s++) {
+                obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
+            }
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
