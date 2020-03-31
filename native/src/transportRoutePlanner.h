@@ -3,15 +3,6 @@
 #include "routeCalculationProgress.h"
 #include "binaryRead.h"
 #include "commonOsmAndCore.h"
-#include "ElapsedTimer.h"
-#include "Logging.h"
-
-#include "transportRoutingConfiguration.h"
-#include "transportRoutingObjects.h"
-#include "transportRoutingContext.h"
-#include "transportRouteResult.h"
-#include "transportRouteResultSegment.h"
-#include "transportRouteSegment.h"
 
 #include <queue>
 
@@ -27,6 +18,9 @@ inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2D
 }
 
 struct TransportSegmentsComparator;
+struct TransportRouteSegment;
+struct TransportRoutingContext;
+struct TransportRouteResult;
 
 typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 

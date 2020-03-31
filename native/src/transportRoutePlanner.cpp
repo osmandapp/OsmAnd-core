@@ -2,6 +2,12 @@
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #include "transportRoutePlanner.h"
 #include "transportRoutingObjects.h"
+#include "transportRoutingConfiguration.h"
+#include "transportRoutingObjects.h"
+#include "transportRoutingContext.h"
+#include "transportRouteResult.h"
+#include "transportRouteResultSegment.h"
+#include "transportRouteSegment.h"
 
 
 struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
@@ -214,7 +220,7 @@ vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<Transpor
 				}
 			}
 			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments.find(segmentId)->second;
-			double distToEnd = getDistance(stop->lat, stop->lon, endLat, endLon);
+			double distToEnd = getDistance(stop->lat, stop->lon, ctx->endLat, ctx->endLon);
 
 			if (endSegments.find(segmentId) != endSegments.end() && distToEnd < ctx->cfg->walkRadius) {
 				if (finish == NULL || minDist > distToEnd) {

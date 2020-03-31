@@ -10,7 +10,6 @@
 #include "transportRoutePlanner.h"
 #include "transportRouteSegment.h"
 #include "ElapsedTimer.h"
-#include "Logging.h"
 
 struct TransportRoutingContext {
     

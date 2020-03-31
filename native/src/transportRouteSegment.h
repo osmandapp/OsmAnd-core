@@ -121,4 +121,4 @@ struct TransportRouteSegment {
     }
 };
 
-#endif _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
+#endif /*_OSMAND_TRANSPORT_ROUTE_SEGMENT_H*/
