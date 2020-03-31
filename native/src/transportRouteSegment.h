@@ -1,7 +1,7 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #include "transportRoutingObjects.h"
-
+// #include <boost/format.hpp>
 
 struct TransportRouteSegment {
     static const int32_t SHIFT = 10; // assume less than 1024 stops
