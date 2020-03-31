@@ -73,7 +73,6 @@ struct TransportRouteSegment {
     }
 
     int64_t getId() {
-        bool noErrors = true;
         int64_t l = road->id;
         l = l << SHIFT_DEPTIME;
 

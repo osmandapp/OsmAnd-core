@@ -100,7 +100,7 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRout
     return lst;
 }
 
-vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<TransportRoutingContext> ctx) {
+vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);

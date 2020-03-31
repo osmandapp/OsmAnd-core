@@ -25,8 +25,8 @@ struct TransportRouteResult;
 typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 
 vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(TransportRoutingContext& ctx);
-void updateCalculationProgress(TransportRoutingContext* ctx, TRANSPORT_SEGMENTS_QUEUE& queue);
-vector<SHARED_PTR<TransportRouteResult>> prepareResults(TransportRoutingContext& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results);
+void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, TRANSPORT_SEGMENTS_QUEUE& queue);
+vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results);
 bool includeRoute(TransportRouteResult& fastRoute, TransportRouteResult& testRoute);
 
 

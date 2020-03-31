@@ -181,6 +181,7 @@ struct Node {
         && std::abs(lat - thatObj->lat) < 0.00001 && std::abs(lon - thatObj->lon) < 0.00001) {
             return true;
         }
+        return false;
     }
 };
 
@@ -387,9 +388,9 @@ struct TransportRoute : public MapObject {
     }
 
     int32_t getAvgBothDistance() {
-        int32_t d = 0;
-        int32_t fSsize = forwardStops.size();
-        for (int i = 1; i < fSsize; i++) {
+        uint32_t d = 0;
+        uint64_t fSsize = forwardStops.size();
+        for (uint64_t i = 1; i < fSsize; i++) {
             d += getDistance(forwardStops.at(i-1)->lat, forwardStops.at(i-1)->lon, forwardStops.at(i)->lat, forwardStops.at(i)->lon);
         }
         return d;
