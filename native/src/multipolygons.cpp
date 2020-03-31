@@ -14,7 +14,7 @@ void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coor
 	}
 	double h = bottomY - topY;
 	double w = rightX - leftX;
-	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%.4f sy=%.4f ex=%.4f ey=%.4f - top/left [%d, %d] width/height [%.0f, %.0f]", msg.c_str(), id, id/128, 
+	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%.4f sy=%.4f ex=%.4f ey=%.4f - top/left [%d, %d] width/height [%.0f, %.0f]", msg.c_str(), id, id/64, 
 			(c.at(0).first-leftX)/w, (c.at(0).second - topY)/h,
 			(c.at(c.size()-1).first-leftX)/w, (c.at(c.size()-1).second - topY)/h,
 			leftX, topY, w, h);
