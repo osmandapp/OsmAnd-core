@@ -10,7 +10,8 @@
 //	static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 
 static const bool TRACE_ROUTING = false;
-static const double GPS_POSSIBLE_ERROR = 10;
+// Check issue #8649
+static const double GPS_POSSIBLE_ERROR = 7;
 
 inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToEnd, float o2DistanceFromStart,
 		float o2DistanceToEnd, float heuristicCoefficient) {
@@ -860,8 +861,9 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 			VISITED_MAP& visitedSegments, double distFromStart, double distanceToEnd,  
 			SHARED_PTR<RouteSegment>& segment, int segmentPoint, SHARED_PTR<RouteSegment>& next) {
 	if (next.get() != NULL) {
-		double obstaclesTime = ctx->config->router->calculateTurnTime(next, next->isPositive()? 
-				next->road->getPointsLength() - 1 : 0,  
+		double obstaclesTime = ctx->config->router->calculateTurnTime(next, 
+				// next->getSegmentStart(),
+				next->isPositive() ? next->road->getPointsLength() - 1 : 0,  
 				segment, segmentPoint);
 		distFromStart += obstaclesTime;
 		VISITED_MAP::iterator visIt = visitedSegments.find(calculateRoutePointId(next, next->isPositive()));
