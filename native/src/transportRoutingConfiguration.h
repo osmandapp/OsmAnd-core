@@ -78,13 +78,13 @@ class TransportRoutingConfigurationBuilder {
     SHARED_PTR<TransportRoutingConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
         SHARED_PTR<TransportRoutingConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
         i->router = router->build(params);
-        i->walkRadius = i->router->getIntAttribute("walkRadius", 1500.f);
-        i->walkChangeRadius = i->router->getIntAttribute("walkChangeRadius", 300.f);
-        i->zoomToLoadTiles = i->router->getIntAttribute("zoomToLoadTiles", 15.f);
+        i->walkRadius = i->router->getIntAttribute("walkRadius", 1500);
+        i->walkChangeRadius = i->router->getIntAttribute("walkChangeRadius", 300);
+        i->zoomToLoadTiles = i->router->getFloatAttribute("zoomToLoadTiles", 15.f);
         i->finishTimeSeconds = i->router->getIntAttribute("delayForAlternativesRoutes", 1200.f);
-        i->walkSpeed = i->router->getIntAttribute("minDefaultSpeed", 3.6f) / 3.6f;
+        i->walkSpeed = i->router->getFloatAttribute("minDefaultSpeed", 3.6f) / 3.6f;
         i->maxRouteTime = i->router->getIntAttribute("maxRouteTime", 60 * 60 * 10);
-        i->defaultTravelSpeed = i->router->getIntAttribute("maxDefaultSpeed", 60) / 3.6f;
+        i->defaultTravelSpeed = i->router->getFloatAttribute("maxDefaultSpeed", 60) / 3.6f;
         string mn = i->router->getAttribute("max_num_changes");
         int maxNumOfChanges = 3;
         try
