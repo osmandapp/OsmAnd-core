@@ -73,7 +73,6 @@ struct TransportRouteSegment {
     }
 
     int64_t getId() {
-        bool noErrors = true;
         int64_t l = road->id;
         l = l << SHIFT_DEPTIME;
 
@@ -121,4 +120,4 @@ struct TransportRouteSegment {
     }
 };
 
-#endif _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
+#endif /*_OSMAND_TRANSPORT_ROUTE_SEGMENT_H*/

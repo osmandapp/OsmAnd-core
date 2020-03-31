@@ -72,4 +72,4 @@ struct TransportRouteResultSegment {
         }
 };
 
-#endif _OSMAND_TRANSPORT_ROUTE_RESULT_SEGMENT_H
+#endif /*_OSMAND_TRANSPORT_ROUTE_RESULT_SEGMENT_H*/
