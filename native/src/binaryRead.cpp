@@ -676,7 +676,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 	routingIndex->completeRouteEncodingRules();
 	return true;
 }
-
+//checked - ok
 bool readTransportBounds(CodedInputStream* input, TransportIndex* ind) {
 	while(true){
 		int si;
@@ -720,15 +720,9 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kRoutesFieldNumber : {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
-				if (!skipUnknownFields(input, tag)) {
-					return false;
-				}
+				skipUnknownFields(input, tag);
 				break;
 			}
-
 			case OsmAnd::OBF::OsmAndTransportIndex::kNameFieldNumber : {
 				DO_((WireFormatLite::ReadString(input, &ind->name)));
 				break;
@@ -1141,8 +1135,8 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 //------ Transport Index Reading-----------------
 
 string regStr(UNORDERED(map)<int32_t, string>& stringTable, CodedInputStream* input) {
-	int32_t i = 0; 
-	WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i);
+	uint32_t i = 0; 
+	WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &i);
 	stringTable.insert({i, ""});
 	string s;
 	s.push_back((char) i);
@@ -1477,7 +1471,6 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch (tag) {
 			case OsmAnd::OBF::TransportRouteStop::kNameEnFieldNumber:
-				// DO_((WireFormatLite::ReadString(input, &value)));
 				transportStop->enName = regStr(stringTable, input);
 				break;
 			case OsmAnd::OBF::TransportRouteStop::kNameFieldNumber :

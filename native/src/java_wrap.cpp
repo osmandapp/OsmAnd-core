@@ -1636,9 +1636,10 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c.targetX = data[2];
 	c.targetY = data[3];
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
+	
 	vector<SHARED_PTR<TransportRouteResult>> r = buildTransportRoute(c);
 
-	// convert results
+	// // convert results
 	jobjectArray res = ienv->NewObjectArray(r.size(), jclass_NativeTransportRoutingResult, NULL);
 	for (uint i = 0; i < r.size(); i++) {
 		jobject resobj = convertPTResultToJava(ienv, r[i]);
