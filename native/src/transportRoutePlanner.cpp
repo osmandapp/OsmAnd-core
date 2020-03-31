@@ -2,7 +2,7 @@
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #include "transportRoutePlanner.h"
 #include "transportRoutingObjects.h"
-#include "transportRoutingContext.h"
+
 
 struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
 {
@@ -94,7 +94,7 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRout
     return lst;
 }
 
-vector<SHARED_PTR<TransportRouteResult>> buildRoute(SHARED_PTR<TransportRoutingContext> ctx) {
+vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<TransportRoutingContext> ctx) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);

@@ -16,6 +16,9 @@
 #include "transportRoutePlanner.h"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingContext.h"
+#include "transportRouteResult.h"
+#include "transportRouteResultSegment.h"
+#include "transportRouteSegment.h"
 //#include "routingConfiguration.h"
 //#include "routeSegmentResult.h"
 //#include "routeSegment.h"
@@ -1372,7 +1375,7 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	rConfig->maxRouteTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_maxRouteTime);
 	
 	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
-	//rConfig->router = ienv->NewGlobalRef(lrouter);//to do fix it in config struct
+	rConfig->router = ienv->NewGlobalRef(lrouter);//todo don't understand what wrong
 	
 	rConfig->walkSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkSpeed);
 	rConfig->defaultTravelSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_defaultTravelSpeed);
@@ -1547,7 +1550,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c.targetX = data[2];
 	c.targetY = data[3];
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
-	vector<SHARED_PTR<TransportRouteResult>> r = buildRoute(c);
+	vector<SHARED_PTR<TransportRouteResult>> r = buildTransportRoute(c);
 
 	// convert results
 	jobjectArray res = ienv->NewObjectArray(r.size(), jclass_NativeTransportRoutingResult, NULL);

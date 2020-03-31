@@ -6,6 +6,7 @@
 #include "Logging.h"
 #include "commonRendering.h"
 
+
 struct ResultJNIPublisher : ResultPublisher {
 	JNIEnv* env;
 	jobject o;

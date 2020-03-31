@@ -8,6 +8,7 @@
 #include "transportRoutingObjects.h"
 #include "routeCalculationProgress.h"
 #include "transportRoutePlanner.h"
+#include "transportRouteSegment.h"
 #include "ElapsedTimer.h"
 #include "Logging.h"
 
