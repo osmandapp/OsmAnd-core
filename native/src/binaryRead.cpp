@@ -1532,8 +1532,8 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
 			}
 			//todo check cast:
 			case OsmAnd::OBF::TransportRoute::kIdFieldNumber : {
-				uint32_t i;
-				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT64>(input, &i)));
+				uint64_t i;
+				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &i)));
 				transportRoute->id = (int64_t) i;
 				break;
 			}

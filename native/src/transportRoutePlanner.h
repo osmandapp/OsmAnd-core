@@ -5,13 +5,12 @@
 #include "commonOsmAndCore.h"
 #include "ElapsedTimer.h"
 #include "Logging.h"
+
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 
-#include <boost/format.hpp>
+// #include <boost/format.hpp>
 #include <queue>
-
-struct TransportRoutingContext;
 
 const bool MEASURE_TIME = false;
 const int64_t GEOMETRY_WAY_ID = -1;
@@ -119,15 +118,15 @@ struct TransportRouteSegment {
         return 1;
     }
     
-    static inline string formatTransporTime(int32_t i)
-    {
-        int32_t h = i / 60 / 6;
-        int32_t mh = i - h * 60 * 6;
-        int32_t m = mh / 6;
-        int32_t s = (mh - m * 6) * 10;
-        boost::format tm = boost::format("%02d:%02d:%02d ") % h % m % s;
-        return tm.str();
-    }
+    // static inline string formatTransporTime(int32_t i)
+    // {
+    //     int32_t h = i / 60 / 6;
+    //     int32_t mh = i - h * 60 * 6;
+    //     int32_t m = mh / 6;
+    //     int32_t s = (mh - m * 6) * 10;
+    //     boost::format tm = boost::format("%02d:%02d:%02d ") % h % m % s;
+    //     return tm.str();
+    // }
 
     string to_string() {
 //        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route: %s, stop: %s %s", road->name, road->forwardStops[segStart]->name, departureTime == -1 ? "" : formatTransporTime(departureTime));
@@ -203,7 +202,101 @@ struct TransportRouteResultSegment {
         }
 };
 
-struct TransportRouteResult;
+struct TransportRouteResult {
+    vector<SHARED_PTR<TransportRouteResultSegment>> segments;
+    double finishWalkDist;
+    double routeTime;
+    SHARED_PTR<TransportRoutingConfiguration> config;
+
+    TransportRouteResult(TransportRoutingContext* ctx) {
+        config = ctx->cfg;
+    }
+    
+    //ui/logging
+    double getWalkDist() {
+        double d = finishWalkDist;
+        for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
+            d += (*it)->walkDist;
+        }
+        return d;
+    }
+
+    //ui only
+    // double getWalkSpeed() {
+    //     cfg->walkSpeed;
+    // }
+    
+    //logging only
+    int getStops() {
+        int stops = 0;
+        for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
+            stops += ((*it)->end - (*it)->start);
+        }
+        return stops;
+    }
+
+    // ui only:
+    // bool isRouteStop (TransportStop stop) {
+    //     for (vector<TransportRouteResultSegment>::iterator it = segments.begin(); it != segments.end(); it++) {
+    //         if (find(*it->getTravelStops().begin(), *it->getTravelStops().end(), stop) != *it->getTravelStops().end()) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
+
+    //for ui/logs
+    double getTravelDist() {
+        double d = 0;
+        for (SHARED_PTR<TransportRouteResultSegment>& it : segments) {
+            d += it->getTravelDist();
+        }
+        return d;
+    }
+
+    //for ui/logs
+    double getTravelTime() {
+        double t = 0;
+        for (SHARED_PTR<TransportRouteResultSegment> seg : segments) {
+            if (config->useSchedule) {
+                SHARED_PTR<TransportSchedule> sts = seg->route->schedule;
+                for (int k = seg->start; k < seg->end; k++) {
+                    t += sts->avgStopIntervals[k] * 10;
+                }
+            } else {
+                t += config->getBoardingTime();
+                t += seg->travelTime;
+            }
+        }
+        return t;
+    }
+
+    //for ui/logs
+    double getWalkTime() {
+        return getWalkDist() / config->walkSpeed;
+    }
+    //for ui/logs
+    double getChangeTime() {
+        return config->changeTime;
+    }
+    //for ui/logs
+    double getBoardingTime() {
+        return config->boardingTime;
+    }
+    //for ui/logs
+    int getChanges() {
+        return segments.size() - 1;
+    }
+
+    string to_string() {
+        //todo add logs
+        return "";
+    }
+};
+
+
+
+
 
 inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2DistFromStart) {
     if(o1DistFromStart == o2DistFromStart) {
@@ -212,16 +305,7 @@ inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2D
     return o1DistFromStart < o2DistFromStart ? -1 : 1;
 }
 
-struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
-{
-    SHARED_PTR<TransportRoutingContext> ctx;
-    TransportSegmentsComparator(SHARED_PTR<TransportRoutingContext>& c) : ctx(c) {}
-    bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
-    {
-        int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
-        return cmp > 0;
-    }
-};
+struct TransportSegmentsComparator;
 
 typedef priority_queue<SHARED_PTR<TransportRouteSegment>, vector<SHARED_PTR<TransportRouteSegment>>, TransportSegmentsComparator> TRANSPORT_SEGMENTS_QUEUE;
 

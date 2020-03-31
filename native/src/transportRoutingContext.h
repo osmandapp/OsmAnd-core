@@ -42,7 +42,7 @@ struct TransportRoutingContext {
     int32_t walkRadiusIn31;
     int32_t walkChangeRadiusIn31;
 
-    TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> cfg_, vector<SHARED_PTR<TransportIndex>>& indexes)
+    TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> cfg_)
     {
         cfg = cfg_;
         walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
