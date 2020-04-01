@@ -2,6 +2,7 @@
 #define _OSMAND_TRANSPORT_ROUTE_RESULT_H
 #include "transportRouteResultSegment.h"
 #include "transportRoutingConfiguration.h"
+#include "transportRoutingContext.h"
  
 
 struct TransportRouteResult {
