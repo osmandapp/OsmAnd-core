@@ -31,6 +31,8 @@ static uint zoomForBaseRouteRendering  = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 static uint zoomDetailedForCoastlines = 17;
+std::vector<BinaryMapFile* > openFiles;
+std::vector<TransportIndex*> transportIndexesList;
 OsmAnd::OBF::OsmAndStoredIndex* cache = NULL;
 
 #ifdef MALLOC_H 
@@ -3000,4 +3002,8 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 	
 	openFiles.push_back(mapFile);
 	return mapFile;
+}
+
+std::vector<BinaryMapFile* > getOpenMapFiles() {
+    return openFiles;
 }

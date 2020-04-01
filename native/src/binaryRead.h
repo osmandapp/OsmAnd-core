@@ -771,8 +771,7 @@ struct SearchQuery {
 	}
 };
 
-std::vector<BinaryMapFile* > openFiles;
-std::vector<TransportIndex*> transportIndexesList;
+std::vector<BinaryMapFile* > getOpenMapFiles();
 
 void searchTransportIndex(SearchQuery* q, BinaryMapFile* file);
 
