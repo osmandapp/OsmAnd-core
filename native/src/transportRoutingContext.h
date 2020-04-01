@@ -46,7 +46,7 @@ struct TransportRoutingContext {
         cfg = cfg_;
         walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
         walkChangeRadiusIn31 = (int) (cfg->walkChangeRadius / getTileDistanceWidth(31));
-        for (BinaryMapFile* i : openFiles)  {
+        for (BinaryMapFile* i : getOpenMapFiles())  {
             routeMap.insert({i, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>()});
         }
     }
@@ -110,6 +110,7 @@ struct TransportRoutingContext {
         
         vector<SHARED_PTR<TransportStop>> stops;
         
+        auto openFiles = getOpenMapFiles();
         std::vector<BinaryMapFile*>::iterator it, end;
         for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it) {
             q->transportResults.clear();
