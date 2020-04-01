@@ -10,7 +10,6 @@
 #include "google/protobuf/wire_format_lite.cc"
 #include "proto/OBF.pb.h"
 #include "proto/osmand_index.pb.h"
-#include "transportRoutingObjects.h"
 #if defined(WIN32)
 #undef min
 #undef max
