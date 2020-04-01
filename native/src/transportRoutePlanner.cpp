@@ -21,7 +21,17 @@ struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<Trans
     }
 };
 
-bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute) {
+TransportRoutePlanner::TransportRoutePlanner()
+{
+    
+}
+
+TransportRoutePlanner::~TransportRoutePlanner()
+{
+    
+}
+
+bool TransportRoutePlanner::includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute) {
     if(testRoute->segments.size() < fastRoute->segments.size()) {
         return false;
     }
@@ -43,7 +53,7 @@ bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<Transp
     return true;
 }
 
-vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results) {
+vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results) {
     sort(results.begin(), results.end(), TransportSegmentsComparator(ctx));
 
     vector<SHARED_PTR<TransportRouteResult>> lst;
@@ -100,7 +110,7 @@ vector<SHARED_PTR<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRout
     return lst;
 }
 
-vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
+vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     //todo add counter
 
 	TransportSegmentsComparator trSegmComp(ctx);
@@ -276,7 +286,7 @@ vector<SHARED_PTR<TransportRouteResult>> buildTransportRoute(SHARED_PTR<Transpor
 // 	}
 // }
 
-void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {
+void TransportRoutePlanner::updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {
 	if (ctx->calculationProgress.get()) {
 		ctx->calculationProgress->directSegmentQueueSize = queue.size();
 		if (queue.size() > 0) {

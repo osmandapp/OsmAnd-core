@@ -1,6 +1,7 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #include "transportRoutingObjects.h"
+#include "Logging.h"
 // #include <boost/format.hpp>
 
 struct TransportRouteSegment {

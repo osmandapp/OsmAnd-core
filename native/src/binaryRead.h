@@ -771,6 +771,13 @@ struct SearchQuery {
 	}
 };
 
+std::vector<BinaryMapFile* > openFiles;
+std::vector<TransportIndex*> transportIndexesList;
+
+void searchTransportIndex(SearchQuery* q, BinaryMapFile* file);
+
+void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result);
+
 void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap);
 
 void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub);

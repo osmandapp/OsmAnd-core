@@ -3,7 +3,6 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include "binaryRead.h"
-#include "binaryRead.cpp"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 #include "routeCalculationProgress.h"
@@ -135,7 +134,7 @@ struct TransportRoutingContext {
                         SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
                         if (route == nullptr) {
                             // TODO: add stop name
-                            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop ", rr);
+//                            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop ", rr);
                         } else if (multifileStop == stop ||
                                 (!multifileStop->hasRoute(route->id) &&
                                         !multifileStop->isRouteDeleted(route->id))) {
