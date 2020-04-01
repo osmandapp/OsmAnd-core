@@ -82,9 +82,8 @@ struct TransportRoutingConfiguration {
     
     dynbitset getRawBitset(std::string tg, std::string vl)
     {
-        dynbitset bs;
         int rawType = getRawType(tg, vl);
-        bs.set(rawType);
+        dynbitset bs(rawType);
         return bs;
     }
     
@@ -112,7 +111,7 @@ class TransportRoutingConfigurationBuilder {
 
 //    SHARED_PTR<GeneralRouter> router;
 //    MAP_STR_STR attributes;
-//    
+//
 //    SHARED_PTR<TransportRoutingConfiguration> build(SHARED_PTR<GeneralRouter> router, const MAP_STR_STR& params = MAP_STR_STR()) {
 //        SHARED_PTR<TransportRoutingConfiguration> i = std::make_shared<TransportRoutingConfiguration>();
 //        i->router = router->build(params);
@@ -133,7 +132,7 @@ class TransportRoutingConfigurationBuilder {
 //            // Ignore
 //        }
 //        i->maxNumberOfChanges = maxNumOfChanges;
-//        
+//
 //        RouteAttributeContext& obstacles = i->router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
 //        dynbitset bs = i->getRawBitset("time", "stop");
 //        i->stopTime = obstacles.evaluateInt(bs, 30);
@@ -141,7 +140,7 @@ class TransportRoutingConfigurationBuilder {
 //        i->changeTime = obstacles.evaluateInt(bs, 180);
 //        bs = i->getRawBitset("time", "boarding");
 //        i->boardingTime = obstacles.evaluateInt(bs, 180);
-//        
+//
 //        RouteAttributeContext& spds = i->router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
 //        bs = i->getRawBitset("route", "walk");
 //        i->walkSpeed = spds.evaluateFloat(bs, 3.6f) / 3.6f;
