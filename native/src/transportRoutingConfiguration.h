@@ -30,6 +30,8 @@ struct TransportRoutingConfiguration {
 
     MAP_STR_INT rawTypes;
     MAP_STR_FLOAT speed;
+
+    TransportRoutingConfiguration() {}
     
     TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter, MAP_STR_STR params) {
         if(prouter != nullptr) {

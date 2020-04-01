@@ -1626,16 +1626,16 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 		jintArray  coordinates, jobject jTransportRoutingConfig, jobject progress) {
 	SHARED_PTR<TransportRoutingConfiguration> trConfig = SHARED_PTR<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
 	parseTransportRoutingConfiguration(ienv, trConfig, jTransportRoutingConfig);
-	TransportRoutingContext c(trConfig);
-	c.calculationProgress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
+	SHARED_PTR<TransportRoutingContext> c = make_shared<TransportRoutingContext>(trConfig);
+	c->calculationProgress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
-	c.startX = data[0];
-	c.startY = data[1];
-	c.targetX = data[2];
-	c.targetY = data[3];
+	c->startX = data[0];
+	c->startY = data[1];
+	c->targetX = data[2];
+	c->targetY = data[3];
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
-	
-	vector<SHARED_PTR<TransportRouteResult>> r = buildTransportRoute(c);
+	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>(); 
+	vector<SHARED_PTR<TransportRouteResult>> r = tplanner->buildTransportRoute(c);
 
 	// // convert results
 	jobjectArray res = ienv->NewObjectArray(r.size(), jclass_NativeTransportRoutingResult, NULL);
