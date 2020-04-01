@@ -1,7 +1,7 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_PLANNER_H
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_H
+#include "CommonCollections.h"
 #include "routeCalculationProgress.h"
-#include "binaryRead.h"
 #include "commonOsmAndCore.h"
 
 #include <queue>
@@ -37,9 +37,6 @@ public:
 private:
     bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute);
     void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, priority_queue<SHARED_PTR<TransportRouteSegment>>& queue);
-    
-    
-    
 };
 
 #endif // _OSMAND_TRANSPORT_ROUTE_PLANNER_H

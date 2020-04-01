@@ -25,7 +25,7 @@ struct MapObject {
             }
             return names;
         }
-        map<string, string> tmp;
+        UNORDERED(map)<string, string> tmp;
         tmp.insert(names.begin(), names.end());
         names.insert({"en", enName});
         return names;
@@ -70,7 +70,7 @@ struct TransportStop : public MapObject {
     int32_t y31;
     vector<SHARED_PTR<TransportStopExit>> exits;
     vector<SHARED_PTR<TransportRoute>> routes;
-    map<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
+    UNORDERED(map)<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
     
     bool hasRoute(int64_t routeId) {
         return std::find(routesIds.begin(), routesIds.end(), routeId) != deletedRoutesIds.end();
@@ -343,7 +343,7 @@ struct TransportRoute : public MapObject {
 		}
 		if (forwardStops.size() > 0) {
 			// resort ways to stops order 
-            map<SHARED_PTR<Way>, pair<int, int>> orderWays;
+            UNORDERED(map)<SHARED_PTR<Way>, pair<int, int>> orderWays;
 			for (SHARED_PTR<Way> w : forwardWays) {
 				pair<int, int> pair;
                 pair.first = 0;
