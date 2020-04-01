@@ -1387,7 +1387,7 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
 	//to do
-	// rConfig->router->
+	// rConfig->router-> 
 	ienv->DeleteGlobalRef(lrouter);
 }
 
@@ -1458,7 +1458,7 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 	ienv->SetIntField(jstop, jfield_NativeTransportStop_x31, stop->x31);
 	ienv->SetIntField(jstop, jfield_NativeTransportStop_y31, stop->y31);
 
-	//maybe we should obscure this field completly?
+	//maybe we should obscure this field completly? need to look if this info needed for result
 	jobjectArray j_routes = ienv->NewObjectArray(stop->routes.size(), jclass_NativeTransportRoute, NULL);
 	for (int i = 0; i < stop->routes.size(); i++){
 		jobject tmp = convertTransportRouteToJava(ienv, stop->routes.at(i));
@@ -1490,8 +1490,6 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 		ienv->DeleteLocalRef(j_pTStopExit_x31s);
 		ienv->DeleteLocalRef(j_pTStopExit_y31s);
 		ienv->DeleteLocalRef(j_pTStopExit_refs);
-		// ienv->DeleteLocalRef(tmpX);
-		// ienv->DeleteLocalRef(tmpY);
 	}
 	
 	jobjectArray j_referenceToRoutesKeys = ienv->NewObjectArray(stop->referencesToRoutesMap.size(), jclassString, NULL);
@@ -1509,7 +1507,6 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 		ienv->SetObjectArrayElement(j_referenceToRoutesVals, n, jrefVals);
 		ienv->DeleteLocalRef(jrefKey);
 		ienv->DeleteLocalRef(jrefVals);
-		// ienv->DeleteLocalRef(tmp);
 		n++;
 	}
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_referenceToRoutesKeys, j_referenceToRoutesKeys);
@@ -1571,7 +1568,8 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> rou
 	jstring j_color = ienv->NewStringUTF(route->color.c_str());
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_color, j_color);
 	ienv->DeleteLocalRef(j_color);
-
+	
+	// ---todo
 	// jobjectArray j_forwardStops = ienv->NewObjectArray(route->forwardStops.size(), jclass_NativeTransportStop, NULL);
 	// for (int i = 0; i < route->forwardStops.size(); i++) {
 	// 	jobject j_stop = convertTransportStopToJava(ienv, route->forwardStops.at(i));
