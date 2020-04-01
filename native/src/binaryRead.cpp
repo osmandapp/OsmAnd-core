@@ -870,6 +870,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file, bool useLive
 			file->indexes.push_back(tIndex);
 			
 			input->Seek(tIndex->filePointer + tIndex->length);
+            break;
 		}
 		case OsmAnd::OBF::OsmAndStructure::kVersionConfirmFieldNumber: {
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &versionConfirm)));
