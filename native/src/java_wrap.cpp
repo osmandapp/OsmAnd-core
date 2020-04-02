@@ -14,8 +14,8 @@
 #include "binaryRoutePlanner.h"
 #include "routingContext.h"
 #include "transportRoutePlanner.h"
-#include "transportRoutingConfiguration.h"
 #include "transportRoutingContext.h"
+#include "transportRoutingConfiguration.h"
 #include "transportRouteResult.h"
 #include "transportRouteResultSegment.h"
 #include "transportRouteSegment.h"
@@ -571,7 +571,7 @@ jclass jclass_NativeTransportRoutingResult = NULL;
 jfieldID jfield_NativeTransportRoutingResult_segments = NULL;
 jfieldID jfield_NativeTransportRoutingResult_finishWalkDist = NULL;
 jfieldID jfield_NativeTransportRoutingResult_routeTime = NULL;
-jmethodID jmethod_NativeTransportRoutingResult_init = NULL; //?
+jmethodID jmethod_NativeTransportRoutingResult_init = NULL; 
 
 jclass jclass_NativeTransportRouteResultSegment = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_route = NULL;
@@ -582,7 +582,7 @@ jfieldID jfield_NativeTransportRouteResultSegment_start = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_end = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_walkDist = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_depTime = NULL;
-jmethodID jmethod_NativeTransportRouteResultSegment_init = NULL; //?
+jmethodID jmethod_NativeTransportRouteResultSegment_init = NULL; 
 
 jclass jclass_NativeTransportRoute = NULL;
 jfieldID jfield_NativeTransportRoute_id = NULL;
@@ -608,7 +608,7 @@ jfieldID jfield_NativeTransportRoute_waysIds = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesIds = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLats = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLons = NULL;
-jmethodID jmethod_NativeTransportRoute_init = NULL; //?
+jmethodID jmethod_NativeTransportRoute_init = NULL; 
 
 jclass jclass_NativeTransportStop = NULL;
 jfieldID jfield_NativeTransportStop_id = NULL;
@@ -632,7 +632,7 @@ jfieldID jfield_NativeTransportStop_pTStopExit_y31s = NULL;
 jfieldID jfield_NativeTransportStop_pTStopExit_refs = NULL;
 jfieldID jfield_NativeTransportStop_referenceToRoutesKeys = NULL;
 jfieldID jfield_NativeTransportStop_referenceToRoutesVals = NULL;
-jmethodID jmethod_NativeTransportStop_init = NULL; //?
+jmethodID jmethod_NativeTransportStop_init = NULL;
 
 
 
@@ -1387,11 +1387,11 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
 	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
 	
-	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
-	jobject router = ienv->NewGlobalRef(lrouter);
-	//to do
-	// rConfig->router-> 
-	ienv->DeleteGlobalRef(lrouter);
+	//to do if needed
+	// jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
+	// jobject router = ienv->NewGlobalRef(lrouter);
+
+	// ienv->DeleteGlobalRef(lrouter);
 }
 
 jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop) {
@@ -1687,6 +1687,8 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c->startY = data[1];
 	c->targetX = data[2];
 	c->targetY = data[3];
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "cords start: %d / %d, end: %d/%d", 
+	c->startX, c->startY, c->targetX, c->targetY);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>(); 
 	vector<SHARED_PTR<TransportRouteResult>> r = tplanner->buildTransportRoute(c);
