@@ -60,12 +60,11 @@ struct TransportRoutingContext {
         return getDistance(lon1, lat1, lon2, lat2);
     }
     
-    //todo need to be checked, unclear if its same result as in java
     void calcLatLons() {
-        startLat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, startY);
-        startLon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, startX);
-        endLat = getLatitudeFromTile(TRANSPORT_STOP_ZOOM, targetY);
-        endLon = getLongitudeFromTile(TRANSPORT_STOP_ZOOM, targetX);
+        startLat = get31LatitudeY(startY);
+        startLon = get31LongitudeX(startX);
+        endLat = get31LatitudeY(targetY);
+        endLon = get31LongitudeX(targetX);
     }
 
     std::vector<SHARED_PTR<TransportRouteSegment>> getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> res) {
@@ -103,18 +102,29 @@ struct TransportRoutingContext {
         loadTime.Pause();
         return res;
     }
+    
+    SearchQuery* buildSearchTransportRequest(int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>>& stops)
+    {
+        SearchQuery* request = new SearchQuery();
+        request->transportResults = stops;
+        request->left = sleft >> (31 - TRANSPORT_STOP_ZOOM);
+        request->right = sright >> (31 - TRANSPORT_STOP_ZOOM);
+        request->top = stop >> (31 - TRANSPORT_STOP_ZOOM);
+        request->bottom = sbottom >> (31 - TRANSPORT_STOP_ZOOM);
+        request->limit = limit;
+        return request;
+    }
 
     std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y) {
         //long nanoTime = System.nanoTime();
         vector<SHARED_PTR<TransportRouteSegment>> lst;
         int pz = (31 - cfg->zoomToLoadTiles);
-        
-        SearchQuery *q = new SearchQuery((uint32_t) (x << pz), (uint32_t) ((x + 1) << pz), (uint32_t)(y << pz), (uint32_t)((y+1) << pz));
+        vector<SHARED_PTR<TransportStop>> stops;
+        SearchQuery *q = buildSearchTransportRequest((x << pz), ((x + 1) << pz), (y << pz), ((y+1) << pz), -1, stops);
+        new SearchQuery();
         UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
         UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
         vector<SHARED_PTR<TransportStop>> loadedTransportStopsVals;
-        
-        vector<SHARED_PTR<TransportStop>> stops;
         
         auto openFiles = getOpenMapFiles();
         std::vector<BinaryMapFile*>::iterator it, end;
