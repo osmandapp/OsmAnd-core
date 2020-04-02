@@ -762,8 +762,12 @@ struct SearchQuery {
 		left(l), right(r), top(t), bottom(b) {
 	}
 		
-	SearchQuery(){
-
+	SearchQuery() {
+        numberOfAcceptedObjects = numberOfVisitedObjects = 0;
+        numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
+        oceanTiles = 0;
+        ocean = 0;
+        limit = -1;
 	}
 
 	bool publish(MapDataObject* obj) {

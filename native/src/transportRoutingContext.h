@@ -67,7 +67,7 @@ struct TransportRoutingContext {
         endLon = get31LongitudeX(targetX);
     }
 
-    std::vector<SHARED_PTR<TransportRouteSegment>> getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> res) {
+    void getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>>& res) {
         loadTime.Start();
         int32_t d = change ? walkChangeRadiusIn31 : walkRadiusIn31;
         int32_t lx = (sx - d) >> (31 - cfg->zoomToLoadTiles);
@@ -100,7 +100,6 @@ struct TransportRoutingContext {
             }
         }
         loadTime.Pause();
-        return res;
     }
     
     SearchQuery* buildSearchTransportRequest(int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>>& stops)
@@ -121,7 +120,6 @@ struct TransportRoutingContext {
         int pz = (31 - cfg->zoomToLoadTiles);
         vector<SHARED_PTR<TransportStop>> stops;
         SearchQuery *q = buildSearchTransportRequest((x << pz), ((x + 1) << pz), (y << pz), ((y+1) << pz), -1, stops);
-        new SearchQuery();
         UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
         UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
         vector<SHARED_PTR<TransportStop>> loadedTransportStopsVals;
