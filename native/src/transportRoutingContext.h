@@ -78,10 +78,16 @@ struct TransportRoutingContext {
         for(int32_t x = lx; x <= rx; x++) {
             for(int32_t y = ty; y <= by; y++) {
                 int64_t tileId = (((int64_t) x) << (cfg->zoomToLoadTiles + 1)) + y;
-                vector<SHARED_PTR<TransportRouteSegment>> list = quadTree.find(tileId)->second;
-                if (quadTree.find(tileId) == quadTree.end()) {
+                vector<SHARED_PTR<TransportRouteSegment>> list;
+                auto it = quadTree.find(tileId);
+                
+                if (it == quadTree.end()) {
                     list = loadTile(x, y);
                     quadTree.insert({tileId, list});
+                }
+                else
+                {
+                    list = it->second;
                 }
                 for (SHARED_PTR<TransportRouteSegment> it : list) {
                     SHARED_PTR<TransportStop> st = it->getStop(it->segStart);
