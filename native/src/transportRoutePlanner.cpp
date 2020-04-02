@@ -114,8 +114,10 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 
 	TransportSegmentsComparator trSegmComp(ctx);
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
-    vector<SHARED_PTR<TransportRouteSegment>> startStops = ctx->getTransportStops(ctx->startX, ctx->startY, false, vector<SHARED_PTR<TransportRouteSegment>>());
-    vector<SHARED_PTR<TransportRouteSegment>> endStops = ctx->getTransportStops(ctx->targetX, ctx->targetY, false, vector<SHARED_PTR<TransportRouteSegment>>());
+    vector<SHARED_PTR<TransportRouteSegment>> startStops;
+    ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
+    vector<SHARED_PTR<TransportRouteSegment>> endStops;
+    ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
     UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
 
 	ctx->calcLatLons();
@@ -200,7 +202,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 				break;
 			}
 			sgms.clear();
-			sgms = ctx->getTransportStops(stop->x31, stop->y31, true, sgms);
+			ctx->getTransportStops(stop->x31, stop->y31, true, sgms);
 			ctx->visitedStops++;
 			for (SHARED_PTR<TransportRouteSegment>& sgm : sgms) {
 				if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {

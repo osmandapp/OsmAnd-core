@@ -1323,8 +1323,8 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 		if (init == 0xf) {
 			init = 0;
 			// coordinates are init
-			if (cleft  < (uint)req->left || cright > (uint)req->right || 
-				cbottom > (uint)req->bottom || ctop < (uint)req->top) {
+			if (cright < req->left || cleft > req->right ||
+				ctop > req->bottom || cbottom < req->top) {
 				return false;
 			} else {
 				req->numberOfAcceptedSubtrees++;
@@ -1411,6 +1411,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 			}
 		}
 	}
+    return true;
 }
 
 bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule> schedule) {
