@@ -145,7 +145,7 @@ struct TransportRoutingContext {
                     stop->referencesToRoutes.clear();
                 }
                 if (rrs.size() > 0 && !multifileStop->isDeleted()) {
-                    for (int32_t& rr : rrs) {
+                    for (int32_t rr : rrs) {
                         SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
                         if (route == nullptr) {
                             // TODO: add stop name
@@ -191,10 +191,11 @@ struct TransportRoutingContext {
         while(it != stops.end()) {
             int64_t stopId = (*it)->id;
             localRoutesToLoad.clear();
-            SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
+            const auto stop = loadedTransportStops.find(stopId);
+            SHARED_PTR<TransportStop> multifileStop = stop == loadedTransportStops.end() ? nullptr : stop->second;
             vector<int64_t> routesIds = (*it)->routesIds;
             vector<int64_t> delRIds = (*it)->deletedRoutesIds;
-            if (loadedTransportStops.find(stopId) == loadedTransportStops.end()) {
+            if (stop == loadedTransportStops.end()) {
                 loadedTransportStops.insert({stopId, *it});
 //                loadedTransportStopsVals.push_back(*it);
                 multifileStop = *it;

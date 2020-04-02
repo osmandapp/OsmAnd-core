@@ -333,7 +333,7 @@ inline bool readInt(CodedInputStream* input, uint32_t* sz ){
 	if (!input->ReadRaw(buf, 4)) {
 		return false;
 	}
-	*sz = ((buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + (buf[3] << 0));
+	*sz = ((buf[0] << 24) + (buf[1] << 16) + (buf[2] << 8) + buf[3]);
 	return true;
 }
 
@@ -1200,7 +1200,7 @@ bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* in
 
 	uint32_t tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 	if(OsmAnd::OBF::TransportStop::kDxFieldNumber != tag) {
-		return NULL;
+		return false;
 	}	
 	int32_t x = 0; 
 	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &x)));
@@ -1208,16 +1208,15 @@ bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* in
 	
 	tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 	if(OsmAnd::OBF::TransportStop::kDyFieldNumber != tag) {
-		return NULL;	
+		return false;
 	}
 	
 	int32_t y = 0;
 	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &y)));
 	y += ptop;
-	if(req->right < x || req->left > x || req->top > y || req->bottom < y){
-		// if (!input->SkipRawBytes(input->BytesUntilLimit()) {
-			return NULL; 
-		// }
+	if(req->right < x || req->left > x || req->top > y || req->bottom < y) {
+        input->Skip(input->BytesUntilLimit());
+        return false;
 	}
 	
 	req->numberOfAcceptedObjects++;
@@ -1258,18 +1257,18 @@ bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* in
 			}
 			case OsmAnd::OBF::TransportStop::kAdditionalNamePairsFieldNumber : {
 				// if (stringTable.get()) {
-					uint32_t sizeL;
-					input->ReadVarint32(&sizeL); 	
-					int32_t oldRef = input->PushLimit(sizeL);
-					while (input->BytesUntilLimit() > 0) {
-						int32_t l;
-						int32_t n;
-						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &l)));
-						DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &n)));
-
-						stop->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
-					}
-					input->PopLimit(oldRef);
+                uint32_t sizeL;
+                input->ReadVarint32(&sizeL);
+                int32_t oldRef = input->PushLimit(sizeL);
+                while (input->BytesUntilLimit() > 0) {
+                    int32_t l;
+                    int32_t n;
+                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &l)));
+                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &n)));
+                    
+                    stop->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
+                }
+                input->PopLimit(oldRef);
 				// } else {
 				// 	skipUnknownFields(input, t);
 				// }
@@ -1291,15 +1290,16 @@ bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* in
 				input->PopLimit(oldLimit);
 				break;
 			}
+            case 0: {
+                stop->referencesToRoutes = req->cacheTypes;
+                stop->deletedRoutesIds = req->cacheIdsA;
+                stop->routesIds = req->cacheIdsB;
+                // if(dataObject->names.find("en").length() == 0){
+                //     dataObject->enName = TransliterationHelper.transliterate(dataObject->name);
+                // }
+                return true;
+            }
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					stop->referencesToRoutes = req->cacheTypes;
-					stop->deletedRoutesIds = req->cacheIdsA;
-					stop->routesIds = req->cacheIdsB;
-					// if(dataObject->names.find("en").length() == 0){
-					// 	dataObject->enName = TransliterationHelper.transliterate(dataObject->name);
-					// }
-				}
 				if (!skipUnknownFields(input, t)) {
 					return false;
 				}
@@ -1317,7 +1317,6 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 	int ctop = 0;
 	int cbottom = 0;
 	int si;
-	uint64_t baseId = 0;
 
 	req->numberOfReadSubtrees++;
 	int tag;
@@ -1338,6 +1337,12 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 		}
 
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
+            case OsmAnd::OBF::TransportStopsTree::kBottomFieldNumber: {
+                DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
+                cbottom = si + pbottom;
+                init |= 1;
+                break;
+            }
 			case OsmAnd::OBF::TransportStopsTree::kLeftFieldNumber: {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				cleft = si + pleft;
@@ -1356,15 +1361,9 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				init |= 8;
 				break;
 			}
-			case OsmAnd::OBF::TransportStopsTree::kBottomFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
-				cbottom = si + pbottom;
-				init |= 1;
-				break;
-			}	
 			case OsmAnd::OBF::TransportStopsTree::kLeafsFieldNumber: {
 				int stopOffset = input->TotalBytesRead();
-				uint32_t length;
+				uint32_t length = 0;
 				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 				int oldLimit = input->PushLimit(length);
 				
@@ -1373,9 +1372,8 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				}
 				req->numberOfVisitedObjects++;
                 TransportStop* transportStop = new TransportStop();
-                readTransportStop(stopOffset, transportStop, input, cleft, cright, ctop, cbottom, req, stringTable);
-			
-				req->transportResults.push_back(SHARED_PTR<TransportStop>(transportStop)); //TODO check
+                if (readTransportStop(stopOffset, transportStop, input, cleft, cright, ctop, cbottom, req, stringTable))
+                    req->transportResults.push_back(SHARED_PTR<TransportStop>(transportStop));
 				
 				input -> PopLimit(oldLimit);
 				break;
@@ -1397,6 +1395,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				break;
 			}
 			case OsmAnd::OBF::TransportStopsTree::kBaseIdFieldNumber : {
+                uint64_t baseId = 0;
 				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &baseId)));
 				if (lastIndexResult != -1) {
 					for (int i = lastIndexResult; i < req->transportResults.size(); i++) {
@@ -1657,24 +1656,32 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 }
 
 void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
-    for (SHARED_PTR<TransportStopExit> exit : s->exits)    {
+    for (SHARED_PTR<TransportStopExit> exit : s->exits) {
         if (exit->ref.size() > 0) {
-            exit->ref = stringTable.find(exit->ref.at(0))->second;
+            const auto it = stringTable.find(exit->ref.at(0));
+            exit->ref = it != stringTable.end() ? it->second : "";
         }
     }
     if (s->name.size() > 0) {
-        s->name = stringTable.find(s->name.at(0))->second;
+        const auto it = stringTable.find(s->name.at(0));
+        s->name = it != stringTable.end() ? it->second : "";
+        
     }
     if (s->enName.size() > 0) {
-        s->enName = stringTable.find(s->enName.at(0))->second;
+        const auto it = stringTable.find(s->enName.at(0));
+        s->enName = it != stringTable.end() ? it->second : "";
     }
-    map<string, string> namesMap;
+    UNORDERED(map)<string, string> namesMap;
     if (s->names.size() > 0) {
         namesMap.insert(s->names.begin(), s->names.end());
         s->names.clear();
-        map<string, string>::iterator it = namesMap.begin();
+        UNORDERED(map)<string, string>::iterator it = namesMap.begin();
         while (it != namesMap.end()) {
-            s->names.insert({stringTable.find(it->first.at(0))->second, stringTable.find(it->second.at(0))->second});
+            const auto first = stringTable.find(it->first.at(0));
+            const auto second = stringTable.find(it->second.at(0));
+            if (first != stringTable.end() && second != stringTable.end())
+                s->names.insert({first->second, second->second});
+            it++;
         }
     }
 }
