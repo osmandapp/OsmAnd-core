@@ -6,8 +6,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
-cp -rpf "mkspecs/macx-clang" "mkspecs/macx-clang-libc++-32"
-cp -rpf "mkspecs/macx-clang" "mkspecs/macx-clang-libc++-64"
+cp -rpf "mkspecs/macx-clang" "mkspecs/macx-clang-64"
 cp -rpf "mkspecs/linux-clang" "mkspecs/linux-clang-32"
 cp -rpf "mkspecs/linux-clang" "mkspecs/linux-clang-64"
 cp -rpf "mkspecs/win32-g++" "mkspecs/win32-g++-32"

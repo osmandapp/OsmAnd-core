@@ -70,7 +70,7 @@ makeStaticAndSharedFlavor()
 
 if [[ "$targetOS" == "linux" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
+		-release -opensource -confirm-license -c++std c++14 -no-accessibility -sql-sqlite -qt-sqlite
 		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
@@ -105,7 +105,7 @@ if [[ "$targetOS" == "linux" ]]; then
 	fi
 elif [[ "$targetOS" == "macosx" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-debug-and-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
+		-debug-and-release -opensource -confirm-license -c++std c++14 -no-accessibility -sql-sqlite -qt-sqlite
 		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
@@ -113,14 +113,11 @@ elif [[ "$targetOS" == "macosx" ]]; then
 	" | tr '\n' ' ')
 
 	if [[ "$compiler" == "clang" ]]; then
-		if [[ "$targetArch" == "i386" ]]; then
+		if [[ "$targetArch" == "x86_64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "macosx.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
-		elif [[ "$targetArch" == "x86_64" ]]; then
-			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "macosx.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "macosx.clang-x86_64" "macx-clang-64" "$QTBASE_CONFIGURATION"
 		else
-			echo "Only 'i386' and 'x86_64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			echo "Only 'x86_64' is supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
 		fi
 	else
@@ -128,7 +125,7 @@ elif [[ "$targetOS" == "macosx" ]]; then
 		exit 1
 	fi
 elif [[ "$targetOS" == "cygwin" ]]; then
-	# cygwin-g++ mkspec does not specify C++ standard to allow -c++std c++11 usage
+	# cygwin-g++ mkspec does not specify C++ standard to allow -c++std c++14 usage
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -no-accessibility -sql-sqlite -qt-sqlite
 		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
@@ -151,7 +148,7 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 	fi
 elif [[ "$targetOS" == "windows" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
+		-release -opensource -confirm-license -c++std c++14 -no-accessibility -sql-sqlite -qt-sqlite
 		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
