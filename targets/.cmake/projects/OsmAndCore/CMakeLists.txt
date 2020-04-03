@@ -81,9 +81,10 @@ add_library(osmand SHARED
 	"${ROOT}/src/binaryRead.cpp"
 	"${ROOT}/src/precalculatedRouteDirection.cpp"
 	"${ROOT}/src/generalRouter.cpp"
+	"${ROOT}/src/transportRoutePlanner.cpp"
 	"${ROOT}/src/binaryRoutePlanner.cpp"
 	"${ROOT}/src/proto/osmand_index.pb.cc"
-	"${ROOT}/src/java_wrap.cpp"
+	"${ROOT}/src/java_wrap.cpp"	
 	${pd_sources}
 )
 
