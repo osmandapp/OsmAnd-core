@@ -270,7 +270,7 @@ struct TransportRoutingContext {
                 double dist = SAME_STOP;
                 for (int k = 0; k < route->forwardStops.size(); k++) {
                     SHARED_PTR<TransportStop> st = route->forwardStops.at(k);
-                    if(st->id == s->id ) {
+                    if(st->id == s->id) {
                         stopIndex = k;
                         break;
                     }
