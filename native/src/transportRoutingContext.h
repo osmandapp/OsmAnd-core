@@ -178,7 +178,6 @@ struct TransportRoutingContext {
     }
 
     std::vector<SHARED_PTR<TransportStop>> mergeTransportStops(
-        //TODO change for native loading mechanic
         BinaryMapFile* file, 
         UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>>& loadedTransportStops,
         vector<SHARED_PTR<TransportStop>>& stops,
@@ -190,18 +189,18 @@ struct TransportRoutingContext {
         
         vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
         while(it != stops.end()) {
-            int64_t stopId = (*it)->id;
+            const auto stop = *it;
+            int64_t stopId = stop->id;
             localRoutesToLoad.clear();
-            const auto stop = loadedTransportStops.find(stopId);
-            SHARED_PTR<TransportStop> multifileStop = stop == loadedTransportStops.end() ? nullptr : stop->second;
-            vector<int64_t> routesIds = (*it)->routesIds;
-            vector<int64_t> delRIds = (*it)->deletedRoutesIds;
-            if (stop == loadedTransportStops.end()) {
-                loadedTransportStops.insert({stopId, *it});
-//                loadedTransportStopsVals.push_back(*it);
+            const auto multiStopIt = loadedTransportStops.find(stopId);
+            SHARED_PTR<TransportStop> multifileStop = multiStopIt == loadedTransportStops.end() ? nullptr : multiStopIt->second;
+            vector<int64_t> routesIds = stop->routesIds;
+            vector<int64_t> delRIds = stop->deletedRoutesIds;
+            if (multifileStop == nullptr) {
+                loadedTransportStops.insert({stopId, stop});
                 multifileStop = *it;
-                if (!(*it)->isDeleted()) {
-                    localRoutesToLoad.insert(localRoutesToLoad.end(), (*it)->referencesToRoutes.begin(), (*it)->referencesToRoutes.end());
+                if (!stop->isDeleted()) {
+                    localRoutesToLoad.insert(localRoutesToLoad.end(), stop->referencesToRoutes.begin(), stop->referencesToRoutes.end());
                 }
             } else if (multifileStop->isDeleted()) {
                 it = stops.erase(it);
@@ -212,7 +211,7 @@ struct TransportRoutingContext {
                     }
                 }
                 if (routesIds.size() > 0) {
-                    vector<int32_t> refs = (*it)->referencesToRoutes;
+                    vector<int32_t> refs = stop->referencesToRoutes;
                     for (int32_t i = 0; i < routesIds.size(); i++) {
                         int64_t routeId = routesIds.at(i);
                         if (find(routesIds.begin(), routesIds.end(), routeId) == multifileStop->routesIds.end()
@@ -222,7 +221,7 @@ struct TransportRoutingContext {
                     }
                 } else {
                     if ((*it)->hasReferencesToRoutes()) {
-                        localRoutesToLoad.insert(localRoutesToLoad.end(), (*it)->referencesToRoutes.begin(), (*it)->referencesToRoutes.end());
+                        localRoutesToLoad.insert(localRoutesToLoad.end(), stop->referencesToRoutes.begin(), stop->referencesToRoutes.end());
                     } else {
                         it = stops.erase(it);
                     }

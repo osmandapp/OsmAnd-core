@@ -1144,16 +1144,12 @@ string regStr(UNORDERED(map)<int32_t, string>& stringTable, CodedInputStream* in
 	uint32_t i = 0;
     WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &i);
 	stringTable.insert({i, ""});
-	string s = "";
-    s += (char) i;
-	return s; 
+	return to_string(i);
 }
 
 string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	stringTable.insert({i, ""});
-	string s = "";
-	s += (char) i;
-	return s; 
+	return to_string(i);
 }
 
 bool readTransportStopExit(CodedInputStream* input, TransportStopExit* exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
@@ -1240,7 +1236,6 @@ bool readTransportStop(int stopOffset, SHARED_PTR<TransportStop>& stop, CodedInp
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kRoutesIdsFieldNumber : {
-				
 				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &si64)));
 				req->cacheIdsB.push_back(si64);
 				break;
@@ -1659,17 +1654,17 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
     for (SHARED_PTR<TransportStopExit> exit : s->exits) {
         if (exit->ref.size() > 0) {
-            const auto it = stringTable.find(exit->ref.at(0));
+            const auto it = stringTable.find(stoi(exit->ref));
             exit->ref = it != stringTable.end() ? it->second : "";
         }
     }
     if (s->name.size() > 0) {
-        const auto it = stringTable.find(s->name.at(0));
+        const auto it = stringTable.find(stoi(s->name));
         s->name = it != stringTable.end() ? it->second : "";
         
     }
     if (s->enName.size() > 0) {
-        const auto it = stringTable.find(s->enName.at(0));
+        const auto it = stringTable.find(stoi(s->enName));
         s->enName = it != stringTable.end() ? it->second : "";
     }
     UNORDERED(map)<string, string> namesMap;
@@ -1678,8 +1673,8 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
         s->names.clear();
         UNORDERED(map)<string, string>::iterator it = namesMap.begin();
         while (it != namesMap.end()) {
-            const auto first = stringTable.find(it->first.at(0));
-            const auto second = stringTable.find(it->second.at(0));
+            const auto first = stringTable.find(stoi(it->first));
+            const auto second = stringTable.find(stoi(it->second));
             if (first != stringTable.end() && second != stringTable.end())
                 s->names.insert({first->second, second->second});
             it++;
