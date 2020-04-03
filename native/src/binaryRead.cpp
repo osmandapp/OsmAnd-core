@@ -1141,8 +1141,8 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 //------ Transport Index Reading-----------------
 
 string regStr(UNORDERED(map)<int32_t, string>& stringTable, CodedInputStream* input) {
-	int32_t i = 0; 
-	WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i);
+	uint32_t i = 0;
+    WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &i);
 	stringTable.insert({i, ""});
 	string s = "";
     s += (char) i;
@@ -1194,7 +1194,7 @@ bool readTransportStopExit(CodedInputStream* input, TransportStopExit* exit, int
 	}
 }
 
-bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
+bool readTransportStop(int stopOffset, SHARED_PTR<TransportStop>& stop, CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 
 	uint32_t tag = WireFormatLite::GetTagFieldNumber(input->ReadTag());
 	if(OsmAnd::OBF::TransportStop::kDxFieldNumber != tag) {
@@ -1261,8 +1261,8 @@ bool readTransportStop(int stopOffset, TransportStop* stop, CodedInputStream* in
                 while (input->BytesUntilLimit() > 0) {
                     int32_t l;
                     int32_t n;
-                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &l)));
-                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &n)));
+                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &l)));
+                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &n)));
                     
                     stop->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
                 }
@@ -1369,9 +1369,9 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 					lastIndexResult = req->transportResults.size();
 				}
 				req->numberOfVisitedObjects++;
-                TransportStop* transportStop = new TransportStop();
+                SHARED_PTR<TransportStop> transportStop = make_shared<TransportStop>();
                 if (readTransportStop(stopOffset, transportStop, input, cleft, cright, ctop, cbottom, req, stringTable))
-                    req->transportResults.push_back(SHARED_PTR<TransportStop>(transportStop));
+                    req->transportResults.push_back(transportStop);
 				
 				input -> PopLimit(oldLimit);
 				break;
@@ -1636,6 +1636,8 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 			int t = input->ReadTag();
 			int tag = WireFormatLite::GetTagFieldNumber(t);
 			switch (tag) {
+                case 0:
+                    break;
 				case OsmAnd::OBF::StringTable::kSFieldNumber: {
 					string value; 
 					DO_((WireFormatLite::ReadString(input, &value)));
@@ -1644,12 +1646,12 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 					break;
 				}
 				default: {
-					skipUnknownFields(input, t);
+                    skipUnknownFields(input, t);
 					break;
 				}
 			}
-		input->PopLimit(oldLimit);
 		}
+        input->PopLimit(oldLimit);
 	}
 	return true;
 }
