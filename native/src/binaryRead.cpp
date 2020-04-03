@@ -1144,19 +1144,17 @@ string regStr(UNORDERED(map)<int32_t, string>& stringTable, CodedInputStream* in
 	int32_t i = 0; 
 	WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &i);
 	stringTable.insert({i, ""});
-	string s;
-	s.push_back((char) i);
+	string s = "";
+    s += (char) i;
 	return s; 
 }
 
 string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	stringTable.insert({i, ""});
-	string s;
-	s.push_back((char) i);
+	string s = "";
+	s += (char) i;
 	return s; 
 }
-
-
 
 bool readTransportStopExit(CodedInputStream* input, TransportStopExit* exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int32_t x = 0;
@@ -1495,11 +1493,12 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &sm)));
                 dy[0] += sm;
 				break;
+            case 0:
+                end = true;
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					end = true;
-				}
-				skipUnknownFields(input, t);
+                if (!skipUnknownFields(input, t)) {
+                    return false;
+                }
 				break;
 			}
 		}
@@ -1688,22 +1687,27 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
 
 void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute> dataObject, UNORDERED(map)<int32_t, string>& stringTable) {
 	if(dataObject->name.size() > 0) {
-        dataObject->name = stringTable.find(dataObject->name.at(0))->second;
+        const auto it = stringTable.find(dataObject->name.at(0));
+        dataObject->name = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->enName.size() > 0) {
-		dataObject->enName = stringTable.find(dataObject->enName.at(0))->second;
+        const auto it = stringTable.find(dataObject->enName.at(0));
+        dataObject->enName = it != stringTable.end() ? it->second : "";
 	}
 	// if(dataObject->getName().length() > 0 && dataObject.getName("en").length() == 0){
 	// 	dataObject.setEnName(TransliterationHelper.transliterate(dataObject.getName()));
 	// }
 	if(dataObject->routeOperator.size() > 0) {
-		dataObject->routeOperator = stringTable.find(dataObject->routeOperator.at(0))->second;
+        const auto it = stringTable.find(dataObject->routeOperator.at(0));
+        dataObject->routeOperator = it != stringTable.end() ? it->second : "";
 	}
-	if(dataObject->color.size() > 0){
-		dataObject->color = stringTable.find(dataObject->color.at(0))->second;
+	if(dataObject->color.size() > 0) {
+        const auto it = stringTable.find(dataObject->color.at(0));
+        dataObject->color = it != stringTable.end() ? it->second : "";
 	}
-	if(dataObject->type.size() > 0){
-		dataObject->color = stringTable.find(dataObject->type.at(0))->second;
+	if(dataObject->type.size() > 0) {
+        const auto it = stringTable.find(dataObject->type.at(0));
+		dataObject->type = it != stringTable.end() ? it->second : "";
 	}
 	if (!onlyDescription) {
         for (SHARED_PTR<TransportStop> s : dataObject->forwardStops) {
@@ -1767,7 +1771,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 
     UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
     for (int i = 0; i < filePointers.size(); i++) {
-        TransportIndex* ind;
+        TransportIndex* ind = new TransportIndex();
         if (getTransportIndex(filePointers[i], ind)) {
             if (groupPoints.find(ind) == groupPoints.end()) {
                 groupPoints[ind] = vector<int32_t>();
@@ -1776,7 +1780,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
         }
     }
     UNORDERED(map)<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
-    if (it != groupPoints.end()) { //is it correct way to check like java's it.hasNext?
+    if (it != groupPoints.end()) {
         TransportIndex* ind = it->first;
         vector<int32_t> pointers = it->second;
         sort(pointers.begin(), pointers.end());
@@ -2966,7 +2970,6 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 				ti->stopsFileLength = tp.stopstablelength();
 				mapFile->transportIndexes.push_back(ti);
 				mapFile->indexes.push_back(mapFile->transportIndexes.back());
-                transportIndexesList.push_back(ti);
 			}
         }
 
@@ -3010,6 +3013,8 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 	}
 	
 	openFiles.push_back(mapFile);
+    transportIndexesList.insert(transportIndexesList.end(), mapFile->transportIndexes.begin(), mapFile->transportIndexes.end());
+    
 	return mapFile;
 }
 
