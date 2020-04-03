@@ -119,6 +119,7 @@ struct TransportRoutingContext {
         vector<SHARED_PTR<TransportRouteSegment>> lst;
         int pz = (31 - cfg->zoomToLoadTiles);
         vector<SHARED_PTR<TransportStop>> stops;
+        vector<SHARED_PTR<TransportStop>> results;
         SearchQuery *q = buildSearchTransportRequest((x << pz), ((x + 1) << pz), (y << pz), ((y+1) << pz), -1, stops);
         UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
         UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
@@ -129,11 +130,11 @@ struct TransportRoutingContext {
         for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it) {
             q->transportResults.clear();
             searchTransportIndex(q, *it);
-            stops = q->transportResults;
+            results = q->transportResults;
             localFileRoutes.clear();
-            mergeTransportStops(*it, loadedTransportStops, stops, localFileRoutes, routeMap[*it]);
+            mergeTransportStops(*it, loadedTransportStops, results, localFileRoutes, routeMap[*it]);
         
-            for (SHARED_PTR<TransportStop> stop : stops) {
+            for (SHARED_PTR<TransportStop> stop : results) {
                 int64_t stopId = stop->id;
                 SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
                 vector<int32_t> rrs = stop->referencesToRoutes;

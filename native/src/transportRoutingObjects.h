@@ -144,8 +144,8 @@ struct TransportStop : public MapObject {
     void setLocation(int zoom, int32_t dx, int32_t dy) {
         x31 = dx << (31 - zoom);
         y31 = dy << (31 - zoom);
-        lon = get31LongitudeX(dx);
-        lat = get31LatitudeY(dy);
+        lon = get31LongitudeX(x31);
+        lat = get31LatitudeY(y31);
     }
 };
 
