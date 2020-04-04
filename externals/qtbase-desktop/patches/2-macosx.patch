@@ -1,0 +1,12 @@
+--- upstream.original/mkspecs/macx-clang-64/qmake.conf	2020-04-03 18:58:52.000000000 +0200
++++ upstream.patched/mkspecs/macx-clang-64/qmake.conf	2020-04-03 19:01:39.000000000 +0200
+@@ -29,4 +29,9 @@ include(../common/gcc-base-mac.conf)
+ include(../common/clang.conf)
+ include(../common/clang-mac.conf)
+ 
++QMAKE_CFLAGS           += -arch x86_64
++QMAKE_OBJECTIVE_CFLAGS += -arch x86_64
++QMAKE_CXXFLAGS         += -arch x86_64
++QMAKE_LFLAGS           += -arch x86_64
++
+ load(qt_config)

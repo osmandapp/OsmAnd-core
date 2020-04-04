@@ -35,7 +35,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 		set(library_suffix_tbd ".tbd")
 	endif()
-	message("LIBRARY SUFFIX ${library_suffix_tbd}")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
 		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
