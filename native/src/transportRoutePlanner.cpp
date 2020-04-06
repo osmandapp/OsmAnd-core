@@ -136,19 +136,19 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
     }
 
     double finishTime = ctx->cfg->maxRouteTime;
-    double maxTravelTimeCmpToWalk = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) / ctx->cfg->changeTime;
+    double maxTravelTimeCmpToWalk = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) / ctx->cfg->walkSpeed - ctx->cfg->changeTime / 2;
     vector<SHARED_PTR<TransportRouteSegment>> results;
 	//initProgressBar(ctx, start, end); - ui
     while (queue.size() > 0) {
 	// 	long beginMs = MEASURE_TIME ? System.currentTimeMillis() : 0;
-        if(ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
+        if(ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			ctx->calculationProgress->setSegmentNotFound(0);
             return vector<SHARED_PTR<TransportRouteResult>>();
 		}
 		
         SHARED_PTR<TransportRouteSegment> segment = queue.top();
         queue.pop();	
-        SHARED_PTR<TransportRouteSegment> ex ;
+        SHARED_PTR<TransportRouteSegment> ex;
         if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
             ex = ctx->visitedSegments.find(segment->getId())->second;
             if (ex->distFromStart > segment->distFromStart) {
@@ -185,7 +185,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 			if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 				return vector<SHARED_PTR<TransportRouteResult>>();
 			}
-			segmentId ++;
+			segmentId++;
 			ctx->visitedSegments.insert({segmentId, segment});
 			SHARED_PTR<TransportStop> stop = segment->getStop(ind);
 			double segmentDist = getDistance(prevStop->lat, prevStop->lon, stop->lat, stop->lon);
@@ -230,7 +230,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 					queue.push(nextSegment);
 				}
 			}
-			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments.find(segmentId)->second;
+			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments[segmentId];
 			double distToEnd = getDistance(stop->lat, stop->lon, ctx->endLat, ctx->endLon);
 
 			if (endSegments.find(segmentId) != endSegments.end() && distToEnd < ctx->cfg->walkRadius) {

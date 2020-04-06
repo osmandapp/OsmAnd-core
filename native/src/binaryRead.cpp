@@ -1483,6 +1483,7 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 				break;
             case 0:
                 end = true;
+                break;
 			default: {
                 if (!skipUnknownFields(input, t)) {
                     return false;
@@ -1499,29 +1500,32 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 
 bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
 	input->Seek(filePointer);
-	int routeLength;
-	DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &routeLength)));
+	int32_t routeLength;
+	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &routeLength)));
 	int old = input->PushLimit(routeLength);
 	transportRoute->fileOffset = filePointer;
 	bool end = false;
 	int64_t rid = 0;
 	int rx[] = {0};
 	int ry[] = {0};
-	int sizeL;
-	int pold;
+	int32_t sizeL;
+	int32_t pold;
 	while(!end){
 		int t = input->ReadTag();
 		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch (tag) {
+            case 0: {
+                end = true;
+                break;
+            }
 			case OsmAnd::OBF::TransportRoute::kDistanceFieldNumber : {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &transportRoute->dist)));
 				break;
 			}
-			//todo check cast:
 			case OsmAnd::OBF::TransportRoute::kIdFieldNumber : {
 				uint64_t i;
 				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &i)));
-				transportRoute->id = (int64_t) i;
+				transportRoute->id = i;
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kRefFieldNumber : {
@@ -1549,21 +1553,21 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kGeometryFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
 				Way* w = new Way(-1);
 				while (input->BytesUntilLimit() > 0) {
-					int ddx; 
-					int ddy; 
-					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &ddx)));
-					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &ddy)));
+					int32_t ddx;
+					int32_t ddy;
+					DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &ddx)));
+					DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &ddy)));
 					ddx = ddx << SHIFT_COORDINATES;
 					ddy = ddy << SHIFT_COORDINATES;
 					if(ddx == 0 && ddy == 0) {
 						if(w->nodes.size() > 0) {
-							transportRoute->addWay(SHARED_PTR<Way>(w));
+							transportRoute->addWay(make_shared<Way>(w));
 						}
 						w = new Way(-1);
 					} else {
@@ -1575,35 +1579,34 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
 					}
 				}
 				if(w->nodes.size() > 0) {
-					transportRoute->addWay(SHARED_PTR<Way>(w));
+                    transportRoute->addWay(make_shared<Way>(w));
 				}
 				input->PopLimit(pold);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kScheduleTripFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
 				pold = input->PushLimit(sizeL);
                 readTransportSchedule(input, transportRoute->getOrCreateSchedule());
 				input->PopLimit(pold);
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kDirectStopsFieldNumber: {
-				if(onlyDescription){
+				if(onlyDescription) {
 					end = true;
+                    input->Skip(input->BytesUntilLimit());
 					break;
 				}
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
 				pold = input->PushLimit(sizeL);
                 TransportStop* stop = new TransportStop();
                 readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
+                transportRoute->forwardStops.push_back(SHARED_PTR<TransportStop>(stop));
 				rid = stop->id;
 				input->PopLimit(pold);
 				break;
 			}
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					end = true;
-				}
 				if (!skipUnknownFields(input, t)) {
 					return false;
 				}
@@ -1666,6 +1669,7 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
         s->names.clear();
         UNORDERED(map)<string, string>::iterator it = namesMap.begin();
         while (it != namesMap.end()) {
+            // TODO: check if first and second actually numbers
             const auto first = stringTable.find(stoi(it->first));
             const auto second = stringTable.find(stoi(it->second));
             if (first != stringTable.end() && second != stringTable.end())
@@ -1675,28 +1679,28 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
     }
 }
 
-void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute> dataObject, UNORDERED(map)<int32_t, string>& stringTable) {
+void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute>& dataObject, UNORDERED(map)<int32_t, string>& stringTable) {
 	if(dataObject->name.size() > 0) {
-        const auto it = stringTable.find(dataObject->name.at(0));
+        const auto it = stringTable.find(stoi(dataObject->name));
         dataObject->name = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->enName.size() > 0) {
-        const auto it = stringTable.find(dataObject->enName.at(0));
+        const auto it = stringTable.find(stoi(dataObject->enName));
         dataObject->enName = it != stringTable.end() ? it->second : "";
 	}
 	// if(dataObject->getName().length() > 0 && dataObject.getName("en").length() == 0){
 	// 	dataObject.setEnName(TransliterationHelper.transliterate(dataObject.getName()));
 	// }
 	if(dataObject->routeOperator.size() > 0) {
-        const auto it = stringTable.find(dataObject->routeOperator.at(0));
+        const auto it = stringTable.find(stoi(dataObject->routeOperator));
         dataObject->routeOperator = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->color.size() > 0) {
-        const auto it = stringTable.find(dataObject->color.at(0));
+        const auto it = stringTable.find(stoi(dataObject->color));
         dataObject->color = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->type.size() > 0) {
-        const auto it = stringTable.find(dataObject->type.at(0));
+        const auto it = stringTable.find(stoi(dataObject->type));
 		dataObject->type = it != stringTable.end() ? it->second : "";
 	}
 	if (!onlyDescription) {
@@ -1741,8 +1745,8 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	return;
 }
 
-bool getTransportIndex(int filePointer, TransportIndex*& ind) {
-    for (TransportIndex*& i : transportIndexesList) {
+bool getTransportIndex(int64_t filePointer, TransportIndex*& ind) {
+    for (TransportIndex* i : transportIndexesList) {
         if (i->filePointer <= filePointer && (filePointer - i->filePointer) < i->length) {
             ind = i;
             return true;
@@ -1751,7 +1755,7 @@ bool getTransportIndex(int filePointer, TransportIndex*& ind) {
     return false;
 }
 
-void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
+void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
     //todo is it ok to create CIS here?
     lseek(file->fd, 0, SEEK_SET);
     FileInputStream input(file->fd);
@@ -1761,7 +1765,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 
     UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
     for (int i = 0; i < filePointers.size(); i++) {
-        TransportIndex* ind = new TransportIndex();
+        TransportIndex* ind = NULL;
         if (getTransportIndex(filePointers[i], ind)) {
             if (groupPoints.find(ind) == groupPoints.end()) {
                 groupPoints[ind] = vector<int32_t>();
@@ -1769,7 +1773,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
             groupPoints.find(ind)->second.push_back(filePointers[i]);
         }
     }
-    UNORDERED(map)<TransportIndex*, vector<int32_t>>::iterator it = groupPoints.begin();
+    const auto it = groupPoints.begin();
     if (it != groupPoints.end()) {
         TransportIndex* ind = it->first;
         vector<int32_t> pointers = it->second;
@@ -1778,16 +1782,18 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
         vector<SHARED_PTR<TransportRoute>> finishInit;
         
         for (int i = 0; i < pointers.size(); i++) {
-            int32_t filePointer = pointers.at(i);
-            //todo check:
+            int32_t filePointer = pointers[i];
             TransportRoute* transportRoute = new TransportRoute();
-            readTransportRoute(&cis, transportRoute, filePointer, stringTable, false);
-            result.insert({filePointer, SHARED_PTR<TransportRoute>(transportRoute)});
-            finishInit.push_back(SHARED_PTR<TransportRoute>(transportRoute));
+            if (readTransportRoute(&cis, transportRoute, filePointer, stringTable, false))
+            {
+                const auto routePtr = SHARED_PTR<TransportRoute>(transportRoute);
+                result.insert({filePointer, routePtr});
+                finishInit.push_back(routePtr);
+            }
         }
         initializeStringTable(&cis, ind, stringTable);
         UNORDERED(map)<int32_t, string> indexedStringTable = ind->stringTable->stringTable;
-        for(SHARED_PTR<TransportRoute> transportRoute : finishInit) {
+        for(SHARED_PTR<TransportRoute>& transportRoute : finishInit) {
             initializeNames(false, transportRoute, indexedStringTable);
         }
     }
