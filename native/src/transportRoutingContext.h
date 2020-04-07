@@ -166,7 +166,7 @@ struct TransportRoutingContext {
         stopsValues.reserve(loadedTransportStops.size());
  
         // Get all values
-        std::transform (loadedTransportStops.begin(), loadedTransportStops.end(), back_inserter(stopsValues), [] (std::pair<int64_t, SHARED_PTR<TransportStop>> const pair)
+        std::transform (loadedTransportStops.begin(), loadedTransportStops.end(), back_inserter(stopsValues), [] (std::pair<int64_t, SHARED_PTR<TransportStop>> const & pair)
                         {
             return pair.second;
         });
@@ -184,8 +184,8 @@ struct TransportRoutingContext {
         UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& localFileRoutes,
         UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& loadedRoutes) {
 
-        vector<int64_t> routesToLoad;
-        vector<int64_t> localRoutesToLoad;
+        vector<int32_t> routesToLoad;
+        vector<int32_t> localRoutesToLoad;
         
         vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
         while(it != stops.end()) {
@@ -236,11 +236,11 @@ struct TransportRoutingContext {
 
         if (routesToLoad.size() > 0) {
             sort(routesToLoad.begin(), routesToLoad.end());
-            vector<int64_t> referencesToLoad;
-            vector<int64_t>::iterator itr = routesToLoad.begin();
-            int64_t p = routesToLoad.at(0) + 1;
+            vector<int32_t> referencesToLoad;
+            vector<int32_t>::iterator itr = routesToLoad.begin();
+            int32_t p = routesToLoad.at(0) + 1;
             while (itr != routesToLoad.end()) {
-                int64_t nxt = *itr;
+                int nxt = *itr;
                 if (p != nxt) {
                     if (loadedRoutes.find(nxt) != loadedRoutes.end()) {
                         localFileRoutes.insert(std::pair<int64_t, SHARED_PTR<TransportRoute>>(nxt, loadedRoutes.find(nxt)->second));

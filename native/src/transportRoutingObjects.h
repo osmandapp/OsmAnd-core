@@ -70,7 +70,7 @@ struct TransportStop : public MapObject {
     int32_t y31;
     vector<SHARED_PTR<TransportStopExit>> exits;
     vector<SHARED_PTR<TransportRoute>> routes;
-    UNORDERED(map)<string, vector<int64_t>> referencesToRoutesMap; //add linked realizations?
+    UNORDERED(map)<string, vector<int32_t>> referencesToRoutesMap; //add linked realizations?
     
     bool hasRoute(int64_t routeId) {
         return std::find(routesIds.begin(), routesIds.end(), routeId) != deletedRoutesIds.end();
@@ -88,7 +88,7 @@ struct TransportStop : public MapObject {
         return !isDeleted() && referencesToRoutes.size() > 0;
     }
 
-    void putReferenceToRoutes(string &repositoryFileName, vector<int64_t>& referencesToRoutes) {
+    void putReferenceToRoutes(string &repositoryFileName, vector<int32_t>& referencesToRoutes) {
         referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
     }
     
@@ -262,7 +262,7 @@ struct TransportRoute : public MapObject {
     string ref;
     string routeOperator;
     string type;
-    int32_t dist;
+    uint32_t dist;
     string color;
     vector<SHARED_PTR<Way>> forwardWays; //todo is there a Way or analogue?
     SHARED_PTR<TransportSchedule> schedule;
