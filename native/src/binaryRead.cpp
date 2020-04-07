@@ -675,12 +675,15 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 	routingIndex->completeRouteEncodingRules();
 	return true;
 }
-//checked - ok
+
 bool readTransportBounds(CodedInputStream* input, TransportIndex* ind) {
 	while(true){
 		int si;
 		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
+            case 0 : {
+                return true;
+            }
 			case OsmAnd::OBF::TransportStopsTree::kLeftFieldNumber : {
 				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 				ind->left = si;
@@ -702,9 +705,6 @@ bool readTransportBounds(CodedInputStream* input, TransportIndex* ind) {
 				break;
 			}
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
 				if (!skipUnknownFields(input, tag)) {
 					return false;
 				}
@@ -718,6 +718,9 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 	while(true) {
 		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
+            case 0: {
+                return true;
+            }
 			case OsmAnd::OBF::OsmAndTransportIndex::kRoutesFieldNumber : {
 				skipUnknownFields(input, tag);
 				break;
@@ -736,7 +739,7 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 			}
 			case OsmAnd::OBF::OsmAndTransportIndex::kStringTableFieldNumber : {
 				IndexStringTable* st = new IndexStringTable();
-				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &st->length)));
+				input->ReadVarint32(&st->length);
 
 				st->fileOffset = input->TotalBytesRead();
 				ind->stringTable = st;
@@ -744,9 +747,6 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 				break;
 			}
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
 				if (!skipUnknownFields(input, tag)) {
 					return false;
 				}
@@ -1248,12 +1248,12 @@ bool readTransportStop(int stopOffset, SHARED_PTR<TransportStop>& stop, CodedInp
                 input->ReadVarint32(&sizeL);
                 int32_t oldRef = input->PushLimit(sizeL);
                 while (input->BytesUntilLimit() > 0) {
-                    int32_t l;
-                    int32_t n;
-                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &l)));
-                    DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &n)));
+                    uint32_t l;
+                    uint32_t n;
+                    input->ReadVarint32(&l);
+                    input->ReadVarint32(&n);
                     
-                    stop->names.insert({regStr(stringTable, input), regStr(stringTable, input)});
+                    stop->names.insert({regStr(stringTable, l), regStr(stringTable, n)});
                 }
                 input->PopLimit(oldRef);
 				// } else {
@@ -1324,6 +1324,9 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 		}
 
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
+            case 0 : {
+                return true;
+            }
             case OsmAnd::OBF::TransportStopsTree::kBottomFieldNumber: {
                 DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
                 cbottom = si + pbottom;
@@ -1351,7 +1354,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 			case OsmAnd::OBF::TransportStopsTree::kLeafsFieldNumber: {
 				int stopOffset = input->TotalBytesRead();
 				uint32_t length = 0;
-				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
+				input->ReadVarint32(&length);
 				int oldLimit = input->PushLimit(length);
 				
 				if(lastIndexResult == -1) {
@@ -1393,9 +1396,6 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 				break;
 			}
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
 				if (!skipUnknownFields(input, tag)) {
 					return false;
 				}
@@ -1407,42 +1407,42 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 }
 
 bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule> schedule) {
-	while(true){
-		int interval, sizeL, old;
+	while(true) {
+        uint32_t sizeL, interval;
+        int32_t old;
 		int t = input->ReadTag();
 		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch (tag) {
+            case 0:
+                return true;
 			case OsmAnd::OBF::TransportRouteSchedule::kTripIntervalsFieldNumber:
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+                input->ReadVarint32(&sizeL);
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
-					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &interval)));
+                    input->ReadVarint32(&interval);
 					schedule->tripIntervals.push_back(interval);
 				}
 				input->PopLimit(old);				
 				break;
 			case OsmAnd::OBF::TransportRouteSchedule::kAvgStopIntervalsFieldNumber:
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				input->ReadVarint32(&sizeL);
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
-					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &interval)));
+					input->ReadVarint32(&interval);
 					schedule->avgStopIntervals.push_back(interval);
 				}
 				input->PopLimit(old);
 				break;
 			case OsmAnd::OBF::TransportRouteSchedule::kAvgWaitIntervalsFieldNumber:
-				DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				input->ReadVarint32(&sizeL);
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
-					DO_((WireFormatLite::ReadPrimitive<int, WireFormatLite::TYPE_INT32>(input, &interval)));
+					input->ReadVarint32(&interval);
 					schedule->avgWaitIntervals.push_back(interval);
 				}
 				input->PopLimit(old);
 				break;
 			default: {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
 				if (!skipUnknownFields(input, t)) {
 					return false;
 				}
@@ -1498,17 +1498,17 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 	
 }
 
-bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
-	input->Seek(filePointer);
-	int32_t routeLength;
-	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &routeLength)));
+bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int32_t filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
+    input->Seek(filePointer);
+	uint32_t routeLength;
+    input->ReadVarint32(&routeLength);
 	int old = input->PushLimit(routeLength);
 	transportRoute->fileOffset = filePointer;
 	bool end = false;
 	int64_t rid = 0;
 	int rx[] = {0};
 	int ry[] = {0};
-	int32_t sizeL;
+	uint32_t sizeL;
 	int32_t pold;
 	while(!end){
 		int t = input->ReadTag();
@@ -1519,7 +1519,7 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
                 break;
             }
 			case OsmAnd::OBF::TransportRoute::kDistanceFieldNumber : {
-				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &transportRoute->dist)));
+                DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &transportRoute->dist)));
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kIdFieldNumber : {
@@ -1553,7 +1553,7 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kGeometryFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+                input->ReadVarint32(&sizeL);
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
@@ -1585,7 +1585,7 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
 				break;
 			}
 			case OsmAnd::OBF::TransportRoute::kScheduleTripFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
+				input->ReadVarint32(&sizeL);
 				pold = input->PushLimit(sizeL);
                 readTransportSchedule(input, transportRoute->getOrCreateSchedule());
 				input->PopLimit(pold);
@@ -1597,8 +1597,9 @@ bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute,
                     input->Skip(input->BytesUntilLimit());
 					break;
 				}
-				DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &sizeL)));
-				pold = input->PushLimit(sizeL);
+                uint32_t length;
+                input->ReadVarint32(&length);
+				pold = input->PushLimit(length);
                 TransportStop* stop = new TransportStop();
                 readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
                 transportRoute->forwardStops.push_back(SHARED_PTR<TransportStop>(stop));
@@ -1717,13 +1718,13 @@ void searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStrea
     }
     input->Seek(index->stopsFileOffset);
     int oldLimit = input->PushLimit(index->stopsFileLength);
-    int offset = q->transportResults.size();
+    uint32_t offset = q->transportResults.size();
     UNORDERED(map)<int32_t, string> stringTable;
     searchTransportTreeBounds(input, 0, 0, 0, 0, q, stringTable);
     input->PopLimit(oldLimit);
     initializeStringTable(input, index, stringTable);
     UNORDERED(map)<int32_t, string> indexedStringTable = index->stringTable->stringTable;
-    for (int i = offset; i < q->transportResults.size(); i++) {
+    for (uint64_t i = offset; i < q->transportResults.size(); i++) {
         initializeNames(indexedStringTable, q->transportResults[i]);
     }
     return;
@@ -1755,7 +1756,7 @@ bool getTransportIndex(int64_t filePointer, TransportIndex*& ind) {
     return false;
 }
 
-void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
+void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
     //todo is it ok to create CIS here?
     lseek(file->fd, 0, SEEK_SET);
     FileInputStream input(file->fd);
@@ -1770,7 +1771,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNOR
             if (groupPoints.find(ind) == groupPoints.end()) {
                 groupPoints[ind] = vector<int32_t>();
             }
-            groupPoints.find(ind)->second.push_back(filePointers[i]);
+            groupPoints[ind].push_back(filePointers[i]);
         }
     }
     const auto it = groupPoints.begin();
@@ -2947,26 +2948,26 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
                 mapFile->mapIndexes.push_back(mi);
                 mapFile->indexes.push_back(&mapFile->mapIndexes.back());
             }
-
-			for (int i = 0; i < fo->transportindex_size(); i++) {
-				TransportIndex *ti = new TransportIndex();
-				OsmAnd::OBF::TransportPart tp = fo->transportindex(i);
-				ti->filePointer = tp.offset();
-				ti->length = tp.size();
-				ti->name = tp.name();
-				ti->left = tp.left();
-                ti->right = tp.right();
-				ti->top = tp.top();
-				ti->bottom = tp.bottom();
-				IndexStringTable *st = new IndexStringTable();
-				st->fileOffset = tp.stringtableoffset();
-				st->length = tp.stringtablelength();
-				ti->stringTable = st;
-				ti->stopsFileOffset = tp.stopstableoffset();
-				ti->stopsFileLength = tp.stopstablelength();
-				mapFile->transportIndexes.push_back(ti);
-				mapFile->indexes.push_back(mapFile->transportIndexes.back());
-			}
+        }
+        
+        for (int i = 0; i < fo->transportindex_size(); i++) {
+            TransportIndex *ti = new TransportIndex();
+            OsmAnd::OBF::TransportPart tp = fo->transportindex(i);
+            ti->filePointer = tp.offset();
+            ti->length = tp.size();
+            ti->name = tp.name();
+            ti->left = tp.left();
+            ti->right = tp.right();
+            ti->top = tp.top();
+            ti->bottom = tp.bottom();
+            IndexStringTable *st = new IndexStringTable();
+            st->fileOffset = tp.stringtableoffset();
+            st->length = tp.stringtablelength();
+            ti->stringTable = st;
+            ti->stopsFileOffset = tp.stopstableoffset();
+            ti->stopsFileLength = tp.stopstablelength();
+            mapFile->transportIndexes.push_back(ti);
+            mapFile->indexes.push_back(mapFile->transportIndexes.back());
         }
 
 		for (int i = 0; i < fo->routingindex_size() && (!mapFile->liveMap || useLive); i++) {

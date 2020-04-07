@@ -779,7 +779,7 @@ std::vector<BinaryMapFile* > getOpenMapFiles();
 
 void searchTransportIndex(SearchQuery* q, BinaryMapFile* file);
 
-void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result);
+void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result);
 
 void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap);
 
