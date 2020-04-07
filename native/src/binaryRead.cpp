@@ -1324,9 +1324,6 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
 		}
 
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
-            case 0 : {
-                return true;
-            }
             case OsmAnd::OBF::TransportStopsTree::kBottomFieldNumber: {
                 DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
                 cbottom = si + pbottom;
@@ -1498,8 +1495,14 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 	
 }
 
-bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int32_t filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
+bool readTransportRoute(BinaryMapFile* file, TransportRoute* transportRoute, int32_t filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
+    lseek(file->fd, 0, SEEK_SET);
+    FileInputStream stream(file->fd);
+    stream.SetCloseOnDelete(false);
+    CodedInputStream *input = new CodedInputStream(&stream);
+    input->SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
     input->Seek(filePointer);
+    
 	uint32_t routeLength;
     input->ReadVarint32(&routeLength);
 	int old = input->PushLimit(routeLength);
@@ -1736,7 +1739,7 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	FileInputStream input(file->fd);
 	input.SetCloseOnDelete(false);
 	CodedInputStream cis(&input);
-	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
 	std::vector<TransportIndex*>::iterator transportIndex = file->transportIndexes.begin();
 	for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
 		searchTransportIndex(*transportIndex, q, &cis);
@@ -1762,7 +1765,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
     FileInputStream input(file->fd);
     input.SetCloseOnDelete(false);
     CodedInputStream cis(&input);
-    cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+    cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
 
     UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
     for (int i = 0; i < filePointers.size(); i++) {
@@ -1785,7 +1788,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
         for (int i = 0; i < pointers.size(); i++) {
             int32_t filePointer = pointers[i];
             TransportRoute* transportRoute = new TransportRoute();
-            if (readTransportRoute(&cis, transportRoute, filePointer, stringTable, false))
+            if (readTransportRoute(file, transportRoute, filePointer, stringTable, false))
             {
                 const auto routePtr = SHARED_PTR<TransportRoute>(transportRoute);
                 result.insert({filePointer, routePtr});
