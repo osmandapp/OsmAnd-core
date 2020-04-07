@@ -1504,7 +1504,7 @@ bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportSto
 	
 }
 
-bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
+bool readTransportRoute(CodedInputStream* input, TransportRoute* transportRoute, int32_t filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
 	input->Seek(filePointer);
 	int32_t routeLength;
 	DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(input, &routeLength)));
@@ -1767,7 +1767,8 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNOR
     FileInputStream input(file->fd);
     input.SetCloseOnDelete(false);
     CodedInputStream cis(&input);
-    cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+//    cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
+    cis.SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
 
     UNORDERED(map)<TransportIndex*, vector<int32_t>> groupPoints;
     for (int i = 0; i < filePointers.size(); i++) {
@@ -1776,7 +1777,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int64_t> filePointers, UNOR
             if (groupPoints.find(ind) == groupPoints.end()) {
                 groupPoints[ind] = vector<int32_t>();
             }
-            groupPoints.find(ind)->second.push_back(filePointers[i]);
+            groupPoints[ind].push_back(filePointers[i]);
         }
     }
     const auto it = groupPoints.begin();
