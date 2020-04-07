@@ -250,7 +250,6 @@ struct TransportRoutingContext {
                 }
                 itr++;
             }
-        //todo: what to use?
             
             loadTransportRoutes(file, referencesToLoad, localFileRoutes);
             loadedRoutes.insert(localFileRoutes.begin(), localFileRoutes.end());
