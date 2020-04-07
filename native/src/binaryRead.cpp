@@ -675,7 +675,7 @@ bool readRoutingIndex(CodedInputStream* input, RoutingIndex* routingIndex, bool 
 	routingIndex->completeRouteEncodingRules();
 	return true;
 }
-
+//checked - ok
 bool readTransportBounds(CodedInputStream* input, TransportIndex* ind) {
 	while(true){
 		int si;
@@ -719,15 +719,9 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 		int tag = input->ReadTag();			
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kRoutesFieldNumber : {
-				if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
-					return true;
-				}
-				if (!skipUnknownFields(input, tag)) {
-					return false;
-				}
+				skipUnknownFields(input, tag);
 				break;
 			}
-
 			case OsmAnd::OBF::OsmAndTransportIndex::kNameFieldNumber : {
 				DO_((WireFormatLite::ReadString(input, &ind->name)));
 				break;

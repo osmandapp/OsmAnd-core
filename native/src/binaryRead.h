@@ -793,19 +793,5 @@ bool initMapFilesFromCache(std::string inputName) ;
 
 bool closeBinaryMapFile(std::string inputName);
 
-// bool readTransportIndex(CodedInputStream* input, TransportIndex* ind);
-
-// bool readTransportBounds(CodedInputStream* input, TransportIndex* ind);
-
-// bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, int ptop, int pbottom, SearchQuery* req, map<int, string>* stringTable);
-
-// TransportRoute* readTransportRoute(CodedInputStream* input, int filePointer, map<int32_t, string>& stringTable, bool onlyDescription);
-
-// bool readTransportSchedule(CodedInputStream* input, TransportSchedule& schedule);
-
-// UNORDERED(map)<int32_t, string> initializeStringTable(CodedInputStream* input, TransportIndex& ind, map<int32_t, string>& requested);
-
-// void initializeNames(bool onlyDescription, TransportRoute& dataObject, map<int32_t, string>& stringTable);
-
 
 #endif

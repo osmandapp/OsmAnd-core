@@ -494,7 +494,7 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 		// more like UT
 		if (diff > 2 * M_PI / 3) {
 			return leftTurn;
-		} else if (diff > M_PI / 2) {
+		} else if (diff > M_PI / 3) {
 			return rightTurn;
 		}
 		return 0;
