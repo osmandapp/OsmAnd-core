@@ -91,7 +91,7 @@ struct TransportRoutingConfiguration {
     
     int32_t getRawType(std::string tg, std::string vl)
     {
-        std::string key = tg.append("$").append(vl);
+        std::string key = tg + "$" + vl;
         if(rawTypes.find(key) == rawTypes.end())
         {
             uint at = router->registerTagValueAttribute(tag_value(tg, vl));

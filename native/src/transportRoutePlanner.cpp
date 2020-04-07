@@ -233,8 +233,8 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments[segmentId];
 			double distToEnd = getDistance(stop->lat, stop->lon, ctx->endLat, ctx->endLon);
 
-			if (endSegments.find(segmentId) != endSegments.end() && distToEnd < ctx->cfg->walkRadius) {
-				if (finish == NULL || minDist > distToEnd) {
+			if (finalSegment != nullptr && distToEnd < ctx->cfg->walkRadius) {
+				if (finish == nullptr || minDist > distToEnd) {
 					minDist = distToEnd;
 					finish = make_shared<TransportRouteSegment>(finalSegment);
 					finish->parentRoute = segment;
