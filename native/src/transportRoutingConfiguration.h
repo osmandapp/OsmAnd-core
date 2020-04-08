@@ -29,7 +29,7 @@ struct TransportRoutingConfiguration {
 //    int32_t scheduleDayNumber; Unused
     MAP_STR_FLOAT speed;
 
-    TransportRoutingConfiguration() {}
+    TransportRoutingConfiguration() : router(new GeneralRouter()) {}
     
     TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter, MAP_STR_STR params) {
         if(prouter != nullptr) {

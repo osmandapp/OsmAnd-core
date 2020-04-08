@@ -120,7 +120,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
     ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
     UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
 
-	ctx->calcLatLons();
+    ctx->calcLatLons();
 
     for (SHARED_PTR<TransportRouteSegment>& s : endStops) {
         endSegments.insert({s->getId(), s});
@@ -173,8 +173,9 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
         int64_t minDist = 0;
         int64_t travelDist = 0;
         double travelTime = 0;
-        const float routeTravelSpeed = ctx->cfg->getSpeedByRouteType(segment->road->type);
-					
+        const float routeTravelSpeed = 16.6666f;//ctx->cfg->getSpeedByRouteType(segment->road->type); todo fix 
+
+
 		if(routeTravelSpeed == 0) {
 			continue;
 		}
@@ -247,7 +248,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 					finish->distFromStart = segment->distFromStart + travelTime + walkTime;
 
 				}
-			}	
+			}
 			prevStop = stop;
 		}
 		if (finish != nullptr) {
@@ -273,7 +274,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		// }
 //		updateCalculationProgress(ctx, queue);
     }
-
+    /** delete */ OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "[NATIVE PT] Stage N: Result calculated");
     return prepareResults(ctx, results);
 }
 

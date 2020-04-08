@@ -83,7 +83,8 @@ enum class GeneralRouterProfile {
 	CAR,
 	PEDESTRIAN,
 	BICYCLE,
-    BOAT
+    BOAT, 
+	PUBLIC_TRANSPORT
 };
 
 static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRouterProfile def) {
@@ -93,6 +94,8 @@ static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRou
         return GeneralRouterProfile::PEDESTRIAN;
     } else if ("bicycle" == to_lowercase(profile)) {
         return GeneralRouterProfile::BICYCLE;
+	} else if ("public_transport" == to_lowercase(profile)) {
+		return GeneralRouterProfile::PUBLIC_TRANSPORT;
     } else {
         return def;
     }
