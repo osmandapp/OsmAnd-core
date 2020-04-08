@@ -525,6 +525,7 @@ private:
 
 public:
 	uint registerTagValueAttribute(const tag_value& r);
+    uint registerTagValueAttribute(const tag_value& r, dynbitset& res);
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}
