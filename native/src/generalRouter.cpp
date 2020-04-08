@@ -510,9 +510,15 @@ void GeneralRouter::printRules() {
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
+    dynbitset bs;
+    return registerTagValueAttribute(r, bs);
+}
+
+uint GeneralRouter::registerTagValueAttribute(const tag_value& r, dynbitset& res) {
 	string key = r.first + "$" + r.second;
 	MAP_STR_INT::iterator it = universalRules.find(key);
 	if (it != universalRules.end()) {
+        res = tagRuleMask[r.first];
 		return ((uint)it->second);
 	}
 	int id = (int)universalRules.size();
@@ -520,6 +526,7 @@ uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
 	universalRules[key] = id;
 	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
 	d.set(id);
+    res = d;
 	return id;
 }
 
