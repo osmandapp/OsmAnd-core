@@ -278,7 +278,6 @@ public:
     int evaluateInt(dynbitset& rawTypes, int defValue)
     {
         double o = evaluate(rawTypes);
-		//todo don't understand this thing. DOUBLE_MISSING is "random big negative number"... How something could be equal to random number?
         if(o == DOUBLE_MISSING)
         {
             return defValue;
