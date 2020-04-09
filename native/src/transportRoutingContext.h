@@ -1,7 +1,5 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
 #define _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "binaryRead.h"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"

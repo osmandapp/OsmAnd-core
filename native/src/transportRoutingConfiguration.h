@@ -1,7 +1,6 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #define _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "generalRouter.h"
 #include <algorithm>
 
