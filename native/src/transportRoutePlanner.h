@@ -7,8 +7,6 @@
 #include <queue>
 
 const bool MEASURE_TIME = false;
-const int64_t GEOMETRY_WAY_ID = -1;
-const int64_t STOPS_WAY_ID = -2;
 
 inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2DistFromStart) {
     if(o1DistFromStart == o2DistFromStart) {
