@@ -121,7 +121,6 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
     vector<SHARED_PTR<TransportRouteSegment>> endStops;
     ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
     UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
-    count = 2;
     ctx->calcLatLons();
 
     for (SHARED_PTR<TransportRouteSegment>& s : endStops) {
@@ -206,7 +205,6 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 				break;
 			}
 			sgms.clear();
-            /**delete*/ count++;
 			ctx->getTransportStops(stop->x31, stop->y31, true, sgms);
 			ctx->visitedStops++;
 			for (SHARED_PTR<TransportRouteSegment>& sgm : sgms) {
@@ -278,7 +276,6 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		// }
 //		updateCalculationProgress(ctx, queue);
     }
-    /** delete */ OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "loadTransportStops called: %d", count);
     return prepareResults(ctx, results);
 }
 
