@@ -70,7 +70,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
         route->routeTime = res->distFromStart;
         route->finishWalkDist = res->walkDist;
         SHARED_PTR<TransportRouteSegment> p = res;
-        while (p.get()) {
+        while (p != nullptr) {
             if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
                 return vector<SHARED_PTR<TransportRouteResult>>();
             }

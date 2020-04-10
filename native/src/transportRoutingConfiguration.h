@@ -15,7 +15,7 @@ struct TransportRoutingConfiguration {
     int32_t maxRouteTime = 60 * 60 * 10;
     SHARED_PTR<GeneralRouter> router;
     
-    float walkSpeed = (3.6 / 3.6);
+    float walkSpeed = (float)(3.6 / 3.6);
     float defaultTravelSpeed = (60 / 3.6);
     int32_t stopTime = 30;
     int32_t changeTime = 180;
@@ -27,6 +27,7 @@ struct TransportRoutingConfiguration {
     int32_t scheduleMaxTime = 50 * 6;
 //    int32_t scheduleDayNumber; Unused
     MAP_STR_FLOAT speed;
+    MAP_STR_INT rawTypes;
 
     TransportRoutingConfiguration() {}
     
@@ -69,22 +70,32 @@ struct TransportRoutingConfiguration {
 
     float getSpeedByRouteType(std::string routeType)
     {
-        float sl = speed[routeType];
-        if (speed.find(routeType) != speed.end())
+        const auto it = speed.find(routeType);
+        double sl = defaultTravelSpeed;
+        if (it == speed.end())
         {
-            std::string routeStr = std::string("route");
-            dynbitset bs = getRawBitset(routeStr, routeType);
+            dynbitset bs = getRawBitset("route", routeType);
             sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, defaultTravelSpeed);
+            speed[routeType] = sl;
         }
         return sl;
     }
     
     dynbitset getRawBitset(std::string tg, std::string vl)
     {
-        dynbitset bs;
-        std::string key = tg + "$" + vl;
-        router->registerTagValueAttribute(tag_value(tg, vl), bs);
+        uint id = getRawType(tg, vl);
+        dynbitset bs(router->getBitSetSize());
+        bs.set(id);
         return bs;
+    }
+    
+    uint getRawType(string& tg, string& vl) {
+        string key = tg + "$" + vl;
+        if(rawTypes.find(key) == rawTypes.end()) {
+            uint at = router->registerTagValueAttribute(tag_value(tg, vl));
+            rawTypes[key] = at;
+        }
+        return rawTypes[key];
     }
     
     int32_t getChangeTime() {
