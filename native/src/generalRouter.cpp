@@ -510,24 +510,21 @@ void GeneralRouter::printRules() {
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
-    dynbitset bs;
-    return registerTagValueAttribute(r, bs);
+    string key = r.first + "$" + r.second;
+    MAP_STR_INT::iterator it = universalRules.find(key);
+    if (it != universalRules.end()) {
+        return ((uint)it->second);
+    }
+    int id = (int)universalRules.size();
+    universalRulesById.push_back(r);
+    universalRules[key] = id;
+    dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
+    d.set(id);
+    return id;
 }
 
-uint GeneralRouter::registerTagValueAttribute(const tag_value& r, dynbitset& res) {
-	string key = r.first + "$" + r.second;
-	MAP_STR_INT::iterator it = universalRules.find(key);
-	if (it != universalRules.end()) {
-        res = tagRuleMask[r.first];
-		return ((uint)it->second);
-	}
-	int id = (int)universalRules.size();
-	universalRulesById.push_back(r);
-	universalRules[key] = id;
-	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
-	d.set(id);
-    res = d;
-	return id;
+uint64_t GeneralRouter::getBitSetSize() {
+    return universalRules.size();
 }
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {

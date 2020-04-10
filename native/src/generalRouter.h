@@ -439,6 +439,8 @@ public:
 
 	int getIntAttribute(string attr, int defVal);
     
+    uint64_t getBitSetSize();
+    
 	/**
 	 * return if the road is accepted for routing
 	 */
@@ -528,7 +530,6 @@ private:
 
 public:
 	uint registerTagValueAttribute(const tag_value& r);
-    uint registerTagValueAttribute(const tag_value& r, dynbitset& res);
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}

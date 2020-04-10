@@ -1426,19 +1426,6 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 
 		ienv->DeleteLocalRef(ctx);
 	}
-	/**delete: for test porposes*/ 
-	rConfig->speed.insert({"train", 80.f});
-	rConfig->speed.insert({"subway", 60.f});
-	rConfig->speed.insert({"monorail", 50.f});
-	rConfig->speed.insert({"light_rail", 50.f});
-	rConfig->speed.insert({"funicular", 50.f});
-	rConfig->speed.insert({"tram", 40.f});
-	rConfig->speed.insert({"bus", 30.f});
-	rConfig->speed.insert({"trolleybus", 30.f});
-	rConfig->speed.insert({"share_taxi", 40.f});
-	rConfig->speed.insert({"aerialway", 30.f});
-	rConfig->speed.insert({"walk", 4.f});
-	rConfig->speed.insert({"ferry", 30.f});
 
 	ienv->DeleteLocalRef(objectAttributes);
 	ienv->DeleteGlobalRef(router);
