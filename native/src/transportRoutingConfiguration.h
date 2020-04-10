@@ -27,7 +27,7 @@ struct TransportRoutingConfiguration {
     int32_t scheduleMaxTime = 50 * 6;
 //    int32_t scheduleDayNumber; Unused
     MAP_STR_FLOAT speed;
-    MAP_STR_INT rawTypes;
+    UNORDERED(map)<string, float> rawTypes;
 
     TransportRoutingConfiguration() : router(new GeneralRouter()) {}
     
@@ -71,12 +71,16 @@ struct TransportRoutingConfiguration {
     float getSpeedByRouteType(std::string routeType)
     {
         const auto it = speed.find(routeType);
-        double sl = defaultTravelSpeed;
+        float sl = defaultTravelSpeed;
         if (it == speed.end())
         {
             dynbitset bs = getRawBitset("route", routeType);
             sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, defaultTravelSpeed);
             speed[routeType] = sl;
+        }
+        else
+        {
+            sl = it->second;
         }
         return sl;
     }
