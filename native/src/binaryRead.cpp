@@ -1744,10 +1744,10 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
 		searchTransportIndex(*transportIndex, q, &cis);
 	}
-	if (q->numberOfVisitedObjects > 0) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
-	}
+	// if (q->numberOfVisitedObjects > 0) {
+	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
+	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
+	// }
 	return;
 }
 

@@ -70,11 +70,11 @@ struct TransportRoutingConfiguration {
     float getSpeedByRouteType(std::string routeType)
     {
         float sl = speed[routeType];
-        if (speed.find(routeType) != speed.end())
+        if (speed.find(routeType) == speed.end())
         {
             std::string routeStr = std::string("route");
             dynbitset bs = getRawBitset(routeStr, routeType);
-            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, defaultTravelSpeed);
+            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, sl);
         }
         return sl;
     }
@@ -82,7 +82,7 @@ struct TransportRoutingConfiguration {
     dynbitset getRawBitset(std::string tg, std::string vl)
     {
         dynbitset bs;
-        std::string key = tg + "$" + vl;
+        // std::string key = tg + "$" + vl;
         router->registerTagValueAttribute(tag_value(tg, vl), bs);
         return bs;
     }
