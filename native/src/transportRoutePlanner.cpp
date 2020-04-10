@@ -11,8 +11,7 @@
 
 struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool>
 {
-    SHARED_PTR<TransportRoutingContext> ctx;
-    TransportSegmentsComparator(SHARED_PTR<TransportRoutingContext>& c) : ctx(c) {}
+    TransportSegmentsComparator(){}
     bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
     {
         int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
@@ -53,7 +52,10 @@ bool TransportRoutePlanner::includeRoute(SHARED_PTR<TransportRouteResult>& fastR
 }
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results) {
-    sort(results.begin(), results.end(), TransportSegmentsComparator(ctx));
+    sort(results.begin(), results.end(), [] (const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs)
+    {
+        return lhs->distFromStart < rhs->distFromStart;
+    });
 
     vector<SHARED_PTR<TransportRouteResult>> lst;
         // System.out.println(String.format("Calculated %.1f seconds, found %d results, visited %d routes / %d stops, loaded %d tiles (%d ms read, %d ms total), loaded ways %d (%d wrong)",
@@ -112,8 +114,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     //todo add counter
-    int count = 0;
-	TransportSegmentsComparator trSegmComp(ctx);
+	TransportSegmentsComparator trSegmComp;
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
     vector<SHARED_PTR<TransportRouteSegment>> startStops;
     ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
