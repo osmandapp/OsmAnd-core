@@ -41,7 +41,9 @@ download "http://sourceforge.net/projects/freetype/files/freetype2/2.5.0/freetyp
 download "http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz" "$DEPENDENCIES_MIRROR/gdal-1.11.1.tar.gz"
 download "http://sourceforge.net/projects/glew/files/glew/1.11.0/glew-1.11.0.tgz/download" "$DEPENDENCIES_MIRROR/glew-1.11.0.tgz"
 download "http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.3/glm-0.9.5.3.zip/download" "$DEPENDENCIES_MIRROR/glm-0.9.5.3.zip"
-download "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz" "$DEPENDENCIES_MIRROR/icu4c-52_1-src.tgz"
+
+download "https://github.com/unicode-org/icu/archive/release-52-1.tar.gz" "$DEPENDENCIES_MIRROR/icu4c-52-1.tar.gz"
+#download "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz" "$DEPENDENCIES_MIRROR/icu4c-52_1-src.tgz"
 download "http://www.ijg.org/files/jpegsrc.v9.tar.gz" "$DEPENDENCIES_MIRROR/jpegsrc.v9.tar.gz"
 download "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz" "$DEPENDENCIES_MIRROR/libarchive-3.1.2.tar.gz"
 download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1.6.6/libpng-1.6.6.tar.xz/download" "$DEPENDENCIES_MIRROR/libpng-1.6.6.tar.xz"
