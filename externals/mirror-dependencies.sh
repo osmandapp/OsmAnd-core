@@ -46,7 +46,7 @@ download "https://github.com/unicode-org/icu/archive/release-52-1.tar.gz" "$DEPE
 #download "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz" "$DEPENDENCIES_MIRROR/icu4c-52_1-src.tgz"
 download "http://www.ijg.org/files/jpegsrc.v9.tar.gz" "$DEPENDENCIES_MIRROR/jpegsrc.v9.tar.gz"
 download "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz" "$DEPENDENCIES_MIRROR/libarchive-3.1.2.tar.gz"
-download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1.6.6/libpng-1.6.6.tar.xz/download" "$DEPENDENCIES_MIRROR/libpng-1.6.6.tar.xz"
+download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1.6.16/libpng-1.6.16.tar.xz/download" "$DEPENDENCIES_MIRROR/libpng-1.6.16.tar.xz"
 download "https://github.com/google/protobuf/releases/download/v2.5.0/protobuf-2.5.0.tar.bz2" "$DEPENDENCIES_MIRROR/protobuf-2.5.0.tar.bz2"
 download "http://zlib.net/zlib-1.2.11.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.11.tar.gz"
 download "http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.bz2/download" "$DEPENDENCIES_MIRROR/giflib-4.2.3.tar.bz2"
