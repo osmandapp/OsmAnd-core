@@ -114,6 +114,8 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     //todo add counter
+    OsmAnd::ElapsedTimer pt_timer;
+    pt_timer.Start();
 	TransportSegmentsComparator trSegmComp;
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
     vector<SHARED_PTR<TransportRouteSegment>> startStops;
@@ -175,8 +177,6 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
         int64_t travelDist = 0;
         double travelTime = 0;
         const float routeTravelSpeed = ctx->cfg->getSpeedByRouteType(segment->road->type); 
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "routeTravelSpeed for %s = %.f", segment->road->type.c_str(), routeTravelSpeed);
-
 
 		if(routeTravelSpeed == 0) {
 			continue;
@@ -267,15 +267,11 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Route calculation interrupted");
 			return vector<SHARED_PTR<TransportRouteResult>>();
 		}
-		// if (MEASURE_TIME) {
-		// 	long time = System.currentTimeMillis() - beginMs;
-		// 	if (time > 10) {
-		// 		System.out.println(String.format("%d ms ref - %s id - %d", time, segment.road.getRef(),
-		// 				segment.road.getId()));
-		// 	}
-		// }
-//		updateCalculationProgress(ctx, queue);
+
+		//updateCalculationProgress(ctx, queue);
     }
+		pt_timer.Pause();
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f ms", pt_timer.GetElapsedMs());
     return prepareResults(ctx, results);
 }
 

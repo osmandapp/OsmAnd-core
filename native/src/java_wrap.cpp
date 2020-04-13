@@ -1221,7 +1221,6 @@ void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAtt
 	jbooleanArray tagValueDefNot = (jbooleanArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefNot);
 	jboolean* nots = ienv->GetBooleanArrayElements(tagValueDefNot, NULL);
 	for(uint i = 0; i < tagValueDefValues.size(); i++) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "tagValueDefTags==> t: %s, v: %s",  tagValueDefTags[i].c_str(), tagValueDefValues[i].c_str());
 		erule->registerAndTagValueCondition(router, tagValueDefTags[i], tagValueDefValues[i], nots[i]);
 	}
 	ienv->ReleaseBooleanArrayElements(tagValueDefNot, nots, 0);
@@ -1392,7 +1391,6 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
 	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
 	
-//to do check this twice! 
 	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
 	
@@ -1401,7 +1399,6 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 
 	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "objectAttributes size %d", ienv->GetArrayLength(objectAttributes));
 	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
 		// RouteAttributeContext
 		RouteAttributeContext* rctx = rConfig->router->newRouteAttributeContext();
@@ -1429,7 +1426,7 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 
 	ienv->DeleteLocalRef(objectAttributes);
 	ienv->DeleteGlobalRef(router);
-	ienv->DeleteGlobalRef(lrouter);
+	ienv->DeleteLocalRef(lrouter);
 }
 
 
@@ -1443,6 +1440,8 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 	jstring j_enName = ienv->NewStringUTF(stop->enName.c_str());
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_name, j_name);
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_enName, j_enName);
+	ienv->DeleteLocalRef(j_name);
+	ienv->DeleteLocalRef(j_enName);
 	
 	jobjectArray j_namesLng = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
 	jobjectArray j_namesNames = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
@@ -1740,7 +1739,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "objects converted");
 	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
 	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
 	if (r.size() == 0) {
