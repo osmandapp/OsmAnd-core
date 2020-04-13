@@ -11,7 +11,7 @@ function download
 {
 	local from=$1
 	local to=$2
-	
+	echo "Downloading $from to $to"
 	curl -L --fail "$from" > "$to"
 	local exitCode=$?
 
