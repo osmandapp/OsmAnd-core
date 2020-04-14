@@ -12,6 +12,10 @@
 #include "Logging.h"
 #include <ctime>
 
+#if defined(__APPLE__)
+#include <OsmAndCore/Logging.h>
+#endif
+
 enum class RouteCalculationMode {
     BASE,
     NORMAL,

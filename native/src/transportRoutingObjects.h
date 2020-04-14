@@ -408,9 +408,20 @@ struct TransportRoute : public MapObject {
         return dist;
     }
 
-    //ui only
-    // string getAdjustedRouteRef(bool small) {
-    // }
+     string getAdjustedRouteRef(bool small) {
+        string adjustedRef = ref;
+         if (adjustedRef.length() > 0) {
+            uint64_t charPos = adjustedRef.find_last_of(':');
+            if (charPos != string::npos) {
+                adjustedRef = adjustedRef.substr(0, charPos);
+            }
+            int maxRefLength = small ? 5 : 8;
+            if (adjustedRef.length() > maxRefLength) {
+                adjustedRef = adjustedRef.substr(0, maxRefLength - 1) + "…";
+            }
+        }
+        return adjustedRef;
+     }
 
     bool compareRoute(SHARED_PTR<TransportRoute> thatObj) {
         if (this == thatObj.get()) {

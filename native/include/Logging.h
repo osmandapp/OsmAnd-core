@@ -1,3 +1,4 @@
+#if !defined(__APPLE__)
 #ifndef _OSMAND_LOGGING_H_
 #define _OSMAND_LOGGING_H_
 
@@ -17,3 +18,4 @@ namespace OsmAnd
 }
 
 #endif // _OSMAND_LOGGING_H_
+#endif // __APPLE__

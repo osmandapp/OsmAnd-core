@@ -24,10 +24,9 @@ struct TransportRouteResult {
         return d;
     }
 
-    //ui only
-    // double getWalkSpeed() {
-    //     cfg->walkSpeed;
-    // }
+    float getWalkSpeed() {
+        return config->walkSpeed;
+    }
     
     //logging only
     int getStops() {

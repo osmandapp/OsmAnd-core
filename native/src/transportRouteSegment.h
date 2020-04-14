@@ -2,7 +2,10 @@
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #include "transportRoutingObjects.h"
 #include "Logging.h"
-// #include <boost/format.hpp>
+
+#if defined(__APPLE__)
+#include <OsmAndCore/Logging.h>
+#endif
 
 struct TransportRouteSegment {
     static const int32_t SHIFT = 10; // assume less than 1024 stops
