@@ -638,14 +638,14 @@ jmethodID jmethod_NativeTransportStop_init = NULL;
 
 void loadJniRenderingContext(JNIEnv* env)
 {
-	jclass_NativeTransportRoutingResult = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRoutingResult");
-	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments", "[Lnet/osmand/router/ptresult/NativeTransportRouteResultSegment;");
+	jclass_NativeTransportRoutingResult = findGlobalClass(env, "net/osmand/router/NativeTransportRoutingResult");
+	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments", "[Lnet/osmand/router/NativeTransportRouteResultSegment;");
 	jfield_NativeTransportRoutingResult_finishWalkDist = getFid(env, jclass_NativeTransportRoutingResult, "finishWalkDist", "D");
 	jfield_NativeTransportRoutingResult_routeTime = getFid(env, jclass_NativeTransportRoutingResult, "routeTime", "D");
 	jmethod_NativeTransportRoutingResult_init = env->GetMethodID(jclass_NativeTransportRoutingResult, "<init>", "()V");
 
-	jclass_NativeTransportRouteResultSegment = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRouteResultSegment");
-	jfield_NativeTransportRouteResultSegment_route = getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/ptresult/NativeTransportRoute;");
+	jclass_NativeTransportRouteResultSegment = findGlobalClass(env, "net/osmand/router/NativeTransportRouteResultSegment");
+	jfield_NativeTransportRouteResultSegment_route = getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/NativeTransportRoute;");
 	jfield_NativeTransportRouteResultSegment_walkTime = getFid(env, jclass_NativeTransportRouteResultSegment, "walkTime", "D");
 	jfield_NativeTransportRouteResultSegment_travelDistApproximate = getFid(env, jclass_NativeTransportRouteResultSegment, "travelDistApproximate", "D");
 	jfield_NativeTransportRouteResultSegment_travelTime = getFid(env, jclass_NativeTransportRouteResultSegment, "travelTime", "D");
@@ -655,7 +655,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportRouteResultSegment_depTime = getFid(env, jclass_NativeTransportRouteResultSegment, "depTime", "I");
 	jmethod_NativeTransportRouteResultSegment_init = env->GetMethodID(jclass_NativeTransportRouteResultSegment, "<init>", "()V");
 
-	jclass_NativeTransportStop = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportStop");
+	jclass_NativeTransportStop = findGlobalClass(env, "net/osmand/router/NativeTransportStop");
 	jfield_NativeTransportStop_id = getFid(env, jclass_NativeTransportStop,  "id", "J");
 	jfield_NativeTransportStop_stopLat = getFid(env, jclass_NativeTransportStop,  "stopLat", "D");
 	jfield_NativeTransportStop_stopLon = getFid(env, jclass_NativeTransportStop,  "stopLon", "D");
@@ -670,7 +670,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_distance = getFid(env, jclass_NativeTransportStop, "distance", "I");
 	jfield_NativeTransportStop_x31 = getFid(env, jclass_NativeTransportStop, "x31", "I");
 	jfield_NativeTransportStop_y31 = getFid(env, jclass_NativeTransportStop, "y31", "I");
-	jfield_NativeTransportStop_routes = getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/ptresult/NativeTransportRoute;");
+	jfield_NativeTransportStop_routes = getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/NativeTransportRoute;");
 	jfield_NativeTransportStop_pTStopExit_x31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_x31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_y31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_y31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_refs = getFid(env, jclass_NativeTransportStop, "pTStopExit_refs", "[Ljava/lang/String;");
@@ -678,14 +678,14 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_referenceToRoutesVals = getFid(env, jclass_NativeTransportStop, "referenceToRoutesVals", "[[I");
 	jmethod_NativeTransportStop_init = env->GetMethodID(jclass_NativeTransportStop, "<init>", "()V");
 
-	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRoute");
+	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/NativeTransportRoute");
 	jfield_NativeTransportRoute_id = getFid(env, jclass_NativeTransportRoute, "id", "J");
 	jfield_NativeTransportRoute_name = getFid(env, jclass_NativeTransportRoute, "name", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_enName =  getFid(env, jclass_NativeTransportRoute, "enName", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_namesLng = getFid(env, jclass_NativeTransportRoute, "namesLng", "[Ljava/lang/String;");
 	jfield_NativeTransportRoute_namesNames = getFid(env, jclass_NativeTransportRoute, "namesNames", "[Ljava/lang/String;");
 	jfield_NativeTransportRoute_fileOffset = getFid(env, jclass_NativeTransportRoute, "fileOffset", "I");
-	jfield_NativeTransportRoute_forwardStops = getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/ptresult/NativeTransportStop;");
+	jfield_NativeTransportRoute_forwardStops = getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/NativeTransportStop;");
 	jfield_NativeTransportRoute_ref = getFid(env, jclass_NativeTransportRoute, "ref", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_routeOperator = getFid(env, jclass_NativeTransportRoute, "routeOperator", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_type = getFid(env, jclass_NativeTransportRoute, "type", "Ljava/lang/String;");

@@ -116,8 +116,7 @@ struct TransportRouteSegment {
     // }
 
     string to_string() {
-//        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Route: %s, stop: %s %s", road->name, road->forwardStops[segStart]->name, departureTime == -1 ? "" : formatTransporTime(departureTime));
-        return "";
+        return "Route: " + road->name + ", stop: " + road->forwardStops[segStart]->name;
     }
 };
 

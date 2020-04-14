@@ -99,6 +99,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
             }
             if(includeRoute(s, route)) {
                 include = true;
+                route->to_string();
                 break;
             }
         }
@@ -116,6 +117,9 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
     //todo add counter
     OsmAnd::ElapsedTimer pt_timer;
     pt_timer.Start();
+    ctx->loadTime.Enable();
+    ctx->searchTransportIndexTime.Enable();
+    ctx->readTime.Enable();
 	TransportSegmentsComparator trSegmComp;
     TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
     vector<SHARED_PTR<TransportRouteSegment>> startStops;
@@ -155,7 +159,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
         if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
             ex = ctx->visitedSegments.find(segment->getId())->second;
             if (ex->distFromStart > segment->distFromStart) {
-//                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart, ex->to_string(), segment->distFromStart, segment->to_string());
+                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart, ex->to_string().c_str(), segment->distFromStart, segment->to_string().c_str());
             }
             continue;
         }
@@ -270,8 +274,10 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 
 		//updateCalculationProgress(ctx, queue);
     }
-		pt_timer.Pause();
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f ms", pt_timer.GetElapsedMs());
+	pt_timer.Pause();
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f ms, loading tiles (overall): %.3f ms, readTime : %.3f ms", 
+	pt_timer.GetElapsedMs(), ctx->loadTime.GetElapsedMs(), ctx->readTime.GetElapsedMs());
+
     return prepareResults(ctx, results);
 }
 

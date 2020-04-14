@@ -33,7 +33,10 @@ struct TransportRoutingContext {
     int32_t visitedStops;
     int32_t wrongLoadedWays;
     int32_t loadedWays;
+
     OsmAnd::ElapsedTimer loadTime;
+    OsmAnd::ElapsedTimer searchTransportIndexTime;
+    OsmAnd::ElapsedTimer loadSegmentsTime;
     OsmAnd::ElapsedTimer readTime;
 
     int32_t walkRadiusIn31;
@@ -66,7 +69,7 @@ struct TransportRoutingContext {
     }
 
     void getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>>& res) {
-        loadTime.Start();
+       
         int32_t d = change ? walkChangeRadiusIn31 : walkRadiusIn31;
         int32_t lx = (sx - d) >> (31 - cfg->zoomToLoadTiles);
         int32_t rx = (sx + d) >> (31 - cfg->zoomToLoadTiles);
@@ -97,7 +100,6 @@ struct TransportRoutingContext {
                 }
             }
         }
-        loadTime.Pause();
     }
     
     SearchQuery* buildSearchTransportRequest(int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>>& stops)
@@ -113,7 +115,7 @@ struct TransportRoutingContext {
     }
 
     std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y) {
-        //long nanoTime = System.nanoTime();
+        loadTime.Start();
         vector<SHARED_PTR<TransportRouteSegment>> lst;
         int pz = (31 - cfg->zoomToLoadTiles);
         vector<SHARED_PTR<TransportStop>> stops;
@@ -125,13 +127,15 @@ struct TransportRoutingContext {
         
         auto openFiles = getOpenMapFiles();
         std::vector<BinaryMapFile*>::iterator it, end;
+        readTime.Start();
         for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it) {
             q->transportResults.clear();
+            searchTransportIndexTime.Start();           
             searchTransportIndex(q, *it);
+            searchTransportIndexTime.Pause();
             results = q->transportResults;
             localFileRoutes.clear();
             mergeTransportStops(*it, loadedTransportStops, results, localFileRoutes, routeMap[*it]);
-        
             for (SHARED_PTR<TransportStop> stop : results) {
                 int64_t stopId = stop->id;
                 SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
@@ -160,6 +164,7 @@ struct TransportRoutingContext {
                 }
             }
         }
+        readTime.Pause();
         std::vector<SHARED_PTR<TransportStop>> stopsValues;
         stopsValues.reserve(loadedTransportStops.size());
  
@@ -168,10 +173,8 @@ struct TransportRoutingContext {
                         {
             return pair.second;
         });
-
         loadTransportSegments(stopsValues, lst);
-        
-        // readTime += System.nanoTime() - nanoTime;
+        loadTime.Pause();
         return lst;
     }
 
@@ -226,8 +229,7 @@ struct TransportRoutingContext {
                 }
             }
             routesToLoad.insert(routesToLoad.end(), localRoutesToLoad.begin(), localRoutesToLoad.end());
-            
-        //TODO get name of file. 
+             
             multifileStop->putReferenceToRoutes(file->inputName, localRoutesToLoad);
             it++;
         }
@@ -252,12 +254,12 @@ struct TransportRoutingContext {
             loadTransportRoutes(file, referencesToLoad, localFileRoutes);
             loadedRoutes.insert(localFileRoutes.begin(), localFileRoutes.end());
         }
-
         return stops;
 
     }
 
     void loadTransportSegments(vector<SHARED_PTR<TransportStop>>& stops, vector<SHARED_PTR<TransportRouteSegment>>& lst) {
+        loadSegmentsTime.Start();
         for(SHARED_PTR<TransportStop> s : stops) {
             if (s->isDeleted() || s->routes.size() == 0) {
                 continue;
@@ -285,11 +287,11 @@ struct TransportRoutingContext {
                         lst.push_back(segment);
                     }
                 } else {
-                    // TODO: Log
-//                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Routing error: missing stop '%s' in route '%s' id: %d", s->toString(), route->ref, route->id / 2));
+                //    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Routing error: missing stop '%s' in route '%s' id: %d", s->toString(), route->ref, route->id / 2));
                 }
             }
 		}
+        loadSegmentsTime.Pause();
     }
 
 
