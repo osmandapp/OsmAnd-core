@@ -47,6 +47,11 @@ struct TransportRoutingContext {
         for (BinaryMapFile* i : getOpenMapFiles())  {
             routeMap.insert({i, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>()});
         }
+        startCalcTime = 0;
+        visitedRoutesCount = 0;
+        visitedStops = 0;
+        wrongLoadedWays = 0;
+        loadedWays = 0;
     }
     
     inline static double getTileDistanceWidth(float zoom)
