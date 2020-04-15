@@ -1,11 +1,15 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
-#include "transportRoutingObjects.h"
-#include "Logging.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
+#include "Logging.h" //check where to put it
 
 #if defined(__APPLE__)
 #include <OsmAndCore/Logging.h>
 #endif
+
+struct TransportRoute;
+struct TransportStop;
 
 struct TransportRouteSegment {
     static const int32_t SHIFT = 10; // assume less than 1024 stops
@@ -25,89 +29,20 @@ struct TransportRouteSegment {
     // main field accumulated all time spent from beginning of journey
     double distFromStart = 0;
 
-    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex)
-    : segStart(stopIndex)
-    {
-        road = road_;
-        departureTime = -1;
-    }
+    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex);
+    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex_, int32_t depTime_);
+    TransportRouteSegment(SHARED_PTR<TransportRouteSegment>& s);
 
-    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex_, int32_t depTime_)
-    : segStart(stopIndex_)
-    {
-        road = road_;
-        departureTime = depTime_;
-    }
+    bool wasVisited(SHARED_PTR<TransportRouteSegment>& rrs);
+    SHARED_PTR<TransportStop> getStop(int i);
+    pair<double, double> getLocation();
+    double getLocationLat();
+    double getLocationLon();
+    int32_t getLength();
+    int64_t getId();
+    int32_t getDepth();
+    string to_string();
 
-    TransportRouteSegment(SHARED_PTR<TransportRouteSegment>& s)
-    : segStart(s->segStart)
-    {
-        road = s->road;
-        departureTime = s->departureTime;
-    }
-
-    bool wasVisited(SHARED_PTR<TransportRouteSegment>& rrs) {
-        if (rrs->road->id == road->id && rrs->departureTime == departureTime) {
-            return true;
-        }
-        if (hasParentRoute) {
-            return parentRoute->wasVisited(rrs);
-        }
-        return false;
-    }
-
-    SHARED_PTR<TransportStop> getStop(int i) {
-        return road->forwardStops.at(i);
-    }
-
-    pair<double, double> getLocation() {
-        return pair<double, double>(road->forwardStops[segStart]->lat, road->forwardStops[segStart]->lon);
-    }
-    
-    double getLocationLat() {
-        return road->forwardStops[segStart]->lat;
-    }
-
-    double getLocationLon() {
-        return road->forwardStops[segStart]->lon;
-    }
-
-    int32_t getLength() {
-        return road->forwardStops.size();
-    }
-
-    int64_t getId() {
-        int64_t l = road->id;
-        l = l << SHIFT_DEPTIME;
-
-        if (departureTime >= (1 << SHIFT_DEPTIME)) {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "too long dep time %d", departureTime);
-            return -1;
-        }
-
-        l += (departureTime + 1);
-        l = l << SHIFT;
-        if (segStart >= (1 << SHIFT)) {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "too many stops roadId: %d, start: %d", road->id, segStart);
-            return -1;
-        }
-
-        l += segStart;
-
-        if (l < 0) {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "too long id: %d", road->id);
-            return -1;
-        }
-        return l;
-    }
-
-    int32_t getDepth() {
-        if (hasParentRoute) {
-            return parentRoute->getDepth() + 1;
-        }
-        return 1;
-    }
-    
     // static inline string formatTransporTime(int32_t i)
     // {
     //     int32_t h = i / 60 / 6;
@@ -117,10 +52,6 @@ struct TransportRouteSegment {
     //     boost::format tm = boost::format("%02d:%02d:%02d ") % h % m % s;
     //     return tm.str();
     // }
-
-    string to_string() {
-        return "Route: " + road->name + ", stop: " + road->forwardStops[segStart]->name;
-    }
 };
 
 #endif /*_OSMAND_TRANSPORT_ROUTE_SEGMENT_H*/
