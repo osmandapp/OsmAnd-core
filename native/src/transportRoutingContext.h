@@ -45,11 +45,16 @@ struct TransportRoutingContext {
     TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> cfg_)
     {
         cfg = cfg_;
-        walkRadiusIn31 = (int) (cfg->walkRadius / getTileDistanceWidth(31));
-        walkChangeRadiusIn31 = (int) (cfg->walkChangeRadius / getTileDistanceWidth(31));
+        walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
+        walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));
         for (BinaryMapFile* i : getOpenMapFiles())  {
             routeMap.insert({i, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>()});
         }
+        startCalcTime = 0;
+        visitedRoutesCount = 0;
+        visitedStops = 0;
+        wrongLoadedWays = 0;
+        loadedWays = 0;
     }
     
     inline static double getTileDistanceWidth(float zoom)
@@ -58,7 +63,7 @@ struct TransportRoutingContext {
         double lon1 = getLongitudeFromTile(zoom, 0);
         double lat2 = 30;
         double lon2 = getLongitudeFromTile(zoom, 1);
-        return getDistance(lon1, lat1, lon2, lat2);
+        return getDistance(lat1, lon1, lat2, lon2);
     }
     
     void calcLatLons() {
