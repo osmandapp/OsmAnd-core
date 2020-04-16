@@ -1736,7 +1736,6 @@ void searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStrea
 }
 
 void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
-	//todo is it ok to create CIS here?
 	lseek(file->fd, 0, SEEK_SET);
 	FileInputStream input(file->fd);
 	input.SetCloseOnDelete(false);
@@ -1746,8 +1745,10 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 	for (; transportIndex != file->transportIndexes.end(); transportIndex++) {
 		searchTransportIndex(*transportIndex, q, &cis);
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
+	if (q->numberOfVisitedObjects > 0) {
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
+	}
 	return;
 }
 
@@ -2805,7 +2806,6 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 
 }
 
-
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub){
 
 	checkAndInitRouteRegionRules(fileInd, routingIndex);
@@ -2844,7 +2844,6 @@ void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& 
 
 	}
 }
-
 
 
 bool closeBinaryMapFile(std::string inputName) {

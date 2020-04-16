@@ -1,114 +1,47 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #define _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #include "CommonCollections.h"
-#include "generalRouter.h"
-#include <algorithm>
+#include "commonOsmAndCore.h"
+#include "boost/dynamic_bitset.hpp"
+// #include <algorithm>
 
-struct TransportRoutingConfiguration {
-    
-    const string KEY = "public_transport";
-    int32_t zoomToLoadTiles = 15;
-    int32_t walkRadius = 1500;
-    int32_t walkChangeRadius = 300;
-    int32_t maxNumberOfChanges = 3;
-    int32_t finishTimeSeconds = 1200;
-    int32_t maxRouteTime = 60 * 60 * 10;
-    SHARED_PTR<GeneralRouter> router;
-    
-    float walkSpeed = (float)(3.6 / 3.6);
-    float defaultTravelSpeed = (60 / 3.6);
-    int32_t stopTime = 30;
-    int32_t changeTime = 180;
-    int32_t boardingTime = 180;
-    
-    bool useSchedule = false;
+class GeneralRouter;
+typedef boost::dynamic_bitset<> dynbitset;
 
-    int32_t scheduleTimeOfDay = 12 * 60 * 6;
-    int32_t scheduleMaxTime = 50 * 6;
-//    int32_t scheduleDayNumber; Unused
-    MAP_STR_FLOAT speed;
-    UNORDERED(map)<string, float> rawTypes;
+struct TransportRoutingConfiguration
+{
+	const string KEY = "public_transport";
+	int32_t zoomToLoadTiles = 15;
+	int32_t walkRadius = 1500;
+	int32_t walkChangeRadius = 300;
+	int32_t maxNumberOfChanges = 3;
+	int32_t finishTimeSeconds = 1200;
+	int32_t maxRouteTime = 60 * 60 * 10;
+	SHARED_PTR<GeneralRouter> router;
 
-    TransportRoutingConfiguration() {}
-    
-    TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter, MAP_STR_STR params) {
-        if(prouter != nullptr) {
-            this->router = prouter->build(params);
-            walkRadius =  router->getIntAttribute("walkRadius", walkRadius);
-            walkChangeRadius =  router->getIntAttribute("walkChangeRadius", walkChangeRadius);
-            zoomToLoadTiles =  router->getIntAttribute("zoomToLoadTiles", zoomToLoadTiles);
-            maxNumberOfChanges =  router->getIntAttribute("maxNumberOfChanges", maxNumberOfChanges);
-            maxRouteTime =  router->getIntAttribute("maxRouteTime", maxRouteTime);
-            finishTimeSeconds =  router->getIntAttribute("delayForAlternativesRoutes", finishTimeSeconds);
-            string mn = router->getAttribute("max_num_changes");
-            int maxNumOfChanges = 3;
-            try
-            {
-                maxNumOfChanges = stoi(mn);
-            } catch (...)
-            {
-                // Ignore
-            }
-            maxNumberOfChanges = maxNumOfChanges;
-            
-            walkSpeed = router->getFloatAttribute("minDefaultSpeed", walkSpeed * 3.6f) / 3.6f;
-            defaultTravelSpeed = router->getFloatAttribute("maxDefaultSpeed", defaultTravelSpeed * 3.6f) / 3.6f;
-            
-            RouteAttributeContext& obstacles = router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);
-            dynbitset bs = getRawBitset("time", "stop");
-            stopTime = obstacles.evaluateInt(bs, stopTime);
-            bs = getRawBitset("time", "change");
-            changeTime = obstacles.evaluateInt(bs, changeTime);
-            bs = getRawBitset("time", "boarding");
-            boardingTime = obstacles.evaluateInt(bs, boardingTime);
-            
-            RouteAttributeContext& spds = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED);
-            bs = getRawBitset("route", "walk");
-            walkSpeed = spds.evaluateFloat(bs, walkSpeed);
-        }
-    }
+	float walkSpeed = (float)(3.6 / 3.6);
+	float defaultTravelSpeed = (60 / 3.6);
+	int32_t stopTime = 30;
+	int32_t changeTime = 180;
+	int32_t boardingTime = 180;
 
-    float getSpeedByRouteType(std::string routeType)
-    {
-        const auto it = speed.find(routeType);
-        float sl = defaultTravelSpeed;
-        if (it == speed.end())
-        {
-            dynbitset bs = getRawBitset("route", routeType);
-            sl = router->getObjContext(RouteDataObjectAttribute::ROAD_SPEED).evaluateFloat(bs, defaultTravelSpeed);
-            speed[routeType] = sl;
-        }
-        else
-        {
-            sl = it->second;
-        }
-        return sl;
-    }
-    
-    dynbitset getRawBitset(std::string tg, std::string vl)
-    {
-        uint id = getRawType(tg, vl);
-        dynbitset bs(router->getBitSetSize());
-        bs.set(id);
-        return bs;
-    }
-    
-    uint getRawType(string& tg, string& vl) {
-        string key = tg + "$" + vl;
-        if(rawTypes.find(key) == rawTypes.end()) {
-            uint at = router->registerTagValueAttribute(tag_value(tg, vl));
-            rawTypes[key] = at;
-        }
-        return rawTypes[key];
-    }
-    
-    int32_t getChangeTime() {
-        return useSchedule ? 0 : changeTime;
-    };
+	bool useSchedule = false;
 
-    int32_t getBoardingTime() {
-        return boardingTime;
-    };
+	int32_t scheduleTimeOfDay = 12 * 60 * 6;
+	int32_t scheduleMaxTime = 50 * 6;
+	//    int32_t scheduleDayNumber; Unused
+	MAP_STR_FLOAT speed;
+	UNORDERED(map)<string, float> rawTypes;
+
+	TransportRoutingConfiguration();
+
+	TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter, MAP_STR_STR params);
+
+	float getSpeedByRouteType(std::string routeType);
+	dynbitset getRawBitset(std::string tg, std::string vl);
+	uint getRawType(string &tg, string &vl);
+	int32_t getChangeTime();
+	int32_t getBoardingTime();
 };
 
 #endif //_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H

@@ -451,7 +451,7 @@ jfieldID jfield_TransportRoutingConfiguration_boardingTime = NULL;
 jfieldID jfield_TransportRoutingConfiguration_useSchedule = NULL;
 jfieldID jfield_TransportRoutingConfiguration_scheduleTimeOfDay = NULL;
 jfieldID jfield_TransportRoutingConfiguration_scheduleMaxTime = NULL;
-// jfieldID jfield_jclass_TransportRoutingConfiguration_rawTypes = NULL;
+// jfieldID jfield_TransportRoutingConfiguration_rawTypes = NULL;
 // jfieldID jfield_jclass_TransportRoutingConfiguration_speed = NULL;
 
 jclass jclass_RoutingConfiguration = NULL;
@@ -638,14 +638,14 @@ jmethodID jmethod_NativeTransportStop_init = NULL;
 
 void loadJniRenderingContext(JNIEnv* env)
 {
-	jclass_NativeTransportRoutingResult = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRoutingResult");
-	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments", "[Lnet/osmand/router/ptresult/NativeTransportRouteResultSegment;");
+	jclass_NativeTransportRoutingResult = findGlobalClass(env, "net/osmand/router/NativeTransportRoutingResult");
+	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments", "[Lnet/osmand/router/NativeTransportRouteResultSegment;");
 	jfield_NativeTransportRoutingResult_finishWalkDist = getFid(env, jclass_NativeTransportRoutingResult, "finishWalkDist", "D");
 	jfield_NativeTransportRoutingResult_routeTime = getFid(env, jclass_NativeTransportRoutingResult, "routeTime", "D");
 	jmethod_NativeTransportRoutingResult_init = env->GetMethodID(jclass_NativeTransportRoutingResult, "<init>", "()V");
 
-	jclass_NativeTransportRouteResultSegment = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRouteResultSegment");
-	jfield_NativeTransportRouteResultSegment_route = getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/ptresult/NativeTransportRoute;");
+	jclass_NativeTransportRouteResultSegment = findGlobalClass(env, "net/osmand/router/NativeTransportRouteResultSegment");
+	jfield_NativeTransportRouteResultSegment_route = getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/NativeTransportRoute;");
 	jfield_NativeTransportRouteResultSegment_walkTime = getFid(env, jclass_NativeTransportRouteResultSegment, "walkTime", "D");
 	jfield_NativeTransportRouteResultSegment_travelDistApproximate = getFid(env, jclass_NativeTransportRouteResultSegment, "travelDistApproximate", "D");
 	jfield_NativeTransportRouteResultSegment_travelTime = getFid(env, jclass_NativeTransportRouteResultSegment, "travelTime", "D");
@@ -655,7 +655,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportRouteResultSegment_depTime = getFid(env, jclass_NativeTransportRouteResultSegment, "depTime", "I");
 	jmethod_NativeTransportRouteResultSegment_init = env->GetMethodID(jclass_NativeTransportRouteResultSegment, "<init>", "()V");
 
-	jclass_NativeTransportStop = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportStop");
+	jclass_NativeTransportStop = findGlobalClass(env, "net/osmand/router/NativeTransportStop");
 	jfield_NativeTransportStop_id = getFid(env, jclass_NativeTransportStop,  "id", "J");
 	jfield_NativeTransportStop_stopLat = getFid(env, jclass_NativeTransportStop,  "stopLat", "D");
 	jfield_NativeTransportStop_stopLon = getFid(env, jclass_NativeTransportStop,  "stopLon", "D");
@@ -670,7 +670,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_distance = getFid(env, jclass_NativeTransportStop, "distance", "I");
 	jfield_NativeTransportStop_x31 = getFid(env, jclass_NativeTransportStop, "x31", "I");
 	jfield_NativeTransportStop_y31 = getFid(env, jclass_NativeTransportStop, "y31", "I");
-	jfield_NativeTransportStop_routes = getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/ptresult/NativeTransportRoute;");
+	jfield_NativeTransportStop_routes = getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/NativeTransportRoute;");
 	jfield_NativeTransportStop_pTStopExit_x31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_x31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_y31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_y31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_refs = getFid(env, jclass_NativeTransportStop, "pTStopExit_refs", "[Ljava/lang/String;");
@@ -678,14 +678,14 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_referenceToRoutesVals = getFid(env, jclass_NativeTransportStop, "referenceToRoutesVals", "[[I");
 	jmethod_NativeTransportStop_init = env->GetMethodID(jclass_NativeTransportStop, "<init>", "()V");
 
-	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/ptresult/NativeTransportRoute");
+	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/NativeTransportRoute");
 	jfield_NativeTransportRoute_id = getFid(env, jclass_NativeTransportRoute, "id", "J");
 	jfield_NativeTransportRoute_name = getFid(env, jclass_NativeTransportRoute, "name", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_enName =  getFid(env, jclass_NativeTransportRoute, "enName", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_namesLng = getFid(env, jclass_NativeTransportRoute, "namesLng", "[Ljava/lang/String;");
 	jfield_NativeTransportRoute_namesNames = getFid(env, jclass_NativeTransportRoute, "namesNames", "[Ljava/lang/String;");
 	jfield_NativeTransportRoute_fileOffset = getFid(env, jclass_NativeTransportRoute, "fileOffset", "I");
-	jfield_NativeTransportRoute_forwardStops = getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/ptresult/NativeTransportStop;");
+	jfield_NativeTransportRoute_forwardStops = getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/NativeTransportStop;");
 	jfield_NativeTransportRoute_ref = getFid(env, jclass_NativeTransportRoute, "ref", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_routeOperator = getFid(env, jclass_NativeTransportRoute, "routeOperator", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_type = getFid(env, jclass_NativeTransportRoute, "type", "Ljava/lang/String;");
@@ -739,8 +739,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
 	jfield_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
 	jfield_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
-	// jfield_jclass_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "I");
-	// jfield_jclass_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "I");
+	// jfield_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "__");
+	// jfield_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "___");
 
 	jclass_RoutingConfiguration = findGlobalClass(env, "net/osmand/router/RoutingConfiguration");
 	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
@@ -1239,6 +1239,10 @@ void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAtt
 		string valueType;
 		if(jselectType) {
 			valueType = getString(ienv, jvalueType);
+
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "valueType: %s", valueType.c_str());
+
+
 			ienv->DeleteLocalRef(jvalueType);
 		}
 
@@ -1387,17 +1391,48 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutin
 	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
 	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
 	
-	//to do if needed
-	// jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
-	// jobject router = ienv->NewGlobalRef(lrouter);
+	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
+	jobject router = ienv->NewGlobalRef(lrouter);
+	
+	rConfig->router->minSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minSpeed);
+	rConfig->router->defaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
+	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 
-	// ienv->DeleteGlobalRef(lrouter);
+	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
+	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
+		// RouteAttributeContext
+		RouteAttributeContext* rctx = rConfig->router->newRouteAttributeContext();
+		jobject ctx = ienv->GetObjectArrayElement(objectAttributes, i);
+		jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
+		vector<string> paramKeys = convertJArrayToStrings(ienv, ar);
+		ienv->DeleteLocalRef(ar);
+		ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
+		vector<string> paramValues = convertJArrayToStrings(ienv, ar);
+		ienv->DeleteLocalRef(ar);
+
+		rctx->registerParams(paramKeys, paramValues);
+		jobjectArray rules = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
+		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
+		
+			shared_ptr<RouteAttributeEvalRule> erule = rctx->newEvaluationRule();
+			jobject rule = ienv->GetObjectArrayElement(rules, j);
+			parseRouteAttributeEvalRule(ienv, rule, erule, rConfig->router.get());
+			ienv->DeleteLocalRef(rule);
+		}
+	// 	//printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
+
+		ienv->DeleteLocalRef(ctx);
+	}
+
+	ienv->DeleteLocalRef(objectAttributes);
+	ienv->DeleteGlobalRef(router);
+	ienv->DeleteLocalRef(lrouter);
 }
+
 
 jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop) {
 
 	jobject jstop = ienv->NewObject(jclass_NativeTransportStop, jmethod_NativeTransportStop_init);
-
 	ienv->SetLongField(jstop, jfield_NativeTransportStop_id, (jlong) stop->id);
 	ienv->SetDoubleField(jstop, jfield_NativeTransportStop_stopLat, stop->lat);
 	ienv->SetDoubleField(jstop, jfield_NativeTransportStop_stopLon, stop->lon);
@@ -1405,6 +1440,8 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 	jstring j_enName = ienv->NewStringUTF(stop->enName.c_str());
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_name, j_name);
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_enName, j_enName);
+	ienv->DeleteLocalRef(j_name);
+	ienv->DeleteLocalRef(j_enName);
 	
 	jobjectArray j_namesLng = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
 	jobjectArray j_namesNames = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
@@ -1445,7 +1482,6 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 		ienv->SetObjectField(jstop, jfield_NativeTransportStop_deletedRoutesIds, j_deletedRoutesIds);
 		ienv->DeleteLocalRef(j_deletedRoutesIds);
 	}
-
 	if (stop->routesIds.size() > 0) {
 		jlongArray j_routesIds = ienv->NewLongArray(stop->routesIds.size());
 		jlong tmp[stop->routesIds.size()];
@@ -1498,10 +1534,11 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 	jobjectArray j_referenceToRoutesKeys = ienv->NewObjectArray(stop->referencesToRoutesMap.size(), jclassString, NULL);
 	jobjectArray j_referenceToRoutesVals = ienv->NewObjectArray(stop->referencesToRoutesMap.size(), jclassIntArray, NULL);
 	n = 0;
-	for (std::pair<string,vector<int32_t>> el : stop->referencesToRoutesMap) {
+
+	for (auto const& el : stop->referencesToRoutesMap) {
 		jstring jrefKey = ienv->NewStringUTF(el.first.c_str());
 		vector<int32_t> refs = el.second;
-		jintArray jrefVals = ienv->NewIntArray(refs.size());
+		jintArray jrefVals = ienv->NewIntArray(el.second.size());
 		jint tmp[refs.size()];
 		for (int j = 0; j < refs.size(); j++) {
 			tmp[j] = (jint) refs[j];
@@ -1555,9 +1592,10 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> rou
 	for (int i = 0; i < route->forwardStops.size(); i++) {
 		jobject j_stop = convertTransportStopToJava(ienv, route->forwardStops.at(i));
 		ienv->SetObjectArrayElement(j_forwardStops, i, j_stop);
-
+		ienv->DeleteLocalRef(j_stop);
 	}
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_forwardStops, j_forwardStops);
+	ienv->DeleteLocalRef(j_forwardStops);
 	
 	jstring j_ref = ienv->NewStringUTF(route->ref.c_str());
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_ref, j_ref);
@@ -1625,8 +1663,8 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> rou
 		ienv->SetDoubleArrayRegion(j_wayNodesLats, 0, nsize, tmpNodesLats);
 		ienv->SetDoubleArrayRegion(j_wayNodesLons, 0, nsize, tmpNodesLons);
 		ienv->SetObjectArrayElement(j_nodesIds, k, j_wayNodesIds);
-		ienv->SetObjectArrayElement(j_nodesIds, k, j_wayNodesLats);
-		ienv->SetObjectArrayElement(j_nodesIds, k, j_wayNodesLons);
+		ienv->SetObjectArrayElement(j_nodesLats, k, j_wayNodesLats);
+		ienv->SetObjectArrayElement(j_nodesLons, k, j_wayNodesLons);
 		ienv->DeleteLocalRef(j_wayNodesIds);
 		ienv->DeleteLocalRef(j_wayNodesLats);
 		ienv->DeleteLocalRef(j_wayNodesLons);
@@ -1649,6 +1687,7 @@ jobject convertPTRouteResultSegmentToJava(JNIEnv* ienv, SHARED_PTR<TransportRout
 	jobject jtrrs = ienv->NewObject(jclass_NativeTransportRouteResultSegment, jmethod_NativeTransportRouteResultSegment_init);
 	jobject jtr = convertTransportRouteToJava(ienv, trrs->route);
 	ienv->SetObjectField(jtrrs, jfield_NativeTransportRouteResultSegment_route, jtr);
+	ienv->DeleteLocalRef(jtr);
 	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_walkTime, (jdouble) trrs->walkTime);
 	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelDistApproximate, (jdouble) trrs->travelDistApproximate);
 	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelTime, (jdouble) trrs->travelTime);
@@ -1687,7 +1726,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c->startY = data[1];
 	c->targetX = data[2];
 	c->targetY = data[3];
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "cords start: %d / %d, end: %d/%d", 
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "coords start: %d / %d, end: %d/%d", 
 	c->startX, c->startY, c->targetX, c->targetY);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>(); 
@@ -1700,7 +1739,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
-	
 	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
 	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
 	if (r.size() == 0) {

@@ -48,6 +48,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_CORE_RELATIVE)/src/binaryRead.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/generalRouter.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/binaryRoutePlanner.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/transportRoutePlanner.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/proto/osmand_index.pb.cc \
 	$(OSMAND_CORE_RELATIVE)/src/java_wrap.cpp
 	
