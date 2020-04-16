@@ -70,7 +70,7 @@ struct TransportRoutingContext
 		UNORDERED(map) < int64_t, SHARED_PTR<TransportRoute>> &localFileRoutes,
 		UNORDERED(map) < int64_t, SHARED_PTR<TransportRoute>> &loadedRoutes);
 	void loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops, vector<SHARED_PTR<TransportRouteSegment>> &lst);
-	void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>> lst, SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
+	void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>>& lst, SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
 };
 
 #endif // _OSMAND_TRANSPORT_ROUTING_CONTEXT_H

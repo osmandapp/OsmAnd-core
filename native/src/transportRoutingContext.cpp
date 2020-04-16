@@ -110,7 +110,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 		results = q->transportResults;
 		localFileRoutes.clear();
 		mergeTransportStops(*it, loadedTransportStops, results, localFileRoutes, routeMap[*it]);
-		for (SHARED_PTR<TransportStop> stop : results)
+		for (SHARED_PTR<TransportStop>& stop : results)
 		{
 			int64_t stopId = stop->id;
 			SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
@@ -298,8 +298,7 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 				}
 				else
 				{
-					const auto segment = make_shared<TransportRouteSegment>(route, stopIndex);
-					lst.push_back(segment);
+					lst.push_back(make_shared<TransportRouteSegment>(route, stopIndex));
 				}
 			}
 			else
@@ -311,7 +310,7 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 	loadSegmentsTime.Pause();
 }
 
-void TransportRoutingContext::loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>> lst, SHARED_PTR<TransportRoute> &route, int32_t stopIndex)
+void TransportRoutingContext::loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>>& lst, SHARED_PTR<TransportRoute> &route, int32_t stopIndex)
 {
 	if (route->schedule != nullptr)
 	{
@@ -334,8 +333,7 @@ void TransportRoutingContext::loadScheduleRouteSegment(std::vector<SHARED_PTR<Tr
 			int32_t startTime = t + stopTravelTime;
 			if (startTime >= cfg->scheduleTimeOfDay && startTime <= cfg->scheduleTimeOfDay + cfg->scheduleMaxTime)
 			{
-				const auto segment = make_shared<TransportRouteSegment>(route, stopIndex, startTime);
-				lst.push_back(segment);
+				lst.push_back(make_shared<TransportRouteSegment>(route, stopIndex, startTime));
 			}
 		}
 	}

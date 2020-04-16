@@ -100,8 +100,7 @@ vector<SHARED_PTR<Way>> TransportRouteResultSegment::getGeometry()
         {
             double lLat = getStop(i)->lat;
             double lLon = getStop(i)->lon;
-            const auto n = make_shared<Node>(lLat, lLon, -1);
-            way->addNode(n);
+            way->addNode(make_shared<Node>(lLat, lLon, -1));
         }
     }
     else
