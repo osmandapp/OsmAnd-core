@@ -85,6 +85,8 @@ add_library(osmand SHARED
 	"${ROOT}/src/transportRoutingObjects.cpp"
 	"${ROOT}/src/transportRouteSegment.cpp"
 	"${ROOT}/src/transportRouteResult.cpp"
+	"${ROOT}/src/transportRoutingConfiguration.cpp"
+	"${ROOT}/src/transportRoutingContext.cpp"
 	"${ROOT}/src/transportRoutePlanner.cpp"
 	"${ROOT}/src/binaryRoutePlanner.cpp"
 	"${ROOT}/src/proto/osmand_index.pb.cc"

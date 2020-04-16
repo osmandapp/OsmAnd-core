@@ -3,7 +3,9 @@
 #include "transportRouteResult.h"
 #include "transportRouteResultSegment.h"
 #include "transportRoutingConfiguration.h"
+#include "transportRoutingObjects.h"
 #include "transportRoutingContext.h"
+#include "Logging.h"
 
 TransportRouteResult::TransportRouteResult(TransportRoutingContext* ctx) {
     config = ctx->cfg;
