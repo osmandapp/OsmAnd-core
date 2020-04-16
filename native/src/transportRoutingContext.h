@@ -298,7 +298,7 @@ struct TransportRoutingContext {
     }
 
 
-    void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>> lst, SHARED_PTR<TransportRoute>& route, int32_t stopIndex) {
+    void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>>& lst, SHARED_PTR<TransportRoute>& route, int32_t stopIndex) {
         if(route->schedule != nullptr) {
             vector<int32_t> ti = route->schedule->tripIntervals;
             int32_t cnt = ti.size();

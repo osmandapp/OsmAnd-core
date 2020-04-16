@@ -58,11 +58,10 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
     });
 
     vector<SHARED_PTR<TransportRouteResult>> lst;
-//         System.out.println(String.format("Calculated %.1f seconds, found %d results, visited %d routes / %d stops, loaded %d tiles (%d ms read, %d ms total), loaded ways %d (%d wrong)",
-//                 (System.currentTimeMillis() - ctx.startCalcTime) / 1000.0, results.size(),
-//                 ctx.visitedRoutesCount, ctx.visitedStops,
-//                 ctx.quadTree.size(), ctx.readTime / (1000 * 1000), ctx.loadTime / (1000 * 1000),
-//                 ctx.loadedWays, ctx.wrongLoadedWays));
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+                      "Found %d results, visited %d routes / %d stops, loaded %d tiles, loaded ways %d (%d wrong)",
+                      results.size(), ctx->visitedRoutesCount, ctx->visitedStops,
+                      ctx->quadTree.size(), ctx->loadedWays, ctx->wrongLoadedWays);
 
     for(SHARED_PTR<TransportRouteSegment>& res : results) {
         if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {

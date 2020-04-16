@@ -1641,7 +1641,9 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 					break;
 				}
 				default: {
-                    skipUnknownFields(input, t);
+                    if (!skipUnknownFields(input, t)) {
+                        return false;
+                    }
 					break;
 				}
 			}

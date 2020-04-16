@@ -37,16 +37,6 @@ struct TransportRouteResult {
         return stops;
     }
 
-    // ui only:
-    // bool isRouteStop (TransportStop stop) {
-    //     for (vector<TransportRouteResultSegment>::iterator it = segments.begin(); it != segments.end(); it++) {
-    //         if (find(*it->getTravelStops().begin(), *it->getTravelStops().end(), stop) != *it->getTravelStops().end()) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
     //for ui/logs
     double getTravelDist() {
         double d = 0;
