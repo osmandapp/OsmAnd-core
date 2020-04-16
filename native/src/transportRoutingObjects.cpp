@@ -375,13 +375,13 @@ void TransportRoute::mergeForwardWays()
     {
         // resort ways to stops order
         UNORDERED(map)<SHARED_PTR<Way>, pair<int, int>> orderWays;
-        for (SHARED_PTR<Way>& w : forwardWays)
+        for (SHARED_PTR<Way> w : forwardWays)
         {
             pair<int, int> pair;
             pair.first = 0;
             pair.second = 0;
             SHARED_PTR<Node> firstNode = w->getFirstNode();
-            SHARED_PTR<TransportStop>& st = forwardStops.at(0);
+            SHARED_PTR<TransportStop> st = forwardStops.at(0);
             double firstDistance = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
             SHARED_PTR<Node> lastNode = w->getLastNode();
             double lastDistance = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);

@@ -1449,7 +1449,7 @@ bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule
 	}
 }
 
-bool readTransportRouteStop(CodedInputStream* input, TransportStop* transportStop, int dx[], int dy[],
+bool readTransportRouteStop(CodedInputStream* input, SHARED_PTR<TransportStop> &transportStop, int dx[], int dy[],
 	int64_t did, UNORDERED(map)<int32_t, string>& stringTable, int32_t filePointer) {
 	transportStop->fileOffset = input->TotalBytesRead();
     transportStop->referencesToRoutes.push_back(filePointer);
@@ -1603,7 +1603,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
                 uint32_t length;
                 input->ReadVarint32(&length);
 				pold = input->PushLimit(length);
-                TransportStop* stop = new TransportStop();
+                SHARED_PTR<TransportStop> stop = make_shared<TransportStop>();
                 readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
                 transportRoute->forwardStops.push_back(SHARED_PTR<TransportStop>(stop));
 				rid = stop->id;
@@ -1654,7 +1654,7 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 }
 
 void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
-    for (SHARED_PTR<TransportStopExit>& exit : s->exits) {
+    for (SHARED_PTR<TransportStopExit> exit : s->exits) {
         if (exit->ref.size() > 0) {
             const auto it = stringTable.find(stoi(exit->ref));
             exit->ref = it != stringTable.end() ? it->second : "";

@@ -110,7 +110,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 		results = q->transportResults;
 		localFileRoutes.clear();
 		mergeTransportStops(*it, loadedTransportStops, results, localFileRoutes, routeMap[*it]);
-		for (SHARED_PTR<TransportStop>& stop : results)
+		for (SHARED_PTR<TransportStop> stop : results)
 		{
 			int64_t stopId = stop->id;
 			SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
