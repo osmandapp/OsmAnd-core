@@ -1675,7 +1675,6 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
         s->names.clear();
         UNORDERED(map)<string, string>::iterator it = namesMap.begin();
         while (it != namesMap.end()) {
-            // TODO: check if first and second actually numbers
             const auto first = stringTable.find(stoi(it->first));
             const auto second = stringTable.find(stoi(it->second));
             if (first != stringTable.end() && second != stringTable.end())
@@ -1710,7 +1709,7 @@ void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute>& dataObjec
 		dataObject->type = it != stringTable.end() ? it->second : "";
 	}
 	if (!onlyDescription) {
-        for (SHARED_PTR<TransportStop> s : dataObject->forwardStops) {
+        for (SHARED_PTR<TransportStop>& s : dataObject->forwardStops) {
 			initializeNames(stringTable, s);
 		}
 	}
@@ -1799,7 +1798,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
         }
         initializeStringTable(&cis, ind, stringTable);
         UNORDERED(map)<int32_t, string> indexedStringTable = ind->stringTable->stringTable;
-        for(SHARED_PTR<TransportRoute>& transportRoute : finishInit) {
+        for (SHARED_PTR<TransportRoute>& transportRoute : finishInit) {
             initializeNames(false, transportRoute, indexedStringTable);
         }
     }
