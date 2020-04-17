@@ -113,6 +113,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     OsmAnd::ElapsedTimer pt_timer;
+    pt_timer.Enable();
     pt_timer.Start();
     ctx->loadTime.Enable();
     ctx->searchTransportIndexTime.Enable();
@@ -272,8 +273,10 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		//updateCalculationProgress(ctx, queue);
     }
 	pt_timer.Pause();
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f ms, loading tiles (overall): %.3f ms, readTime : %.3f ms", 
-	pt_timer.GetElapsedMs(), ctx->loadTime.GetElapsedMs(), ctx->readTime.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f s, loading tiles (overall): %.3f s, readTime : %.3f s",
+                      (double) pt_timer.GetElapsedMs() / 1000.0,
+                      (double) ctx->loadTime.GetElapsedMs() / 1000.0,
+                      (double) ctx->readTime.GetElapsedMs() / 1000.0);
 
     return prepareResults(ctx, results);
 }
