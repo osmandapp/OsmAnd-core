@@ -1498,14 +1498,14 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop> stop)
 	ienv->SetIntField(jstop, jfield_NativeTransportStop_y31, stop->y31);
 
 	//maybe we should obscure this field completly? need to look if this info needed for result
-	jobjectArray j_routes = ienv->NewObjectArray(stop->routes.size(), jclass_NativeTransportRoute, NULL);
-	for (int i = 0; i < stop->routes.size(); i++){
-		jobject tmp = convertTransportRouteToJava(ienv, stop->routes.at(i));
-		ienv->SetObjectArrayElement(j_routes, i, tmp);
-		ienv->DeleteLocalRef(tmp);
-	}
-	ienv->SetObjectField(jstop, jfield_NativeTransportStop_routes, j_routes);
-	ienv->DeleteLocalRef(j_routes);
+	// jobjectArray j_routes = ienv->NewObjectArray(stop->routes.size(), jclass_NativeTransportRoute, NULL);
+	// for (int i = 0; i < stop->routes.size(); i++){
+	// 	jobject tmp = convertTransportRouteToJava(ienv, stop->routes.at(i));
+	// 	ienv->SetObjectArrayElement(j_routes, i, tmp);
+	// 	ienv->DeleteLocalRef(tmp);
+	// }
+	// ienv->SetObjectField(jstop, jfield_NativeTransportStop_routes, j_routes);
+	// ienv->DeleteLocalRef(j_routes);
 
 	if (stop->exits.size() > 0) {
 		jintArray j_pTStopExit_x31s = ienv->NewIntArray(stop->exits.size());
