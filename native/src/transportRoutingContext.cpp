@@ -34,7 +34,7 @@ void TransportRoutingContext::calcLatLons()
 
 void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> &res)
 {
-
+	loadTime.Start();
 	int32_t d = change ? walkChangeRadiusIn31 : walkRadiusIn31;
 	int32_t lx = (sx - d) >> (31 - cfg->zoomToLoadTiles);
 	int32_t rx = (sx + d) >> (31 - cfg->zoomToLoadTiles);
@@ -72,6 +72,7 @@ void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool cha
 			}
 		}
 	}
+	loadTime.Pause();
 }
 
 void TransportRoutingContext::buildSearchTransportRequest(SearchQuery* q, int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops)
@@ -86,7 +87,7 @@ void TransportRoutingContext::buildSearchTransportRequest(SearchQuery* q, int sl
 
 std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile(uint32_t x, uint32_t y)
 {
-	loadTime.Start();
+	readTime.Start();
 	vector<SHARED_PTR<TransportRouteSegment>> lst;
 	int pz = (31 - cfg->zoomToLoadTiles);
 	vector<SHARED_PTR<TransportStop>> stops;
@@ -98,13 +99,11 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 
 	auto openFiles = getOpenMapFiles();
 	std::vector<BinaryMapFile *>::iterator it, end;
-	readTime.Start();
+	
 	for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it)
 	{
         q.transportResults.clear();
-		searchTransportIndexTime.Start();
 		searchTransportIndex(&q, *it);
-		searchTransportIndexTime.Pause();
         stops = q.transportResults;
 		localFileRoutes.clear();
 		mergeTransportStops(*it, loadedTransportStops, stops, localFileRoutes, routeMap[*it]);
@@ -145,7 +144,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 			}
 		}
 	}
-	readTime.Pause();
+	
 	std::vector<SHARED_PTR<TransportStop>> stopsValues;
 	stopsValues.reserve(loadedTransportStops.size());
 
@@ -154,7 +153,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 		return pair.second;
 	});
 	loadTransportSegments(stopsValues, lst);
-	loadTime.Pause();
+	readTime.Pause();
 	return lst;
 }
 

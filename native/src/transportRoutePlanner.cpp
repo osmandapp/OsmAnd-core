@@ -113,7 +113,6 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
     OsmAnd::ElapsedTimer pt_timer;
-    pt_timer.Enable();
     pt_timer.Start();
     ctx->loadTime.Enable();
     ctx->searchTransportIndexTime.Enable();
