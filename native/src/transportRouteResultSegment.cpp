@@ -70,21 +70,21 @@ vector<SHARED_PTR<Way>> TransportRouteResultSegment::getGeometry()
     double endLon = getEnd()->lon;
 
     int endInd = -1;
-    vector<SHARED_PTR<Node>> res;
+    vector<Node> res;
     for (auto it = fw.begin(); it != fw.end(); ++it)
     {
-        vector<SHARED_PTR<Node>> nodes = (*it)->nodes;
+        vector<Node> nodes = (*it)->nodes;
         for (auto nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt)
         {
             const auto n = *nodesIt;
-            double startDist = getDistance(startLat, startLon, n->lat, n->lon);
+            double startDist = getDistance(startLat, startLon, n.lat, n.lon);
             if (startDist < minStart)
             {
                 minStart = startDist;
                 res.clear();
             }
             res.push_back(n);
-            double endDist = getDistance(endLat, endLon, n->lat, n->lon);
+            double endDist = getDistance(endLat, endLon, n.lat, n.lon);
             if (endDist < minEnd)
             {
                 endInd = res.size();
@@ -100,7 +100,7 @@ vector<SHARED_PTR<Way>> TransportRouteResultSegment::getGeometry()
         {
             double lLat = getStop(i)->lat;
             double lLon = getStop(i)->lon;
-            const auto n = make_shared<Node>(lLat, lLon, -1);
+            const auto n = Node(lLat, lLon, -1);
             way->addNode(n);
         }
     }

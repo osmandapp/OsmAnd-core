@@ -177,13 +177,13 @@ Node::Node(double lat_, double lon_, int64_t id_)
     lon = lon_;
 }
 
-bool Node::compareNode(SHARED_PTR<Node> thatObj)
+bool Node::compareNode(Node& thatObj)
 {
-    if (this == thatObj.get())
-    {
-        return true;
-    }
-    if (id == thatObj->id && std::abs(lat - thatObj->lat) < 0.00001 && std::abs(lon - thatObj->lon) < 0.00001)
+    // if (this == thatObj)
+    // {
+    //     return true;
+    // }
+    if (id == thatObj.id && std::abs(lat - thatObj.lat) < 0.00001 && std::abs(lon - thatObj.lon) < 0.00001)
     {
         return true;
     }
@@ -204,43 +204,43 @@ Way::Way(Way *w_)
     nodeIds = w_->nodeIds;
 }
 
-void Way::addNode(SHARED_PTR<Node> n)
+void Way::addNode(Node n)
 {
-    nodes.push_back(n);
+    nodes.push_back(std::move(n));
 }
 
-SHARED_PTR<Node> Way::getFirstNode()
+Node Way::getFirstNode()
 {
     if (nodes.size() > 0)
     {
         return nodes.at(0);
     }
-    return NULL;
+    return Node(0,0,-1);
 }
 
 int64_t Way::getFirstNodeId()
 {
     if (nodes.size() > 0)
     {
-        return nodes.at(0)->id;
+        return nodes.at(0).id;
     }
     return -1;
 }
 
-SHARED_PTR<Node> Way::getLastNode()
+Node Way::getLastNode()
 {
     if (nodes.size() > 0)
     {
         return nodes.at(nodes.size() - 1);
     }
-    return NULL;
+    return Node(0,0,-1);
 }
 
 int64_t Way::getLastNodeId()
 {
     if (nodes.size() > 0)
     {
-        return nodes.at(nodes.size() - 1)->id;
+        return nodes.at(nodes.size() - 1).id;
     }
     return -1;
 }
@@ -259,7 +259,7 @@ bool Way::compareWay(SHARED_PTR<Way> thatObj)
     {
         for (int i = 0; i < nodes.size(); i++)
         {
-            if (!nodes[i]->compareNode(thatObj->nodes[i]))
+            if (!nodes[i].compareNode(thatObj->nodes[i]))
             {
                 return false;
             }
@@ -305,10 +305,10 @@ void TransportRoute::mergeForwardWays()
             for (int32_t i = k + 1; i < forwardWays.size(); i++)
             {
                 SHARED_PTR<Way> w = forwardWays.at(i);
-                double distAttachAfter = getDistance(first->getLastNode()->lat, first->getLastNode()->lon, w->getFirstNode()->lat, w->getFirstNode()->lon);
-                double distReverseAttach = getDistance(first->getLastNode()->lat, first->getLastNode()->lon, w->getLastNode()->lat, w->getLastNode()->lon);
-                double distAttachAfterReverse = getDistance(first->getFirstNode()->lat, first->getFirstNode()->lon, w->getFirstNode()->lat, w->getFirstNode()->lon);
-                double distReverseAttachReverse = getDistance(first->getFirstNode()->lat, first->getFirstNode()->lon, w->getLastNode()->lat, w->getLastNode()->lon);
+                double distAttachAfter = getDistance(first->getLastNode().lat, first->getLastNode().lon, w->getFirstNode().lat, w->getFirstNode().lon);
+                double distReverseAttach = getDistance(first->getLastNode().lat, first->getLastNode().lon, w->getLastNode().lat, w->getLastNode().lon);
+                double distAttachAfterReverse = getDistance(first->getFirstNode().lat, first->getFirstNode().lon, w->getFirstNode().lat, w->getFirstNode().lon);
+                double distReverseAttachReverse = getDistance(first->getFirstNode().lat, first->getFirstNode().lon, w->getLastNode().lat, w->getLastNode().lon);
                 if (distAttachAfter < d)
                 {
                     reverseSecond = false;
@@ -382,16 +382,16 @@ void TransportRoute::mergeForwardWays()
             pair<int, int> pair;
             pair.first = 0;
             pair.second = 0;
-            SHARED_PTR<Node> firstNode = w->getFirstNode();
+            Node firstNode = w->getFirstNode();
             SHARED_PTR<TransportStop> st = forwardStops.at(0);
-            double firstDistance = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
-            SHARED_PTR<Node> lastNode = w->getLastNode();
-            double lastDistance = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);
+            double firstDistance = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+            Node lastNode = w->getLastNode();
+            double lastDistance = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
             for (int i = 1; i < forwardStops.size(); i++)
             {
                 st = forwardStops[i];
-                double firstd = getDistance(st->lat, st->lon, firstNode->lat, firstNode->lon);
-                double lastd = getDistance(st->lat, st->lon, lastNode->lat, lastNode->lon);
+                double firstd = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+                double lastd = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
                 if (firstd < firstDistance)
                 {
                     pair.first = i;

@@ -1655,9 +1655,9 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> rou
 		jdouble tmpNodesLats[nsize];
 		jdouble tmpNodesLons[nsize];
 		for (n = 0; n < nsize; n++) {
-			tmpNodesIds[n] = route->forwardWays.at(k)->nodes.at(n)->id;
-			tmpNodesLats[n] = route->forwardWays.at(k)->nodes.at(n)->lat;
-			tmpNodesLons[n] = route->forwardWays.at(k)->nodes.at(n)->lon;
+			tmpNodesIds[n] = route->forwardWays.at(k)->nodes.at(n).id;
+			tmpNodesLats[n] = route->forwardWays.at(k)->nodes.at(n).lat;
+			tmpNodesLons[n] = route->forwardWays.at(k)->nodes.at(n).lon;
 		}
 		ienv->SetLongArrayRegion(j_wayNodesIds, 0, nsize, tmpNodesIds);
 		ienv->SetDoubleArrayRegion(j_wayNodesLats, 0, nsize, tmpNodesLats);

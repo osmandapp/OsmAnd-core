@@ -83,23 +83,23 @@ struct Node
 
 	Node(double lat_, double lon_, int64_t id_);
 
-	bool compareNode(SHARED_PTR<Node> thatObj);
+	bool compareNode(Node& thatObj);
 };
 
 struct Way
 {
 	int64_t id;
-	vector<SHARED_PTR<Node>> nodes;
+	vector<Node> nodes;
 	vector<int64_t> nodeIds;
 
 	Way(int64_t id_);
 
 	Way(Way *w_);
 
-	void addNode(SHARED_PTR<Node> n);
-	SHARED_PTR<Node> getFirstNode();
+	void addNode(Node n);
+	Node getFirstNode();
 	int64_t getFirstNodeId();
-	SHARED_PTR<Node> getLastNode();
+	Node getLastNode();
 	int64_t getLastNodeId();
 	void reverseNodes();
 	bool compareWay(SHARED_PTR<Way> thatObj);

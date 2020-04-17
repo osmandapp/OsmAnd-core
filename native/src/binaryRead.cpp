@@ -1576,7 +1576,7 @@ bool readTransportRoute(BinaryMapFile* file, TransportRoute* transportRoute, int
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
-						w->addNode(make_shared<Node>(get31LatitudeY(y), get31LongitudeX(x), -1));
+						w->addNode(Node(get31LatitudeY(y), get31LongitudeX(x), -1));
 						px = x;
 						py = y;
 					}
