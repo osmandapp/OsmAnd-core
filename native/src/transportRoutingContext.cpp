@@ -57,9 +57,9 @@ void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool cha
 			{
 				list = it->second;
 			}
-			for (SHARED_PTR<TransportRouteSegment> it : list)
+			for (SHARED_PTR<TransportRouteSegment>& it : list)
 			{
-				SHARED_PTR<TransportStop> st = it->getStop(it->segStart);
+				SHARED_PTR<TransportStop>& st = it->getStop(it->segStart);
 				if (abs(st->x31 - sx) > walkRadiusIn31 || abs(st->y31 - sy) > walkRadiusIn31)
 				{
 					wrongLoadedWays++;
@@ -74,16 +74,14 @@ void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool cha
 	}
 }
 
-SearchQuery *TransportRoutingContext::buildSearchTransportRequest(int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops)
+void TransportRoutingContext::buildSearchTransportRequest(SearchQuery* q, int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops)
 {
-	SearchQuery *request = new SearchQuery();
-	request->transportResults = stops;
-	request->left = sleft >> (31 - TRANSPORT_STOP_ZOOM);
-	request->right = sright >> (31 - TRANSPORT_STOP_ZOOM);
-	request->top = stop >> (31 - TRANSPORT_STOP_ZOOM);
-	request->bottom = sbottom >> (31 - TRANSPORT_STOP_ZOOM);
-	request->limit = limit;
-	return request;
+	q->transportResults = stops;
+	q->left = sleft >> (31 - TRANSPORT_STOP_ZOOM);
+	q->right = sright >> (31 - TRANSPORT_STOP_ZOOM);
+	q->top = stop >> (31 - TRANSPORT_STOP_ZOOM);
+	q->bottom = sbottom >> (31 - TRANSPORT_STOP_ZOOM);
+	q->limit = limit;
 }
 
 std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile(uint32_t x, uint32_t y)
@@ -92,8 +90,8 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 	vector<SHARED_PTR<TransportRouteSegment>> lst;
 	int pz = (31 - cfg->zoomToLoadTiles);
 	vector<SHARED_PTR<TransportStop>> stops;
-	vector<SHARED_PTR<TransportStop>> results;
-	SearchQuery *q = buildSearchTransportRequest((x << pz), ((x + 1) << pz), (y << pz), ((y + 1) << pz), -1, stops);
+    SearchQuery* q = new SearchQuery();
+    buildSearchTransportRequest(q, (x << pz), ((x + 1) << pz), (y << pz), ((y + 1) << pz), -1, stops);
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
 	vector<SHARED_PTR<TransportStop>> loadedTransportStopsVals;
@@ -103,17 +101,17 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 	readTime.Start();
 	for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it)
 	{
-		q->transportResults.clear();
+        q->transportResults.clear();
 		searchTransportIndexTime.Start();
 		searchTransportIndex(q, *it);
 		searchTransportIndexTime.Pause();
-		results = q->transportResults;
+        stops = q->transportResults;
 		localFileRoutes.clear();
-		mergeTransportStops(*it, loadedTransportStops, results, localFileRoutes, routeMap[*it]);
-		for (SHARED_PTR<TransportStop> stop : results)
+		mergeTransportStops(*it, loadedTransportStops, stops, localFileRoutes, routeMap[*it]);
+		for (SHARED_PTR<TransportStop>& stop : stops)
 		{
 			int64_t stopId = stop->id;
-			SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
+            SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
 			vector<int32_t> rrs = stop->referencesToRoutes;
 			if (multifileStop == stop)
 			{
@@ -129,11 +127,11 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 			{
 				for (int32_t rr : rrs)
 				{
-					SHARED_PTR<TransportRoute> route = localFileRoutes.at(rr);
-					if (route == nullptr)
+					const auto it = localFileRoutes.find(rr);
+                    const auto& route = it->second;
+                    if (it == localFileRoutes.end())
 					{
-						// TODO: add stop name
-						//    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop ", rr);
+//						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Something went wrong by loading route %d for stop", rr);
 					}
 					else if (multifileStop == stop ||
 							 (!multifileStop->hasRoute(route->id) &&
@@ -147,6 +145,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 			}
 		}
 	}
+    delete q;
 	readTime.Pause();
 	std::vector<SHARED_PTR<TransportStop>> stopsValues;
 	stopsValues.reserve(loadedTransportStops.size());
@@ -246,7 +245,7 @@ std::vector<SHARED_PTR<TransportStop>> TransportRoutingContext::mergeTransportSt
 			{
 				if (loadedRoutes.find(nxt) != loadedRoutes.end())
 				{
-					localFileRoutes.insert(std::pair<int64_t, SHARED_PTR<TransportRoute>>(nxt, loadedRoutes.find(nxt)->second));
+					localFileRoutes.insert(std::pair<int64_t, SHARED_PTR<TransportRoute>>(nxt, loadedRoutes[nxt]));
 				}
 				else
 				{
@@ -265,7 +264,7 @@ std::vector<SHARED_PTR<TransportStop>> TransportRoutingContext::mergeTransportSt
 void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops, vector<SHARED_PTR<TransportRouteSegment>> &lst)
 {
 	loadSegmentsTime.Start();
-	for (SHARED_PTR<TransportStop> s : stops)
+	for (SHARED_PTR<TransportStop> &s : stops)
 	{
 		if (s->isDeleted() || s->routes.size() == 0)
 		{

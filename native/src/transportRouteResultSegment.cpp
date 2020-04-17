@@ -66,8 +66,9 @@ vector<SHARED_PTR<Way>> TransportRouteResultSegment::getGeometry()
 
     double startLat = getStart()->lat;
     double startLon = getStart()->lon;
-    double endLat = getEnd()->lat;
-    double endLon = getEnd()->lon;
+    const auto& endStop = getEnd();
+    double endLat = endStop->lat;
+    double endLon = endStop->lon;
 
     int endInd = -1;
     vector<SHARED_PTR<Node>> res;

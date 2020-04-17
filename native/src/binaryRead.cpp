@@ -1654,7 +1654,7 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 }
 
 void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
-    for (SHARED_PTR<TransportStopExit> exit : s->exits) {
+    for (SHARED_PTR<TransportStopExit>& exit : s->exits) {
         if (exit->ref.size() > 0) {
             const auto it = stringTable.find(stoi(exit->ref));
             exit->ref = it != stringTable.end() ? it->second : "";

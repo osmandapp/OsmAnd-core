@@ -35,9 +35,6 @@ public:
 	SHARED_PTR<TransportStop> getEnd();
 	vector<SHARED_PTR<TransportStop>> getTravelStops();
 	SHARED_PTR<TransportStop> getStop(int32_t i);
-
-	
-
 };
 
 #endif /*_OSMAND_TRANSPORT_ROUTE_RESULT_SEGMENT_H*/

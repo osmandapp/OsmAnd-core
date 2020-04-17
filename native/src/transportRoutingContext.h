@@ -61,7 +61,7 @@ struct TransportRoutingContext
 
 	void calcLatLons();
 	void getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> &res);
-	SearchQuery *buildSearchTransportRequest(int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops);
+	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops);
 	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y);
 	std::vector<SHARED_PTR<TransportStop>> mergeTransportStops(
 		BinaryMapFile *file,
