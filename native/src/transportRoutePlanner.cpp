@@ -182,7 +182,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		if(routeTravelSpeed == 0) {
 			continue;
 		}
-        SHARED_PTR<TransportStop>& prevStop = segment->getStop(segment->segStart);
+        SHARED_PTR<TransportStop> prevStop = segment->getStop(segment->segStart);
 		vector<SHARED_PTR<TransportRouteSegment>> sgms;
 		
 		for (int32_t ind = 1 + segment->segStart; ind < segment->getLength(); ind++) {

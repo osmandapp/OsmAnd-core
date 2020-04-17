@@ -34,7 +34,7 @@ struct TransportRouteSegment {
     TransportRouteSegment(SHARED_PTR<TransportRouteSegment> s);
 
     bool wasVisited(SHARED_PTR<TransportRouteSegment>& rrs);
-    SHARED_PTR<TransportStop>& getStop(int i);
+    SHARED_PTR<TransportStop> getStop(int i);
     pair<double, double> getLocation();
     double getLocationLat();
     double getLocationLon();

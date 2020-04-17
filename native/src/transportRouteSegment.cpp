@@ -34,7 +34,7 @@ bool TransportRouteSegment::wasVisited(SHARED_PTR<TransportRouteSegment>& rrs) {
     return false;
 }
 
-SHARED_PTR<TransportStop>& TransportRouteSegment::getStop(int i) {
+SHARED_PTR<TransportStop> TransportRouteSegment::getStop(int i) {
     return road->forwardStops.at(i);
 }
 

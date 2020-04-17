@@ -59,7 +59,7 @@ void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool cha
 			}
 			for (SHARED_PTR<TransportRouteSegment>& it : list)
 			{
-				SHARED_PTR<TransportStop>& st = it->getStop(it->segStart);
+				SHARED_PTR<TransportStop> st = it->getStop(it->segStart);
 				if (abs(st->x31 - sx) > walkRadiusIn31 || abs(st->y31 - sy) > walkRadiusIn31)
 				{
 					wrongLoadedWays++;
@@ -90,8 +90,8 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 	vector<SHARED_PTR<TransportRouteSegment>> lst;
 	int pz = (31 - cfg->zoomToLoadTiles);
 	vector<SHARED_PTR<TransportStop>> stops;
-    SearchQuery* q = new SearchQuery();
-    buildSearchTransportRequest(q, (x << pz), ((x + 1) << pz), (y << pz), ((y + 1) << pz), -1, stops);
+    SearchQuery q;
+    buildSearchTransportRequest(&q, (x << pz), ((x + 1) << pz), (y << pz), ((y + 1) << pz), -1, stops);
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
 	vector<SHARED_PTR<TransportStop>> loadedTransportStopsVals;
@@ -101,11 +101,11 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 	readTime.Start();
 	for (it = openFiles.begin(), end = openFiles.end(); it != end; ++it)
 	{
-        q->transportResults.clear();
+        q.transportResults.clear();
 		searchTransportIndexTime.Start();
-		searchTransportIndex(q, *it);
+		searchTransportIndex(&q, *it);
 		searchTransportIndexTime.Pause();
-        stops = q->transportResults;
+        stops = q.transportResults;
 		localFileRoutes.clear();
 		mergeTransportStops(*it, loadedTransportStops, stops, localFileRoutes, routeMap[*it]);
 		for (SHARED_PTR<TransportStop>& stop : stops)
@@ -145,7 +145,6 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 			}
 		}
 	}
-    delete q;
 	readTime.Pause();
 	std::vector<SHARED_PTR<TransportStop>> stopsValues;
 	stopsValues.reserve(loadedTransportStops.size());
