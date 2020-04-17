@@ -14,7 +14,12 @@ struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<Trans
     TransportSegmentsComparator(){}
     bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
     {
-        int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
+        int cmp = 0;
+        if(lhs->distFromStart == rhs->distFromStart) {
+            cmp = 0;
+        } else {
+            cmp = lhs->distFromStart < rhs->distFromStart ? -1 : 1;
+        }
         return cmp > 0;
     }
 };
