@@ -375,7 +375,7 @@ void TransportRoute::mergeForwardWays()
     {
         // resort ways to stops order
         UNORDERED(map)<SHARED_PTR<Way>, pair<int, int>> orderWays;
-        for (SHARED_PTR<Way> w : forwardWays)
+        for (SHARED_PTR<Way>& w : forwardWays)
         {
             pair<int, int> pair;
             pair.first = 0;
