@@ -657,17 +657,32 @@ struct BinaryMapFile {
 
 struct ResultPublisher {
 	std::vector< MapDataObject*> result;
-	UNORDERED(set)<uint64_t > ids;
-	
+	UNORDERED(map)<uint64_t, MapDataObject*> ids;
+
 	bool publish(MapDataObject* r) {
-		if(r->id > 0 && !ids.insert(r->id).second) {
-			return false;
+		if(r->id > 0) {
+			MapDataObject *ex = ids[r->id] ;
+			if (ex) {
+				if (ex->points.size() > r->points.size()) {
+					return false;
+				} else {
+					auto it = result.begin();
+					for(; it != result.end(); it++) {
+						if( *it == ex) {
+							result.erase(it);
+							break;
+						}
+					}
+					delete ex;
+				}
+			}
+			ids[r->id] = r;
 		}
 		result.push_back(r);
 		return true;
 	}
 
-	bool publishOnlyUnique(std::vector<MapDataObject*> r) {
+	bool publishOnlyUnique(std::vector<MapDataObject*>& r) {
 		for(uint i = 0; i < r.size(); i++) {
 			if(!publish(r[i])) {
 				delete r[i];
@@ -677,7 +692,7 @@ struct ResultPublisher {
 		return true;
 	}
 
-	bool publishAll(std::vector<MapDataObject*> r) {
+	bool publishAll(std::vector<MapDataObject*>& r) {
 		for(uint i = 0; i < r.size(); i++) {
 			result.push_back(r[i]);
 		}
