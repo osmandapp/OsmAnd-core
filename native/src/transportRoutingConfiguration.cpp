@@ -2,6 +2,7 @@
 #define _OSMAND_TRANSPORT_ROUTE_CONFIGUERATION_CPP
 #include "transportRoutingConfiguration.h"
 #include "generalRouter.h"
+#include <stdlib.h>
 
 
 TransportRoutingConfiguration::TransportRoutingConfiguration() : router(new GeneralRouter()) {}
@@ -21,7 +22,7 @@ TransportRoutingConfiguration::TransportRoutingConfiguration(SHARED_PTR<GeneralR
 		int maxNumOfChanges = 3;
 		try
 		{
-			maxNumOfChanges = stoi(mn);
+			maxNumOfChanges = atoi(mn.c_str());
 		}
 		catch (...)
 		{

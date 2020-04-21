@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <algorithm>
+#include <stdlib.h>
 #include "google/protobuf/wire_format_lite.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/wire_format_lite.cc"
@@ -1656,17 +1657,17 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<TransportStop> s) {
     for (SHARED_PTR<TransportStopExit>& exit : s->exits) {
         if (exit->ref.size() > 0) {
-            const auto it = stringTable.find(stoi(exit->ref));
+            const auto it = stringTable.find(atoi(exit->ref.c_str()));
             exit->ref = it != stringTable.end() ? it->second : "";
         }
     }
     if (s->name.size() > 0) {
-        const auto it = stringTable.find(stoi(s->name));
+        const auto it = stringTable.find(atoi(s->name.c_str()));
         s->name = it != stringTable.end() ? it->second : "";
         
     }
     if (s->enName.size() > 0) {
-        const auto it = stringTable.find(stoi(s->enName));
+        const auto it = stringTable.find(atoi(s->enName.c_str()));
         s->enName = it != stringTable.end() ? it->second : "";
     }
     UNORDERED(map)<string, string> namesMap;
@@ -1675,8 +1676,8 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
         s->names.clear();
         UNORDERED(map)<string, string>::iterator it = namesMap.begin();
         while (it != namesMap.end()) {
-            const auto first = stringTable.find(stoi(it->first));
-            const auto second = stringTable.find(stoi(it->second));
+            const auto first = stringTable.find(atoi(it->first.c_str()));
+            const auto second = stringTable.find(atoi(it->second.c_str()));
             if (first != stringTable.end() && second != stringTable.end())
                 s->names.insert({first->second, second->second});
             it++;
@@ -1686,26 +1687,26 @@ void initializeNames(UNORDERED(map)<int32_t, string>& stringTable, SHARED_PTR<Tr
 
 void initializeNames(bool onlyDescription, SHARED_PTR<TransportRoute>& dataObject, UNORDERED(map)<int32_t, string>& stringTable) {
 	if(dataObject->name.size() > 0) {
-        const auto it = stringTable.find(stoi(dataObject->name));
+        const auto it = stringTable.find(atoi(dataObject->name.c_str()));
         dataObject->name = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->enName.size() > 0) {
-        const auto it = stringTable.find(stoi(dataObject->enName));
+        const auto it = stringTable.find(atoi(dataObject->enName.c_str()));
         dataObject->enName = it != stringTable.end() ? it->second : "";
 	}
 	// if(dataObject->getName().length() > 0 && dataObject.getName("en").length() == 0){
 	// 	dataObject.setEnName(TransliterationHelper.transliterate(dataObject.getName()));
 	// }
 	if(dataObject->routeOperator.size() > 0) {
-        const auto it = stringTable.find(stoi(dataObject->routeOperator));
+        const auto it = stringTable.find(atoi(dataObject->routeOperator.c_str()));
         dataObject->routeOperator = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->color.size() > 0) {
-        const auto it = stringTable.find(stoi(dataObject->color));
+        const auto it = stringTable.find(atoi(dataObject->color.c_str()));
         dataObject->color = it != stringTable.end() ? it->second : "";
 	}
 	if(dataObject->type.size() > 0) {
-        const auto it = stringTable.find(stoi(dataObject->type));
+        const auto it = stringTable.find(atoi(dataObject->type.c_str()));
 		dataObject->type = it != stringTable.end() ? it->second : "";
 	}
 	if (!onlyDescription) {
