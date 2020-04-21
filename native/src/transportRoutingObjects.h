@@ -94,7 +94,7 @@ struct Way
 
 	Way(int64_t id_);
 
-	Way(Way *w_);
+	Way(SHARED_PTR<Way> w_);
 
 	void addNode(Node n);
 	Node getFirstNode();
@@ -102,7 +102,7 @@ struct Way
 	Node getLastNode();
 	int64_t getLastNodeId();
 	void reverseNodes();
-	bool compareWay(SHARED_PTR<Way> thatObj);
+	bool compareWay(SHARED_PTR<Way>& thatObj);
 };
 
 struct TransportRoute : public MapObject
@@ -124,7 +124,7 @@ struct TransportRoute : public MapObject
 	int32_t getAvgBothDistance();
 	int32_t getDist();
 	string getAdjustedRouteRef(bool small);
-	bool compareRoute(SHARED_PTR<TransportRoute> thatObj);
+	bool compareRoute(SHARED_PTR<TransportRoute>& thatObj);
 
 	
 };

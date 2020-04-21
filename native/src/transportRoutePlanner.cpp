@@ -14,7 +14,12 @@ struct TransportSegmentsComparator: public std::binary_function<SHARED_PTR<Trans
     TransportSegmentsComparator(){}
     bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const
     {
-        int cmp = TransportSegmentPriorityComparator(lhs->distFromStart, rhs->distFromStart);
+        int cmp;
+        if(lhs->distFromStart == rhs->distFromStart) {
+            cmp = 0;
+        } else {
+            cmp = lhs->distFromStart < rhs->distFromStart ? -1 : 1;
+        }
         return cmp > 0;
     }
 };
@@ -58,8 +63,11 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
     });
 
     vector<SHARED_PTR<TransportRouteResult>> lst;
-    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Found %d results, visited %d routes / %d stops, loaded %d tiles (%d ms read, %d ms total), loaded ways %d (%d wrong)",
-    results.size(), ctx->visitedRoutesCount, ctx->visitedStops, ctx->quadTree.size(), ctx->readTime.GetElapsedMs(), ctx->loadTime.GetElapsedMs(), ctx->loadedWays, ctx->wrongLoadedWays);
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+                      "Found %d results, visited %d routes / %d stops, loaded %d tiles, loaded ways %d (%d wrong)",
+                      results.size(), ctx->visitedRoutesCount, ctx->visitedStops,
+                      ctx->quadTree.size(), ctx->loadedWays, ctx->wrongLoadedWays);
+
     for(SHARED_PTR<TransportRouteSegment>& res : results) {
         if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
             return vector<SHARED_PTR<TransportRouteResult>>();
@@ -101,15 +109,12 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::prepareResults(S
         if(!include) {
             lst.push_back(route);
             // System.out.println(route.toString());
-        } else {
-//                System.err.println(route.toString());
         }
     }
     return lst;
 }
 
 vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx) {
-    //todo add counter
     OsmAnd::ElapsedTimer pt_timer;
     pt_timer.Start();
     ctx->loadTime.Enable();
@@ -180,7 +185,7 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		if(routeTravelSpeed == 0) {
 			continue;
 		}
-		SHARED_PTR<TransportStop> prevStop = segment->getStop(segment->segStart);
+        SHARED_PTR<TransportStop> prevStop = segment->getStop(segment->segStart);
 		vector<SHARED_PTR<TransportRouteSegment>> sgms;
 		
 		for (int32_t ind = 1 + segment->segStart; ind < segment->getLength(); ind++) {
@@ -270,8 +275,10 @@ vector<SHARED_PTR<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		//updateCalculationProgress(ctx, queue);
     }
 	pt_timer.Pause();
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f ms, loading tiles (overall): %.3f ms, readTime : %.3f ms", 
-	pt_timer.GetElapsedMs(), ctx->loadTime.GetElapsedMs(), ctx->readTime.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[NATIVE] PT calculation took %.3f s, loading tiles (overall): %.3f s, readTime : %.3f s",
+                      (double) pt_timer.GetElapsedMs() / 1000.0,
+                      (double) ctx->loadTime.GetElapsedMs() / 1000.0,
+                      (double) ctx->readTime.GetElapsedMs() / 1000.0);
 
     return prepareResults(ctx, results);
 }

@@ -3,21 +3,21 @@
 #include "transportRouteSegment.h"
 #include "transportRoutingObjects.h"
 
-TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex)
+TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRoute> road_, int32_t stopIndex)
 : segStart(stopIndex)
 {
     road = road_;
     departureTime = -1;
 }
 
-TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex_, int32_t depTime_)
+TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRoute> road_, int32_t stopIndex_, int32_t depTime_)
 : segStart(stopIndex_)
 {
     road = road_;
     departureTime = depTime_;
 }
 
-TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRouteSegment>& s)
+TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRouteSegment> s)
 : segStart(s->segStart)
 {
     road = s->road;

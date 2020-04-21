@@ -9,7 +9,6 @@
 
 MapObject::MapObject()
 {
-
 }
 
 UNORDERED(map)<string, string> MapObject::getNamesMap(bool includeEn)
@@ -39,7 +38,6 @@ string MapObject::getName(string lang)
 
 TransportStopExit::TransportStopExit()
 {
-
 }
 
 void TransportStopExit::setLocation(int zoom, int32_t dx, int32_t dy)
@@ -49,7 +47,7 @@ void TransportStopExit::setLocation(int zoom, int32_t dx, int32_t dy)
     // setLocation(MapUtils.getLatitudeFromTile(zoom, dy), MapUtils.getLongitudeFromTile(zoom, dx));
 }
 
-bool TransportStopExit::compareExit(SHARED_PTR<TransportStopExit> &thatObj)
+bool TransportStopExit::compareExit(SHARED_PTR<TransportStopExit>& thatObj)
 {
     return x31 == thatObj->x31 && y31 == thatObj->y31 && ref == thatObj->ref;
 }
@@ -98,7 +96,7 @@ void TransportStop::addRoute(SHARED_PTR<TransportRoute> rt)
     routes.push_back(rt);
 }
 
-bool TransportStop::compareStop(SHARED_PTR<TransportStop> &thatObj)
+bool TransportStop::compareStop(SHARED_PTR<TransportStop>& thatObj)
 {
     if (this == thatObj.get())
     {
@@ -163,7 +161,7 @@ TransportSchedule::TransportSchedule()
 {
 }
 
-bool TransportSchedule::compareSchedule(const SHARED_PTR<TransportSchedule> &thatObj)
+bool TransportSchedule::compareSchedule(const SHARED_PTR<TransportSchedule>& thatObj)
 {
     return tripIntervals == thatObj->tripIntervals && avgStopIntervals == thatObj->avgStopIntervals && avgWaitIntervals == thatObj->avgWaitIntervals;
 }
@@ -197,7 +195,7 @@ Way::Way(int64_t id_)
     id = id_;
 }
 
-Way::Way(Way *w_)
+Way::Way(SHARED_PTR<Way> w_)
 {
     id = w_->id;
     nodes = w_->nodes;
@@ -251,7 +249,7 @@ void Way::reverseNodes()
     reverse(nodeIds.begin(), nodeIds.end());
 }
 
-bool Way::compareWay(SHARED_PTR<Way> thatObj)
+bool Way::compareWay(SHARED_PTR<Way>& thatObj)
 {
     if (this == thatObj.get() &&
         nodeIds == thatObj->nodeIds &&
@@ -377,7 +375,7 @@ void TransportRoute::mergeForwardWays()
     {
         // resort ways to stops order
         UNORDERED(map)<SHARED_PTR<Way>, pair<int, int>> orderWays;
-        for (SHARED_PTR<Way> w : forwardWays)
+        for (SHARED_PTR<Way>& w : forwardWays)
         {
             pair<int, int> pair;
             pair.first = 0;
@@ -466,7 +464,7 @@ string TransportRoute::getAdjustedRouteRef(bool small)
     return adjustedRef;
 }
 
-bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute> thatObj)
+bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute>& thatObj)
 {
     if (this == thatObj.get())
     {

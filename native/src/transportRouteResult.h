@@ -15,7 +15,7 @@ struct TransportRouteResult {
     SHARED_PTR<TransportRoutingConfiguration> config;
 
     TransportRouteResult(TransportRoutingContext* ctx);
-    
+
     double getWalkDist();
     float getWalkSpeed();
     int getStops();

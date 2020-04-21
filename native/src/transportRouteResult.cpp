@@ -55,7 +55,7 @@ double TransportRouteResult::getTravelDist() {
 //for ui/logs
 double TransportRouteResult::getTravelTime() {
     double t = 0;
-    for (SHARED_PTR<TransportRouteResultSegment> seg : segments) {
+    for (SHARED_PTR<TransportRouteResultSegment>& seg : segments) {
         if (config->useSchedule) {
             SHARED_PTR<TransportSchedule> sts = seg->route->schedule;
             for (int k = seg->start; k < seg->end; k++) {

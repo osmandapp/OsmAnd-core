@@ -29,9 +29,9 @@ struct TransportRouteSegment {
     // main field accumulated all time spent from beginning of journey
     double distFromStart = 0;
 
-    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex);
-    TransportRouteSegment(SHARED_PTR<TransportRoute>& road_, int32_t stopIndex_, int32_t depTime_);
-    TransportRouteSegment(SHARED_PTR<TransportRouteSegment>& s);
+    TransportRouteSegment(SHARED_PTR<TransportRoute> road_, int32_t stopIndex);
+    TransportRouteSegment(SHARED_PTR<TransportRoute> road_, int32_t stopIndex_, int32_t depTime_);
+    TransportRouteSegment(SHARED_PTR<TransportRouteSegment> s);
 
     bool wasVisited(SHARED_PTR<TransportRouteSegment>& rrs);
     SHARED_PTR<TransportStop> getStop(int i);

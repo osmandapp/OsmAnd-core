@@ -8,13 +8,6 @@
 
 const bool MEASURE_TIME = false;
 
-inline int TransportSegmentPriorityComparator(double o1DistFromStart, double o2DistFromStart) {
-    if(o1DistFromStart == o2DistFromStart) {
-        return 0;
-    }
-    return o1DistFromStart < o2DistFromStart ? -1 : 1;
-}
-
 struct TransportSegmentsComparator;
 struct TransportRouteSegment;
 struct TransportRoutingContext;
