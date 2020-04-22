@@ -10,8 +10,8 @@
 #include "transportRoutingObjects.h"
 
 TransportRoutingContext::TransportRoutingContext(
-	SHARED_PTR<TransportRoutingConfiguration> cfg_) {
-	cfg = cfg_;
+	unique_ptr<TransportRoutingConfiguration>& cfg_) {
+	cfg = std::move(cfg_);
 	walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
 	walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));
 	for (BinaryMapFile *i : getOpenMapFiles()) {

@@ -4,14 +4,14 @@
 #include "commonOsmAndCore.h"
 
 struct TransportRouteResultSegment;
-struct TransportRoutingConfiguration;
 struct TransportRoutingContext;
+struct TransportRoutingConfiguration;
 
 struct TransportRouteResult {
 	vector<SHARED_PTR<TransportRouteResultSegment>> segments;
 	double finishWalkDist;
 	double routeTime;
-	SHARED_PTR<TransportRoutingConfiguration> config;
+	TransportRoutingConfiguration *config;
 
 	TransportRouteResult(TransportRoutingContext* ctx);
 

@@ -9,7 +9,7 @@
 #include "transportRoutingObjects.h"
 
 TransportRouteResult::TransportRouteResult(TransportRoutingContext* ctx) {
-	config = ctx->cfg;
+	config = ctx->cfg.get();
 }
 
 // ui/logging

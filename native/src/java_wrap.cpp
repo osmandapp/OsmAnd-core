@@ -1375,7 +1375,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	return res;
 }
 
-void parseTransportRoutingConfiguration(JNIEnv* ienv, SHARED_PTR<TransportRoutingConfiguration> rConfig, jobject jTransportConfig) {
+void parseTransportRoutingConfiguration(JNIEnv* ienv, unique_ptr<TransportRoutingConfiguration>& rConfig, jobject jTransportConfig) {
 	rConfig->zoomToLoadTiles = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES);
 	rConfig->walkRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkRadius);
 	rConfig->walkChangeRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkChangeRadius);
@@ -1688,7 +1688,7 @@ jobject convertPTResultToJava(JNIEnv* ienv, SHARED_PTR<TransportRouteResult> r) 
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTransportRouting(JNIEnv* ienv,
 		jobject obj, 
 		jintArray  coordinates, jobject jTransportRoutingConfig, jobject progress) {
-	SHARED_PTR<TransportRoutingConfiguration> trConfig = SHARED_PTR<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
+	unique_ptr<TransportRoutingConfiguration> trConfig = unique_ptr<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
 	parseTransportRoutingConfiguration(ienv, trConfig, jTransportRoutingConfig);
 	SHARED_PTR<TransportRoutingContext> c = make_shared<TransportRoutingContext>(trConfig);
 	c->calculationProgress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
