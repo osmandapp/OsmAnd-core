@@ -1,15 +1,14 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #define _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
 #include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "boost/dynamic_bitset.hpp"
+#include "commonOsmAndCore.h"
 // #include <algorithm>
 
 class GeneralRouter;
 typedef boost::dynamic_bitset<> dynbitset;
 
-struct TransportRoutingConfiguration
-{
+struct TransportRoutingConfiguration {
 	const string KEY = "public_transport";
 	int32_t zoomToLoadTiles = 15;
 	int32_t walkRadius = 1500;
@@ -35,7 +34,8 @@ struct TransportRoutingConfiguration
 
 	TransportRoutingConfiguration();
 
-	TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter, MAP_STR_STR params);
+	TransportRoutingConfiguration(SHARED_PTR<GeneralRouter> prouter,
+								  MAP_STR_STR params);
 
 	float getSpeedByRouteType(std::string routeType);
 	dynbitset getRawBitset(std::string tg, std::string vl);
@@ -44,4 +44,4 @@ struct TransportRoutingConfiguration
 	int32_t getBoardingTime();
 };
 
-#endif //_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H
+#endif	//_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_H

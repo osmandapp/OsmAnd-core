@@ -10,13 +10,12 @@ struct TransportRoute;
 struct TransportStop;
 struct Way;
 
-struct TransportRouteResultSegment
-{
-private:
+struct TransportRouteResultSegment {
+   private:
 	static const bool DISPLAY_FULL_SEGMENT_ROUTE = false;
 	static const int DISPLAY_SEGMENT_IND = 0;
 
-public:
+   public:
 	SHARED_PTR<TransportRoute> route;
 	double walkTime;
 	double travelDistApproximate;

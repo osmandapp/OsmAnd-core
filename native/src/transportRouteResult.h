@@ -8,25 +8,24 @@ struct TransportRoutingConfiguration;
 struct TransportRoutingContext;
 
 struct TransportRouteResult {
+	vector<SHARED_PTR<TransportRouteResultSegment>> segments;
+	double finishWalkDist;
+	double routeTime;
+	SHARED_PTR<TransportRoutingConfiguration> config;
 
-    vector<SHARED_PTR<TransportRouteResultSegment>> segments;
-    double finishWalkDist;
-    double routeTime;
-    SHARED_PTR<TransportRoutingConfiguration> config;
+	TransportRouteResult(TransportRoutingContext* ctx);
 
-    TransportRouteResult(TransportRoutingContext* ctx);
-
-    double getWalkDist();
-    float getWalkSpeed();
-    int getStops();
-    //bool isRouteStop(TransportStop stop);
-    double getTravelDist();
-    double getTravelTime();
-    double getWalkTime();
-    double getChangeTime();
-    double getBoardingTime();
-    int getChanges();
-    void to_string();
+	double getWalkDist();
+	float getWalkSpeed();
+	int getStops();
+	// bool isRouteStop(TransportStop stop);
+	double getTravelDist();
+	double getTravelTime();
+	double getWalkTime();
+	double getChangeTime();
+	double getBoardingTime();
+	int getChanges();
+	void to_string();
 };
 
 #endif /*_OSMAND_TRANSPORT_ROUTE_RESULT_H*/

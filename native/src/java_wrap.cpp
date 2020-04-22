@@ -1610,35 +1610,6 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> rou
 	jstring j_color = ienv->NewStringUTF(route->color.c_str());
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_color, j_color);
 	ienv->DeleteLocalRef(j_color);
-	
-	// not needed.
-
-	// jintArray j_intervals = ienv->NewIntArray(route->intervals.size());
-	// jint tmp[route->intervals.size()];
-	// for (int j = 0; j < route->intervals.size(); j++) {
-	// 	tmp[j] = (jint) route->intervals.[j];
-	// }
-	// ienv->SetIntArrayRegion(j_intervals, 0, route->intervals.size(), tmp);
-	// ienv->SetObjectField(jtr, jfield_NativeTransportRoute_intervals, j_intervals);
-	// ienv->DeleteLocalRef(j_intervals);
-
-	// jintArray j_avgStopIntervals = ienv->NewIntArray(route->avgStopIntervals.size());
-	// jint tmp[route->avgStopIntervals.size()];
-	// for (int j = 0; j < route->avgStopIntervals.size(); j++) {
-	// 	tmp[j] = (jint) route->avgStopIntervals.[j];
-	// }
-	// ienv->SetIntArrayRegion(j_avgStopIntervals, 0, route->avgStopIntervals.size(), tmp);
-	// ienv->SetObjectField(jtr, jfield_NativeTransportRoute_avgStopIntervals, j_avgStopIntervals);
-	// ienv->DeleteLocalRef(j_avgStopIntervals);
-
-	// jintArray j_avgWaitIntervals = ienv->NewIntArray(route->avgWaitIntervals.size());
-	// jint tmp[route->avgWaitIntervals.size()];
-	// for (int j = 0; j < route->avgWaitIntervals.size(); j++) {
-	// 	tmp[j] = (jint) route->avgWaitIntervals.[j];
-	// }
-	// ienv->SetIntArrayRegion(j_avgWaitIntervals, 0, route->avgWaitIntervals.size(), tmp);
-	// ienv->SetObjectField(jtr, jfield_NativeTransportRoute_avgWaitIntervals, j_avgWaitIntervals);
-	// ienv->DeleteLocalRef(j_avgWaitIntervals);
 
 	jlongArray j_waysIds = ienv->NewLongArray(route->forwardWays.size());
 	jlong tmpIds[route->forwardWays.size()];

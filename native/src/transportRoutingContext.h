@@ -1,9 +1,9 @@
 #ifndef _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
 #define _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
 
-#include "commonOsmAndCore.h"
 #include "CommonCollections.h"
 #include "ElapsedTimer.h"
+#include "commonOsmAndCore.h"
 
 class RouteCalculationProgress;
 struct BinaryMapFile;
@@ -13,16 +13,16 @@ struct TransportRouteSegment;
 struct TransportStop;
 struct TransportRoute;
 
-struct TransportRoutingContext
-{
-
+struct TransportRoutingContext {
 	SHARED_PTR<RouteCalculationProgress> calculationProgress;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
 	SHARED_PTR<TransportRoutingConfiguration> cfg;
 
-	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
+	UNORDERED(
+		map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
-	UNORDERED(map)<BinaryMapFile *, UNORDERED(map) < int64_t, SHARED_PTR<TransportRoute>>> routeMap;
+	UNORDERED(map)<BinaryMapFile *, UNORDERED(map) < int64_t,
+				   SHARED_PTR<TransportRoute>>> routeMap;
 
 	int32_t startX;
 	int32_t startY;
@@ -50,8 +50,7 @@ struct TransportRoutingContext
 
 	TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> cfg_);
 
-	inline static double getTileDistanceWidth(float zoom)
-	{
+	inline static double getTileDistanceWidth(float zoom) {
 		double lat1 = 30;
 		double lon1 = getLongitudeFromTile(zoom, 0);
 		double lat2 = 30;
@@ -60,17 +59,24 @@ struct TransportRoutingContext
 	}
 
 	void calcLatLons();
-	void getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> &res);
-	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright, int stop, int sbottom, int limit, vector<SHARED_PTR<TransportStop>> &stops);
-	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y);
+	void getTransportStops(int32_t sx, int32_t sy, bool change,
+						   vector<SHARED_PTR<TransportRouteSegment>> &res);
+	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright,
+									 int stop, int sbottom, int limit,
+									 vector<SHARED_PTR<TransportStop>> &stops);
+	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x,
+															uint32_t y);
 	std::vector<SHARED_PTR<TransportStop>> mergeTransportStops(
-		BinaryMapFile *file,
-		UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-		vector<SHARED_PTR<TransportStop>> &stops,
-		UNORDERED(map) < int64_t, SHARED_PTR<TransportRoute>> &localFileRoutes,
-		UNORDERED(map) < int64_t, SHARED_PTR<TransportRoute>> &loadedRoutes);
-	void loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops, vector<SHARED_PTR<TransportRouteSegment>> &lst);
-	void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>>& lst, SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
+		BinaryMapFile *file, UNORDERED(map) < int64_t,
+		SHARED_PTR<TransportStop>> &loadedTransportStops,
+		vector<SHARED_PTR<TransportStop>> &stops, UNORDERED(map) < int64_t,
+		SHARED_PTR<TransportRoute>> &localFileRoutes, UNORDERED(map) < int64_t,
+		SHARED_PTR<TransportRoute>> &loadedRoutes);
+	void loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops,
+							   vector<SHARED_PTR<TransportRouteSegment>> &lst);
+	void loadScheduleRouteSegment(
+		std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
+		SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
 };
 
-#endif // _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
+#endif	// _OSMAND_TRANSPORT_ROUTING_CONTEXT_H
