@@ -92,17 +92,21 @@ struct Way
 	vector<Node> nodes;
 	vector<int64_t> nodeIds;
 
+	Way();
+
 	Way(int64_t id_);
 
-	Way(SHARED_PTR<Way> w_);
+	Way(Way &w_);
 
-	void addNode(Node n);
+	Way(const Way &w_);
+
+	void addNode(Node& n);
 	Node getFirstNode();
 	int64_t getFirstNodeId();
 	Node getLastNode();
 	int64_t getLastNodeId();
 	void reverseNodes();
-	bool compareWay(SHARED_PTR<Way>& thatObj);
+	bool compareWay(Way& thatObj);
 };
 
 struct TransportRoute : public MapObject
@@ -113,14 +117,14 @@ struct TransportRoute : public MapObject
 	string type;
 	uint32_t dist;
 	string color;
-	vector<SHARED_PTR<Way>> forwardWays; //todo is there a Way or analogue?
+	vector<Way> forwardWays; 
 	SHARED_PTR<TransportSchedule> schedule;
 
 	TransportRoute();
 
 	SHARED_PTR<TransportSchedule> getOrCreateSchedule();
 	void mergeForwardWays();
-	void addWay(SHARED_PTR<Way> w);
+	void addWay(Way& w);
 	int32_t getAvgBothDistance();
 	int32_t getDist();
 	string getAdjustedRouteRef(bool small);

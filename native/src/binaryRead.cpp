@@ -1561,7 +1561,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
-				SHARED_PTR<Way> w = make_shared<Way>(-1);
+				Way w;
 				while (input->BytesUntilLimit() > 0) {
 					int32_t ddx;
 					int32_t ddy;
@@ -1570,20 +1570,21 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 					ddx = ddx << SHIFT_COORDINATES;
 					ddy = ddy << SHIFT_COORDINATES;
 					if(ddx == 0 && ddy == 0) {
-						if(w->nodes.size() > 0) {
-							transportRoute->addWay(make_shared<Way>(w));
+						if(w.nodes.size() > 0) {
+							transportRoute->addWay(w);
 						}
-						w = make_shared<Way>(-1);
+						w = Way();
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
-						w->addNode(Node(get31LatitudeY(y), get31LongitudeX(x), -1));
+						Node n(get31LatitudeY(y), get31LongitudeX(x), -1);
+						w.addNode(n);
 						px = x;
 						py = y;
 					}
 				}
-				if(w->nodes.size() > 0) {
-                    transportRoute->addWay(make_shared<Way>(w));
+				if(w.nodes.size() > 0) {
+                    transportRoute->addWay(w);
 				}
 				input->PopLimit(pold);
 				break;

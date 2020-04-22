@@ -189,22 +189,32 @@ bool Node::compareNode(Node& thatObj)
 }
 
 //Way:
+Way::Way() {
+    id = -1;
+}
 
 Way::Way(int64_t id_)
 {
     id = id_;
 }
 
-Way::Way(SHARED_PTR<Way> w_)
+Way::Way(Way& w_)
 {
-    id = w_->id;
-    nodes = w_->nodes;
-    nodeIds = w_->nodeIds;
+    id = w_.id;
+    nodes = w_.nodes;
+    nodeIds = w_.nodeIds;
 }
 
-void Way::addNode(Node n)
+Way::Way(const Way& w_)
 {
-    nodes.push_back(std::move(n));
+    id = w_.id;
+    nodes = w_.nodes;
+    nodeIds = w_.nodeIds;
+}
+
+void Way::addNode(Node& n)
+{
+    nodes.push_back(n);
 }
 
 Node Way::getFirstNode()
@@ -249,15 +259,15 @@ void Way::reverseNodes()
     reverse(nodeIds.begin(), nodeIds.end());
 }
 
-bool Way::compareWay(SHARED_PTR<Way>& thatObj)
+bool Way::compareWay(Way& thatObj)
 {
-    if (this == thatObj.get() &&
-        nodeIds == thatObj->nodeIds &&
-        (nodes.size() == thatObj->nodes.size()))
+    if (
+        nodeIds == thatObj.nodeIds &&
+        (nodes.size() == thatObj.nodes.size()))
     {
         for (int i = 0; i < nodes.size(); i++)
         {
-            if (!nodes[i].compareNode(thatObj->nodes[i]))
+            if (!nodes[i].compareNode(thatObj.nodes[i]))
             {
                 return false;
             }
@@ -295,18 +305,18 @@ void TransportRoute::mergeForwardWays()
         for (int32_t k = 0; k < forwardWays.size();)
         {
             // scan to merge with the next segment
-            SHARED_PTR<Way> first = forwardWays.at(k);
+            Way &first = forwardWays[k];
             double d = SAME_STOP;
             bool reverseSecond = false;
             bool reverseFirst = false;
             int32_t secondInd = -1;
             for (int32_t i = k + 1; i < forwardWays.size(); i++)
             {
-                SHARED_PTR<Way> w = forwardWays.at(i);
-                double distAttachAfter = getDistance(first->getLastNode().lat, first->getLastNode().lon, w->getFirstNode().lat, w->getFirstNode().lon);
-                double distReverseAttach = getDistance(first->getLastNode().lat, first->getLastNode().lon, w->getLastNode().lat, w->getLastNode().lon);
-                double distAttachAfterReverse = getDistance(first->getFirstNode().lat, first->getFirstNode().lon, w->getFirstNode().lat, w->getFirstNode().lon);
-                double distReverseAttachReverse = getDistance(first->getFirstNode().lat, first->getFirstNode().lon, w->getLastNode().lat, w->getLastNode().lon);
+                Way &w = forwardWays[i];
+                double distAttachAfter = getDistance(first.getLastNode().lat, first.getLastNode().lon, w.getFirstNode().lat, w.getFirstNode().lon);
+                double distReverseAttach = getDistance(first.getLastNode().lat, first.getLastNode().lon, w.getLastNode().lat, w.getLastNode().lon);
+                double distAttachAfterReverse = getDistance(first.getFirstNode().lat, first.getFirstNode().lon, w.getFirstNode().lat, w.getFirstNode().lon);
+                double distReverseAttachReverse = getDistance(first.getFirstNode().lat, first.getFirstNode().lon, w.getLastNode().lat, w.getLastNode().lon);
                 if (distAttachAfter < d)
                 {
                     reverseSecond = false;
@@ -342,7 +352,7 @@ void TransportRoute::mergeForwardWays()
             }
             if (secondInd != -1)
             {
-                SHARED_PTR<Way> second = nullptr;
+                Way second;
                 if (secondInd == 0)
                 {
                     second = *forwardWays.erase(forwardWays.begin());
@@ -353,15 +363,15 @@ void TransportRoute::mergeForwardWays()
                 }
                 if (reverseFirst)
                 {
-                    first->reverseNodes();
+                    first.reverseNodes();
                 }
                 if (reverseSecond)
                 {
-                    second->reverseNodes();
+                    second.reverseNodes();
                 }
-                for (int i = 1; i < second->nodes.size(); i++)
+                for (int i = 1; i < second.nodes.size(); i++)
                 {
-                    first->addNode(second->nodes.at(i));
+                    first.addNode(second.nodes[i]);
                 }
                 changed = true;
             }
@@ -371,56 +381,49 @@ void TransportRoute::mergeForwardWays()
             }
         }
     }
-    if (forwardStops.size() > 0)
-    {
+    if (forwardStops.size() > 0) {
         // resort ways to stops order
-        UNORDERED(map)<SHARED_PTR<Way>, pair<int, int>> orderWays;
-        for (SHARED_PTR<Way>& w : forwardWays)
-        {
+        UNORDERED_map<Way, pair<int, int>> orderWays; //what's wrong with you, for Christ's sake?!
+        for (Way& w : forwardWays) {
             pair<int, int> pair;
             pair.first = 0;
             pair.second = 0;
-            Node firstNode = w->getFirstNode();
-            SHARED_PTR<TransportStop> st = forwardStops.at(0);
+            Node firstNode = w.getFirstNode();
+            SHARED_PTR<TransportStop> st = forwardStops[0]; 
             double firstDistance = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
-            Node lastNode = w->getLastNode();
+            Node lastNode = w.getLastNode();
             double lastDistance = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
-            for (int i = 1; i < forwardStops.size(); i++)
-            {
+            for (int i = 1; i < forwardStops.size(); i++) {
                 st = forwardStops[i];
                 double firstd = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
                 double lastd = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
-                if (firstd < firstDistance)
-                {
+                if (firstd < firstDistance) {
                     pair.first = i;
                     firstDistance = firstd;
                 }
-                if (lastd < lastDistance)
-                {
+                if (lastd < lastDistance) {
                     pair.second = i;
                     lastDistance = lastd;
                 }
             }
             orderWays[w] = pair;
-            if (pair.first > pair.second)
-            {
-                w->reverseNodes();
+            if (pair.first > pair.second) {
+                w.reverseNodes();
             }
         }
-        if (orderWays.size() > 1)
-        {
-            sort(forwardWays.begin(), forwardWays.end(), [orderWays](SHARED_PTR<Way> &w1, SHARED_PTR<Way> &w2) {
+        if (orderWays.size() > 1) {
+            sort(forwardWays.begin(), forwardWays.end(), [orderWays](Way &w1, Way &w2) {
                 const auto is1 = orderWays.find(w1);
                 const auto is2 = orderWays.find(w2);
-                int i1 = is1 != orderWays.end() ? min(is1->second.first, is1->second.second) : 0;
-                int i2 = is2 != orderWays.end() ? min(is2->second.first, is2->second.second) : 0;
+                int i1 = is1 != orderWays.end() ? min(is1->second.first, is1->second.second) : 0; //check
+                int i2 = is2 != orderWays.end() ? min(is2->second.first, is2->second.second) : 0; //check
                 return i1 < i2;
             });
         }
     }
 }
 
-void TransportRoute::addWay(SHARED_PTR<Way> w)
+void TransportRoute::addWay(Way& w)
 {
     forwardWays.push_back(w);
 }
@@ -491,7 +494,7 @@ bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute>& thatObj)
         }
         for (int i = 0; i < forwardWays.size(); i++)
         {
-            if (!forwardWays.at(i)->compareWay(thatObj->forwardWays.at(i)))
+            if (!forwardWays.at(i).compareWay(thatObj->forwardWays.at(i)))
             {
                 return false;
             }

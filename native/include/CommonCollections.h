@@ -33,15 +33,12 @@
 #if defined(ANDROID) || defined(__ANDROID__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
-#   define UNIQUE_PTR std::unique_ptr
 #elif defined(__linux__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
-#   define UNIQUE_PTR std::unique_ptr
 #elif defined(__APPLE__)
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
-#   define UNIQUE_PTR std::unique_ptr
 #elif defined(_WIN32) 
 #   include <memory>
 #   define SHARED_PTR std::shared_ptr
