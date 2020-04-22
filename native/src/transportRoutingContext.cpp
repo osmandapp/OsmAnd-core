@@ -9,8 +9,7 @@
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 
-TransportRoutingContext::TransportRoutingContext(
-	unique_ptr<TransportRoutingConfiguration>& cfg_) {
+TransportRoutingContext::TransportRoutingContext(unique_ptr<TransportRoutingConfiguration>& cfg_) {
 	cfg = std::move(cfg_);
 	walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
 	walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));

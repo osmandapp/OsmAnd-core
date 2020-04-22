@@ -8,14 +8,14 @@
 #include "transportRoutingContext.h"
 #include "transportRoutingObjects.h"
 
-TransportRouteResult::TransportRouteResult(TransportRoutingContext* ctx) {
-	config = ctx->cfg.get();
+TransportRouteResult::TransportRouteResult(TransportRoutingConfiguration& cfg) {
+	config = &cfg;
 }
 
 // ui/logging
 double TransportRouteResult::TransportRouteResult::getWalkDist() {
 	double d = finishWalkDist;
-	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
+	for (vector<unique_ptr<TransportRouteResultSegment>>::iterator it =
 			 segments.begin();
 		 it != segments.end(); it++) {
 		d += (*it)->walkDist;
@@ -28,7 +28,7 @@ float TransportRouteResult::getWalkSpeed() { return config->walkSpeed; }
 // logging only
 int TransportRouteResult::getStops() {
 	int stops = 0;
-	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
+	for (vector<unique_ptr<TransportRouteResultSegment>>::iterator it =
 			 segments.begin();
 		 it != segments.end(); it++) {
 		stops += ((*it)->end - (*it)->start);
@@ -51,7 +51,7 @@ int TransportRouteResult::getStops() {
 // for ui/logs
 double TransportRouteResult::getTravelDist() {
 	double d = 0;
-	for (SHARED_PTR<TransportRouteResultSegment>& it : segments) {
+	for (unique_ptr<TransportRouteResultSegment>& it : segments) {
 		d += it->getTravelDist();
 	}
 	return d;
@@ -60,7 +60,7 @@ double TransportRouteResult::getTravelDist() {
 // for ui/logs
 double TransportRouteResult::getTravelTime() {
 	double t = 0;
-	for (SHARED_PTR<TransportRouteResultSegment>& seg : segments) {
+	for (unique_ptr<TransportRouteResultSegment>& seg : segments) {
 		if (config->useSchedule) {
 			SHARED_PTR<TransportSchedule> sts = seg->route->schedule;
 			for (int k = seg->start; k < seg->end; k++) {
@@ -85,7 +85,7 @@ double TransportRouteResult::getBoardingTime() { return config->boardingTime; }
 // for ui/logs
 int TransportRouteResult::getChanges() { return segments.size() - 1; }
 
-void TransportRouteResult::to_string() {
+void TransportRouteResult::toString() {
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 					  "Route %d stops, %d changes, %.2f min: %.2f m (%.1f min) "
 					  "to walk, %.2f m (%.1f min) to travel\n",
@@ -93,7 +93,7 @@ void TransportRouteResult::to_string() {
 					  getWalkTime() / 60.0, getTravelDist(),
 					  getTravelTime() / 60.0);
 	for (int i = 0; i < segments.size(); i++) {
-		SHARED_PTR<TransportRouteResultSegment> s = segments[i];
+		unique_ptr<TransportRouteResultSegment>& s = segments[i];
 		string time = "";
 		string arrivalTime = "";
 		if (s->depTime != -1) {

@@ -113,6 +113,6 @@ std::string getStringMethod(JNIEnv* env, jobject o, jmethodID fid, int i) {
 	env->DeleteLocalRef(js);
 	return s;
 }
-jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute> route);
+jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& route);
 
 #endif

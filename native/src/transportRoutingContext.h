@@ -18,8 +18,7 @@ struct TransportRoutingContext {
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
 	unique_ptr<TransportRoutingConfiguration> cfg;
 
-	UNORDERED(
-		map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
+	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
 	UNORDERED(map)<BinaryMapFile *, UNORDERED(map) < int64_t,
 				   SHARED_PTR<TransportRoute>>> routeMap;
