@@ -189,6 +189,15 @@ bool Node::compareNode(Node& thatObj)
     return false;
 }
 
+std::size_t hash_value(Node const &n) {
+    std::size_t result = 0;
+    boost::hash_combine(result, n.id);
+    boost::hash_combine(result, n.lat);
+    boost::hash_combine(result, n.lon);
+
+    return result;
+} 
+
 //Way:
 Way::Way() {
     id = -1;
@@ -281,7 +290,7 @@ bool Way::compareWay(Way& thatObj)
     }
 }
 
-friend std::size_t hash_value(Way const &w) {
+std::size_t hash_value(Way const &w) {
     std::size_t result = 0;
     boost::hash_combine(result, w.id);
     boost::hash_combine(result, w.nodes);

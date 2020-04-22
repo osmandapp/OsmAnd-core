@@ -90,6 +90,8 @@ struct Node
 	{
 		return id == n.id && lat == n.lat && lon == n.lon;
 	}
+
+	friend std::size_t hash_value(Node const &n);
 };
 
 struct Way
