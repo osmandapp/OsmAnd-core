@@ -2,6 +2,7 @@
 #define _OSMAND_TRANSPORT_ROUTING_OBJECTS_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "boost/functional/hash.hpp"
 
 
 #define SAME_STOP 40
@@ -120,9 +121,37 @@ struct Way
 		return id == w.id && nodes == w.nodes && nodeIds == w.nodeIds;
 	}
 
-	friend std::size_t hash_value(Way const &w);
-
 };
+
+namespace std {
+
+template <>
+struct hash<Way>
+{
+    std::size_t operator()(const Way& w) const
+    {
+        std::size_t result = 0;
+        boost::hash_combine(result, w.id);
+        return result;
+        
+    }
+};
+
+template <>
+struct hash<Node>
+{
+    std::size_t operator()(const Node& n) const
+    {
+        std::size_t result = 0;
+        boost::hash_combine(result, n.id);
+        boost::hash_combine(result, n.lat);
+        boost::hash_combine(result, n.lon);
+        
+        return result;
+    }
+};
+
+}
 
 struct TransportRoute : public MapObject
 {
