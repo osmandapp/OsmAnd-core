@@ -48,10 +48,10 @@ vector<Way> TransportRouteResultSegment::getGeometry() {
 	double minStart = 150;
 	double minEnd = 150;
 
-	double startLat = getStart()->lat;
-	double startLon = getStart()->lon;
-	double endLat = getEnd()->lat;
-	double endLon = getEnd()->lon;
+	double startLat = getStart().lat;
+	double startLon = getStart().lon;
+	double endLat = getEnd().lat;
+	double endLon = getEnd().lon;
 
 	int endInd = -1;
 	vector<Node> res;
@@ -76,8 +76,8 @@ vector<Way> TransportRouteResultSegment::getGeometry() {
 	if (res.size() == 0 || endInd == -1) {
 		way = Way(STOPS_WAY_ID);
 		for (int i = start; i <= end; i++) {
-			double lLat = getStop(i)->lat;
-			double lLon = getStop(i)->lon;
+			double lLat = getStop(i).lat;
+			double lLon = getStop(i).lon;
 			Node n(lLat, lLon, -1);
 			way.addNode(n);
 		}
@@ -91,12 +91,12 @@ vector<Way> TransportRouteResultSegment::getGeometry() {
 	return list;
 }
 
-SHARED_PTR<TransportStop> TransportRouteResultSegment::getStart() {
-	return route->forwardStops.at(start);
+const TransportStop& TransportRouteResultSegment::getStart() {
+	return *route->forwardStops.at(start).get();
 }
 
-SHARED_PTR<TransportStop> TransportRouteResultSegment::getEnd() {
-	return route->forwardStops.at(end);
+const TransportStop& TransportRouteResultSegment::getEnd() {
+	return *route->forwardStops.at(end).get();
 }
 
 vector<SHARED_PTR<TransportStop>>
@@ -105,8 +105,8 @@ TransportRouteResultSegment::getTravelStops() {
 		route->forwardStops.begin() + start, route->forwardStops.begin() + end);
 }
 
-SHARED_PTR<TransportStop> TransportRouteResultSegment::getStop(int32_t i) {
-	return route->forwardStops.at(i);
+const TransportStop& TransportRouteResultSegment::getStop(int32_t i) {
+	return *route->forwardStops.at(i).get();
 }
 
 #endif /*_OSMAND_TRANSPORT_ROUTE_RESULT_SEGMENT_CPP*/

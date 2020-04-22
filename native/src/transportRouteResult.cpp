@@ -92,10 +92,6 @@ void TransportRouteResult::to_string() {
 					  getStops(), getChanges(), routeTime / 60, getWalkDist(),
 					  getWalkTime() / 60.0, getTravelDist(),
 					  getTravelTime() / 60.0);
-	// string routeStr = "Route " + getStops() + ", " + getChanges() + "
-	// changes, " + routeTime/60 + " min: " + getWalkDist() + " m (" +
-	// getWalkTime()/ 60.0 + " min) to walk, " +  getTravelDist() + " m (" +
-	// getTravelTime()/60.f + " min) to travel\n";
 	for (int i = 0; i < segments.size(); i++) {
 		SHARED_PTR<TransportRouteResultSegment> s = segments[i];
 		string time = "";
@@ -116,8 +112,8 @@ void TransportRouteResult::to_string() {
 						  "%d. %s: walk %.1f m to '%s' and travel %s to '%s' "
 						  "by %s %d stops %s\n",
 						  i + 1, s->route->ref.c_str(), s->walkDist,
-						  s->getStart()->name.c_str(), time.c_str(),
-						  s->getEnd()->name.c_str(), s->route->name.c_str(),
+						  s->getStart().name.c_str(), time.c_str(),
+						  s->getEnd().name.c_str(), s->route->name.c_str(),
 						  (s->end - s->start), arrivalTime.c_str());
 	}
 }

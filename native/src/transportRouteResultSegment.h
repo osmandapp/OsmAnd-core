@@ -31,10 +31,10 @@ public:
 	int getArrivalTime();
 	double getTravelDist();
 	vector<Way> getGeometry();
-	SHARED_PTR<TransportStop> getStart();
-	SHARED_PTR<TransportStop> getEnd();
+	const TransportStop& getStart();
+	const TransportStop& getEnd();
 	vector<SHARED_PTR<TransportStop>> getTravelStops();
-	SHARED_PTR<TransportStop> getStop(int32_t i);
+	const TransportStop& getStop(int32_t i);
 };
 
 #endif /*_OSMAND_TRANSPORT_ROUTE_RESULT_SEGMENT_H*/
