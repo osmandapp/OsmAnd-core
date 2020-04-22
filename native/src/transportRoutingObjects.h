@@ -3,6 +3,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 
+
 #define SAME_STOP 40
 
 const static int TRANSPORT_STOP_ZOOM = 24;
@@ -84,6 +85,11 @@ struct Node
 	Node(double lat_, double lon_, int64_t id_);
 
 	bool compareNode(Node& thatObj);
+
+	bool operator==(const Node &n) const
+	{
+		return id == n.id && lat == n.lat && lon == n.lon;
+	}
 };
 
 struct Way
@@ -107,6 +113,15 @@ struct Way
 	int64_t getLastNodeId();
 	void reverseNodes();
 	bool compareWay(Way& thatObj);
+	
+	
+	bool operator==(const Way &w) const
+	{
+		return id == w.id && nodes == w.nodes && nodeIds == w.nodeIds;
+	}
+
+	friend std::size_t hash_value(Way const &w);
+
 };
 
 struct TransportRoute : public MapObject

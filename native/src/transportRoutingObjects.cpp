@@ -3,6 +3,7 @@
 #include "transportRoutingObjects.h"
 #include "commonOsmAndCore.h"
 #include "CommonCollections.h"
+#include "boost/functional/hash.hpp"
 #include <algorithm>
 
 //MapObject:
@@ -279,6 +280,15 @@ bool Way::compareWay(Way& thatObj)
         return false;
     }
 }
+
+friend std::size_t hash_value(Way const &w) {
+    std::size_t result = 0;
+    boost::hash_combine(result, w.id);
+    boost::hash_combine(result, w.nodes);
+    boost::hash_combine(result, w.nodeIds);
+
+    return result;
+} 
 
 //TransportRoute:
 
