@@ -89,7 +89,6 @@ struct Node {
 struct Way {
 	int64_t id;
 	vector<Node> nodes;
-	vector<int64_t> nodeIds;
 
 	Way();
 	Way(int64_t id_);
@@ -102,7 +101,7 @@ struct Way {
 	void reverseNodes();
 
 	bool operator==(const Way &w) const {
-		return id == w.id && nodes == w.nodes && nodeIds == w.nodeIds;
+		return id == w.id && nodes == w.nodes;
 	}
 };
 
