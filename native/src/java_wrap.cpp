@@ -1640,7 +1640,7 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 	return jtr;
 }
 
-jobject convertPTRouteResultSegmentToJava(JNIEnv* ienv, unique_ptr<TransportRouteResultSegment>& trrs) {
+jobject convertPTRouteResultSegmentToJava(JNIEnv* ienv, SHARED_PTR<TransportRouteResultSegment>& trrs) {
 	jobject jtrrs = ienv->NewObject(jclass_NativeTransportRouteResultSegment, jmethod_NativeTransportRouteResultSegment_init);
 	jobject jtr = convertTransportRouteToJava(ienv, trrs->route);
 	ienv->SetObjectField(jtrrs, jfield_NativeTransportRouteResultSegment_route, jtr);
@@ -1655,7 +1655,7 @@ jobject convertPTRouteResultSegmentToJava(JNIEnv* ienv, unique_ptr<TransportRout
 	return jtrrs;
 }
 
-jobject convertPTResultToJava(JNIEnv* ienv, unique_ptr<TransportRouteResult>& r) {
+jobject convertPTResultToJava(JNIEnv* ienv, SHARED_PTR<TransportRouteResult>& r) {
 	jobject jtrr = ienv->NewObject(jclass_NativeTransportRoutingResult, jmethod_NativeTransportRoutingResult_init);
 	jobjectArray j_segments = ienv->NewObjectArray(r->segments.size(), jclass_NativeTransportRouteResultSegment, NULL);
 	for (int i = 0; i < r->segments.size(); i++) {
@@ -1676,7 +1676,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 		jintArray  coordinates, jobject jTransportRoutingConfig, jobject progress) {
 	unique_ptr<TransportRoutingConfiguration> trConfig = unique_ptr<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
 	parseTransportRoutingConfiguration(ienv, trConfig, jTransportRoutingConfig);
-	SHARED_PTR<TransportRoutingContext> c = make_shared<TransportRoutingContext>(trConfig);
+	unique_ptr<TransportRoutingContext> c (new TransportRoutingContext(trConfig));
 	c->calculationProgress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c->startX = data[0];
@@ -1687,7 +1687,8 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 	c->startX, c->startY, c->targetX, c->targetY);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>(); 
-	vector<unique_ptr<TransportRouteResult>> r = tplanner->buildTransportRoute(c);
+	vector<SHARED_PTR<TransportRouteResult>> r; 
+	tplanner->buildTransportRoute(c, r);
 
 	// // convert results
 	jobjectArray res = ienv->NewObjectArray(r.size(), jclass_NativeTransportRoutingResult, NULL);
@@ -1696,8 +1697,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
-	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
-	// ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
 	if (r.size() == 0) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No PT route found");
 	}
