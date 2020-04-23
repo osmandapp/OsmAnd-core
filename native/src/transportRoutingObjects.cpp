@@ -139,15 +139,13 @@ bool TransportSchedule::compareSchedule(
 
 // Node:
 
-Node::Node(double lat_, double lon_, int64_t id_) {
-	id = id_;
+Node::Node(double lat_, double lon_) {
 	lat = lat_;
 	lon = lon_;
 }
 
 std::size_t hash_value(Node const& n) {
 	std::size_t result = 0;
-	boost::hash_combine(result, n.id);
 	boost::hash_combine(result, n.lat);
 	boost::hash_combine(result, n.lon);
 
@@ -177,28 +175,14 @@ Node Way::getFirstNode() {
 	if (nodes.size() > 0) {
 		return nodes.at(0);
 	}
-	return Node(0, 0, -1);
-}
-
-int64_t Way::getFirstNodeId() {
-	if (nodes.size() > 0) {
-		return nodes.at(0).id;
-	}
-	return -1;
+	return Node(0, 0);
 }
 
 Node Way::getLastNode() {
 	if (nodes.size() > 0) {
 		return nodes.at(nodes.size() - 1);
 	}
-	return Node(0, 0, -1);
-}
-
-int64_t Way::getLastNodeId() {
-	if (nodes.size() > 0) {
-		return nodes.at(nodes.size() - 1).id;
-	}
-	return -1;
+	return Node(0, 0);
 }
 
 void Way::reverseNodes() {

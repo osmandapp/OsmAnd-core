@@ -74,14 +74,13 @@ struct TransportSchedule {
 };
 
 struct Node {
-	int64_t id;
 	double lat;
 	double lon;
 
-	Node(double lat_, double lon_, int64_t id_);
+	Node(double lat_, double lon_);
 
 	bool operator==(const Node &n) const {
-		return id == n.id && lat == n.lat && lon == n.lon;
+		return lat == n.lat && lon == n.lon;
 	}
 
 	friend std::size_t hash_value(Node const &n);
@@ -99,9 +98,7 @@ struct Way {
 
 	void addNode(Node &n);
 	Node getFirstNode();
-	int64_t getFirstNodeId();
 	Node getLastNode();
-	int64_t getLastNodeId();
 	void reverseNodes();
 
 	bool operator==(const Way &w) const {
@@ -124,7 +121,6 @@ template <>
 struct hash<Node> {
 	std::size_t operator()(const Node &n) const {
 		std::size_t result = 0;
-		boost::hash_combine(result, n.id);
 		boost::hash_combine(result, n.lat);
 		boost::hash_combine(result, n.lon);
 		return result;

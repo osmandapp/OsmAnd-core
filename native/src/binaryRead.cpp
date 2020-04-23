@@ -1577,7 +1577,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
-						Node n(get31LatitudeY(y), get31LongitudeX(x), -1);
+						Node n(get31LatitudeY(y), get31LongitudeX(x));
 						w.addNode(n);
 						px = x;
 						py = y;

@@ -78,7 +78,7 @@ vector<Way> TransportRouteResultSegment::getGeometry() {
 		for (int i = start; i <= end; i++) {
 			double lLat = getStop(i).lat;
 			double lLon = getStop(i).lon;
-			Node n(lLat, lLon, -1);
+			Node n(lLat, lLon);
 			way.addNode(n);
 		}
 	} else {

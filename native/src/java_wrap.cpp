@@ -603,9 +603,6 @@ jfieldID jfield_NativeTransportRoute_intervals = NULL;
 jfieldID jfield_NativeTransportRoute_avgStopIntervals = NULL;
 jfieldID jfield_NativeTransportRoute_avgWaitIntervals = NULL;
 jfieldID jfield_NativeTransportRoute_waysIds = NULL;
-// jfieldID jfield_NativeTransportRoute_waysLats = NULL;
-// jfieldID jfield_NativeTransportRoute_waysLons = NULL;
-jfieldID jfield_NativeTransportRoute_waysNodesIds = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLats = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLons = NULL;
 jmethodID jmethod_NativeTransportRoute_init = NULL; 
@@ -695,9 +692,6 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportRoute_avgStopIntervals = getFid(env, jclass_NativeTransportRoute, "avgStopIntervals", "[I");
 	jfield_NativeTransportRoute_avgWaitIntervals = getFid(env, jclass_NativeTransportRoute, "avgWaitIntervals", "[I");
 	jfield_NativeTransportRoute_waysIds = getFid(env, jclass_NativeTransportRoute, "waysIds", "[J");
-	// jfield_NativeTransportRoute_waysLats = getFid(env, jclass_NativeTransportRoute, "waysLats", "[D");
-	// jfield_NativeTransportRoute_waysLons = getFid(env, jclass_NativeTransportRoute, "waysLons", "[D");
-	jfield_NativeTransportRoute_waysNodesIds = getFid(env, jclass_NativeTransportRoute, "waysNodesIds", "[[J");
 	jfield_NativeTransportRoute_waysNodesLats = getFid(env, jclass_NativeTransportRoute, "waysNodesLats", "[[D");
 	jfield_NativeTransportRoute_waysNodesLons = getFid(env, jclass_NativeTransportRoute, "waysNodesLons", "[[D");
 	jmethod_NativeTransportRoute_init = env->GetMethodID(jclass_NativeTransportRoute, "<init>", "()V");
@@ -1613,41 +1607,33 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 
 	jlongArray j_waysIds = ienv->NewLongArray(route->forwardWays.size());
 	jlong tmpIds[route->forwardWays.size()];
-	jobjectArray j_nodesIds = ienv->NewObjectArray(route->forwardWays.size(), jclassLongArray, NULL); //object longarray
 	jobjectArray j_nodesLats = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object longarray
 	jobjectArray j_nodesLons = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object doublearray
 	for (int k = 0; k < route->forwardWays.size(); k++) {
 		tmpIds[k] = (jlong) route->forwardWays.at(k).id;
 		int nsize = route->forwardWays.at(k).nodes.size();
-		jlongArray j_wayNodesIds = ienv->NewLongArray(nsize);
 		jdoubleArray j_wayNodesLats = ienv->NewDoubleArray(nsize);
 		jdoubleArray j_wayNodesLons = ienv->NewDoubleArray(nsize);
 		jlong tmpNodesIds[nsize];
 		jdouble tmpNodesLats[nsize];
 		jdouble tmpNodesLons[nsize];
 		for (n = 0; n < nsize; n++) {
-			tmpNodesIds[n] = route->forwardWays.at(k).nodes.at(n).id;
 			tmpNodesLats[n] = route->forwardWays.at(k).nodes.at(n).lat;
 			tmpNodesLons[n] = route->forwardWays.at(k).nodes.at(n).lon;
 		}
-		ienv->SetLongArrayRegion(j_wayNodesIds, 0, nsize, tmpNodesIds);
 		ienv->SetDoubleArrayRegion(j_wayNodesLats, 0, nsize, tmpNodesLats);
 		ienv->SetDoubleArrayRegion(j_wayNodesLons, 0, nsize, tmpNodesLons);
-		ienv->SetObjectArrayElement(j_nodesIds, k, j_wayNodesIds);
 		ienv->SetObjectArrayElement(j_nodesLats, k, j_wayNodesLats);
 		ienv->SetObjectArrayElement(j_nodesLons, k, j_wayNodesLons);
-		ienv->DeleteLocalRef(j_wayNodesIds);
 		ienv->DeleteLocalRef(j_wayNodesLats);
 		ienv->DeleteLocalRef(j_wayNodesLons);
 	}
 	ienv->SetLongArrayRegion(j_waysIds, 0, route->forwardWays.size(), tmpIds);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysIds, j_waysIds);
-	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysNodesIds, j_nodesIds);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysNodesLats, j_nodesLats);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysNodesLons, j_nodesLons);
 	
 	ienv->DeleteLocalRef(j_waysIds);
-	ienv->DeleteLocalRef(j_nodesIds);
 	ienv->DeleteLocalRef(j_nodesLats);
 	ienv->DeleteLocalRef(j_nodesLons);
 
