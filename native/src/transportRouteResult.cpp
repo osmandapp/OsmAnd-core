@@ -62,9 +62,9 @@ double TransportRouteResult::getTravelTime() {
 	double t = 0;
 	for (unique_ptr<TransportRouteResultSegment>& seg : segments) {
 		if (config->useSchedule) {
-			SHARED_PTR<TransportSchedule> sts = seg->route->schedule;
+			// TransportSchedule& sts = seg->route->schedule;
 			for (int k = seg->start; k < seg->end; k++) {
-				t += sts->avgStopIntervals[k] * 10;
+				t += seg->route->schedule.avgStopIntervals[k] * 10;
 			}
 		} else {
 			t += config->getBoardingTime();

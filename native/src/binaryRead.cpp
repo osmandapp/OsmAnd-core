@@ -1404,7 +1404,7 @@ bool searchTransportTreeBounds(CodedInputStream* input, int pleft, int pright, i
     return true;
 }
 
-bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule> schedule) {
+bool readTransportSchedule(CodedInputStream* input, TransportSchedule& schedule) {
 	while(true) {
         uint32_t sizeL, interval;
         int32_t old;
@@ -1418,7 +1418,7 @@ bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
                     input->ReadVarint32(&interval);
-					schedule->tripIntervals.push_back(interval);
+					schedule.tripIntervals.push_back(interval);
 				}
 				input->PopLimit(old);				
 				break;
@@ -1427,7 +1427,7 @@ bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
 					input->ReadVarint32(&interval);
-					schedule->avgStopIntervals.push_back(interval);
+					schedule.avgStopIntervals.push_back(interval);
 				}
 				input->PopLimit(old);
 				break;
@@ -1436,7 +1436,7 @@ bool readTransportSchedule(CodedInputStream* input, SHARED_PTR<TransportSchedule
 				old = input->PushLimit(sizeL);
 				while (input->BytesUntilLimit() > 0) {
 					input->ReadVarint32(&interval);
-					schedule->avgWaitIntervals.push_back(interval);
+					schedule.avgWaitIntervals.push_back(interval);
 				}
 				input->PopLimit(old);
 				break;

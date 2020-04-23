@@ -9,7 +9,7 @@ TransportRouteResultSegment::TransportRouteResultSegment() {}
 int TransportRouteResultSegment::getArrivalTime() {
 	if (depTime != -1) {
 		int32_t tm = depTime;
-		std::vector<int32_t> intervals = route->schedule->avgStopIntervals;
+		std::vector<int32_t> intervals = route->schedule.avgStopIntervals;
 		for (int i = start; i <= end; i++) {
 			if (i == end) {
 				return tm;

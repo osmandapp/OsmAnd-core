@@ -194,10 +194,7 @@ void Way::reverseNodes() {
 
 TransportRoute::TransportRoute() { dist = -1; }
 
-SHARED_PTR<TransportSchedule> TransportRoute::getOrCreateSchedule() {
-	if (schedule == nullptr) {
-		schedule = make_shared<TransportSchedule>();
-	}
+TransportSchedule& TransportRoute::getOrCreateSchedule() {
 	return schedule;
 }
 

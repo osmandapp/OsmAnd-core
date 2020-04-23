@@ -137,11 +137,11 @@ struct TransportRoute : public MapObject {
 	uint32_t dist;
 	string color;
 	vector<Way> forwardWays;
-	SHARED_PTR<TransportSchedule> schedule;
+	TransportSchedule schedule;
 
 	TransportRoute();
 
-	SHARED_PTR<TransportSchedule> getOrCreateSchedule();
+	TransportSchedule& getOrCreateSchedule();
 	void mergeForwardWays();
 	void addWay(Way &w);
 	int32_t getAvgBothDistance();

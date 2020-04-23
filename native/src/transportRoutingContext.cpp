@@ -281,13 +281,13 @@ void TransportRoutingContext::loadTransportSegments(
 void TransportRoutingContext::loadScheduleRouteSegment(
 	std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
 	SHARED_PTR<TransportRoute> &route, int32_t stopIndex) {
-	if (route->schedule != nullptr) {
-		vector<int32_t> ti = route->schedule->tripIntervals;
+	// if (route->schedule != nullptr) {
+		vector<int32_t> ti = route->schedule.tripIntervals;
 		int32_t cnt = ti.size();
 		int32_t t = 0;
 		// improve by using exact data
 		int32_t stopTravelTime = 0;
-		vector<int32_t> avgStopIntervals = route->schedule->avgStopIntervals;
+		vector<int32_t> avgStopIntervals = route->schedule.avgStopIntervals;
 		for (int32_t i = 0; i < stopIndex; i++) {
 			if (avgStopIntervals.size() > i) {
 				stopTravelTime += avgStopIntervals[i];
@@ -302,7 +302,7 @@ void TransportRoutingContext::loadScheduleRouteSegment(
 					route, stopIndex, startTime));
 			}
 		}
-	}
+	// }
 }
 
 #endif	//_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_CPP

@@ -199,8 +199,8 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 			travelDist += segmentDist;
 
 			if (ctx->cfg->useSchedule) {
-				SHARED_PTR<TransportSchedule> sc = segment->road->schedule;
-				int interval = sc->avgStopIntervals.at(ind - 1);
+				// TransportSchedule& sc = segment->road->schedule;
+				int interval = segment->road->schedule.avgStopIntervals.at(ind - 1);
 				travelTime += interval * 10;
 			} else {
 				travelTime += ctx->cfg->stopTime + segmentDist / routeTravelSpeed;
