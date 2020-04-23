@@ -89,7 +89,6 @@ struct Node {
 struct Way {
 	int64_t id;
 	vector<Node> nodes;
-	vector<int64_t> nodeIds;
 
 	Way();
 	Way(int64_t id_);
