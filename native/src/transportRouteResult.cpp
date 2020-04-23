@@ -8,8 +8,8 @@
 #include "transportRoutingContext.h"
 #include "transportRoutingObjects.h"
 
-TransportRouteResult::TransportRouteResult(TransportRoutingConfiguration& cfg) {
-	config = &cfg;
+TransportRouteResult::TransportRouteResult(unique_ptr<TransportRoutingConfiguration>& cfg) {
+	config = cfg.get();
 }
 
 // ui/logging

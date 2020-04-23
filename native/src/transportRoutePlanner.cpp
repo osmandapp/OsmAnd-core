@@ -68,7 +68,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
 		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
 			return vector<unique_ptr<TransportRouteResult>>();
 		}
-		unique_ptr<TransportRouteResult> route (new TransportRouteResult(*ctx->cfg.get()));	 // check
+		unique_ptr<TransportRouteResult> route (new TransportRouteResult(ctx->cfg));	 // check
 		route->routeTime = res->distFromStart;
 		route->finishWalkDist = res->walkDist;
 		SHARED_PTR<TransportRouteSegment> p = res;
@@ -77,7 +77,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
 				return vector<unique_ptr<TransportRouteResult>>();
 			}
 			if (p->parentRoute != nullptr) {
-				unique_ptr<TransportRouteResultSegment> sg = unique_ptr<TransportRouteResultSegment>();
+				unique_ptr<TransportRouteResultSegment> sg(new TransportRouteResultSegment());
 				sg->route = p->parentRoute->road;
 				sg->start = p->parentRoute->segStart;
 				sg->end = p->parentStop;

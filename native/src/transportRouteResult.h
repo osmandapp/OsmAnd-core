@@ -13,7 +13,7 @@ struct TransportRouteResult {
 	double routeTime;
 	TransportRoutingConfiguration *config;
 
-	TransportRouteResult(TransportRoutingConfiguration& cfg);
+	TransportRouteResult(unique_ptr<TransportRoutingConfiguration>& cfg);
 
 	double getWalkDist();
 	float getWalkSpeed();
