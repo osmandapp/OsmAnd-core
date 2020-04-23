@@ -160,13 +160,11 @@ Way::Way(int64_t id_) { id = id_; }
 Way::Way(Way& w_) {
 	id = w_.id;
 	nodes = w_.nodes;
-	nodeIds = w_.nodeIds;
 }
 
 Way::Way(const Way& w_) {
 	id = w_.id;
 	nodes = w_.nodes;
-	nodeIds = w_.nodeIds;
 }
 
 void Way::addNode(Node& n) { nodes.push_back(n); }
@@ -187,7 +185,6 @@ Node Way::getLastNode() {
 
 void Way::reverseNodes() {
 	reverse(nodes.begin(), nodes.end());
-	reverse(nodeIds.begin(), nodeIds.end());
 }
 
 // TransportRoute:

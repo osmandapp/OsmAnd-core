@@ -34,15 +34,15 @@ double TransportRouteResultSegment::getTravelDist() {
 	return d;
 }
 
-vector<Way> TransportRouteResultSegment::getGeometry() {
-	vector<Way> list;
+void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
 	route->mergeForwardWays();
 	if (DISPLAY_FULL_SEGMENT_ROUTE) {
 		if (route->forwardWays.size() > DISPLAY_SEGMENT_IND) {
 			list.push_back(route->forwardWays[DISPLAY_SEGMENT_IND]);
-			return list;
+			return;
 		}
-		return route->forwardWays;
+		list.insert(list.end(), route->forwardWays.begin(), route->forwardWays.end());
+		return;
 	}
 	vector<Way> fw = route->forwardWays;
 	double minStart = 150;
@@ -88,7 +88,6 @@ vector<Way> TransportRouteResultSegment::getGeometry() {
 		}
 	}
 	list.push_back(way);
-	return list;
 }
 
 const TransportStop& TransportRouteResultSegment::getStart() {

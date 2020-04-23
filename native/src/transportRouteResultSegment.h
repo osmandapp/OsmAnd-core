@@ -30,7 +30,7 @@ public:
 
 	int getArrivalTime();
 	double getTravelDist();
-	vector<Way> getGeometry();
+	void getGeometry(vector<Way>& lst);
 	const TransportStop& getStart();
 	const TransportStop& getEnd();
 	vector<SHARED_PTR<TransportStop>> getTravelStops();
