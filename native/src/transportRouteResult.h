@@ -8,7 +8,7 @@ struct TransportRoutingContext;
 struct TransportRoutingConfiguration;
 
 struct TransportRouteResult {
-	vector<unique_ptr<TransportRouteResultSegment>> segments;
+	vector<SHARED_PTR<TransportRouteResultSegment>> segments;
 	double finishWalkDist;
 	double routeTime;
 	TransportRoutingConfiguration *config;

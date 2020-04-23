@@ -15,7 +15,7 @@ TransportRouteResult::TransportRouteResult(unique_ptr<TransportRoutingConfigurat
 // ui/logging
 double TransportRouteResult::TransportRouteResult::getWalkDist() {
 	double d = finishWalkDist;
-	for (vector<unique_ptr<TransportRouteResultSegment>>::iterator it =
+	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
 			 segments.begin();
 		 it != segments.end(); it++) {
 		d += (*it)->walkDist;
@@ -28,7 +28,7 @@ float TransportRouteResult::getWalkSpeed() { return config->walkSpeed; }
 // logging only
 int TransportRouteResult::getStops() {
 	int stops = 0;
-	for (vector<unique_ptr<TransportRouteResultSegment>>::iterator it =
+	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
 			 segments.begin();
 		 it != segments.end(); it++) {
 		stops += ((*it)->end - (*it)->start);
@@ -51,7 +51,7 @@ int TransportRouteResult::getStops() {
 // for ui/logs
 double TransportRouteResult::getTravelDist() {
 	double d = 0;
-	for (unique_ptr<TransportRouteResultSegment>& it : segments) {
+	for (SHARED_PTR<TransportRouteResultSegment>& it : segments) {
 		d += it->getTravelDist();
 	}
 	return d;
@@ -60,7 +60,7 @@ double TransportRouteResult::getTravelDist() {
 // for ui/logs
 double TransportRouteResult::getTravelTime() {
 	double t = 0;
-	for (unique_ptr<TransportRouteResultSegment>& seg : segments) {
+	for (SHARED_PTR<TransportRouteResultSegment>& seg : segments) {
 		if (config->useSchedule) {
 			// TransportSchedule& sts = seg->route->schedule;
 			for (int k = seg->start; k < seg->end; k++) {
@@ -93,7 +93,7 @@ void TransportRouteResult::toString() {
 					  getWalkTime() / 60.0, getTravelDist(),
 					  getTravelTime() / 60.0);
 	for (int i = 0; i < segments.size(); i++) {
-		unique_ptr<TransportRouteResultSegment>& s = segments[i];
+		SHARED_PTR<TransportRouteResultSegment>& s = segments[i];
 		string time = "";
 		string arrivalTime = "";
 		if (s->depTime != -1) {

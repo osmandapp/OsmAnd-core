@@ -27,16 +27,16 @@ TransportRoutePlanner::TransportRoutePlanner() {}
 
 TransportRoutePlanner::~TransportRoutePlanner() {}
 
-bool TransportRoutePlanner::includeRoute(unique_ptr<TransportRouteResult>& fastRoute,
-										 unique_ptr<TransportRouteResult>& testRoute) {
+bool TransportRoutePlanner::includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute,
+										 SHARED_PTR<TransportRouteResult>& testRoute) {
 	if (testRoute->segments.size() < fastRoute->segments.size()) {
 		return false;
 	}
 	int32_t j = 0;
 	for (int32_t i = 0; i < fastRoute->segments.size(); i++, j++) {
-		unique_ptr<TransportRouteResultSegment>& fs = fastRoute->segments.at(i);
+		SHARED_PTR<TransportRouteResultSegment>& fs = fastRoute->segments.at(i);
 		while (j < testRoute->segments.size()) {
-			unique_ptr<TransportRouteResultSegment>& ts = testRoute->segments[j];
+			SHARED_PTR<TransportRouteResultSegment>& ts = testRoute->segments[j];
 			if (fs->route->id != ts->route->id) {
 				j++;
 			} else {
@@ -50,14 +50,14 @@ bool TransportRoutePlanner::includeRoute(unique_ptr<TransportRouteResult>& fastR
 	return true;
 }
 
-vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
-	SHARED_PTR<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results) {
+void TransportRoutePlanner::prepareResults(
+	unique_ptr<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results,
+    vector<SHARED_PTR<TransportRouteResult>>& routes) {
 	sort(results.begin(), results.end(),
 		 [](const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) {
 			 return lhs->distFromStart < rhs->distFromStart;
 		 });
-
-	vector<unique_ptr<TransportRouteResult>> lst;
+    
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 					  "Found %d results, visited %d routes / %d stops, loaded "
 					  "%d tiles, loaded ways %d (%d wrong)",
@@ -66,15 +66,15 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
 
 	for (SHARED_PTR<TransportRouteSegment>& res : results) {
 		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
-			return vector<unique_ptr<TransportRouteResult>>();
+			return;
 		}
-		unique_ptr<TransportRouteResult> route (new TransportRouteResult(ctx->cfg));	 // check
+        SHARED_PTR<TransportRouteResult> route(new TransportRouteResult(ctx->cfg));
 		route->routeTime = res->distFromStart;
 		route->finishWalkDist = res->walkDist;
 		SHARED_PTR<TransportRouteSegment> p = res;
 		while (p != nullptr) {
 			if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
-				return vector<unique_ptr<TransportRouteResult>>();
+				return;
 			}
 			if (p->parentRoute != nullptr) {
 				unique_ptr<TransportRouteResultSegment> sg(new TransportRouteResultSegment());
@@ -92,9 +92,9 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
 		}
 		// test if faster routes fully included
 		bool include = false;
-		for (unique_ptr<TransportRouteResult>& s : lst) {
+		for (SHARED_PTR<TransportRouteResult>& s : routes) {
 			if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
-				return vector<unique_ptr<TransportRouteResult>>();
+				return;
 			}
 			if (includeRoute(s, route)) {
 				include = true;
@@ -103,15 +103,15 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::prepareResults(
 			}
 		}
 		if (!include) {
-			lst.push_back(std::move(route));
+			routes.push_back(std::move(route));
 			// System.out.println(route.toString());
 		}
 	}
-	return lst;
 }
 
-vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRoute(
-	SHARED_PTR<TransportRoutingContext>& ctx) {
+void TransportRoutePlanner::buildTransportRoute(
+	unique_ptr<TransportRoutingContext>& ctx,
+    vector<SHARED_PTR<TransportRouteResult>>& res) {
 	OsmAnd::ElapsedTimer pt_timer;
 	pt_timer.Start();
 	ctx->loadTime.Enable();
@@ -130,7 +130,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		endSegments.insert({s->getId(), s});
 	}
 	if (startStops.size() == 0) {
-		return vector<unique_ptr<TransportRouteResult>>();
+		return;
 	}
 
 	for (SHARED_PTR<TransportRouteSegment>& r : startStops) {
@@ -149,7 +149,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 		// 	long beginMs = MEASURE_TIME ? System.currentTimeMillis() : 0;
 		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			ctx->calculationProgress->setSegmentNotFound(0);
-			return vector<unique_ptr<TransportRouteResult>>();
+			return;
 		}
 
 		SHARED_PTR<TransportRouteSegment> segment = queue.top();
@@ -190,7 +190,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 
 		for (int32_t ind = 1 + segment->segStart; ind < segment->getLength(); ind++) {
 			if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
-				return vector<unique_ptr<TransportRouteResult>>();
+				return;
 			}
 			segmentId++;
 			ctx->visitedSegments.insert({segmentId, segment});
@@ -213,7 +213,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 			ctx->visitedStops++;
 			for (SHARED_PTR<TransportRouteSegment>& sgm : sgms) {
 				if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
-					return vector<unique_ptr<TransportRouteResult>>();
+					return;
 				}
 				if (segment->wasVisited(sgm)) {
 					continue;
@@ -269,7 +269,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 
 		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Route calculation interrupted");
-			return vector<unique_ptr<TransportRouteResult>>();
+			return;
 		}
 
 		// updateCalculationProgress(ctx, queue);
@@ -281,7 +281,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 					  (double)pt_timer.GetElapsedMs() / 1000.0, (double)ctx->loadTime.GetElapsedMs() / 1000.0,
 					  (double)ctx->readTime.GetElapsedMs() / 1000.0);
 
-	return prepareResults(ctx, results);
+	prepareResults(ctx, results, res);
 }
 
 // private void initProgressBar(TransportRoutingContext ctx, LatLon start,
@@ -295,7 +295,7 @@ vector<unique_ptr<TransportRouteResult>> TransportRoutePlanner::buildTransportRo
 // 	}
 // }
 
-void TransportRoutePlanner::updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx,
+void TransportRoutePlanner::updateCalculationProgress(unique_ptr<TransportRoutingContext>& ctx,
 													  priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {
 	if (ctx->calculationProgress.get()) {
 		ctx->calculationProgress->directSegmentQueueSize = queue.size();

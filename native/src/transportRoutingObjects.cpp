@@ -44,7 +44,12 @@ bool TransportStopExit::compareExit(SHARED_PTR<TransportStopExit>& thatObj) {
 
 // TransportStop:
 
-TransportStop::TransportStop() {}
+TransportStop::TransportStop() :
+distance(0),
+x31(-1),
+y31(-1)
+{
+}
 
 bool TransportStop::hasRoute(int64_t routeId) {
 	return std::find(routesIds.begin(), routesIds.end(), routeId) !=

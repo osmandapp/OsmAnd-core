@@ -22,15 +22,16 @@ class TransportRoutePlanner {
 	TransportRoutePlanner();
 	~TransportRoutePlanner();
 
-	vector<unique_ptr<TransportRouteResult>> buildTransportRoute(SHARED_PTR<TransportRoutingContext>& ctx);
-	void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx, TRANSPORT_SEGMENTS_QUEUE& queue);
-	vector<unique_ptr<TransportRouteResult>> prepareResults(SHARED_PTR<TransportRoutingContext>& ctx,
-															vector<SHARED_PTR<TransportRouteSegment>>& results);
+	void buildTransportRoute(unique_ptr<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteResult>>& res);
+	void updateCalculationProgress(unique_ptr<TransportRoutingContext>& ctx, TRANSPORT_SEGMENTS_QUEUE& queue);
+	void prepareResults(unique_ptr<TransportRoutingContext>& ctx,
+															vector<SHARED_PTR<TransportRouteSegment>>& results,
+                                                            vector<SHARED_PTR<TransportRouteResult>>& routes);
 	bool includeRoute(TransportRouteResult& fastRoute, TransportRouteResult& testRoute);
 
    private:
-	bool includeRoute(unique_ptr<TransportRouteResult>& fastRoute, unique_ptr<TransportRouteResult>& testRoute);
-	void updateCalculationProgress(SHARED_PTR<TransportRoutingContext>& ctx,
+	bool includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute, SHARED_PTR<TransportRouteResult>& testRoute);
+	void updateCalculationProgress(unique_ptr<TransportRoutingContext>& ctx,
 								   priority_queue<SHARED_PTR<TransportRouteSegment>>& queue);
 };
 
