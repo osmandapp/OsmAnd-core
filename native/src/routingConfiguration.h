@@ -33,7 +33,7 @@ struct RoutingConfiguration {
 	
     // 1.5 Recalculate distance help
     float recalculateDistance;
-    time_t routeCalculationTime;
+    time_t routeCalculationTime = 0;
 
     RoutingConfiguration(float initDirection = -360, int memLimit = DEFAULT_MEMORY_LIMIT) : router(new GeneralRouter()), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
     }
