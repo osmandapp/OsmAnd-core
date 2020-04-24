@@ -11,9 +11,9 @@ struct TransportRouteResult {
 	vector<SHARED_PTR<TransportRouteResultSegment>> segments;
 	double finishWalkDist;
 	double routeTime;
-	TransportRoutingConfiguration *config;
+	SHARED_PTR<TransportRoutingConfiguration> config;
 
-	TransportRouteResult(unique_ptr<TransportRoutingConfiguration>& cfg);
+	TransportRouteResult(SHARED_PTR<TransportRoutingConfiguration>& cfg);
 
 	double getWalkDist();
 	float getWalkSpeed();

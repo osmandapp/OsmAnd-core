@@ -1,12 +1,7 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_H
 #include "CommonCollections.h"
-#include "Logging.h"  //check where to put it
 #include "commonOsmAndCore.h"
-
-#if defined(__APPLE__)
-#include <OsmAndCore/Logging.h>
-#endif
 
 struct TransportRoute;
 struct TransportStop;

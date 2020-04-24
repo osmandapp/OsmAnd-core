@@ -1,13 +1,13 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #include "transportRoutePlanner.h"
-
 #include "transportRouteResult.h"
 #include "transportRouteResultSegment.h"
 #include "transportRouteSegment.h"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingContext.h"
 #include "transportRoutingObjects.h"
+#include "Logging.h"
 
 struct TransportSegmentsComparator
 	: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool> {

@@ -16,7 +16,7 @@ struct TransportRoute;
 struct TransportRoutingContext {
 	SHARED_PTR<RouteCalculationProgress> calculationProgress;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
-	unique_ptr<TransportRoutingConfiguration> cfg;
+	SHARED_PTR<TransportRoutingConfiguration> cfg;
 
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
@@ -47,7 +47,7 @@ struct TransportRoutingContext {
 	int32_t walkRadiusIn31;
 	int32_t walkChangeRadiusIn31;
 
-	TransportRoutingContext(unique_ptr<TransportRoutingConfiguration>& cfg_);
+	TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration>& cfg_);
 
 	inline static double getTileDistanceWidth(float zoom) {
 		double lat1 = 30;

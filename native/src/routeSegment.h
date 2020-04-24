@@ -4,10 +4,6 @@
 #include "commonOsmAndCore.h"
 #include "Logging.h"
 
-#if defined(__APPLE__)
-#include <OsmAndCore/Logging.h>
-#endif
-
 struct RouteSegment {
     public :
     uint16_t segmentStart;

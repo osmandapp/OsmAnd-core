@@ -1,7 +1,7 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_SEGMENT_CPP
 #define _OSMAND_TRANSPORT_ROUTE_SEGMENT_CPP
 #include "transportRouteSegment.h"
-
+#include "Logging.h"
 #include "transportRoutingObjects.h"
 
 TransportRouteSegment::TransportRouteSegment(SHARED_PTR<TransportRoute> road_,
