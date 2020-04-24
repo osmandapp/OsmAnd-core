@@ -333,6 +333,14 @@ string GeneralRouter::getAttribute(string attribute) {
 	return attributes[attribute];
 }
 
+float GeneralRouter::getFloatAttribute(string attr, float defVal) {
+	return parseFloat(getAttribute(attr), defVal);
+}
+
+int GeneralRouter::getIntAttribute(string attr, int defVal) {
+	return (int) parseFloat(getAttribute(attr), (float) defVal);
+}
+
 double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def) {
 	return evaluateCache(attr, way->region, way->types, def );
 }
@@ -502,17 +510,21 @@ void GeneralRouter::printRules() {
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
-	string key = r.first + "$" + r.second;
-	MAP_STR_INT::iterator it = universalRules.find(key);
-	if (it != universalRules.end()) {
-		return ((uint)it->second);
-	}
-	int id = (int)universalRules.size();
-	universalRulesById.push_back(r);
-	universalRules[key] = id;
-	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
-	d.set(id);
-	return id;
+    string key = r.first + "$" + r.second;
+    MAP_STR_INT::iterator it = universalRules.find(key);
+    if (it != universalRules.end()) {
+        return ((uint)it->second);
+    }
+    int id = (int)universalRules.size();
+    universalRulesById.push_back(r);
+    universalRules[key] = id;
+    dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
+    d.set(id);
+    return id;
+}
+
+uint64_t GeneralRouter::getBitSetSize() {
+    return universalRules.size();
 }
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {

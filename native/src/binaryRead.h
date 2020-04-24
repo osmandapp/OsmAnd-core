@@ -18,6 +18,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include "routeTypeRule.h"
+#include "transportRoutingObjects.h"
 
 #if defined(WIN32)
 #define close _close
@@ -26,7 +27,6 @@
 
 static const uint MAP_VERSION = 2;
 static const int SHIFT_ID = 6;
-
 struct MapTreeBounds {
 	uint32_t length;
 	uint32_t filePointer;
@@ -523,19 +523,19 @@ struct RouteDataObject {
 		return def;
 	}
 	
-//	static double parseLength(string v, double def) {
-//		// 14"10' not supported
-//		int i = findFirstNumberEndIndex(v);
-//		if (i > 0) {
-//			double f = atof(v.substr(0, i).c_str());
-//			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
-//				// foot to meters
-//				f *= 0.3048;
-//			}
-//			return f;
-//		}
-//		return def;
-//	}
+	//	static double parseLength(string v, double def) {
+	//		// 14"10' not supported
+	//		int i = findFirstNumberEndIndex(v);
+	//		if (i > 0) {
+	//			double f = atof(v.substr(0, i).c_str());
+	//			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
+	//				// foot to meters
+	//				f *= 0.3048;
+	//			}
+	//			return f;
+	//		}
+	//		return def;
+	//	}
 
 
 	
@@ -553,7 +553,27 @@ struct RouteDataObject {
 	}
 };
 
+struct IndexStringTable {
+    uint32_t fileOffset;
+    uint32_t length;
+    UNORDERED(map)<int32_t, string> stringTable;
+};
 
+struct TransportIndex : BinaryPartIndex {
+	int left;
+	int right;
+	int top;
+	int bottom;
+
+	uint32_t stopsFileOffset;
+	uint32_t stopsFileLength;
+
+	IndexStringTable* stringTable;
+
+	TransportIndex() : BinaryPartIndex(TRANSPORT_INDEX), left(0), right(0), top(0), bottom(0) {
+
+	}
+};
 
 struct MapIndex : BinaryPartIndex {
 
@@ -625,6 +645,7 @@ struct BinaryMapFile {
 	uint64_t dateCreated;
 	std::vector<MapIndex> mapIndexes;
 	std::vector<RoutingIndex*> routingIndexes;
+	std::vector<TransportIndex*> transportIndexes;
 	std::vector<BinaryPartIndex*> indexes;
 	int fd;
 	int routefd;
@@ -734,6 +755,15 @@ struct SearchQuery {
 	uint numberOfAcceptedObjects;
 	uint numberOfReadSubtrees;
 	uint numberOfAcceptedSubtrees;
+    
+    int limit;
+    
+	vector<SHARED_PTR<TransportStop>> transportResults;
+	
+	// cache information
+	vector<int32_t> cacheTypes;
+	vector<int64_t> cacheIdsA;
+	vector<int64_t> cacheIdsB;
 
 	SearchQuery(int l, int r, int t, int b, RenderingRuleSearchRequest* req, ResultPublisher* publisher) :
 			req(req), left(l), right(r), top(t), bottom(b),publisher(publisher) {
@@ -741,19 +771,30 @@ struct SearchQuery {
 		numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
 		oceanTiles = 0;
 		ocean = 0;
+        limit = -1;
 	}
 	SearchQuery(int l, int r, int t, int b) :
-				left(l), right(r), top(t), bottom(b) {
+		left(l), right(r), top(t), bottom(b) {
 	}
-
-	SearchQuery(){
-
+		
+	SearchQuery() {
+        numberOfAcceptedObjects = numberOfVisitedObjects = 0;
+        numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
+        oceanTiles = 0;
+        ocean = 0;
+        limit = -1;
 	}
 
 	bool publish(MapDataObject* obj) {
 		return publisher->publish(obj);
 	}
 };
+
+std::vector<BinaryMapFile* > getOpenMapFiles();
+
+void searchTransportIndex(SearchQuery* q, BinaryMapFile* file);
+
+void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result);
 
 void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap);
 
@@ -766,5 +807,6 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 bool initMapFilesFromCache(std::string inputName) ;
 
 bool closeBinaryMapFile(std::string inputName);
+
 
 #endif

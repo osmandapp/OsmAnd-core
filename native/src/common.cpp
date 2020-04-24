@@ -32,6 +32,10 @@ double getPowZoom(float zoom){
 	}
 }
 
+static double getTileDistanceWidth(double zoom) {
+	return getDistance(30, getLongitudeFromTile(zoom, 0), 30, getLongitudeFromTile(zoom, 1));
+}
+
 double measuredDist31(int x1, int y1, int x2, int y2) {
   return getDistance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
 }

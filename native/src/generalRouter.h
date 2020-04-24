@@ -83,7 +83,8 @@ enum class GeneralRouterProfile {
 	CAR,
 	PEDESTRIAN,
 	BICYCLE,
-    BOAT
+    BOAT, 
+	PUBLIC_TRANSPORT
 };
 
 static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRouterProfile def) {
@@ -93,6 +94,8 @@ static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRou
         return GeneralRouterProfile::PEDESTRIAN;
     } else if ("bicycle" == to_lowercase(profile)) {
         return GeneralRouterProfile::BICYCLE;
+	} else if ("public_transport" == to_lowercase(profile)) {
+		return GeneralRouterProfile::PUBLIC_TRANSPORT;
     } else {
         return def;
     }
@@ -274,6 +277,26 @@ public:
     SHARED_PTR<RouteAttributeEvalRule> getLastRule() {
         return rules.back();
     }
+    
+    int evaluateInt(dynbitset& rawTypes, int defValue)
+    {
+        double o = evaluate(rawTypes);
+        if(o == DOUBLE_MISSING)
+        {
+            return defValue;
+        }
+        return (int) o;
+    }
+    
+    float evaluateFloat(dynbitset& rawTypes, float defValue)
+    {
+        double o = evaluate(rawTypes);
+        if(o == DOUBLE_MISSING)
+        {
+            return defValue;
+        }
+        return (float) o;
+    }
 
 private:
 	double evaluate(dynbitset& types) {
@@ -411,6 +434,12 @@ public:
 	bool containsAttribute(string attribute);
 	
 	string getAttribute(string attribute);
+
+	float getFloatAttribute(string attr, float defVal);
+
+	int getIntAttribute(string attr, int defVal);
+    
+    uint64_t getBitSetSize();
     
 	/**
 	 * return if the road is accepted for routing
@@ -496,12 +525,11 @@ private:
 
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
-	uint registerTagValueAttribute(const tag_value& r);
-
 	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def);
 	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def);
 
 public:
+	uint registerTagValueAttribute(const tag_value& r);
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}
