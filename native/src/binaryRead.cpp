@@ -1497,8 +1497,8 @@ bool readTransportRouteStop(CodedInputStream* input, SHARED_PTR<TransportStop> &
 }
 
 bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transportRoute, int32_t filePointer, UNORDERED(map)<int32_t, string>& stringTable, bool onlyDescription) {
-    lseek(file->fd, 0, SEEK_SET);
-    FileInputStream stream(file->fd);
+    lseek(file->routefd, 0, SEEK_SET);
+    FileInputStream stream(file->routefd);
     stream.SetCloseOnDelete(false);
     CodedInputStream *input = new CodedInputStream(&stream);
     input->SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
@@ -1737,8 +1737,8 @@ void searchTransportIndex(TransportIndex* index, SearchQuery* q, CodedInputStrea
 }
 
 void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
-	lseek(file->fd, 0, SEEK_SET);
-	FileInputStream input(file->fd);
+	lseek(file->routefd, 0, SEEK_SET);
+	FileInputStream input(file->routefd);
 	input.SetCloseOnDelete(false);
 	CodedInputStream cis(&input);
 	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
@@ -1764,10 +1764,9 @@ bool getTransportIndex(int64_t filePointer, TransportIndex*& ind) {
 }
 
 void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result) {
-    //todo is it ok to create CIS here?
-    lseek(file->fd, 0, SEEK_SET);
-    FileInputStream input(file->fd);
-    input.SetCloseOnDelete(false);
+    lseek(file->routefd, 0, SEEK_SET);
+	FileInputStream input(file->routefd);
+	input.SetCloseOnDelete(false);
     CodedInputStream cis(&input);
     cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
 
