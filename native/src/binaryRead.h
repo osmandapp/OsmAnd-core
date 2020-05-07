@@ -697,6 +697,15 @@ struct ResultPublisher {
 
 	bool publish(FoundMapDataObject r);
 
+	shared_ptr<vector<MapDataObject*>> getObjects() {
+		shared_ptr<vector<MapDataObject *>> objs(new vector<MapDataObject *> );
+		objs->reserve(result.size());
+		for (uint i = 0; i < result.size(); i++) {
+			objs->push_back(result[i].obj);
+		}
+		return objs;
+	}
+
 	bool publishOnlyUnique(std::vector<FoundMapDataObject> &r) {
 		for(uint i = 0; i < r.size(); i++) {
 			if(!publish(r[i])) {

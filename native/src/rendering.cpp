@@ -1124,19 +1124,19 @@ bool sortPolygonsOrder(const MapDataObjectPrimitive& i,const MapDataObjectPrimit
 	return (i.order>j.order); 
 }
 
-void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
+void sortObjectsByProperOrder(shared_ptr<std::vector <MapDataObject* >>& mapDataObjects,
 	RenderingRuleSearchRequest* req, RenderingContext* rc,
 		std::vector<MapDataObjectPrimitive>&  polygonsArray, std::vector<MapDataObjectPrimitive>&  pointsArray,
 		std::vector<MapDataObjectPrimitive>&  linesResArray) {
 	if (req != NULL) {
 		std::vector<MapDataObjectPrimitive>  linesArray;
 		req->clearState();
-		const uint size = mapDataObjects.size();
+		const uint size = mapDataObjects->size();
 		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 8), 0));
 		double minPolygonSize = rc->polygonMinSizeToDisplay;
 		uint i = 0;
 		for (; i < size; i++) {
-			MapDataObject* mobj = mapDataObjects[i];
+			MapDataObject* mobj = (*mapDataObjects)[i];
 			size_t sizeTypes = mobj->types.size();
 			size_t j = 0;
 			for (; j < sizeTypes; j++) {
@@ -1208,7 +1208,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 	}
 }
 
-void doRendering(std::vector <MapDataObject* > mapDataObjects, SkCanvas* canvas,
+void doRendering(shared_ptr<std::vector <MapDataObject* >> mapDataObjects, SkCanvas* canvas,
 		RenderingRuleSearchRequest* req,
 		RenderingContext* rc) {
 	rc->nativeOperations.Start();
