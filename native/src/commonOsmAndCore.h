@@ -194,7 +194,6 @@ public:
 	int32_t labelX;
 	int32_t labelY;
 
-	//
 
 	bool cycle(){
 		return points[0] == points[points.size() -1];

@@ -44,6 +44,13 @@ void print_dump(const char* msg1, const char* msg2) {
 }
 #endif
 
+void deleteObjects(std::vector<FoundMapDataObject> & v) {
+	for(size_t i = 0; i< v.size(); i++) {
+		delete v[i].obj;
+	}
+	v.clear();
+}
+
 uint32_t RoutingIndex::findOrCreateRouteType(const std::string& tag, const std::string& value ) {
 	uint32_t i = 0;
 	for(; i < routeEncodingRules.size(); i++) {
@@ -1946,8 +1953,8 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 		 	MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
 			if (mapObject != NULL) {
 				mapObject->id += baseId;
-				if(req->publish(mapObject)) {
-				  	results.push_back(mapObject);
+				if(req->publish(mapObject, root)) {
+					results.push_back(mapObject);
 				} else {
 					delete mapObject;
 				}
@@ -2028,7 +2035,7 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 }
 
 
-void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<MapDataObject*>& tempResult,
+void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<FoundMapDataObject>& tempResult,
 		int& renderedState) {
 	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
@@ -2081,7 +2088,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			if (renderedState < 2 && checkObjectBounds(q, obj)) {
 				renderedState |= 2;
 			}
-			tempResult.push_back(obj);
+			tempResult.push_back(FoundMapDataObject(obj, NULL));
 		} else {
 			delete obj;
 		}
@@ -2133,7 +2140,7 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 }
 
 void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubregion>& found,
-		RoutingIndex* routeIndex, std::vector<MapDataObject*>& tempResult, int& renderedState) {
+		RoutingIndex* routeIndex, std::vector<FoundMapDataObject>& tempResult, int& renderedState) {
 	sort(found.begin(), found.end(), sortRouteRegions);
 	lseek(file->fd, 0, SEEK_SET);
 	FileInputStream input(file->fd);
@@ -2152,7 +2159,7 @@ void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubreg
 	}
 }
 
-void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<MapDataObject*>& tempResult,
+void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<FoundMapDataObject>& tempResult,
 		int& renderedState) {
 	std::vector<RoutingIndex*>::iterator routeIndex = file->routingIndexes.begin();
 	for (; routeIndex != file->routingIndexes.end(); routeIndex++) {
@@ -2233,9 +2240,9 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 	}
 }
 
-void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, 
-		std::vector<MapDataObject*>& tempResult, std::vector<MapDataObject*>& extResult,
-		 std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
+void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject> & basemapResult, 
+		std::vector<FoundMapDataObject>& tempResult, std::vector<FoundMapDataObject>& extResult,
+		 std::vector<FoundMapDataObject>& coastLines,std::vector<FoundMapDataObject>& basemapCoastLines,
 		int& count, bool& basemapExists, int& renderedState) {
 	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
@@ -2290,30 +2297,30 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		 		q->bottom = sbottom;
 			}
 			readMapObjects(q, file);
-			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
+			std::vector<FoundMapDataObject>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
 			for (; r != q->publisher->result.end(); r++) {				
 				if(basemap) {
-					if(renderedState % 2 == 0 && checkObjectBounds(q, *r)) {
+					if(renderedState % 2 == 0 && checkObjectBounds(q, r->obj)) {
 						renderedState |= 1;
 					}
 				} else {
-					if(renderedState < 2 && checkObjectBounds(q, *r)) {
+					if(renderedState < 2 && checkObjectBounds(q, r->obj)) {
 						renderedState |= 2;
 					}
 				}
 
 				count++;
-				if(!basemap && (*r)->contains("osmand_change", "delete") ) {
-					deletedIds.insert((*r)->id);
+				if(!basemap && r->obj->contains("osmand_change", "delete") ) {
+					deletedIds.insert(r->obj->id);
 				}
-				if ((*r)->contains("natural", "coastline") ) {
+				if (r->obj->contains("natural", "coastline") ) {
 					//&& !(*r)->contains("place", "island")
 					if (basemap) {
 						basemapCoastLines.push_back(*r);
 					} else {
-						if(deletedIds.find((*r)->id) == deletedIds.end()) {
+						if(deletedIds.find(r->obj->id) == deletedIds.end()) {
 							coastLines.push_back(*r);
 						}
 					}
@@ -2338,27 +2345,72 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	q->bottom = obottom;
 }
 
-void uniq(std::vector<MapDataObject*>& r, std::vector<MapDataObject*>& uniq) {
+std::string simpleNonLiveName(std::string s) {
+	uint t = s.length() - 1 ;
+	for (; t > 0; t--) {
+		if (s[t] == '_' || (s[t] >= '0' && s[t] < '9')) {
+			// strip numbers
+		} else {
+			break;
+		}
+	}
+	return t > 0 ? s.substr(0, t + 1) : s;
+}
+
+bool ResultPublisher::publish(FoundMapDataObject o ) {
+	MapDataObject *r = o.obj;
+	MapIndex *ind = o.ind;
+	if(r->id > 0) {
+		auto it = ids.find(r->id) ;
+		if (it != ids.end()) {
+			MapDataObject *ex = it->second.obj;
+			MapIndex *exInd = it->second.ind;
+			// check that object is not from newer live maps
+			bool newerLiveMap = false;
+			if (ind != NULL && exInd != NULL) {
+				if (simpleNonLiveName(exInd->name) == simpleNonLiveName(ind->name)) {
+					newerLiveMap = true;
+				}
+			}
+			if (ex->points.size() >= r->points.size() || newerLiveMap) {
+				return false;
+			} else {
+				auto it = result.begin();
+				for (; it != result.end(); it++) {
+					if ( it->obj == ex) {
+						result.erase(it);
+						break;
+					}
+				}
+				delete ex;
+			}
+		}
+		ids[r->id] = o;
+	}
+	result.push_back(o);
+	return true;
+}
+
+void uniq(std::vector<FoundMapDataObject>& r, std::vector<FoundMapDataObject>& uniq) {
 	UNORDERED(set)<uint64_t > ids;
 	for(uint i = 0; i < r.size(); i++) {
-		if(r[i]->id > 0 && !ids.insert(r[i]->id).second) {
+		if (r[i].obj->id > 0 && !ids.insert(r[i].obj->id).second) {
 			continue;
 		} else {
 			uniq.push_back(r[i]);
 		}
-
 	}
 }
 
 ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound,
 	 int& renderedState) {
 	int count = 0;
-	std::vector<MapDataObject*> basemapResult;
-	std::vector<MapDataObject*> tempResult;
-	std::vector<MapDataObject*> extResult;
-	std::vector<MapDataObject*> coastLines;
-	std::vector<MapDataObject*> uniqCoastLines;
-	std::vector<MapDataObject*> basemapCoastLines;
+	std::vector<FoundMapDataObject> basemapResult;
+	std::vector<FoundMapDataObject> tempResult;
+	std::vector<FoundMapDataObject> extResult;
+	std::vector<FoundMapDataObject> coastLines;
+	std::vector<FoundMapDataObject> uniqCoastLines;
+	std::vector<FoundMapDataObject> basemapCoastLines;
 
 	bool basemapExists = false;
 	readMapObjectsForRendering(q, basemapResult, tempResult, extResult, coastLines, basemapCoastLines, count,
@@ -2396,7 +2448,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
 		bool basemapMissing = q->zoom <= zoomOnlyForBasemaps && basemapCoastLines.empty() && !basemapExists;
-		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
+		// bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
 		bool coastlinesWereAdded = false;
 		bool detailedCoastlinesWereAdded = false;
 		if (!coastLines.empty()) {
@@ -2458,7 +2510,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			}
 			o->area = true;
 			o->additionalTypes.push_back(tag_value("layer", "-5"));
-			tempResult.push_back(o);
+			tempResult.push_back(FoundMapDataObject(o, NULL));
 		}
 		if ( (emptyData && extResult.size() == 0) || basemapMissing) {
 			// message
@@ -2468,7 +2520,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->types.push_back(tag_value("natural", "coastline"));
 			o->objectNames["name"] = msgNothingFound;
 			o->namesOrder.push_back("name");
-			tempResult.push_back(o);
+			tempResult.push_back(FoundMapDataObject(o, NULL));
 		}
 		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStartForRouteSection)) {
 			tempResult.insert(tempResult.end(), basemapResult.begin(), basemapResult.end());

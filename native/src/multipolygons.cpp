@@ -2,6 +2,7 @@
 #define _MULTIPOLYGONS_CPP
 #include "Logging.h"
 #include "multipolygons.h"
+#include "binaryRead.h"
 
 const bool DEBUG_LINE = false;
 
@@ -22,8 +23,8 @@ void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coor
 
 
 // returns true if coastlines were added!
-bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
-		bool showIfThereIncompleted, bool addDebugIncompleted, std::vector<MapDataObject*>& res) {
+bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
+		bool showIfThereIncompleted, bool addDebugIncompleted, std::vector<FoundMapDataObject>& res) {
 	// try out (quite dirty fix to align boundaries to grid)
 	leftX = (leftX >> 5) << 5;
 	rightX = (rightX >> 5) << 5;
@@ -33,10 +34,10 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	
 	std::vector<coordinates> completedRings;
 	std::vector<coordinates > uncompletedRings;
-	std::vector<MapDataObject*>::iterator val = coastLines.begin();
+	std::vector<FoundMapDataObject>::iterator val = coastLines.begin();
 	int64_t dbId = 0;
 	for (; val != coastLines.end(); val++) {
-		MapDataObject* o = *val;
+		MapDataObject* o = val->obj;
 		int len = o->points.size();
 		if (len < 2) {
 			continue;
@@ -89,14 +90,14 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 			MapDataObject* o = new MapDataObject();
 			o->points = uncompletedRings[i];
 			o->types.push_back(tag_value("natural", "coastline_broken"));
-			res.push_back(o);
+			res.push_back(FoundMapDataObject(o, NULL));
 		}
 		// draw completed for debug purpose
 		for (uint i = 0; i < completedRings.size(); i++) {
 			MapDataObject* o = new MapDataObject();
 			o->points = completedRings[i];
 			o->types.push_back(tag_value("natural", "coastline_line"));
-			res.push_back(o);
+			res.push_back(FoundMapDataObject(o, NULL));
 		}
 
 	}
@@ -121,7 +122,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		}
 		o->id = dbId--;
 		o->area = true;
-		res.push_back(o);
+		res.push_back(FoundMapDataObject(o, NULL));
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: islands %d, closed water %d, coastline touches screen %d",
 			landFound, waterFound, coastlineCrossScreen);
@@ -135,7 +136,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		o->points.push_back(int_pair(leftX, topY));
 		o->id = dbId--;
 		o->types.push_back(tag_value("natural", "coastline"));
-		res.push_back(o);
+		res.push_back(FoundMapDataObject(o, NULL));
 
 	}
 	return true;

@@ -676,44 +676,38 @@ struct BinaryMapFile {
 	}
 };
 
-struct ResultPublisher {
-	std::vector< MapDataObject*> result;
-	UNORDERED(map)<uint64_t, MapDataObject*> ids;
-
-	bool publish(MapDataObject* r) {
-		if(r->id > 0) {
-			MapDataObject *ex = ids[r->id] ;
-			if (ex) {
-				if (ex->points.size() > r->points.size()) {
-					return false;
-				} else {
-					auto it = result.begin();
-					for(; it != result.end(); it++) {
-						if( *it == ex) {
-							result.erase(it);
-							break;
-						}
-					}
-					delete ex;
-				}
-			}
-			ids[r->id] = r;
-		}
-		result.push_back(r);
-		return true;
+struct FoundMapDataObject {
+	MapDataObject* obj;
+	MapIndex *ind;
+	FoundMapDataObject(MapDataObject *obj = NULL, MapIndex *ind = NULL) {
+		this->obj = obj;
+		this->ind = ind;
 	}
+	FoundMapDataObject(const FoundMapDataObject& c) {
+		this->obj = c.obj;
+		this->ind = c.ind;
+	}
+};
 
-	bool publishOnlyUnique(std::vector<MapDataObject*>& r) {
+void deleteObjects(std::vector<FoundMapDataObject> & v);
+
+struct ResultPublisher {
+	std::vector<FoundMapDataObject> result;
+	UNORDERED(map)<uint64_t, FoundMapDataObject> ids;
+
+	bool publish(FoundMapDataObject r);
+
+	bool publishOnlyUnique(std::vector<FoundMapDataObject> &r) {
 		for(uint i = 0; i < r.size(); i++) {
 			if(!publish(r[i])) {
-				delete r[i];
+				delete r[i].obj;
 			}
 		}
 		r.clear();
 		return true;
 	}
 
-	bool publishAll(std::vector<MapDataObject*>& r) {
+	bool publishAll(std::vector<FoundMapDataObject> &r) {
 		for(uint i = 0; i < r.size(); i++) {
 			result.push_back(r[i]);
 		}
@@ -785,8 +779,8 @@ struct SearchQuery {
         limit = -1;
 	}
 
-	bool publish(MapDataObject* obj) {
-		return publisher->publish(obj);
+	bool publish(MapDataObject* obj, MapIndex* ind) {
+		return publisher->publish(FoundMapDataObject(obj, ind));
 	}
 };
 

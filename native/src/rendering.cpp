@@ -19,12 +19,11 @@
 #include <SkPaint.h>
 #include <SkPath.h>
 #include <SkFilterQuality.h>
-
+#include "binaryRead.h"
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include "commonRendering.h"
 #include "renderRules.h"
-#include "binaryRead.h"
 #include "textdraw.cpp"
 #include "rendering.h"
 #include "Logging.h"

@@ -358,7 +358,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	SkCanvas* canvas = new SkCanvas(*bitmap);
 	canvas->drawColor(rc.getDefaultColor());
 	if (result != NULL) {
-		doRendering(result->result, canvas, req, &rc);
+		vector<MapDataObject*> objs;
+		objs.reserve(result->result.size());
+		for(uint i = 0; i < result->result.size(); i++) {
+			objs.push_back(result->result[i].obj);
+		}
+		doRendering(objs, canvas, req, &rc);
 	}
 	pushToJavaRenderingContext(ienv, renderingContext, &rc);
 
