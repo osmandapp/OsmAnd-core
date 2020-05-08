@@ -210,6 +210,21 @@ float OsmAnd::Road::getMaximumSpeed(bool direction) const
     return maxSpeed;
 }
 
+bool OsmAnd::Road::isDeleted() const
+{
+    const auto& decodeMap = section->getAttributeMapping()->routingDecodeMap;
+    float maxSpeed = 0;
+    for (int i = 0; i < attributeIds.size(); i++) {
+        const auto r = decodeMap.getRef(attributeIds[i]);
+        if (r)
+        {
+            if (r->getTag() == QStringLiteral("osmand_change") && r->getValue() == QStringLiteral("delete"))
+                return true;
+        }
+    }
+    return false;
+}
+
 // Gives route direction of EAST degrees from NORTH ]-PI, PI]
 double OsmAnd::Road::directionRoute(int startPoint, bool plus, float dist) const
 {

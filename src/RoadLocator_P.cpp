@@ -144,9 +144,18 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
     std::shared_ptr<const Road> minDistanceRoad;
     int minDistancePointIdx = -1;
     double minSqDistance = std::numeric_limits<double>::max();
+    QList<ObfObjectId> processedIds;
 
     for (const auto& road : constOf(collection))
     {
+        if (processedIds.contains(road->id))
+            continue;
+        
+        processedIds.push_back(road->id);
+        
+        if (road->isDeleted())
+            continue;
+        
         const auto& points31 = road->points31;
         if (points31.size() <= 1)
             continue;

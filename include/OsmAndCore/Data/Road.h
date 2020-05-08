@@ -63,6 +63,7 @@ namespace OsmAnd
         QString getDestinationName(const QString lang, bool transliterate, bool direction) const;
 
         float getMaximumSpeed(bool direction) const;
+        bool isDeleted() const;
 
         double directionRoute(int startPoint, bool plus) const;
         double directionRoute(int startPoint, bool plus, float dist) const;
