@@ -7,7 +7,7 @@
 #include <vector>
 #include <SkCanvas.h>
 
-void doRendering(shared_ptr<std::vector<MapDataObject *>>  mapDataObjects, SkCanvas *canvas,
+void doRendering(std::vector<FoundMapDataObject> &mapDataObjects, SkCanvas *canvas,
 				 RenderingRuleSearchRequest *req, RenderingContext *rc);
 
 #endif

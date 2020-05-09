@@ -280,7 +280,23 @@ public:
 	}
 };
 
-void deleteObjects(std::vector <MapDataObject* > & v);
+struct FoundMapDataObject {
+	MapDataObject* obj;
+	void *ind;
+	uint8_t zoom;
+	FoundMapDataObject(MapDataObject *obj = NULL, void *ind = NULL, uint8_t zoom = 15) {
+		this->obj = obj;
+		this->ind = ind;
+		this->zoom = zoom;
+	}
+	FoundMapDataObject(const FoundMapDataObject& c) {
+		this->obj = c.obj;
+		this->ind = c.ind;
+		this->zoom = c.zoom;
+	}
+};
+
+void deleteObjects(std::vector<FoundMapDataObject> &v);
 
 int get31TileNumberX(double longitude);
 int get31TileNumberY( double latitude);

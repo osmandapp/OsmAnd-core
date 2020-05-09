@@ -44,13 +44,6 @@ void print_dump(const char* msg1, const char* msg2) {
 }
 #endif
 
-void deleteObjects(std::vector<FoundMapDataObject> & v) {
-	for(size_t i = 0; i< v.size(); i++) {
-		delete v[i].obj;
-	}
-	v.clear();
-}
-
 uint32_t RoutingIndex::findOrCreateRouteType(const std::string& tag, const std::string& value ) {
 	uint32_t i = 0;
 	for(; i < routeEncodingRules.size(); i++) {
@@ -1953,7 +1946,7 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 		 	MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
 			if (mapObject != NULL) {
 				mapObject->id += baseId;
-				if(req->publish(mapObject, root)) {
+				if(req->publish(mapObject, root, req->zoom)) {
 					results.push_back(mapObject);
 				} else {
 					delete mapObject;
@@ -2044,7 +2037,6 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 		if (r == NULL) {
 			continue;
 		}
-
 		// if (skipDuplicates && r->id > 0) {
 		// 	if (ids.find(r->id) != ids.end()) {
 		// 		continue;
@@ -2067,9 +2059,9 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			}
 		}
 		if (add) {
-            for (uint32_t s = 0; s < r->pointsX.size(); s++) {
-                obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
-            }
+			for (uint32_t s = 0; s < r->pointsX.size(); s++) {
+				obj->points.push_back(std::pair<int, int>(r->pointsX[s], r->pointsY[s]));
+			}
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
@@ -2088,7 +2080,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			if (renderedState < 2 && checkObjectBounds(q, obj)) {
 				renderedState |= 2;
 			}
-			tempResult.push_back(FoundMapDataObject(obj, NULL));
+			tempResult.push_back(FoundMapDataObject(obj, NULL, q->zoom));
 		} else {
 			delete obj;
 		}
@@ -2359,20 +2351,20 @@ std::string simpleNonLiveName(std::string s) {
 
 bool ResultPublisher::publish(FoundMapDataObject o ) {
 	MapDataObject *r = o.obj;
-	MapIndex *ind = o.ind;
+	// MapIndex *ind = (MapIndex *) o.ind;
 	if(r->id > 0) {
 		auto it = ids.find(r->id) ;
 		if (it != ids.end()) {
 			MapDataObject *ex = it->second.obj;
-			MapIndex *exInd = it->second.ind;
-			// check that object is not from newer live maps
-			bool newerLiveMap = false;
-			if (ind != NULL && exInd != NULL) {
-				if (simpleNonLiveName(exInd->name) == simpleNonLiveName(ind->name)) {
-					newerLiveMap = true;
-				}
-			}
-			if (ex->points.size() >= r->points.size() || newerLiveMap) {
+			// MapIndex *exInd = (MapIndex *) it->second.ind;
+			// // check that object is not from newer live maps
+			// bool newerLiveMap = false;
+			// if (ind != NULL && exInd != NULL) {
+			// 	if (simpleNonLiveName(exInd->name) == simpleNonLiveName(ind->name)) {
+			// 		newerLiveMap = true;
+			// 	}
+			// }
+			if (ex->points.size() >= r->points.size() || o.zoom >= 13) {
 				return false;
 			} else {
 				auto it = result.begin();
@@ -2510,7 +2502,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			}
 			o->area = true;
 			o->additionalTypes.push_back(tag_value("layer", "-5"));
-			tempResult.push_back(FoundMapDataObject(o, NULL));
+			tempResult.push_back(FoundMapDataObject(o, NULL, q->zoom));
 		}
 		if ( (emptyData && extResult.size() == 0) || basemapMissing) {
 			// message
@@ -2520,7 +2512,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->types.push_back(tag_value("natural", "coastline"));
 			o->objectNames["name"] = msgNothingFound;
 			o->namesOrder.push_back("name");
-			tempResult.push_back(FoundMapDataObject(o, NULL));
+			tempResult.push_back(FoundMapDataObject(o, NULL, q->zoom));
 		}
 		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStartForRouteSection)) {
 			tempResult.insert(tempResult.end(), basemapResult.begin(), basemapResult.end());

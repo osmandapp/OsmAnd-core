@@ -676,20 +676,6 @@ struct BinaryMapFile {
 	}
 };
 
-struct FoundMapDataObject {
-	MapDataObject* obj;
-	MapIndex *ind;
-	FoundMapDataObject(MapDataObject *obj = NULL, MapIndex *ind = NULL) {
-		this->obj = obj;
-		this->ind = ind;
-	}
-	FoundMapDataObject(const FoundMapDataObject& c) {
-		this->obj = c.obj;
-		this->ind = c.ind;
-	}
-};
-
-void deleteObjects(std::vector<FoundMapDataObject> & v);
 
 struct ResultPublisher {
 	std::vector<FoundMapDataObject> result;
@@ -788,8 +774,8 @@ struct SearchQuery {
         limit = -1;
 	}
 
-	bool publish(MapDataObject* obj, MapIndex* ind) {
-		return publisher->publish(FoundMapDataObject(obj, ind));
+	bool publish(MapDataObject* obj, MapIndex* ind, int8_t zoom) {
+		return publisher->publish(FoundMapDataObject(obj, ind, zoom));
 	}
 };
 

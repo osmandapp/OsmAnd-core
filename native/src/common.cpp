@@ -14,15 +14,13 @@
 #	include <time.h>
 #endif
 
-
-void deleteObjects(std::vector<MapDataObject* > & v)
-{
-	for(size_t i = 0; i< v.size(); i++)
-	{
-		delete v.at(i);
+void deleteObjects(std::vector<FoundMapDataObject> & v) {
+	for(size_t i = 0; i< v.size(); i++) {
+		delete v[i].obj;
 	}
 	v.clear();
 }
+
 
 double getPowZoom(float zoom){
 	if(zoom >= 0 && zoom - floor(zoom) < 0.05f){
