@@ -709,8 +709,31 @@ void OsmAnd::ResourcesManager_P::installOsmAndOnlineTileSource()
     installTilesResource(mapnikSource);
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> >
-OsmAnd::ResourcesManager_P::getLocalResources() const
+bool OsmAnd::ResourcesManager_P::FILENAME_COMPARATOR(const QString& fileName1, const QString& fileName2)
+{
+    QString firstName = fileName1;
+    QString secondName = fileName2;
+    firstName = firstName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+    secondName = secondName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
+    return firstName.compare(secondName) > 0;
+}
+
+QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getSortedLocalResources() const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    auto resources = detachedOf(_localResources).values();
+    std::sort(resources.begin(), resources.end(), [](const std::shared_ptr<const LocalResource> first, std::shared_ptr<const LocalResource> second) -> bool
+              {
+                  QFileInfo firstInfo(first->localPath);
+                  QFileInfo secondInfo(second->localPath);
+                  return FILENAME_COMPARATOR(firstInfo.fileName(), secondInfo.fileName());
+              });
+    
+    return resources;
+}
+
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
@@ -1837,11 +1860,7 @@ void OsmAnd::ResourcesManager_P::ObfsCollectionProxy::sortReaders(QList<std::sha
               {
                   QFileInfo firstInfo(first->obfFile->filePath);
                   QFileInfo secondInfo(second->obfFile->filePath);
-                  QString firstName = firstInfo.fileName();
-                  QString secondName = secondInfo.fileName();
-                  firstName = firstName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
-                  secondName = secondName.remove(QStringLiteral(".obf")).remove(QStringLiteral(".map")).remove(QStringLiteral(".live"));
-                  return firstName.compare(secondName) > 0;
+                  return FILENAME_COMPARATOR(firstInfo.fileName(), secondInfo.fileName());
               });
 }
 

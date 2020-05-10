@@ -78,8 +78,12 @@ bool OsmAnd::ResourcesManager::rescanUnmanagedStoragePaths() const
     return _p->rescanUnmanagedStoragePaths();
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
-OsmAnd::ResourcesManager::getLocalResources() const
+QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager::getSortedLocalResources() const
+{
+    return _p->getSortedLocalResources();
+}
+
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager::getLocalResources() const
 {
     return _p->getLocalResources();
 }

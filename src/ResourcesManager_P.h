@@ -49,6 +49,8 @@ namespace OsmAnd
         QMetaObject::Connection _onFileChangedConnection;
         void onFileChanged(const QString& path);
 
+        static bool FILENAME_COMPARATOR(const QString &fileName1, const QString &fileName2);
+
         void attachToFileSystem();
         void detachFromFileSystem();
 
@@ -231,6 +233,7 @@ namespace OsmAnd
 
         // Local resources:
         bool rescanUnmanagedStoragePaths() const;
+        QList< std::shared_ptr<const LocalResource> > getSortedLocalResources() const;
         QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
