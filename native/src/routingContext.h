@@ -56,7 +56,7 @@ struct RoutingSubregionTile {
 		return size + routes.size() * sizeof(std::pair<int64_t, SHARED_PTR<RouteSegment> >);
 	}
 
-	void add(SHARED_PTR<RouteDataObject>& o) {
+	void add(SHARED_PTR<RouteDataObject> o) {
 		size += o->getSize() + sizeof(RouteSegment) * o->pointsX.size();
 		for (uint i = 0; i < o->pointsX.size(); i++) {
 			uint64_t x31 = o->pointsX[i];
@@ -357,7 +357,7 @@ struct RoutingContext {
 		timeToLoad.Pause();
 	}
 
-	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
+	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects) {
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
 		if (t <= 0) {
@@ -366,7 +366,6 @@ struct RoutingContext {
 		} else {
 			t = 1 << t;
 		}
-		UNORDERED(set)<int64_t> ids;
 		int z  = config->zoomToLoad;
 		for (int i = -t; i <= t; i++) {
 			for (int j = -t; j <= t; j++) {
@@ -379,14 +378,14 @@ struct RoutingContext {
                     continue;
                 auto& subregions = itSubregions->second;
 				for (uint j = 0; j<subregions.size(); j++) {
-					if(subregions[j]->isLoaded()) {
+					if (subregions[j]->isLoaded()) {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
-						while(s != subregions[j]->routes.end()) {
+						while (s != subregions[j]->routes.end()) {
 							SHARED_PTR<RouteSegment> seg = s->second;
-							while(seg.get() != NULL) {
-								if(ids.find(seg->road->id) == ids.end()) {
-									dataObjects.push_back(seg->road);
-									ids.insert(seg->road->id);
+							while (seg.get() != NULL) {
+                                SHARED_PTR<RouteDataObject> ro = seg->road;
+                                if (!isExcluded(ro->id, j, subregions)) {
+                                    dataObjects.push_back(ro);
 								}
 								seg = seg->next;
 							}
@@ -420,7 +419,7 @@ struct RoutingContext {
 					SHARED_PTR<RouteDataObject> ro = segment->road;
 					SHARED_PTR<RouteDataObject> toCmp = excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
 					if (!isExcluded(ro->id, j, subregions) && (toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size())) {
-						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] =  ro;
+						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] = ro;
 						SHARED_PTR<RouteSegment> s = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 						s->next = original;
 						original = 	s;

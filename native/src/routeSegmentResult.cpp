@@ -2,7 +2,7 @@
 #define _OSMAND_ROUTE_SEGMENT_RESULT_CPP
 #include "routeSegmentResult.h"
 
-void RouteSegmentResult::attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult>& r) {
+void RouteSegmentResult::attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult> r) {
     if (r->object->isRoadDeleted()) {
         return;
     }
@@ -13,7 +13,7 @@ void RouteSegmentResult::attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResul
     attachedRoutesFrontEnd[st].push_back(r);
 }
 
-void RouteSegmentResult::copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult>& toCopy, int shift) {
+void RouteSegmentResult::copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift) {
     if (!toCopy->preAttachedRoutes.empty()) {
         preAttachedRoutes.clear();
         preAttachedRoutes.insert(preAttachedRoutes.end(), toCopy->preAttachedRoutes.begin() + shift, toCopy->preAttachedRoutes.end());
