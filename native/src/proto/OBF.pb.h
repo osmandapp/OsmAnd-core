@@ -57,6 +57,8 @@ class StreetIntersection;
 class BuildingIndex;
 class TransportRoutes;
 class TransportRoute;
+class IncompleteTransportRoutes;
+class IncompleteTransportRoute;
 class TransportRouteSchedule;
 class TransportRouteScheduleException;
 class TransportRouteStop;
@@ -3280,6 +3282,226 @@ class TransportRoute : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
+class IncompleteTransportRoutes : public ::google::protobuf::Message {
+ public:
+  IncompleteTransportRoutes();
+  virtual ~IncompleteTransportRoutes();
+
+  IncompleteTransportRoutes(const IncompleteTransportRoutes& from);
+
+  inline IncompleteTransportRoutes& operator=(const IncompleteTransportRoutes& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IncompleteTransportRoutes& default_instance();
+
+  void Swap(IncompleteTransportRoutes* other);
+
+  // implements Message ----------------------------------------------
+
+  IncompleteTransportRoutes* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const IncompleteTransportRoutes& from);
+  void MergeFrom(const IncompleteTransportRoutes& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .OsmAnd.OBF.IncompleteTransportRoute routes = 6;
+  inline int routes_size() const;
+  inline void clear_routes();
+  static const int kRoutesFieldNumber = 6;
+  inline const ::OsmAnd::OBF::IncompleteTransportRoute& routes(int index) const;
+  inline ::OsmAnd::OBF::IncompleteTransportRoute* mutable_routes(int index);
+  inline ::OsmAnd::OBF::IncompleteTransportRoute* add_routes();
+  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IncompleteTransportRoute >&
+      routes() const;
+  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IncompleteTransportRoute >*
+      mutable_routes();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.IncompleteTransportRoutes)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IncompleteTransportRoute > routes_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static IncompleteTransportRoutes* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class IncompleteTransportRoute : public ::google::protobuf::Message {
+ public:
+  IncompleteTransportRoute();
+  virtual ~IncompleteTransportRoute();
+
+  IncompleteTransportRoute(const IncompleteTransportRoute& from);
+
+  inline IncompleteTransportRoute& operator=(const IncompleteTransportRoute& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IncompleteTransportRoute& default_instance();
+
+  void Swap(IncompleteTransportRoute* other);
+
+  // implements Message ----------------------------------------------
+
+  IncompleteTransportRoute* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const IncompleteTransportRoute& from);
+  void MergeFrom(const IncompleteTransportRoute& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required uint64 id = 1;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 1;
+  inline ::google::protobuf::uint64 id() const;
+  inline void set_id(::google::protobuf::uint64 value);
+
+  // optional uint32 type = 3;
+  inline bool has_type() const;
+  inline void clear_type();
+  static const int kTypeFieldNumber = 3;
+  inline ::google::protobuf::uint32 type() const;
+  inline void set_type(::google::protobuf::uint32 value);
+
+  // optional uint32 operator = 4;
+  inline bool has_operator_() const;
+  inline void clear_operator_();
+  static const int kOperatorFieldNumber = 4;
+  inline ::google::protobuf::uint32 operator_() const;
+  inline void set_operator_(::google::protobuf::uint32 value);
+
+  // optional uint32 ref = 5;
+  inline bool has_ref() const;
+  inline void clear_ref();
+  static const int kRefFieldNumber = 5;
+  inline ::google::protobuf::uint32 ref() const;
+  inline void set_ref(::google::protobuf::uint32 value);
+
+  // required uint32 routeRef = 7;
+  inline bool has_routeref() const;
+  inline void clear_routeref();
+  static const int kRouteRefFieldNumber = 7;
+  inline ::google::protobuf::uint32 routeref() const;
+  inline void set_routeref(::google::protobuf::uint32 value);
+
+  // repeated uint32 missingStops = 8;
+  inline int missingstops_size() const;
+  inline void clear_missingstops();
+  static const int kMissingStopsFieldNumber = 8;
+  inline ::google::protobuf::uint32 missingstops(int index) const;
+  inline void set_missingstops(int index, ::google::protobuf::uint32 value);
+  inline void add_missingstops(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      missingstops() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_missingstops();
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.IncompleteTransportRoute)
+ private:
+  inline void set_has_id();
+  inline void clear_has_id();
+  inline void set_has_type();
+  inline void clear_has_type();
+  inline void set_has_operator_();
+  inline void clear_has_operator_();
+  inline void set_has_ref();
+  inline void clear_has_ref();
+  inline void set_has_routeref();
+  inline void clear_has_routeref();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint64 id_;
+  ::google::protobuf::uint32 type_;
+  ::google::protobuf::uint32 operator__;
+  ::google::protobuf::uint32 ref_;
+  ::google::protobuf::uint32 routeref_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > missingstops_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static IncompleteTransportRoute* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class TransportRouteSchedule : public ::google::protobuf::Message {
  public:
   TransportRouteSchedule();
@@ -4215,6 +4437,15 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   inline ::OsmAnd::OBF::TransportStopsTree* release_stops();
   inline void set_allocated_stops(::OsmAnd::OBF::TransportStopsTree* stops);
 
+  // optional .OsmAnd.OBF.IncompleteTransportRoutes incompleteRoutes = 8;
+  inline bool has_incompleteroutes() const;
+  inline void clear_incompleteroutes();
+  static const int kIncompleteRoutesFieldNumber = 8;
+  inline const ::OsmAnd::OBF::IncompleteTransportRoutes& incompleteroutes() const;
+  inline ::OsmAnd::OBF::IncompleteTransportRoutes* mutable_incompleteroutes();
+  inline ::OsmAnd::OBF::IncompleteTransportRoutes* release_incompleteroutes();
+  inline void set_allocated_incompleteroutes(::OsmAnd::OBF::IncompleteTransportRoutes* incompleteroutes);
+
   // required .OsmAnd.OBF.StringTable stringTable = 9;
   inline bool has_stringtable() const;
   inline void clear_stringtable();
@@ -4232,6 +4463,8 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   inline void clear_has_routes();
   inline void set_has_stops();
   inline void clear_has_stops();
+  inline void set_has_incompleteroutes();
+  inline void clear_has_incompleteroutes();
   inline void set_has_stringtable();
   inline void clear_has_stringtable();
 
@@ -4240,10 +4473,11 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   ::std::string* name_;
   ::OsmAnd::OBF::TransportRoutes* routes_;
   ::OsmAnd::OBF::TransportStopsTree* stops_;
+  ::OsmAnd::OBF::IncompleteTransportRoutes* incompleteroutes_;
   ::OsmAnd::OBF::StringTable* stringtable_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -11058,6 +11292,174 @@ TransportRoute::mutable_scheduletrip() {
 
 // -------------------------------------------------------------------
 
+// IncompleteTransportRoutes
+
+// repeated .OsmAnd.OBF.IncompleteTransportRoute routes = 6;
+inline int IncompleteTransportRoutes::routes_size() const {
+  return routes_.size();
+}
+inline void IncompleteTransportRoutes::clear_routes() {
+  routes_.Clear();
+}
+inline const ::OsmAnd::OBF::IncompleteTransportRoute& IncompleteTransportRoutes::routes(int index) const {
+  return routes_.Get(index);
+}
+inline ::OsmAnd::OBF::IncompleteTransportRoute* IncompleteTransportRoutes::mutable_routes(int index) {
+  return routes_.Mutable(index);
+}
+inline ::OsmAnd::OBF::IncompleteTransportRoute* IncompleteTransportRoutes::add_routes() {
+  return routes_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IncompleteTransportRoute >&
+IncompleteTransportRoutes::routes() const {
+  return routes_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IncompleteTransportRoute >*
+IncompleteTransportRoutes::mutable_routes() {
+  return &routes_;
+}
+
+// -------------------------------------------------------------------
+
+// IncompleteTransportRoute
+
+// required uint64 id = 1;
+inline bool IncompleteTransportRoute::has_id() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void IncompleteTransportRoute::set_has_id() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void IncompleteTransportRoute::clear_has_id() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void IncompleteTransportRoute::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+  clear_has_id();
+}
+inline ::google::protobuf::uint64 IncompleteTransportRoute::id() const {
+  return id_;
+}
+inline void IncompleteTransportRoute::set_id(::google::protobuf::uint64 value) {
+  set_has_id();
+  id_ = value;
+}
+
+// optional uint32 type = 3;
+inline bool IncompleteTransportRoute::has_type() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void IncompleteTransportRoute::set_has_type() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void IncompleteTransportRoute::clear_has_type() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void IncompleteTransportRoute::clear_type() {
+  type_ = 0u;
+  clear_has_type();
+}
+inline ::google::protobuf::uint32 IncompleteTransportRoute::type() const {
+  return type_;
+}
+inline void IncompleteTransportRoute::set_type(::google::protobuf::uint32 value) {
+  set_has_type();
+  type_ = value;
+}
+
+// optional uint32 operator = 4;
+inline bool IncompleteTransportRoute::has_operator_() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void IncompleteTransportRoute::set_has_operator_() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void IncompleteTransportRoute::clear_has_operator_() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void IncompleteTransportRoute::clear_operator_() {
+  operator__ = 0u;
+  clear_has_operator_();
+}
+inline ::google::protobuf::uint32 IncompleteTransportRoute::operator_() const {
+  return operator__;
+}
+inline void IncompleteTransportRoute::set_operator_(::google::protobuf::uint32 value) {
+  set_has_operator_();
+  operator__ = value;
+}
+
+// optional uint32 ref = 5;
+inline bool IncompleteTransportRoute::has_ref() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void IncompleteTransportRoute::set_has_ref() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void IncompleteTransportRoute::clear_has_ref() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void IncompleteTransportRoute::clear_ref() {
+  ref_ = 0u;
+  clear_has_ref();
+}
+inline ::google::protobuf::uint32 IncompleteTransportRoute::ref() const {
+  return ref_;
+}
+inline void IncompleteTransportRoute::set_ref(::google::protobuf::uint32 value) {
+  set_has_ref();
+  ref_ = value;
+}
+
+// required uint32 routeRef = 7;
+inline bool IncompleteTransportRoute::has_routeref() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void IncompleteTransportRoute::set_has_routeref() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void IncompleteTransportRoute::clear_has_routeref() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void IncompleteTransportRoute::clear_routeref() {
+  routeref_ = 0u;
+  clear_has_routeref();
+}
+inline ::google::protobuf::uint32 IncompleteTransportRoute::routeref() const {
+  return routeref_;
+}
+inline void IncompleteTransportRoute::set_routeref(::google::protobuf::uint32 value) {
+  set_has_routeref();
+  routeref_ = value;
+}
+
+// repeated uint32 missingStops = 8;
+inline int IncompleteTransportRoute::missingstops_size() const {
+  return missingstops_.size();
+}
+inline void IncompleteTransportRoute::clear_missingstops() {
+  missingstops_.Clear();
+}
+inline ::google::protobuf::uint32 IncompleteTransportRoute::missingstops(int index) const {
+  return missingstops_.Get(index);
+}
+inline void IncompleteTransportRoute::set_missingstops(int index, ::google::protobuf::uint32 value) {
+  missingstops_.Set(index, value);
+}
+inline void IncompleteTransportRoute::add_missingstops(::google::protobuf::uint32 value) {
+  missingstops_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+IncompleteTransportRoute::missingstops() const {
+  return missingstops_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+IncompleteTransportRoute::mutable_missingstops() {
+  return &missingstops_;
+}
+
+// -------------------------------------------------------------------
+
 // TransportRouteSchedule
 
 // optional bytes avgStopIntervals = 1;
@@ -12253,15 +12655,53 @@ inline void OsmAndTransportIndex::set_allocated_stops(::OsmAnd::OBF::TransportSt
   }
 }
 
-// required .OsmAnd.OBF.StringTable stringTable = 9;
-inline bool OsmAndTransportIndex::has_stringtable() const {
+// optional .OsmAnd.OBF.IncompleteTransportRoutes incompleteRoutes = 8;
+inline bool OsmAndTransportIndex::has_incompleteroutes() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void OsmAndTransportIndex::set_has_stringtable() {
+inline void OsmAndTransportIndex::set_has_incompleteroutes() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void OsmAndTransportIndex::clear_has_stringtable() {
+inline void OsmAndTransportIndex::clear_has_incompleteroutes() {
   _has_bits_[0] &= ~0x00000008u;
+}
+inline void OsmAndTransportIndex::clear_incompleteroutes() {
+  if (incompleteroutes_ != NULL) incompleteroutes_->::OsmAnd::OBF::IncompleteTransportRoutes::Clear();
+  clear_has_incompleteroutes();
+}
+inline const ::OsmAnd::OBF::IncompleteTransportRoutes& OsmAndTransportIndex::incompleteroutes() const {
+  return incompleteroutes_ != NULL ? *incompleteroutes_ : *default_instance_->incompleteroutes_;
+}
+inline ::OsmAnd::OBF::IncompleteTransportRoutes* OsmAndTransportIndex::mutable_incompleteroutes() {
+  set_has_incompleteroutes();
+  if (incompleteroutes_ == NULL) incompleteroutes_ = new ::OsmAnd::OBF::IncompleteTransportRoutes;
+  return incompleteroutes_;
+}
+inline ::OsmAnd::OBF::IncompleteTransportRoutes* OsmAndTransportIndex::release_incompleteroutes() {
+  clear_has_incompleteroutes();
+  ::OsmAnd::OBF::IncompleteTransportRoutes* temp = incompleteroutes_;
+  incompleteroutes_ = NULL;
+  return temp;
+}
+inline void OsmAndTransportIndex::set_allocated_incompleteroutes(::OsmAnd::OBF::IncompleteTransportRoutes* incompleteroutes) {
+  delete incompleteroutes_;
+  incompleteroutes_ = incompleteroutes;
+  if (incompleteroutes) {
+    set_has_incompleteroutes();
+  } else {
+    clear_has_incompleteroutes();
+  }
+}
+
+// required .OsmAnd.OBF.StringTable stringTable = 9;
+inline bool OsmAndTransportIndex::has_stringtable() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void OsmAndTransportIndex::set_has_stringtable() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void OsmAndTransportIndex::clear_has_stringtable() {
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void OsmAndTransportIndex::clear_stringtable() {
   if (stringtable_ != NULL) stringtable_->::OsmAnd::OBF::StringTable::Clear();
