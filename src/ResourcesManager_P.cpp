@@ -339,6 +339,13 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             outResult,
             QLatin1String("*.hillshade.sqlitedb"),
             ResourceType::HillshadeRegion);
+        
+        // Find ResourceType::SlopeRegion -> "*.slope.sqlitedb" files
+        loadLocalResourcesFromPath_SQLiteDB(
+            storagePath,
+            outResult,
+            QLatin1String("*.slope.sqlitedb"),
+            ResourceType::SlopeRegion);
 
         // Find ResourceType::HeightmapRegion -> "*.heightmap.sqlitedb" files
         loadLocalResourcesFromPath_SQLiteDB(
@@ -522,6 +529,15 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             resourceId = resourceId
                 .remove("Hillshade_")
                 .replace(".sqlitedb", ".hillshade.sqlitedb");
+        }
+        else if (fileName.endsWith(".slope.sqlitedb"))
+            resourceType = ResourceType::SlopeRegion;
+        else if (fileName.startsWith("Slope_"))
+        {
+            resourceType = ResourceType::HillshadeRegion;
+            resourceId = resourceId
+                .remove("Slope_")
+                .replace(".sqlitedb", ".slope.sqlitedb");
         }
         else if (fileName.endsWith(".heightmap.sqlitedb"))
         {
@@ -800,6 +816,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             resourceType = ResourceType::WikiMapRegion;
         else if (resourceTypeValue == QLatin1String("hillshade"))
             resourceType = ResourceType::HillshadeRegion;
+        else if (resourceTypeValue == QLatin1String("slope"))
+            resourceType = ResourceType::SlopeRegion;
         else if (resourceTypeValue == QLatin1String("heightmap"))
             resourceType = ResourceType::HeightmapRegion;
         else if (resourceTypeValue == QLatin1String("voice"))
@@ -915,6 +933,18 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?hillshade=yes&file=") +
                     QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::SlopeRegion:
+                // 'Slope_[region].sqlitedb' -> '[region].slope.sqlitedb'
+                resourceId = QString(name)
+                .remove(QLatin1String("Slope_"))
+                .remove(QLatin1String(".sqlitedb"))
+                .toLower()
+                .append(QLatin1String(".slope.sqlitedb"));
+                downloadUrl =
+                owner->repositoryBaseUrl +
+                QLatin1String("/download.php?slope=yes&file=") +
+                QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::HeightmapRegion:
                 // 'Heightmap_[region].sqlitedb' -> '[region].heightmap.sqlitedb'
@@ -1259,6 +1289,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
             break;
         case ResourceType::HillshadeRegion:
         case ResourceType::HeightmapRegion:
+        case ResourceType::SlopeRegion:
             ok = installSQLiteDBFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::VoicePack:
@@ -1613,6 +1644,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
             break;
         case ResourceType::HillshadeRegion:
         case ResourceType::HeightmapRegion:
+        case ResourceType::SlopeRegion:
             ok = updateSQLiteDBFromFile(installedResource, filePath);
             break;
         case ResourceType::VoicePack:

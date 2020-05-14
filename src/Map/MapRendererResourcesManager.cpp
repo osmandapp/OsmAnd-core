@@ -703,6 +703,34 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             else
                 return nullptr;
         };
+    
+    auto minZoom = MinZoomLevel;
+    auto maxZoom = MaxZoomLevel;
+    
+    auto minVisibleZoom = MinZoomLevel;
+    auto maxVisibleZoom = MaxZoomLevel;
+
+    bool isMapLayer = resourcesCollection->getType() == MapRendererResourceType::MapLayer;
+    
+    if (isMapLayer)
+    {
+        std::shared_ptr<IMapDataProvider> provider_;
+        obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
+        const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
+        if (tiledProvider)
+        {
+            minZoom = tiledProvider->getMinZoom();
+            maxZoom = tiledProvider->getMaxZoom();
+            
+            minVisibleZoom = tiledProvider->getMinVisibleZoom();
+            maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
+        }
+        
+        bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
+        
+        if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
+            return;
+    }
 
     // Request all tiles on active zoom
     for (const auto& activeTileId : constOf(activeTiles))
@@ -715,22 +743,10 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     }
 
     // Request all other zoom levels that cover unavailable tile, in case all scaled tiles are not unavailable
-    if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||
+    if (isMapLayer/* ||
         resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
     {
         const auto debugSettings = renderer->getDebugSettings();
-        
-        auto minZoom = MinZoomLevel;
-        auto maxZoom = MaxZoomLevel;
-
-        std::shared_ptr<IMapDataProvider> provider_;
-        obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
-        const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
-        if (tiledProvider)
-        {
-            minZoom = tiledProvider->getMinZoom();
-            maxZoom = tiledProvider->getMaxZoom();
-        }
 
         const auto isNotUnavailableResource =
             []
@@ -1487,11 +1503,20 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
             auto minZoom = MinZoomLevel;
             auto maxZoom = MaxZoomLevel;
+            
+            auto minVisibleZoom = MinZoomLevel;
+            auto maxVisibleZoom = MaxZoomLevel;
+            
             if (tiledProvider)
             {
                 minZoom = tiledProvider->getMinZoom();
                 maxZoom = tiledProvider->getMaxZoom();
+                
+                minVisibleZoom = tiledProvider->getMinVisibleZoom();
+                maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
             }
+            
+            bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
             
             resourcesCollection->removeResources(
                 [this, activeZoom, activeTiles, &needsResourcesUploadOrUnload]
@@ -1551,6 +1576,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 {
                     continue;
                 }
+                
+                if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
+                    continue;
 
                 if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||
                     resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
