@@ -10,6 +10,16 @@ OsmAnd::IMapTiledDataProvider::~IMapTiledDataProvider()
 {
 }
 
+OsmAnd::ZoomLevel OsmAnd::IMapTiledDataProvider::getMinVisibleZoom() const
+{
+    return getMinZoom();
+}
+
+OsmAnd::ZoomLevel OsmAnd::IMapTiledDataProvider::getMaxVisibleZoom() const
+{
+    return getMaxZoom();
+}
+
 bool OsmAnd::IMapTiledDataProvider::obtainTiledData(
     const Request& request,
     std::shared_ptr<Data>& outTiledData,

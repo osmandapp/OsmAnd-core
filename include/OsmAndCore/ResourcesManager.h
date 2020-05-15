@@ -45,6 +45,7 @@ namespace OsmAnd
             DepthContourRegion,
             WikiMapRegion,
             HillshadeRegion,
+            SlopeRegion,
             HeightmapRegion,
             LiveUpdateRegion,
             VoicePack,
