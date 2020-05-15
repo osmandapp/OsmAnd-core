@@ -101,7 +101,7 @@ const TransportStop& TransportRouteResultSegment::getEnd() {
 vector<SHARED_PTR<TransportStop>>
 TransportRouteResultSegment::getTravelStops() {
 	return vector<SHARED_PTR<TransportStop>>(
-		route->forwardStops.begin() + start, route->forwardStops.begin() + end);
+		route->forwardStops.begin() + start, route->forwardStops.begin() + end + 1);
 }
 
 const TransportStop& TransportRouteResultSegment::getStop(int32_t i) {
