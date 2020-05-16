@@ -747,6 +747,12 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 				input->Seek(st->length + st->fileOffset);
 				break;
 			}
+			case OsmAnd::OBF::OsmAndTransportIndex::kIncompleteRoutesFieldNumber : {
+				input->ReadVarint32(&ind->incompleteRoutesLength);
+				ind->incompleteRoutesOffset = input->TotalBytesRead();
+				input->Seek(ind->incompleteRoutesOffset + ind->incompleteRoutesOffset);
+				break;
+			}
 			default: {
 				if (!skipUnknownFields(input, tag)) {
 					return false;
@@ -2408,7 +2414,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	readMapObjectsForRendering(q, basemapResult, tempResult, extResult, coastLines, basemapCoastLines, count,
 			basemapExists, renderedState);
 
-	bool objectsFromMapSectionRead = tempResult.size() > 0;
+	// bool objectsFromMapSectionRead = tempResult.size() > 0;
 	bool objectsFromRoutingSectionRead = false;
 	if (q->zoom >= zoomOnlyForBasemaps) {
 		vector<BinaryMapFile*>::iterator i = openFiles.begin();
@@ -3013,6 +3019,8 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 			ti->stringTable = st;
 			ti->stopsFileOffset = tp.stopstableoffset();
 			ti->stopsFileLength = tp.stopstablelength();
+			ti->incompleteRoutesOffset = tp.incompleteroutesoffset();
+			ti->incompleteRoutesLength = tp.incompleterouteslength();
 			mapFile->transportIndexes.push_back(ti);
 			mapFile->indexes.push_back(mapFile->transportIndexes.back());
 		}

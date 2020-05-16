@@ -567,6 +567,8 @@ struct TransportIndex : BinaryPartIndex {
 
 	uint32_t stopsFileOffset;
 	uint32_t stopsFileLength;
+	uint32_t incompleteRoutesOffset;
+	uint32_t incompleteRoutesLength;
 
 	IndexStringTable* stringTable;
 
