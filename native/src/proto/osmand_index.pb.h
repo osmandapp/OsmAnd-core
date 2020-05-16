@@ -1432,6 +1432,20 @@ class TransportPart : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::uint32 stopstablelength() const;
   inline void set_stopstablelength(::google::protobuf::uint32 value);
 
+  // optional uint32 incompleteRoutesOffset = 12;
+  inline bool has_incompleteroutesoffset() const;
+  inline void clear_incompleteroutesoffset();
+  static const int kIncompleteRoutesOffsetFieldNumber = 12;
+  inline ::google::protobuf::uint32 incompleteroutesoffset() const;
+  inline void set_incompleteroutesoffset(::google::protobuf::uint32 value);
+
+  // optional uint32 incompleteRoutesLength = 13;
+  inline bool has_incompleterouteslength() const;
+  inline void clear_incompleterouteslength();
+  static const int kIncompleteRoutesLengthFieldNumber = 13;
+  inline ::google::protobuf::uint32 incompleterouteslength() const;
+  inline void set_incompleterouteslength(::google::protobuf::uint32 value);
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportPart)
  private:
   inline void set_has_size();
@@ -1456,6 +1470,10 @@ class TransportPart : public ::google::protobuf::MessageLite {
   inline void clear_has_stopstableoffset();
   inline void set_has_stopstablelength();
   inline void clear_has_stopstablelength();
+  inline void set_has_incompleteroutesoffset();
+  inline void clear_has_incompleteroutesoffset();
+  inline void set_has_incompleterouteslength();
+  inline void clear_has_incompleterouteslength();
 
   ::google::protobuf::int64 size_;
   ::google::protobuf::int64 offset_;
@@ -1468,9 +1486,11 @@ class TransportPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::uint32 stringtablelength_;
   ::google::protobuf::uint32 stopstableoffset_;
   ::google::protobuf::uint32 stopstablelength_;
+  ::google::protobuf::uint32 incompleteroutesoffset_;
+  ::google::protobuf::uint32 incompleterouteslength_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
 
   #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
   friend void  protobuf_AddDesc_osmand_5findex_2eproto_impl();
@@ -3317,6 +3337,50 @@ inline ::google::protobuf::uint32 TransportPart::stopstablelength() const {
 inline void TransportPart::set_stopstablelength(::google::protobuf::uint32 value) {
   set_has_stopstablelength();
   stopstablelength_ = value;
+}
+
+// optional uint32 incompleteRoutesOffset = 12;
+inline bool TransportPart::has_incompleteroutesoffset() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void TransportPart::set_has_incompleteroutesoffset() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void TransportPart::clear_has_incompleteroutesoffset() {
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline void TransportPart::clear_incompleteroutesoffset() {
+  incompleteroutesoffset_ = 0u;
+  clear_has_incompleteroutesoffset();
+}
+inline ::google::protobuf::uint32 TransportPart::incompleteroutesoffset() const {
+  return incompleteroutesoffset_;
+}
+inline void TransportPart::set_incompleteroutesoffset(::google::protobuf::uint32 value) {
+  set_has_incompleteroutesoffset();
+  incompleteroutesoffset_ = value;
+}
+
+// optional uint32 incompleteRoutesLength = 13;
+inline bool TransportPart::has_incompleterouteslength() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void TransportPart::set_has_incompleterouteslength() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void TransportPart::clear_has_incompleterouteslength() {
+  _has_bits_[0] &= ~0x00001000u;
+}
+inline void TransportPart::clear_incompleterouteslength() {
+  incompleterouteslength_ = 0u;
+  clear_has_incompleterouteslength();
+}
+inline ::google::protobuf::uint32 TransportPart::incompleterouteslength() const {
+  return incompleterouteslength_;
+}
+inline void TransportPart::set_incompleterouteslength(::google::protobuf::uint32 value) {
+  set_has_incompleterouteslength();
+  incompleterouteslength_ = value;
 }
 
 

@@ -3184,6 +3184,8 @@ const int TransportPart::kStringTableOffsetFieldNumber;
 const int TransportPart::kStringTableLengthFieldNumber;
 const int TransportPart::kStopsTableOffsetFieldNumber;
 const int TransportPart::kStopsTableLengthFieldNumber;
+const int TransportPart::kIncompleteRoutesOffsetFieldNumber;
+const int TransportPart::kIncompleteRoutesLengthFieldNumber;
 #endif  // !_MSC_VER
 
 TransportPart::TransportPart()
@@ -3213,6 +3215,8 @@ void TransportPart::SharedCtor() {
   stringtablelength_ = 0u;
   stopstableoffset_ = 0u;
   stopstablelength_ = 0u;
+  incompleteroutesoffset_ = 0u;
+  incompleterouteslength_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -3271,6 +3275,8 @@ void TransportPart::Clear() {
     stringtablelength_ = 0u;
     stopstableoffset_ = 0u;
     stopstablelength_ = 0u;
+    incompleteroutesoffset_ = 0u;
+    incompleterouteslength_ = 0u;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -3450,6 +3456,38 @@ bool TransportPart::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(96)) goto parse_incompleteRoutesOffset;
+        break;
+      }
+
+      // optional uint32 incompleteRoutesOffset = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_incompleteRoutesOffset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &incompleteroutesoffset_)));
+          set_has_incompleteroutesoffset();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(104)) goto parse_incompleteRoutesLength;
+        break;
+      }
+
+      // optional uint32 incompleteRoutesLength = 13;
+      case 13: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_incompleteRoutesLength:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &incompleterouteslength_)));
+          set_has_incompleterouteslength();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -3525,6 +3563,16 @@ void TransportPart::SerializeWithCachedSizes(
   // optional uint32 stopsTableLength = 11;
   if (has_stopstablelength()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->stopstablelength(), output);
+  }
+
+  // optional uint32 incompleteRoutesOffset = 12;
+  if (has_incompleteroutesoffset()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(12, this->incompleteroutesoffset(), output);
+  }
+
+  // optional uint32 incompleteRoutesLength = 13;
+  if (has_incompleterouteslength()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(13, this->incompleterouteslength(), output);
   }
 
 }
@@ -3612,6 +3660,20 @@ int TransportPart::ByteSize() const {
           this->stopstablelength());
     }
 
+    // optional uint32 incompleteRoutesOffset = 12;
+    if (has_incompleteroutesoffset()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->incompleteroutesoffset());
+    }
+
+    // optional uint32 incompleteRoutesLength = 13;
+    if (has_incompleterouteslength()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->incompleterouteslength());
+    }
+
   }
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = total_size;
@@ -3662,6 +3724,12 @@ void TransportPart::MergeFrom(const TransportPart& from) {
     if (from.has_stopstablelength()) {
       set_stopstablelength(from.stopstablelength());
     }
+    if (from.has_incompleteroutesoffset()) {
+      set_incompleteroutesoffset(from.incompleteroutesoffset());
+    }
+    if (from.has_incompleterouteslength()) {
+      set_incompleterouteslength(from.incompleterouteslength());
+    }
   }
 }
 
@@ -3690,6 +3758,8 @@ void TransportPart::Swap(TransportPart* other) {
     std::swap(stringtablelength_, other->stringtablelength_);
     std::swap(stopstableoffset_, other->stopstableoffset_);
     std::swap(stopstablelength_, other->stopstablelength_);
+    std::swap(incompleteroutesoffset_, other->incompleteroutesoffset_);
+    std::swap(incompleterouteslength_, other->incompleterouteslength_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     std::swap(_cached_size_, other->_cached_size_);
   }
