@@ -139,6 +139,8 @@ namespace OsmAnd
         };
 
     private:
+        static std::shared_ptr<GpxWpt> parseWpt(QXmlStreamReader& xmlReader);
+        static std::shared_ptr<GpxTrkPt> parseTrkPt(QXmlStreamReader& xmlReader);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
         static void writeExtensions(const std::shared_ptr<const GpxExtensions>& extensions, QXmlStreamWriter& xmlWriter);

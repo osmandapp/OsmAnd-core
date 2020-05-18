@@ -596,11 +596,84 @@ bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
     return ok;
 }
 
+std::shared_ptr<OsmAnd::GpxDocument::GpxWpt> OsmAnd::GpxDocument::parseWpt(QXmlStreamReader& xmlReader)
+{
+    bool ok = true;
+    const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
+    const double lat = latValue.toDouble(&ok);
+    if (!ok)
+    {
+        LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lat' attribute value '%s'",
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber(),
+            qPrintableRef(latValue));
+        xmlReader.skipCurrentElement();
+        return nullptr;
+    }
+    const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
+    const double lon = lonValue.toDouble(&ok);
+    if (!ok)
+    {
+        LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lon' attribute value '%s'",
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber(),
+            qPrintableRef(lonValue));
+        xmlReader.skipCurrentElement();
+        return nullptr;
+    }
+
+    auto wpt = std::make_shared<GpxWpt>();
+    wpt->position.latitude = lat;
+    wpt->position.longitude = lon;
+    return wpt;
+}
+
+std::shared_ptr<OsmAnd::GpxDocument::GpxTrkPt> OsmAnd::GpxDocument::parseTrkPt(QXmlStreamReader& xmlReader)
+{
+    bool ok = true;
+    const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
+    const double lat = latValue.toDouble(&ok);
+    if (!ok)
+    {
+        LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lat' attribute value '%s'",
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber(),
+            qPrintableRef(latValue));
+        xmlReader.skipCurrentElement();
+        return nullptr;
+    }
+    const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
+    const double lon = lonValue.toDouble(&ok);
+    if (!ok)
+    {
+        LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lon' attribute value '%s'",
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber(),
+            qPrintableRef(lonValue));
+        xmlReader.skipCurrentElement();
+        return nullptr;
+    }
+
+    auto trkpt = std::make_shared<GpxTrkPt>();
+    trkpt->position.latitude = lat;
+    trkpt->position.longitude = lon;
+    return trkpt;
+}
+
 std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamReader& xmlReader)
 {
     std::shared_ptr<GpxDocument> document;
     std::shared_ptr<GpxMetadata> metadata;
     std::shared_ptr<GpxWpt> wpt;
+    std::shared_ptr<GpxWpt> rpt;
     std::shared_ptr<GpxTrk> trk;
     std::shared_ptr<GpxRte> rte;
     std::shared_ptr<GpxLink> link;
@@ -625,6 +698,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     };
     QStack<Token> tokens;
 
+    auto routeTrack = std::make_shared<GpxTrk>();
+    auto routeTrackSegment = std::make_shared<GpxTrkSeg>();
+    routeTrack->segments.append(routeTrackSegment);
+    bool routePointExtension = false;
+    
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
         xmlReader.readNext();
@@ -638,6 +716,20 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 for (const auto& attribute : xmlReader.attributes())
                     extension->attributes[attribute.name().toString()] = attribute.value().toString();
 
+                if (tagName.compare(QLatin1String("routepointextension"), Qt::CaseInsensitive) == 0)
+                {
+                    routePointExtension = true;                    
+                    if (tokens.top() == Token::rtept || (tokens.size() > 1 && tokens.at(tokens.size() - 2) == Token::rtept))
+                        extension->attributes[QLatin1String("offset")] = QString::number(routeTrackSegment->points.size());
+                }
+
+                if (routePointExtension && tagName == QLatin1String("rpt"))
+                {
+                    rpt = parseWpt(xmlReader);
+                    if (!rpt)
+                        continue;
+                }
+                
                 extensionStack.push(extension);
                 continue;
             }
@@ -705,37 +797,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
-                bool ok = true;
-                const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
-                const double lat = latValue.toDouble(&ok);
-                if (!ok)
-                {
-                    LogPrintf(
-                        LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lat' attribute value '%s'",
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber(),
-                        qPrintableRef(latValue));
-                    xmlReader.skipCurrentElement();
+                wpt = parseWpt(xmlReader);
+                if (!wpt)
                     continue;
-                }
-                const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
-                const double lon = lonValue.toDouble(&ok);
-                if (!ok)
-                {
-                    LogPrintf(
-                        LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lon' attribute value '%s'",
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber(),
-                        qPrintableRef(lonValue));
-                    xmlReader.skipCurrentElement();
-                    continue;
-                }
-
-                wpt.reset(new GpxWpt());
-                wpt->position.latitude = lat;
-                wpt->position.longitude = lon;
 
                 tokens.push(Token::wpt);
             }
@@ -1687,13 +1751,13 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("trkpt"))
+            else if (tagName == QLatin1String("trkpt") || tagName == QLatin1String("rpt"))
             {
-                if (!trkseg)
+                if (!trkseg && !trk)
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): <trkpt> not in <trkseg>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): <trkpt> not in <trkseg> and not in <trk>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1710,37 +1774,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
-                bool ok = true;
-                const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
-                const double lat = latValue.toDouble(&ok);
-                if (!ok)
-                {
-                    LogPrintf(
-                        LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lat' attribute value '%s'",
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber(),
-                        qPrintableRef(latValue));
-                    xmlReader.skipCurrentElement();
+                trkpt = parseTrkPt(xmlReader);
+                if (!trkpt)
                     continue;
-                }
-                const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
-                const double lon = lonValue.toDouble(&ok);
-                if (!ok)
-                {
-                    LogPrintf(
-                        LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lon' attribute value '%s'",
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber(),
-                        qPrintableRef(lonValue));
-                    xmlReader.skipCurrentElement();
-                    continue;
-                }
-
-                trkpt.reset(new GpxTrkPt());
-                trkpt->position.latitude = lat;
-                trkpt->position.longitude = lon;
 
                 tokens.push(Token::trkpt);
             }
@@ -1894,8 +1930,20 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
         }
         else if (xmlReader.isEndElement())
         {
+            if (tagName.compare(QLatin1String("routepointextension"), Qt::CaseInsensitive) == 0)
+                routePointExtension = false;
+            
             if (extensions && !extensionStack.isEmpty())
             {
+                if (routePointExtension && tagName == QLatin1String("rpt"))
+                {
+                    if (rpt)
+                    {
+                        routeTrackSegment->points.append(rpt);
+                        rpt = nullptr;
+                    }
+                }
+                
                 const auto extension = extensionStack.pop();
 
                 if (extensionStack.isEmpty())
@@ -2071,11 +2119,42 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("trkpt"))
+            else if (tagName == QLatin1String("trkpt") || tagName == QLatin1String("rpt"))
             {
                 tokens.pop();
 
-                trkseg->points.append(trkpt);
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected </trkpt> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+                
+                switch (tokens.top())
+                {
+                    case Token::trk:
+                        if (trk->segments.empty())
+                            trk->segments.append(std::make_shared<GpxTrkSeg>());
+
+                        trk->segments.last()->points.append(trkpt);
+                        break;
+                    case Token::trkseg:
+                        trkseg->points.append(trkpt);
+                        break;
+
+                    default:
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected </trkpt> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        trkpt = nullptr;
+                        continue;
+                }
+                
                 trkpt = nullptr;
             }
             else if (tagName == QLatin1String("trkseg"))
@@ -2173,6 +2252,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     extensions->value = xmlReader.text().toString();
             }
         }
+    }
+    if (!routeTrackSegment->points.isEmpty()) {
+        document->tracks.append(routeTrack);
     }
     if (xmlReader.hasError())
     {
