@@ -2,13 +2,13 @@ project(icu4c)
 
 prepare_upstream()
 
-file(GLOB_RECURSE source_common "upstream.patched/source/common/*.[ch]*")
+file(GLOB_RECURSE source_common "upstream.patched/icu4c/source/common/*.[ch]*")
 set_source_files_properties(${source_common}
 	PROPERTIES
 		COMPILE_DEFINITIONS "U_COMMON_IMPLEMENTATION"
 )
 
-file(GLOB_RECURSE source_i18n "upstream.patched/source/i18n/*.[ch]*")
+file(GLOB_RECURSE source_i18n "upstream.patched/icu4c/source/i18n/*.[ch]*")
 set_source_files_properties(${source_i18n}
 	PROPERTIES
 		COMPILE_DEFINITIONS "U_I18N_IMPLEMENTATION"
@@ -17,7 +17,7 @@ set_source_files_properties(${source_i18n}
 add_library(icu4c_static STATIC
 	${source_common}
 	${source_i18n}
-	"upstream.patched/source/stubdata/stubdata.c"
+	"upstream.patched/icu4c/source/stubdata/stubdata.c"
 )
 
 set(target_specific_private_definitions "")
@@ -47,8 +47,8 @@ target_compile_definitions(icu4c_static
 
 target_include_directories(icu4c_static
 	PUBLIC
-		"upstream.patched/source/common"
-		"upstream.patched/source/i18n"
+		"upstream.patched/icu4c/source/common"
+		"upstream.patched/icu4c/source/i18n"
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
