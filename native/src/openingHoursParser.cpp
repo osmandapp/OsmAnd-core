@@ -2201,16 +2201,16 @@ void OpeningHoursParser::fillRuleArray(std::vector<bool>* array, const std::shar
 {
     if (pair->at(0)->mainNumber <= pair->at(1)->mainNumber)
     {
-        for (int j = pair->at(0)->mainNumber; j <= pair->at(1)->mainNumber && j < array->size(); j++)
+        for (int j = pair->at(0)->mainNumber; j <= pair->at(1)->mainNumber && j >= 0 && j < array->size(); j++)
             array->at(j) = true;
     }
     else
     {
         // overflow
-        for (int j = pair->at(0)->mainNumber; j < array->size(); j++)
+        for (int j = pair->at(0)->mainNumber; j >= 0 && j < array->size(); j++)
             array->at(j) = true;
             
-        for (int j = 0; j <= pair->at(1)->mainNumber; j++)
+        for (int j = 0; j <= pair->at(1)->mainNumber && j < array->size(); j++)
             array->at(j) = true;
     }
 }
