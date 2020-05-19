@@ -66,6 +66,15 @@ void OsmAnd::ObfTransportSectionReader_P::read(
                 cis->Seek(offset + length);
             }
             break;
+        case OBF::OsmAndTransportIndex::kIncompleteRoutesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                section->_incompleteRoutesLength = length;
+                section->_incompleteRoutesOffset = cis->CurrentPosition();
+                cis->Seek(section->incompleteRoutesLength + section->incompleteRoutesOffset);
+            }
+            break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
             break;

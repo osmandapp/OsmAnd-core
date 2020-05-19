@@ -32,8 +32,10 @@ namespace OsmAnd {
 
         AreaI _area31;
 
-        uint32_t _stopsOffset;
-        uint32_t _stopsLength;
+        uint32_t _stopsOffset = 0;
+        uint32_t _stopsLength = 0;
+        uint32_t _incompleteRoutesOffset = 0;
+        uint32_t _incompleteRoutesLength = 0;
         Nullable<IndexStringTable> _stringTable;
 
     public:
@@ -42,6 +44,8 @@ namespace OsmAnd {
         const AreaI& area31;
         const uint32_t& stopsOffset;
         const uint32_t& stopsLength;
+        const uint32_t& incompleteRoutesOffset;
+        const uint32_t& incompleteRoutesLength;
         const Nullable<IndexStringTable>& stringTable;
 
         friend class OsmAnd::ObfTransportSectionReader_P;

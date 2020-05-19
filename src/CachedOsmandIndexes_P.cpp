@@ -140,6 +140,8 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         transport->set_bottom(index->area31.bottom());
         transport->set_stopstablelength(index->stopsLength);
         transport->set_stopstableoffset(index->stopsOffset);
+        transport->set_incompleterouteslength(index->incompleteRoutesLength);
+        transport->set_incompleteroutesoffset(index->incompleteRoutesOffset);
         transport->set_stringtablelength(index->stringTable->length);
         transport->set_stringtableoffset(index->stringTable->fileOffset);
     }
@@ -255,6 +257,8 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->_area31 = AreaI(index.top(), index.left(), index.bottom(), index.right());
         mi->_stopsLength = index.stopstablelength();
         mi->_stopsOffset = index.stopstableoffset();
+        mi->_incompleteRoutesLength = index.incompleterouteslength();
+        mi->_incompleteRoutesOffset = index.incompleteroutesoffset();
         ObfTransportSectionInfo::IndexStringTable stringTable;
         stringTable.fileOffset = index.stringtableoffset();
         stringTable.length = index.stringtablelength();
