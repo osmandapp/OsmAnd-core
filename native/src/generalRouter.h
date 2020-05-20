@@ -450,6 +450,11 @@ public:
 	 * return oneway +/- 1 if it is oneway and 0 if both ways
 	 */
 	int isOneWay(SHARED_PTR<RouteDataObject>& road);
+    
+    /**
+     * return true if area == 1 and false otherwise
+     */
+    bool isArea(SHARED_PTR<RouteDataObject>& road);
 	
 	/**
 	 * return delay in seconds (0 no obstacles)

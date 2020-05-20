@@ -61,6 +61,12 @@ struct MergeTurnLaneTurn {
     }
 };
 
+struct CombineAreaRoutePoint {
+    int x31;
+    int y31;
+    int originalIndex;
+};
+
 long getPoint(SHARED_PTR<RouteDataObject>& road, int pointInd) {
     return (((long) road->pointsX[pointInd]) << 31) + (long) road->pointsY[pointInd];
 }
@@ -1488,7 +1494,114 @@ void printResults(RoutingContext* ctx, int startX, int startY, int endX, int end
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "</test>");
 }
 
+bool segmentLineBelongsToPolygon(CombineAreaRoutePoint& p, CombineAreaRoutePoint& n,
+        vector<CombineAreaRoutePoint>& originalWay) {
+    int intersections = 0;
+    int mx = p.x31 / 2 + n.x31 / 2;
+    int my = p.y31 / 2 + n.y31 / 2;
+    for(int i = 1; i < originalWay.size(); i++) {
+        CombineAreaRoutePoint& p2 = originalWay[i - 1];
+        CombineAreaRoutePoint& n2 = originalWay[i];
+        if(p.originalIndex != i && p.originalIndex != i - 1) {
+            if(n.originalIndex != i && n.originalIndex != i - 1) {
+                if(linesIntersect(p.x31, p.y31, n.x31, n.y31, p2.x31, p2.y31, n2.x31, n2.y31)) {
+                    return false;
+                }
+            }
+        }
+        int fx = ray_intersect_x(p2.x31, p2.y31, n2.x31, n2.y31, my);
+        if (INT_MIN != fx && mx >= fx) {
+            intersections++;
+        }
+    }
+    return intersections % 2 == 1;
+}
+
+void simplifyAreaRouteWay(vector<CombineAreaRoutePoint>& routeWay, vector<CombineAreaRoutePoint>& originalWay) {
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        uint64_t connectStart = -1;
+        uint64_t connectLen = 0;
+        double dist = 0;
+        uint64_t length = routeWay.size() - 1;
+        while (length > 0 && connectLen == 0) {
+            for (int i = 0; i < routeWay.size() - length; i++) {
+                CombineAreaRoutePoint& p = routeWay[i];
+                CombineAreaRoutePoint& n = routeWay[i + length];
+                if (segmentLineBelongsToPolygon(p, n, originalWay)) {
+                    double ndist = squareRootDist31(p.x31, p.y31, n.x31, n.y31);
+                    if (ndist > dist) {
+                        ndist = dist;
+                        connectStart = i;
+                        connectLen = length;
+                    }
+                }
+            }
+            length--;
+        }
+        while (connectLen > 1) {
+            routeWay.erase(routeWay.begin() + connectStart + 1);
+            connectLen--;
+            changed = true;
+        }
+    }
+}
+
+void combineWayPointsForAreaRouting(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
+    for(int i = 0; i < result.size(); i++) {
+        const auto& rsr = result[i];
+        auto& obj = rsr->object;
+        bool area = false;
+        if(obj->pointsX[0] == obj->pointsX[obj->getPointsLength() - 1] &&
+                obj->pointsY[0] == obj->pointsY[obj->getPointsLength() - 1]) {
+            area = true;
+        }
+        if(!area || !ctx->config->router->isArea(obj)) {
+            continue;
+        }
+        vector<CombineAreaRoutePoint> originalWay;
+        vector<CombineAreaRoutePoint> routeWay;
+        for(int j = 0;  j < obj->getPointsLength(); j++) {
+            CombineAreaRoutePoint pnt;
+            pnt.x31 = obj->pointsX[j];
+            pnt.y31 = obj->pointsY[j];
+            pnt.originalIndex = j;
+
+            originalWay.push_back(pnt);
+            if(j >= rsr->getStartPointIndex() && j <= rsr->getEndPointIndex()) {
+                routeWay.push_back(pnt);
+            } else if(j <= rsr->getStartPointIndex() && j >= rsr->getEndPointIndex()) {
+                routeWay.insert(routeWay.begin(), pnt);
+            }
+        }
+        uint64_t originalSize = routeWay.size();
+        simplifyAreaRouteWay(routeWay, originalWay);
+        uint64_t newsize = routeWay.size();
+        if (routeWay.size() != originalSize) {
+            SHARED_PTR<RouteDataObject> nobj = std::make_shared<RouteDataObject>(*obj);
+            nobj->pointsX.clear();
+            nobj->pointsY.clear();
+            nobj->pointsX.resize(newsize);
+            nobj->pointsY.resize(newsize);
+            for (int k = 0; k < newsize; k++) {
+                nobj->pointsX[k] = routeWay[k].x31;
+                nobj->pointsY[k] = routeWay[k].y31;
+            }
+            // in future point names might be used
+            nobj->restrictions.clear();
+//            nobj->restrictionsVia.clear();
+            nobj->pointTypes.clear();
+            nobj->pointNames.clear();
+            nobj->pointNameTypes.clear();
+            auto nrsr = std::make_shared<RouteSegmentResult>(nobj, 0, newsize - 1);
+            result.insert(result.begin() + i, nrsr);
+        }
+    }
+}
+
 vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
+    combineWayPointsForAreaRouting(ctx, result);
     validateAllPointsConnected(result);
     splitRoadsAndAttachRoadSegments(ctx, result);
     calculateTimeSpeed(ctx, result);

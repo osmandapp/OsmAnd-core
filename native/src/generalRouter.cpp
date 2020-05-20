@@ -375,6 +375,10 @@ int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
 	return (int) evaluateCache(RouteDataObjectAttribute::ONEWAY, road, 0);
 }
 
+bool GeneralRouter::isArea(SHARED_PTR<RouteDataObject>& road) {
+    return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
+}
+
 double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
 		return evaluateCache(RouteDataObjectAttribute::OBSTACLES, road->region, road->pointTypes[point], 0);
