@@ -1233,6 +1233,24 @@ void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t,
 	}
 }
 
+UNORDERED(map)<uint64_t, shared_ptr<IncompleteTransportRoute>> getIncompleteTransportRoutes(BinaryMapFile* file) {
+	if (file->incompleteTransportRoutes.size() == 0) {
+		for (auto& ti : file->transportIndexes) {
+			if (ti->incompleteRoutesLength > 0) {
+				lseek(file->routefd, 0, SEEK_SET);
+				FileInputStream stream(file->routefd);
+				stream.SetCloseOnDelete(false);
+				CodedInputStream *input = new CodedInputStream(&stream);
+				input->SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
+				
+				readIncompleteRoutesList(input, file->incompleteTransportRoutes, ti->incompleteRoutesLength,
+						ti->incompleteRoutesOffset);
+			}
+		}
+	}
+	return file->incompleteTransportRoutes;
+}
+
 bool readTransportStopExit(CodedInputStream* input, SHARED_PTR<TransportStopExit>& exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int32_t x = 0;
 	int32_t y = 0;
