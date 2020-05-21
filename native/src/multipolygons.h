@@ -12,6 +12,10 @@
 /// !!! Fuly copied from MapRenderRepositories.java, should be carefully synchroinized
 bool isClockwiseWay(std::vector<int_pair>& c) ;
 
+int ray_intersect_x(int prevX, int prevY, int x, int y, int middleY);
+
+bool linesIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+
 bool calculateLineCoordinates(bool inside, int x, int y, bool pinside, int px, int py, int leftX, int rightX,
 		int bottomY, int topY, std::vector<int_pair>& coordinates);
 
