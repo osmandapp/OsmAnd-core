@@ -5,7 +5,7 @@
 #include "commonOsmAndCore.h"
 
 #define SAME_STOP 40
-
+const static string MISSING_STOP_NAME = "#Missing Stop";
 const static int TRANSPORT_STOP_ZOOM = 24;
 
 struct TransportRoute;
@@ -23,54 +23,6 @@ struct MapObject {
 
 	UNORDERED(map)<string, string> getNamesMap(bool includeEn);
 	string getName(string lang);
-};
-
-struct TransportStopExit {
-	int x31;
-	int y31;
-	string ref;
-
-	TransportStopExit();
-
-	void setLocation(int zoom, int32_t dx, int32_t dy);
-	bool compareExit(SHARED_PTR<TransportStopExit> &thatObj);
-};
-
-struct TransportStop : public MapObject {
-	const static int32_t DELETED_STOP = -1;
-
-	vector<int32_t> referencesToRoutes;
-	vector<int64_t> deletedRoutesIds;
-	vector<int64_t> routesIds;
-	int32_t distance;
-	int32_t x31;
-	int32_t y31;
-	vector<SHARED_PTR<TransportStopExit>> exits;
-	vector<SHARED_PTR<TransportRoute>> routes;
-	UNORDERED(map)<string, vector<int32_t>> referencesToRoutesMap;
-
-	TransportStop();
-
-	bool hasRoute(int64_t routeId);
-	bool isDeleted();
-	bool isRouteDeleted(int64_t routeId);
-	bool hasReferencesToRoutes();
-	void putReferenceToRoutes(string &repositoryFileName,
-							  vector<int32_t> &referencesToRoutes);
-	void addRouteId(int64_t routeId);
-	void addRoute(SHARED_PTR<TransportRoute> rt);
-	bool compareStop(SHARED_PTR<TransportStop> &thatObj);
-	void setLocation(int zoom, int32_t dx, int32_t dy);
-};
-
-struct TransportSchedule {
-	vector<int32_t> tripIntervals;
-	vector<int32_t> avgStopIntervals;
-	vector<int32_t> avgWaitIntervals;
-
-	TransportSchedule();
-
-	bool compareSchedule(const SHARED_PTR<TransportSchedule> &thatObj);
 };
 
 struct Node {
@@ -128,6 +80,53 @@ struct hash<Node> {
 
 }  // namespace std
 
+struct TransportStopExit {
+	int x31;
+	int y31;
+	string ref;
+
+	TransportStopExit();
+
+	void setLocation(int zoom, int32_t dx, int32_t dy);
+	bool compareExit(SHARED_PTR<TransportStopExit> &thatObj);
+};
+
+struct TransportStop : public MapObject {
+	const static int32_t DELETED_STOP = -1;
+
+	vector<int32_t> referencesToRoutes;
+	vector<int64_t> deletedRoutesIds;
+	vector<int64_t> routesIds;
+	int32_t distance;
+	int32_t x31;
+	int32_t y31;
+	vector<SHARED_PTR<TransportStopExit>> exits;
+	vector<SHARED_PTR<TransportRoute>> routes;
+
+	TransportStop();
+
+	bool hasRoute(int64_t routeId);
+	bool isDeleted();
+	bool isRouteDeleted(int64_t routeId);
+	void addRouteId(int64_t routeId);
+	void addRoute(SHARED_PTR<TransportRoute> rt);
+	bool compareStop(SHARED_PTR<TransportStop> &thatObj);
+	void setLocation(int zoom, int32_t dx, int32_t dy);
+	bool isMissingStop();
+};
+
+struct TransportSchedule {
+	vector<int32_t> tripIntervals;
+	vector<int32_t> avgStopIntervals;
+	vector<int32_t> avgWaitIntervals;
+
+	TransportSchedule();
+
+	bool compareSchedule(const SHARED_PTR<TransportSchedule> &thatObj);
+};
+
+
+
 struct TransportRoute : public MapObject {
 	vector<SHARED_PTR<TransportStop>> forwardStops;
 	string ref;
@@ -139,14 +138,18 @@ struct TransportRoute : public MapObject {
 	TransportSchedule schedule;
 
 	TransportRoute();
+	TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<Way>& cforwardWays) ;
 
 	TransportSchedule& getOrCreateSchedule();
 	void mergeForwardWays();
+	void mergeForwardWays(vector<Way>& ways);
+	UNORDERED_map<Way, pair<int, int>> resortWaysToStopsOrder(vector<Way>& forwardWays, vector<SHARED_PTR<TransportStop>>& forwardStops);
 	void addWay(Way &w);
 	int32_t getAvgBothDistance();
 	int32_t getDist();
 	string getAdjustedRouteRef(bool small);
 	bool compareRoute(SHARED_PTR<TransportRoute> &thatObj);
+	bool isIncomplete();
 };
 
 

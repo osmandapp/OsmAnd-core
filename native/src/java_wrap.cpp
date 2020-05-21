@@ -627,8 +627,6 @@ jfieldID jfield_NativeTransportStop_routes = NULL;
 jfieldID jfield_NativeTransportStop_pTStopExit_x31s = NULL;
 jfieldID jfield_NativeTransportStop_pTStopExit_y31s = NULL;
 jfieldID jfield_NativeTransportStop_pTStopExit_refs = NULL;
-jfieldID jfield_NativeTransportStop_referenceToRoutesKeys = NULL;
-jfieldID jfield_NativeTransportStop_referenceToRoutesVals = NULL;
 jmethodID jmethod_NativeTransportStop_init = NULL;
 
 
@@ -671,8 +669,6 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_pTStopExit_x31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_x31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_y31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_y31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_refs = getFid(env, jclass_NativeTransportStop, "pTStopExit_refs", "[Ljava/lang/String;");
-	jfield_NativeTransportStop_referenceToRoutesKeys = getFid(env, jclass_NativeTransportStop, "referenceToRoutesKeys", "[Ljava/lang/String;");
-	jfield_NativeTransportStop_referenceToRoutesVals = getFid(env, jclass_NativeTransportStop, "referenceToRoutesVals", "[[I");
 	jmethod_NativeTransportStop_init = env->GetMethodID(jclass_NativeTransportStop, "<init>", "()V");
 
 	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/NativeTransportRoute");
@@ -1524,30 +1520,6 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 		ienv->DeleteLocalRef(j_pTStopExit_y31s);
 		ienv->DeleteLocalRef(j_pTStopExit_refs);
 	}
-	
-	jobjectArray j_referenceToRoutesKeys = ienv->NewObjectArray(stop->referencesToRoutesMap.size(), jclassString, NULL);
-	jobjectArray j_referenceToRoutesVals = ienv->NewObjectArray(stop->referencesToRoutesMap.size(), jclassIntArray, NULL);
-	n = 0;
-
-	for (auto const& el : stop->referencesToRoutesMap) {
-		jstring jrefKey = ienv->NewStringUTF(el.first.c_str());
-		vector<int32_t> refs = el.second;
-		jintArray jrefVals = ienv->NewIntArray(el.second.size());
-		jint tmp[refs.size()];
-		for (int j = 0; j < refs.size(); j++) {
-			tmp[j] = (jint) refs[j];
-		}
-		ienv->SetIntArrayRegion(jrefVals, 0, stop->referencesToRoutesMap.size(), tmp);
-		ienv->SetObjectArrayElement(j_referenceToRoutesKeys, n, jrefKey);
-		ienv->SetObjectArrayElement(j_referenceToRoutesVals, n, jrefVals);
-		ienv->DeleteLocalRef(jrefKey);
-		ienv->DeleteLocalRef(jrefVals);
-		n++;
-	}
-	ienv->SetObjectField(jstop, jfield_NativeTransportStop_referenceToRoutesKeys, j_referenceToRoutesKeys);
-	ienv->DeleteLocalRef(j_referenceToRoutesKeys);
-	ienv->SetObjectField(jstop, jfield_NativeTransportStop_referenceToRoutesVals, j_referenceToRoutesVals);
-	ienv->DeleteLocalRef(j_referenceToRoutesVals);
 
 	return jstop;
 }

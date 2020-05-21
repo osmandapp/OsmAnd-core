@@ -197,19 +197,19 @@ TransportRoutingContext::mergeTransportStops(
 					}
 				}
 			} else {
-				if ((*it)->hasReferencesToRoutes()) {
-					localRoutesToLoad.insert(localRoutesToLoad.end(),
-											 stop->referencesToRoutes.begin(),
-											 stop->referencesToRoutes.end());
-				} else {
-					it = stops.erase(it);
-				}
+				// if ((*it)->hasReferencesToRoutes()) {
+				// 	localRoutesToLoad.insert(localRoutesToLoad.end(),
+				// 							 stop->referencesToRoutes.begin(),
+				// 							 stop->referencesToRoutes.end());
+				// } else {
+				// 	it = stops.erase(it);
+				// }
 			}
 		}
 		routesToLoad.insert(routesToLoad.end(), localRoutesToLoad.begin(),
 							localRoutesToLoad.end());
 
-		multifileStop->putReferenceToRoutes(file->inputName, localRoutesToLoad);
+		// multifileStop->putReferenceToRoutes(file->inputName, localRoutesToLoad);
 		it++;
 	}
 

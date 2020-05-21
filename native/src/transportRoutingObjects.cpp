@@ -66,15 +66,6 @@ bool TransportStop::isRouteDeleted(int64_t routeId) {
 					 routeId) != deletedRoutesIds.end();
 }
 
-bool TransportStop::hasReferencesToRoutes() {
-	return !isDeleted() && referencesToRoutes.size() > 0;
-}
-
-void TransportStop::putReferenceToRoutes(string& repositoryFileName,
-										 vector<int32_t>& referencesToRoutes) {
-	referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
-}
-
 void TransportStop::addRouteId(int64_t routeId) {
 	// make assumption that ids are sorted
 	routesIds.push_back(routeId);
@@ -129,6 +120,13 @@ void TransportStop::setLocation(int zoom, int32_t dx, int32_t dy) {
 	y31 = dy << (31 - zoom);
 	lon = get31LongitudeX(x31);
 	lat = get31LatitudeY(y31);
+}
+
+bool TransportStop::isMissingStop() {
+	if (MISSING_STOP_NAME.compare(name) == 0) {
+		return true;
+	}
+	return false;
 }
 
 // TransportSchedule:
@@ -195,12 +193,32 @@ void Way::reverseNodes() {
 // TransportRoute:
 
 TransportRoute::TransportRoute() { dist = -1; }
+TransportRoute::TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<Way>& cforwardWays) {
+	name = base->name;
+	enName = base->enName;
+	names = base->names;
+	id = base->id;
+	ref = base->ref;
+	routeOperator = base->routeOperator;
+	type = base->type;
+	dist = base->dist;
+	color = base->color;
+	schedule = base->schedule;
+
+	forwardWays = cforwardWays;
+	forwardStops = cforwardStops;
+}
 
 TransportSchedule& TransportRoute::getOrCreateSchedule() {
 	return schedule;
 }
 
 void TransportRoute::mergeForwardWays() {
+	mergeForwardWays(forwardWays);
+	resortWaysToStopsOrder(forwardWays, forwardStops);
+}
+
+void TransportRoute::mergeForwardWays(vector<Way>& ways) {
 	bool changed = true;
 	// combine as many ways as possible
 	while (changed && forwardWays.size() != 0) {
@@ -268,8 +286,10 @@ void TransportRoute::mergeForwardWays() {
 				if (reverseSecond) {
 					second.reverseNodes();
 				}
-				for (int i = 1; i < second.nodes.size(); i++) {
-					first.addNode(second.nodes[i]);
+				if (first.nodes == second.nodes && (first.id < 0 || first.id != second.id)) {
+					for (int i = 1; i < second.nodes.size(); i++) {
+						first.addNode(second.nodes[i]);
+					}
 				}
 				changed = true;
 			} else {
@@ -277,27 +297,26 @@ void TransportRoute::mergeForwardWays() {
 			}
 		}
 	}
-	if (forwardStops.size() > 0) {
+}
+
+UNORDERED_map<Way, pair<int, int>> TransportRoute::resortWaysToStopsOrder(vector<Way>& fWays,
+																  vector<SHARED_PTR<TransportStop>>& fStops) {
+	UNORDERED_map<Way, pair<int, int>> orderWays; 
+	if (fWays.size() > 0 && fStops.size() > 0) {
 		// resort ways to stops order
-		UNORDERED_map<Way, pair<int, int>>
-			orderWays;	// what's wrong with you, for Christ's sake?!
-		for (Way& w : forwardWays) {
+		for (Way& w : fWays) {
 			pair<int, int> pair;
 			pair.first = 0;
 			pair.second = 0;
 			Node firstNode = w.getFirstNode();
-			SHARED_PTR<TransportStop> st = forwardStops[0];
-			double firstDistance =
-				getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+			SHARED_PTR<TransportStop> st = fStops[0];
+			double firstDistance = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
 			Node lastNode = w.getLastNode();
-			double lastDistance =
-				getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
-			for (int i = 1; i < forwardStops.size(); i++) {
-				st = forwardStops[i];
-				double firstd =
-					getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
-				double lastd =
-					getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
+			double lastDistance = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
+			for (int i = 1; i < fStops.size(); i++) {
+				st = fStops[i];
+				double firstd = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+				double lastd = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
 				if (firstd < firstDistance) {
 					pair.first = i;
 					firstDistance = firstd;
@@ -313,20 +332,16 @@ void TransportRoute::mergeForwardWays() {
 			}
 		}
 		if (orderWays.size() > 1) {
-			sort(forwardWays.begin(), forwardWays.end(),
-				 [orderWays](Way& w1, Way& w2) {
-					 const auto is1 = orderWays.find(w1);
-					 const auto is2 = orderWays.find(w2);
-					 int i1 = is1 != orderWays.end()
-								  ? min(is1->second.first, is1->second.second)
-								  : 0;	// check
-					 int i2 = is2 != orderWays.end()
-								  ? min(is2->second.first, is2->second.second)
-								  : 0;	// check
-					 return i1 < i2;
-				 });
+			sort(fWays.begin(), fWays.end(), [orderWays](Way& w1, Way& w2) {
+				const auto is1 = orderWays.find(w1);
+				const auto is2 = orderWays.find(w2);
+				int i1 = is1 != orderWays.end() ? min(is1->second.first, is1->second.second) : 0;  // check
+				int i2 = is2 != orderWays.end() ? min(is2->second.first, is2->second.second) : 0;  // check
+				return i1 < i2;
+			});
 		}
 	}
+	return orderWays;
 }
 
 void TransportRoute::addWay(Way& w) { forwardWays.push_back(w); }
@@ -399,6 +414,14 @@ bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute>& thatObj) {
 	}
 }
 
+bool TransportRoute::isIncomplete() {
+	for (SHARED_PTR<TransportStop>& s : forwardStops) {
+		if (s->isMissingStop()) {
+			return true;
+		}
+	}
+	return false;
+}
 
 //IncompleteTransportRoute
 
