@@ -5,6 +5,7 @@
 #include "routeSegmentResult.h"
 #include "turnType.h"
 #include "binaryRoutePlanner.h"
+#include "multipolygons.h"
 
 const int MAX_SPEAK_PRIORITY = 5;
 const float TURN_DEGREE_MIN = 45;

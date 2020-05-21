@@ -314,7 +314,6 @@ double getDistance(double lat1, double lon1, double lat2, double lon2);
 double getPowZoom(float zoom);
 
 bool linesIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-int ray_intersect_x(int prevX, int prevY, int x, int y, int middleY);
 
 double calculateProjection31TileMetric(int xA, int yA, int xB, int yB, int xC, int yC);
 double measuredDist31(int x1, int y1, int x2, int y2); 
