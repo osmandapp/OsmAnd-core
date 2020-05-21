@@ -1595,7 +1595,7 @@ void combineWayPointsForAreaRouting(RoutingContext* ctx, vector<SHARED_PTR<Route
             nobj->pointNames.clear();
             nobj->pointNameTypes.clear();
             auto nrsr = std::make_shared<RouteSegmentResult>(nobj, 0, newsize - 1);
-            result.insert(result.begin() + i, nrsr);
+            result[i] = nrsr;
         }
     }
 }
