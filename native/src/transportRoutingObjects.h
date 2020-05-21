@@ -149,4 +149,19 @@ struct TransportRoute : public MapObject {
 	bool compareRoute(SHARED_PTR<TransportRoute> &thatObj);
 };
 
+
+struct IncompleteTransportRoute {
+	uint64_t routeId;
+	uint32_t routeOffset = -1;
+	string routeOperator;
+	string type;
+	string ref;
+	shared_ptr<IncompleteTransportRoute> nextLinkedRoute;
+
+	IncompleteTransportRoute();
+
+	shared_ptr<IncompleteTransportRoute> getNextLinkedRoute();
+	void setNextLinkedRoute(shared_ptr<IncompleteTransportRoute>& nextRoute);
+};
+
 #endif	//_OSMAND_TRANSPORT_ROUTING_OBJECTS_H

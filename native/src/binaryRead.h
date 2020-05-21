@@ -799,5 +799,4 @@ bool initMapFilesFromCache(std::string inputName) ;
 
 bool closeBinaryMapFile(std::string inputName);
 
-
 #endif

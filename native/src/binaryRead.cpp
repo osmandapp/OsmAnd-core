@@ -1153,6 +1153,86 @@ string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	return to_string(i);
 }
 
+bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransportRoute>& obj) {
+	bool end = false;
+	while(!end) {
+		int t = input->ReadTag();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
+		switch (tag) {
+			case OsmAnd::OBF::IncompleteTransportRoute::kIdFieldNumber:{
+				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &obj->routeId)));
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kRouteRefFieldNumber: {
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &obj->routeOffset)));
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kOperatorFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kRefFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kTypeFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kMissingStopsFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}	
+			case 0: {
+				end = true;
+				return true;
+				break;
+			}
+			default:{
+				if (!skipUnknownFields(input, t)) {
+					return false;
+				}
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t, 
+	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int32_t lenght, int32_t offset) {
+	bool end = false;
+	while(!end) {
+		int t = input->ReadTag();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
+		switch(tag) {
+			case OsmAnd::OBF::IncompleteTransportRoutes::kRoutesFieldNumber: {
+				uint32_t sizeL;
+				input->ReadVarint32(&sizeL);
+				int32_t olds = input->PushLimit(sizeL);
+				shared_ptr<IncompleteTransportRoute> ir = make_shared<IncompleteTransportRoute>();
+				readIncompleteRoute(input, ir);
+				shared_ptr<IncompleteTransportRoute> itr = incompleteRoutes[ir->routeId];
+				if (itr != nullptr) {
+					itr->setNextLinkedRoute(ir);
+				} else {
+					incompleteRoutes.insert({ir->routeId, ir});
+				}
+				input->PopLimit(olds);
+				break;
+			}
+			case 0: {
+				end = true;
+				break;
+			}
+			default: {
+				skipUnknownFields(input, t);
+				break;
+			}
+		}
+	}
+}
+
 bool readTransportStopExit(CodedInputStream* input, SHARED_PTR<TransportStopExit>& exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int32_t x = 0;
 	int32_t y = 0;

@@ -399,4 +399,17 @@ bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute>& thatObj) {
 	}
 }
 
+
+//IncompleteTransportRoute
+
+IncompleteTransportRoute::IncompleteTransportRoute() {}
+
+shared_ptr<IncompleteTransportRoute> IncompleteTransportRoute::getNextLinkedRoute() {
+	return nextLinkedRoute;
+}
+
+void IncompleteTransportRoute::setNextLinkedRoute(shared_ptr<IncompleteTransportRoute>& nextRoute) {
+	nextLinkedRoute = nextRoute;
+}
+
 #endif	//_OSMAND_TRANSPORT_ROUTING_OBJECTS_CPP
