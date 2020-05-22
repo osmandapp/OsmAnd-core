@@ -87,6 +87,8 @@ TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 	SearchQuery q;
 	buildSearchTransportRequest(&q, (x << pz), ((x + 1) << pz), (y << pz),
 								((y + 1) << pz), -1, stops);
+
+//TODO delete starting from here after refactoring:
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> localFileRoutes;
 	vector<SHARED_PTR<TransportStop>> loadedTransportStopsVals;
@@ -144,6 +146,7 @@ TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 			return pair.second;
 		});
 	loadTransportSegments(stopsValues, lst);
+// TODO - end of delete
 	readTime.Pause();
 	return lst;
 }
