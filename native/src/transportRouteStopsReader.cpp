@@ -4,157 +4,145 @@
 #include "binaryRead.h"
 #include "transportRouteStopsReader.h"
 #include "transportRoutingObjects.h"
+#include <algorithm>
 
 TransportRouteStopsReader::TransportRouteStopsReader(vector<BinaryMapFile*>& files) {
-	// for (auto& f: files) {
-	// 	routesFileCache.insert({*f, UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>});
-	// }
+	for (auto& f: files) {
+		routesFilesCache.insert(make_pair(f, PT_ROUTE_MAP()));
+	}
 }
 
-vector<SHARED_PTR<TransportStop>> readMergedTransportStops(SearchQuery& q) {
+vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransportStops(SearchQuery* q) {
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportStop>> loadedTransportStops;
 
-	// for (auto& it : routesFilesCache) {
-	// 	q.transportResults.clear();
-	// 	searchTransportIndex(&q, *it->first);
-	// 	vector<SHARED_PTR<TransportStop>> stops = q.transportResults;
-	
-	// 	mergeTransportStops(*it, loadedTransportStops, stops, localFileRoutes, routeMap[*it]);
-	// 	for (SHARED_PTR<TransportStop> &stop : stops) {
-	// 		int64_t stopId = stop->id;
-	// 		SHARED_PTR<TransportStop> multifileStop =
-	// 			loadedTransportStops.find(stopId)->second;
-	// 		vector<int32_t> rrs = stop->referencesToRoutes;
-	// 		if (multifileStop == stop) {
-	// 			// clear up so it won't be used as it is multi file stop
-	// 			stop->referencesToRoutes.clear();
-	// 		} else {
-	// 			// add other routes
-	// 			stop->referencesToRoutes.clear();
-	// 		}
-	// 		if (rrs.size() > 0 && !multifileStop->isDeleted()) {
-	// 			for (int32_t rr : rrs) {
-	// 				const auto it = localFileRoutes.find(rr);
-	// 				const auto &route = it->second;
-	// 				if (it == localFileRoutes.end()) {
-	// 					//						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
-	// 					//"Something went wrong by loading route %d for stop",
-	// 					//rr);
-	// 				} else if (multifileStop == stop ||
-	// 						   (!multifileStop->hasRoute(route->id) &&
-	// 							!multifileStop->isRouteDeleted(route->id))) {
-	// 					// duplicates won't be added check!
-	// 					multifileStop->addRouteId(route->id);
-	// 					multifileStop->addRoute(route);
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+	for (auto& it : routesFilesCache) {
+		q->transportResults.clear();
+		searchTransportIndex(q, it.first);
+		vector<SHARED_PTR<TransportStop>> stops = q->transportResults;
+		
+		PT_ROUTE_MAP routesToLoad = mergeTransportStops(it.first, loadedTransportStops, stops);
+		loadRoutes(it.first, routesToLoad);
 
-	// std::vector<SHARED_PTR<TransportStop>> stopsValues;
-	// stopsValues.reserve(loadedTransportStops.size());
+		for (SHARED_PTR<TransportStop> &stop : stops) {
+			if (stop->isMissingStop()) {
+				continue;
+			}
+			int64_t stopId = stop->id;
+			SHARED_PTR<TransportStop> multifileStop = loadedTransportStops.find(stopId)->second;
+			vector<int32_t> rrs = stop->referencesToRoutes;
+			// clear up so it won't be used as it is multi file stop
+			stop->referencesToRoutes.clear();
+			if (rrs.size() > 0 && !multifileStop->isDeleted()) {
+				for (int32_t rr : rrs) {
+					const auto it = routesToLoad.find(rr);
+					const auto &route = it->second;
+					if (it == routesToLoad.end()) {
+						// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
+						// "Something went wrong by loading route %d for stop %d", rr, stop->id);
+					} else {
+						SHARED_PTR<TransportRoute> combinedRoute = getCombinedRoute(route); 
+						if (multifileStop == stop ||
+							   (!multifileStop->hasRoute(route->id) &&
+								!multifileStop->isRouteDeleted(route->id))) {
+							// duplicates won't be added check!
+							multifileStop->addRouteId(combinedRoute->id);
+							multifileStop->addRoute(combinedRoute);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	std::vector<SHARED_PTR<TransportStop>> stopsValues;
+	stopsValues.reserve(loadedTransportStops.size());
 
 	// // Get all values
-	// std::transform(
-	// 	loadedTransportStops.begin(), loadedTransportStops.end(),
-	// 	back_inserter(stopsValues),
-	// 	[](std::pair<int64_t, SHARED_PTR<TransportStop>> const &pair) {
-	// 		return pair.second;
-	// 	});
-	// loadTransportSegments(stopsValues, lst);
-
-
-};
-
-
-UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>> TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
-																			UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-																			vector<SHARED_PTR<TransportStop>> &stops) {
-		// Iterator<TransportStop> it = stops.iterator();
-		// TIntObjectHashMap<TransportRoute> routesToLoad = routesFilesCache.get(reader);
-		
-		// while (it.hasNext()) {
-		// 	TransportStop stop = it.next();
-		// 	long stopId = stop.getId();
-		// 	TransportStop multifileStop = loadedTransportStops.get(stopId);
-		// 	long[] routesIds = stop.getRoutesIds();
-		// 	long[] delRIds = stop.getDeletedRoutesIds();
-		// 	if (multifileStop == null) {
-		// 		loadedTransportStops.put(stopId, stop);
-		// 		multifileStop = stop;
-		// 		if (!stop.isDeleted()) {
-		// 			putAll(routesToLoad, stop.getReferencesToRoutes());
-		// 		}
-		// 	} else if (multifileStop.isDeleted()) {
-		// 		// stop has nothing to load, so not needed
-		// 		it.remove();
-		// 	} else {
-		// 		if (delRIds != null) {
-		// 			for (long deletedRouteId : delRIds) {
-		// 				multifileStop.addDeletedRouteId(deletedRouteId);
-		// 			}
-		// 		}
-		// 		if (routesIds != null && routesIds.length > 0) {
-		// 			int[] refs = stop.getReferencesToRoutes();
-		// 			for (int i = 0; i < routesIds.length; i++) {
-		// 				long routeId = routesIds[i];
-		// 				if (!multifileStop.hasRoute(routeId) && !multifileStop.isRouteDeleted(routeId)) {
-		// 					if(!routesToLoad.containsKey(refs[i])) {
-		// 						routesToLoad.put(refs[i], null);
-		// 					}
-		// 				}
-		// 			}
-		// 		} else {
-		// 			if (stop.hasReferencesToRoutes()) {
-		// 				// old format
-		// 				putAll(routesToLoad, stop.getReferencesToRoutes());
-		// 			} else {
-		// 				// stop has noting to load, so not needed
-		// 				it.remove();
-		// 			}
-		// 		}
-		// 	}
-		// }
-		// return routesToLoad;
+	std::transform(
+		loadedTransportStops.begin(), loadedTransportStops.end(),
+		back_inserter(stopsValues),
+		[](std::pair<int64_t, SHARED_PTR<TransportStop>> const &pair) {
+			return pair.second;
+	});
+	return stopsValues;
 }
 
-void TransportRouteStopsReader::putAll(UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& routesToLoad, int referenceToRoutes[]) {
-	int refsize = *(&referenceToRoutes + 1) - referenceToRoutes;
-	for (int k = 0; k < refsize; k++) {
+
+PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
+																			UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
+																			vector<SHARED_PTR<TransportStop>> &stops) {
+	
+	PT_ROUTE_MAP routesToLoad = routesFilesCache.at(file);
+	vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
+	
+	while (it != stops.end()) {
+		const auto stop = *it;
+		int64_t stopId = stop->id;
+		routesToLoad.clear();
+		const auto multiStopIt = loadedTransportStops.find(stopId);
+		SHARED_PTR<TransportStop> multifileStop =
+			multiStopIt == loadedTransportStops.end() ? nullptr
+													  : multiStopIt->second;
+		vector<int64_t> routesIds = stop->routesIds;
+		vector<int64_t> delRIds = stop->deletedRoutesIds;
+		if (multifileStop == nullptr) {
+			loadedTransportStops.insert({stopId, stop});
+			multifileStop = *it;
+			if (!stop->isDeleted()) {
+				putAll(routesToLoad, (*it)->referencesToRoutes);
+			}
+		} else if (multifileStop->isDeleted()) {
+			it = stops.erase(it);
+		} else {
+			if (delRIds.size() > 0) {
+				for (vector<int64_t>::iterator it = delRIds.begin();
+					 it != delRIds.end(); it++) {
+					multifileStop->deletedRoutesIds.push_back(*it);
+				}
+			}
+			if (routesIds.size() > 0) {
+				vector<int32_t> refs = stop->referencesToRoutes;
+				for (int32_t i = 0; i < routesIds.size(); i++) {
+					int64_t routeId = routesIds.at(i);
+					if (find(routesIds.begin(), routesIds.end(), routeId) ==
+							multifileStop->routesIds.end() && !multifileStop->isRouteDeleted(routeId)) {
+						if (routesToLoad.find(routeId) == routesToLoad.end()) {
+							routesToLoad.insert( {refs[i], nullptr});
+						}
+					}
+				}
+			} else {
+				if ((*it)->referencesToRoutes.size() > 0) {
+					putAll(routesToLoad, (*it)->referencesToRoutes);
+				} else {
+					it = stops.erase(it);
+				}
+			}
+		}
+		it++;
+	}
+	return routesToLoad;
+}
+
+void TransportRouteStopsReader::putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_t> referenceToRoutes) {
+	
+	for (int k = 0; k < referenceToRoutes.size(); k++) {
 		if (routesToLoad.find(referenceToRoutes[k]) == routesToLoad.end()) {
 			routesToLoad.insert({referenceToRoutes[k], nullptr});
 		}
 	}
 }
 
-void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& localFileRoutes) {
+void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& localFileRoutes) {
 	if (localFileRoutes.size() > 0) {
 		vector<int32_t> routesToLoad (localFileRoutes.size());
-		for (auto const& kv : localFileRoutes) {
-			if (kv.second == nullptr) {
-				routesToLoad.push_back(kv.first);
+		for (auto& itr : localFileRoutes) {
+			if (itr.second == nullptr) {
+				routesToLoad.push_back(itr.first);
 			}
 		}
-		// sort(routesToLoad.begin(), routesToLoad.end());
-		// vector<int32_t> referencesToLoad;
-		// vector<int32_t>::iterator itr = routesToLoad.begin();
-		// int32_t p = routesToLoad.at(0) + 1;
-		// while (itr != routesToLoad.end()) {
-		// 	int nxt = *itr;
-		// 	if (p != nxt) {
-		// 		if (loadedRoutes.find(nxt) != loadedRoutes.end()) {
-		// 			localFileRoutes.insert(
-		// 				std::pair<int64_t, SHARED_PTR<TransportRoute>>(
-		// 					nxt, loadedRoutes[nxt]));
-		// 		} else {
-		// 			referencesToLoad.push_back(nxt);
-		// 		}
-		// 	}
-		// 	itr++;
-		// }
 
-		// loadTransportRoutes(file, referencesToLoad, localFileRoutes);
+		loadTransportRoutes(file, routesToLoad, localFileRoutes);
 	}
 }
 
@@ -232,7 +220,7 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<Tr
 		}
 		// 5. Create combined TransportRoute and return it
 		return new TransportRoute(route, finalList, allWays);
-	 * /
+	 */
 }
 
 vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::findAndDeleteMinDistance(double lat, double lon, 
@@ -280,7 +268,7 @@ vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::mergeSegmen
 			while (merged) {
 				merged = false;
 				Iterator<List<TransportStop>> it = segments.iterator();
-				while (it.hasNext()) {
+				while (it.hasNext()) {	
 					List<TransportStop> segmentToMerge = it.next();
 					if (mergeMissingSegs) {
 						merged = tryToMergeMissingStops(firstSegment, segmentToMerge);

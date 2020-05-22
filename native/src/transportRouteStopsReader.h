@@ -12,20 +12,23 @@ struct TransportRoute;
 struct Way;
 
 const static int MISSING_STOP_SEARCH_RADIUS = 15000;
+typedef UNORDERED(map)<int64_t, shared_ptr<TransportRoute>> PT_ROUTE_MAP;
+typedef 
+
 
 struct TransportRouteStopsReader {
 	TransportRouteStopsReader(vector<BinaryMapFile*>& files);
 
-	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> combinedRoutesCache;
-	UNORDERED(map)<BinaryMapFile*, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>> routesFileCache;
+	PT_ROUTE_MAP combinedRoutesCache;
+	UNORDERED(map)<BinaryMapFile*, PT_ROUTE_MAP> routesFilesCache;
 
-	vector<SHARED_PTR<TransportStop>> readMergedTransportStops(SearchQuery& sr);
-	UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>> mergeTransportStops(BinaryMapFile* file,
-																			UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-																			vector<SHARED_PTR<TransportStop>> &stops);
+	vector<SHARED_PTR<TransportStop>> readMergedTransportStops(SearchQuery* sr);
+	PT_ROUTE_MAP mergeTransportStops(BinaryMapFile* file,
+									UNORDERED(map) <int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
+									vector<SHARED_PTR<TransportStop>> &stops);
 
-	void putAll(UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& routesToLoad, int referenceToRoutes[]);
-	void loadRoutes(BinaryMapFile* file, UNORDERED(map)<int32_t, SHARED_PTR<TransportRoute>>& localFileRoutes);
+	void putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_t> referenceToRoutes);
+	void loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& localFileRoutes);
 	SHARED_PTR<TransportRoute> getCombinedRoute(SHARED_PTR<TransportRoute> route);
 	SHARED_PTR<TransportRoute> combineRoute(SHARED_PTR<TransportRoute> route);
 	vector<SHARED_PTR<TransportStop>> findAndDeleteMinDistance(double lat, double lon, 

@@ -151,8 +151,7 @@ TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 	return lst;
 }
 
-std::vector<SHARED_PTR<TransportStop>>
-TransportRoutingContext::mergeTransportStops(
+std::vector<SHARED_PTR<TransportStop>>  TransportRoutingContext::mergeTransportStops(
 	BinaryMapFile *file, UNORDERED(map) < int64_t,
 	SHARED_PTR<TransportStop>> &loadedTransportStops,
 	vector<SHARED_PTR<TransportStop>> &stops, UNORDERED(map) < int64_t,
@@ -305,7 +304,7 @@ void TransportRoutingContext::loadScheduleRouteSegment(
 					route, stopIndex, startTime));
 			}
 		}
-	// }
+	
 }
 
 #endif	//_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_CPP
