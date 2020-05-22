@@ -13,7 +13,6 @@ struct Way;
 
 const static int MISSING_STOP_SEARCH_RADIUS = 15000;
 typedef UNORDERED(map)<int64_t, shared_ptr<TransportRoute>> PT_ROUTE_MAP;
-typedef 
 
 
 struct TransportRouteStopsReader {

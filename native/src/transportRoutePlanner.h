@@ -7,6 +7,7 @@
 #include "routeCalculationProgress.h"
 
 const bool MEASURE_TIME = false;
+const int MIN_DIST_STOP_TO_GEOMETRY = 150;
 
 struct TransportSegmentsComparator;
 struct TransportRouteSegment;

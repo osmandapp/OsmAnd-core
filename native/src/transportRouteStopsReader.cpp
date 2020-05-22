@@ -147,115 +147,119 @@ void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& lo
 }
 
 SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PTR<TransportRoute> route) {
-	/** java
-	 * 	if (!route.isIncomplete()) {
-			return route;
-		}
-		TransportRoute c = combinedRoutesCache.get(route.getId());
-		if (c == null) {
-			c = combineRoute(route);
-			combinedRoutesCache.put(route.getId(), c);
-		}
-		return c;
-	 */
+	if (!route->isIncomplete()) {
+		return route;
+	}
+	shared_ptr<TransportRoute> c = combinedRoutesCache.find(route->id) != combinedRoutesCache.end() 
+		? combinedRoutesCache[route->id] : nullptr;
+	if (c == nullptr) {
+		c = combineRoute(route);
+		combinedRoutesCache.insert({route->id, c});
+	}
+	return c;
 }
 	
 SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<TransportRoute> route) {
-	/** java
-	 * // 1. Get all available route parts;
-		List<TransportRoute> incompleteRoutes = findIncompleteRouteParts(route);
-		if (incompleteRoutes == null) {
-			return route;
-		}
-		// here could be multiple overlays between same points
-		// It's better to remove them especially identical segments
-		List<Way> allWays = getAllWays(incompleteRoutes);
+	// 1. Get all available route parts;
+	auto& incompleteRoutes = findIncompleteRouteParts(route);
+	if (incompleteRoutes.empty()) {
+		return route;
+	}
+	// here could be multiple overlays between same points
+	// It's better to remove them especially identical segments
+	auto& allWays = getAllWays(incompleteRoutes);
 
-		// 2. Get array of segments (each array size > 1):
-		LinkedList<List<TransportStop>> stopSegments = parseRoutePartsToSegments(incompleteRoutes);
+	// 2. Get array of segments (each array size > 1):
+	auto& stopSegments = parseRoutePartsToSegments(incompleteRoutes);
 
-		// 3. Merge segments and remove excess missingStops (when they are closer then MISSING_STOP_SEARCH_RADIUS):
-		// + Check for missingStops. If they present in the middle/there more then one segment - we have a hole in the
-		// map data
-		List<List<TransportStop>> mergedSegments = combineSegmentsOfSameRoute(stopSegments);
+	// 3. Merge segments and remove excess missingStops (when they are closer then MISSING_STOP_SEARCH_RADIUS):
+	// + Check for missingStops. If they present in the middle/there more then one segment - we have a hole in the
+	// map data
+	auto& mergedSegments = combineSegmentsOfSameRoute(stopSegments);
 
-		// 4. Now we need to properly sort segments, proper sorting is minimizing distance between stops
-		// So it is salesman problem, we have this solution at TspAnt, but if we know last or first segment we can solve
-		// it straightforward
-		List<TransportStop> firstSegment = null;
-		List<TransportStop> lastSegment = null;
-		for (List<TransportStop> l : mergedSegments) {
-			if (!l.get(0).isMissingStop()) {
-				firstSegment = l;
-			}
-			if (!l.get(l.size() - 1).isMissingStop()) {
-				lastSegment = l;
-			}
+	// 4. Now we need to properly sort segments, proper sorting is minimizing distance between stops
+	// So it is salesman problem, we have this solution at TspAnt, but if we know last or first segment we can solve
+	// it straightforward
+	vector<SHARED_PTR<TransportRoute>> firstSegment;
+	vector<SHARED_PTR<TransportRoute>> lastSegment;
+	for (const auto& l : mergedSegments) {
+		if (!l.front()->isMissingStop()) {
+			firstSegment = l;
 		}
-		List<List<TransportStop>> sortedSegments = new ArrayList<List<TransportStop>>();
-		if (firstSegment != null) {
-			sortedSegments.add(firstSegment);
-			mergedSegments.remove(firstSegment);
-			while (!mergedSegments.isEmpty()) {
-				List<TransportStop> last = sortedSegments.get(sortedSegments.size() - 1);
-				List<TransportStop> add = findAndDeleteMinDistance(last.get(last.size() - 1).getLocation(),
-						mergedSegments, true);
-				sortedSegments.add(add);
-			}
+		if (!l.back()->isMissingStop()) {
+			lastSegment = l;
+		}
+	}
+	vector<vector<SHARED_PTR<TransportStop>>> sortedSegments;
+	if (!firstSegment.empty()) {
+		sortedSegments.push_back(firstSegment);
+		const auto itFirstSegment = mergedSegments.find(firstSegment);
+		if (itFirstSegment != mergedSegments.end()) {
+			mergedSegments.erase(itFirstSegment);
+		}
+		while (!mergedSegments.empty()) {
+			auto last = sortedSegments.back().back();
+			auto& add = findAndDeleteMinDistance(last->lat, last->lon, mergedSegments, true);
+			sortedSegments.push_back(add);
+		}
 
-		} else if (lastSegment != null) {
-			sortedSegments.add(lastSegment);
-			mergedSegments.remove(lastSegment);
-			while (!mergedSegments.isEmpty()) {
-				List<TransportStop> first = sortedSegments.get(0);
-				List<TransportStop> add = findAndDeleteMinDistance(first.get(0).getLocation(), mergedSegments, false);
-				sortedSegments.add(0, add);
-			}
-		} else {
-			sortedSegments = mergedSegments;
+	} else if (!lastSegment.empty()) {
+		sortedSegments.push_back(lastSegment);
+		const auto itLastSegment = mergedSegments.find(lastSegment);
+		if (itLastSegment != mergedSegments.end()) {
+			mergedSegments.erase(itLastSegment);
 		}
-		List<TransportStop> finalList = new ArrayList<TransportStop>();
-		for (List<TransportStop> s : sortedSegments) {
-			finalList.addAll(s);
+		while (!mergedSegments.empty()) {
+			auto first = sortedSegments.front().front();
+			auto& add = findAndDeleteMinDistance(first->lat, first->lon, mergedSegments, false);
+			sortedSegments.insert(sortedSegments.begin(), add);
 		}
-		// 5. Create combined TransportRoute and return it
-		return new TransportRoute(route, finalList, allWays);
-	 */
+	} else {
+		sortedSegments = mergedSegments;
+	}
+	vector<SHARED_PTR<TransportRoute>> finalList;
+	for (auto& s : sortedSegments) {
+		finalList.insert(finalList.end(), s.begin(), s.end());
+	}
+	// 5. Create combined TransportRoute and return it
+	return SHARED_PTR<TransportRoute>(new TransportRoute(route, finalList, allWays));
 }
 
 vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::findAndDeleteMinDistance(double lat, double lon, 
 															vector<vector<SHARED_PTR<TransportStop>>>& mergedSegments, 
 															bool attachToBegin) {
-	/** java
-	 * int ind = attachToBegin ? 0 : mergedSegments.get(0).size() - 1;
-		double minDist = MapUtils.getDistance(mergedSegments.get(0).get(ind).getLocation(), location);
-		int minInd = 0;
-		for (int i = 1; i < mergedSegments.size(); i++) {
-			ind = attachToBegin ? 0 : mergedSegments.get(i).size() - 1;
-			double dist = MapUtils.getDistance(mergedSegments.get(i).get(ind).getLocation(), location);
-			if (dist < minDist) {
-				minInd = i;
-			}
+	int ind = attachToBegin ? 0 : mergedSegments.front().size() - 1;
+	auto stop = mergedSegments.front().at(ind);
+	double minDist = getDistance(stop->lat, stop->lon, lat, lon);
+	int minInd = 0;
+	for (int i = 1; i < mergedSegments.size(); i++) {
+		ind = attachToBegin ? 0 : mergedSegments.at(i).size() - 1;
+		auto s = mergedSegments.at(i).at(ind);
+		double dist = getDistance(s->lat, s->lon, lat, lon);
+		if (dist < minDist) {
+			minInd = i;
 		}
-		return mergedSegments.remove(minInd);
-	 */ 
+	}
+	auto& res = mergedSegments.at(minInd);
+	mergedSegments.erase(mergedSegments.begin() + minInd);
+	return res;
 }
 
-vector<Way> TransportRouteStopsReader::getAllWays(vector<SHARED_PTR<TransportRoute>>& parts) {
-	/** java
-	 * 	List<Way> w = new ArrayList<Way>();
-		for (TransportRoute t : parts) {
-			w.addAll(t.getForwardWays());
+vector<SHARED_PTR<Way>> TransportRouteStopsReader::getAllWays(vector<SHARED_PTR<TransportRoute>>& parts) {
+	vector<SHARED_PTR<Way>> w;
+	for (auto t : parts) {
+		if (!t.forwardWays.empty()) {
+			w.insert(w.end(), t.forwardWays.begin(), t.forwardWays.end());
 		}
-		return w;
-	 */ 
+	}
+	return w;
 }
 
 vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::combineSegmentsOfSameRoute(vector<vector<SHARED_PTR<TransportStop>>>& segments) { 
-	/** java
-	 * 		LinkedList<List<TransportStop>> tempResultSegments = mergeSegments(segments, new LinkedList<List<TransportStop>>(), false);
-		return mergeSegments(tempResultSegments, new ArrayList<List<TransportStop>>(), true);
-	 */
+	vector<vector<SHARED_PTR<TransportStop>>> resultSegments;
+	auto& tempResultSegments = mergeSegments(segments, resultSegments, false);
+	resultSegments.clear();
+	return mergeSegments(tempResultSegments, resultSegments, true);
 }
 
 vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::mergeSegments(vector<SHARED_PTR<TransportStop>>& segments, 
@@ -395,6 +399,7 @@ vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::parseRouteP
 }
 
 vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRouteParts(SHARED_PTR<TransportRoute>& baseRoute) {
+	vector<shared_ptr<TransportRoute>> allRoutes;
 	/** java:
 	 * List<TransportRoute> allRoutes = null;
 		for (BinaryMapIndexReader bmir : routesFilesCache.keySet()) {
@@ -417,6 +422,7 @@ vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRout
 		return allRoutes;
 	 * 
 	 */ 
+	return allRoutes;
 }
 
 #endif
