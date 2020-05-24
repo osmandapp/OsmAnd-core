@@ -134,17 +134,17 @@ struct TransportRoute : public MapObject {
 	string type;
 	uint32_t dist;
 	string color;
-	vector<Way> forwardWays;
+	vector<shared_ptr<Way>> forwardWays;
 	TransportSchedule schedule;
 
 	TransportRoute();
-	TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<Way>& cforwardWays) ;
+	TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<shared_ptr<Way>>& cforwardWays) ;
 
 	TransportSchedule& getOrCreateSchedule();
 	void mergeForwardWays();
-	void mergeForwardWays(vector<Way>& ways);
-	UNORDERED_map<Way, pair<int, int>> resortWaysToStopsOrder(vector<Way>& forwardWays, vector<SHARED_PTR<TransportStop>>& forwardStops);
-	void addWay(Way &w);
+	void mergeForwardWays(vector<shared_ptr<Way>>& ways);
+	UNORDERED_map<shared_ptr<Way>, pair<int, int>> resortWaysToStopsOrder(vector<shared_ptr<Way>>& forwardWays, vector<SHARED_PTR<TransportStop>>& forwardStops);
+	void addWay(shared_ptr<Way> &w);
 	int32_t getAvgBothDistance();
 	int32_t getDist();
 	string getAdjustedRouteRef(bool small);

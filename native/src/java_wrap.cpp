@@ -1582,16 +1582,16 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 	jobjectArray j_nodesLats = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object longarray
 	jobjectArray j_nodesLons = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object doublearray
 	for (int k = 0; k < route->forwardWays.size(); k++) {
-		tmpIds[k] = (jlong) route->forwardWays.at(k).id;
-		int nsize = route->forwardWays.at(k).nodes.size();
+		tmpIds[k] = (jlong) route->forwardWays.at(k)->id;
+		int nsize = route->forwardWays.at(k)->nodes.size();
 		jdoubleArray j_wayNodesLats = ienv->NewDoubleArray(nsize);
 		jdoubleArray j_wayNodesLons = ienv->NewDoubleArray(nsize);
 		jlong tmpNodesIds[nsize];
 		jdouble tmpNodesLats[nsize];
 		jdouble tmpNodesLons[nsize];
 		for (n = 0; n < nsize; n++) {
-			tmpNodesLats[n] = route->forwardWays.at(k).nodes.at(n).lat;
-			tmpNodesLons[n] = route->forwardWays.at(k).nodes.at(n).lon;
+			tmpNodesLats[n] = route->forwardWays.at(k)->nodes.at(n).lat;
+			tmpNodesLons[n] = route->forwardWays.at(k)->nodes.at(n).lon;
 		}
 		ienv->SetDoubleArrayRegion(j_wayNodesLats, 0, nsize, tmpNodesLats);
 		ienv->SetDoubleArrayRegion(j_wayNodesLons, 0, nsize, tmpNodesLons);

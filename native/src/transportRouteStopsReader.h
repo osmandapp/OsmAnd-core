@@ -33,11 +33,11 @@ struct TransportRouteStopsReader {
 	vector<SHARED_PTR<TransportStop>> findAndDeleteMinDistance(double lat, double lon, 
 																vector<vector<SHARED_PTR<TransportStop>>>& mergedSegments, 
 																bool attachToBegin);
-	vector<Way> getAllWays(vector<SHARED_PTR<TransportRoute>>& parts);
+	vector<SHARED_PTR<Way>> getAllWays(vector<SHARED_PTR<TransportRoute>>& parts);
 	vector<vector<SHARED_PTR<TransportStop>>> combineSegmentsOfSameRoute(vector<vector<SHARED_PTR<TransportStop>>>& segments);
 	vector<vector<SHARED_PTR<TransportStop>>> mergeSegments(vector<SHARED_PTR<TransportStop>>& segments, 
 															vector<SHARED_PTR<TransportStop>>& resultSegments, 
-															bool mergeMissingStops);
+															bool mergeMissingSegs);
 	bool tryToMerge(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge);
 	bool tryToMergeMissingStops(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge);
 	vector<vector<SHARED_PTR<TransportStop>>> parseRoutePartsToSegments(vector<SHARED_PTR<TransportRoute>> routeParts);

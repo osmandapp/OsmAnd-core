@@ -119,6 +119,7 @@ void TransportRoutePlanner::buildTransportRoute(
 	ctx->readTime.Enable();
 	TransportSegmentsComparator trSegmComp;
 	TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
+	double totalDistance = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon);
 	vector<SHARED_PTR<TransportRouteSegment>> startStops;
 	ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
 	vector<SHARED_PTR<TransportRouteSegment>> endStops;
@@ -140,6 +141,14 @@ void TransportRoutePlanner::buildTransportRoute(
 	}
 
 	double finishTime = ctx->cfg->maxRouteTime;
+	ctx->finishTimeSeconds = ctx->cfg->finishTimeSeconds;
+	if (totalDistance > ctx->cfg->maxNumberOfChanges && ctx->cfg->maxRouteIncreaseSpeed > 0) {
+		int increaseTime = (int) ((totalDistance - ctx->cfg->maxRouteDistance) 
+			* 3.6 / ctx->cfg->maxRouteIncreaseSpeed);
+		finishTime += increaseTime;
+		ctx->finishTimeSeconds += increaseTime / 6;
+	}
+	
 	double maxTravelTimeCmpToWalk =
 		getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) / ctx->cfg->walkSpeed -
 		ctx->cfg->changeTime / 2;
@@ -170,7 +179,7 @@ void TransportRoutePlanner::buildTransportRoute(
 			continue;
 		}
 
-		if (segment->distFromStart > finishTime + ctx->cfg->finishTimeSeconds ||
+		if (segment->distFromStart > finishTime + ctx->finishTimeSeconds ||
 			segment->distFromStart > maxTravelTimeCmpToWalk) {
 			break;
 		}
@@ -205,7 +214,7 @@ void TransportRoutePlanner::buildTransportRoute(
 			} else {
 				travelTime += ctx->cfg->stopTime + segmentDist / routeTravelSpeed;
 			}
-			if (segment->distFromStart + travelTime > finishTime + ctx->cfg->finishTimeSeconds) {
+			if (segment->distFromStart + travelTime > finishTime + ctx->finishTimeSeconds) {
 				break;
 			}
 			sgms.clear();
@@ -261,7 +270,7 @@ void TransportRoutePlanner::buildTransportRoute(
 			if (finishTime > finish->distFromStart) {
 				finishTime = finish->distFromStart;
 			}
-			if (finish->distFromStart < finishTime + ctx->cfg->finishTimeSeconds &&
+			if (finish->distFromStart < finishTime + ctx->finishTimeSeconds &&
 				(finish->distFromStart < maxTravelTimeCmpToWalk || results.size() == 0)) {
 				results.push_back(finish);
 			}
@@ -283,17 +292,6 @@ void TransportRoutePlanner::buildTransportRoute(
 
 	prepareResults(ctx, results, res);
 }
-
-// private void initProgressBar(TransportRoutingContext ctx, LatLon start,
-// LatLon end) { 	if (ctx.calculationProgress != null) {
-// 		ctx.calculationProgress.distanceFromEnd = 0;
-// 		ctx.calculationProgress.reverseSegmentQueueSize = 0;
-// 		ctx.calculationProgress.directSegmentQueueSize = 0;
-// 		float speed = (float) ctx.cfg.defaultTravelSpeed + 1; // assume
-// 		ctx.calculationProgress.totalEstimatedDistance = (float)
-// (MapUtils.getDistance(start, end) / speed);
-// 	}
-// }
 
 void TransportRoutePlanner::updateCalculationProgress(unique_ptr<TransportRoutingContext>& ctx,
 													  priority_queue<SHARED_PTR<TransportRouteSegment>>& queue) {

@@ -1212,8 +1212,8 @@ void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t,
 				int32_t olds = input->PushLimit(sizeL);
 				shared_ptr<IncompleteTransportRoute> ir = make_shared<IncompleteTransportRoute>();
 				readIncompleteRoute(input, ir);
-				shared_ptr<IncompleteTransportRoute> itr = incompleteRoutes[ir->routeId];
-				if (itr != nullptr) {
+				if (incompleteRoutes.find(ir->routeId) != incompleteRoutes.end()) {
+					shared_ptr<IncompleteTransportRoute> itr = incompleteRoutes[ir->routeId];
 					itr->setNextLinkedRoute(ir);
 				} else {
 					incompleteRoutes.insert({ir->routeId, ir});
@@ -1665,7 +1665,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
-				Way w;
+				shared_ptr<Way> w;
 				while (input->BytesUntilLimit() > 0) {
 					int32_t ddx;
 					int32_t ddy;
@@ -1674,20 +1674,20 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 					ddx = ddx << SHIFT_COORDINATES;
 					ddy = ddy << SHIFT_COORDINATES;
 					if(ddx == 0 && ddy == 0) {
-						if(w.nodes.size() > 0) {
+						if(w->nodes.size() > 0) {
 							transportRoute->addWay(w);
 						}
-						w = Way();
+						w = make_shared<Way>();
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
 						Node n(get31LatitudeY(y), get31LongitudeX(x));
-						w.addNode(n);
+						w->addNode(n);
 						px = x;
 						py = y;
 					}
 				}
-				if(w.nodes.size() > 0) {
+				if(w->nodes.size() > 0) {
 					transportRoute->addWay(w);
 				}
 				input->PopLimit(pold);

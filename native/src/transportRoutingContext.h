@@ -12,16 +12,17 @@ struct TransportRoutingConfiguration;
 struct TransportRouteSegment;
 struct TransportStop;
 struct TransportRoute;
+struct TransportRouteStopsReader;
 
 struct TransportRoutingContext {
 	SHARED_PTR<RouteCalculationProgress> calculationProgress;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
 	SHARED_PTR<TransportRoutingConfiguration> cfg;
-
+	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> combinedRouteCache;
+	UNORDERED(map)<SHARED_PTR<TransportStop>, List<SHARED_PTR<TransportRoute>>> missingStopsCache;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
-	UNORDERED(map)<BinaryMapFile *, UNORDERED(map) < int64_t,
-				   SHARED_PTR<TransportRoute>>> routeMap;
+	unique_ptr<TrnasportRouteStopsReader> transportStopsReader;
 
 	int32_t startX;
 	int32_t startY;
@@ -46,6 +47,7 @@ struct TransportRoutingContext {
 
 	int32_t walkRadiusIn31;
 	int32_t walkChangeRadiusIn31;
+	int32_t finishTimeSeconds; 
 
 	TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration>& cfg_);
 
@@ -63,14 +65,7 @@ struct TransportRoutingContext {
 	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright,
 									 int stop, int sbottom, int limit,
 									 vector<SHARED_PTR<TransportStop>> &stops);
-	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x,
-															uint32_t y);
-	std::vector<SHARED_PTR<TransportStop>> mergeTransportStops(
-		BinaryMapFile *file, UNORDERED(map) < int64_t,
-		SHARED_PTR<TransportStop>> &loadedTransportStops,
-		vector<SHARED_PTR<TransportStop>> &stops, UNORDERED(map) < int64_t,
-		SHARED_PTR<TransportRoute>> &localFileRoutes, UNORDERED(map) < int64_t,
-		SHARED_PTR<TransportRoute>> &loadedRoutes);
+	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y);
 	void loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops,
 							   vector<SHARED_PTR<TransportRouteSegment>> &lst);
 	void loadScheduleRouteSegment(

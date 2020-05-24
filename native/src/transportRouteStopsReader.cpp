@@ -248,7 +248,7 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::findAndDeleteMinDis
 vector<SHARED_PTR<Way>> TransportRouteStopsReader::getAllWays(vector<SHARED_PTR<TransportRoute>>& parts) {
 	vector<SHARED_PTR<Way>> w;
 	for (auto t : parts) {
-		if (!t.forwardWays.empty()) {
+		if (!t->forwardWays.empty()) {
 			w.insert(w.end(), t.forwardWays.begin(), t.forwardWays.end());
 		}
 	}
@@ -264,164 +264,154 @@ vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::combineSegm
 
 vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::mergeSegments(vector<SHARED_PTR<TransportStop>>& segments, 
 																					vector<SHARED_PTR<TransportStop>>& resultSegments, 
-																					bool mergeMissingStops) {
-	/** java
-	 * while (!segments.isEmpty()) {
-			List<TransportStop> firstSegment = segments.poll();
-			boolean merged = true;
-			while (merged) {
-				merged = false;
-				Iterator<List<TransportStop>> it = segments.iterator();
-				while (it.hasNext()) {	
-					List<TransportStop> segmentToMerge = it.next();
-					if (mergeMissingSegs) {
-						merged = tryToMergeMissingStops(firstSegment, segmentToMerge);
-					} else {						
-						merged = tryToMerge(firstSegment, segmentToMerge);
-					}
-
-					if (merged) {
-						it.remove();
-						break;
-					}
+																					bool mergeMissingSegs) {
+	std::deque<SHARED_PTR<TransportStop>> segQueue(segments.begin(), segments.end()); //check
+	while (segQueue.size() > 0) {
+		auto& firstSegment = segQueue.front();
+		segQueue.pop_front();
+		bool merged = true;
+		while (merged) {
+			merged = false;
+			vector<SHARED_PTR<TransportStop>>::iterator it = segQueue.cbegin();
+			while(it != segQueue.cend()) {
+				auto& segmentToMerge = *it;
+				if (mergeMissingSegs) {
+					merged = tryToMergeMissingStops(firstSegment, segmentToMerge)
+				} else {
+					merged = tryToMerge(firstSegment, segmentToMerge);
 				}
+				if (merged) {
+					it.erase();
+				}
+
+				it++;
 			}
-			resultSegments.add(firstSegment);
 		}
-		return resultSegments;
-	 */ 
+		resultSegments.push_back(firstSegment); //check
+	}
+	return resultSegments;
 }
 	
 bool TransportRouteStopsReader::tryToMerge(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge) {
-	/** java:
-	 * 		if (firstSegment.size() < 2 || segmentToMerge.size() < 2) {
-			return false;
-		}
-		// 1st we check that segments overlap by stop
-		int commonStopFirst = 0;
-		int commonStopSecond = 0;
-		boolean found = false;
-		for (; commonStopFirst < firstSegment.size(); commonStopFirst++) {
-			for (commonStopSecond = 0; commonStopSecond < segmentToMerge.size() && !found; commonStopSecond++) {
-				long lid1 = firstSegment.get(commonStopFirst).getId();
-				long lid2 = segmentToMerge.get(commonStopSecond).getId();
-				if (lid1 > 0 && lid2 == lid1) {
-					found = true;
-					break;
-				}
-			}
-			if (found) {
-				// important to increment break inside loop
+	if (firstSegment.size() < 2 || segmentToMerge.size < 2) {
+		return false;
+	}
+	int commonStopFirst = 0;
+	int commonStopSecond = 0;
+	bool found = false;
+	for (; commonStopFirst < firstSegment.size; commonStopFirst++) {
+		for (commonStopSecond = 0l commonStopSecond < segmentToMerge.size() && !found; commonStopSecond++) {
+			auto lid1 = firstSegment[commonStopFirst].id;
+			auto lid2 = segmentToMerge[commonStopSecond].id;
+			if (lid1 > 0 && lid2 == lid1) {
+				found = true;
 				break;
 			}
 		}
-		if (found && commonStopFirst < firstSegment.size()) {
-			// we've found common stop so we can merge based on stops
-			// merge last part first
-			int leftPartFirst = firstSegment.size() - commonStopFirst;
-			int leftPartSecond = segmentToMerge.size() - commonStopSecond;
-			if (leftPartFirst < leftPartSecond
-					|| (leftPartFirst == leftPartSecond && firstSegment.get(firstSegment.size() - 1).isMissingStop())) {
-				while (firstSegment.size() > commonStopFirst) {
-					firstSegment.remove(firstSegment.size() - 1);
-				}
-				for (int i = commonStopSecond; i < segmentToMerge.size(); i++) {
-					firstSegment.add(segmentToMerge.get(i));
-				}
-			}
-			// merge first part
-			if (commonStopFirst < commonStopSecond
-					|| (commonStopFirst == commonStopSecond && firstSegment.get(0).isMissingStop())) {
-				for (int i = 0; i <= commonStopFirst; i++) {
-					firstSegment.remove(0);
-				}
-				for (int i = commonStopSecond; i >= 0; i--) {
-					firstSegment.add(0, segmentToMerge.get(i));
-				}
-			}
-			return true;
-
+		if (found) {
+			// important to increment break inside loop
+			break;
 		}
-
-		return false;
 	}
-	 */
+	if (found && commonStopFirst < firstSegment.size()) {
+		// we've found common stop so we can merge based on stops
+		// merge last part first
+		int leftPartFirst = firstSegment.size() - commonStopFirst;
+		int leftPartSecond = segmentToMerge.size() - commonStopSecond;
+		if (leftPartFirst < leftPartSecond 
+				|| (leftPartFirst == leftPartSecond && firstSegment[firstSegment.size()-1]->isMissingStop())) {
+			while (firstSegment.size() > commonStopFirst) {
+				firstSegmnet.erase(firstSegment.size()-1);
+			}
+			for (int i = commonStopSecond; i < segmentToMerge.size(); i++) {
+				firstSegment.push_back(segmentToMerge[i]);
+			}
+		}
+		// merge first part
+		if (commonStopFirst < commonStopSecond 
+				|| (commonStopFirst == commonStopSecond && firstSegment[0]->isMissingStop())) {
+			for (int i = 0; i <= commonStopFirst; i++) {
+				firstSegment.erase(0);
+			}
+			for (int i = commonStopSecond; i >= 0; i--) {
+				firstSegment.insert(0, segmentToMerge[i]);
+			}
+		}
+		return true;
+	}
+	return false;
+
 }
 
 bool TransportRouteStopsReader::tryToMergeMissingStops(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge) {
-	/** java:
-	 // no common stops, so try to connect to the end or beginning
-		// beginning
-		boolean merged = false;
-		if (MapUtils.getDistance(firstSegment.get(0).getLocation(),
-				segmentToMerge.get(segmentToMerge.size() - 1).getLocation()) < MISSING_STOP_SEARCH_RADIUS 
-				&& firstSegment.get(0).isMissingStop() && segmentToMerge.get(segmentToMerge.size() - 1).isMissingStop()) {
-			firstSegment.remove(0);
-			for (int i = segmentToMerge.size() - 2; i >= 0; i--) {
-				firstSegment.add(0, segmentToMerge.get(i));
-			}
-			merged = true;
-		} else if (MapUtils.getDistance(firstSegment.get(firstSegment.size() - 1).getLocation(),
-				segmentToMerge.get(0).getLocation()) < MISSING_STOP_SEARCH_RADIUS
-				&& segmentToMerge.get(0).isMissingStop() && firstSegment.get(firstSegment.size() - 1).isMissingStop()) {
-			firstSegment.remove(firstSegment.size() - 1);
-			for (int i = 1; i < segmentToMerge.size(); i++) {
-				firstSegment.add(segmentToMerge.get(i));
-			}
-			merged = true;
+// no common stops, so try to connect to the end or beginning
+	// beginning
+	boolean merged = false;	
+	if (getDistance(firstSegment[0]->lat, firstSegment[0]->lon, segmentToMerge[segmentToMerge.size() - 1]->lat,
+					segmentToMerge[segmentToMerge.size() - 1]->lon) < MISSING_STOP_SEARCH_RADIUS &&
+		firstSegment[0]->isMissingStop() && segmentToMerge[segmentToMerge.size() - 1]->isMissingStop()) {
+		firstSegment.erase(0);
+		for (int i = segmentToMerge.size()-2; i >= 0; i--) {
+			firstSegment.insert(0, segmentToMerge[i]);
 		}
-		return merged;
-	 */
+		merged = true;
+	} else if (getDistance(firstSegment[firstSegment.size()-1]->lat, firstSegment[firstSegment.size()-1]->lon, 
+	segmentToMerge[0]->lat, segmentToMerge[0]->lon) < MISSING_STOP_SEARCH_RADIUS && segmentToMerge[0]->isMissingStop() && firstSegment[firstSegment.size()-1]->isMissingStop()) {
+		firstSegment.erase(firstSegment.size()-1);
+		for (int i = 1; i < segmentToMerge.size(); i++) {
+			firstSegment.push_back(segmentToMerge[i]);
+		}
+		merged = true;
+	}
+	return merged;
 }
 
 vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::parseRoutePartsToSegments(vector<SHARED_PTR<TransportRoute>> routeParts) {
-	/** java:
-		// here we assume that missing stops come in pairs <A, B, C, MISSING, MISSING, D, E...>
-		// we don't add segments with 1 stop cause they are irrelevant further
-		for (TransportRoute part : routeParts) {
-			List<TransportStop> newSeg = new ArrayList<TransportStop>();
-			for (TransportStop s : part.getForwardStops()) {
-				newSeg.add(s);
-				if (s.isMissingStop()) {
-					if (newSeg.size() > 1) {
-						segs.add(newSeg);
-						newSeg = new ArrayList<TransportStop>();
-					}
+	vector<vector<SHARED_PTR<TrnasportStop>> segs;
+	// here we assume that missing stops come in pairs <A, B, C, MISSING, MISSING, D, E...>
+	// we don't add segments with 1 stop cause they are irrelevant further
+	for (auto& part : routeParts) {
+		vector<SHARED_PTR<TransportStop> newSeg;
+		for (auto& s : part->forwardStops) {
+			newSeg.push_back(s);
+			if (s->isMissingStop()) {
+				if (newSeg.size() > 1) {
+					segs.push_back(newSeg);
+					newSeg = vector<SHARED_PTR<TransportStop>();
 				}
 			}
-			if (newSeg.size() > 1) {
-				segs.add(newSeg);
-			}
+		}
+		if (newSeg.size() > 1) {
+			segs.push_back(newSeg);
 		}
 		return segs;
-	 * 
-	 */
+	}
 }
 
 vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRouteParts(SHARED_PTR<TransportRoute>& baseRoute) {
-	vector<shared_ptr<TransportRoute>> allRoutes;
-	/** java:
-	 * List<TransportRoute> allRoutes = null;
-		for (BinaryMapIndexReader bmir : routesFilesCache.keySet()) {
-			// here we could limit routeMap indexes by only certain bbox around start / end (check comment on field)
-			IncompleteTransportRoute ptr = bmir.getIncompleteTransportRoutes().get(baseRoute.getId());
-			if (ptr != null) {
-				TIntArrayList lst = new TIntArrayList();
-				while (ptr != null) {
-					lst.add(ptr.getRouteOffset());
-					ptr = ptr.getNextLinkedRoute();
-				}
-				if (lst.size() > 0) {
-					if (allRoutes == null) {
-						allRoutes = new ArrayList<TransportRoute>();
-					}
-					allRoutes.addAll(bmir.getTransportRoutes(lst.toArray()).valueCollection());
-				}
+	vector<SHARED_PTR<TransportRoute>> allRoutes;
+	for (auto& f : routesFilesCache) {
+		vector<SHARED_PTR<TransportRoute>> filesRoutes;
+		// here we could limit routeMap indexes by only certain bbox around start / end (check comment on field)
+		// auto::iterator it = f.first->incompleteTransportRoutes.find(baseRoute->id);
+		if (f.first->incompleteTransportRoutes.find(baseRoute->id) != f.first->incompleteTransportRoutes.end()) {
+			shared_ptr<IncompleteTransportRoute> ptr  = f.first->incompleteTransportRoutes[baseRoute->id];
+			vector<int32_t> lst;
+			while (ptr != nullptr) {
+				lst.push_back(ptr->routeOffset);
+				ptr = ptr->getNextLinkedRoute();
 			}
+			if (lst.size() > 0) {
+
+				allRoutes.insert(allRoutes.end(), )
+			}
+
+		if (lst.size() > 0) {
+			sort(lst.begin(), lst.end());
+			loadTransportRoutes(f.first, lst, filesRoutes);
+			allRoutes.insert(filesRoutes.begin(), filesRoutes.end());
 		}
-		return allRoutes;
-	 * 
-	 */ 
+	}
 	return allRoutes;
 }
 

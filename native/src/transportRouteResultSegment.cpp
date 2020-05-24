@@ -34,7 +34,7 @@ double TransportRouteResultSegment::getTravelDist() {
 	return d;
 }
 
-void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
+void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 	route->mergeForwardWays();
 	if (DISPLAY_FULL_SEGMENT_ROUTE) {
 		if (route->forwardWays.size() > DISPLAY_SEGMENT_IND) {
@@ -44,7 +44,7 @@ void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
 		list.insert(list.end(), route->forwardWays.begin(), route->forwardWays.end());
 		return;
 	}
-	vector<Way> fw = route->forwardWays;
+	vector<shared_ptr<Way>> fw = route->forwardWays;
 	double minStart = 150;
 	double minEnd = 150;
 
@@ -56,7 +56,7 @@ void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
 	int endInd = -1;
 	vector<Node> res;
 	for (auto it = fw.begin(); it != fw.end(); ++it) {
-		vector<Node> nodes = (*it).nodes;
+		vector<Node> nodes = (*it)->nodes;
 		for (auto nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
 			const auto n = *nodesIt;
 			double startDist = getDistance(startLat, startLon, n.lat, n.lon);
@@ -72,19 +72,19 @@ void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
 			}
 		}
 	}
-	Way way;
+	shared_ptr<Way> way;
 	if (res.size() == 0 || endInd == -1) {
-		way = Way(STOPS_WAY_ID);
+		way = make_shared<Way>(STOPS_WAY_ID);
 		for (int i = start; i <= end; i++) {
 			double lLat = getStop(i).lat;
 			double lLon = getStop(i).lon;
 			Node n(lLat, lLon);
-			way.addNode(n);
+			way->addNode(n);
 		}
 	} else {
-		way = Way(GEOMETRY_WAY_ID);
+		way = make_shared<Way>(GEOMETRY_WAY_ID);
 		for (int k = 0; k < res.size() && k < endInd; k++) {
-			way.addNode(res[k]);
+			way->addNode(res[k]);
 		}
 	}
 	list.push_back(way);
