@@ -82,8 +82,7 @@ PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
 		routesToLoad.clear();
 		const auto multiStopIt = loadedTransportStops.find(stopId);
 		SHARED_PTR<TransportStop> multifileStop =
-			multiStopIt == loadedTransportStops.end() ? nullptr
-													  : multiStopIt->second;
+			multiStopIt == loadedTransportStops.end() ? nullptr : multiStopIt->second;
 		vector<int64_t> routesIds = stop->routesIds;
 		vector<int64_t> delRIds = stop->deletedRoutesIds;
 		if (multifileStop == nullptr) {
