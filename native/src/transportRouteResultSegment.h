@@ -7,7 +7,7 @@
 #define STOPS_WAY_ID -2
 
 const int MIN_DIST_STOP_TO_GEOMETRY = 150;
-
+const static int MISSING_STOP_SEARCH_RADIUS = 15000;
 struct TransportRoute;
 struct TransportStop;
 struct Way;

@@ -19,10 +19,10 @@ struct TransportRoutingContext {
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> visitedSegments;
 	SHARED_PTR<TransportRoutingConfiguration> cfg;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> combinedRouteCache;
-	UNORDERED(map)<SHARED_PTR<TransportStop>, List<SHARED_PTR<TransportRoute>>> missingStopsCache;
+	UNORDERED(map)<SHARED_PTR<TransportStop>, vector<SHARED_PTR<TransportRoute>>> missingStopsCache;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
-	unique_ptr<TrnasportRouteStopsReader> transportStopsReader;
+	TransportRouteStopsReader* transportStopsReader;
 
 	int32_t startX;
 	int32_t startY;

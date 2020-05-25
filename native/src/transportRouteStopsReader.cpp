@@ -5,6 +5,7 @@
 #include "transportRouteStopsReader.h"
 #include "transportRoutingObjects.h"
 #include <algorithm>
+#include <iterator>
 
 TransportRouteStopsReader::TransportRouteStopsReader(vector<BinaryMapFile*>& files) {
 	for (auto& f: files) {
@@ -161,27 +162,27 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PT
 	
 SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<TransportRoute> route) {
 	// 1. Get all available route parts;
-	auto& incompleteRoutes = findIncompleteRouteParts(route);
+	vector<SHARED_PTR<TransportRoute>> incompleteRoutes = findIncompleteRouteParts(route);
 	if (incompleteRoutes.empty()) {
 		return route;
 	}
 	// here could be multiple overlays between same points
 	// It's better to remove them especially identical segments
-	auto& allWays = getAllWays(incompleteRoutes);
+	vector<SHARED_PTR<Way>> allWays = getAllWays(incompleteRoutes);
 
 	// 2. Get array of segments (each array size > 1):
-	auto& stopSegments = parseRoutePartsToSegments(incompleteRoutes);
+	vector<PT_STOPS_SEGMENT> stopSegments = parseRoutePartsToSegments(incompleteRoutes);
 
 	// 3. Merge segments and remove excess missingStops (when they are closer then MISSING_STOP_SEARCH_RADIUS):
 	// + Check for missingStops. If they present in the middle/there more then one segment - we have a hole in the
 	// map data
-	auto& mergedSegments = combineSegmentsOfSameRoute(stopSegments);
+	vector<PT_STOPS_SEGMENT> mergedSegments = combineSegmentsOfSameRoute(stopSegments);
 
 	// 4. Now we need to properly sort segments, proper sorting is minimizing distance between stops
 	// So it is salesman problem, we have this solution at TspAnt, but if we know last or first segment we can solve
 	// it straightforward
-	vector<SHARED_PTR<TransportRoute>> firstSegment;
-	vector<SHARED_PTR<TransportRoute>> lastSegment;
+	PT_STOPS_SEGMENT firstSegment;
+	PT_STOPS_SEGMENT lastSegment;
 	for (const auto& l : mergedSegments) {
 		if (!l.front()->isMissingStop()) {
 			firstSegment = l;
@@ -190,46 +191,47 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<Tr
 			lastSegment = l;
 		}
 	}
-	vector<vector<SHARED_PTR<TransportStop>>> sortedSegments;
+	vector<PT_STOPS_SEGMENT> sortedSegments;
 	if (!firstSegment.empty()) {
 		sortedSegments.push_back(firstSegment);
-		const auto itFirstSegment = mergedSegments.find(firstSegment);
-		if (itFirstSegment != mergedSegments.end()) {
-			mergedSegments.erase(itFirstSegment);
+		const auto it = std::find(mergedSegments.begin(), mergedSegments.end(), firstSegment);
+		if (it != mergedSegments.end()) {
+			mergedSegments.erase(it);
 		}
 		while (!mergedSegments.empty()) {
 			auto last = sortedSegments.back().back();
-			auto& add = findAndDeleteMinDistance(last->lat, last->lon, mergedSegments, true);
+			auto add = findAndDeleteMinDistance(last->lat, last->lon, mergedSegments, true);
 			sortedSegments.push_back(add);
 		}
 
 	} else if (!lastSegment.empty()) {
 		sortedSegments.push_back(lastSegment);
-		const auto itLastSegment = mergedSegments.find(lastSegment);
-		if (itLastSegment != mergedSegments.end()) {
-			mergedSegments.erase(itLastSegment);
+		const auto it = std::find(mergedSegments.begin(), mergedSegments.end(), lastSegment);
+		if (it != mergedSegments.end()) {
+			mergedSegments.erase(it);
 		}
 		while (!mergedSegments.empty()) {
 			auto first = sortedSegments.front().front();
-			auto& add = findAndDeleteMinDistance(first->lat, first->lon, mergedSegments, false);
+			auto add = findAndDeleteMinDistance(first->lat, first->lon, mergedSegments, false);
 			sortedSegments.insert(sortedSegments.begin(), add);
 		}
 	} else {
 		sortedSegments = mergedSegments;
 	}
-	vector<SHARED_PTR<TransportRoute>> finalList;
+	vector<SHARED_PTR<TransportStop>> finalList;
 	for (auto& s : sortedSegments) {
+		
 		finalList.insert(finalList.end(), s.begin(), s.end());
 	}
 	// 5. Create combined TransportRoute and return it
-	return SHARED_PTR<TransportRoute>(new TransportRoute(route, finalList, allWays));
+	return make_shared<TransportRoute>(route, finalList, allWays);
 }
 
-vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::findAndDeleteMinDistance(double lat, double lon, 
-															vector<vector<SHARED_PTR<TransportStop>>>& mergedSegments, 
+PT_STOPS_SEGMENT TransportRouteStopsReader::findAndDeleteMinDistance(double lat, double lon, 
+															vector<PT_STOPS_SEGMENT>& mergedSegments, 
 															bool attachToBegin) {
 	int ind = attachToBegin ? 0 : mergedSegments.front().size() - 1;
-	auto stop = mergedSegments.front().at(ind);
+	auto stop = mergedSegments[0][ind];
 	double minDist = getDistance(stop->lat, stop->lon, lat, lon);
 	int minInd = 0;
 	for (int i = 1; i < mergedSegments.size(); i++) {
@@ -249,39 +251,39 @@ vector<SHARED_PTR<Way>> TransportRouteStopsReader::getAllWays(vector<SHARED_PTR<
 	vector<SHARED_PTR<Way>> w;
 	for (auto t : parts) {
 		if (!t->forwardWays.empty()) {
-			w.insert(w.end(), t.forwardWays.begin(), t.forwardWays.end());
+			w.insert(w.end(), t->forwardWays.begin(), t->forwardWays.end());
 		}
 	}
 	return w;
 }
 
-vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::combineSegmentsOfSameRoute(vector<vector<SHARED_PTR<TransportStop>>>& segments) { 
-	vector<vector<SHARED_PTR<TransportStop>>> resultSegments;
-	auto& tempResultSegments = mergeSegments(segments, resultSegments, false);
+vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::combineSegmentsOfSameRoute(vector<PT_STOPS_SEGMENT>& segs) { 
+	vector<PT_STOPS_SEGMENT> resultSegments;
+	auto tempResultSegments = mergeSegments(segs, resultSegments, false);
 	resultSegments.clear();
 	return mergeSegments(tempResultSegments, resultSegments, true);
 }
 
-vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::mergeSegments(vector<SHARED_PTR<TransportStop>>& segments, 
-																					vector<SHARED_PTR<TransportStop>>& resultSegments, 
-																					bool mergeMissingSegs) {
-	std::deque<SHARED_PTR<TransportStop>> segQueue(segments.begin(), segments.end()); //check
+vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOPS_SEGMENT>& segments, 
+																vector<PT_STOPS_SEGMENT>& resultSegments, 
+																bool mergeMissingSegs) {
+	std::deque<PT_STOPS_SEGMENT> segQueue(segments.begin(), segments.end()); //check
 	while (segQueue.size() > 0) {
-		auto& firstSegment = segQueue.front();
+		auto firstSegment = segQueue.front();
 		segQueue.pop_front();
 		bool merged = true;
 		while (merged) {
 			merged = false;
-			vector<SHARED_PTR<TransportStop>>::iterator it = segQueue.cbegin();
-			while(it != segQueue.cend()) {
-				auto& segmentToMerge = *it;
+			deque<PT_STOPS_SEGMENT>::iterator it = segQueue.begin();
+			while(it != segQueue.end()) {
+				auto segmentToMerge = *it;
 				if (mergeMissingSegs) {
-					merged = tryToMergeMissingStops(firstSegment, segmentToMerge)
+					merged = tryToMergeMissingStops(firstSegment, segmentToMerge);	
 				} else {
 					merged = tryToMerge(firstSegment, segmentToMerge);
 				}
 				if (merged) {
-					it.erase();
+					segQueue.erase(it);
 				}
 
 				it++;
@@ -292,17 +294,17 @@ vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::mergeSegmen
 	return resultSegments;
 }
 	
-bool TransportRouteStopsReader::tryToMerge(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge) {
-	if (firstSegment.size() < 2 || segmentToMerge.size < 2) {
+bool TransportRouteStopsReader::tryToMerge(PT_STOPS_SEGMENT& firstSegment, PT_STOPS_SEGMENT& segmentToMerge) {
+	if (firstSegment.size() < 2 || segmentToMerge.size() < 2) {
 		return false;
 	}
 	int commonStopFirst = 0;
 	int commonStopSecond = 0;
 	bool found = false;
-	for (; commonStopFirst < firstSegment.size; commonStopFirst++) {
-		for (commonStopSecond = 0l commonStopSecond < segmentToMerge.size() && !found; commonStopSecond++) {
-			auto lid1 = firstSegment[commonStopFirst].id;
-			auto lid2 = segmentToMerge[commonStopSecond].id;
+	for (; commonStopFirst < firstSegment.size(); commonStopFirst++) {
+		for (commonStopSecond = 0;  commonStopSecond < segmentToMerge.size() && !found; commonStopSecond++) {
+			auto lid1 = firstSegment[commonStopFirst]->id;
+			auto lid2 = segmentToMerge[commonStopSecond]->id;
 			if (lid1 > 0 && lid2 == lid1) {
 				found = true;
 				break;
@@ -321,7 +323,9 @@ bool TransportRouteStopsReader::tryToMerge(vector<SHARED_PTR<TransportStop>>& fi
 		if (leftPartFirst < leftPartSecond 
 				|| (leftPartFirst == leftPartSecond && firstSegment[firstSegment.size()-1]->isMissingStop())) {
 			while (firstSegment.size() > commonStopFirst) {
-				firstSegmnet.erase(firstSegment.size()-1);
+				const auto it = firstSegment.end()-1;
+				firstSegment.erase(it);
+				// firstSegment.erase(firstSegment.size()-1);
 			}
 			for (int i = commonStopSecond; i < segmentToMerge.size(); i++) {
 				firstSegment.push_back(segmentToMerge[i]);
@@ -331,10 +335,12 @@ bool TransportRouteStopsReader::tryToMerge(vector<SHARED_PTR<TransportStop>>& fi
 		if (commonStopFirst < commonStopSecond 
 				|| (commonStopFirst == commonStopSecond && firstSegment[0]->isMissingStop())) {
 			for (int i = 0; i <= commonStopFirst; i++) {
-				firstSegment.erase(0);
+				const auto it = firstSegment.begin();
+				firstSegment.erase(it);
+				// firstSegment.erase(0);
 			}
 			for (int i = commonStopSecond; i >= 0; i--) {
-				firstSegment.insert(0, segmentToMerge[i]);
+				firstSegment.insert(firstSegment.begin(), segmentToMerge[i]);
 			}
 		}
 		return true;
@@ -343,21 +349,29 @@ bool TransportRouteStopsReader::tryToMerge(vector<SHARED_PTR<TransportStop>>& fi
 
 }
 
-bool TransportRouteStopsReader::tryToMergeMissingStops(vector<SHARED_PTR<TransportStop>>& firstSegment, vector<SHARED_PTR<TransportStop>>& segmentToMerge) {
+bool TransportRouteStopsReader::tryToMergeMissingStops(PT_STOPS_SEGMENT& firstSegment, PT_STOPS_SEGMENT& segmentToMerge) {
 // no common stops, so try to connect to the end or beginning
 	// beginning
-	boolean merged = false;	
+	bool merged = false;	
 	if (getDistance(firstSegment[0]->lat, firstSegment[0]->lon, segmentToMerge[segmentToMerge.size() - 1]->lat,
 					segmentToMerge[segmentToMerge.size() - 1]->lon) < MISSING_STOP_SEARCH_RADIUS &&
 		firstSegment[0]->isMissingStop() && segmentToMerge[segmentToMerge.size() - 1]->isMissingStop()) {
-		firstSegment.erase(0);
+		const auto it = firstSegment.begin();
+		if (it != firstSegment.end()) {
+			firstSegment.erase(it);
+		}
+		// firstSegment.erase(0);
 		for (int i = segmentToMerge.size()-2; i >= 0; i--) {
-			firstSegment.insert(0, segmentToMerge[i]);
+			firstSegment.insert(firstSegment.begin(), segmentToMerge[i]);
 		}
 		merged = true;
 	} else if (getDistance(firstSegment[firstSegment.size()-1]->lat, firstSegment[firstSegment.size()-1]->lon, 
 	segmentToMerge[0]->lat, segmentToMerge[0]->lon) < MISSING_STOP_SEARCH_RADIUS && segmentToMerge[0]->isMissingStop() && firstSegment[firstSegment.size()-1]->isMissingStop()) {
-		firstSegment.erase(firstSegment.size()-1);
+		const auto it = firstSegment.end()-1;
+		if (it != firstSegment.end()) {
+			firstSegment.erase(it);
+		}
+		// firstSegment.erase(firstSegment.size()-1);
 		for (int i = 1; i < segmentToMerge.size(); i++) {
 			firstSegment.push_back(segmentToMerge[i]);
 		}
@@ -366,50 +380,48 @@ bool TransportRouteStopsReader::tryToMergeMissingStops(vector<SHARED_PTR<Transpo
 	return merged;
 }
 
-vector<vector<SHARED_PTR<TransportStop>>> TransportRouteStopsReader::parseRoutePartsToSegments(vector<SHARED_PTR<TransportRoute>> routeParts) {
-	vector<vector<SHARED_PTR<TrnasportStop>> segs;
+vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::parseRoutePartsToSegments(vector<SHARED_PTR<TransportRoute>> routeParts) {
+	vector<PT_STOPS_SEGMENT> segs;
 	// here we assume that missing stops come in pairs <A, B, C, MISSING, MISSING, D, E...>
 	// we don't add segments with 1 stop cause they are irrelevant further
 	for (auto& part : routeParts) {
-		vector<SHARED_PTR<TransportStop> newSeg;
+		PT_STOPS_SEGMENT newSeg;
 		for (auto& s : part->forwardStops) {
 			newSeg.push_back(s);
 			if (s->isMissingStop()) {
 				if (newSeg.size() > 1) {
 					segs.push_back(newSeg);
-					newSeg = vector<SHARED_PTR<TransportStop>();
+					newSeg = PT_STOPS_SEGMENT();
 				}
 			}
 		}
 		if (newSeg.size() > 1) {
 			segs.push_back(newSeg);
 		}
-		return segs;
 	}
+	return segs;
 }
 
 vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRouteParts(SHARED_PTR<TransportRoute>& baseRoute) {
 	vector<SHARED_PTR<TransportRoute>> allRoutes;
 	for (auto& f : routesFilesCache) {
-		vector<SHARED_PTR<TransportRoute>> filesRoutes;
+		 UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> filesRoutesMap;
 		// here we could limit routeMap indexes by only certain bbox around start / end (check comment on field)
 		// auto::iterator it = f.first->incompleteTransportRoutes.find(baseRoute->id);
+		vector<int32_t> lst;
 		if (f.first->incompleteTransportRoutes.find(baseRoute->id) != f.first->incompleteTransportRoutes.end()) {
 			shared_ptr<IncompleteTransportRoute> ptr  = f.first->incompleteTransportRoutes[baseRoute->id];
-			vector<int32_t> lst;
 			while (ptr != nullptr) {
 				lst.push_back(ptr->routeOffset);
 				ptr = ptr->getNextLinkedRoute();
 			}
-			if (lst.size() > 0) {
-
-				allRoutes.insert(allRoutes.end(), )
-			}
-
+		}
 		if (lst.size() > 0) {
 			sort(lst.begin(), lst.end());
-			loadTransportRoutes(f.first, lst, filesRoutes);
-			allRoutes.insert(filesRoutes.begin(), filesRoutes.end());
+			loadTransportRoutes(f.first, lst, filesRoutesMap);
+			for (auto& r : filesRoutesMap) {
+				allRoutes.push_back(r.second);
+			}
 		}
 	}
 	return allRoutes;

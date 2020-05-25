@@ -134,11 +134,11 @@ struct TransportRoute : public MapObject {
 	string type;
 	uint32_t dist;
 	string color;
-	vector<shared_ptr<Way>> forwardWays;
+	vector<SHARED_PTR<Way>> forwardWays;
 	TransportSchedule schedule;
 
 	TransportRoute();
-	TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<shared_ptr<Way>>& cforwardWays) ;
+	TransportRoute(SHARED_PTR<TransportRoute>& base, vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<SHARED_PTR<Way>>& cforwardWays);
 
 	TransportSchedule& getOrCreateSchedule();
 	void mergeForwardWays();

@@ -1,5 +1,5 @@
-#ifndef _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_CPP
-#define _OSMAND_TRANSPORT_ROUTING_CONFIGURATION_CPP
+#ifndef _OSMAND_TRANSPORT_ROUTING_CONTEXT_CPP
+#define _OSMAND_TRANSPORT_ROUTING_CONTEXT_CPP
 #include "transportRoutingContext.h"
 
 #include "binaryRead.h"
@@ -14,7 +14,8 @@ TransportRoutingContext::TransportRoutingContext(SHARED_PTR<TransportRoutingConf
 	cfg = cfg_;
 	walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
 	walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));
-	transportStopsReader = unique_ptr<TransportStopsReader>(new transportStopsReader(getOpenMapFiles());
+	vector<BinaryMapFile* > files = getOpenMapFiles();
+	transportStopsReader = new TransportRouteStopsReader(files);
 
 	startCalcTime = 0;
 	visitedRoutesCount = 0;
@@ -87,8 +88,8 @@ TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 	buildSearchTransportRequest(&q, (x << pz), ((x + 1) << pz), (y << pz),
 								((y + 1) << pz), -1, stops);
 
-	vector<SHARED_PTR<TransportStop>> stops = transportStopsReader->readMergedTransportStops(q);
-	loadTransportSegments(stopsValues, lst);
+	stops = transportStopsReader->readMergedTransportStops(&q);
+	loadTransportSegments(stops, lst);
 	readTime.Pause();
 	return lst;
 }
@@ -157,7 +158,7 @@ void TransportRoutingContext::loadScheduleRouteSegment(
 					route, stopIndex, startTime));
 			}
 		}
-	
+	// }
 }
 
-#endif	//_OSMAND_TRANSPORT_ROUTING_CONFIGURATION_CPP
+#endif	//_OSMAND_TRANSPORT_ROUTING_CONTEXT_CPP
