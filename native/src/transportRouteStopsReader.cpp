@@ -9,7 +9,9 @@
 
 TransportRouteStopsReader::TransportRouteStopsReader(vector<BinaryMapFile*>& files) {
 	for (auto& f: files) {
-		routesFilesCache.insert(make_pair(f, PT_ROUTE_MAP()));
+		if (f->transportIndexes.size() > 0) {
+			routesFilesCache.insert(make_pair(f, PT_ROUTE_MAP()));
+		}
 	}
 }
 
