@@ -1665,7 +1665,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
-				shared_ptr<Way> w;
+				shared_ptr<Way> w = make_shared<Way>();
 				while (input->BytesUntilLimit() > 0) {
 					int32_t ddx;
 					int32_t ddy;

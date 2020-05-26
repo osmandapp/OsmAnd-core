@@ -28,8 +28,8 @@ struct TransportRouteStopsReader {
 
 	void putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_t> referenceToRoutes);
 	void loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& localFileRoutes);
-	SHARED_PTR<TransportRoute> getCombinedRoute(SHARED_PTR<TransportRoute> route);
-	SHARED_PTR<TransportRoute> combineRoute(SHARED_PTR<TransportRoute> route);
+	SHARED_PTR<TransportRoute> getCombinedRoute(SHARED_PTR<TransportRoute>& route);
+	SHARED_PTR<TransportRoute> combineRoute(SHARED_PTR<TransportRoute>& route);
 	PT_STOPS_SEGMENT findAndDeleteMinDistance(double lat, double lon, 
 																vector<PT_STOPS_SEGMENT>& mergedSegments, 
 																bool attachToBegin);

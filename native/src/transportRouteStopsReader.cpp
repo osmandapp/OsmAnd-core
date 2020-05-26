@@ -38,7 +38,7 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 			if (rrs.size() > 0 && !multifileStop->isDeleted()) {
 				for (int32_t rr : rrs) {
 					const auto it = routesToLoad.find(rr);
-					const auto &route = it->second;
+					auto &route = it->second;
 					if (it == routesToLoad.end()) {
 						// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
 						// "Something went wrong by loading route %d for stop %d", rr, stop->id);
@@ -72,16 +72,16 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 
 
 PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
-																			UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-																			vector<SHARED_PTR<TransportStop>> &stops) {
+															UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
+															vector<SHARED_PTR<TransportStop>> &stops) {
 	
-	PT_ROUTE_MAP routesToLoad = routesFilesCache.at(file);
+	PT_ROUTE_MAP routesToLoad = routesFilesCache[file];
 	vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
 	
 	while (it != stops.end()) {
 		const auto stop = *it;
 		int64_t stopId = stop->id;
-		routesToLoad.clear();
+		// routesToLoad.clear();
 		const auto multiStopIt = loadedTransportStops.find(stopId);
 		SHARED_PTR<TransportStop> multifileStop =
 			multiStopIt == loadedTransportStops.end() ? nullptr : multiStopIt->second;
@@ -143,12 +143,12 @@ void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& lo
 				routesToLoad.push_back(itr.first);
 			}
 		}
-
+		localFileRoutes.clear();
 		loadTransportRoutes(file, routesToLoad, localFileRoutes);
 	}
 }
 
-SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PTR<TransportRoute> route) {
+SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PTR<TransportRoute>& route) {
 	if (!route->isIncomplete()) {
 		return route;
 	}
@@ -161,7 +161,7 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PT
 	return c;
 }
 	
-SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<TransportRoute> route) {
+SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<TransportRoute>& route) {
 	// 1. Get all available route parts;
 	vector<SHARED_PTR<TransportRoute>> incompleteRoutes = findIncompleteRouteParts(route);
 	if (incompleteRoutes.empty()) {
