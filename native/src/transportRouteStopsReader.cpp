@@ -6,6 +6,7 @@
 #include "transportRoutingObjects.h"
 #include <algorithm>
 #include <iterator>
+#include "Logging.h"
 
 TransportRouteStopsReader::TransportRouteStopsReader(vector<BinaryMapFile*>& files) {
 	for (auto& f: files) {
@@ -40,15 +41,17 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 					const auto it = routesToLoad.find(rr);
 					auto &route = it->second;
 					if (it == routesToLoad.end()) {
-						// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
-						// "Something went wrong by loading route %d for stop %d", rr, stop->id);
+						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
+						"Something went wrong by loading route %d for stop %d", rr, stop->id);
 					} else {
 						SHARED_PTR<TransportRoute> combinedRoute = getCombinedRoute(route); 
 						if (multifileStop == stop ||
 							   (!multifileStop->hasRoute(route->id) &&
 								!multifileStop->isRouteDeleted(route->id))) {
 							// duplicates won't be added check!
-							multifileStop->addRouteId(combinedRoute->id);
+							if(std::find(multifileStop->routesIds.begin(), multifileStop->routesIds.end(), combinedRoute->id) != multifileStop->routesIds.end()) {
+								multifileStop->addRouteId(combinedRoute->id);
+							}
 							multifileStop->addRoute(combinedRoute);
 						}
 					}
@@ -269,7 +272,7 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOP
 																vector<PT_STOPS_SEGMENT>& resultSegments, 
 																bool mergeMissingSegs) {
 	std::deque<PT_STOPS_SEGMENT> segQueue(segments.begin(), segments.end()); //check
-	while (segQueue.size() > 0) {
+	while (!segQueue.empty()) {
 		auto firstSegment = segQueue.front();
 		segQueue.pop_front();
 		bool merged = true;
@@ -284,13 +287,14 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOP
 					merged = tryToMerge(firstSegment, segmentToMerge);
 				}
 				if (merged) {
-					segQueue.erase(it);
+					it = segQueue.erase(it);
 				}
-
-				it++;
+				if (it != segQueue.end()) {
+					it++;
+				}
 			}
 		}
-		resultSegments.push_back(firstSegment); //check
+		resultSegments.push_back(firstSegment);
 	}
 	return resultSegments;
 }
@@ -408,8 +412,10 @@ vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRout
 	for (auto& f : routesFilesCache) {
 		 UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> filesRoutesMap;
 		// here we could limit routeMap indexes by only certain bbox around start / end (check comment on field)
-		// auto::iterator it = f.first->incompleteTransportRoutes.find(baseRoute->id);
 		vector<int32_t> lst;
+		
+		getIncompleteTransportRoutes(f.first);
+		
 		if (f.first->incompleteTransportRoutes.find(baseRoute->id) != f.first->incompleteTransportRoutes.end()) {
 			shared_ptr<IncompleteTransportRoute> ptr  = f.first->incompleteTransportRoutes[baseRoute->id];
 			while (ptr != nullptr) {

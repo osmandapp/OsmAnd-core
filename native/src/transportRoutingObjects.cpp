@@ -4,6 +4,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include <algorithm>
+#include "Logging.h"
 
 // MapObject:
 
@@ -44,12 +45,7 @@ bool TransportStopExit::compareExit(SHARED_PTR<TransportStopExit>& thatObj) {
 
 // TransportStop:
 
-TransportStop::TransportStop() :
-distance(0),
-x31(-1),
-y31(-1)
-{
-}
+TransportStop::TransportStop() : distance(0), x31(-1), y31(-1) {}
 
 bool TransportStop::hasRoute(int64_t routeId) {
 	return std::find(routesIds.begin(), routesIds.end(), routeId) !=
@@ -123,8 +119,8 @@ void TransportStop::setLocation(int zoom, int32_t dx, int32_t dy) {
 }
 
 bool TransportStop::isMissingStop() {
-	if (MISSING_STOP_NAME.compare(name) == 0) {
-		return true;
+	if (MISSING_STOP_NAME.compare(name.c_str()) == 0) {
+			return true;
 	}
 	return false;
 }
@@ -202,12 +198,13 @@ TransportRoute::TransportRoute(SHARED_PTR<TransportRoute>& base,
 	ref = base->ref;
 	routeOperator = base->routeOperator;
 	type = base->type;
-	dist = base->dist;
+	dist = base->dist; //??
 	color = base->color;
 	schedule = base->schedule;
 
 	forwardWays = cforwardWays;
 	forwardStops = cforwardStops;
+
 }
 
 TransportSchedule& TransportRoute::getOrCreateSchedule() {

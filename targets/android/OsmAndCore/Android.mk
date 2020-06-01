@@ -55,6 +55,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_CORE_RELATIVE)/src/transportRouteResult.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/transportRoutingConfiguration.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/transportRoutingContext.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/transportRouteStopsReader.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/proto/osmand_index.pb.cc \
 	$(OSMAND_CORE_RELATIVE)/src/java_wrap.cpp
 	

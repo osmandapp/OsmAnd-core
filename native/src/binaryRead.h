@@ -650,6 +650,7 @@ struct BinaryMapFile {
 	std::vector<TransportIndex*> transportIndexes;
 	std::vector<BinaryPartIndex*> indexes;
 	UNORDERED(map) <uint64_t, shared_ptr<IncompleteTransportRoute>> incompleteTransportRoutes;
+	bool incompleteLoaded = false;
 	int fd;
 	int routefd;
 	bool basemap;
@@ -799,5 +800,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 bool initMapFilesFromCache(std::string inputName) ;
 
 bool closeBinaryMapFile(std::string inputName);
+
+void getIncompleteTransportRoutes(BinaryMapFile* file);
 
 #endif

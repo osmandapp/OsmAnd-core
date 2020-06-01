@@ -109,30 +109,33 @@ void TransportRoutePlanner::prepareResults(
 	}
 }
 
-void TransportRoutePlanner::buildTransportRoute(
-	unique_ptr<TransportRoutingContext>& ctx,
-    vector<SHARED_PTR<TransportRouteResult>>& res) {
+void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingContext>& ctx,
+    											vector<SHARED_PTR<TransportRouteResult>>& res) {
+	
 	OsmAnd::ElapsedTimer pt_timer;
 	pt_timer.Start();
 	ctx->loadTime.Enable();
 	ctx->searchTransportIndexTime.Enable();
 	ctx->readTime.Enable();
+	
+	double totalDistance = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon);
+
 	TransportSegmentsComparator trSegmComp;
 	TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
-	double totalDistance = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon);
 	vector<SHARED_PTR<TransportRouteSegment>> startStops;
-	ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
 	vector<SHARED_PTR<TransportRouteSegment>> endStops;
-	ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
+	vector<SHARED_PTR<TransportRouteSegment>> results;
+	
+	ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
+	ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
 	ctx->calcLatLons();
-
+	
 	for (SHARED_PTR<TransportRouteSegment>& s : endStops) {
 		endSegments.insert({s->getId(), s});
 	}
-	if (startStops.size() == 0) {
-		return;
-	}
+
+	if (startStops.size() == 0) { return; }
 
 	for (SHARED_PTR<TransportRouteSegment>& r : startStops) {
 		r->walkDist = getDistance(r->getLocationLat(), r->getLocationLon(), ctx->startLat, ctx->startLon);
@@ -149,13 +152,10 @@ void TransportRoutePlanner::buildTransportRoute(
 		ctx->finishTimeSeconds += increaseTime / 6;
 	}
 	
-	double maxTravelTimeCmpToWalk =
-		getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) / ctx->cfg->walkSpeed -
-		ctx->cfg->changeTime / 2;
-	vector<SHARED_PTR<TransportRouteSegment>> results;
-	// initProgressBar(ctx, start, end); - ui
+	double maxTravelTimeCmpToWalk = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) 
+									/ ctx->cfg->walkSpeed - ctx->cfg->changeTime / 2;
+	
 	while (queue.size() > 0) {
-		// 	long beginMs = MEASURE_TIME ? System.currentTimeMillis() : 0;
 		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			ctx->calculationProgress->setSegmentNotFound(0);
 			return;
@@ -164,6 +164,7 @@ void TransportRoutePlanner::buildTransportRoute(
 		SHARED_PTR<TransportRouteSegment> segment = queue.top();
 		queue.pop();
 		SHARED_PTR<TransportRouteSegment> ex;
+		
 		if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
 			ex = ctx->visitedSegments.find(segment->getId())->second;
 			if (ex->distFromStart > segment->distFromStart) {
@@ -247,7 +248,10 @@ void TransportRoutePlanner::buildTransportRoute(
 					queue.push(nextSegment);
 				}
 			}
-			SHARED_PTR<TransportRouteSegment> finalSegment = endSegments[segmentId];
+			SHARED_PTR<TransportRouteSegment> finalSegment = nullptr;
+			if (endSegments.find(segmentId) != endSegments.end()) {
+				finalSegment = endSegments[segmentId];
+			}
 			double distToEnd = getDistance(stop->lat, stop->lon, ctx->endLat, ctx->endLon);
 
 			if (finalSegment != nullptr && distToEnd < ctx->cfg->walkRadius) {

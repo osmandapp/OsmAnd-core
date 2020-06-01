@@ -60,17 +60,14 @@ struct TransportRoutingContext {
 	}
 
 	void calcLatLons();
-	void getTransportStops(int32_t sx, int32_t sy, bool change,
-						   vector<SHARED_PTR<TransportRouteSegment>> &res);
-	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright,
-									 int stop, int sbottom, int limit,
+	void getTransportStops(int32_t sx, int32_t sy, bool change, vector<SHARED_PTR<TransportRouteSegment>> &res);
+	void buildSearchTransportRequest(SearchQuery *q, int sleft, int sright, int stop, int sbottom, int limit,
 									 vector<SHARED_PTR<TransportStop>> &stops);
 	std::vector<SHARED_PTR<TransportRouteSegment>> loadTile(uint32_t x, uint32_t y);
 	void loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops,
 							   vector<SHARED_PTR<TransportRouteSegment>> &lst);
-	void loadScheduleRouteSegment(
-		std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
-		SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
+	void loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
+								  SHARED_PTR<TransportRoute> &route, int32_t stopIndex);
 };
 
 #endif	// _OSMAND_TRANSPORT_ROUTING_CONTEXT_H

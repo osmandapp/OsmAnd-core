@@ -9,6 +9,7 @@
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
 #include "transportRouteStopsReader.h"
+#include "Logging.h"
 
 TransportRoutingContext::TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration>& cfg_) {
 	cfg = cfg_;
@@ -78,8 +79,7 @@ void TransportRoutingContext::buildSearchTransportRequest(
 	q->limit = limit;
 }
 
-std::vector<SHARED_PTR<TransportRouteSegment>>
-TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
+std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 	readTime.Start();
 	vector<SHARED_PTR<TransportRouteSegment>> lst;
 	int pz = (31 - cfg->zoomToLoadTiles);
@@ -94,9 +94,8 @@ TransportRoutingContext::loadTile(uint32_t x, uint32_t y) {
 	return lst;
 }
 
-void TransportRoutingContext::loadTransportSegments(
-	vector<SHARED_PTR<TransportStop>> &stops,
-	vector<SHARED_PTR<TransportRouteSegment>> &lst) {
+void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportStop>> &stops,
+													vector<SHARED_PTR<TransportRouteSegment>> &lst) {
 	loadSegmentsTime.Start();
 	for (SHARED_PTR<TransportStop> &s : stops) {
 		if (s->isDeleted() || s->routes.size() == 0) {
@@ -106,16 +105,22 @@ void TransportRoutingContext::loadTransportSegments(
 			int stopIndex = -1;
 			double dist = SAME_STOP;
 			for (int k = 0; k < route->forwardStops.size(); k++) {
-				SHARED_PTR<TransportStop> st = route->forwardStops.at(k);
+				SHARED_PTR<TransportStop> st = route->forwardStops[k];
 				if (st->id == s->id) {
 					stopIndex = k;
+					// if (route->id == 10523942) {
+					// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Segment for stop: %s of route id: %d, segStart: %d", st->name.c_str(), route->id, stopIndex);
+					// }
 					break;
 				}
+				
 				double d = getDistance(st->lat, st->lon, s->lat, s->lon);
 				if (d < dist) {
 					stopIndex = k;
 					dist = d;
 				}
+
+			
 			}
 			if (stopIndex != -1) {
 				if (cfg->useSchedule) {
@@ -125,9 +130,9 @@ void TransportRoutingContext::loadTransportSegments(
 						make_shared<TransportRouteSegment>(route, stopIndex));
 				}
 			} else {
-				//    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
-				//    "Routing error: missing stop '%s' in route '%s' id: %d",
-				//    s->toString(), route->ref, route->id / 2));
+				   OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
+				   "Routing error: missing stop '%s' in route '%s' id: %d",
+				   s->name.c_str(), route->ref.c_str(), route->id / 2);
 			}
 		}
 	}

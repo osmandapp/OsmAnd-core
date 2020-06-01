@@ -11,6 +11,7 @@
 #include "google/protobuf/wire_format_lite.cc"
 #include "proto/OBF.pb.h"
 #include "proto/osmand_index.pb.h"
+#include "Logging.h"
 #if defined(WIN32)
 #undef min
 #undef max
@@ -1200,21 +1201,22 @@ bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransport
 }
 
 void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t, 
-	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int32_t lenght, int32_t offset) {
+	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int32_t length, int32_t offset) {
+	input->Seek(offset);
 	bool end = false;
+	uint32_t sizeL;
 	while(!end) {
 		int t = input->ReadTag();
 		int tag = WireFormatLite::GetTagFieldNumber(t);
 		switch(tag) {
 			case OsmAnd::OBF::IncompleteTransportRoutes::kRoutesFieldNumber: {
-				uint32_t sizeL;
 				input->ReadVarint32(&sizeL);
 				int32_t olds = input->PushLimit(sizeL);
 				shared_ptr<IncompleteTransportRoute> ir = make_shared<IncompleteTransportRoute>();
 				readIncompleteRoute(input, ir);
+
 				if (incompleteRoutes.find(ir->routeId) != incompleteRoutes.end()) {
-					shared_ptr<IncompleteTransportRoute> itr = incompleteRoutes[ir->routeId];
-					itr->setNextLinkedRoute(ir);
+					incompleteRoutes[ir->routeId]->setNextLinkedRoute(ir);
 				} else {
 					incompleteRoutes.insert({ir->routeId, ir});
 				}
@@ -1233,8 +1235,8 @@ void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t,
 	}
 }
 
-UNORDERED(map)<uint64_t, shared_ptr<IncompleteTransportRoute>> getIncompleteTransportRoutes(BinaryMapFile* file) {
-	if (file->incompleteTransportRoutes.size() == 0) {
+void getIncompleteTransportRoutes(BinaryMapFile* file) {
+	if (!file->incompleteLoaded) {
 		for (auto& ti : file->transportIndexes) {
 			if (ti->incompleteRoutesLength > 0) {
 				lseek(file->routefd, 0, SEEK_SET);
@@ -1247,8 +1249,8 @@ UNORDERED(map)<uint64_t, shared_ptr<IncompleteTransportRoute>> getIncompleteTran
 						ti->incompleteRoutesOffset);
 			}
 		}
+		file->incompleteLoaded = true;
 	}
-	return file->incompleteTransportRoutes;
 }
 
 bool readTransportStopExit(CodedInputStream* input, SHARED_PTR<TransportStopExit>& exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
@@ -1367,8 +1369,8 @@ bool readTransportStop(int stopOffset, SHARED_PTR<TransportStop>& stop, CodedInp
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kIdFieldNumber : {
-				uint64_t id;
-				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &id)));
+				int64_t id;
+				DO_((WireFormatLite::ReadPrimitive<int64_t, WireFormatLite::TYPE_SINT64>(input, &id)));
 				stop->id = id;
 				break;
 			}
@@ -1851,7 +1853,7 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 		searchTransportIndex(*transportIndex, q, &cis);
 	}
 	if (q->numberOfVisitedObjects > 0) {
-		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
+		// OsmAnd::LoOsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
 		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
 	}
 	return;
@@ -3104,6 +3106,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 		for (int i = 0; i < fo->transportindex_size(); i++) {
 			TransportIndex *ti = new TransportIndex();
 			OsmAnd::OBF::TransportPart tp = fo->transportindex(i);
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "String table offset: %d, length: %d", tp.stopstableoffset(), tp.stopstablelength());
 			ti->filePointer = tp.offset();
 			ti->length = tp.size();
 			ti->name = tp.name();
