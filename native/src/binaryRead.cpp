@@ -751,7 +751,7 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kIncompleteRoutesFieldNumber : {
 				input->ReadVarint32(&ind->incompleteRoutesLength);
 				ind->incompleteRoutesOffset = input->TotalBytesRead();
-				input->Seek(ind->incompleteRoutesOffset + ind->incompleteRoutesOffset);
+				input->Seek(ind->incompleteRoutesOffset + ind->incompleteRoutesLength);
 				break;
 			}
 			default: {
@@ -1853,7 +1853,7 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file){
 		searchTransportIndex(*transportIndex, q, &cis);
 	}
 	if (q->numberOfVisitedObjects > 0) {
-		// OsmAnd::LoOsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Search is done. Visit %d objects. Read %d objects.", q->numberOfVisitedObjects, q->numberOfAcceptedObjects);
 		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Read %d subtrees. Go through %d subtrees. ", q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees);
 	}
 	return;
@@ -1897,9 +1897,8 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 		for (int i = 0; i < pointers.size(); i++) {
 			int32_t filePointer = pointers[i];
 			SHARED_PTR<TransportRoute> transportRoute = make_shared<TransportRoute>();
-			if (readTransportRoute(file, transportRoute, filePointer, stringTable, false))
-			{
-				result.insert({filePointer, transportRoute});
+			if (readTransportRoute(file, transportRoute, filePointer, stringTable, false)) {
+				result[filePointer] = transportRoute;
 				finishInit.push_back(transportRoute);
 			}
 		}
@@ -3106,7 +3105,6 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 		for (int i = 0; i < fo->transportindex_size(); i++) {
 			TransportIndex *ti = new TransportIndex();
 			OsmAnd::OBF::TransportPart tp = fo->transportindex(i);
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "String table offset: %d, length: %d", tp.stopstableoffset(), tp.stopstablelength());
 			ti->filePointer = tp.offset();
 			ti->length = tp.size();
 			ti->name = tp.name();

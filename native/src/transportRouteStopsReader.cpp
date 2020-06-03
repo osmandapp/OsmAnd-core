@@ -36,18 +36,20 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 			vector<int32_t> rrs = stop->referencesToRoutes;
 			// clear up so it won't be used as it is multi file stop
 			stop->referencesToRoutes.clear();
+			
 			if (rrs.size() > 0 && !multifileStop->isDeleted()) {
 				for (int32_t rr : rrs) {
-					const auto it = routesToLoad.find(rr);
-					auto &route = it->second;
-					if (it == routesToLoad.end()) {
+					
+					if (routesToLoad.find(rr) == routesToLoad.end()) {
 						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
 						"Something went wrong by loading route %d for stop %d", rr, stop->id);
 					} else {
+						const auto it = routesToLoad.find(rr);
+						auto &route = it->second;	
 						SHARED_PTR<TransportRoute> combinedRoute = getCombinedRoute(route); 
 						if (multifileStop == stop ||
-							   (!multifileStop->hasRoute(route->id) &&
-								!multifileStop->isRouteDeleted(route->id))) {
+							   (!multifileStop->hasRoute(combinedRoute->id) &&
+								!multifileStop->isRouteDeleted(combinedRoute->id))) {
 							// duplicates won't be added check!
 							if(std::find(multifileStop->routesIds.begin(), multifileStop->routesIds.end(), combinedRoute->id) != multifileStop->routesIds.end()) {
 								multifileStop->addRouteId(combinedRoute->id);
@@ -78,7 +80,7 @@ PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
 															UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
 															vector<SHARED_PTR<TransportStop>> &stops) {
 	
-	PT_ROUTE_MAP routesToLoad = routesFilesCache[file];
+	auto routesToLoad = routesFilesCache[file];
 	vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
 	
 	while (it != stops.end()) {
@@ -146,17 +148,18 @@ void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& lo
 				routesToLoad.push_back(itr.first);
 			}
 		}
-		localFileRoutes.clear();
+		// localFileRoutes.clear();
+		sort(routesToLoad.begin(), routesToLoad.end());
 		loadTransportRoutes(file, routesToLoad, localFileRoutes);
 	}
 }
 
 SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PTR<TransportRoute>& route) {
-	if (!route->isIncomplete()) {
-		return route;
-	}
 	shared_ptr<TransportRoute> c = combinedRoutesCache.find(route->id) != combinedRoutesCache.end() 
 		? combinedRoutesCache[route->id] : nullptr;
+	if (c == nullptr && !route->isIncomplete()) {
+		return route;
+	}
 	if (c == nullptr) {
 		c = combineRoute(route);
 		combinedRoutesCache.insert({route->id, c});

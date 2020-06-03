@@ -119,10 +119,7 @@ void TransportStop::setLocation(int zoom, int32_t dx, int32_t dy) {
 }
 
 bool TransportStop::isMissingStop() {
-	if (MISSING_STOP_NAME.compare(name.c_str()) == 0) {
-			return true;
-	}
-	return false;
+	return MISSING_STOP_NAME.compare(name) == 0;
 }
 
 // TransportSchedule:

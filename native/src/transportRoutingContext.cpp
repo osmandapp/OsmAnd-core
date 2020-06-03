@@ -108,9 +108,6 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 				SHARED_PTR<TransportStop> st = route->forwardStops[k];
 				if (st->id == s->id) {
 					stopIndex = k;
-					// if (route->id == 10523942) {
-					// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Segment for stop: %s of route id: %d, segStart: %d", st->name.c_str(), route->id, stopIndex);
-					// }
 					break;
 				}
 				
