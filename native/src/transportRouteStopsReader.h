@@ -22,9 +22,9 @@ struct TransportRouteStopsReader {
 	UNORDERED(map)<BinaryMapFile*, PT_ROUTE_MAP> routesFilesCache;
 
 	PT_STOPS_SEGMENT readMergedTransportStops(SearchQuery* sr);
-	PT_ROUTE_MAP mergeTransportStops(BinaryMapFile* file,
-									UNORDERED(map) <int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-									PT_STOPS_SEGMENT &stops);
+	void mergeTransportStops(PT_ROUTE_MAP& routesToLoad,
+							UNORDERED(map) <int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
+							PT_STOPS_SEGMENT &stops);
 
 	void putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_t> referenceToRoutes);
 	void loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& localFileRoutes);

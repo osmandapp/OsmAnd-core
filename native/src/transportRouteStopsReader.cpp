@@ -23,8 +23,8 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 		q->transportResults.clear();
 		searchTransportIndex(q, it.first);
 		vector<SHARED_PTR<TransportStop>> stops = q->transportResults;
-		
-		PT_ROUTE_MAP routesToLoad = mergeTransportStops(it.first, loadedTransportStops, stops);
+		auto& routesToLoad = routesFilesCache[it.first];
+		mergeTransportStops(routesToLoad, loadedTransportStops, stops);
 		loadRoutes(it.first, routesToLoad);
 
 		for (SHARED_PTR<TransportStop> &stop : stops) {
@@ -41,6 +41,8 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 				for (int32_t rr : rrs) {
 					
 					if (routesToLoad.find(rr) == routesToLoad.end()) {
+					//skip, we already has this route from other map?
+					} else if (routesToLoad.at(rr) == nullptr) {
 						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
 						"Something went wrong by loading route %d for stop %d", rr, stop->id);
 					} else {
@@ -76,22 +78,20 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 }
 
 
-PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
-															UNORDERED(map) < int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
-															vector<SHARED_PTR<TransportStop>> &stops) {
+void TransportRouteStopsReader::mergeTransportStops(PT_ROUTE_MAP &routesToLoad,
+													UNORDERED(map) <int64_t, SHARED_PTR<TransportStop>> &loadedTransportStops,
+													vector<SHARED_PTR<TransportStop>> &stops) {
 	
-	auto routesToLoad = routesFilesCache[file];
 	vector<SHARED_PTR<TransportStop>>::iterator it = stops.begin();
 	
 	while (it != stops.end()) {
 		const auto stop = *it;
 		int64_t stopId = stop->id;
-		// routesToLoad.clear();
 		const auto multiStopIt = loadedTransportStops.find(stopId);
 		SHARED_PTR<TransportStop> multifileStop =
 			multiStopIt == loadedTransportStops.end() ? nullptr : multiStopIt->second;
-		vector<int64_t> routesIds = stop->routesIds;
-		vector<int64_t> delRIds = stop->deletedRoutesIds;
+		vector<int64_t>& routesIds = stop->routesIds;
+		vector<int64_t>& delRIds = stop->deletedRoutesIds;
 		if (multifileStop == nullptr) {
 			loadedTransportStops.insert({stopId, stop});
 			multifileStop = *it;
@@ -113,14 +113,14 @@ PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
 					int64_t routeId = routesIds.at(i);
 					if (find(routesIds.begin(), routesIds.end(), routeId) ==
 							multifileStop->routesIds.end() && !multifileStop->isRouteDeleted(routeId)) {
-						if (routesToLoad.find(routeId) == routesToLoad.end()) {
+						if (routesToLoad.find(refs[i]) == routesToLoad.end()) {
 							routesToLoad.insert( {refs[i], nullptr});
 						}
 					}
 				}
 			} else {
-				if ((*it)->referencesToRoutes.size() > 0) {
-					putAll(routesToLoad, (*it)->referencesToRoutes);
+				if (stop->referencesToRoutes.size() > 0) {
+					putAll(routesToLoad, stop->referencesToRoutes);
 				} else {
 					it = stops.erase(it);
 				}
@@ -128,11 +128,9 @@ PT_ROUTE_MAP TransportRouteStopsReader::mergeTransportStops(BinaryMapFile* file,
 		}
 		it++;
 	}
-	return routesToLoad;
 }
 
 void TransportRouteStopsReader::putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_t> referenceToRoutes) {
-	
 	for (int k = 0; k < referenceToRoutes.size(); k++) {
 		if (routesToLoad.find(referenceToRoutes[k]) == routesToLoad.end()) {
 			routesToLoad.insert({referenceToRoutes[k], nullptr});
@@ -142,27 +140,30 @@ void TransportRouteStopsReader::putAll(PT_ROUTE_MAP& routesToLoad, vector<int32_
 
 void TransportRouteStopsReader::loadRoutes(BinaryMapFile* file, PT_ROUTE_MAP& localFileRoutes) {
 	if (localFileRoutes.size() > 0) {
-		vector<int32_t> routesToLoad (localFileRoutes.size());
+		vector<int32_t> routesToLoad;
 		for (auto& itr : localFileRoutes) {
 			if (itr.second == nullptr) {
 				routesToLoad.push_back(itr.first);
 			}
 		}
-		// localFileRoutes.clear();
 		sort(routesToLoad.begin(), routesToLoad.end());
 		loadTransportRoutes(file, routesToLoad, localFileRoutes);
 	}
 }
 
 SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PTR<TransportRoute>& route) {
-	shared_ptr<TransportRoute> c = combinedRoutesCache.find(route->id) != combinedRoutesCache.end() 
-		? combinedRoutesCache[route->id] : nullptr;
-	if (c == nullptr && !route->isIncomplete()) {
+	if (!route->isIncomplete()) {
 		return route;
 	}
+	shared_ptr<TransportRoute> c = combinedRoutesCache.find(route->id) != combinedRoutesCache.end() 
+		? combinedRoutesCache[route->id] : nullptr;
 	if (c == nullptr) {
 		c = combineRoute(route);
 		combinedRoutesCache.insert({route->id, c});
+		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, ">> Combined route %s id: %d:", c->name.c_str(), c->id);
+		for (auto& s : c->forwardStops) {
+			//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, ">>>> Stop: %s (id: %d)", s->name.c_str(), s->id);
+		}
 	}
 	return c;
 }
@@ -398,9 +399,15 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::parseRoutePartsToSegments(ve
 			newSeg.push_back(s);
 			if (s->isMissingStop()) {
 				if (newSeg.size() > 1) {
-					segs.push_back(newSeg);
-					newSeg = PT_STOPS_SEGMENT();
-				}
+					if (newSeg.size() == 2 && newSeg[0]-> isMissingStop()) {
+						newSeg = PT_STOPS_SEGMENT();
+						newSeg.push_back(s);
+					} else {
+						segs.push_back(newSeg);
+						newSeg = PT_STOPS_SEGMENT();
+					}
+
+				} 
 			}
 		}
 		if (newSeg.size() > 1) {

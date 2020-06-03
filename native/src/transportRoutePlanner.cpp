@@ -168,8 +168,8 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 		if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
 			ex = ctx->visitedSegments.find(segment->getId())->second;
 			if (ex->distFromStart > segment->distFromStart) {
-				// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart,
-				// 				  ex->to_string().c_str(), segment->distFromStart, segment->to_string().c_str());
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "%.1f (%s) > %.1f (%s)", ex->distFromStart,
+								  ex->to_string().c_str(), segment->distFromStart, segment->to_string().c_str());
 			}
 			continue;
 		}
