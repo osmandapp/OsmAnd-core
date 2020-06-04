@@ -216,17 +216,17 @@ void TransportRoute::mergeForwardWays() {
 void TransportRoute::mergeForwardWays(vector<shared_ptr<Way>>& ways) {
 	bool changed = true;
 	// combine as many ways as possible
-	while (changed && forwardWays.size() != 0) {
+	while (changed && ways.size() != 0) {
 		changed = false;
-		for (int32_t k = 0; k < forwardWays.size();) {
+		for (int32_t k = 0; k < ways.size();) {
 			// scan to merge with the next segment
-			shared_ptr<Way>& first = forwardWays[k];
+			shared_ptr<Way>& first = ways[k];
 			double d = SAME_STOP;
 			bool reverseSecond = false;
 			bool reverseFirst = false;
 			int32_t secondInd = -1;
-			for (int32_t i = k + 1; i < forwardWays.size(); i++) {
-				shared_ptr<Way>& w = forwardWays[i];
+			for (int32_t i = k + 1; i < ways.size(); i++) {
+				shared_ptr<Way>& w = ways[i];
 				double distAttachAfter = getDistance(
 					first->getLastNode().lat, first->getLastNode().lon,
 					w->getFirstNode().lat, w->getFirstNode().lon);
@@ -270,10 +270,10 @@ void TransportRoute::mergeForwardWays(vector<shared_ptr<Way>>& ways) {
 			if (secondInd != -1) {
 				shared_ptr<Way> second;
 				if (secondInd == 0) {
-					second = *forwardWays.erase(forwardWays.begin());
+					second = *ways.erase(ways.begin());
 				} else {
 					second =
-						*forwardWays.erase(forwardWays.begin() + secondInd);
+						*ways.erase(ways.begin() + secondInd);
 				}
 				if (reverseFirst) {
 					first->reverseNodes();
