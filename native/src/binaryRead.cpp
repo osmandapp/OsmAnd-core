@@ -1713,7 +1713,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(length);
 				SHARED_PTR<TransportStop> stop = make_shared<TransportStop>();
 				readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
-				transportRoute->forwardStops.push_back(SHARED_PTR<TransportStop>(stop));
+				transportRoute->forwardStops.push_back(stop);
 				rid = stop->id;
 				input->PopLimit(pold);
 				break;
