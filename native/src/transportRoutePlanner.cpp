@@ -118,7 +118,6 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 	ctx->searchTransportIndexTime.Enable();
 	ctx->readTime.Enable();
 	
-	double totalDistance = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon);
 
 	TransportSegmentsComparator trSegmComp;
 	TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
@@ -143,17 +142,17 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 		queue.push(r);
 	}
 
+	double totalDistance = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon);
 	double finishTime = ctx->cfg->maxRouteTime;
 	ctx->finishTimeSeconds = ctx->cfg->finishTimeSeconds;
-	if (totalDistance > ctx->cfg->maxNumberOfChanges && ctx->cfg->maxRouteIncreaseSpeed > 0) {
+	if (totalDistance > ctx->cfg->maxRouteDistance && ctx->cfg->maxRouteIncreaseSpeed > 0) {
 		int increaseTime = (int) ((totalDistance - ctx->cfg->maxRouteDistance) 
 			* 3.6 / ctx->cfg->maxRouteIncreaseSpeed);
 		finishTime += increaseTime;
 		ctx->finishTimeSeconds += increaseTime / 6;
 	}
 	
-	double maxTravelTimeCmpToWalk = getDistance(ctx->startLat, ctx->startLon, ctx->endLat, ctx->endLon) 
-									/ ctx->cfg->walkSpeed - ctx->cfg->changeTime / 2;
+	double maxTravelTimeCmpToWalk = totalDistance / ctx->cfg->walkSpeed - ctx->cfg->changeTime / 2;
 	
 	while (queue.size() > 0) {
 		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {

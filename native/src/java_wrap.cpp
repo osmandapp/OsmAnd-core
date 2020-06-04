@@ -451,6 +451,9 @@ jfieldID jfield_TransportRoutingConfiguration_boardingTime = NULL;
 jfieldID jfield_TransportRoutingConfiguration_useSchedule = NULL;
 jfieldID jfield_TransportRoutingConfiguration_scheduleTimeOfDay = NULL;
 jfieldID jfield_TransportRoutingConfiguration_scheduleMaxTime = NULL;
+jfieldID jfield_TransportRoutingConfiguration_maxRouteDistance = NULL;
+jfieldID jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed = NULL;
+
 // jfieldID jfield_TransportRoutingConfiguration_rawTypes = NULL;
 // jfieldID jfield_jclass_TransportRoutingConfiguration_speed = NULL;
 
@@ -729,6 +732,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
 	jfield_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
 	jfield_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
+	jfield_TransportRoutingConfiguration_maxRouteDistance = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteDistance", "I");
+	jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteIncreaseSpeed", "I");
 	// jfield_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "__");
 	// jfield_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "___");
 
@@ -1380,7 +1385,8 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, shared_ptr<TransportRoutin
 	rConfig->useSchedule = ienv->GetBooleanField(jTransportConfig,  jfield_TransportRoutingConfiguration_useSchedule);
 	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
 	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
-	
+	rConfig->maxRouteDistance = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteDistance);
+	rConfig->maxRouteIncreaseSpeed = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed);
 	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
 	
