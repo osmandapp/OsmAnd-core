@@ -20,6 +20,7 @@ function download
 		exitCode=$?
 		if [ $exitCode -ne 0 ]; then	
 			echo "Download $from failed $i"
+			sleep 30
 		else 
 			return 0
 		fi
