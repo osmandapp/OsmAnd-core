@@ -12,10 +12,20 @@ function download
 	local from=$1
 	local to=$2
 	echo "Downloading $from to $to"
-	curl -L --fail "$from" > "$to"
-	local exitCode=$?
-
-	if [ $exitCode -ne 0 ]; then
+	i="0"
+	local exitCode=0
+	while [ $i -lt 3 ]
+	do
+		curl -L --fail "$from" > "$to"
+		exitCode=$?
+		if [ $exitCode -ne 0 ]; then	
+			echo "Download $from failed $i"
+		else 
+			return 0
+		fi
+		i=$[$i+1]
+	done
+	if [ $exitCode -ne 0 ]; then	
 		echo "Download $from failed"
 		exit $exitCode
 	fi
