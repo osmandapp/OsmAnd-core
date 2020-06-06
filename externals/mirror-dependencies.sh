@@ -14,6 +14,7 @@ function download
 	echo "Downloading $from to $to"
 	i="0"
 	local exitCode=0
+	sleep 10
 	while [ $i -lt 3 ]
 	do
 		curl -L --fail "$from" > "$to"
