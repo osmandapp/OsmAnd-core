@@ -160,10 +160,6 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::getCombinedRoute(SHARED_PT
 	if (c == nullptr) {
 		c = combineRoute(route);
 		combinedRoutesCache.insert({route->id, c});
-		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, ">> Combined route %s id: %ld:", c->name.c_str(), c->id);
-		// for (auto& s : c->forwardStops) {
-			//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, ">>>> Stop: %s (id: %ld)", s->name.c_str(), s->id);
-		// }
 	}
 	return c;
 }
@@ -228,7 +224,6 @@ SHARED_PTR<TransportRoute> TransportRouteStopsReader::combineRoute(SHARED_PTR<Tr
 	}
 	vector<SHARED_PTR<TransportStop>> finalList;
 	for (auto& s : sortedSegments) {
-		
 		finalList.insert(finalList.end(), s.begin(), s.end());
 	}
 	// 5. Create combined TransportRoute and return it
@@ -250,7 +245,7 @@ PT_STOPS_SEGMENT TransportRouteStopsReader::findAndDeleteMinDistance(double lat,
 			minInd = i;
 		}
 	}
-	auto& res = mergedSegments.at(minInd);
+	auto res = mergedSegments.at(minInd);
 	mergedSegments.erase(mergedSegments.begin() + minInd);
 	return res;
 }

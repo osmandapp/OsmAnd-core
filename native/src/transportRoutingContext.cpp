@@ -116,8 +116,6 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 					stopIndex = k;
 					dist = d;
 				}
-
-			
 			}
 			if (stopIndex != -1) {
 				if (cfg->useSchedule) {
