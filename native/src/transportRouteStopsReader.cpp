@@ -267,9 +267,9 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::combineSegmentsOfSameRoute(v
 	return mergeSegments(tempResultSegments, resultSegments, true);
 }
 
-vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOPS_SEGMENT>& segments, 
-																vector<PT_STOPS_SEGMENT>& resultSegments, 
-																bool mergeMissingSegs) {
+vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOPS_SEGMENT>& segments,
+																  vector<PT_STOPS_SEGMENT>& resultSegments,
+																  bool mergeMissingSegs) {
 	std::deque<PT_STOPS_SEGMENT> segQueue(segments.begin(), segments.end()); //check
 	while (!segQueue.empty()) {
 		auto firstSegment = segQueue.front();
@@ -297,7 +297,7 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOP
 	}
 	return resultSegments;
 }
-	
+
 bool TransportRouteStopsReader::tryToMerge(PT_STOPS_SEGMENT& firstSegment, PT_STOPS_SEGMENT& segmentToMerge) {
 	if (firstSegment.size() < 2 || segmentToMerge.size() < 2) {
 		return false;
@@ -364,7 +364,6 @@ bool TransportRouteStopsReader::tryToMergeMissingStops(PT_STOPS_SEGMENT& firstSe
 		if (it != firstSegment.end()) {
 			firstSegment.erase(it);
 		}
-		// firstSegment.erase(0);
 		for (int i = segmentToMerge.size()-2; i >= 0; i--) {
 			firstSegment.insert(firstSegment.begin(), segmentToMerge[i]);
 		}
@@ -375,7 +374,6 @@ bool TransportRouteStopsReader::tryToMergeMissingStops(PT_STOPS_SEGMENT& firstSe
 		if (it != firstSegment.end()) {
 			firstSegment.erase(it);
 		}
-		// firstSegment.erase(firstSegment.size()-1);
 		for (int i = 1; i < segmentToMerge.size(); i++) {
 			firstSegment.push_back(segmentToMerge[i]);
 		}
