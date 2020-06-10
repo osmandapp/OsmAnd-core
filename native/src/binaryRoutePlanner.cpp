@@ -752,7 +752,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 			SHARED_PTR<RouteSegmentPoint> road;
 			for (uint j = 1; j < r->pointsX.size(); j++) {
 				std::pair<int, int> p = getProjectionPoint(px, py, 
-						r->pointsX[j -1 ], r->pointsY[j-1], r->pointsX[j], r->pointsY[j]);
+						r->pointsX[j-1], r->pointsY[j-1], r->pointsX[j], r->pointsY[j]);
 				int prx = p.first;
 				int pry = p.second;
 				double currentsDist = squareDist31TileMetric(prx, pry, px, py);
@@ -764,7 +764,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 				}
 			}
 			if (road.get() != NULL) {
-				float prio = ctx->config->router->defineSpeedPriority(road->road);
+				float prio = max(ctx->config->router->defineSpeedPriority(road->road), 0.3);
 				if (prio > 0) {
 					road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
 					list.push_back(road);

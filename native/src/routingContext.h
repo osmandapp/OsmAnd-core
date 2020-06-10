@@ -277,15 +277,15 @@ struct RoutingContext {
 	}
 
 	void loadHeaderObjects(int64_t tileId) {
-        const auto itSubregions = indexedSubregions.find(tileId);
-        if (itSubregions == indexedSubregions.end())
-            return;
-        auto& subregions = itSubregions->second;
-        bool gc = false;
+		const auto itSubregions = indexedSubregions.find(tileId);
+		if (itSubregions == indexedSubregions.end())
+		return;
+		auto& subregions = itSubregions->second;
+		bool gc = false;
 		for (uint j = 0; j < subregions.size(); j++) {
 			if (!subregions[j]->isLoaded()) {
 				gc = true;
-                break;
+				break;
 			}
 		}
 		if (gc) {
@@ -295,7 +295,7 @@ struct RoutingContext {
 		for (uint j = 0; j < subregions.size(); j++) {
 			if (!subregions[j]->isLoaded()) {
 				load = true;
-                break;
+				break;
 			}
 		}
 		if (load) {
@@ -367,25 +367,28 @@ struct RoutingContext {
 			t = 1 << t;
 		}
 		int z  = config->zoomToLoad;
+		UNORDERED(set)<int64_t> excludeDuplications;
 		for (int i = -t; i <= t; i++) {
 			for (int j = -t; j <= t; j++) {
 				uint32_t xloc = (x31 + i*coordinatesShift) >> (31 - z);
-				uint32_t yloc = (y31+j*coordinatesShift) >> (31 - z);
+				uint32_t yloc = (y31 + j*coordinatesShift) >> (31 - z);
 				int64_t tileId = (xloc << z) + yloc;
 				loadHeaders(xloc, yloc);
-                const auto itSubregions = indexedSubregions.find(tileId);
-                if (itSubregions == indexedSubregions.end())
-                    continue;
-                auto& subregions = itSubregions->second;
-				for (uint j = 0; j<subregions.size(); j++) {
+				const auto itSubregions = indexedSubregions.find(tileId);
+				if (itSubregions == indexedSubregions.end())
+					continue;
+
+				auto& subregions = itSubregions->second;
+				for (uint j = 0; j < subregions.size(); j++) {
 					if (subregions[j]->isLoaded()) {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> >::iterator s = subregions[j]->routes.begin();
 						while (s != subregions[j]->routes.end()) {
 							SHARED_PTR<RouteSegment> seg = s->second;
 							while (seg.get() != NULL) {
-                                SHARED_PTR<RouteDataObject> ro = seg->road;
-                                if (!isExcluded(ro->id, j, subregions)) {
-                                    dataObjects.push_back(ro);
+								SHARED_PTR<RouteDataObject> ro = seg->road;
+								// excludeDuplications.insert(ro->id).second - true if it was inserted
+								if (!isExcluded(ro->id, j, subregions) && excludeDuplications.insert(ro->id).second) {
+									dataObjects.push_back(ro);
 								}
 								seg = seg->next;
 							}
@@ -405,10 +408,10 @@ struct RoutingContext {
 		uint64_t l = (((uint64_t) x31) << 31) + (uint64_t) y31;
 		int64_t tileId = (xloc << z) + yloc;
 		loadHeaders(xloc, yloc);
-        const auto itSubregions = indexedSubregions.find(tileId);
-        if(itSubregions == indexedSubregions.end())
-            return SHARED_PTR<RouteSegment>();
-        auto& subregions = itSubregions->second;
+		const auto itSubregions = indexedSubregions.find(tileId);
+		if(itSubregions == indexedSubregions.end())
+			return SHARED_PTR<RouteSegment>();
+		auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
 		SHARED_PTR<RouteSegment> original;
 		for(uint j = 0; j<subregions.size(); j++) {
@@ -441,9 +444,9 @@ struct RoutingContext {
 	}
 
 	bool isInterrupted() {
-        return progress != nullptr ? progress->isCancelled() : false;
+		return progress != nullptr ? progress->isCancelled() : false;
 	}
-    
+
 	float getHeuristicCoefficient() {
 		return config->heurCoefficient;
 	}
@@ -451,21 +454,21 @@ struct RoutingContext {
 	bool planRouteIn2Directions() {
 		return getPlanRoadDirection() == 0;
 	}
-    
+
 	int getPlanRoadDirection() {
 		return config->planRoadDirection;
 	}
-    
-    void initTargetPoint(SHARED_PTR<RouteSegment>& end) {
-        targetX = end->road->pointsX[end->segmentStart];
-        targetY = end->road->pointsY[end->segmentStart];
-    }
-    
-    void initStartAndTargetPoints(SHARED_PTR<RouteSegment> start, SHARED_PTR<RouteSegment> end) {
-        initTargetPoint(end);
-        startX = start->road->pointsX[start->segmentStart];
-        startY = start->road->pointsY[start->segmentStart];
-    }
+
+	void initTargetPoint(SHARED_PTR<RouteSegment>& end) {
+		targetX = end->road->pointsX[end->segmentStart];
+		targetY = end->road->pointsY[end->segmentStart];
+	}
+
+	void initStartAndTargetPoints(SHARED_PTR<RouteSegment> start, SHARED_PTR<RouteSegment> end) {
+		initTargetPoint(end);
+		startX = start->road->pointsX[start->segmentStart];
+		startY = start->road->pointsY[start->segmentStart];
+	}
 };
 
 #endif /*_OSMAND_ROUTING_CONTEXT_H*/
