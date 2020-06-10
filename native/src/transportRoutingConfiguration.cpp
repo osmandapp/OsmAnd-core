@@ -14,7 +14,7 @@ TransportRoutingConfiguration::TransportRoutingConfiguration(
 	if (prouter != nullptr) {
 		this->router = prouter->build(params);
 		walkRadius = router->getIntAttribute("walkRadius", walkRadius);
-		walkChangeRadius =
+		walkChangeRadius = 
 			router->getIntAttribute("walkChangeRadius", walkChangeRadius);
 		zoomToLoadTiles =
 			router->getIntAttribute("zoomToLoadTiles", zoomToLoadTiles);
@@ -38,6 +38,8 @@ TransportRoutingConfiguration::TransportRoutingConfiguration(
 		defaultTravelSpeed = router->getFloatAttribute(
 								 "maxDefaultSpeed", defaultTravelSpeed * 3.6f) /
 							 3.6f;
+		maxRouteIncreaseSpeed = router->getIntAttribute("maxRouteIncreaseSpeed", maxRouteIncreaseSpeed);
+		maxRouteDistance =  router->getIntAttribute("maxRouteDistance", maxRouteDistance);
 
 		RouteAttributeContext &obstacles =
 			router->getObjContext(RouteDataObjectAttribute::ROUTING_OBSTACLES);

@@ -91,6 +91,7 @@ add_library(osmand SHARED
 	"${ROOT}/src/binaryRoutePlanner.cpp"
 	"${ROOT}/src/proto/osmand_index.pb.cc"
 	"${ROOT}/src/java_wrap.cpp"
+	"${ROOT}/src/transportRouteStopsReader.cpp"
 	${pd_sources}
 )
 

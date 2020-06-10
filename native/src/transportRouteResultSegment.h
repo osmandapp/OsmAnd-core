@@ -6,9 +6,18 @@
 #define GEOMETRY_WAY_ID -1
 #define STOPS_WAY_ID -2
 
+const int MIN_DIST_STOP_TO_GEOMETRY = 150;
+const static int MISSING_STOP_SEARCH_RADIUS = 15000;
 struct TransportRoute;
 struct TransportStop;
 struct Way;
+
+struct SearchNodeInd {
+	int ind = -1;
+	shared_ptr<Way> way = nullptr;
+	double dist = MIN_DIST_STOP_TO_GEOMETRY;
+};
+
 
 struct TransportRouteResultSegment
 {
@@ -30,7 +39,7 @@ public:
 
 	int getArrivalTime();
 	double getTravelDist();
-	void getGeometry(vector<Way>& lst);
+	void getGeometry(vector<shared_ptr<Way>>& lst);
 	const TransportStop& getStart();
 	const TransportStop& getEnd();
 	vector<SHARED_PTR<TransportStop>> getTravelStops();

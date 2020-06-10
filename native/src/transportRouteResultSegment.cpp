@@ -34,58 +34,89 @@ double TransportRouteResultSegment::getTravelDist() {
 	return d;
 }
 
-void TransportRouteResultSegment::getGeometry(vector<Way>& list) {
+void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 	route->mergeForwardWays();
 	if (DISPLAY_FULL_SEGMENT_ROUTE) {
-		if (route->forwardWays.size() > DISPLAY_SEGMENT_IND) {
+		if (route->forwardWays.size() > DISPLAY_SEGMENT_IND && DISPLAY_SEGMENT_IND != -1) {
 			list.push_back(route->forwardWays[DISPLAY_SEGMENT_IND]);
 			return;
 		}
 		list.insert(list.end(), route->forwardWays.begin(), route->forwardWays.end());
 		return;
 	}
-	vector<Way> fw = route->forwardWays;
+	vector<shared_ptr<Way>> ways = route->forwardWays;
 	double minStart = 150;
 	double minEnd = 150;
 
-	double startLat = getStart().lat;
-	double startLon = getStart().lon;
-	double endLat = getEnd().lat;
-	double endLon = getEnd().lon;
+	const double startLat = getStart().lat;
+	const double startLon = getStart().lon;
+	const double endLat = getEnd().lat;
+	const double endLon = getEnd().lon;
 
-	int endInd = -1;
+	SearchNodeInd* startInd = new SearchNodeInd();
+	SearchNodeInd* endInd = new SearchNodeInd();
+	
 	vector<Node> res;
-	for (auto it = fw.begin(); it != fw.end(); ++it) {
-		vector<Node> nodes = (*it).nodes;
-		for (auto nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
-			const auto n = *nodesIt;
+	for (int i = 0; i < ways.size(); i++) {
+	// for (auto it = ways.begin(); it != ways.end(); ++it) {
+		vector<Node> nodes = ways[i]->nodes;
+		// for (auto nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
+		for (int j = 0; j < nodes.size(); j++) {
+			const auto n = nodes[j];
 			double startDist = getDistance(startLat, startLon, n.lat, n.lon);
-			if (startDist < minStart) {
-				minStart = startDist;
-				res.clear();
+			if (startDist < startInd->dist) {
+				startInd->dist = startDist;
+				startInd->ind = j;
+				startInd->way = ways[i];
 			}
-			res.push_back(n);
 			double endDist = getDistance(endLat, endLon, n.lat, n.lon);
-			if (endDist < minEnd) {
-				endInd = res.size();
-				minEnd = endDist;
+			if (endDist < endInd->dist) {
+				endInd->dist = endDist;
+				endInd->ind = j;
+				endInd->way = ways[i];
 			}
 		}
 	}
-	Way way;
-	if (res.size() == 0 || endInd == -1) {
-		way = Way(STOPS_WAY_ID);
-		for (int i = start; i <= end; i++) {
-			double lLat = getStop(i).lat;
-			double lLon = getStop(i).lon;
-			Node n(lLat, lLon);
-			way.addNode(n);
+	bool validOneWay = startInd->way != nullptr && startInd->way == endInd->way && startInd->ind <= endInd->ind;
+	if (validOneWay) {
+		shared_ptr<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
+		for (int k = startInd->ind; k <= endInd->ind; k++) {
+			way->addNode(startInd->way->nodes[k]);
 		}
-	} else {
-		way = Way(GEOMETRY_WAY_ID);
-		for (int k = 0; k < res.size() && k < endInd; k++) {
-			way.addNode(res[k]);
+		list.push_back(way);
+		return;
+	}
+	bool validContinuation = startInd->way != nullptr && endInd->way != nullptr && startInd->way != endInd->way;
+	if (validContinuation) {
+		Node ln = startInd->way->getLastNode();
+		Node fn = endInd->way->getFirstNode();
+		// HERE we need to check other ways for continuation
+		if (getDistance(ln.lat, ln.lon, fn.lat, fn.lon) < MISSING_STOP_SEARCH_RADIUS) {
+			validContinuation = true;
+		} else {
+			validContinuation = false;
 		}
+	}
+		if (validContinuation) {
+			SHARED_PTR<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
+			for (int k = startInd->ind; k < startInd->way->nodes.size(); k++) {
+				way->addNode(startInd->way->nodes[k]);
+			}
+			list.push_back(way);
+			way = make_shared<Way>(GEOMETRY_WAY_ID);
+			for (int k = 0; k <= endInd->ind; k++) {
+				way->addNode(endInd->way->nodes[k]);
+			}
+		list.push_back(way);
+		return;
+	}
+
+	SHARED_PTR<Way> way = make_shared<Way>(STOPS_WAY_ID);
+	for (int i = start; i <= end; i++) {
+		double lLat = getStop(i).lat;
+		double lLon = getStop(i).lon;
+		Node n(lLat, lLon);
+		way->addNode(n);
 	}
 	list.push_back(way);
 }

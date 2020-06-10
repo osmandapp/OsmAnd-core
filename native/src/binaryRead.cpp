@@ -11,6 +11,7 @@
 #include "google/protobuf/wire_format_lite.cc"
 #include "proto/OBF.pb.h"
 #include "proto/osmand_index.pb.h"
+#include "Logging.h"
 #if defined(WIN32)
 #undef min
 #undef max
@@ -750,7 +751,7 @@ bool readTransportIndex(CodedInputStream* input, TransportIndex* ind) {
 			case OsmAnd::OBF::OsmAndTransportIndex::kIncompleteRoutesFieldNumber : {
 				input->ReadVarint32(&ind->incompleteRoutesLength);
 				ind->incompleteRoutesOffset = input->TotalBytesRead();
-				input->Seek(ind->incompleteRoutesOffset + ind->incompleteRoutesOffset);
+				input->Seek(ind->incompleteRoutesOffset + ind->incompleteRoutesLength);
 				break;
 			}
 			default: {
@@ -1153,6 +1154,105 @@ string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	return to_string(i);
 }
 
+bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransportRoute>& obj) {
+	bool end = false;
+	while(!end) {
+		int t = input->ReadTag();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
+		switch (tag) {
+			case OsmAnd::OBF::IncompleteTransportRoute::kIdFieldNumber:{
+				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &obj->routeId)));
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kRouteRefFieldNumber: {
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &obj->routeOffset)));
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kOperatorFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kRefFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kTypeFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}
+			case OsmAnd::OBF::IncompleteTransportRoute::kMissingStopsFieldNumber: {
+				skipUnknownFields(input, t);
+				break;
+			}	
+			case 0: {
+				end = true;
+				return true;
+				break;
+			}
+			default:{
+				if (!skipUnknownFields(input, t)) {
+					return false;
+				}
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t, 
+	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int32_t length, int32_t offset) {
+	input->Seek(offset);
+	bool end = false;
+	uint32_t sizeL;
+	while(!end) {
+		int t = input->ReadTag();
+		int tag = WireFormatLite::GetTagFieldNumber(t);
+		switch(tag) {
+			case OsmAnd::OBF::IncompleteTransportRoutes::kRoutesFieldNumber: {
+				input->ReadVarint32(&sizeL);
+				int32_t olds = input->PushLimit(sizeL);
+				shared_ptr<IncompleteTransportRoute> ir = make_shared<IncompleteTransportRoute>();
+				readIncompleteRoute(input, ir);
+
+				if (incompleteRoutes.find(ir->routeId) != incompleteRoutes.end()) {
+					incompleteRoutes[ir->routeId]->setNextLinkedRoute(ir);
+				} else {
+					incompleteRoutes.insert({ir->routeId, ir});
+				}
+				input->PopLimit(olds);
+				break;
+			}
+			case 0: {
+				end = true;
+				break;
+			}
+			default: {
+				skipUnknownFields(input, t);
+				break;
+			}
+		}
+	}
+}
+
+void getIncompleteTransportRoutes(BinaryMapFile* file) {
+	if (!file->incompleteLoaded) {
+		for (auto& ti : file->transportIndexes) {
+			if (ti->incompleteRoutesLength > 0) {
+				lseek(file->routefd, 0, SEEK_SET);
+				FileInputStream stream(file->routefd);
+				stream.SetCloseOnDelete(false);
+				CodedInputStream *input = new CodedInputStream(&stream);
+				input->SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
+				
+				readIncompleteRoutesList(input, file->incompleteTransportRoutes, ti->incompleteRoutesLength,
+						ti->incompleteRoutesOffset);
+			}
+		}
+		file->incompleteLoaded = true;
+	}
+}
+
 bool readTransportStopExit(CodedInputStream* input, SHARED_PTR<TransportStopExit>& exit, int cleft, int ctop, SearchQuery* req, UNORDERED(map)<int32_t, string>& stringTable) {
 	int32_t x = 0;
 	int32_t y = 0;
@@ -1269,8 +1369,8 @@ bool readTransportStop(int stopOffset, SHARED_PTR<TransportStop>& stop, CodedInp
 				break;
 			}
 			case OsmAnd::OBF::TransportStop::kIdFieldNumber : {
-				uint64_t id;
-				DO_((WireFormatLite::ReadPrimitive<uint64_t, WireFormatLite::TYPE_UINT64>(input, &id)));
+				int64_t id;
+				DO_((WireFormatLite::ReadPrimitive<int64_t, WireFormatLite::TYPE_SINT64>(input, &id)));
 				stop->id = id;
 				break;
 			}
@@ -1567,7 +1667,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(sizeL);
 				int px = 0; 
 				int py = 0;
-				Way w;
+				shared_ptr<Way> w = make_shared<Way>();
 				while (input->BytesUntilLimit() > 0) {
 					int32_t ddx;
 					int32_t ddy;
@@ -1576,20 +1676,20 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 					ddx = ddx << SHIFT_COORDINATES;
 					ddy = ddy << SHIFT_COORDINATES;
 					if(ddx == 0 && ddy == 0) {
-						if(w.nodes.size() > 0) {
+						if(w->nodes.size() > 0) {
 							transportRoute->addWay(w);
 						}
-						w = Way();
+						w = make_shared<Way>();
 					} else {
 						int x = ddx + px;
 						int y = ddy + py;
 						Node n(get31LatitudeY(y), get31LongitudeX(x));
-						w.addNode(n);
+						w->addNode(n);
 						px = x;
 						py = y;
 					}
 				}
-				if(w.nodes.size() > 0) {
+				if(w->nodes.size() > 0) {
 					transportRoute->addWay(w);
 				}
 				input->PopLimit(pold);
@@ -1613,7 +1713,7 @@ bool readTransportRoute(BinaryMapFile* file, SHARED_PTR<TransportRoute>& transpo
 				pold = input->PushLimit(length);
 				SHARED_PTR<TransportStop> stop = make_shared<TransportStop>();
 				readTransportRouteStop(input, stop, rx, ry, rid, stringTable, filePointer);
-				transportRoute->forwardStops.push_back(SHARED_PTR<TransportStop>(stop));
+				transportRoute->forwardStops.push_back(stop);
 				rid = stop->id;
 				input->PopLimit(pold);
 				break;
@@ -1797,9 +1897,8 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 		for (int i = 0; i < pointers.size(); i++) {
 			int32_t filePointer = pointers[i];
 			SHARED_PTR<TransportRoute> transportRoute = make_shared<TransportRoute>();
-			if (readTransportRoute(file, transportRoute, filePointer, stringTable, false))
-			{
-				result.insert({filePointer, transportRoute});
+			if (readTransportRoute(file, transportRoute, filePointer, stringTable, false)) {
+				result[filePointer] = transportRoute;
 				finishInit.push_back(transportRoute);
 			}
 		}

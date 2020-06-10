@@ -4,6 +4,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include <algorithm>
+#include "Logging.h"
 
 // MapObject:
 
@@ -44,12 +45,7 @@ bool TransportStopExit::compareExit(SHARED_PTR<TransportStopExit>& thatObj) {
 
 // TransportStop:
 
-TransportStop::TransportStop() :
-distance(0),
-x31(-1),
-y31(-1)
-{
-}
+TransportStop::TransportStop() : distance(0), x31(-1), y31(-1) {}
 
 bool TransportStop::hasRoute(int64_t routeId) {
 	return std::find(routesIds.begin(), routesIds.end(), routeId) !=
@@ -64,15 +60,6 @@ bool TransportStop::isDeleted() {
 bool TransportStop::isRouteDeleted(int64_t routeId) {
 	return std::find(deletedRoutesIds.begin(), deletedRoutesIds.end(),
 					 routeId) != deletedRoutesIds.end();
-}
-
-bool TransportStop::hasReferencesToRoutes() {
-	return !isDeleted() && referencesToRoutes.size() > 0;
-}
-
-void TransportStop::putReferenceToRoutes(string& repositoryFileName,
-										 vector<int32_t>& referencesToRoutes) {
-	referencesToRoutesMap.insert({repositoryFileName, referencesToRoutes});
 }
 
 void TransportStop::addRouteId(int64_t routeId) {
@@ -129,6 +116,10 @@ void TransportStop::setLocation(int zoom, int32_t dx, int32_t dy) {
 	y31 = dy << (31 - zoom);
 	lon = get31LongitudeX(x31);
 	lat = get31LatitudeY(y31);
+}
+
+bool TransportStop::isMissingStop() {
+	return MISSING_STOP_NAME.compare(name) == 0;
 }
 
 // TransportSchedule:
@@ -195,37 +186,59 @@ void Way::reverseNodes() {
 // TransportRoute:
 
 TransportRoute::TransportRoute() { dist = -1; }
+TransportRoute::TransportRoute(SHARED_PTR<TransportRoute>& base, 
+		vector<SHARED_PTR<TransportStop>>& cforwardStops, vector<shared_ptr<Way>>& cforwardWays) {
+	name = base->name;
+	enName = base->enName;
+	names = base->names;
+	id = base->id;
+	ref = base->ref;
+	routeOperator = base->routeOperator;
+	type = base->type;
+	dist = base->dist; //??
+	color = base->color;
+	schedule = base->schedule;
+
+	forwardWays = cforwardWays;
+	forwardStops = cforwardStops;
+
+}
 
 TransportSchedule& TransportRoute::getOrCreateSchedule() {
 	return schedule;
 }
 
 void TransportRoute::mergeForwardWays() {
+	mergeForwardWays(forwardWays);
+	resortWaysToStopsOrder(forwardWays, forwardStops);
+}
+
+void TransportRoute::mergeForwardWays(vector<shared_ptr<Way>>& ways) {
 	bool changed = true;
 	// combine as many ways as possible
-	while (changed && forwardWays.size() != 0) {
+	while (changed && ways.size() != 0) {
 		changed = false;
-		for (int32_t k = 0; k < forwardWays.size();) {
+		for (int32_t k = 0; k < ways.size();) {
 			// scan to merge with the next segment
-			Way& first = forwardWays[k];
+			shared_ptr<Way>& first = ways[k];
 			double d = SAME_STOP;
 			bool reverseSecond = false;
 			bool reverseFirst = false;
 			int32_t secondInd = -1;
-			for (int32_t i = k + 1; i < forwardWays.size(); i++) {
-				Way& w = forwardWays[i];
+			for (int32_t i = k + 1; i < ways.size(); i++) {
+				shared_ptr<Way>& w = ways[i];
 				double distAttachAfter = getDistance(
-					first.getLastNode().lat, first.getLastNode().lon,
-					w.getFirstNode().lat, w.getFirstNode().lon);
+					first->getLastNode().lat, first->getLastNode().lon,
+					w->getFirstNode().lat, w->getFirstNode().lon);
 				double distReverseAttach = getDistance(
-					first.getLastNode().lat, first.getLastNode().lon,
-					w.getLastNode().lat, w.getLastNode().lon);
+					first->getLastNode().lat, first->getLastNode().lon,
+					w->getLastNode().lat, w->getLastNode().lon);
 				double distAttachAfterReverse = getDistance(
-					first.getFirstNode().lat, first.getFirstNode().lon,
-					w.getFirstNode().lat, w.getFirstNode().lon);
+					first->getFirstNode().lat, first->getFirstNode().lon,
+					w->getFirstNode().lat, w->getFirstNode().lon);
 				double distReverseAttachReverse = getDistance(
-					first.getFirstNode().lat, first.getFirstNode().lon,
-					w.getLastNode().lat, w.getLastNode().lon);
+					first->getFirstNode().lat, first->getFirstNode().lon,
+					w->getLastNode().lat, w->getLastNode().lon);
 				if (distAttachAfter < d) {
 					reverseSecond = false;
 					reverseFirst = false;
@@ -255,21 +268,23 @@ void TransportRoute::mergeForwardWays() {
 				}
 			}
 			if (secondInd != -1) {
-				Way second;
+				shared_ptr<Way> second;
 				if (secondInd == 0) {
-					second = *forwardWays.erase(forwardWays.begin());
+					second = *ways.erase(ways.begin());
 				} else {
 					second =
-						*forwardWays.erase(forwardWays.begin() + secondInd);
+						*ways.erase(ways.begin() + secondInd);
 				}
 				if (reverseFirst) {
-					first.reverseNodes();
+					first->reverseNodes();
 				}
 				if (reverseSecond) {
-					second.reverseNodes();
+					second->reverseNodes();
 				}
-				for (int i = 1; i < second.nodes.size(); i++) {
-					first.addNode(second.nodes[i]);
+				if (first->nodes == second->nodes && (first->id < 0 || first->id != second->id)) {
+					for (int i = 1; i < second->nodes.size(); i++) {
+						first->addNode(second->nodes[i]);
+					}
 				}
 				changed = true;
 			} else {
@@ -277,27 +292,26 @@ void TransportRoute::mergeForwardWays() {
 			}
 		}
 	}
-	if (forwardStops.size() > 0) {
+}
+
+UNORDERED_map<shared_ptr<Way>, pair<int, int>> TransportRoute::resortWaysToStopsOrder(vector<shared_ptr<Way>>& fWays,
+																  vector<SHARED_PTR<TransportStop>>& fStops) {
+	UNORDERED_map<shared_ptr<Way>, pair<int, int>> orderWays; 
+	if (fWays.size() > 0 && fStops.size() > 0) {
 		// resort ways to stops order
-		UNORDERED_map<Way, pair<int, int>>
-			orderWays;	// what's wrong with you, for Christ's sake?!
-		for (Way& w : forwardWays) {
+		for (shared_ptr<Way>& w : fWays) {
 			pair<int, int> pair;
 			pair.first = 0;
 			pair.second = 0;
-			Node firstNode = w.getFirstNode();
-			SHARED_PTR<TransportStop> st = forwardStops[0];
-			double firstDistance =
-				getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
-			Node lastNode = w.getLastNode();
-			double lastDistance =
-				getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
-			for (int i = 1; i < forwardStops.size(); i++) {
-				st = forwardStops[i];
-				double firstd =
-					getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
-				double lastd =
-					getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
+			Node firstNode = w->getFirstNode();
+			SHARED_PTR<TransportStop> st = fStops[0];
+			double firstDistance = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+			Node lastNode = w->getLastNode();
+			double lastDistance = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
+			for (int i = 1; i < fStops.size(); i++) {
+				st = fStops[i];
+				double firstd = getDistance(st->lat, st->lon, firstNode.lat, firstNode.lon);
+				double lastd = getDistance(st->lat, st->lon, lastNode.lat, lastNode.lon);
 				if (firstd < firstDistance) {
 					pair.first = i;
 					firstDistance = firstd;
@@ -309,27 +323,23 @@ void TransportRoute::mergeForwardWays() {
 			}
 			orderWays[w] = pair;
 			if (pair.first > pair.second) {
-				w.reverseNodes();
+				w->reverseNodes();
 			}
 		}
 		if (orderWays.size() > 1) {
-			sort(forwardWays.begin(), forwardWays.end(),
-				 [orderWays](Way& w1, Way& w2) {
-					 const auto is1 = orderWays.find(w1);
-					 const auto is2 = orderWays.find(w2);
-					 int i1 = is1 != orderWays.end()
-								  ? min(is1->second.first, is1->second.second)
-								  : 0;	// check
-					 int i2 = is2 != orderWays.end()
-								  ? min(is2->second.first, is2->second.second)
-								  : 0;	// check
-					 return i1 < i2;
-				 });
+			sort(fWays.begin(), fWays.end(), [orderWays](shared_ptr<Way>& w1, shared_ptr<Way>& w2) {
+				const auto is1 = orderWays.find(w1);
+				const auto is2 = orderWays.find(w2);
+				int i1 = is1 != orderWays.end() ? min(is1->second.first, is1->second.second) : 0;  // check
+				int i2 = is2 != orderWays.end() ? min(is2->second.first, is2->second.second) : 0;  // check
+				return i1 < i2;
+			});
 		}
 	}
+	return orderWays;
 }
 
-void TransportRoute::addWay(Way& w) { forwardWays.push_back(w); }
+void TransportRoute::addWay(shared_ptr<Way>& w) { forwardWays.push_back(w); }
 
 int32_t TransportRoute::getAvgBothDistance() {
 	uint32_t d = 0;
@@ -397,6 +407,27 @@ bool TransportRoute::compareRoute(SHARED_PTR<TransportRoute>& thatObj) {
 	} else {
 		return false;
 	}
+}
+
+bool TransportRoute::isIncomplete() {
+	for (SHARED_PTR<TransportStop>& s : forwardStops) {
+		if (s->isMissingStop()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+//IncompleteTransportRoute
+
+IncompleteTransportRoute::IncompleteTransportRoute() {}
+
+shared_ptr<IncompleteTransportRoute> IncompleteTransportRoute::getNextLinkedRoute() {
+	return nextLinkedRoute;
+}
+
+void IncompleteTransportRoute::setNextLinkedRoute(shared_ptr<IncompleteTransportRoute>& nextRoute) {
+	nextLinkedRoute = nextRoute;
 }
 
 #endif	//_OSMAND_TRANSPORT_ROUTING_OBJECTS_CPP
