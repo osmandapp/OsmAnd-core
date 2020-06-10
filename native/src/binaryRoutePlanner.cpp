@@ -880,16 +880,16 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 			// 1. when we underestimate distnceToEnd - wrong h()
 			// 2. because we process not small segments but the whole road, it could be that
 			// deviation from the road is faster than following the whole road itself!
-			if (ctx->getHeuristicCoefficient() <= 1) {
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
-								  "! Alert distance from start %f < %f id=%lld",
-								  distFromStart, next->distanceFromStart, next->getRoad()->getId());
-			}
 			if (TRACE_ROUTING) {
 				printRoad("  >?", visIt->second.get());
 			}
 			if (distFromStart < visIt->second.get()->distanceFromStart && next->parentRoute.get() == NULL) {
 				toAdd = true;
+				if (ctx->getHeuristicCoefficient() <= 1) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
+								  "! Alert distance from start %f < %f id=%lld",
+								  distFromStart, visIt->second.get()->distanceFromStart, next->getRoad()->getId());
+				}
 			} else {
 				toAdd = false;
 			}
