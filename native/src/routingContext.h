@@ -366,6 +366,7 @@ struct RoutingContext {
 		} else {
 			t = 1 << t;
 		}
+         	UNORDERED(set)<int64_t> ids;
 		int z  = config->zoomToLoad;
 		for (int i = -t; i <= t; i++) {
 			for (int j = -t; j <= t; j++) {
@@ -384,8 +385,9 @@ struct RoutingContext {
 							SHARED_PTR<RouteSegment> seg = s->second;
 							while (seg.get() != NULL) {
                                 SHARED_PTR<RouteDataObject> ro = seg->road;
-                                if (!isExcluded(ro->id, j, subregions)) {
+                                if ( (ids.find(seg->road->id) == ids.end()) && !isExcluded(ro->id, j, subregions) ) {
                                     dataObjects.push_back(ro);
+					ids.insert(seg->road->id);
 								}
 								seg = seg->next;
 							}
