@@ -700,7 +700,7 @@ const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager_
 {
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
     const auto& downloadResult = _webClient->downloadData(
-        QLatin1String("https://test.osmand.net/tile_sources?osmandver=") + owner->appVersion,
+        QLatin1String("https://osmand.net/tile_sources?osmandver=") + owner->appVersion,
         &requestResult);
     if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
         return nullptr;
