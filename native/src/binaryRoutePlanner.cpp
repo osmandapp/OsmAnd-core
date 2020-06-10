@@ -24,13 +24,19 @@ inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToE
 	return f1 < f2 ? -1 : 1;
 }
 
-void printRoad(const char* prefix, SHARED_PTR<RouteSegment>& segment) {
+
+void printRoad(const char* prefix, RouteSegment* segment) {
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "%s Road id=%lld dir=%d ind=%d ds=%f es=%f pend=%d parent=%lld",
 		prefix, segment->road->id / 64, 
 		segment->directionAssgn, segment->getSegmentStart(),
 		segment->distanceFromStart, segment->distanceToEnd, 
 		segment->parentRoute.get() != NULL? segment->parentSegmentEnd : 0,
 		segment->parentRoute.get() != NULL? segment->parentRoute->road->id : 0);	
+}
+
+
+void printRoad(const char* prefix, SHARED_PTR<RouteSegment>& segment) {
+	printRoad(prefix, segment.get());
 }
 
 int64_t calculateRoutePointId(SHARED_PTR<RouteDataObject>& road, int intervalId, bool positive) {
@@ -437,7 +443,7 @@ bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearc
 			frs->distanceToEnd = 0;
 			frs->opposite = opposite;
 			graphSegments.push(frs);
-			if(TRACE_ROUTING){
+			if (TRACE_ROUTING) {
 				printRoad("  >> Final segment : ", frs);
 			}
 			return true;			
@@ -867,41 +873,39 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 				segment, segmentPoint);
 		distFromStart += obstaclesTime;
 		VISITED_MAP::iterator visIt = visitedSegments.find(calculateRoutePointId(next, next->isPositive()));
-		if (visIt == visitedSegments.end() || visIt->second.get() == NULL) {
-			if (next->parentRoute.get() == NULL
-				|| roadPriorityComparator(next->distanceFromStart, next->distanceToEnd,
-								distFromStart, distanceToEnd, ctx->getHeuristicCoefficient()) > 0) {
-				next->distanceFromStart = distFromStart;
-				next->distanceToEnd = distanceToEnd;
-				if (TRACE_ROUTING) {
-					printRoad("  >>", next);
-				}
-					// put additional information to recover whole route after
-				next->parentRoute = segment;
-				next->parentSegmentEnd = segmentPoint;
-				graphSegments.push(next);
-			}
-		} else {
+		bool toAdd = true;
+		if (visIt != visitedSegments.end() && visIt->second.get() != NULL) {
 			// the segment was already visited! We need to follow better route if it exists
-			// that is very exceptional situation and almost exception, it can happen 
+			// that is very exceptional situation and almost exception, it can happen
 			// 1. when we underestimate distnceToEnd - wrong h()
-			// 2. because we process not small segments but the whole road, it could be that 
+			// 2. because we process not small segments but the whole road, it could be that
 			// deviation from the road is faster than following the whole road itself!
-			if (distFromStart < next->distanceFromStart) {
-				if (ctx->getHeuristicCoefficient() <= 1) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, 
-						"! Alert distance from start %f < %f id=%lld", 
-						 distFromStart, next->distanceFromStart, next->getRoad()->getId());
-				}
-				// A: we can't change parent route just here, because we need to update visitedSegments
-				// presumably we can do visitedSegments.put(calculateRoutePointId(next), next);
-//				next.distanceFromStart = distFromStart;
-//				next.setParentRoute(segment);
-//				next.setParentSegmentEnd(segmentPoint);
-				//if (ctx.visitor != null) {
-					// ctx.visitor.visitSegment(next, false);
-				//}
+			if (ctx->getHeuristicCoefficient() <= 1) {
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning,
+								  "! Alert distance from start %f < %f id=%lld",
+								  distFromStart, next->distanceFromStart, next->getRoad()->getId());
 			}
+			if (TRACE_ROUTING) {
+				printRoad("  >?", visIt->second.get());
+			}
+			if (distFromStart < visIt->second.get()->distanceFromStart && next->parentRoute.get() == NULL) {
+				toAdd = true;
+			} else {
+				toAdd = false;
+			}
+		}
+		if (toAdd && (next->parentRoute.get() == NULL
+				|| roadPriorityComparator(next->distanceFromStart, next->distanceToEnd,
+								distFromStart, distanceToEnd, ctx->getHeuristicCoefficient()) > 0)) {
+			next->distanceFromStart = distFromStart;
+			next->distanceToEnd = distanceToEnd;
+			if (TRACE_ROUTING) {
+				printRoad("  >>", next);
+			}
+			// put additional information to recover whole route after
+			next->parentRoute = segment;
+			next->parentSegmentEnd = segmentPoint;
+			graphSegments.push(next);
 		}
 	}
 }
