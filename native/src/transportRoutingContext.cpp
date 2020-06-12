@@ -16,7 +16,7 @@ TransportRoutingContext::TransportRoutingContext(SHARED_PTR<TransportRoutingConf
 	walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
 	walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));
 	vector<BinaryMapFile* > files = getOpenMapFiles();
-	transportStopsReader = new TransportRouteStopsReader(files);
+	transportStopsReader = std::make_shared<TransportRouteStopsReader>(files);
 
 	startCalcTime = 0;
 	visitedRoutesCount = 0;

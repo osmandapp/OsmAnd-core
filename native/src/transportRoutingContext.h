@@ -22,7 +22,7 @@ struct TransportRoutingContext {
 	UNORDERED(map)<SHARED_PTR<TransportStop>, vector<SHARED_PTR<TransportRoute>>> missingStopsCache;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<TransportRouteSegment>>> quadTree;
 
-	TransportRouteStopsReader* transportStopsReader;
+	SHARED_PTR<TransportRouteStopsReader> transportStopsReader;
 
 	int32_t startX;
 	int32_t startY;
