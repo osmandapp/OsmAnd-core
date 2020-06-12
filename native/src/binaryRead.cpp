@@ -1201,7 +1201,7 @@ bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransport
 }
 
 void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t, 
-	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int32_t length, int32_t offset) {
+	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, uint32_t length, uint32_t offset) {
 	input->Seek(offset);
 	bool end = false;
 	uint32_t sizeL;
