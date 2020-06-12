@@ -45,16 +45,14 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 		return;
 	}
 	vector<shared_ptr<Way>> ways = route->forwardWays;
-	double minStart = 150;
-	double minEnd = 150;
 
 	const double startLat = getStart().lat;
 	const double startLon = getStart().lon;
 	const double endLat = getEnd().lat;
 	const double endLon = getEnd().lon;
 
-	SearchNodeInd* startInd = new SearchNodeInd();
-	SearchNodeInd* endInd = new SearchNodeInd();
+	SearchNodeInd startInd;
+	SearchNodeInd* endInd;
 	
 	vector<Node> res;
 	for (int i = 0; i < ways.size(); i++) {
@@ -64,32 +62,32 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 		for (int j = 0; j < nodes.size(); j++) {
 			const auto n = nodes[j];
 			double startDist = getDistance(startLat, startLon, n.lat, n.lon);
-			if (startDist < startInd->dist) {
-				startInd->dist = startDist;
-				startInd->ind = j;
-				startInd->way = ways[i];
+			if (startDist < startInd.dist) {
+				startInd.dist = startDist;
+				startInd.ind = j;
+				startInd.way = ways[i];
 			}
 			double endDist = getDistance(endLat, endLon, n.lat, n.lon);
-			if (endDist < endInd->dist) {
-				endInd->dist = endDist;
-				endInd->ind = j;
-				endInd->way = ways[i];
+			if (endDist < endInd.dist) {
+				endInd.dist = endDist;
+				endInd.ind = j;
+				endInd.way = ways[i];
 			}
 		}
 	}
-	bool validOneWay = startInd->way != nullptr && startInd->way == endInd->way && startInd->ind <= endInd->ind;
+	bool validOneWay = startInd.way != nullptr && startInd.way == endInd.way && startInd.ind <= endInd.ind;
 	if (validOneWay) {
 		shared_ptr<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
-		for (int k = startInd->ind; k <= endInd->ind; k++) {
-			way->addNode(startInd->way->nodes[k]);
+		for (int k = startInd.ind; k <= endInd.ind; k++) {
+			way->addNode(startInd.way->nodes[k]);
 		}
 		list.push_back(way);
 		return;
 	}
-	bool validContinuation = startInd->way != nullptr && endInd->way != nullptr && startInd->way != endInd->way;
+	bool validContinuation = startInd.way != nullptr && endInd.way != nullptr && startInd.way != endInd.way;
 	if (validContinuation) {
-		Node ln = startInd->way->getLastNode();
-		Node fn = endInd->way->getFirstNode();
+		Node ln = startInd.way->getLastNode();
+		Node fn = endInd.way->getFirstNode();
 		// HERE we need to check other ways for continuation
 		if (getDistance(ln.lat, ln.lon, fn.lat, fn.lon) < MISSING_STOP_SEARCH_RADIUS) {
 			validContinuation = true;
@@ -99,13 +97,13 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 	}
 		if (validContinuation) {
 			SHARED_PTR<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
-			for (int k = startInd->ind; k < startInd->way->nodes.size(); k++) {
-				way->addNode(startInd->way->nodes[k]);
+			for (int k = startInd.ind; k < startInd.way->nodes.size(); k++) {
+				way->addNode(startInd.way->nodes[k]);
 			}
 			list.push_back(way);
 			way = make_shared<Way>(GEOMETRY_WAY_ID);
-			for (int k = 0; k <= endInd->ind; k++) {
-				way->addNode(endInd->way->nodes[k]);
+			for (int k = 0; k <= endInd.ind; k++) {
+				way->addNode(endInd.way->nodes[k]);
 			}
 		list.push_back(way);
 		return;
