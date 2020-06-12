@@ -52,7 +52,7 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 	const double endLon = getEnd().lon;
 
 	SearchNodeInd startInd;
-	SearchNodeInd* endInd;
+	SearchNodeInd endInd;
 	
 	vector<Node> res;
 	for (int i = 0; i < ways.size(); i++) {
