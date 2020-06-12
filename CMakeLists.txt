@@ -220,6 +220,8 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
         	"${LEGACY_SRC}/transportRoutingConfiguration.cpp"
         	"${LEGACY_SRC}/transportRoutingContext.cpp"
         	"${LEGACY_SRC}/transportRoutingObjects.cpp"
+         "${LEGACY_SRC}/transportRouteStopsReader.h"
+         "${LEGACY_SRC}/transportRouteStopsReader.cpp"
 
         "${LEGACY_SRC}/turnType.h"
         "${LEGACY_SRC}/turnType.cpp"
