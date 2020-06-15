@@ -560,7 +560,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				if((pprevCross & prevCross) != 0) {
 					// point before is on the same side outside so we can move point along the line to next one
 					targetx = rc->calcX;
-					targetx = rc->calcY;
+					targety = rc->calcY;
 				} else if((cross & prevCross) != 0) {
 					// point next is on the same side outside so we can move point along the line to prev one
 					targetx = px;
