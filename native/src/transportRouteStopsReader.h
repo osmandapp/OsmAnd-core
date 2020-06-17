@@ -11,7 +11,7 @@ struct TransportStop;
 struct TransportRoute;
 struct Way;
 
-const static int MISSING_STOP_SEARCH_RADIUS = 30000;
+const static int MISSING_STOP_SEARCH_RADIUS = 50000;
 typedef UNORDERED(map)<int64_t, shared_ptr<TransportRoute>> PT_ROUTE_MAP;
 typedef vector<SHARED_PTR<TransportStop>> PT_STOPS_SEGMENT;
 

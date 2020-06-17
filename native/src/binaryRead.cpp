@@ -1735,11 +1735,13 @@ bool initializeStringTable(CodedInputStream* input, TransportIndex* ind, UNORDER
 		input->Seek(ind->stringTable->fileOffset);
 		int oldLimit = input->PushLimit(ind->stringTable->length);
 		int current = 0;
-		while (input->BytesUntilLimit() > 0) {
+		bool end = false;
+		while (!end) {
 			int t = input->ReadTag();
 			int tag = WireFormatLite::GetTagFieldNumber(t);
 			switch (tag) {
 				case 0:
+					end = true;
 					break;
 				case OsmAnd::OBF::StringTable::kSFieldNumber: {
 					string value; 
@@ -1886,8 +1888,8 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 			groupPoints[ind].push_back(filePointers[i]);
 		}
 	}
-	const auto it = groupPoints.begin();
-	if (it != groupPoints.end()) {
+	auto it = groupPoints.begin();
+	while (it != groupPoints.end()) {
 		TransportIndex* ind = it->first;
 		vector<int32_t> pointers = it->second;
 		sort(pointers.begin(), pointers.end());
@@ -1907,6 +1909,7 @@ void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNOR
 		for (SHARED_PTR<TransportRoute>& transportRoute : finishInit) {
 			initializeNames(false, transportRoute, indexedStringTable);
 		}
+		it++;
 	}
 }
 //----------------------------
