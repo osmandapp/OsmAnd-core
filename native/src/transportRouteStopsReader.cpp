@@ -39,7 +39,6 @@ vector<SHARED_PTR<TransportStop>> TransportRouteStopsReader::readMergedTransport
 			
 			if (rrs.size() > 0 && !multifileStop->isDeleted()) {
 				for (int32_t rr : rrs) {
-					
 					if (routesToLoad.find(rr) == routesToLoad.end()) {
 					//skip, we already has this route from other map?
 					} else if (routesToLoad.at(rr) == nullptr) {
@@ -392,15 +391,9 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::parseRoutePartsToSegments(ve
 			newSeg.push_back(s);
 			if (s->isMissingStop()) {
 				if (newSeg.size() > 1) {
-					if (newSeg.size() == 2 && newSeg[0]-> isMissingStop()) {
-						newSeg = PT_STOPS_SEGMENT();
-						newSeg.push_back(s);
-					} else {
-						segs.push_back(newSeg);
-						newSeg = PT_STOPS_SEGMENT();
-					}
-
-				} 
+					segs.push_back(newSeg);
+					newSeg = PT_STOPS_SEGMENT();
+				}			
 			}
 		}
 		if (newSeg.size() > 1) {
