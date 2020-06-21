@@ -1656,7 +1656,10 @@ OpeningHoursParser::Token::Token(TokenType tokenType, const std::string& string)
 {
     type = tokenType;
     text = string;
-    mainNumber = atoi(string.c_str());
+    char *p;
+    int val = (int) strtol(string.c_str(), &p, 10);
+    if (!*p)
+        mainNumber = val;
 }
 
 OpeningHoursParser::Token::Token(TokenType tokenType, int mainNumber_)
