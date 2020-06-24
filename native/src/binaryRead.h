@@ -653,6 +653,7 @@ struct BinaryMapFile {
 	bool incompleteLoaded = false;
 	int fd;
 	int routefd;
+    int geocodingfd;
 	bool basemap;
 	bool external;
 	bool roadOnly;
@@ -789,9 +790,9 @@ void searchTransportIndex(SearchQuery* q, BinaryMapFile* file);
 
 void loadTransportRoutes(BinaryMapFile* file, vector<int32_t> filePointers, UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>>& result);
 
-void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap);
+void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap, bool geocoding);
 
-void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub);
+void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub, bool geocoding);
 
 ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound, int& renderedState);
 

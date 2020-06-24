@@ -304,6 +304,8 @@ std::vector<std::string> split_string( const std::string& str, const std::string
             pos = length;
         if (pos != lastPos)
             tokens.push_back(str.substr(lastPos, pos - lastPos));
+        else
+            tokens.push_back("");
 
 		lastPos = pos + delimiters.length();
 	}

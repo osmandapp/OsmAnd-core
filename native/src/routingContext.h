@@ -122,6 +122,7 @@ struct RoutingContext {
 	bool targetTransportStop;
 	bool publicTransport;
 	bool basemap;
+    bool geocoding;
 
 	time_t conditionalTime;
 	tm conditionalTimeStr;
@@ -145,6 +146,7 @@ struct RoutingContext {
         this->publicTransport = cp->publicTransport;
         this->conditionalTime = cp->conditionalTime;
         this->basemap = cp->basemap;
+        this->geocoding = cp->geocoding;
         // copy local data and clear caches
         auto it = cp->subregionTiles.begin();
         for(;it != cp->subregionTiles.end(); it++) {
@@ -179,6 +181,7 @@ struct RoutingContext {
 		, targetTransportStop(false)
 		, publicTransport(false)
 		, conditionalTime(0)
+        , geocoding(false)
 		, precalcRoute(new PrecalculatedRouteDirection()) {
             this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
@@ -306,7 +309,7 @@ struct RoutingContext {
 					subregions[j]->setLoaded();
 					SearchQuery q;
 					vector<RouteDataObject*> res;
-					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion);
+					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion, geocoding);
 					vector<RouteDataObject*>::iterator i = res.begin();
 					for (;i != res.end(); i++) {
 						if (*i != NULL) {
@@ -341,7 +344,7 @@ struct RoutingContext {
 			SearchQuery q((uint32_t) (xloc << tz),
 							(uint32_t) ((xloc + 1) << tz), (uint32_t) (yloc << tz), (uint32_t) ((yloc + 1) << tz));
 			std::vector<RouteSubregion> tempResult;
-			searchRouteSubregions(&q, tempResult, basemap);
+			searchRouteSubregions(&q, tempResult, basemap, geocoding);
 			std::vector<SHARED_PTR<RoutingSubregionTile> > collection;
 			for (uint i = 0; i < tempResult.size(); i++) {
 				RouteSubregion& rs = tempResult[i];

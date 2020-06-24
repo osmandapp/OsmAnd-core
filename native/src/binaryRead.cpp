@@ -324,7 +324,7 @@ bool RouteDataObject::roundabout() {
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub);
 void searchRouteRegion(CodedInputStream** input, 
 	FileInputStream** fis, BinaryMapFile* file, SearchQuery* q,
-	RoutingIndex* ind, std::vector<RouteSubregion>& subregions, std::vector<RouteSubregion>& toLoad);
+	RoutingIndex* ind, std::vector<RouteSubregion>& subregions, std::vector<RouteSubregion>& toLoad, bool geocoding);
 bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects,
 		RoutingIndex* routingIndex);
 
@@ -2212,7 +2212,7 @@ void checkAndInitRouteRegionRules(int fileInd, RoutingIndex* routingIndex){
 	}
 }
 
-void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap) {
+void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap, bool geocoding) {
 	vector<BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
@@ -2229,10 +2229,10 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 			if (contains) {	
 				FileInputStream* nt = NULL;
 				CodedInputStream* cis = NULL;
-				searchRouteRegion(&cis, &nt, file, q, *routeIndex, subs, tempResult);				
+				searchRouteRegion(&cis, &nt, file, q, *routeIndex, subs, tempResult, geocoding);
 				if ( cis != NULL) { delete cis; }
 				if ( nt != NULL) { delete nt; }
-				checkAndInitRouteRegionRules(file->routefd, (*routeIndex));
+				checkAndInitRouteRegionRules(geocoding ? file->geocodingfd : file->routefd, (*routeIndex));
 			}
 		}
 
@@ -2282,7 +2282,7 @@ void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<
 			vector<RouteSubregion> found;			
 			FileInputStream* nt = NULL;
 			CodedInputStream* cis = NULL;
-			searchRouteRegion(&cis, &nt, file, q, *routeIndex, subs, found);
+			searchRouteRegion(&cis, &nt, file, q, *routeIndex, subs, found, false);
 			if ( cis != NULL) { delete cis; }
 			if ( nt != NULL) { delete nt; }
 			checkAndInitRouteRegionRules(file->fd, (*routeIndex));
@@ -2638,10 +2638,10 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	return q->publisher;
 }
 
-void initInputForRouteFile(CodedInputStream** inputStream, FileInputStream** fis, BinaryMapFile* file, uint32_t seek) {
+void initInputForRouteFile(CodedInputStream** inputStream, FileInputStream** fis, BinaryMapFile* file, uint32_t seek, bool geocoding) {
   if(*inputStream == 0) {
-	  lseek(file->routefd, 0, SEEK_SET); // seek 0 or seek (*routeIndex)->filePointer
-	  *fis = new FileInputStream(file->routefd);
+	  lseek(geocoding ? file->geocodingfd : file->routefd, 0, SEEK_SET); // seek 0 or seek (*routeIndex)->filePointer
+	  *fis = new FileInputStream(geocoding ? file->geocodingfd : file->routefd);
 	  (*fis)->SetCloseOnDelete(false);
 	  *inputStream = new CodedInputStream(*fis);	  
 	  (*inputStream) -> SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
@@ -2654,19 +2654,19 @@ void initInputForRouteFile(CodedInputStream** inputStream, FileInputStream** fis
 }
 
 void searchRouteRegion(CodedInputStream** input, FileInputStream** fis, BinaryMapFile* file, SearchQuery* q, RoutingIndex* ind, std::vector<RouteSubregion>& subregions,
-		std::vector<RouteSubregion>& toLoad) {
+		std::vector<RouteSubregion>& toLoad, bool geocoding) {
   
 	for (std::vector<RouteSubregion>::iterator subreg = subregions.begin();
 						subreg != subregions.end(); subreg++) {
 		if (subreg->right >= (uint) q->left && (uint)q->right >= subreg->left && 
 				subreg->bottom >= (uint)q->top && (uint)q->bottom >= subreg->top) {
 			if(subreg->subregions.empty() && subreg->mapDataBlock == 0) {
-				initInputForRouteFile(input, fis, file, subreg->filePointer);
+				initInputForRouteFile(input, fis, file, subreg->filePointer, geocoding);
 				uint32_t old = (*input)->PushLimit(subreg->length);
 				readRouteTree(*input, &(*subreg), NULL, ind, -1/*contains? -1 : 1*/, false);
 				(*input)->PopLimit(old);
 			}
-			searchRouteRegion(input, fis, file, q, ind, subreg->subregions, toLoad);
+			searchRouteRegion(input, fis, file, q, ind, subreg->subregions, toLoad, geocoding);
 			if(subreg->mapDataBlock != 0) {
 				toLoad.push_back(*subreg);
 			}
@@ -2976,7 +2976,7 @@ void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  Rou
 	cis.PopLimit(old);
 }
 
-void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub){
+void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub, bool geocoding) {
 	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	RoutingIndex* rs = sub->routingIndex;
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
@@ -2989,7 +2989,7 @@ void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& 
 			if(rs != NULL && (rs->name != (*routingIndex)->name || rs->filePointer != (*routingIndex)->filePointer)){
 				continue;
 			}
-			searchRouteSubRegion(file->routefd, list, (*routingIndex), sub);
+			searchRouteSubRegion(geocoding ? file->geocodingfd : file->routefd, list, (*routingIndex), sub);
 			return;
 		}
 
@@ -3049,9 +3049,11 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 #if defined(_WIN32)
 	int fileDescriptor = open(inputName.c_str(), O_RDONLY | O_BINARY);
 	int routeDescriptor = open(inputName.c_str(), O_RDONLY | O_BINARY);
+    int geocodingDescriptor = open(inputName.c_str(), O_RDONLY | O_BINARY);
 #else
 	int fileDescriptor = open(inputName.c_str(), O_RDONLY);
 	int routeDescriptor = open(inputName.c_str(), O_RDONLY);
+    int geocodingDescriptor = open(inputName.c_str(), O_RDONLY);
 #endif
 	if (fileDescriptor < 0 || routeDescriptor < 0 || routeDescriptor == fileDescriptor) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File could not be open to read from C : %s", inputName.c_str());
@@ -3061,6 +3063,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive, bool routi
 	mapFile->fd = fileDescriptor;
 
 	mapFile->routefd = routeDescriptor;
+    mapFile->geocodingfd = geocodingDescriptor;
 	mapFile->liveMap = inputName.find("live/") != string::npos;
 	mapFile->inputName = inputName;
 	mapFile->roadOnly = inputName.find(".road") != string::npos;

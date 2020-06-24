@@ -40,10 +40,10 @@ private:
     void analyze();
     
 public:
-    RouteTypeRule() : t(""), v("") {
+    RouteTypeRule() : t(""), v(""), intValue(0), floatValue(0), type(0), forward(0) {
     }
     
-    RouteTypeRule(std::string t, std::string v) : t(t) {
+    RouteTypeRule(std::string t, std::string v) : t(t), intValue(0), floatValue(0), type(0), forward(0) {
         if ("true" == v) {
             v = "yes";
         }
