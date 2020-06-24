@@ -440,6 +440,8 @@ public:
 	int getIntAttribute(string attr, int defVal);
     
     uint64_t getBitSetSize();
+
+	void filterDirectionTags(RoutingIndex* reg, vector<uint32_t>& pointTypes, bool dir);
     
 	/**
 	 * return if the road is accepted for routing
@@ -459,7 +461,7 @@ public:
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	double defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point);
+	double defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir);
 
 
   	/**
@@ -470,7 +472,7 @@ public:
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
-	double defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point);
+	double defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir);
 
 	/**
 	 * return routing speed in m/s for vehicle for specified road
@@ -530,7 +532,7 @@ private:
 
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
-	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def);
+	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def, bool dir);
 	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def);
 
 public:

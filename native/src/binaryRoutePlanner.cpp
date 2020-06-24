@@ -496,7 +496,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		segmentDist  += squareRootDist31(x, y,  prevx, prevy);
 			
 		// 2.1 calculate possible obstacle plus time
-		double obstacle = ctx->config->router->defineRoutingObstacle(road, segmentPoint);
+		double obstacle = ctx->config->router->defineRoutingObstacle(road, segmentPoint, (dir && !reverseWaySearch));
 		if (obstacle < 0) {
 			directionAllowed = false;
 			continue;

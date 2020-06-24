@@ -342,10 +342,10 @@ int GeneralRouter::getIntAttribute(string attr, int defVal) {
 }
 
 double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def) {
-	return evaluateCache(attr, way->region, way->types, def );
+	return evaluateCache(attr, way->region, way->types, def, false);
 }
 
-double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def) {
+double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def, bool extra) {
 	auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
 	MAP_INTV_DOUBLE* regCache;
 	if (regCacheIt == cacheEval[(unsigned int)attr].end()) {
@@ -358,6 +358,7 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 	if (r != regCache->end()) {
 		return r->second;
 	}
+	filterDirectionTags(reg, types, extra);
 	double res = getObjContext(attr).evaluateDouble(reg, types, def);
 	(*regCache)[types] = res;
 	return res;
@@ -379,9 +380,9 @@ bool GeneralRouter::isArea(SHARED_PTR<RouteDataObject>& road) {
     return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
 }
 
-double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
+double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
-		return evaluateCache(RouteDataObjectAttribute::OBSTACLES, road->region, road->pointTypes[point], 0);
+		return evaluateCache(RouteDataObjectAttribute::OBSTACLES, road->region, road->pointTypes[point], 0, dir);
 	}
 	return 0;
 }
@@ -416,12 +417,44 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, ui
  	return sum;
  }
 
+void GeneralRouter::filterDirectionTags(RoutingIndex* reg, vector<uint32_t>& pointTypes, bool dir) {
+	int wayOppositeDirection = dir ? -1 : 1;
+	int direction = 0;
+	int tdirection = 0;
+	for (int i = 0; i < pointTypes.size(); i++) {
+		if (pointTypes[i] == reg->directionBackward) {
+			direction = -1;
+		} else if(pointTypes[i] == reg->directionForward) {
+			direction = 1;
+		} else if (pointTypes[i] == reg->directionTrafficSignalsBackward) {
+			tdirection = -1;
+		} else if(pointTypes[i] == reg->directionTrafficSignalsForward) {
+			tdirection = 1;
+		}
+	}
+	if (direction != 0 || tdirection != 0) {
+		vector<uint32_t> filteredRules;
+		auto it = pointTypes.begin();
+		while (it != pointTypes.end()) {
+			bool skip = false;
+			if ((*it == reg->stopSign || *it == reg->giveWaySign) 
+				&& direction == wayOppositeDirection) {
+				skip = true;
+			} else if (*it == reg->trafficSignals && tdirection == wayOppositeDirection) {
+				skip = true;
+			}
+			if (skip) {
+				it = pointTypes.erase(it);
+			} else {
+				++it;
+			}
+		}
+	}
+} 
 
-
-
-double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point) {
-	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
-		return evaluateCache(RouteDataObjectAttribute::ROUTING_OBSTACLES, road->region, road->pointTypes[point], 0);
+double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
+	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0) {
+		return evaluateCache(RouteDataObjectAttribute::ROUTING_OBSTACLES, road->region, road->pointTypes[point], 0, dir);
 	}
 	return 0;
 }

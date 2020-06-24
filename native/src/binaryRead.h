@@ -98,7 +98,14 @@ struct RoutingIndex : BinaryPartIndex {
     int refTypeRule;
     int destinationTypeRule;
     int destinationRefTypeRule;
-
+	int directionForward = -1;
+	int directionBackward = -1;
+	int directionTrafficSignalsForward = -1;
+	int directionTrafficSignalsBackward = -1;
+	int trafficSignals = -1;
+	int stopSign = -1;
+	int giveWaySign = -1;
+	
 	RoutingIndex() : BinaryPartIndex(ROUTING_INDEX), nameTypeRule(-1), refTypeRule(-1), destinationTypeRule(-1), destinationRefTypeRule(-1) {
 	}
 
