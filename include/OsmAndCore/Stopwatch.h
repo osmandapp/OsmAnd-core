@@ -6,7 +6,6 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Logging.h>
 
 namespace OsmAnd
 {
