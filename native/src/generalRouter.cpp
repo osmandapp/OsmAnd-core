@@ -349,7 +349,7 @@ SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint3
 	int wayOppositeDirection = dir ? -1 : 1;
 	int direction = 0;
 	int tdirection = 0;
-	SHARED_PTR<vector<uint32_t>> ptr;
+	std::shared_ptr<vector<uint32_t>> ptr = nullptr;
 	for (int i = 0; i < pointTypes.size(); i++) {
 		if (pointTypes[i] == reg->directionBackward) {
 			direction = -1;
@@ -362,20 +362,18 @@ SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint3
 		}
 	}
 	if (direction != 0 || tdirection != 0) {
-		auto it = pointTypes.begin();
-		ptr = SHARED_PTR<vector<uint32_t>>(new vector<uint32_t>);
-		while (it != pointTypes.end()) {
+		ptr = shared_ptr<vector<uint32_t>>(new vector<uint32_t>());
+		for (uint32_t r : pointTypes) {
 			bool skip = false;
-			if ((*it == reg->stopSign || *it == reg->giveWaySign) 
+			if ((r == reg->stopSign || r == reg->giveWaySign) 
 				&& direction == wayOppositeDirection) {
 				skip = true;
-			} else if (*it == reg->trafficSignals && tdirection == wayOppositeDirection) {
+			} else if (r == reg->trafficSignals && tdirection == wayOppositeDirection) {
 				skip = true;
 			}
 			if (!skip) {
-				ptr->push_back(*it);
+				ptr->push_back(r);
 			}
-			++it;
 		}
 	}
 	return ptr;
@@ -396,8 +394,8 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 	if (r != regCache->end()) {
 		return r->second;
 	}
-	SHARED_PTR<vector<uint32_t>> ptr = filterDirectionTags(reg, types, extra);
-	double res = getObjContext(attr).evaluateDouble(reg, ptr.get() == nullptr ? *ptr.get() : types, def);
+	auto ptr = filterDirectionTags(reg, types, extra);
+	double res = getObjContext(attr).evaluateDouble(reg, ptr != nullptr ? *ptr : types, def);	
 	types.push_back(extra ? 1 : 0);
 	(*regCache)[types] = res;
 	types.pop_back();
