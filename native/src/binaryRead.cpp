@@ -88,6 +88,24 @@ void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::stri
 		destinationTypeRule = id;
 	} else if (tag == "destination:ref" || tag == "destination:ref:forward" || tag == "destination:ref:backward") {
 		destinationRefTypeRule = id;
+	} else if (tag == "highway" && val == "traffic_signals") {
+		trafficSignals = id;
+	} else if (tag == "highway" && val == "stop") {
+		stopSign = id;
+	} else if (tag == "highway" && val == "give_way") {
+		giveWaySign = id;
+	} else if (tag == "traffic_signals:direction") {
+		if (val == "forward") {
+			directionTrafficSignalsForward = id;
+		} else if (val == "backward") {
+			directionTrafficSignalsBackward = id;
+		}
+	} else if (tag == "direction") {
+		if (val == "forward") {
+			directionForward = id;
+		} else if (val == "backward") {
+			directionBackward = id;
+		}
 	}
 }
 
