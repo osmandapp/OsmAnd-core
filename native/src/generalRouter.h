@@ -440,8 +440,6 @@ public:
 	int getIntAttribute(string attr, int defVal);
     
     uint64_t getBitSetSize();
-
-	void filterDirectionTags(RoutingIndex* reg, vector<uint32_t>& pointTypes, bool dir);
     
 	/**
 	 * return if the road is accepted for routing

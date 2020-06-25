@@ -113,7 +113,7 @@ SHARED_PTR<RouteSegment> loadSameSegment(RoutingContext* ctx, SHARED_PTR<RouteSe
 	int x31 = segment->getRoad()->pointsX[ind];
 	int y31 = segment->getRoad()->pointsY[ind];
 	SHARED_PTR<RouteSegment> s = ctx->loadRouteSegment(x31, y31);
-	while(s.get() != NULL) {
+	while (s.get() != NULL) {
 		if(s->getRoad()->getId() == segment->getRoad()->getId()) {
 			segment = s;
 			break;
@@ -125,14 +125,14 @@ SHARED_PTR<RouteSegment> loadSameSegment(RoutingContext* ctx, SHARED_PTR<RouteSe
 
 
 SHARED_PTR<RouteSegment> initRouteSegment(RoutingContext* ctx, SHARED_PTR<RouteSegment> segment, bool positiveDirection) {
-	if(segment->getSegmentStart() == 0 && !positiveDirection && segment->getRoad()->getPointsLength() > 0) {
+	if (segment->getSegmentStart() == 0 && !positiveDirection && segment->getRoad()->getPointsLength() > 0) {
 		segment = loadSameSegment(ctx, segment, 1);
 	// } else if(segment->getSegmentStart() == segment->getRoad()->getPointsLength() -1 && positiveDirection && segment->getSegmentStart() > 0) {
 	// assymetric cause we calculate initial point differently (segmentStart means that point is between ]segmentStart-1, segmentStart]
 	} else if(segment->getSegmentStart() > 0 && positiveDirection) {
 		segment = loadSameSegment(ctx, segment, segment->getSegmentStart() -1);
 	}
-	if(segment.get() == NULL) {
+	if (segment.get() == NULL) {
 		return segment;
 	}
 	return RouteSegment::initRouteSegment(segment, positiveDirection);

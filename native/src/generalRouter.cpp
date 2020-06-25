@@ -345,6 +345,42 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<Ro
 	return evaluateCache(attr, way->region, way->types, def, false);
 }
 
+SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint32_t>& pointTypes, bool dir) {
+	int wayOppositeDirection = dir ? -1 : 1;
+	int direction = 0;
+	int tdirection = 0;
+	SHARED_PTR<vector<uint32_t>> ptr;
+	for (int i = 0; i < pointTypes.size(); i++) {
+		if (pointTypes[i] == reg->directionBackward) {
+			direction = -1;
+		} else if(pointTypes[i] == reg->directionForward) {
+			direction = 1;
+		} else if (pointTypes[i] == reg->directionTrafficSignalsBackward) {
+			tdirection = -1;
+		} else if(pointTypes[i] == reg->directionTrafficSignalsForward) {
+			tdirection = 1;
+		}
+	}
+	if (direction != 0 || tdirection != 0) {
+		auto it = pointTypes.begin();
+		ptr = SHARED_PTR<vector<uint32_t>>(new vector<uint32_t>);
+		while (it != pointTypes.end()) {
+			bool skip = false;
+			if ((*it == reg->stopSign || *it == reg->giveWaySign) 
+				&& direction == wayOppositeDirection) {
+				skip = true;
+			} else if (*it == reg->trafficSignals && tdirection == wayOppositeDirection) {
+				skip = true;
+			}
+			if (!skip) {
+				ptr->push_back(*it);
+			}
+			++it;
+		}
+	}
+	return ptr;
+} 
+
 double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def, bool extra) {
 	auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
 	MAP_INTV_DOUBLE* regCache;
@@ -354,13 +390,17 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 	} else {
 		regCache = &regCacheIt->second;
 	}
+	types.push_back(extra ? 1 : 0);
 	auto r = regCache->find(types);
+	types.pop_back();
 	if (r != regCache->end()) {
 		return r->second;
 	}
-	filterDirectionTags(reg, types, extra);
-	double res = getObjContext(attr).evaluateDouble(reg, types, def);
+	SHARED_PTR<vector<uint32_t>> ptr = filterDirectionTags(reg, types, extra);
+	double res = getObjContext(attr).evaluateDouble(reg, ptr.get() == nullptr ? *ptr.get() : types, def);
+	types.push_back(extra ? 1 : 0);
 	(*regCache)[types] = res;
+	types.pop_back();
 	return res;
 }
 
@@ -417,40 +457,6 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, ui
  	return sum;
  }
 
-void GeneralRouter::filterDirectionTags(RoutingIndex* reg, vector<uint32_t>& pointTypes, bool dir) {
-	int wayOppositeDirection = dir ? -1 : 1;
-	int direction = 0;
-	int tdirection = 0;
-	for (int i = 0; i < pointTypes.size(); i++) {
-		if (pointTypes[i] == reg->directionBackward) {
-			direction = -1;
-		} else if(pointTypes[i] == reg->directionForward) {
-			direction = 1;
-		} else if (pointTypes[i] == reg->directionTrafficSignalsBackward) {
-			tdirection = -1;
-		} else if(pointTypes[i] == reg->directionTrafficSignalsForward) {
-			tdirection = 1;
-		}
-	}
-	if (direction != 0 || tdirection != 0) {
-		vector<uint32_t> filteredRules;
-		auto it = pointTypes.begin();
-		while (it != pointTypes.end()) {
-			bool skip = false;
-			if ((*it == reg->stopSign || *it == reg->giveWaySign) 
-				&& direction == wayOppositeDirection) {
-				skip = true;
-			} else if (*it == reg->trafficSignals && tdirection == wayOppositeDirection) {
-				skip = true;
-			}
-			if (skip) {
-				it = pointTypes.erase(it);
-			} else {
-				++it;
-			}
-		}
-	}
-} 
 
 double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0) {
