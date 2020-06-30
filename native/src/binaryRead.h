@@ -656,7 +656,7 @@ struct BinaryMapFile {
 	std::vector<RoutingIndex*> routingIndexes;
 	std::vector<TransportIndex*> transportIndexes;
 	std::vector<BinaryPartIndex*> indexes;
-	UNORDERED(map) <uint64_t, shared_ptr<IncompleteTransportRoute>> incompleteTransportRoutes;
+	UNORDERED(map) <TransportIndex*, UNORDERED(map)<uint64_t, shared_ptr<IncompleteTransportRoute>>> incompleteTransportRoutes;
 	bool incompleteLoaded = false;
 	int fd;
 	int routefd;

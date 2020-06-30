@@ -404,26 +404,27 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::parseRoutePartsToSegments(ve
 }
 
 vector<SHARED_PTR<TransportRoute>> TransportRouteStopsReader::findIncompleteRouteParts(SHARED_PTR<TransportRoute>& baseRoute) {
-	vector<SHARED_PTR<TransportRoute>> allRoutes;
+	vector<SHARED_PTR<TransportRoute>> allRoutes;	
 	for (auto& f : routesFilesCache) {
-		 UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> filesRoutesMap;
-		// here we could limit routeMap indexes by only certain bbox around start / end (check comment on field)
-		vector<int32_t> lst;
-		
+		UNORDERED(map)<int64_t, SHARED_PTR<TransportRoute>> filesRoutesMap;
 		getIncompleteTransportRoutes(f.first);
-		
-		if (f.first->incompleteTransportRoutes.find(baseRoute->id) != f.first->incompleteTransportRoutes.end()) {
-			shared_ptr<IncompleteTransportRoute> ptr  = f.first->incompleteTransportRoutes[baseRoute->id];
-			while (ptr != nullptr) {
-				lst.push_back(ptr->routeOffset);
-				ptr = ptr->getNextLinkedRoute();
+		if (!f.first->incompleteTransportRoutes.empty()) {
+			vector<int32_t> lst;
+			for (auto& entry: f.first->incompleteTransportRoutes) {
+				if (entry.second.find(baseRoute->id) != entry.second.end()) {
+					shared_ptr<IncompleteTransportRoute> ptr  = entry.second[baseRoute->id];
+					while (ptr != nullptr) {
+						lst.push_back(ptr->routeOffset);
+						ptr = ptr->getNextLinkedRoute();
+					}
+				}
 			}
-		}
-		if (lst.size() > 0) {
-			sort(lst.begin(), lst.end());
-			loadTransportRoutes(f.first, lst, filesRoutesMap);
-			for (auto& r : filesRoutesMap) {
-				allRoutes.push_back(r.second);
+			if (lst.size() > 0) {
+				sort(lst.begin(), lst.end());
+				loadTransportRoutes(f.first, lst, filesRoutesMap);
+				for (auto& r : filesRoutesMap) {
+					allRoutes.push_back(r.second);
+				}
 			}
 		}
 	}
