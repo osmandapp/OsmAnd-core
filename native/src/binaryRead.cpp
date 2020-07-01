@@ -1172,7 +1172,7 @@ string regStr(UNORDERED(map)<int32_t, string>& stringTable, int32_t i) {
 	return to_string(i);
 }
 
-bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransportRoute>& obj) {
+bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransportRoute>& obj, int transportIndexOffset) {
 	bool end = false;
 	while(!end) {
 		int t = input->ReadTag();
@@ -1183,7 +1183,13 @@ bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransport
 				break;
 			}
 			case OsmAnd::OBF::IncompleteTransportRoute::kRouteRefFieldNumber: {
-				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &obj->routeOffset)));
+				uint32_t shift;
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &shift)));
+				if (shift > transportIndexOffset) {
+					obj->routeOffset = shift;
+				} else {
+					obj->routeOffset = transportIndexOffset + shift;
+				}
 				break;
 			}
 			case OsmAnd::OBF::IncompleteTransportRoute::kOperatorFieldNumber: {
@@ -1219,8 +1225,7 @@ bool readIncompleteRoute(CodedInputStream* input, shared_ptr<IncompleteTransport
 }
 
 void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t, 
-	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, uint32_t length, uint32_t offset) {
-	input->Seek(offset);
+	shared_ptr<IncompleteTransportRoute>>& incompleteRoutes, int transportIndexOffset) {
 	bool end = false;
 	uint32_t sizeL;
 	while(!end) {
@@ -1231,7 +1236,7 @@ void readIncompleteRoutesList(CodedInputStream* input, UNORDERED(map)<uint64_t,
 				input->ReadVarint32(&sizeL);
 				int32_t olds = input->PushLimit(sizeL);
 				shared_ptr<IncompleteTransportRoute> ir = make_shared<IncompleteTransportRoute>();
-				readIncompleteRoute(input, ir);
+				readIncompleteRoute(input, ir, transportIndexOffset);
 
 				if (incompleteRoutes.find(ir->routeId) != incompleteRoutes.end()) {
 					incompleteRoutes[ir->routeId]->setNextLinkedRoute(ir);
@@ -1263,8 +1268,10 @@ void getIncompleteTransportRoutes(BinaryMapFile* file) {
 				CodedInputStream *input = new CodedInputStream(&stream);
 				input->SetTotalBytesLimit(INT_MAX, INT_MAX >> 1);
 				
-				readIncompleteRoutesList(input, file->incompleteTransportRoutes, ti->incompleteRoutesLength,
-						ti->incompleteRoutesOffset);
+				input->Seek(ti->incompleteRoutesOffset);
+				int oldLimit = input->PushLimit(ti->incompleteRoutesLength);
+				readIncompleteRoutesList(input, file->incompleteTransportRoutes, ti->filePointer);
+				input->PopLimit(oldLimit);
 			}
 		}
 		file->incompleteLoaded = true;

@@ -427,7 +427,11 @@ shared_ptr<IncompleteTransportRoute> IncompleteTransportRoute::getNextLinkedRout
 }
 
 void IncompleteTransportRoute::setNextLinkedRoute(shared_ptr<IncompleteTransportRoute>& nextRoute) {
-	nextLinkedRoute = nextRoute;
+	if (nextLinkedRoute == nullptr) {
+		nextLinkedRoute = nextRoute;
+	} else {
+		nextLinkedRoute->setNextLinkedRoute(nextRoute);
+	}
 }
 
 #endif	//_OSMAND_TRANSPORT_ROUTING_OBJECTS_CPP
