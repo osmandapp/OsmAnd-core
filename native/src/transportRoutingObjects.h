@@ -159,7 +159,7 @@ struct IncompleteTransportRoute {
 	string routeOperator;
 	string type;
 	string ref;
-	shared_ptr<IncompleteTransportRoute> nextLinkedRoute;
+	shared_ptr<IncompleteTransportRoute> nextLinkedRoute = nullptr;
 
 	IncompleteTransportRoute();
 
