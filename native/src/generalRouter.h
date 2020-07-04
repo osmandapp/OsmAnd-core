@@ -365,6 +365,9 @@ public:
 	UNORDERED(set)<int64_t> impassableRoadIds;
     bool shortestRoute;
     bool allowPrivate;
+    
+    string profileName;
+    string fileName;
 
     GeneralRouter();
     GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes = MAP_STR_STR());

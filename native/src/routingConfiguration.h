@@ -58,11 +58,11 @@ struct RoutingConfiguration {
 
 class RoutingConfigurationBuilder {
 private:
-    UNORDERED(map)<string, SHARED_PTR<GeneralRouter> > routers;
     MAP_STR_STR attributes;
     UNORDERED(map)<int64_t, int_pair> impassableRoadLocations;
 
 public:
+    UNORDERED(map)<string, SHARED_PTR<GeneralRouter> > routers;
     string defaultRouter;
 
     RoutingConfigurationBuilder() : defaultRouter("") {
