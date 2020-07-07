@@ -63,12 +63,13 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
 	this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
 	this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
 	this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
-	if (shortestRoute) {
-		maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
-	}
 	this->defaultSpeed = parseFloat(params, GeneralRouterConstants::DEFAULT_SPEED, this->defaultSpeed);
 	this->minSpeed = parseFloat(params, GeneralRouterConstants::MIN_SPEED, this->minSpeed);
 	this->maxSpeed = parseFloat(params, GeneralRouterConstants::MAX_SPEED, this->maxSpeed);
+	this->maxVehicleSpeed = this->maxSpeed;
+	if (shortestRoute) {
+		this->maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
+	}
 }
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
@@ -470,7 +471,7 @@ double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
 	double spd = evaluateCache(RouteDataObjectAttribute::ROAD_SPEED, road, defaultSpeed);
-	return max(min(spd, maxSpeed), minSpeed);
+	return max(min(spd, maxVehicleSpeed), minSpeed);
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {

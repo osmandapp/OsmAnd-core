@@ -360,15 +360,16 @@ public:
 	double roundaboutTurn;
 	double rightTurn;
 	double minSpeed;
-    double defaultSpeed;
+	double defaultSpeed;
 	double maxSpeed;
+	double maxVehicleSpeed;
 	UNORDERED(set)<int64_t> impassableRoadIds;
-    bool shortestRoute;
-    bool allowPrivate;
+	bool shortestRoute;
+	bool allowPrivate;
 
-    GeneralRouter();
-    GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes = MAP_STR_STR());
-    GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params = MAP_STR_STR());
+	GeneralRouter();
+	GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes = MAP_STR_STR());
+	GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params = MAP_STR_STR());
 
 	~GeneralRouter() {
 		for (uint k = 0; k < objectAttributes.size(); k++) {
