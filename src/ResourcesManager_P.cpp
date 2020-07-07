@@ -1178,6 +1178,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
             break;
         case ResourceType::HillshadeRegion:
         case ResourceType::HeightmapRegion:
+        case ResourceType::SlopeRegion:
             ok = uninstallSQLiteDB(installedResource);
             break;
         case ResourceType::VoicePack:
