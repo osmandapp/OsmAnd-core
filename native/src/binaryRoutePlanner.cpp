@@ -73,9 +73,9 @@ struct SegmentsComparator: public std::binary_function<SHARED_PTR<RouteSegment>&
 	bool operator()(const SHARED_PTR<RouteSegment>& lhs, const SHARED_PTR<RouteSegment>& rhs) const
 	{
 		int cmp = roadPriorityComparator(lhs.get()->distanceFromStart, lhs.get()->distanceToEnd, rhs.get()->distanceFromStart,
-		    			rhs.get()->distanceToEnd, ctx->getHeuristicCoefficient());
-    	return cmp > 0;
-    }
+						rhs.get()->distanceToEnd, ctx->getHeuristicCoefficient());
+		return cmp > 0;
+	}
 };
 struct NonHeuristicSegmentsComparator: public std::binary_function<SHARED_PTR<RouteSegment>&, SHARED_PTR<RouteSegment>&, bool>
 {
@@ -395,32 +395,32 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 }
 
 bool checkViaRestrictions(SHARED_PTR<RouteSegment>& from, SHARED_PTR<RouteSegment>& to) {
-    if(from.get() != NULL && to.get() != NULL) {
-        int64_t fid = to->getRoad()->getId();
-        for(uint i = 0; i < from->getRoad()->restrictions.size(); i++) {
-            int64_t id = from->getRoad()->restrictions[i].to;
-            if(fid == id) {
-                int tp = from->getRoad()->restrictions[i].type;
-                if(tp == RESTRICTION_NO_LEFT_TURN || 
-                   tp == RESTRICTION_NO_RIGHT_TURN || 
-                   tp == RESTRICTION_NO_STRAIGHT_ON || 
-                   tp == RESTRICTION_NO_U_TURN) {
-                   return false;
-                }
-                break;
-            }
-        }
-    }
-    return true;
+	if(from.get() != NULL && to.get() != NULL) {
+		int64_t fid = to->getRoad()->getId();
+		for(uint i = 0; i < from->getRoad()->restrictions.size(); i++) {
+			int64_t id = from->getRoad()->restrictions[i].to;
+			if(fid == id) {
+				int tp = from->getRoad()->restrictions[i].type;
+				if(tp == RESTRICTION_NO_LEFT_TURN || 
+				   tp == RESTRICTION_NO_RIGHT_TURN || 
+				   tp == RESTRICTION_NO_STRAIGHT_ON || 
+				   tp == RESTRICTION_NO_U_TURN) {
+				   return false;
+				}
+				break;
+			}
+		}
+	}
+	return true;
 }
 
 SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment> s) {
-    while(s->parentRoute.get() != NULL && s->parentRoute->getRoad()->id == s->getRoad()->id) {
-            s = s->parentRoute;
-    }
-    return s->parentRoute;
+	while(s->parentRoute.get() != NULL && s->parentRoute->getRoad()->id == s->getRoad()->id) {
+			s = s->parentRoute;
+	}
+	return s->parentRoute;
 }
-               
+			   
 
 bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QUEUE& graphSegments,
 		SHARED_PTR<RouteSegment>& segment, VISITED_MAP& oppositeSegments,
@@ -431,9 +431,9 @@ bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearc
 	if (opIt != oppositeSegments.end() && opIt->second.get() != NULL ) {
 		SHARED_PTR<RouteSegment> opposite = opIt->second;
 		SHARED_PTR<RouteSegment> to = reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
-        SHARED_PTR<RouteSegment> from = !reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
-        if (checkViaRestrictions(from, to)) {			
-            SHARED_PTR<RouteSegment> frs = std::make_shared<RouteSegment>(road, segmentPoint);
+		SHARED_PTR<RouteSegment> from = !reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
+		if (checkViaRestrictions(from, to)) {			
+			SHARED_PTR<RouteSegment> frs = std::make_shared<RouteSegment>(road, segmentPoint);
 			float distStartObstacles = segment->distanceFromStart + 
 						calculateTimeWithObstacles(ctx, road, segmentDist, obstaclesTime);
 			frs->parentRoute = segment;
@@ -728,9 +728,9 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 			hasNext = next.get() != NULL;
 		}
 	}
-    if (ctx->isInterrupted())
-        *processFurther = false;
-    
+	if (ctx->isInterrupted())
+		*processFurther = false;
+	
 	return itself;
 }
 
@@ -844,7 +844,7 @@ void addRouteSegmentToResult(vector<SHARED_PTR<RouteSegmentResult> >& result, SH
 }
 
 void attachConnectedRoads(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& res) {
-    for (auto it : res) {
+	for (auto it : res) {
 		bool plus = it->getStartPointIndex() < it->getEndPointIndex();
 		int j = it->getStartPointIndex();
 		do {
@@ -852,13 +852,13 @@ void attachConnectedRoads(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentRes
 			vector<SHARED_PTR<RouteSegmentResult> > r;
 			RouteSegment* rs = s.get();
 			while(rs != NULL) {
-                auto res = std::make_shared<RouteSegmentResult>(rs->road, rs->getSegmentStart(), rs->getSegmentStart());
+				auto res = std::make_shared<RouteSegmentResult>(rs->road, rs->getSegmentStart(), rs->getSegmentStart());
 				r.push_back(res);
 				rs = rs->next.get();
 			}
 			it->attachedRoutes.push_back(r);
 			j = plus ? j + 1 : j - 1;
-            
+			
 		} while (j != it->getEndPointIndex());
 	}
 }
@@ -932,7 +932,7 @@ vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingCont
 					finalSegment->opposite->parentSegmentEnd;
 		float parentRoutingTime = -1;
 		while (segment.get() != NULL) {
-            auto res = std::make_shared<RouteSegmentResult>(segment->road, parentSegmentStart, segment->getSegmentStart());
+			auto res = std::make_shared<RouteSegmentResult>(segment->road, parentSegmentStart, segment->getSegmentStart());
 			parentRoutingTime = calcRoutingTime(parentRoutingTime, finalSegment, segment, res);
 			parentSegmentStart = segment->parentSegmentEnd;
 			segment = segment->parentRoute;

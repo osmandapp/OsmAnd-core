@@ -416,7 +416,7 @@ int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
 }
 
 bool GeneralRouter::isArea(SHARED_PTR<RouteDataObject>& road) {
-    return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
+	return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
 }
 
 double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
@@ -552,21 +552,21 @@ void GeneralRouter::printRules() {
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
-    string key = r.first + "$" + r.second;
-    MAP_STR_INT::iterator it = universalRules.find(key);
-    if (it != universalRules.end()) {
-        return ((uint)it->second);
-    }
-    int id = (int)universalRules.size();
-    universalRulesById.push_back(r);
-    universalRules[key] = id;
-    dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
-    d.set(id);
-    return id;
+	string key = r.first + "$" + r.second;
+	MAP_STR_INT::iterator it = universalRules.find(key);
+	if (it != universalRules.end()) {
+		return ((uint)it->second);
+	}
+	int id = (int)universalRules.size();
+	universalRulesById.push_back(r);
+	universalRules[key] = id;
+	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
+	d.set(id);
+	return id;
 }
 
 uint64_t GeneralRouter::getBitSetSize() {
-    return universalRules.size();
+	return universalRules.size();
 }
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {
