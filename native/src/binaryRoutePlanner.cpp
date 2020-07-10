@@ -744,6 +744,9 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 }
 
 SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx, bool transportStop) {
+	if (ctx->progress) {
+		ctx->progress->timeToFindInitialSegments.Start();
+	}
 	vector<SHARED_PTR<RouteDataObject> > dataObjects;
 	ctx->loadTileData(px, py, 17, dataObjects);
 	if (dataObjects.size() == 0) {
@@ -783,6 +786,9 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 		}		
 	}	
 	sort(list.begin(), list.end(), sortRoutePoints);
+	if (ctx->progress) {
+		ctx->progress->timeToFindInitialSegments.Pause();
+	}
 	if(list.size() > 0) {
 		SHARED_PTR<RouteSegmentPoint> ps = nullptr;
 		int i = 0;

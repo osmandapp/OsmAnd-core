@@ -7,6 +7,8 @@ class RouteCalculationProgress {
 public:
 	OsmAnd::ElapsedTimer timeToLoad;
 	OsmAnd::ElapsedTimer timeToCalculate;
+	OsmAnd::ElapsedTimer timeToLoadHeaders;
+	OsmAnd::ElapsedTimer timeToFindInitialSegments;
 	OsmAnd::ElapsedTimer timeExtra;
 
 	int segmentNotFound;

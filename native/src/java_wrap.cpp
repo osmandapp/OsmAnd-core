@@ -1338,6 +1338,14 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 
 }
 
+void addIntField(JNIEnv *ienv, jobject obj, jfieldID fid, int val) {
+	ienv->SetIntField(obj, fid, ienv->GetIntField(obj, fid)  + val);
+}
+
+void addLongField(JNIEnv *ienv, jobject obj, jfieldID fid, jlong val) {
+	ienv->SetLongField(obj, fid, ienv->GetLongField(obj, fid) + val);
+}
+
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
 		jobject obj, 
 		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
@@ -1347,6 +1355,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	parseRouteConfiguration(ienv, config, jRouteConfig);
 	RoutingContext c(config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
+
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c.startX = data[0];
 	c.startY = data[1];
@@ -1382,32 +1391,28 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 
 
 	if (c.progress && c.progress.get()) {
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.progress->visitedSegments);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.progress->loadedTiles);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_directQueueSize, c.progress->directQueueSize);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_oppositeQueueSize, c.progress->oppositeQueueSize);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_directSegmentQueueSize, c.progress->directSegmentQueueSize);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_reverseSegmentQueueSize, c.progress->reverseSegmentQueueSize);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedDirectSegments, c.progress->visitedDirectSegments);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedOppositeSegments, c.progress->visitedOppositeSegments);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_directQueueSize, c.progress->directQueueSize);
-		ienv->SetIntField(progress, jfield_RouteCalculationProgress_oppositeQueueSize, c.progress->oppositeQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedSegments, c.progress->visitedSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_loadedTiles, c.progress->loadedTiles);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c.progress->directQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c.progress->oppositeQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directSegmentQueueSize, c.progress->directSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_reverseSegmentQueueSize, c.progress->reverseSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedDirectSegments, c.progress->visitedDirectSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedOppositeSegments, c.progress->visitedOppositeSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c.progress->directQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c.progress->oppositeQueueSize);
 
-		// no info
-		// ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeNanoToCalcDeviation, 0);
-		// ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeToLoadHeaders, 0);
-		// ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeToFindInitialSegments, 0);
-
-		ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeToLoad,
-							c.progress->timeToLoad.GetElapsedMicros() * 1000);
-		ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeToCalculate,
-							c.progress->timeToCalculate.GetElapsedMicros() * 1000);
-		ienv->SetLongField(progress, jfield_RouteCalculationProgress_timeToLoadHeaders,
-							c.progress->timeExtra.GetElapsedMicros() * 1000);
-
-		
-
-
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToLoad,
+					c.progress->timeToLoad.GetElapsedMicros() * 1000);
+		// timeToCalculate set by wrapper
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToCalculate,
+					 c.progress->timeToCalculate.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToLoadHeaders,
+					 c.progress->timeToLoadHeaders.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToFindInitialSegments,
+					 c.progress->timeToFindInitialSegments.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeNanoToCalcDeviation,
+					c.progress->timeExtra.GetElapsedMicros() * 1000);
 	}
 	if (r.size() == 0) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No route found");

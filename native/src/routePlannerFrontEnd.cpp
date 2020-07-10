@@ -197,7 +197,6 @@ vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_P
 	}
 	if (ctx->finalRouteSegment && ctx->progress) {
 		ctx->progress->routingCalculatedTime += ctx->finalRouteSegment->distanceFromStart;
-		ctx->progress->loadedTiles = ctx->loadedTiles;
 	}
 
 	return prepareResult(ctx, result);
@@ -263,7 +262,6 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 		auto res = searchRouteInternalPrepare(&local, points[i], points[i + 1], routeDirection);
 		
 		results.insert(results.end(), res.begin(), res.end());
-		ctx->loadedTiles += local.loadedTiles;
 		
 		local.unloadAllData(ctx);
 		if (!restPartRecalculatedRoute.empty()) {

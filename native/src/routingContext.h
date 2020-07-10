@@ -102,7 +102,6 @@ struct RoutingContext {
 	RouteCalculationMode calculationMode;
 	int firstRoadDirection;
 	int64_t firstRoadId;
-	int loadedTiles;
 	SHARED_PTR<RoutingConfiguration> config;
 	SHARED_PTR<RouteCalculationProgress> progress;
 	bool leftSideNavigation;
@@ -143,9 +142,8 @@ struct RoutingContext {
 		this->basemap = cp->basemap;
 		this->geocoding = cp->geocoding;
 		this->progress = std::make_shared<RouteCalculationProgress>();
-		this->loadedTiles = 0;
-			// copy local data and clear caches
-			auto it = cp->subregionTiles.begin();
+		// copy local data and clear caches
+		auto it = cp->subregionTiles.begin();
 		for(;it != cp->subregionTiles.end(); it++) {
 			auto tl = it->second;
 			if (tl->isLoaded()) {
@@ -169,7 +167,6 @@ struct RoutingContext {
 		: calculationMode(calcMode)
 		, firstRoadDirection(0)
 		, firstRoadId(0)
-		, loadedTiles(0)
 		, config(config)
 		, leftSideNavigation(false)
 		, startTransportStop(false)
@@ -301,7 +298,9 @@ struct RoutingContext {
 			UNORDERED(set)<int64_t> excludedIds;
 			for (uint j = 0; j < subregions.size(); j++) {
 				if (!subregions[j]->isLoaded()) {
-					loadedTiles++;
+					if (progress) {
+						progress->loadedTiles++;
+					}
 					subregions[j]->setLoaded();
 					SearchQuery q;
 					vector<RouteDataObject*> res;
@@ -334,6 +333,7 @@ struct RoutingContext {
 	void loadHeaders(uint32_t xloc, uint32_t yloc) {
 		if (progress && progress.get()) {
 			progress->timeToLoad.Start();
+			progress->timeToLoadHeaders.Start();
 		}
 		int z  = config->zoomToLoad;
 		int tz = 31 - z;
@@ -353,6 +353,9 @@ struct RoutingContext {
 				collection.push_back(subregionTiles[key]);
 			}
 			indexedSubregions[tileId] = collection;
+		}
+		if (progress && progress.get()) {
+			progress->timeToLoadHeaders.Pause();
 		}
 		loadHeaderObjects(tileId);
 		if (progress && progress.get()) {
