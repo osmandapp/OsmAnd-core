@@ -411,6 +411,22 @@ jclass jclass_TransliterationHelper;
 jmethodID jmethod_TransliterationHelper_transliterate;
 jmethodID jmethod_Reshaper_reshape;
 jmethodID jmethod_Reshaper_reshapebytes;
+jclass jclass_RoutingContext = NULL;
+jfieldID jfield_RoutingContext_startX = NULL;
+jfieldID jfield_RoutingContext_startY = NULL;
+jfieldID jfield_RoutingContext_startRoadId = NULL;
+jfieldID jfield_RoutingContext_startSegmentInd = NULL;
+jfieldID jfield_RoutingContext_startTransportStop = NULL;
+jfieldID jfield_RoutingContext_targetX = NULL;
+jfieldID jfield_RoutingContext_targetY = NULL;
+jfieldID jfield_RoutingContext_targetRoadId = NULL;
+jfieldID jfield_RoutingContext_targetSegmentInd = NULL;
+jfieldID jfield_RoutingContext_targetTransportStop = NULL;
+jfieldID jfield_RoutingContext_publicTransport = NULL;
+jfieldID jfield_RoutingContext_config = NULL;
+jfieldID jfield_RoutingContext_precalculatedRouteDirection = NULL;
+jfieldID jfield_RoutingContext_calculationProgress = NULL;
+
 jclass jclass_RouteCalculationProgress = NULL;
 jfieldID jfield_RouteCalculationProgress_segmentNotFound = NULL;
 jfieldID jfield_RouteCalculationProgress_distanceFromBegin = NULL;
@@ -712,6 +728,22 @@ void loadJniRenderingContext(JNIEnv* env)
 			"F"); 
 	jfield_RouteSegmentResult_preAttachedRoutes = getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes",
 			"[[Lnet/osmand/router/RouteSegmentResult;");
+
+	jclass_RoutingContext = findGlobalClass(env, "net/osmand/router/RoutingContext");
+	jfield_RoutingContext_startX = getFid(env, jclass_RoutingContext, "startX", "I");
+	jfield_RoutingContext_startY = getFid(env, jclass_RoutingContext, "startY", "I");
+	jfield_RoutingContext_startRoadId = getFid(env, jclass_RoutingContext, "startRoadId", "J");
+	jfield_RoutingContext_startSegmentInd = getFid(env, jclass_RoutingContext, "startSegmentInd", "I");
+	jfield_RoutingContext_startTransportStop = getFid(env, jclass_RoutingContext, "startTransportStop", "Z");
+	jfield_RoutingContext_targetX = getFid(env, jclass_RoutingContext, "targetX", "I");
+	jfield_RoutingContext_targetY = getFid(env, jclass_RoutingContext, "targetY", "I");
+	jfield_RoutingContext_targetRoadId = getFid(env, jclass_RoutingContext, "targetRoadId", "J");
+	jfield_RoutingContext_targetSegmentInd = getFid(env, jclass_RoutingContext, "targetSegmentInd", "I");
+	jfield_RoutingContext_targetTransportStop = getFid(env, jclass_RoutingContext, "targetTransportStop", "Z");
+	jfield_RoutingContext_publicTransport = getFid(env, jclass_RoutingContext, "publicTransport", "Z");
+	jfield_RoutingContext_config = getFid(env, jclass_RoutingContext, "config", "Lnet/osmand/router/RoutingConfiguration;");
+	jfield_RoutingContext_precalculatedRouteDirection = getFid(env, jclass_RoutingContext, "precalculatedRouteDirection", "Lnet/osmand/router/PrecalculatedRouteDirection;");
+	jfield_RoutingContext_calculationProgress = getFid(env, jclass_RoutingContext, "calculationProgress", "Lnet/osmand/router/RouteCalculationProgress;");
 
 	jclass_RouteCalculationProgress = findGlobalClass(env, "net/osmand/router/RouteCalculationProgress");
 	jfield_RouteCalculationProgress_isCancelled  = getFid(env, jclass_RouteCalculationProgress, "isCancelled", "Z");
@@ -1347,27 +1379,27 @@ void addLongField(JNIEnv *ienv, jobject obj, jfieldID fid, jlong val) {
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
-		jobject obj, 
-		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
-		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap,
-		bool publicTransport, bool startTransportStop, bool targetTransportStop) {
+		jobject obj, jobject jCtx, jfloat initDirection,
+		jobjectArray regions, bool basemap) {
+	jobject jRouteConfig = ienv->GetObjectField(jCtx, jfield_RoutingContext_config);
+	jobject precalculatedRoute = ienv->GetObjectField(jCtx, jfield_RoutingContext_precalculatedRouteDirection);
+	jobject progress = ienv->GetObjectField(jCtx, jfield_RoutingContext_calculationProgress);
+
 	SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
 	parseRouteConfiguration(ienv, config, jRouteConfig);
 	RoutingContext c(config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 
-	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
-	c.startX = data[0];
-	c.startY = data[1];
-	c.targetX = data[2];
-	c.targetY = data[3];
+	c.startX = ienv->GetIntField(jCtx, jfield_RoutingContext_startX);
+	c.startY = ienv->GetIntField(jCtx, jfield_RoutingContext_startY);
+	c.targetX = ienv->GetIntField(jCtx, jfield_RoutingContext_targetX);
+	c.targetY = ienv->GetIntField(jCtx, jfield_RoutingContext_targetY);
 	c.basemap = basemap;
 	c.setConditionalTime(config->routeCalculationTime);
-	c.publicTransport = publicTransport;
-	c.startTransportStop = startTransportStop;
-	c.targetTransportStop = targetTransportStop;
+	c.publicTransport = ienv->GetBooleanField(jCtx, jfield_RoutingContext_publicTransport);
+	c.startTransportStop = ienv->GetBooleanField(jCtx, jfield_RoutingContext_startTransportStop);
+	c.targetTransportStop = ienv->GetBooleanField(jCtx, jfield_RoutingContext_targetTransportStop);
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
-	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
 	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(&c, false);
 	UNORDERED(map)<int64_t, int> indexes;
 	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
@@ -1418,6 +1450,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No route found");
 	}
 	fflush(stdout);
+	ienv->DeleteLocalRef(jRouteConfig);
+	ienv->DeleteLocalRef(progress);
+	ienv->DeleteLocalRef(precalculatedRoute);
 	return res;
 }
 
