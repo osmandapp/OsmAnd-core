@@ -2445,7 +2445,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject> 
 					if (basemap) {
 						basemapCoastLines.push_back(*r);
 					} else {
-						if(deletedIds.find(r->obj->id) == deletedIds.end()) {
+						if (deletedIds.find(r->obj->id) == deletedIds.end()) {
 							coastLines.push_back(*r);
 						}
 					}
@@ -2576,12 +2576,12 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		// bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
 		bool coastlinesWereAdded = false;
 		bool detailedCoastlinesWereAdded = false;
-		if (!coastLines.empty()) {
+		if (!coastLines.empty() && q->zoom > zoomOnlyForBasemaps) {
 			int bleft = q->left;
 			int bright = q->right;
 			int btop = q->top;
 			int bbottom = q->bottom;
-			if(q->zoom > zoomDetailedForCoastlines + 1) {
+			if (q->zoom > zoomDetailedForCoastlines + 1) {
 				int shift = (31 - zoomDetailedForCoastlines + 1);
 				bleft = (q->left >> shift) << shift;
 				bright = ((q->right >> shift) + 1) << shift;
