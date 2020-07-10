@@ -236,9 +236,11 @@ bool checkIfGraphIsEmpty(RoutingContext* ctx, bool allowDirection,
 SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<RouteSegmentPoint>& start, SHARED_PTR<RouteSegmentPoint>& end, bool leftSideNavigation) {
 	// FIXME intermediate points
 	// measure time
-	ctx->visitedSegments = 0;
+	
 	int iterationsToUpdate = 0;
-	ctx->timeToCalculate.Start();
+	if (ctx->progress.get()) {
+		ctx->progress->timeToCalculate.Start();
+	}
 	
 
 	SegmentsComparator sgmCmp(ctx);
@@ -276,8 +278,9 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 			}
 			break;
 		}
-
-		ctx->visitedSegments++;	
+		if (ctx->progress.get()) {
+			ctx->progress->visitedSegments++;	
+		}
 		if (forwardSearch) {
 			bool doNotAddIntersections = onlyBackward;
 			processRouteSegment(ctx, false, graphDirectSegments, visitedDirectSegments, 
@@ -297,11 +300,11 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 				break;
 			}
 		}
-		if(checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() <= 0, graphReverseSegments, end, visitedOppositeSegments,
+		if (checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() <= 0, graphReverseSegments, end, visitedOppositeSegments,
 					"Route is not found to selected target point.")) {
 			return finalSegment;
 		}
-		if(checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() >= 0, graphDirectSegments, start, visitedDirectSegments,
+		if (checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() >= 0, graphDirectSegments, start, visitedDirectSegments,
 					"Route is not found from selected start point.")) {
 			return finalSegment;
 		}		
@@ -330,20 +333,20 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 		}
 
 		// check if interrupted
-		if(ctx->isInterrupted()) {
+		if (ctx->isInterrupted()) {
 			return finalSegment;
 		}
 	}
-	ctx->timeToCalculate.Pause();
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Result visited (visited roads %d, visited segments %d / %d , queue sizes %d / %d ) ",
-			ctx-> visitedSegments, visitedDirectSegments.size(), visitedOppositeSegments.size(),
-			graphDirectSegments.size(),graphReverseSegments.size());
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Result timing (time to load %.3f, time to calc %.3f, extra timer %.3f, loaded tiles %d) ", 
-			ctx->timeToLoad.GetElapsedMicros() / 1000000.0, ctx->timeToCalculate.GetElapsedMicros() / 1000000.0, 
-			ctx->timeExtra.GetElapsedMicros() / 1000000.0,  ctx->loadedTiles);
-	int sz = calculateSizeOfSearchMaps(graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Memory occupied (Routing context %d Kb, search %d Kb)", ctx->getSize()/ 1024, sz/1024);
-	ctx->visitedSegments = visitedDirectSegments.size() + visitedOppositeSegments.size();
+	if (ctx->progress.get()) {
+		ctx->progress->timeToCalculate.Pause();
+		ctx->progress->visitedDirectSegments += visitedDirectSegments.size();
+		ctx->progress->visitedOppositeSegments += visitedOppositeSegments.size();
+		ctx->progress->directQueueSize += graphDirectSegments.size();
+		ctx->progress->oppositeQueueSize += graphReverseSegments.size();
+		// int sz = calculateSizeOfSearchMaps(graphDirectSegments, graphReverseSegments, visitedDirectSegments, visitedOppositeSegments);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "[Native] Memory occupied (Routing context %d Kb, search %d Kb)", ctx->getSize()/ 1024, sz/1024);
+		
+	}
 	return finalSegment;
 }
 
@@ -924,7 +927,7 @@ float calcRoutingTime(float parentRoutingTime, SHARED_PTR<RouteSegment>& finalSe
 vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingContext* ctx, SHARED_PTR<RouteSegment>& finalSegment) {
 	vector<SHARED_PTR<RouteSegmentResult> > result;
 	if (finalSegment.get() != NULL) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
 		// Get results from opposite direction roads
 		SHARED_PTR<RouteSegment> segment = finalSegment->isReverseWaySearch() ? finalSegment : 
 					finalSegment->opposite->parentRoute;
@@ -969,7 +972,7 @@ vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx,
 		}
 		return vector<SHARED_PTR<RouteSegmentResult> >();
 	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Start point was found %lld [Native]", start->road->id / 64);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Start point was found %lld [Native]", start->road->id / 64);
 	}
 	SHARED_PTR<RouteSegmentPoint> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx, ctx->publicTransport && ctx->targetTransportStop);
 	if(end.get() == NULL) {
@@ -979,7 +982,7 @@ vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx,
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "End point was not found [Native]");
 		return vector<SHARED_PTR<RouteSegmentResult> >();
 	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id / 64);
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id / 64);
 	}
 	SHARED_PTR<RouteSegment> finalSegment = searchRouteInternal(ctx, start, end, leftSideNavigation);
 	vector<SHARED_PTR<RouteSegmentResult> > res = convertFinalSegmentToResults(ctx, finalSegment);

@@ -5,23 +5,33 @@
 
 class RouteCalculationProgress {
 public:
+	OsmAnd::ElapsedTimer timeToLoad;
+	OsmAnd::ElapsedTimer timeToCalculate;
+	OsmAnd::ElapsedTimer timeExtra;
+
 	int segmentNotFound;
 	float distanceFromBegin;
 	int directSegmentQueueSize;
 	float distanceFromEnd;
 	int reverseSegmentQueueSize;
-    float totalEstimatedDistance;
-    
-    float routingCalculatedTime;
-    int visitedSegments;
-    int loadedTiles;
+	float totalEstimatedDistance;
+	
+	float routingCalculatedTime;
+	int visitedSegments;
+	int loadedTiles;
+
+	int visitedDirectSegments;
+	int visitedOppositeSegments;
+	int directQueueSize;
+	int oppositeQueueSize;
 
 	bool cancelled;
-    
+	
 public:
 	RouteCalculationProgress() : segmentNotFound(-1), distanceFromBegin(0),
 		directSegmentQueueSize(0), distanceFromEnd(0),  reverseSegmentQueueSize(0), totalEstimatedDistance(0),
-        routingCalculatedTime(0), visitedSegments(0), loadedTiles(0), cancelled(false){
+		routingCalculatedTime(0), visitedSegments(0), loadedTiles(0), 
+		visitedDirectSegments(0), visitedOppositeSegments(0), directQueueSize(0),  oppositeQueueSize(0), cancelled(false) {
 	}
 
 	virtual bool isCancelled(){
