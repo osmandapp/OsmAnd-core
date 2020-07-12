@@ -150,7 +150,6 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 
 		// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
 		if (ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
-			ctx->firstRoadId = (start->road->id << ROUTE_POINTS) + start->getSegmentStart();
 			double plusDir = start->road->directionRoute(start->getSegmentStart(), true);
 			double diff = plusDir - ctx->config->initialDirection;
 			if (abs(alignAngleDifference(diff)) <= M_PI / 3) {
@@ -169,19 +168,19 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 		//int startY = start->road->pointsY[start->segmentStart];
 	
 		float estimatedDistance = (float) h(ctx, ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
-		if(startPos.get() != NULL) {
+		if (startPos.get() != NULL) {
 			startPos->distanceToEnd = estimatedDistance;
 			graphDirectSegments.push(startPos);
 		}
-		if(startNeg.get() != NULL) {
+		if (startNeg.get() != NULL) {
 			startNeg->distanceToEnd = estimatedDistance;
 			graphDirectSegments.push(startNeg);
 		}
-		if(endPos.get() != NULL) {
+		if (endPos.get() != NULL) {
 			endPos->distanceToEnd = estimatedDistance;
 			graphReverseSegments.push(endPos);
 		}
-		if(endNeg.get() != NULL) {
+		if (endNeg.get() != NULL) {
 			endNeg->distanceToEnd = estimatedDistance;
 			graphReverseSegments.push(endNeg);
 		}
@@ -743,7 +742,8 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	return findRouteSegment(px, py, ctx, false);
 }
 
-SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx, bool transportStop) {
+SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx, bool transportStop, 
+												int64_t roadId, int segmentInd) {
 	if (ctx->progress) {
 		ctx->progress->timeToFindInitialSegments.Start();
 	}
@@ -758,6 +758,20 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	
 	vector<SHARED_PTR<RouteSegmentPoint> > list ;
 	vector<SHARED_PTR<RouteDataObject> >::iterator it = dataObjects.begin();
+	for (; it!= dataObjects.end(); it++) {
+		SHARED_PTR<RouteDataObject> r = *it;
+		if (r->id == roadId && roadId > 0 && segmentInd < r->pointsX.size() ) {
+			SHARED_PTR<RouteSegmentPoint> road = std::make_shared<RouteSegmentPoint>(r, segmentInd);
+			road->preciseX = px;
+			road->preciseY = py;
+			road->dist = 0;
+			list.push_back(road);
+			break;
+		}
+	}
+	if (list.empty()) {
+		it = dataObjects.begin();
+	}
 	for (; it!= dataObjects.end(); it++) {
 		SHARED_PTR<RouteDataObject> r = *it;
 		if (r->pointsX.size() > 1) {
@@ -789,7 +803,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	if (ctx->progress) {
 		ctx->progress->timeToFindInitialSegments.Pause();
 	}
-	if(list.size() > 0) {
+	if (list.size() > 0) {
 		SHARED_PTR<RouteSegmentPoint> ps = nullptr;
 		int i = 0;
 		if (ctx->publicTransport) {
@@ -970,7 +984,8 @@ vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingCont
 }
 
 vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {
-	SHARED_PTR<RouteSegmentPoint> start = findRouteSegment(ctx->startX, ctx->startY, ctx, ctx->publicTransport && ctx->startTransportStop);
+	SHARED_PTR<RouteSegmentPoint> start = findRouteSegment(ctx->startX, ctx->startY, ctx, ctx->publicTransport && ctx->startTransportStop,
+														   ctx->startRoadId, ctx->startSegmentInd);
 	if(start.get() == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was not found [Native]");
 		if(ctx->progress.get()) {
@@ -980,7 +995,8 @@ vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx,
 	} else {
 		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Start point was found %lld [Native]", start->road->id / 64);
 	}
-	SHARED_PTR<RouteSegmentPoint> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx, ctx->publicTransport && ctx->targetTransportStop);
+	SHARED_PTR<RouteSegmentPoint> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx, ctx->publicTransport && ctx->targetTransportStop,
+							ctx->targetRoadId, ctx->targetSegmentInd);
 	if(end.get() == NULL) {
 		if(ctx->progress.get()) {
 			ctx->progress->setSegmentNotFound(1);

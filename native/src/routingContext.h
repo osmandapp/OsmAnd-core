@@ -100,8 +100,6 @@ struct RoutingContext {
 	typedef UNORDERED(map)<int64_t, SHARED_PTR<RoutingSubregionTile> > MAP_SUBREGION_TILES;
 
 	RouteCalculationMode calculationMode;
-	int firstRoadDirection;
-	int64_t firstRoadId;
 	SHARED_PTR<RoutingConfiguration> config;
 	SHARED_PTR<RouteCalculationProgress> progress;
 	bool leftSideNavigation;
@@ -110,9 +108,14 @@ struct RoutingContext {
 
 	int startX;
 	int startY;
+	int64_t startRoadId;
+	int startSegmentInd;
 	bool startTransportStop;
+	
 	int targetX;
 	int targetY;
+	int64_t targetRoadId;
+	int targetSegmentInd;
 	bool targetTransportStop;
 	bool publicTransport;
 	bool basemap;
@@ -165,8 +168,6 @@ struct RoutingContext {
 	
 	RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL)
 		: calculationMode(calcMode)
-		, firstRoadDirection(0)
-		, firstRoadId(0)
 		, config(config)
 		, leftSideNavigation(false)
 		, startTransportStop(false)
