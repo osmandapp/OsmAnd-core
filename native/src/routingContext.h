@@ -333,7 +333,6 @@ struct RoutingContext {
 
 	void loadHeaders(uint32_t xloc, uint32_t yloc) {
 		if (progress && progress.get()) {
-			progress->timeToLoad.Start();
 			progress->timeToLoadHeaders.Start();
 		}
 		int z  = config->zoomToLoad;
@@ -359,12 +358,12 @@ struct RoutingContext {
 			progress->timeToLoadHeaders.Pause();
 		}
 		loadHeaderObjects(tileId);
-		if (progress && progress.get()) {
-			progress->timeToLoad.Pause();
-		}
 	}
 
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects) {
+		if (progress && progress.get()) {
+			progress->timeToLoad.Start();
+		}
 		int t = config->zoomToLoad - zoomAround;
 		int coordinatesShift = (1 << (31 - config->zoomToLoad));
 		if (t <= 0) {
@@ -405,10 +404,16 @@ struct RoutingContext {
 				}
 			}
 		}
+		if (progress && progress.get()) {
+			progress->timeToLoad.Pause();
+		}
 	}
 
 	// void searchRouteRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RoutingIndex* rs, RouteSubregion* sub)
 	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31) {
+		if (progress && progress.get()) {
+			progress->timeToLoad.Start();
+		}
 		int z  = config->zoomToLoad;
 		int64_t xloc = x31 >> (31 - z);
 		int64_t yloc = y31 >> (31 - z);
@@ -416,8 +421,13 @@ struct RoutingContext {
 		int64_t tileId = (xloc << z) + yloc;
 		loadHeaders(xloc, yloc);
 		const auto itSubregions = indexedSubregions.find(tileId);
-		if(itSubregions == indexedSubregions.end())
+		if(itSubregions == indexedSubregions.end()) {
+			if (progress && progress.get()) {
+				progress->timeToLoad.Start();
+			}
 			return SHARED_PTR<RouteSegment>();
+		}
+			
 		auto& subregions = itSubregions->second;
 		UNORDERED(map)<int64_t, SHARED_PTR<RouteDataObject> > excludeDuplications;
 		SHARED_PTR<RouteSegment> original;
@@ -437,6 +447,9 @@ struct RoutingContext {
 					segment = segment->next;
 				}
 			}
+		}
+		if (progress && progress.get()) {
+				progress->timeToLoad.Start();
 		}
 		return original;
 	}

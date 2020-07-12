@@ -754,8 +754,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	}
 	if (dataObjects.size() == 0) {
 		ctx->loadTileData(px, py, 14, dataObjects);
-	}	
-	
+	}
 	vector<SHARED_PTR<RouteSegmentPoint> > list ;
 	vector<SHARED_PTR<RouteDataObject> >::iterator it = dataObjects.begin();
 	for (; it!= dataObjects.end(); it++) {
