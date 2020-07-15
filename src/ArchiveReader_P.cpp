@@ -24,7 +24,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
 
     const auto ok = processArchive(owner->fileName,
         [&result]
-        (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/) -> bool
+        (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
             Item item;
             item.name = QString::fromWCharArray(archive_entry_pathname_w(entry));
@@ -56,11 +56,12 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
     uint64_t extractedBytes = 0;
     bool ok = processArchive(owner->fileName, 
         [itemName, fileName, &extractedBytes]
-        (archive* archive, archive_entry* entry, bool& doStop) -> bool
+        (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
         {
             const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
-            if (currentItemName != itemName)
-                return false;
+            match = currentItemName == itemName;
+            if (!match)
+                return true;
 
             // Item was found, so stop on this item regardless of result
             doStop = true;
@@ -79,7 +80,7 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
     uint64_t extractedBytes = 0;
     bool ok = processArchive(owner->fileName,
         [destinationPath, &extractedBytes]
-        (archive* archive, archive_entry* entry, bool& /*doStop*/) -> bool
+        (archive* archive, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
             const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
             const auto destinationFileName = QDir(destinationPath).absoluteFilePath(currentItemName);
@@ -188,9 +189,12 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     // Process items
     bool ok = true;
     bool doStop = false;
+    bool match = true;
     archive_entry* archiveEntry = nullptr;
     while (!doStop && (archive_read_next_header(archive, &archiveEntry) == ARCHIVE_OK))
-        ok = handler(archive, archiveEntry, doStop) && ok;
+        ok = handler(archive, archiveEntry, doStop, match);
+    
+    ok = ok && match;
 
     // Close archive
     res = archive_read_finish(archive);

@@ -30,7 +30,7 @@ namespace OsmAnd
             QIODevice* ioDevice;
             uint8_t* buffer;
         };
-        typedef std::function<bool(archive* archive, archive_entry* entry, bool& doStop)> ArchiveEntryHander;
+        typedef std::function<bool(archive* archive, archive_entry* entry, bool& doStop, bool& match)> ArchiveEntryHander;
         static bool processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isGzip = false);
         static bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip = false);
 
