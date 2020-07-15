@@ -1299,7 +1299,9 @@ void addRouteSegmentToResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegment
 vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingContext* ctx, const SHARED_PTR<FinalRouteSegment>& finalSegment) {
     vector<SHARED_PTR<RouteSegmentResult> > result;
     if (finalSegment) {
-        ctx->routingTime = finalSegment->distanceFromStart;
+        if (ctx->progress)
+            ctx->progress->routingCalculatedTime = finalSegment->distanceFromStart;
+
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
         // Get results from opposite direction roads
         auto segment = finalSegment->reverseWaySearch ? finalSegment : finalSegment->opposite->parentRoute;
@@ -1379,9 +1381,10 @@ void printResults(RoutingContext* ctx, int startX, int startY, int endX, int end
     double startLon = get31LongitudeX(startX);
     double endLat = get31LatitudeY(endY);
     double endLon = get31LongitudeX(endX);
-    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "ROUTE : <test regions=\"\" description=\"\" best_percent=\"\" vehicle=\"%s\" \n    start_x=\"%f\" start_y=\"%f\" target_x=\"%f\" target_y=\"%f\" loadedTiles = \"%d\" visitedSegments = \"%d\" complete_distance = \"%f\" complete_time = \"%f\" routing_time = \"%f\">",
-                      ctx->config->routerName.c_str(), startLat, startLon, endLat, endLon,
-                      ctx->loadedTiles, ctx->visitedSegments, completeDistance, completeTime, ctx->routingTime);
+    if (ctx->progress)
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "ROUTE : <test regions=\"\" description=\"\" best_percent=\"\" vehicle=\"%s\" \n    start_x=\"%f\" start_y=\"%f\" target_x=\"%f\" target_y=\"%f\" loadedTiles = \"%d\" visitedSegments = \"%d\" complete_distance = \"%f\" complete_time = \"%f\" routing_time = \"%f\">",
+                          ctx->config->routerName.c_str(), startLat, startLon, endLat, endLon,
+                          ctx->progress->loadedTiles, ctx->progress->visitedSegments, completeDistance, completeTime, ctx->progress->routingCalculatedTime);
     
     if (PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST) {
         

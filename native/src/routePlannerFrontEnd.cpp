@@ -276,7 +276,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int>& intermediatesX, vector<int>& intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
 	
 	if (!ctx->progress) {
-		ctx->progress = std::make_shared<RouteCalculationProgress>(new RouteCalculationProgress());
+		ctx->progress = std::make_shared<RouteCalculationProgress>();
 	}
 	bool intermediatesEmpty = intermediatesX.empty();
 	/* TODO missing functionality for private access recalculation
