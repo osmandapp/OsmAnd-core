@@ -29,7 +29,7 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 	leftX = (leftX >> 5) << 5;
 	rightX = (rightX >> 5) << 5;
 	bottomY = (bottomY >> 5) << 5;
-	topY = (topY >> 5) << 5;
+	topY = (topY >> 5) << 5;	
 	
 	
 	std::vector<coordinates> completedRings;
@@ -67,7 +67,7 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 			py = y;
 			pinside = inside;
 		}
-		if(cs.size() > 0) {
+		if (cs.size() > 0) {
 			printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean: line ", -dbId, cs, leftX, rightX, bottomY, topY);
 		}
 		combineMultipolygonLine(completedRings, uncompletedRings, cs);

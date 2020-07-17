@@ -58,8 +58,15 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 	return JNI_VERSION_1_6;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResult(JNIEnv* ienv,
-		jobject obj, jlong searchResult) {
+
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteNativeRoutingContext(JNIEnv* ienv, jobject obj, jlong searchResult) {
+	RoutingContext *result = (RoutingContext*)searchResult;
+	if (result != NULL){
+		delete result;
+	}
+}
+
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResult(JNIEnv* ienv, jobject obj, jlong searchResult) {
 	ResultPublisher* result = (ResultPublisher*) searchResult;
 	if(result != NULL){
 		delete result;
@@ -411,15 +418,40 @@ jclass jclass_TransliterationHelper;
 jmethodID jmethod_TransliterationHelper_transliterate;
 jmethodID jmethod_Reshaper_reshape;
 jmethodID jmethod_Reshaper_reshapebytes;
+jclass jclass_RoutingContext = NULL;
+jfieldID jfield_RoutingContext_startX = NULL;
+jfieldID jfield_RoutingContext_startY = NULL;
+jfieldID jfield_RoutingContext_startRoadId = NULL;
+jfieldID jfield_RoutingContext_startSegmentInd = NULL;
+jfieldID jfield_RoutingContext_startTransportStop = NULL;
+jfieldID jfield_RoutingContext_targetX = NULL;
+jfieldID jfield_RoutingContext_targetY = NULL;
+jfieldID jfield_RoutingContext_targetRoadId = NULL;
+jfieldID jfield_RoutingContext_targetSegmentInd = NULL;
+jfieldID jfield_RoutingContext_targetTransportStop = NULL;
+jfieldID jfield_RoutingContext_publicTransport = NULL;
+jfieldID jfield_RoutingContext_config = NULL;
+jfieldID jfield_RoutingContext_precalculatedRouteDirection = NULL;
+jfieldID jfield_RoutingContext_calculationProgress = NULL;
+
 jclass jclass_RouteCalculationProgress = NULL;
 jfieldID jfield_RouteCalculationProgress_segmentNotFound = NULL;
 jfieldID jfield_RouteCalculationProgress_distanceFromBegin = NULL;
-jfieldID jfield_RouteCalculationProgress_directSegmentQueueSize = NULL;
 jfieldID jfield_RouteCalculationProgress_distanceFromEnd = NULL;
-jfieldID jfield_RouteCalculationProgress_reverseSegmentQueueSize = NULL;
 jfieldID jfield_RouteCalculationProgress_isCancelled = NULL;
 jfieldID jfield_RouteCalculationProgress_routingCalculatedTime = NULL;
+jfieldID jfield_RouteCalculationProgress_directSegmentQueueSize = NULL;
+jfieldID jfield_RouteCalculationProgress_reverseSegmentQueueSize = NULL;
 jfieldID jfield_RouteCalculationProgress_visitedSegments = NULL;
+jfieldID jfield_RouteCalculationProgress_visitedDirectSegments = NULL;
+jfieldID jfield_RouteCalculationProgress_visitedOppositeSegments = NULL;
+jfieldID jfield_RouteCalculationProgress_directQueueSize = NULL;
+jfieldID jfield_RouteCalculationProgress_oppositeQueueSize = NULL;
+jfieldID jfield_RouteCalculationProgress_timeNanoToCalcDeviation = NULL;
+jfieldID jfield_RouteCalculationProgress_timeToLoad = NULL;
+jfieldID jfield_RouteCalculationProgress_timeToLoadHeaders = NULL;
+jfieldID jfield_RouteCalculationProgress_timeToFindInitialSegments = NULL;
+jfieldID jfield_RouteCalculationProgress_timeToCalculate = NULL;
 jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
 jclass jclass_RenderedObject = NULL;	
@@ -508,6 +540,8 @@ jfieldID jfield_PrecalculatedRouteDirection_endFinishTime = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_startFinishTime = NULL;
 
 jclass jclass_RenderingContext = NULL;
+jfieldID jfield_RoutingContext_nativeRoutingContext = NULL;
+jfieldID jfield_RoutingContext_keepNativeRoutingContext = NULL;
 jfieldID jfield_RenderingContext_interrupted = NULL;
 jfieldID jfield_RenderingContext_leftX = NULL;
 jfieldID jfield_RenderingContext_topY = NULL;
@@ -704,6 +738,24 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteSegmentResult_preAttachedRoutes = getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes",
 			"[[Lnet/osmand/router/RouteSegmentResult;");
 
+	jclass_RoutingContext = findGlobalClass(env, "net/osmand/router/RoutingContext");
+	jfield_RoutingContext_startX = getFid(env, jclass_RoutingContext, "startX", "I");
+	jfield_RoutingContext_startY = getFid(env, jclass_RoutingContext, "startY", "I");
+	jfield_RoutingContext_startRoadId = getFid(env, jclass_RoutingContext, "startRoadId", "J");
+	jfield_RoutingContext_startSegmentInd = getFid(env, jclass_RoutingContext, "startSegmentInd", "I");
+	jfield_RoutingContext_startTransportStop = getFid(env, jclass_RoutingContext, "startTransportStop", "Z");
+	jfield_RoutingContext_targetX = getFid(env, jclass_RoutingContext, "targetX", "I");
+	jfield_RoutingContext_targetY = getFid(env, jclass_RoutingContext, "targetY", "I");
+	jfield_RoutingContext_targetRoadId = getFid(env, jclass_RoutingContext, "targetRoadId", "J");
+	jfield_RoutingContext_targetSegmentInd = getFid(env, jclass_RoutingContext, "targetSegmentInd", "I");
+	jfield_RoutingContext_targetTransportStop = getFid(env, jclass_RoutingContext, "targetTransportStop", "Z");
+	jfield_RoutingContext_publicTransport = getFid(env, jclass_RoutingContext, "publicTransport", "Z");
+	jfield_RoutingContext_nativeRoutingContext = getFid(env, jclass_RoutingContext, "nativeRoutingContext", "J");
+	jfield_RoutingContext_keepNativeRoutingContext = getFid(env, jclass_RoutingContext, "keepNativeRoutingContext", "Z");
+	jfield_RoutingContext_config = getFid(env, jclass_RoutingContext, "config", "Lnet/osmand/router/RoutingConfiguration;");
+	jfield_RoutingContext_precalculatedRouteDirection = getFid(env, jclass_RoutingContext, "precalculatedRouteDirection", "Lnet/osmand/router/PrecalculatedRouteDirection;");
+	jfield_RoutingContext_calculationProgress = getFid(env, jclass_RoutingContext, "calculationProgress", "Lnet/osmand/router/RouteCalculationProgress;");
+
 	jclass_RouteCalculationProgress = findGlobalClass(env, "net/osmand/router/RouteCalculationProgress");
 	jfield_RouteCalculationProgress_isCancelled  = getFid(env, jclass_RouteCalculationProgress, "isCancelled", "Z");
 	jfield_RouteCalculationProgress_segmentNotFound  = getFid(env, jclass_RouteCalculationProgress, "segmentNotFound", "I");
@@ -713,6 +765,15 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_reverseSegmentQueueSize  = getFid(env, jclass_RouteCalculationProgress, "reverseSegmentQueueSize", "I");
 	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
 	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
+	jfield_RouteCalculationProgress_visitedDirectSegments = getFid(env, jclass_RouteCalculationProgress, "visitedDirectSegments", "I");
+	jfield_RouteCalculationProgress_visitedOppositeSegments = getFid(env, jclass_RouteCalculationProgress, "visitedOppositeSegments", "I");
+	jfield_RouteCalculationProgress_directQueueSize = getFid(env, jclass_RouteCalculationProgress, "directQueueSize", "I");
+	jfield_RouteCalculationProgress_oppositeQueueSize = getFid(env, jclass_RouteCalculationProgress, "oppositeQueueSize", "I");
+	jfield_RouteCalculationProgress_timeNanoToCalcDeviation = getFid(env, jclass_RouteCalculationProgress, "timeNanoToCalcDeviation", "J");
+	jfield_RouteCalculationProgress_timeToLoad = getFid(env, jclass_RouteCalculationProgress, "timeToLoad", "J");
+	jfield_RouteCalculationProgress_timeToLoadHeaders = getFid(env, jclass_RouteCalculationProgress, "timeToLoadHeaders", "J");
+	jfield_RouteCalculationProgress_timeToFindInitialSegments = getFid(env, jclass_RouteCalculationProgress, "timeToFindInitialSegments", "J");
+	jfield_RouteCalculationProgress_timeToCalculate = getFid(env, jclass_RouteCalculationProgress, "timeToCalculate", "J");
 	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
 
 
@@ -1140,35 +1201,35 @@ public:
 	}
 };
 
-void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalculatedRoute) {
-	if(precalculatedRoute != NULL) {
+void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext* ctx,  jobject precalculatedRoute) {
+	if (precalculatedRoute != NULL) {
 		jintArray pointsY = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsY);
 		jintArray pointsX = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsX);
 		jfloatArray tms = (jfloatArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_tms);
-		jint* pointsYF = (jint*)ienv->GetIntArrayElements(pointsY, NULL);
-		jint* pointsXF = (jint*)ienv->GetIntArrayElements(pointsX, NULL);
-		jfloat* tmsF = (jfloat*)ienv->GetFloatArrayElements(tms, NULL);
-		for(int k = 0; k < ienv->GetArrayLength(pointsY); k++) {
+		jint* pointsYF = (jint*) ienv->GetIntArrayElements(pointsY, NULL);
+		jint* pointsXF = (jint*) ienv->GetIntArrayElements(pointsX, NULL);
+		jfloat* tmsF = (jfloat*) ienv->GetFloatArrayElements(tms, NULL);
+		ctx->precalcRoute = SHARED_PTR < PrecalculatedRouteDirection>(new PrecalculatedRouteDirection());
+		for (int k = 0; k < ienv->GetArrayLength(pointsY); k++) {
 			int y = pointsYF[k];
 			int x = pointsXF[k];
-			int ind = ctx.precalcRoute->pointsX.size();
-			ctx.precalcRoute->pointsY.push_back(y);
-			ctx.precalcRoute->pointsX.push_back(x);
-			ctx.precalcRoute->times.push_back(tmsF[k]);
+			int ind = ctx->precalcRoute->pointsX.size();
+			ctx->precalcRoute->pointsY.push_back(y);
+			ctx->precalcRoute->pointsX.push_back(x);
+			ctx->precalcRoute->times.push_back(tmsF[k]);
 			SkRect r = SkRect::MakeLTRB(x, y, x, y);
-			ctx.precalcRoute->quadTree.insert(ind, r);
+			ctx->precalcRoute->quadTree.insert(ind, r);
 		}
-		ctx.precalcRoute->startPoint = ctx.precalcRoute->calc(ctx.startX, ctx.startY);
-		ctx.precalcRoute->endPoint = ctx.precalcRoute->calc(ctx.targetX, ctx.targetY);
-		ctx.precalcRoute->minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
-		ctx.precalcRoute->maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
-		ctx.precalcRoute->followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
-		ctx.precalcRoute->startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
-		ctx.precalcRoute->endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
+		ctx->precalcRoute->startPoint = ctx->precalcRoute->calc(ctx->startX, ctx->startY);
+		ctx->precalcRoute->endPoint = ctx->precalcRoute->calc(ctx->targetX, ctx->targetY);
+		ctx->precalcRoute->minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
+		ctx->precalcRoute->maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
+		ctx->precalcRoute->followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
+		ctx->precalcRoute->startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
+		ctx->precalcRoute->endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
 		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
 		ienv->ReleaseIntArrayElements(pointsX, pointsXF, 0);
 		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);
-
 	}
 }
 
@@ -1320,28 +1381,46 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 
 }
 
+void addIntField(JNIEnv *ienv, jobject obj, jfieldID fid, int val) {
+	ienv->SetIntField(obj, fid, ienv->GetIntField(obj, fid)  + val);
+}
+
+void addLongField(JNIEnv *ienv, jobject obj, jfieldID fid, jlong val) {
+	ienv->SetLongField(obj, fid, ienv->GetLongField(obj, fid) + val);
+}
+
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
-		jobject obj, 
-		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
-		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap,
-		bool publicTransport, bool startTransportStop, bool targetTransportStop) {
-	SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
-	parseRouteConfiguration(ienv, config, jRouteConfig);
-	RoutingContext c(config);
-	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
-	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
-	c.startX = data[0];
-	c.startY = data[1];
-	c.targetX = data[2];
-	c.targetY = data[3];
-	c.basemap = basemap;
-	c.setConditionalTime(config->routeCalculationTime);
-	c.publicTransport = publicTransport;
-	c.startTransportStop = startTransportStop;
-	c.targetTransportStop = targetTransportStop;
+		jobject obj, jobject jCtx, jfloat initDirection,
+		jobjectArray regions, bool basemap) {
+	jobject jRouteConfig = ienv->GetObjectField(jCtx, jfield_RoutingContext_config);
+	jobject precalculatedRoute = ienv->GetObjectField(jCtx, jfield_RoutingContext_precalculatedRouteDirection);
+	jobject progress = ienv->GetObjectField(jCtx, jfield_RoutingContext_calculationProgress);
+
+	RoutingContext* c = (RoutingContext*) ienv->GetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext);
+	if ( c == NULL ) {
+		SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
+		parseRouteConfiguration(ienv, config, jRouteConfig);
+		c = new RoutingContext(config);
+		ienv->SetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext, (jlong ) c);
+	}
+	c->progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
+	c->startX = ienv->GetIntField(jCtx, jfield_RoutingContext_startX);
+	c->startY = ienv->GetIntField(jCtx, jfield_RoutingContext_startY);
+	c->startRoadId = ienv->GetLongField(jCtx, jfield_RoutingContext_startRoadId);
+	c->startSegmentInd = ienv->GetIntField(jCtx, jfield_RoutingContext_startSegmentInd);
+	c->startTransportStop = ienv->GetBooleanField(jCtx, jfield_RoutingContext_startTransportStop);
+	c->targetX = ienv->GetIntField(jCtx, jfield_RoutingContext_targetX);
+	c->targetY = ienv->GetIntField(jCtx, jfield_RoutingContext_targetY);
+	c->targetRoadId = ienv->GetLongField(jCtx, jfield_RoutingContext_targetRoadId);
+	c->targetSegmentInd = ienv->GetIntField(jCtx, jfield_RoutingContext_targetSegmentInd);
+	c->targetTransportStop = ienv->GetBooleanField(jCtx, jfield_RoutingContext_targetTransportStop);
+	c->basemap = basemap;
+	c->setConditionalTime(c->config->routeCalculationTime);
+	c->publicTransport = ienv->GetBooleanField(jCtx, jfield_RoutingContext_publicTransport);
+	
+	
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
-	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
-	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(&c, false);
+	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(c, false);
 	UNORDERED(map)<int64_t, int> indexes;
 	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
 		jobject oreg = ienv->GetObjectArrayElement(regions, t);
@@ -1358,15 +1437,44 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
-	if(c.finalRouteSegment.get() != NULL) {
-		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime, c.finalRouteSegment->distanceFromStart);
+	if(c->finalRouteSegment.get() != NULL) {
+		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime, c->finalRouteSegment->distanceFromStart);
 	}
-	ienv->SetIntField(progress, jfield_RouteCalculationProgress_visitedSegments, c.visitedSegments);
-	ienv->SetIntField(progress, jfield_RouteCalculationProgress_loadedTiles, c.loadedTiles);
+	if (c->progress && c->progress.get()) {
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedSegments, c->progress->visitedSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_loadedTiles, c->progress->loadedTiles);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c->progress->directQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c->progress->oppositeQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directSegmentQueueSize, c->progress->directSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_reverseSegmentQueueSize, c->progress->reverseSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedDirectSegments, c->progress->visitedDirectSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedOppositeSegments, c->progress->visitedOppositeSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c->progress->directQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c->progress->oppositeQueueSize);
+
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToLoad,
+					 c->progress->timeToLoad.GetElapsedMicros() * 1000);
+		// timeToCalculate set by wrapper
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToCalculate,
+					 c->progress->timeToCalculate.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToLoadHeaders,
+					 c->progress->timeToLoadHeaders.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeToFindInitialSegments,
+					 c->progress->timeToFindInitialSegments.GetElapsedMicros() * 1000);
+		addLongField(ienv, progress, jfield_RouteCalculationProgress_timeNanoToCalcDeviation,
+					 c->progress->timeExtra.GetElapsedMicros() * 1000);
+	}
 	if (r.size() == 0) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "No route found");
 	}
 	fflush(stdout);
+	ienv->DeleteLocalRef(jRouteConfig);
+	ienv->DeleteLocalRef(progress);
+	ienv->DeleteLocalRef(precalculatedRoute);
+	if (c != NULL && !ienv->GetBooleanField(jCtx, jfield_RoutingContext_keepNativeRoutingContext) ) {
+		ienv->SetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext, 0);
+		delete c;
+	}
 	return res;
 }
 

@@ -63,12 +63,13 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
 	this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
 	this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
 	this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
-	if (shortestRoute) {
-		maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
-	}
 	this->defaultSpeed = parseFloat(params, GeneralRouterConstants::DEFAULT_SPEED, this->defaultSpeed);
 	this->minSpeed = parseFloat(params, GeneralRouterConstants::MIN_SPEED, this->minSpeed);
 	this->maxSpeed = parseFloat(params, GeneralRouterConstants::MAX_SPEED, this->maxSpeed);
+	this->maxVehicleSpeed = this->maxSpeed;
+	if (shortestRoute) {
+		this->maxSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxSpeed);
+	}
 }
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
@@ -415,7 +416,7 @@ int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
 }
 
 bool GeneralRouter::isArea(SHARED_PTR<RouteDataObject>& road) {
-    return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
+	return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
 }
 
 double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
@@ -470,7 +471,7 @@ double GeneralRouter::defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road) {
 
 double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
 	double spd = evaluateCache(RouteDataObjectAttribute::ROAD_SPEED, road, defaultSpeed);
-	return max(min(spd, maxSpeed), minSpeed);
+	return max(min(spd, maxVehicleSpeed), minSpeed);
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {
@@ -551,21 +552,21 @@ void GeneralRouter::printRules() {
 }
 
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
-    string key = r.first + "$" + r.second;
-    MAP_STR_INT::iterator it = universalRules.find(key);
-    if (it != universalRules.end()) {
-        return ((uint)it->second);
-    }
-    int id = (int)universalRules.size();
-    universalRulesById.push_back(r);
-    universalRules[key] = id;
-    dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
-    d.set(id);
-    return id;
+	string key = r.first + "$" + r.second;
+	MAP_STR_INT::iterator it = universalRules.find(key);
+	if (it != universalRules.end()) {
+		return ((uint)it->second);
+	}
+	int id = (int)universalRules.size();
+	universalRulesById.push_back(r);
+	universalRules[key] = id;
+	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
+	d.set(id);
+	return id;
 }
 
 uint64_t GeneralRouter::getBitSetSize() {
-    return universalRules.size();
+	return universalRules.size();
 }
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {
