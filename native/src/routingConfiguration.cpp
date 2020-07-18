@@ -176,10 +176,7 @@ SHARED_PTR<RoutingConfigurationBuilder> parseRoutingConfigurationFromXml(const c
     XML_Parser parser = XML_ParserCreate(NULL);
     SHARED_PTR<RoutingConfigurationBuilder> config = std::make_shared<RoutingConfigurationBuilder>();
     RoutingRulesHandler* handler = new RoutingRulesHandler(config);
-    string fileName = string(filename);
-    // Check if it's a bundled resource
-    fileName = fileName.find("OsmAnd Maps.app") != std::string::npos ? "" : filename;
-    handler->filename = fileName;
+    handler->filename = string(filename);
     XML_SetUserData(parser, handler);
     XML_SetElementHandler(parser, RoutingRulesHandler::startElementHandler, RoutingRulesHandler::endElementHandler);
     FILE *file = fopen(filename, "r");
