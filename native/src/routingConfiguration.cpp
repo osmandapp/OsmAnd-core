@@ -44,10 +44,7 @@ private:
         currentRouter->profileName = currentSelectedRouter;
         if (filename.length() > 0) {
             currentRouter->fileName = filename;
-            string tmp = filename;
-            tmp.append("/");
-            tmp.append(currentSelectedRouter);
-            currentSelectedRouter = tmp;
+            currentSelectedRouter = filename + "/" + currentSelectedRouter;
         }
         config->addRouter(currentSelectedRouter, currentRouter);
         return currentRouter;
