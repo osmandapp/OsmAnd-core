@@ -366,7 +366,6 @@ public:
 	UNORDERED(set)<int64_t> impassableRoadIds;
     bool shortestRoute;
     bool allowPrivate;
-    
     string profileName;
     string fileName;
 
