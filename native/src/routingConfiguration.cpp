@@ -17,6 +17,8 @@ public:
     RoutingRulesHandler(SHARED_PTR<RoutingConfigurationBuilder> routingConfig) : config(routingConfig) {
     }
     
+    string filename;
+    
 private:
     static UNORDERED(map)<string, string>& parseAttributes(const char **atts, UNORDERED(map)<string, string>& m) {
         while (*atts != NULL) {
@@ -33,12 +35,17 @@ private:
         return def;
     }
     
-    static SHARED_PTR<GeneralRouter> parseRoutingProfile(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder>& config) {
+    static SHARED_PTR<GeneralRouter> parseRoutingProfile(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder>& config, string filename) {
         string currentSelectedRouter = attrValue(attrsMap, "name");
         UNORDERED(map)<string, string> attrs;
         attrs.insert(attrsMap.begin(), attrsMap.end());
         GeneralRouterProfile c = parseGeneralRouterProfile(attrValue(attrsMap, "baseProfile"), GeneralRouterProfile::CAR);
         SHARED_PTR<GeneralRouter> currentRouter = std::make_shared<GeneralRouter>(c, attrs);
+        currentRouter->profileName = currentSelectedRouter;
+        if (filename.length() > 0) {
+            currentRouter->fileName = filename;
+            currentSelectedRouter = filename + "/" + currentSelectedRouter;
+        }
         config->addRouter(currentSelectedRouter, currentRouter);
         return currentRouter;
     }
@@ -135,7 +142,7 @@ public:
         if ("osmand_routing_config" == name) {
             handler->config->defaultRouter = attrValue(attrsMap, "defaultProfile", "");
         } else if ("routingProfile" == name) {
-            handler->currentRouter = parseRoutingProfile(attrsMap, handler->config);
+            handler->currentRouter = parseRoutingProfile(attrsMap, handler->config, handler->filename);
         } else if ("attribute" == name) {
             parseAttribute(attrsMap, handler->config, handler->currentRouter);
         } else if ("parameter" == name) {
@@ -166,6 +173,7 @@ SHARED_PTR<RoutingConfigurationBuilder> parseRoutingConfigurationFromXml(const c
     XML_Parser parser = XML_ParserCreate(NULL);
     SHARED_PTR<RoutingConfigurationBuilder> config = std::make_shared<RoutingConfigurationBuilder>();
     RoutingRulesHandler* handler = new RoutingRulesHandler(config);
+    handler->filename = string(filename);
     XML_SetUserData(parser, handler);
     XML_SetElementHandler(parser, RoutingRulesHandler::startElementHandler, RoutingRulesHandler::endElementHandler);
     FILE *file = fopen(filename, "r");
