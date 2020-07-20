@@ -1132,7 +1132,7 @@ void sortObjectsByProperOrder(std::vector<FoundMapDataObject> & mapDataObjects,
 		std::vector<MapDataObjectPrimitive>  linesArray;
 		req->clearState();
 		const uint size = mapDataObjects.size();
-		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 8), 0));
+		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 10), 0));
 		double minPolygonSize = rc->polygonMinSizeToDisplay;
 		uint i = 0;
 		for (; i < size; i++) {
