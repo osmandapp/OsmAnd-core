@@ -893,6 +893,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     const auto& tag = subtypes->subtypes[entry.key()]->tagName;
                     if (tag.contains(QLatin1String("_name")))
                         additionalNames.append(entry.value().toString());
+                    if (tag == QLatin1String("name"))
+                        nativeName = entry.value().toString();
                     if (!tag.startsWith(QLatin1String("name:")) && tag != QLatin1String("brand"))
                         continue;
 
