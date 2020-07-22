@@ -34,6 +34,7 @@ const int DEFAULT_POLYGON_MAX = 11;
 const int DEFAULT_LINE_MAX = 100;
 const int DEFAULT_POINTS_MAX = 200;
 const int POI_ZOOM_SHIFT = 7;
+const int POINT_DRAW_ZOOM_FILTER = 16
 #if defined(WIN32)
 #undef min
 #endif
@@ -1178,7 +1179,7 @@ void sortObjectsByProperOrder(std::vector<FoundMapDataObject> & mapDataObjects,
 								} else {
 									linesArray.push_back(mapObj);	
 								}
-								if(addPoint && (area > MAX_V_AREA || addTextForSmallAreas || rc->getZoom() > 16)) {
+								if(addPoint && (area > MAX_V_AREA || addTextForSmallAreas || rc->getZoom() > POINT_DRAW_ZOOM_FILTER)) {
 									pointsArray.push_back(pointObj);
 								}
 							} 
