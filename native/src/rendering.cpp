@@ -30,6 +30,7 @@
 
 const int MAX_V = 10;
 const int MAX_V_AREA = 2000;
+const int MAX_V_AREA_FOR_POINT = 500;
 const int DEFAULT_POLYGON_MAX = 11;
 const int DEFAULT_LINE_MAX = 100;
 const int DEFAULT_POINTS_MAX = 200;
@@ -1132,7 +1133,7 @@ void sortObjectsByProperOrder(std::vector<FoundMapDataObject> & mapDataObjects,
 		std::vector<MapDataObjectPrimitive>  linesArray;
 		req->clearState();
 		const uint size = mapDataObjects.size();
-		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 9), 0));
+		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 8), 0));
 		double minPolygonSize = rc->polygonMinSizeToDisplay;
 		uint i = 0;
 		for (; i < size; i++) {
@@ -1178,7 +1179,7 @@ void sortObjectsByProperOrder(std::vector<FoundMapDataObject> & mapDataObjects,
 								} else {
 									linesArray.push_back(mapObj);	
 								}
-								if(addPoint && (area > MAX_V_AREA || addTextForSmallAreas)) {
+								if(addPoint && (area > MAX_V_AREA_FOR_POINT || addTextForSmallAreas)) {
 									pointsArray.push_back(pointObj); 
 								}
 							} 
