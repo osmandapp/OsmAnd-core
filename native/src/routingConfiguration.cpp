@@ -42,10 +42,10 @@ private:
         GeneralRouterProfile c = parseGeneralRouterProfile(attrValue(attrsMap, "baseProfile"), GeneralRouterProfile::CAR);
         SHARED_PTR<GeneralRouter> currentRouter = std::make_shared<GeneralRouter>(c, attrs);
         currentRouter->profileName = currentSelectedRouter;
-        if (filename.length() > 0) {
-            currentRouter->fileName = filename;
-            currentSelectedRouter = filename + "/" + currentSelectedRouter;
-        }
+//        if (filename.length() > 0) {
+//            currentRouter->fileName = filename;
+//            currentSelectedRouter = filename + "/" + currentSelectedRouter;
+//        }
         config->addRouter(currentSelectedRouter, currentRouter);
         return currentRouter;
     }
