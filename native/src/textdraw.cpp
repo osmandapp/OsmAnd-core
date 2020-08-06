@@ -183,9 +183,6 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	if (info->minDistance == 0) {
 		info->minDistance = rc->getDensityValue(150) * rc->getTextScale();
 	}
-	if (info->object.id == 	29724656575) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "object name and %ld",  info->object.id);	
-	}
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD) ;
 	info->shieldResIcon = render->getStringPropertyValue(render-> props()-> R_ICON);
 	if (info->shieldRes.find('?') != std::string::npos) {
@@ -196,8 +193,6 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	}
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
-
-
 
 bool isLetterOrDigit(char c)
 {
