@@ -143,6 +143,22 @@ inline float absFloat(float a){
 	return a > 0 ? a : -a;
 }
 
+
+string getParsedValue(MapDataObject& object, string qval) {
+		int st = qval.find('?');
+		int en = qval.find_last_of('?');
+		string tagVal = qval.substr(0, st);
+		string tagName = qval.substr(0, en).substr(st + 1);
+		for (int i = 0; i < object.additionalTypes.size(); i++) {
+			if (object.additionalTypes[i].first == tagName) {
+				tagVal += object.additionalTypes[i].second;
+				break;
+			}
+		}
+		tagVal += qval.substr(en+1, qval.length());
+		return tagVal;
+}
+
 void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, RenderingRuleSearchRequest* render, float cx, float cy) {
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
@@ -167,10 +183,21 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	if (info->minDistance == 0) {
 		info->minDistance = rc->getDensityValue(150) * rc->getTextScale();
 	}
+	if (info->object.id == 	29724656575) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "object name and %ld",  info->object.id);	
+	}
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD) ;
 	info->shieldResIcon = render->getStringPropertyValue(render-> props()-> R_ICON);
+	if (info->shieldRes.find('?') != std::string::npos) {
+		info->shieldRes = getParsedValue(info->object, info->shieldRes);
+	} 
+	if (info->shieldResIcon.find('?') != std::string::npos) {
+		info->shieldResIcon = getParsedValue(info->object, info->shieldRes);
+	}
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
+
+
 
 bool isLetterOrDigit(char c)
 {
