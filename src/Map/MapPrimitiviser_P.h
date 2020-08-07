@@ -199,6 +199,10 @@ namespace OsmAnd
             MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
+        
+        static void parseGenericTag(
+            const std::shared_ptr<const MapObject>& object,
+            QString& genTagVal);
     public:
         ~MapPrimitiviser_P();
 
