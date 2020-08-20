@@ -9,6 +9,9 @@
 
 const int MAX_SPEAK_PRIORITY = 5;
 const float TURN_DEGREE_MIN = 45;
+const float UNMATCHED_TURN_DEGREE_MINIMUM = 45;
+const float SPLIT_TURN_DEGREE_NOT_STRAIGHT = 100;
+const string UNMATCHED_HIGHWAY_TYPE = "unmatched";
 
 struct RoadSplitStructure {
     bool keepLeft = false;
@@ -192,6 +195,7 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
         //checkAndInitRouteRegion(ctx, road); ? TODO
         bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
         int next;
+        bool unmatched = UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway();
         for (int j = rr->getStartPointIndex(); j != rr->getEndPointIndex(); j = next) {
             next = plus ? j + 1 : j - 1;
             if (j == rr->getStartPointIndex()) {
@@ -207,22 +211,28 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
                 tryToSplit = false;
             }
             if (tryToSplit) {
+                float distBearing = unmatched ? DIST_BEARING_DETECT_UNMATCHED : DIST_BEARING_DETECT;
                 // avoid small zigzags
-                float before = rr->getBearing(next, !plus);
-                float after = rr->getBearing(next, plus);
-                if(rr->getDistance(next, plus ) < 5) {
-                    after = before + 180;
-                } else if(rr->getDistance(next, !plus ) < 5) {
-                    before = after - 180;
+                float before = rr->getBearingEnd(next, distBearing);
+                float after = rr->getBearingBegin(next, distBearing);
+                if(rr->getDistance(next, plus) < distBearing) {
+                    after = before;
+                } else if(rr->getDistance(next, !plus) < distBearing) {
+                    before = after;
                 }
-                bool straight = abs(degreesDiff(before + 180, after)) < TURN_DEGREE_MIN;
+                double contAngle = abs(degreesDiff(before, after));
+                bool straight = contAngle < TURN_DEGREE_MIN;
                 bool isSplit = false;
+                
+                if (unmatched && abs(contAngle) >= UNMATCHED_TURN_DEGREE_MINIMUM) {
+                    isSplit = true;
+                }
                 // split if needed
                 for (auto rs : attachedRoutes) {
-                    double diff = degreesDiff(before + 180, rs->getBearingBegin());
+                    double diff = degreesDiff(before, rs->getBearingBegin());
                     if (abs(diff) <= TURN_DEGREE_MIN) {
                         isSplit = true;
-                    } else if (!straight && abs(diff) < 100) {
+                    } else if (!straight && abs(diff) < SPLIT_TURN_DEGREE_NOT_STRAIGHT) {
                         isSplit = true;
                     }
                 }
@@ -254,9 +264,9 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
             speed = ctx->config->router->getDefaultSpeed();
         } else {
             if (speed > 15) {
-                // decrease speed proportionally from 15ms=50kmh -
-                // reference speed 30ms=108kmh - 7kmh
-                speed = speed - ((speed - 15.f) / (30.f - 15.f) * 2.f);
+                // decrease speed proportionally from 15ms (50kmh)
+                // reference speed 30ms (108kmh) - 2ms (7kmh)
+                speed = speed - (speed / 15.f - 1) * 2.f;
             }
         }
         bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
@@ -1124,6 +1134,70 @@ void inferActiveTurnLanesFromTurn(const SHARED_PTR<TurnType>& tt, int type) {
     }
 }
 
+vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive) {
+        Set<Integer> possibleTurns = new LinkedHashSet<>();
+        Set<Integer> upossibleTurns = new LinkedHashSet<>();
+        for (int i = 0; i < oLanes.length; i++) {
+            // Nothing is in the list to compare to, so add the first elements
+            upossibleTurns.clear();
+            upossibleTurns.add(TurnType.getPrimaryTurn(oLanes[i]));
+            if (!onlyPrimary && TurnType.getSecondaryTurn(oLanes[i]) != 0) {
+                upossibleTurns.add(TurnType.getSecondaryTurn(oLanes[i]));
+            }
+            if (!onlyPrimary && TurnType.getTertiaryTurn(oLanes[i]) != 0) {
+                upossibleTurns.add(TurnType.getTertiaryTurn(oLanes[i]));
+            }
+            if (!uniqueFromActive) {
+                possibleTurns.addAll(upossibleTurns);
+//                if (!possibleTurns.isEmpty()) {
+//                    possibleTurns.retainAll(upossibleTurns);
+//                    if(possibleTurns.isEmpty()) {
+//                        break;
+//                    }
+//                } else {
+//                    possibleTurns.addAll(upossibleTurns);
+//                }
+            } else if ((oLanes[i] & 1) == 1) {
+                if (!possibleTurns.isEmpty()) {
+                    possibleTurns.retainAll(upossibleTurns);
+                    if(possibleTurns.isEmpty()) {
+                        break;
+                    }
+                } else {
+                    possibleTurns.addAll(upossibleTurns);
+                }
+            }
+        }
+        // Remove all turns from lanes not selected...because those aren't it
+        if (uniqueFromActive) {
+            for (int i = 0; i < oLanes.length; i++) {
+                if ((oLanes[i] & 1) == 0) {
+                    possibleTurns.remove((Integer) TurnType.getPrimaryTurn(oLanes[i]));
+                    if (TurnType.getSecondaryTurn(oLanes[i]) != 0) {
+                        possibleTurns.remove((Integer) TurnType.getSecondaryTurn(oLanes[i]));
+                    }
+                    if (TurnType.getTertiaryTurn(oLanes[i]) != 0) {
+                        possibleTurns.remove((Integer) TurnType.getTertiaryTurn(oLanes[i]));
+                    }
+                }
+            }
+        }
+        Integer[] array = possibleTurns.toArray(new Integer[possibleTurns.size()]);
+        Arrays.sort(array, new Comparator<Integer>() {
+
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return Integer.compare(TurnType.orderFromLeftToRight(o1), TurnType.orderFromLeftToRight(o2));
+            }
+        });
+        return array;
+    }
+
+vector<int> getPossibleTurnsFromActiveLanes(vector<int>& oLanes, bool onlyPrimary)
+{
+    return getPossibleTurns(oLanes, onlyPrimary, true);
+}
+
 void determineTurnsToMerge(bool leftside, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     SHARED_PTR<RouteSegmentResult> nextSegment = nullptr;
     double dist = 0;
@@ -1143,6 +1217,8 @@ void determineTurnsToMerge(bool leftside, vector<SHARED_PTR<RouteSegmentResult> 
                 }
                 if (dist < mergeDistance) {
                     mergeTurnLanes(leftside, currentSegment, nextSegment);
+                    const auto& turnType = currentSegment->turnType;
+                    const auto possibleTurn = getPossibleTurnsFromActiveLanes(turnType->getLanes(), true);
                     inferCommonActiveLane(currentSegment->turnType, nextSegment->turnType);
                     merged = true;
                 }
@@ -1215,18 +1291,16 @@ SHARED_PTR<TurnType> justifyUTurn(bool leftside, vector<SHARED_PTR<RouteSegmentR
 }
 
 void justifyUTurns(bool leftSide, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    int next = 0;
-    if (result.size() > 0) {
-        for (int i = 0; i < result.size() - 1; i = next) {
-            next = i + 1;
-            const auto& t = result[i]->turnType;
-            // justify turn
-            if (t) {
-                const auto& jt = justifyUTurn(leftSide, result, i, t);
-                if (jt) {
-                    result[i]->turnType = jt;
-                    next = i + 2;
-                }
+    int next;
+    for (int i = 1; i < result.size() - 1; i = next) {
+        next = i + 1;
+        const auto& t = result[i]->turnType;
+        // justify turn
+        if (t) {
+            const auto& jt = justifyUTurn(leftSide, result, i, t);
+            if (jt) {
+                result[i]->turnType = jt;
+                next = i + 2;
             }
         }
     }
@@ -1604,12 +1678,7 @@ void combineWayPointsForAreaRouting(RoutingContext* ctx, vector<SHARED_PTR<Route
     }
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    combineWayPointsForAreaRouting(ctx, result);
-    validateAllPointsConnected(result);
-    splitRoadsAndAttachRoadSegments(ctx, result);
-    calculateTimeSpeed(ctx, result);
-    
+void prepareTurnResults(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     for (int i = 0; i < result.size(); i ++) {
         const auto& turnType = getTurnInfo(result, i, ctx->leftSideNavigation);
         result[i]->turnType = turnType;
@@ -1619,6 +1688,15 @@ vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vecto
     ignorePrecedingStraightsOnSameIntersection(ctx->leftSideNavigation, result);
     justifyUTurns(ctx->leftSideNavigation, result);
     addTurnInfoDescriptions(result);
+}
+
+vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
+    combineWayPointsForAreaRouting(ctx, result);
+    validateAllPointsConnected(result);
+    splitRoadsAndAttachRoadSegments(ctx, result);
+    calculateTimeSpeed(ctx, result);
+    
+    prepareTurnResults(ctx, result);
     return result;
 }
 
