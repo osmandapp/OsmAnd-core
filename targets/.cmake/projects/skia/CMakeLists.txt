@@ -1527,9 +1527,9 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
         target_link_libraries(skia_osmand LINK_PUBLIC
                 pthread
                 ${FONTCONFIG_LIBRARY}
-                "${CORE_FOUNDATION_LIBRARY}/CoreFoundation"
-                "${CORE_TEXT_LIBRARY}/CoreText"
-                "${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
+                "${CORE_FOUNDATION_LIBRARY}/CoreFoundation.tbd"
+                "${CORE_TEXT_LIBRARY}/CoreText.tbd"
+                "${CORE_GRAPHICS_LIBRARY}/CoreGraphics.tbd"
  
         )
 endif()
