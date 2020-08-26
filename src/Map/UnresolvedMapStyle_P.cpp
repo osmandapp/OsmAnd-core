@@ -340,7 +340,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             {
                //todo seq logic
                 std::shared_ptr<XmlTreeSequence> seq = std::make_shared<XmlTreeSequence>();
-                seq->name = tagName; //check
+                seq->name = tagName; 
                 seq->attrsMap = attribs;
                 seq->parent = currentSeqElement;
                 if (currentSeqElement == nullptr) {
@@ -529,7 +529,7 @@ bool OsmAnd::UnresolvedMapStyle_P::load()
 }
 
 void OsmAnd::XmlTreeSequence::process(
-                                    int i,
+                                    int index,
                                     OsmAnd::UnresolvedMapStyle_P *parserObj,
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
                                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
@@ -542,13 +542,13 @@ void OsmAnd::XmlTreeSequence::process(
             QString key = attrsMap[i].name().toString();
             seqVal.replace("#SEQ", QString::number(i));
             const QXmlStreamAttribute seqAttr = QXmlStreamAttribute(key, seqVal);
-            attrsMap.replace(i, seqAttr);
+            attrsMap.replace(index, seqAttr);
         }
     };
     parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
     for (const auto& child : children) {
-        child->process(i, parserObj, currentRulesetType, ruleNodesStack);
+        child->process(index, parserObj, currentRulesetType, ruleNodesStack);
         
     };
-    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
+    parserObj->processEndElement(currentRulesetType, ruleNodesStack, name, lineNum, columnNum);
 }
