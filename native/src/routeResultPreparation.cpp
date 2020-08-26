@@ -1134,64 +1134,66 @@ void inferActiveTurnLanesFromTurn(const SHARED_PTR<TurnType>& tt, int type) {
     }
 }
 
-vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive) {
-        Set<Integer> possibleTurns = new LinkedHashSet<>();
-        Set<Integer> upossibleTurns = new LinkedHashSet<>();
-        for (int i = 0; i < oLanes.length; i++) {
-            // Nothing is in the list to compare to, so add the first elements
-            upossibleTurns.clear();
-            upossibleTurns.add(TurnType.getPrimaryTurn(oLanes[i]));
-            if (!onlyPrimary && TurnType.getSecondaryTurn(oLanes[i]) != 0) {
-                upossibleTurns.add(TurnType.getSecondaryTurn(oLanes[i]));
-            }
-            if (!onlyPrimary && TurnType.getTertiaryTurn(oLanes[i]) != 0) {
-                upossibleTurns.add(TurnType.getTertiaryTurn(oLanes[i]));
-            }
-            if (!uniqueFromActive) {
-                possibleTurns.addAll(upossibleTurns);
-//                if (!possibleTurns.isEmpty()) {
-//                    possibleTurns.retainAll(upossibleTurns);
-//                    if(possibleTurns.isEmpty()) {
-//                        break;
-//                    }
-//                } else {
-//                    possibleTurns.addAll(upossibleTurns);
-//                }
-            } else if ((oLanes[i] & 1) == 1) {
-                if (!possibleTurns.isEmpty()) {
-                    possibleTurns.retainAll(upossibleTurns);
-                    if(possibleTurns.isEmpty()) {
-                        break;
-                    }
-                } else {
-                    possibleTurns.addAll(upossibleTurns);
-                }
-            }
-        }
-        // Remove all turns from lanes not selected...because those aren't it
-        if (uniqueFromActive) {
-            for (int i = 0; i < oLanes.length; i++) {
-                if ((oLanes[i] & 1) == 0) {
-                    possibleTurns.remove((Integer) TurnType.getPrimaryTurn(oLanes[i]));
-                    if (TurnType.getSecondaryTurn(oLanes[i]) != 0) {
-                        possibleTurns.remove((Integer) TurnType.getSecondaryTurn(oLanes[i]));
-                    }
-                    if (TurnType.getTertiaryTurn(oLanes[i]) != 0) {
-                        possibleTurns.remove((Integer) TurnType.getTertiaryTurn(oLanes[i]));
-                    }
-                }
-            }
-        }
-        Integer[] array = possibleTurns.toArray(new Integer[possibleTurns.size()]);
-        Arrays.sort(array, new Comparator<Integer>() {
+bool sortArray(int o1, int o2) {
+    return TurnType::orderFromLeftToRight(o1) > TurnType::orderFromLeftToRight(o2);
+}
 
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                return Integer.compare(TurnType.orderFromLeftToRight(o1), TurnType.orderFromLeftToRight(o2));
+vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive) {
+    set<int> possibleTurns;
+    set<int> upossibleTurns;
+    for (int i = 0; i < oLanes.size(); i++) {
+        // Nothing is in the list to compare to, so add the first elements
+        upossibleTurns.clear();
+        upossibleTurns.insert(TurnType::getPrimaryTurn(oLanes[i]));
+        if (!onlyPrimary && TurnType::getSecondaryTurn(oLanes[i]) != 0) {
+            upossibleTurns.insert(TurnType::getSecondaryTurn(oLanes[i]));
+        }
+        if (!onlyPrimary && TurnType::getTertiaryTurn(oLanes[i]) != 0) {
+            upossibleTurns.insert(TurnType::getTertiaryTurn(oLanes[i]));
+        }
+        if (!uniqueFromActive) {
+            possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
+            //                if (!possibleTurns.isEmpty()) {
+            //                    possibleTurns.retainAll(upossibleTurns);
+            //                    if(possibleTurns.isEmpty()) {
+            //                        break;
+            //                    }
+            //                } else {
+            //                    possibleTurns.addAll(upossibleTurns);
+            //                }
+        } else if ((oLanes[i] & 1) == 1) {
+            if (possibleTurns.size() != 0) {
+                possibleTurns.clear();
+                for (auto it = upossibleTurns.begin(); it != upossibleTurns.end(); ++it)
+                {
+                    possibleTurns.insert(*it);
+                }
+                if(possibleTurns.size() == 0) {
+                    break;
+                }
+            } else {
+                possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
             }
-        });
-        return array;
+        }
     }
+    // Remove all turns from lanes not selected...because those aren't it
+    if (uniqueFromActive) {
+        for (int i = 0; i < oLanes.size(); i++) {
+            if ((oLanes[i] & 1) == 0) {
+                possibleTurns.erase(TurnType::getPrimaryTurn(oLanes[i]));
+                if (TurnType::getSecondaryTurn(oLanes[i]) != 0) {
+                    possibleTurns.erase(TurnType::getSecondaryTurn(oLanes[i]));
+                }
+                if (TurnType::getTertiaryTurn(oLanes[i]) != 0) {
+                    possibleTurns.erase(TurnType::getTertiaryTurn(oLanes[i]));
+                }
+            }
+        }
+    }
+    vector<int> array(possibleTurns.begin(), possibleTurns.end());
+    sort(array.begin(), array.end(), sortArray);
+    return array;
+}
 
 vector<int> getPossibleTurnsFromActiveLanes(vector<int>& oLanes, bool onlyPrimary)
 {
