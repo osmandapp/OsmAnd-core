@@ -54,20 +54,19 @@ namespace OsmAnd
         mutable QMutex _loadMutex;
         
         bool inSequence = false;
-        const QString SEQ_PLACEHOLDER = "#SEQ";
         const QString SEQ_ATTR = "seq";
         
         bool parse();
         
         bool processStartElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                             QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
-                            const QStringRef &tagName,
+                            const QString &tagName,
                             const QXmlStreamAttributes &attribs,
                             qint64 lineNum, qint64 columnNum);
         
         bool processEndElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
                             QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
-                            const QStringRef &tagName,
+                            const QString &tagName,
                             qint64 lineNum, qint64 columnNum);
         
         bool parse(QXmlStreamReader& xmlReader);
@@ -109,9 +108,10 @@ namespace OsmAnd
     };
 
     struct XmlTreeSequence {
+        const QString SEQ_PLACEHOLDER = "#SEQ";
         QString seqOrder;
         QXmlStreamAttributes attrsMap;
-        QStringRef name;
+        QString name;
         std::vector<std::shared_ptr<XmlTreeSequence>> children;
         std::shared_ptr<XmlTreeSequence> parent;
         qint64 lineNum;
