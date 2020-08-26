@@ -96,277 +96,288 @@ bool OsmAnd::UnresolvedMapStyle_P::parse()
     return ok;
 }
 
+
+
+bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
+                                                QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                                                const QStringRef &tagName,
+                                                const QXmlStreamAttributes &attribs,
+                                                qint64 lineNum, qint64 columnNum
+                                                ) {
+    
+//    const auto& attribs = xmlReader.attributes();
+    
+    if (tagName == QLatin1String("renderingConstant"))
+    {
+        const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
+        const auto valueAttribValue = attribs.value(QLatin1String("value")).toString();
+        OsmAnd::UnresolvedMapStyle_P::constants.insert(nameAttribValue, valueAttribValue);
+    }
+    else if (tagName == QLatin1String("renderingProperty"))
+    {
+        const auto title = attribs.value(QLatin1String("name")).toString();
+        const auto description = attribs.value(QLatin1String("description")).toString();
+        const auto category = attribs.value(QLatin1String("category")).toString();
+        const auto name = attribs.value(QLatin1String("attr")).toString();
+        const auto valueType = attribs.value(QLatin1String("type")).toString();
+        const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString()
+        .split(QLatin1Char(','), QString::SkipEmptyParts);
+        const auto defaultValueDescription = attribs.value(QLatin1String("defaultValueDescription")).toString();
+        
+        MapStyleValueDataType dataType;
+        if (valueType == QLatin1String("string"))
+            dataType = MapStyleValueDataType::String;
+        else if (valueType == QLatin1String("boolean"))
+            dataType = MapStyleValueDataType::Boolean;
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "'%s' type is not supported (%s) - skip it",
+                      qPrintable(valueType),
+                      qPrintable(name));
+            return false;
+        }
+        
+        const std::shared_ptr<const Parameter> newParameter(new Parameter(
+                                                                          title,
+                                                                          description,
+                                                                          category,
+                                                                          name,
+                                                                          dataType,
+                                                                          possibleValues,
+                                                                          defaultValueDescription));
+        parameters.push_back(qMove(newParameter));
+    }
+    else if (tagName == QLatin1String("renderingAttribute"))
+    {
+        const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
+        
+        const std::shared_ptr<Attribute> newAttribute(new Attribute(nameAttribValue));
+        
+        if (!ruleNodesStack.isEmpty())
+        {
+            LogPrintf(LogSeverityLevel::Error, "Previous rule node was closed before opening <renderingAttribute>");
+            return false;
+        }
+        ruleNodesStack.push(newAttribute->rootNode);
+        
+        attributes.push_back(qMove(newAttribute));
+    }
+    else if (tagName == QLatin1String("switch") || tagName == QLatin1String("group"))
+    {
+        const std::shared_ptr<RuleNode> newSwitchNode(new RuleNode(true));
+        
+        for (const auto& xmlAttrib : constOf(attribs))
+        {
+            const auto attribName = xmlAttrib.name().toString();
+            const auto attribValue = xmlAttrib.value().toString();
+            newSwitchNode->values[attribName] = attribValue;
+        }
+        ruleNodesStack.push(newSwitchNode);
+    }
+    else if (tagName == QLatin1String("case") || tagName == QLatin1String("filter"))
+    {
+        const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
+        
+        for (const auto& xmlAttrib : constOf(attribs))
+        {
+            const auto attribName = xmlAttrib.name().toString();
+            const auto attribValue = xmlAttrib.value().toString();
+            
+            newCaseNode->values[attribName] = attribValue;
+        }
+        
+        if (ruleNodesStack.isEmpty() &&
+            (!newCaseNode->values.contains(QLatin1String("tag")) || !newCaseNode->values.contains(QLatin1String("value"))))
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "Top-level <case> must have 'tag' and 'value' attributes at %" PRIi64 ":%" PRIi64,
+                      lineNum,
+                      columnNum);
+            return false;
+        }
+        ruleNodesStack.push(newCaseNode);
+    }
+    else if (tagName == QLatin1String("apply") || tagName == QLatin1String("apply_if") || tagName == QLatin1String("groupFilter"))
+    {
+        const std::shared_ptr<RuleNode> newApplyNode(new RuleNode(false));
+        
+        for (const auto& xmlAttrib : constOf(attribs))
+        {
+            const auto attribName = xmlAttrib.name().toString();
+            const auto attribValue = xmlAttrib.value().toString();
+            
+            newApplyNode->values[attribName] = attribValue;
+        }
+        
+        if (ruleNodesStack.isEmpty())
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "<apply> must be inside <switch>, <case> or <renderingAttribute> at %" PRIi64 ":%" PRIi64,
+                      lineNum,
+                      columnNum);
+            return false;
+        }
+        ruleNodesStack.push(newApplyNode);
+    }
+    else if (tagName == QLatin1String("order"))
+    {
+        currentRulesetType = MapStyleRulesetType::Order;
+    }
+    else if (tagName == QLatin1String("text"))
+    {
+        currentRulesetType = MapStyleRulesetType::Text;
+    }
+    else if (tagName == QLatin1String("point"))
+    {
+        currentRulesetType = MapStyleRulesetType::Point;
+    }
+    else if (tagName == QLatin1String("line"))
+    {
+        currentRulesetType = MapStyleRulesetType::Polyline;
+    }
+    else if (tagName == QLatin1String("polygon"))
+    {
+        currentRulesetType = MapStyleRulesetType::Polygon;
+    }
+    return true; //test
+}
+
+bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
+                                                QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                                                const QStringRef &tagName,
+                                                qint64 lineNum, qint64 columnNum) {
+    
+    if (tagName == QLatin1String("renderingAttribute"))
+    {
+        const auto attribute = ruleNodesStack.pop();
+        if (!ruleNodesStack.isEmpty())
+        {
+            LogPrintf(LogSeverityLevel::Error, "<renderingAttribute> was not complete before </renderingAttribute>");
+            return false;
+        }
+    }
+    else if (tagName == QLatin1String("switch") || tagName == QLatin1String("group"))
+    {
+        const auto switchNode = ruleNodesStack.pop();
+        if (!ruleNodesStack.isEmpty())
+            ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(switchNode);
+        else
+        {
+            // Several cases:
+            //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be copied inside every <case>-child
+            //  - Otherwise, process as case
+            const auto ok = insertNodeIntoTopLevelTagValueRule(
+                                                               rulesets[static_cast<unsigned int>(currentRulesetType)],
+                                                               currentRulesetType,
+                                                               switchNode);
+            if (!ok)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                          "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":%" PRIi64,
+                          lineNum,
+                          columnNum);
+                return false;
+            }
+        }
+    }
+    else if (tagName == QLatin1String("case") || tagName == QLatin1String("filter"))
+    {
+        const auto caseNode = ruleNodesStack.pop();
+        if (!ruleNodesStack.isEmpty())
+            ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(caseNode);
+        else
+        {
+            // In case there's no <switch> parent, create or obtain top-level one with 'tag' and 'value' attributes pair of this case
+            const auto ok = insertNodeIntoTopLevelTagValueRule(
+                                                               rulesets[static_cast<unsigned int>(currentRulesetType)],
+                                                               currentRulesetType,
+                                                               caseNode);
+            if (!ok)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                          "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":" PRIi64,
+                          lineNum,
+                          columnNum);
+                return false;
+            }
+        }
+    }
+    else if (tagName == QLatin1String("apply") || tagName == QLatin1String("apply_if") || tagName == QLatin1String("groupFilter"))
+    {
+        const auto applyNode = ruleNodesStack.pop();
+        ruleNodesStack.top()->applySubnodes.push_back(applyNode);
+    }
+    else
+    {
+        currentRulesetType = MapStyleRulesetType::Invalid;
+    }
+    return true; //test
+}
+
 bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
 {
-    QHash<QString, QString> constants;
-    QList< std::shared_ptr<const Parameter> > parameters;
-    QList< std::shared_ptr<const Attribute> > attributes;
-    std::array<EditableRulesByTagValueCollection, MapStyleRulesetTypesCount> rulesets;
-
+    
+    std::shared_ptr<XmlTreeSequence> currentSeqElement = nullptr;
     QStack< std::shared_ptr<RuleNode> > ruleNodesStack;
     auto currentRulesetType = MapStyleRulesetType::Invalid;
-
+    
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
         xmlReader.readNext();
         const auto tagName = xmlReader.name();
-        if (tagName == QLatin1String("renderingStyle"))
-        {
-            if (xmlReader.isStartElement())
+        if (xmlReader.isStartElement()) {
+            const auto &attribs = xmlReader.attributes();
+            if (tagName == QLatin1String("renderingStyle"))
             {
                 if (!isMetadataLoaded())
                 {
                     if (!parseTagStart_RenderingStyle(xmlReader))
-                        return false;
+                        continue;
                 }
             }
-            else if (xmlReader.isEndElement())
+            else if (attribs.hasAttribute(SEQ_ATTR) || currentSeqElement != nullptr)
             {
+               //todo seq logic
+                std::shared_ptr<XmlTreeSequence> seq = std::make_shared<XmlTreeSequence>();
+                seq->name = tagName; //check
+                seq->attrsMap = attribs;
+                seq->parent = currentSeqElement;
+                if (currentSeqElement == nullptr) {
+                    seq->seqOrder = attribs.value(SEQ_ATTR).toString();
+                } else {
+                    currentSeqElement->children.push_back(seq);
+                    seq->seqOrder = currentSeqElement->seqOrder;
+                }
+            }
+            else
+            {
+                processStartElement(currentRulesetType, ruleNodesStack, tagName, attribs, xmlReader.lineNumber(), xmlReader.columnNumber());
             }
         }
-        else if (tagName == QLatin1String("renderingConstant"))
+        else if (xmlReader.isEndElement())
         {
-            if (xmlReader.isStartElement())
+            if (currentSeqElement == nullptr)
             {
-                const auto& attribs = xmlReader.attributes();
-
-                const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
-                const auto valueAttribValue = attribs.value(QLatin1String("value")).toString();
-                constants.insert(nameAttribValue, valueAttribValue);
+                processEndElement(currentRulesetType, ruleNodesStack, tagName, xmlReader.lineNumber(), xmlReader.columnNumber());
             }
-            else if (xmlReader.isEndElement())
+            else
             {
-            }
-        }
-        else if (tagName == QLatin1String("renderingProperty"))
-        {
-            if (xmlReader.isStartElement())
-            {
-                const auto& attribs = xmlReader.attributes();
-
-                const auto title = attribs.value(QLatin1String("name")).toString();
-                const auto description = attribs.value(QLatin1String("description")).toString();
-                const auto category = attribs.value(QLatin1String("category")).toString();
-                const auto name = attribs.value(QLatin1String("attr")).toString();
-                const auto valueType = attribs.value(QLatin1String("type")).toString();
-                const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString()
-                    .split(QLatin1Char(','), QString::SkipEmptyParts);
-                const auto defaultValueDescription = attribs.value(QLatin1String("defaultValueDescription")).toString();
-
-                MapStyleValueDataType dataType;
-                if (valueType == QLatin1String("string"))
-                    dataType = MapStyleValueDataType::String;
-                else if (valueType == QLatin1String("boolean"))
-                    dataType = MapStyleValueDataType::Boolean;
-                else
+                auto process = currentSeqElement;
+                currentSeqElement = currentSeqElement->parent;
+                if (currentSeqElement == nullptr)
                 {
-                    LogPrintf(LogSeverityLevel::Error,
-                        "'%s' type is not supported (%s) - skip it",
-                        qPrintable(valueType),
-                        qPrintable(name));
-                    continue;
-                }
-
-                const std::shared_ptr<const Parameter> newParameter(new Parameter(
-                    title,
-                    description,
-                    category,
-                    name,
-                    dataType,
-                    possibleValues,
-                    defaultValueDescription));
-                parameters.push_back(qMove(newParameter));
-            }
-            else if (xmlReader.isEndElement())
-            {
-            }
-        }
-        else if (tagName == QLatin1String("renderingAttribute"))
-        {
-            if (xmlReader.isStartElement())
-            {
-                const auto& attribs = xmlReader.attributes();
-
-                const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
-
-                const std::shared_ptr<Attribute> newAttribute(new Attribute(
-                    nameAttribValue));
-
-                if (!ruleNodesStack.isEmpty())
-                {
-                    LogPrintf(LogSeverityLevel::Error, "Previous rule node was closed before opening <renderingAttribute>");
-                    return false;
-                }
-                ruleNodesStack.push(newAttribute->rootNode);
-
-                attributes.push_back(qMove(newAttribute));
-            }
-            else if (xmlReader.isEndElement())
-            {
-                const auto attribute = ruleNodesStack.pop();
-                if (!ruleNodesStack.isEmpty())
-                {
-                    LogPrintf(LogSeverityLevel::Error, "<renderingAttribute> was not complete before </renderingAttribute>");
-                    return false;
-                }
-            }
-        }
-        else if (tagName == QLatin1String("switch") || tagName == QLatin1String("group"))
-        {
-            if (xmlReader.isStartElement())
-            {
-                const std::shared_ptr<RuleNode> newSwitchNode(new RuleNode(true));
-
-                const auto& attribs = xmlReader.attributes();
-                for (const auto& xmlAttrib : constOf(attribs))
-                {
-                    const auto attribName = xmlAttrib.name().toString();
-                    const auto attribValue = xmlAttrib.value().toString();
-
-                    newSwitchNode->values[attribName] = attribValue;
-                }
-
-                ruleNodesStack.push(newSwitchNode);
-            }
-            else if (xmlReader.isEndElement())
-            {
-                const auto switchNode = ruleNodesStack.pop();
-                if (!ruleNodesStack.isEmpty())
-                    ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(switchNode);
-                else
-                {
-                    // Several cases:
-                    //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be copied inside every <case>-child
-                    //  - Otherwise, process as case
-                    const auto ok = insertNodeIntoTopLevelTagValueRule(
-                        rulesets[static_cast<unsigned int>(currentRulesetType)],
-                        currentRulesetType,
-                        switchNode);
-                    if (!ok)
+                    int seqEnd = currentSeqElement->seqOrder.split(":")[1].toInt();
+                    for (int i = 1; i < seqEnd; i++)
                     {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":%" PRIi64,
-                            xmlReader.lineNumber(),
-                            xmlReader.columnNumber());
-                        return false;
+                        process->process(i,
+                                         this,
+                                         currentRulesetType,
+                                         ruleNodesStack);
                     }
                 }
+                currentSeqElement = nullptr;
             }
-        }
-        else if (tagName == QLatin1String("case") || tagName == QLatin1String("filter"))
-        {
-            if (xmlReader.isStartElement())
-            {
-                const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
-
-                const auto& attribs = xmlReader.attributes();
-                for (const auto& xmlAttrib : constOf(attribs))
-                {
-                    const auto attribName = xmlAttrib.name().toString();
-                    const auto attribValue = xmlAttrib.value().toString();
-
-                    newCaseNode->values[attribName] = attribValue;
-                }
-
-                if (ruleNodesStack.isEmpty() &&
-                    (!newCaseNode->values.contains(QLatin1String("tag")) || !newCaseNode->values.contains(QLatin1String("value"))))
-                {
-                    LogPrintf(LogSeverityLevel::Error,
-                        "Top-level <case> must have 'tag' and 'value' attributes at %" PRIi64 ":%" PRIi64,
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber());
-                    return false;
-                }
-                ruleNodesStack.push(newCaseNode);
-            }
-            else if (xmlReader.isEndElement())
-            {
-                const auto caseNode = ruleNodesStack.pop();
-                if (!ruleNodesStack.isEmpty())
-                    ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(caseNode);
-                else
-                {
-                    // In case there's no <switch> parent, create or obtain top-level one with 'tag' and 'value' attributes pair of this case
-                    const auto ok = insertNodeIntoTopLevelTagValueRule(
-                        rulesets[static_cast<unsigned int>(currentRulesetType)],
-                        currentRulesetType,
-                        caseNode);
-                    if (!ok)
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":" PRIi64,
-                            xmlReader.lineNumber(),
-                            xmlReader.columnNumber());
-                        return false;
-                    }
-                }
-            }
-        }
-        else if (tagName == QLatin1String("apply") || tagName == QLatin1String("apply_if") || tagName == QLatin1String("groupFilter"))
-        {
-            if (xmlReader.isStartElement())
-            {
-                const std::shared_ptr<RuleNode> newApplyNode(new RuleNode(false));
-
-                const auto& attribs = xmlReader.attributes();
-                for (const auto& xmlAttrib : constOf(attribs))
-                {
-                    const auto attribName = xmlAttrib.name().toString();
-                    const auto attribValue = xmlAttrib.value().toString();
-
-                    newApplyNode->values[attribName] = attribValue;
-                }
-
-                if (ruleNodesStack.isEmpty())
-                {
-                    LogPrintf(LogSeverityLevel::Error,
-                        "<apply> must be inside <switch>, <case> or <renderingAttribute> at %" PRIi64 ":%" PRIi64,
-                        xmlReader.lineNumber(),
-                        xmlReader.columnNumber());
-                    return false;
-                }
-                ruleNodesStack.push(newApplyNode);
-            }
-            else if (xmlReader.isEndElement())
-            {
-                const auto applyNode = ruleNodesStack.pop();
-                ruleNodesStack.top()->applySubnodes.push_back(applyNode);
-            }
-        }
-        else if (tagName == QLatin1String("order"))
-        {
-            if (xmlReader.isStartElement())
-                currentRulesetType = MapStyleRulesetType::Order;
-            else if (xmlReader.isEndElement())
-                currentRulesetType = MapStyleRulesetType::Invalid;
-        }
-        else if (tagName == QLatin1String("text"))
-        {
-            if (xmlReader.isStartElement())
-                currentRulesetType = MapStyleRulesetType::Text;
-            else if (xmlReader.isEndElement())
-                currentRulesetType = MapStyleRulesetType::Invalid;
-        }
-        else if (tagName == QLatin1String("point"))
-        {
-            if (xmlReader.isStartElement())
-                currentRulesetType = MapStyleRulesetType::Point;
-            else if (xmlReader.isEndElement())
-                currentRulesetType = MapStyleRulesetType::Invalid;
-        }
-        else if (tagName == QLatin1String("line"))
-        {
-            if (xmlReader.isStartElement())
-                currentRulesetType = MapStyleRulesetType::Polyline;
-            else if (xmlReader.isEndElement())
-                currentRulesetType = MapStyleRulesetType::Invalid;
-        }
-        else if (tagName == QLatin1String("polygon"))
-        {
-            if (xmlReader.isStartElement())
-                currentRulesetType = MapStyleRulesetType::Polygon;
-            else if (xmlReader.isEndElement())
-                currentRulesetType = MapStyleRulesetType::Invalid;
         }
     }
     if (xmlReader.hasError())
@@ -515,4 +526,29 @@ bool OsmAnd::UnresolvedMapStyle_P::load()
     }
 
     return true;
+}
+
+void OsmAnd::XmlTreeSequence::process(
+                                    int i,
+                                    OsmAnd::UnresolvedMapStyle_P *parserObj,
+                                    OsmAnd::MapStyleRulesetType &currentRulesetType,
+                                    QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
+    
+    for (int i = 0; i < attrsMap.size(); i++)
+    {
+        if (attrsMap[i].value().contains('#SEQ'))
+        {
+            QString seqVal = attrsMap[i].value().toString();
+            QString key = attrsMap[i].name().toString();
+            seqVal.replace("#SEQ", QString::number(i));
+            const QXmlStreamAttribute seqAttr = QXmlStreamAttribute(key, seqVal);
+            attrsMap.replace(i, seqAttr);
+        }
+    };
+    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
+    for (const auto& child : children) {
+        child->process(i, parserObj, currentRulesetType, ruleNodesStack);
+        
+    };
+    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
 }

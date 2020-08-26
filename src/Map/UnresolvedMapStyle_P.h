@@ -21,9 +21,11 @@
 namespace OsmAnd
 {
     class UnresolvedMapStyle;
+    struct XmlTreeSequence;
     class UnresolvedMapStyle_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(UnresolvedMapStyle_P);
+        
     public:
         typedef UnresolvedMapStyle::RuleNode RuleNode;
         typedef UnresolvedMapStyle::BaseRule BaseRule;
@@ -37,7 +39,12 @@ namespace OsmAnd
         bool parseTagStart_RenderingStyle(QXmlStreamReader& xmlReader);
 
         const std::shared_ptr<QIODevice> _source;
-
+        
+        QHash<QString, QString> constants;
+        QList< std::shared_ptr<const Parameter> > parameters;
+        QList< std::shared_ptr<const Attribute> > attributes;
+        std::array<EditableRulesByTagValueCollection, MapStyleRulesetTypesCount> rulesets;
+        
         QAtomicInt _isMetadataLoaded;
         mutable QMutex _metadataLoadMutex;
         bool parseMetadata();
@@ -45,7 +52,24 @@ namespace OsmAnd
 
         QAtomicInt _isLoaded;
         mutable QMutex _loadMutex;
+        
+        bool inSequence = false;
+        const QString SEQ_PLACEHOLDER = "#SEQ";
+        const QString SEQ_ATTR = "seq";
+        
         bool parse();
+        
+        bool processStartElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
+                            QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                            const QStringRef &tagName,
+                            const QXmlStreamAttributes &attribs,
+                            qint64 lineNum, qint64 columnNum);
+        
+        bool processEndElement(OsmAnd::MapStyleRulesetType &currentRulesetType,
+                            QStack<std::shared_ptr<RuleNode> > &ruleNodesStack,
+                            const QStringRef &tagName,
+                            qint64 lineNum, qint64 columnNum);
+        
         bool parse(QXmlStreamReader& xmlReader);
 
         static bool insertNodeIntoTopLevelTagValueRule(
@@ -81,7 +105,24 @@ namespace OsmAnd
         bool load();
 
     friend class OsmAnd::UnresolvedMapStyle;
+    friend struct OsmAnd::XmlTreeSequence;
     };
+
+    struct XmlTreeSequence {
+        QString seqOrder;
+        QXmlStreamAttributes attrsMap;
+        QStringRef name;
+        std::vector<std::shared_ptr<XmlTreeSequence>> children;
+        std::shared_ptr<XmlTreeSequence> parent;
+        qint64 lineNum;
+        qint64 columnNum;
+        
+        void process(int i,
+                     UnresolvedMapStyle_P *parserObj,
+                     OsmAnd::MapStyleRulesetType &currentRulesetType,
+                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack);
+    };
+
 }
 
 #endif // !defined(_OSMAND_CORE_UNRESOLVED_MAP_STYLE_P_H_)
