@@ -189,8 +189,9 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 		info->shieldRes = getParsedValue(info->object, info->shieldRes);
 	} 
 	if (info->shieldResIcon.find('?') != std::string::npos) {
-		info->shieldResIcon = getParsedValue(info->object, info->shieldRes);
+		info->shieldResIcon = getParsedValue(info->object, info->shieldResIcon);
 	}
+	
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
 
