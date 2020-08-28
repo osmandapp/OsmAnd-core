@@ -37,8 +37,8 @@ bool OsmAnd::UnresolvedMapStyle_P::parseTagStart_RenderingStyle(QXmlStreamReader
 {
     const auto& attribs = xmlReader.attributes();
 
-    _title = attribs.value(QLatin1String("name")).toString();
-    _parentName = attribs.value(QLatin1String("depends")).toString();
+    _title = attribs.value(QStringLiteral("name")).toString();
+    _parentName = attribs.value(QStringLiteral("depends")).toString();
 
     return true;
 }
@@ -61,7 +61,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parseMetadata(QXmlStreamReader& xmlReader)
     {
         xmlReader.readNext();
         const auto tagName = xmlReader.name();
-        if (tagName == QLatin1String("renderingStyle"))
+        if (tagName == QStringLiteral("renderingStyle"))
         {
             if (xmlReader.isStartElement())
             {
@@ -107,27 +107,27 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
     
 //    const auto& attribs = xmlReader.attributes();
     
-    if (tagName == QLatin1String("renderingConstant"))
+    if (tagName == QStringLiteral("renderingConstant"))
     {
-        const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
-        const auto valueAttribValue = attribs.value(QLatin1String("value")).toString();
+        const auto nameAttribValue = attribs.value(QStringLiteral("name")).toString();
+        const auto valueAttribValue = attribs.value(QStringLiteral("value")).toString();
         OsmAnd::UnresolvedMapStyle_P::constants.insert(nameAttribValue, valueAttribValue);
     }
-    else if (tagName == QLatin1String("renderingProperty"))
+    else if (tagName == QStringLiteral("renderingProperty"))
     {
-        const auto title = attribs.value(QLatin1String("name")).toString();
-        const auto description = attribs.value(QLatin1String("description")).toString();
-        const auto category = attribs.value(QLatin1String("category")).toString();
-        const auto name = attribs.value(QLatin1String("attr")).toString();
-        const auto valueType = attribs.value(QLatin1String("type")).toString();
-        const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString()
+        const auto title = attribs.value(QStringLiteral("name")).toString();
+        const auto description = attribs.value(QStringLiteral("description")).toString();
+        const auto category = attribs.value(QStringLiteral("category")).toString();
+        const auto name = attribs.value(QStringLiteral("attr")).toString();
+        const auto valueType = attribs.value(QStringLiteral("type")).toString();
+        const auto possibleValues = attribs.value(QStringLiteral("possibleValues")).toString()
         .split(QLatin1Char(','), QString::SkipEmptyParts);
-        const auto defaultValueDescription = attribs.value(QLatin1String("defaultValueDescription")).toString();
+        const auto defaultValueDescription = attribs.value(QStringLiteral("defaultValueDescription")).toString();
         
         MapStyleValueDataType dataType;
-        if (valueType == QLatin1String("string"))
+        if (valueType == QStringLiteral("string"))
             dataType = MapStyleValueDataType::String;
-        else if (valueType == QLatin1String("boolean"))
+        else if (valueType == QStringLiteral("boolean"))
             dataType = MapStyleValueDataType::Boolean;
         else
         {
@@ -148,9 +148,9 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
                                                                           defaultValueDescription));
         parameters.push_back(qMove(newParameter));
     }
-    else if (tagName == QLatin1String("renderingAttribute"))
+    else if (tagName == QStringLiteral("renderingAttribute"))
     {
-        const auto nameAttribValue = attribs.value(QLatin1String("name")).toString();
+        const auto nameAttribValue = attribs.value(QStringLiteral("name")).toString();
         
         const std::shared_ptr<Attribute> newAttribute(new Attribute(nameAttribValue));
         
@@ -163,7 +163,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         
         attributes.push_back(qMove(newAttribute));
     }
-    else if (tagName == QLatin1String("switch") || tagName == QLatin1String("group"))
+    else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
     {
         const std::shared_ptr<RuleNode> newSwitchNode(new RuleNode(true));
         
@@ -175,7 +175,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         ruleNodesStack.push(newSwitchNode);
     }
-    else if (tagName == QLatin1String("case") || tagName == QLatin1String("filter"))
+    else if (tagName == QStringLiteral("case") || tagName == QStringLiteral("filter"))
     {
         const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
         
@@ -188,7 +188,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         
         if (ruleNodesStack.isEmpty() &&
-            (!newCaseNode->values.contains(QLatin1String("tag")) || !newCaseNode->values.contains(QLatin1String("value"))))
+            (!newCaseNode->values.contains(QStringLiteral("tag")) || !newCaseNode->values.contains(QStringLiteral("value"))))
         {
             LogPrintf(LogSeverityLevel::Error,
                       "Top-level <case> must have 'tag' and 'value' attributes at %" PRIi64 ":%" PRIi64,
@@ -198,7 +198,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         ruleNodesStack.push(newCaseNode);
     }
-    else if (tagName == QLatin1String("apply") || tagName == QLatin1String("apply_if") || tagName == QLatin1String("groupFilter"))
+    else if (tagName == QStringLiteral("apply") || tagName == QStringLiteral("apply_if") || tagName == QStringLiteral("groupFilter"))
     {
         const std::shared_ptr<RuleNode> newApplyNode(new RuleNode(false));
         
@@ -220,23 +220,23 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         }
         ruleNodesStack.push(newApplyNode);
     }
-    else if (tagName == QLatin1String("order"))
+    else if (tagName == QStringLiteral("order"))
     {
         currentRulesetType = MapStyleRulesetType::Order;
     }
-    else if (tagName == QLatin1String("text"))
+    else if (tagName == QStringLiteral("text"))
     {
         currentRulesetType = MapStyleRulesetType::Text;
     }
-    else if (tagName == QLatin1String("point"))
+    else if (tagName == QStringLiteral("point"))
     {
         currentRulesetType = MapStyleRulesetType::Point;
     }
-    else if (tagName == QLatin1String("line"))
+    else if (tagName == QStringLiteral("line"))
     {
         currentRulesetType = MapStyleRulesetType::Polyline;
     }
-    else if (tagName == QLatin1String("polygon"))
+    else if (tagName == QStringLiteral("polygon"))
     {
         currentRulesetType = MapStyleRulesetType::Polygon;
     }
@@ -248,7 +248,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                                                 const QString &tagName,
                                                 qint64 lineNum, qint64 columnNum) {
     
-    if (tagName == QLatin1String("renderingAttribute"))
+    if (tagName == QStringLiteral("renderingAttribute"))
     {
         const auto attribute = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
@@ -257,7 +257,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
             return false;
         }
     }
-    else if (tagName == QLatin1String("switch") || tagName == QLatin1String("group"))
+    else if (tagName == QStringLiteral("switch") || tagName == QStringLiteral("group"))
     {
         const auto switchNode = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
@@ -281,7 +281,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
             }
         }
     }
-    else if (tagName == QLatin1String("case") || tagName == QLatin1String("filter"))
+    else if (tagName == QStringLiteral("case") || tagName == QStringLiteral("filter"))
     {
         const auto caseNode = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
@@ -303,7 +303,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
             }
         }
     }
-    else if (tagName == QLatin1String("apply") || tagName == QLatin1String("apply_if") || tagName == QLatin1String("groupFilter"))
+    else if (tagName == QStringLiteral("apply") || tagName == QStringLiteral("apply_if") || tagName == QStringLiteral("groupFilter"))
     {
         const auto applyNode = ruleNodesStack.pop();
         ruleNodesStack.top()->applySubnodes.push_back(applyNode);
@@ -329,7 +329,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
         tagName += xmlReader.name();
         if (xmlReader.isStartElement()) {
             const auto &attribs = xmlReader.attributes();
-            if (tagName == QLatin1String("renderingStyle"))
+            if (tagName == QStringLiteral("renderingStyle"))
             {
                 if (!isMetadataLoaded())
                 {
@@ -431,8 +431,8 @@ bool OsmAnd::UnresolvedMapStyle_P::insertNodeIntoTopLevelTagValueRule(
     const MapStyleRulesetType rulesetType,
     const std::shared_ptr<RuleNode>& ruleNode)
 {
-    const auto itTagAttrib = ruleNode->values.find(QLatin1String("tag"));
-    const auto itValueAttrib = ruleNode->values.find(QLatin1String("value"));
+    const auto itTagAttrib = ruleNode->values.find(QStringLiteral("tag"));
+    const auto itValueAttrib = ruleNode->values.find(QStringLiteral("value"));
     const auto itAttribNotFound = ruleNode->values.end();
 
     if (ruleNode->isSwitch && (itTagAttrib == itAttribNotFound || itValueAttrib == itAttribNotFound))
@@ -469,8 +469,8 @@ bool OsmAnd::UnresolvedMapStyle_P::insertNodeIntoTopLevelTagValueRule(
         {
             // If there's no rule with corresponding "tag-value", create one
             topLevelRule.reset(new Rule(rulesetType));
-            topLevelRule->rootNode->values[QLatin1String("tag")] = tagAttrib;
-            topLevelRule->rootNode->values[QLatin1String("value")] = valueAttrib;
+            topLevelRule->rootNode->values[QStringLiteral("tag")] = tagAttrib;
+            topLevelRule->rootNode->values[QStringLiteral("value")] = valueAttrib;
         }
 
         topLevelRule->rootNode->oneOfConditionalSubnodes.push_back(ruleNode);
