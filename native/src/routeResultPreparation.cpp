@@ -9,6 +9,9 @@
 
 const int MAX_SPEAK_PRIORITY = 5;
 const float TURN_DEGREE_MIN = 45;
+const float UNMATCHED_TURN_DEGREE_MINIMUM = 45;
+const float SPLIT_TURN_DEGREE_NOT_STRAIGHT = 100;
+const string UNMATCHED_HIGHWAY_TYPE = "unmatched";
 
 struct RoadSplitStructure {
     bool keepLeft = false;
@@ -67,6 +70,8 @@ struct CombineAreaRoutePoint {
     int y31;
     int originalIndex;
 };
+
+vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive);
 
 long getPoint(SHARED_PTR<RouteDataObject>& road, int pointInd) {
     return (((long) road->pointsX[pointInd]) << 31) + (long) road->pointsY[pointInd];
@@ -192,6 +197,7 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
         //checkAndInitRouteRegion(ctx, road); ? TODO
         bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
         int next;
+        bool unmatched = UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway();
         for (int j = rr->getStartPointIndex(); j != rr->getEndPointIndex(); j = next) {
             next = plus ? j + 1 : j - 1;
             if (j == rr->getStartPointIndex()) {
@@ -207,22 +213,28 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
                 tryToSplit = false;
             }
             if (tryToSplit) {
+                float distBearing = unmatched ? DIST_BEARING_DETECT_UNMATCHED : DIST_BEARING_DETECT;
                 // avoid small zigzags
-                float before = rr->getBearing(next, !plus);
-                float after = rr->getBearing(next, plus);
-                if(rr->getDistance(next, plus ) < 5) {
-                    after = before + 180;
-                } else if(rr->getDistance(next, !plus ) < 5) {
-                    before = after - 180;
+                float before = rr->getBearingEnd(next, distBearing);
+                float after = rr->getBearingBegin(next, distBearing);
+                if(rr->getDistance(next, plus) < distBearing) {
+                    after = before;
+                } else if(rr->getDistance(next, !plus) < distBearing) {
+                    before = after;
                 }
-                bool straight = abs(degreesDiff(before + 180, after)) < TURN_DEGREE_MIN;
+                double contAngle = abs(degreesDiff(before, after));
+                bool straight = contAngle < TURN_DEGREE_MIN;
                 bool isSplit = false;
+                
+                if (unmatched && abs(contAngle) >= UNMATCHED_TURN_DEGREE_MINIMUM) {
+                    isSplit = true;
+                }
                 // split if needed
                 for (auto rs : attachedRoutes) {
-                    double diff = degreesDiff(before + 180, rs->getBearingBegin());
+                    double diff = degreesDiff(before, rs->getBearingBegin());
                     if (abs(diff) <= TURN_DEGREE_MIN) {
                         isSplit = true;
-                    } else if (!straight && abs(diff) < 100) {
+                    } else if (!straight && abs(diff) < SPLIT_TURN_DEGREE_NOT_STRAIGHT) {
                         isSplit = true;
                     }
                 }
@@ -254,9 +266,9 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
             speed = ctx->config->router->getDefaultSpeed();
         } else {
             if (speed > 15) {
-                // decrease speed proportionally from 15ms=50kmh -
-                // reference speed 30ms=108kmh - 7kmh
-                speed = speed - ((speed - 15.f) / (30.f - 15.f) * 2.f);
+                // decrease speed proportionally from 15ms (50kmh)
+                // reference speed 30ms (108kmh) - 2ms (7kmh)
+                speed = speed - (speed / 15.f - 1) * 2.f;
             }
         }
         bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
@@ -362,10 +374,8 @@ vector<int> calculateRawTurnLanes(string turnLanes, int calcTurnType) {
     vector<int> lanes(splitLaneOptions.size());
     for (int i = 0; i < splitLaneOptions.size(); i++) {
         vector<string> laneOptions = split_string(splitLaneOptions[i], ";");
-        bool isTertiaryTurn = false;
         for (int j = 0; j < laneOptions.size(); j++) {
             int turn = TurnType::convertType(laneOptions[j]);
-
             int primary = TurnType::getPrimaryTurn(lanes[i]);
             if (primary == 0) {
                 TurnType::setPrimaryTurnAndReset(lanes, i, turn);
@@ -375,12 +385,12 @@ vector<int> calculateRawTurnLanes(string turnLanes, int calcTurnType) {
                     (TurnType::isLeftTurn(calcTurnType) && TurnType::isLeftTurn(turn))
                     ) {
                     TurnType::setPrimaryTurnShiftOthers(lanes, i, turn);
-                } else if (!isTertiaryTurn) {
-                    TurnType::setSecondaryTurnShiftOthers(lanes, i, turn);
-                    isTertiaryTurn = true;
-                } else {
+                } else if (TurnType::getSecondaryTurn(lanes[i]) == 0) {
+                    TurnType::setSecondaryTurn(lanes, i, turn);
+                } else if (TurnType::getTertiaryTurn(lanes[i]) == 0) {
                     TurnType::setTertiaryTurn(lanes, i, turn);
-                    break;
+                } else {
+                    // ignore
                 }
             }
         }
@@ -460,7 +470,7 @@ int highwaySpeakPriority(const string& highway) {
         return MAX_SPEAK_PRIORITY;
     }
     if (endsWith(highway, "_link")  || endsWith(highway, "unclassified") || endsWith(highway, "road")
-        || endsWith(highway, "living_street") || endsWith(highway, "residential") )  {
+        || endsWith(highway, "living_street") || endsWith(highway, "residential") || endsWith(highway, "tertiary"))  {
         return 1;
     }
     return 0;
@@ -649,143 +659,65 @@ int findActiveIndex(vector<int>& rawLanes, vector<string>& splitLaneOptions, int
     return activeStartIndex;
 }
 
-
-int inferSlightTurnFromLanes(vector<int>& oLanes, RoadSplitStructure& rs) {
-    set<int> possibleTurns;
-    for (int i = 0; i < oLanes.size(); i++) {
-        if ((oLanes[i] & 1) == 0) {
-            continue;
-        }
-        if (possibleTurns.empty()) {
-            // Nothing is in the list to compare to, so add the first elements
-            possibleTurns.insert(TurnType::getPrimaryTurn(oLanes[i]));
-            if (TurnType::getSecondaryTurn(oLanes[i]) != 0) {
-                possibleTurns.insert(TurnType::getSecondaryTurn(oLanes[i]));
-            }
-            if (TurnType::getTertiaryTurn(oLanes[i]) != 0) {
-                possibleTurns.insert(TurnType::getTertiaryTurn(oLanes[i]));
-            }
-        } else {
-            vector<int> laneTurns;
-            laneTurns.push_back(TurnType::getPrimaryTurn(oLanes[i]));
-            if (TurnType::getSecondaryTurn(oLanes[i]) != 0) {
-                laneTurns.push_back(TurnType::getSecondaryTurn(oLanes[i]));
-            }
-            if (TurnType::getTertiaryTurn(oLanes[i]) != 0) {
-                laneTurns.push_back(TurnType::getTertiaryTurn(oLanes[i]));
-            }
-            // retain all
-            for (auto it = possibleTurns.begin(); it != possibleTurns.end(); ) {
-                if (std::find(laneTurns.begin(), laneTurns.end(), *it) == laneTurns.end()) {
-                    it = possibleTurns.erase(it);
-                }
-                else {
-                    ++it;
-                }
-            }
-            if (possibleTurns.empty()) {
-                // No common turns, so can't determine anything.
-                return 0;
-            }
-        }
-    }
-    
-    // Remove all turns from lanes not selected...because those aren't it
-    for (int i = 0; i < oLanes.size(); i++) {
-        if ((oLanes[i] & 1) == 0 && !possibleTurns.empty()) {
-            possibleTurns.erase(TurnType::getPrimaryTurn(oLanes[i]));
-            if (TurnType::getSecondaryTurn(oLanes[i]) != 0) {
-                possibleTurns.erase(TurnType::getSecondaryTurn(oLanes[i]));
-            }
-            if (TurnType::getTertiaryTurn(oLanes[i]) != 0) {
-                possibleTurns.erase(TurnType::getTertiaryTurn(oLanes[i]));
-            }
-        }
-    }
-    // remove all non-slight turns
-    // https://github.com/osmandapp/Osmand/commit/ba7c11a25d2bc0ffbeb812a61c7f8cfbf9a4ad80
-    /*
-    if (possibleTurns.size() > 1) {
-        for (auto it = possibleTurns.begin(); it != possibleTurns.end(); ) {
-            if (!TurnType::isSlightTurn(*it)) {
-                it = possibleTurns.erase(it);
-            }
-            else {
-                ++it;
-            }
-        }
-    }
-     */
-    int infer = 0;
-    if (possibleTurns.size() == 1) {
-        infer = *possibleTurns.begin();
-    } else if (possibleTurns.size() > 1) {
-        int ttc = TurnType::C;
-        if (rs.keepLeft && rs.keepRight && possibleTurns.find(ttc) != possibleTurns.end()) {
-            infer = TurnType::C;
-        } else if (rs.keepLeft || rs.keepRight) {
-            auto it = possibleTurns.begin();
-            infer = *it;
-            ++it;
-            for (; it != possibleTurns.end(); ++it) {
-                int next = *it;
-                int orderInfer = TurnType::orderFromLeftToRight(infer);
-                int orderNext = TurnType::orderFromLeftToRight(next) ;
-                if (rs.keepLeft && orderNext < orderInfer) {
-                    infer = next;
-                } else if(rs.keepRight && orderNext > orderInfer) {
-                    infer = next;
-                }
-            }
-        }
-    }
-    
-    // Checking to see that there is only one unique turn
-    if (infer != 0) {
-        for(int i = 0; i < oLanes.size(); i++) {
-            if (TurnType::getSecondaryTurn(oLanes[i]) == infer) {
-                int pt = TurnType::getPrimaryTurn(oLanes[i]);
-                int en = oLanes[i] & 1;
-                TurnType::setPrimaryTurnAndReset(oLanes, i, infer);
-                oLanes[i] |= en;
-                TurnType::setSecondaryTurn(oLanes, i, pt);
-            }
-        }
-    }
-    return infer;
-}
-
 SHARED_PTR<TurnType> createSimpleKeepLeftRightTurn(bool leftSide, SHARED_PTR<RouteSegmentResult>& prevSegm,
                                                  SHARED_PTR<RouteSegmentResult>& currentSegm, RoadSplitStructure& rs) {
+    double devation = abs(degreesDiff(prevSegm->getBearingEnd(), currentSegm->getBearingBegin()));
+    bool makeSlightTurn = devation > 5 && (!isMotorway(prevSegm) || !isMotorway(currentSegm));
+    SHARED_PTR<TurnType> t = nullptr;
+    int laneType = TurnType::C;
+    if (rs.keepLeft && rs.keepRight) {
+        t = TurnType::ptrValueOf(TurnType::C, leftSide);
+    } else if (rs.keepLeft) {
+        t = TurnType::ptrValueOf(makeSlightTurn ? TurnType::TSLL : TurnType::KL, leftSide);
+        if (makeSlightTurn) {
+            laneType = TurnType::TSLL;
+        }
+    } else if (rs.keepRight) {
+        t = TurnType::ptrValueOf(makeSlightTurn ? TurnType::TSLR : TurnType::KR, leftSide);
+        if (makeSlightTurn) {
+            laneType = TurnType::TSLR;
+        }
+    } else {
+        return nullptr;
+    }
     int current = countLanesMinOne(currentSegm);
     int ls = current + rs.leftLanes + rs.rightLanes;
     vector<int> lanes(ls);
     for (int it = 0; it < ls; it++) {
         if (it < rs.leftLanes || it >= rs.leftLanes + current) {
-            lanes[it] = 0;
+            lanes[it] = TurnType::C << 1;
         } else {
-            lanes[it] = 1;
+            lanes[it] = (laneType << 1) + 1;
         }
     }
     // sometimes links are
     if ((current <= rs.leftLanes + rs.rightLanes) && (rs.leftLanes > 1 || rs.rightLanes > 1)) {
         rs.speak = true;
     }
-    double devation = abs(degreesDiff(prevSegm->getBearingEnd(), currentSegm->getBearingBegin()));
-    bool makeSlightTurn = devation > 5 && (!isMotorway(prevSegm) || !isMotorway(currentSegm));
-    SHARED_PTR<TurnType> t = nullptr;
-    if (rs.keepLeft && rs.keepRight) {
-        t = TurnType::ptrValueOf(TurnType::C, leftSide);
-    } else if (rs.keepLeft) {
-        t = TurnType::ptrValueOf(makeSlightTurn ? TurnType::TSLL : TurnType::KL, leftSide);
-    } else if (rs.keepRight) {
-        t = TurnType::ptrValueOf(makeSlightTurn ? TurnType::TSLR : TurnType::KR, leftSide);
-    } else {
-        return t;
-    }
     t->setSkipToSpeak(!rs.speak);
     t->setLanes(lanes);
     return t;
+}
+
+int inferSlightTurnFromActiveLanes(vector<int>& oLanes, bool mostLeft, bool mostRight) {
+    const auto possibleTurns = getPossibleTurns(oLanes, false, true);
+    if (possibleTurns.size() == 0) {
+        // No common turns, so can't determine anything.
+        return 0;
+    }
+    int infer = 0;
+    if (possibleTurns.size() == 1) {
+        infer = possibleTurns[0];
+    } else {
+        if (mostLeft && !mostRight) {
+            infer = possibleTurns[0];
+        } else if (mostRight && !mostLeft) {
+            infer = possibleTurns[possibleTurns.size() - 1];
+        } else {
+            infer = possibleTurns[1];
+        }
+    }
+    return infer;
 }
 
 SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure& rs, SHARED_PTR<RouteSegmentResult>& prevSegm,
@@ -802,7 +734,7 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
         if (turn == TurnType::TU || sturn == TurnType::TU || tturn == TurnType::TU) {
             possiblyLeftTurn = true;
         }
-        if (turn == TurnType::TRU || sturn == TurnType::TRU || sturn == TurnType::TRU) {
+        if (turn == TurnType::TRU || sturn == TurnType::TRU || tturn == TurnType::TRU) {
             possiblyRightTurn = true;
         }
     }
@@ -833,11 +765,40 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
                 rawLanes[k] |= 1;
             }
         }
-        int tp = inferSlightTurnFromLanes(rawLanes, rs);
+        int tp = inferSlightTurnFromActiveLanes(rawLanes, rs.keepLeft, rs.keepRight);
+        // Checking to see that there is only one unique turn
+        if (tp != 0) {
+            // add extra lanes with same turn
+            for(int i = 0; i < rawLanes.size(); i++) {
+                if(TurnType::getSecondaryTurn(rawLanes[i]) == tp) {
+                    TurnType::setSecondaryToPrimary(rawLanes, i);
+                    rawLanes[i] |= 1;
+                } else if(TurnType::getPrimaryTurn(rawLanes[i]) == tp) {
+                    rawLanes[i] |= 1;
+                }
+            }
+        }
         if (tp != t->getValue() && tp != 0) {
             t = TurnType::ptrValueOf(tp, leftSide);
+        } else {
+            if (rs.keepRight && TurnType::getSecondaryTurn(rawLanes[activeEndIndex]) == 0) {
+                t = TurnType::ptrValueOf(TurnType::getPrimaryTurn(rawLanes[activeEndIndex]), leftSide);
+            } else if (rs.keepLeft && TurnType::getSecondaryTurn(rawLanes[activeBeginIndex]) == 0) {
+                t = TurnType::ptrValueOf(TurnType::getPrimaryTurn(rawLanes[activeBeginIndex]), leftSide);
+            }
         }
     } else {
+        // case for go straight and identify correct turn:lane to go straight
+        const auto possibleTurns = getPossibleTurns(rawLanes, false, false);
+        int tp = TurnType::C;
+        if (possibleTurns.size() == 1) {
+            tp = possibleTurns[0];
+        } else if (possibleTurns.size() == 3) {
+            if ((!possiblyLeftTurn || !possiblyRightTurn) && TurnType::isSlightTurn(possibleTurns[1])) {
+                tp = possibleTurns[1];
+                t = TurnType::ptrValueOf(tp, leftSide);
+            }
+        }
         for (int k = 0; k < rawLanes.size(); k++) {
             int turn = TurnType::getPrimaryTurn(rawLanes[k]);
             int sturn = TurnType::getSecondaryTurn(rawLanes[k]);
@@ -851,18 +812,16 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
                (TurnType::isLeftTurn(sturn) && possiblyLeftTurn)) {
                 // we can't predict here whether it will be a left turn or straight on,
                 // it could be done during 2nd pass
-                TurnType::setPrimaryTurn(rawLanes, k, sturn);
-                TurnType::setSecondaryTurn(rawLanes, k, turn);
+                TurnType::setSecondaryToPrimary(rawLanes, k);
                 active = true;
             } else if((TurnType::isRightTurn(tturn) && possiblyRightTurn) ||
                       (TurnType::isLeftTurn(tturn) && possiblyLeftTurn)) {
-                TurnType::setPrimaryTurn(rawLanes, k, tturn);
-                TurnType::setTertiaryTurn(rawLanes, k, turn);
+                TurnType::setTertiaryToPrimary(rawLanes, k);
                 active = true;
             } else if((TurnType::isRightTurn(turn) && possiblyRightTurn) ||
                       (TurnType::isLeftTurn(turn) && possiblyLeftTurn)) {
                 active = true;
-            } else if (turn == TurnType::C) {
+            } else if (turn == tp) {
                 active = true;
             }
             if (active) {
@@ -872,6 +831,8 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
     }
     t->setSkipToSpeak(!rs.speak);
     t->setLanes(rawLanes);
+    t->setPossibleLeftTurn(possiblyLeftTurn);
+    t->setPossibleRightTurn(possiblyRightTurn);
     return t;
 }
 
@@ -913,18 +874,16 @@ SHARED_PTR<TurnType> getTurnInfo(vector<SHARED_PTR<RouteSegmentResult> >& result
         return processRoundaboutTurn(result, i, leftSide, prev, rr);
     }
     SHARED_PTR<TurnType> t = nullptr;
-    bool noAttachedRoads = rr->getAttachedRoutes(rr->getStartPointIndex()).size() == 0;
     // add description about turn
-    double mpi = degreesDiff(prev->getBearingEnd(), rr->getBearingBegin());
-    if (noAttachedRoads) {
-        // TODO VICTOR : look at the comment inside direction route
-        // ? avoid small zigzags is covered at (search for "zigzags")
-        //				double begin = rr->object->directionRoute(rr->getStartPointIndex(), rr->getStartPointIndex() <
-        //						rr->getEndPointIndex(), 25);
-        //				mpi = MapUtils.degreesDiff(prev->getBearingEnd(), begin);
+    // avoid small zigzags is covered at (search for "zigzags")
+    float bearingDist = DIST_BEARING_DETECT;
+    // could be || noAttachedRoads, boolean noAttachedRoads = rr.getAttachedRoutes(rr.getStartPointIndex()).size() == 0;
+    if (UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway()) {
+        bearingDist = DIST_BEARING_DETECT_UNMATCHED;
     }
+    double mpi = degreesDiff(prev->getBearingEnd(prev->getEndPointIndex(), bearingDist), rr->getBearingBegin(rr->getStartPointIndex(), bearingDist));
     if (mpi >= TURN_DEGREE_MIN) {
-        if (mpi < 45) {
+        if (mpi < TURN_DEGREE_MIN) {
             // Slight turn detection here causes many false positives where drivers would expect a "normal" TL. Best use limit-angle=TURN_DEGREE_MIN, this reduces TSL to the turn-lanes cases.
             t = TurnType::ptrValueOf(TurnType::TSLL, leftSide);
         } else if (mpi < 120) {
@@ -937,7 +896,7 @@ SHARED_PTR<TurnType> getTurnInfo(vector<SHARED_PTR<RouteSegmentResult> >& result
         const auto& lanes = getTurnLanesInfo(prev, t->getValue());
         t->setLanes(lanes);
     } else if (mpi < -TURN_DEGREE_MIN) {
-        if (mpi > -45) {
+        if (mpi > -TURN_DEGREE_MIN) {
             t = TurnType::ptrValueOf(TurnType::TSLR, leftSide);
         } else if (mpi > -120) {
             t = TurnType::ptrValueOf(TurnType::TR, leftSide);
@@ -1124,6 +1083,69 @@ void inferActiveTurnLanesFromTurn(const SHARED_PTR<TurnType>& tt, int type) {
     }
 }
 
+bool sortArray(int o1, int o2) {
+    return TurnType::orderFromLeftToRight(o1) > TurnType::orderFromLeftToRight(o2);
+}
+
+vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive) {
+    set<int> possibleTurns;
+    set<int> upossibleTurns;
+    for (int i = 0; i < oLanes.size(); i++) {
+        // Nothing is in the list to compare to, so add the first elements
+        upossibleTurns.clear();
+        upossibleTurns.insert(TurnType::getPrimaryTurn(oLanes[i]));
+        if (!onlyPrimary && TurnType::getSecondaryTurn(oLanes[i]) != 0) {
+            upossibleTurns.insert(TurnType::getSecondaryTurn(oLanes[i]));
+        }
+        if (!onlyPrimary && TurnType::getTertiaryTurn(oLanes[i]) != 0) {
+            upossibleTurns.insert(TurnType::getTertiaryTurn(oLanes[i]));
+        }
+        if (!uniqueFromActive) {
+            possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
+            //                if (!possibleTurns.isEmpty()) {
+            //                    possibleTurns.retainAll(upossibleTurns);
+            //                    if(possibleTurns.isEmpty()) {
+            //                        break;
+            //                    }
+            //                } else {
+            //                    possibleTurns.addAll(upossibleTurns);
+            //                }
+        } else if ((oLanes[i] & 1) == 1) {
+            if (possibleTurns.size() != 0) {
+                possibleTurns.clear();
+                possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
+                if(possibleTurns.size() == 0) {
+                    break;
+                }
+            } else {
+                possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
+            }
+        }
+    }
+    // Remove all turns from lanes not selected...because those aren't it
+    if (uniqueFromActive) {
+        for (int i = 0; i < oLanes.size(); i++) {
+            if ((oLanes[i] & 1) == 0) {
+                possibleTurns.erase(TurnType::getPrimaryTurn(oLanes[i]));
+                if (TurnType::getSecondaryTurn(oLanes[i]) != 0) {
+                    possibleTurns.erase(TurnType::getSecondaryTurn(oLanes[i]));
+                }
+                if (TurnType::getTertiaryTurn(oLanes[i]) != 0) {
+                    possibleTurns.erase(TurnType::getTertiaryTurn(oLanes[i]));
+                }
+            }
+        }
+    }
+    vector<int> array(possibleTurns.begin(), possibleTurns.end());
+    sort(array.begin(), array.end(), sortArray);
+    return array;
+}
+
+vector<int> getPossibleTurnsFromActiveLanes(vector<int>& oLanes, bool onlyPrimary)
+{
+    return getPossibleTurns(oLanes, onlyPrimary, true);
+}
+
 void determineTurnsToMerge(bool leftside, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     SHARED_PTR<RouteSegmentResult> nextSegment = nullptr;
     double dist = 0;
@@ -1143,13 +1165,21 @@ void determineTurnsToMerge(bool leftside, vector<SHARED_PTR<RouteSegmentResult> 
                 }
                 if (dist < mergeDistance) {
                     mergeTurnLanes(leftside, currentSegment, nextSegment);
+                    const auto& turnType = currentSegment->turnType;
+                    const auto possibleTurn = getPossibleTurnsFromActiveLanes(turnType->getLanes(), true);
+                    if (possibleTurn.size() == 1) {
+                        auto tt = TurnType::ptrValueOf(possibleTurn[0], currentSegment->turnType->isLeftSide());
+                        tt->setLanes(turnType->getLanes());
+                        tt->setSkipToSpeak(turnType->isSkipToSpeak());
+                        currentSegment->turnType = tt;
+                    }
                     inferCommonActiveLane(currentSegment->turnType, nextSegment->turnType);
                     merged = true;
                 }
             }
             if (!merged) {
                 const auto& tt = currentSegment->turnType;
-                inferActiveTurnLanesFromTurn(tt, TurnType::C);
+                inferActiveTurnLanesFromTurn(tt, tt->getValue());
             }
             nextSegment = currentSegment;
             dist = 0;
@@ -1215,18 +1245,16 @@ SHARED_PTR<TurnType> justifyUTurn(bool leftside, vector<SHARED_PTR<RouteSegmentR
 }
 
 void justifyUTurns(bool leftSide, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    int next = 0;
-    if (result.size() > 0) {
-        for (int i = 0; i < result.size() - 1; i = next) {
-            next = i + 1;
-            const auto& t = result[i]->turnType;
-            // justify turn
-            if (t) {
-                const auto& jt = justifyUTurn(leftSide, result, i, t);
-                if (jt) {
-                    result[i]->turnType = jt;
-                    next = i + 2;
-                }
+    int next;
+    for (int i = 1; i < ((int) result.size() - 1); i = next) {
+        next = i + 1;
+        const auto& t = result[i]->turnType;
+        // justify turn
+        if (t) {
+            const auto& jt = justifyUTurn(leftSide, result, i, t);
+            if (jt) {
+                result[i]->turnType = jt;
+                next = i + 2;
             }
         }
     }
@@ -1604,12 +1632,7 @@ void combineWayPointsForAreaRouting(RoutingContext* ctx, vector<SHARED_PTR<Route
     }
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    combineWayPointsForAreaRouting(ctx, result);
-    validateAllPointsConnected(result);
-    splitRoadsAndAttachRoadSegments(ctx, result);
-    calculateTimeSpeed(ctx, result);
-    
+void prepareTurnResults(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     for (int i = 0; i < result.size(); i ++) {
         const auto& turnType = getTurnInfo(result, i, ctx->leftSideNavigation);
         result[i]->turnType = turnType;
@@ -1619,6 +1642,15 @@ vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vecto
     ignorePrecedingStraightsOnSameIntersection(ctx->leftSideNavigation, result);
     justifyUTurns(ctx->leftSideNavigation, result);
     addTurnInfoDescriptions(result);
+}
+
+vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
+    combineWayPointsForAreaRouting(ctx, result);
+    validateAllPointsConnected(result);
+    splitRoadsAndAttachRoadSegments(ctx, result);
+    calculateTimeSpeed(ctx, result);
+    
+    prepareTurnResults(ctx, result);
     return result;
 }
 

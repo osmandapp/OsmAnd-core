@@ -103,6 +103,22 @@ public:
         lanes[lane] = (turnType << 1);
     }
     
+    static void setSecondaryToPrimary(vector<int>& lanes, int lane) {
+        int st = getSecondaryTurn(lanes[lane]);
+        int pt = getPrimaryTurn(lanes[lane]);
+        setPrimaryTurn(lanes, lane, st);
+        setSecondaryTurn(lanes, lane, pt);
+    }
+    
+    static void setTertiaryToPrimary(vector<int>& lanes, int lane) {
+        int st = getSecondaryTurn(lanes[lane]);
+        int pt = getPrimaryTurn(lanes[lane]);
+        int tt = getTertiaryTurn(lanes[lane]);
+        setPrimaryTurn(lanes, lane, tt);
+        setSecondaryTurn(lanes, lane, pt);
+        setTertiaryTurn(lanes, lane, st);
+    }
+    
     static int getPrimaryTurn(int laneValue) {
         // Get the primary turn modifier for the lane
         return (laneValue >> 1) & ((1 << 4) - 1);

@@ -6,6 +6,11 @@
 #include "turnType.h"
 #include <algorithm>
 
+// this should be bigger (50-80m) but tests need to be fixed first
+#define DIST_BEARING_DETECT 5
+
+#define DIST_BEARING_DETECT_UNMATCHED 50
+
 struct RouteSegmentResult {
 private:
     int startPointIndex;
@@ -65,19 +70,32 @@ public:
     }
     
     inline float getBearingBegin() {
-        return (float) (object->directionRoute(startPointIndex, startPointIndex < endPointIndex) / M_PI * 180);
+        return getBearingBegin(startPointIndex, DIST_BEARING_DETECT);
     }
 
     inline float getBearingEnd() {
-        return (float) (alignAngleDifference(object->directionRoute(endPointIndex, startPointIndex > endPointIndex) - M_PI) / M_PI * 180);
+        return getBearingEnd(endPointIndex, DIST_BEARING_DETECT);
     }
     
-    inline float getBearing(int point, bool plus) {
-        return (float) (object->directionRoute(point, plus) / M_PI * 180);
+    inline float getBearingBegin(int point, float dist) {
+        return getBearing(point, true, dist);
+    }
+    
+    inline float getBearingEnd(int point, float dist) {
+        return getBearing(point, false, dist);
+    }
+    
+    inline float getBearing(int point, bool begin, float dist) {
+        if (begin) {
+            return (float) (object->directionRoute(point, startPointIndex < endPointIndex) / M_PI * 180);
+        } else {
+            double dr = object->directionRoute(point, startPointIndex > endPointIndex, dist);
+            return (float) (alignAngleDifference(dr - M_PI) / M_PI * 180);
+        }
     }
 
     inline float getDistance(int point, bool plus) {
-        return (float) (plus ? object->distance(point, endPointIndex): object->distance(startPointIndex, point));
+        return (float) (plus ? object->distance(point, endPointIndex) : object->distance(startPointIndex, point));
     }
 
     inline std::vector<double> getHeightValues() {
