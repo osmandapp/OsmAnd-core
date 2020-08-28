@@ -312,7 +312,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
     {
         currentRulesetType = MapStyleRulesetType::Invalid;
     }
-    return true; //test
+    return true;
 }
 
 bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
@@ -339,7 +339,6 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             }
             else if (attribs.hasAttribute(SEQ_ATTR) || currentSeqElement != nullptr)
             {
-               //todo seq logic
                 std::shared_ptr<XmlTreeSequence> seq = std::make_shared<XmlTreeSequence>();
                 seq->name += tagName;
                 seq->attrsMap = attribs;
@@ -373,7 +372,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 currentSeqElement = currentSeqElement->parent;
                 if (currentSeqElement == nullptr)
                 {
-                    int seqEnd = process->seqOrder.split(":")[1].toInt();
+                    int seqEnd = process->seqOrder.split(QLatin1Char(':'))[1].toInt();
                     for (int i = 1; i < seqEnd; i++)
                     {
                         process->process(i,
@@ -538,17 +537,19 @@ void OsmAnd::XmlTreeSequence::process(
                                     OsmAnd::UnresolvedMapStyle_P *parserObj,
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
                                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
+    
     for (int i = 0; i < attrsMap.size(); i++)
     {
-        if (attrsMap[i].value().contains('#SEQ'))
+        if (attrsMap[i].value().contains(SEQ_PLACEHOLDER))
         {
             QString seqVal = attrsMap[i].value().toString();
             QString key = attrsMap[i].name().toString();
-            seqVal.replace("#SEQ", QString::number(i));
-            const QXmlStreamAttribute seqAttr = QXmlStreamAttribute(key, seqVal);
-            attrsMap.replace(index, seqAttr);
+            seqVal.replace(SEQ_PLACEHOLDER, QString::number(index));
+            const QXmlStreamAttribute seqAttr(key, seqVal);
+            attrsMap.replace(i, seqAttr);
         }
     };
+
     parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
     for (const auto& child : children) {
         child->process(index, parserObj, currentRulesetType, ruleNodesStack);

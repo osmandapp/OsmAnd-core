@@ -200,7 +200,7 @@ namespace OsmAnd
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
         
-        static void parseGenericTag(
+        static QString parseGenericTag(
             const std::shared_ptr<const MapObject>& object,
             QString& genTagVal);
     public:

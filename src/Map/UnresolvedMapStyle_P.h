@@ -18,6 +18,9 @@
 #include "UnresolvedMapStyle.h"
 #include "MapStyleConstantValue.h"
 
+static const QString SEQ_PLACEHOLDER = QStringLiteral("#SEQ");
+static const QString SEQ_ATTR = QStringLiteral("seq");
+
 namespace OsmAnd
 {
     class UnresolvedMapStyle;
@@ -54,7 +57,6 @@ namespace OsmAnd
         mutable QMutex _loadMutex;
         
         bool inSequence = false;
-        const QString SEQ_ATTR = "seq";
         
         bool parse();
         
@@ -108,7 +110,6 @@ namespace OsmAnd
     };
 
     struct XmlTreeSequence {
-        const QString SEQ_PLACEHOLDER = "#SEQ";
         QString seqOrder;
         QXmlStreamAttributes attrsMap;
         QString name;

@@ -2625,11 +2625,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             text->underlayIconResourceName);
         
         if (text->shieldResourceName.contains('?')) {
-            parseGenericTag(primitive->sourceObject,text->shieldResourceName);
+            text->shieldResourceName = parseGenericTag(primitive->sourceObject,text->shieldResourceName);
         }
         
         if (text->underlayIconResourceName.contains('?')) {
-            parseGenericTag(primitive->sourceObject,text->underlayIconResourceName);
+            text->underlayIconResourceName = parseGenericTag(primitive->sourceObject,text->underlayIconResourceName);
         }
         
         QString intersectsWith;
@@ -2693,7 +2693,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     }
 }
 
-void OsmAnd::MapPrimitiviser_P::parseGenericTag(
+QString OsmAnd::MapPrimitiviser_P::parseGenericTag(
     const std::shared_ptr<const MapObject>& object,
     QString& genTagVal)
 {
@@ -2708,7 +2708,7 @@ void OsmAnd::MapPrimitiviser_P::parseGenericTag(
         }
     }
     res.append(genTagVal.mid(endQ + 1));
-    genTagVal = res;
+    return res;
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
