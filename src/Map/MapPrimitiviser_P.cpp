@@ -2629,7 +2629,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         }
         
         if (text->underlayIconResourceName.contains('?')) {
-            parseGenericTag(primitive->sourceObject,text->shieldResourceName);
+            parseGenericTag(primitive->sourceObject,text->underlayIconResourceName);
         }
         
         QString intersectsWith;
