@@ -202,7 +202,7 @@ namespace OsmAnd
         
         static QString parseGenericTag(
             const std::shared_ptr<const MapObject>& object,
-            QString& genTagVal);
+            const QString& genTagVal);
     public:
         ~MapPrimitiviser_P();
 

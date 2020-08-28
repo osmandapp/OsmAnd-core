@@ -2695,7 +2695,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
 QString OsmAnd::MapPrimitiviser_P::parseGenericTag(
     const std::shared_ptr<const MapObject>& object,
-    QString& genTagVal)
+    const QString& genTagVal)
 {
     int startQ = genTagVal.indexOf('?');
     int endQ = genTagVal.lastIndexOf('?');
