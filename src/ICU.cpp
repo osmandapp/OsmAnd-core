@@ -1,5 +1,6 @@
 #include "ICU.h"
 #include "ICU_private.h"
+#include "CollatorStringMatcher.h"
 
 #include <cassert>
 #include <cstring>
@@ -390,6 +391,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base
             return cstartsWith(_base, _part, false, true, false);
         case StringMatcherMode::CHECK_ONLY_STARTS_WITH:
             return cstartsWith(_base, _part, true, false, false);
+        case StringMatcherMode::CHECK_EQUALS:
+            return cstartsWith(_base, _part, false, false, true);
         default:
             return false;
     }
@@ -450,7 +453,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     }
     else
     {
-        UnicodeString searchIn = qStrToUniStr(_searchInParam).toLower(Locale::getDefault());
+        UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(_searchInParam));
         UnicodeString theStart = qStrToUniStr(_theStart);
         
         int startLength = theStart.length();
@@ -460,57 +463,58 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             result = true;
         }
-        else if (startLength > serchInLength)
+        // this is not correct because of Auhofstrasse != Auhofstraße
+        if (startLength > serchInLength)
         {
             result = false;
         }
-        else
+        
+        if (checkBeginning)
         {
-            if (checkBeginning)
+            bool starts = collator->equals(searchIn.tempSubString(0, startLength), theStart);
+            if (starts)
             {
-                bool starts = collator->equals(searchIn.tempSubString(0, startLength), theStart);
-                if (starts)
+                if (equals)
                 {
-                    if (equals)
-                    {
-                        if (startLength == serchInLength || isSpace(searchIn.charAt(startLength)))
-                        {
-                            result = true;
-                        }
-                    }
-                    else
+                    if (startLength == serchInLength || isSpace(searchIn.charAt(startLength)))
                     {
                         result = true;
                     }
                 }
-            }
-            
-            if (!result && checkSpaces)
-            {
-                for (int i = 1; i <= serchInLength - startLength; i++)
+                else
                 {
-                    if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+                    result = true;
+                }
+            }
+        }
+        
+        if (!result && checkSpaces)
+        {
+            for (int i = 1; i <= serchInLength - startLength; i++)
+            {
+                if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+                {
+                    if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
                     {
-                        if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
+                        if (equals)
                         {
-                            if (equals)
-                            {
-                                if (i + startLength == serchInLength || isSpace(searchIn.charAt(i + startLength)))
-                                {
-                                    result = true;
-                                    break;
-                                }
-                            }
-                            else
+                            if (i + startLength == serchInLength || isSpace(searchIn.charAt(i + startLength)))
                             {
                                 result = true;
                                 break;
                             }
                         }
+                        else
+                        {
+                            result = true;
+                            break;
+                        }
                     }
                 }
             }
         }
+        if (!checkBeginning && !checkSpaces && equals)
+            result = collator->equals(searchIn, theStart);
     }
     
     if (collator != nullptr)

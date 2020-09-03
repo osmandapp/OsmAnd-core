@@ -1241,7 +1241,15 @@ namespace OsmAnd
         static inline int getCommonSearch(const QString name)
         {
             int i = COMMON_WORDS.indexOf(name);
-            return i == -1 ? getFrequentlyUsed(name) : i + FREQUENTLY_USED_WORDS.size();
+            // higher means better for search
+            if (i == -1) {
+                int fq = getFrequentlyUsed(name);
+                if (fq != -1) {
+                    return COMMON_WORDS.size() + fq;
+                }
+                return -1;
+            }
+            return i;
         }
 
         static inline int getCommonGeocoding(const QString name)
