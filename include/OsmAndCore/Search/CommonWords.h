@@ -1,6 +1,9 @@
 #ifndef _OSMAND_CORE_COMMON_WORDS_H_
 #define _OSMAND_CORE_COMMON_WORDS_H_
 
+//  OsmAnd-java/src/main/java/net/osmand/binary/CommonWords.java
+//  git revision 63f67248593c49f0901738085b5f41d22b992f62
+
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
@@ -819,6 +822,7 @@ namespace OsmAnd
         QStringLiteral("van"),
         QStringLiteral("road"),
         QStringLiteral("street"),
+        QStringLiteral("sector"),
         QStringLiteral("drive"),
         QStringLiteral("avenue"),
         QStringLiteral("rue"),
