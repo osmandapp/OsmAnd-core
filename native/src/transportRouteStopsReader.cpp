@@ -99,10 +99,11 @@ void TransportRouteStopsReader::mergeTransportStops(PT_ROUTE_MAP &routesToLoad,
 			}
 		} else if (multifileStop->isDeleted()) {
 			it = stops.erase(it);
+			continue;
 		} else {
 			if (delRIds.size() > 0) {
 				for (vector<int64_t>::iterator it = delRIds.begin();
-					 it != delRIds.end(); it++) {
+					it != delRIds.end(); it++) {
 					multifileStop->deletedRoutesIds.push_back(*it);
 				}
 			}
@@ -122,6 +123,7 @@ void TransportRouteStopsReader::mergeTransportStops(PT_ROUTE_MAP &routesToLoad,
 					putAll(routesToLoad, stop->referencesToRoutes);
 				} else {
 					it = stops.erase(it);
+					continue;
 				}
 			}
 		}
