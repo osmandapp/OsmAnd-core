@@ -288,8 +288,8 @@ vector<PT_STOPS_SEGMENT> TransportRouteStopsReader::mergeSegments(vector<PT_STOP
 				}
 				if (merged) {
 					it = segQueue.erase(it);
-				}
-				if (it != segQueue.end()) {
+					break;
+				} else if (it != segQueue.end()) {
 					it++;
 				}
 			}
