@@ -1315,6 +1315,36 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
     return ok;
 }
 
+bool OsmAnd::ResourcesManager_P::addLocalResource(const QString& filePath)
+{
+    QFileInfo info(filePath);
+    const auto fileName = info.fileName();
+
+    // Read information from OBF
+    const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
+    const auto obfInfo = ObfReader(obfFile).obtainInfo();
+    if (!obfInfo)
+    {
+        LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(filePath));
+        return false;
+    }
+
+    auto resourceType = ResourceType::MapRegion;
+    const auto resourceId = fileName.toLower();
+
+    // Create local resource entry
+    const auto pLocalResource = new InstalledResource(
+        resourceId,
+        resourceType,
+        filePath,
+        0,
+        obfFile->obfInfo->creationTimestamp);
+    pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
+    std::shared_ptr<const LocalResource> localResource(pLocalResource);
+    _localResources.insert(resourceId, qMove(localResource));
+    return true;
+}
+
 bool OsmAnd::ResourcesManager_P::installObfFromFile(
     const QString& id,
     const QString& filePath,

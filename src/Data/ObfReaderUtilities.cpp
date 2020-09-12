@@ -21,7 +21,7 @@ bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QSt
     if (!gpb::internal::WireFormatLite::ReadString(cis, &value))
         return false;
 
-    output = QString::fromUtf8(value.c_str(), value.size());
+    output = QString::fromStdString(value);
     return true;
 }
 

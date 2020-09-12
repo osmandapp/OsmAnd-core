@@ -266,6 +266,9 @@ namespace OsmAnd
             const QString& id,
             const IWebClient::RequestProgressCallbackSignature downloadProgressCallback);
         bool updateFromRepository(const QString& id, const QString& filePath);
+        
+        // Tests
+        bool addLocalResource(const QString& filePath);
 
         const std::shared_ptr<const IOnlineTileSources> onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection> mapStylesCollection;
