@@ -1,6 +1,9 @@
 #ifndef _OSMAND_CORE_COMMON_WORDS_H_
 #define _OSMAND_CORE_COMMON_WORDS_H_
 
+//  OsmAnd-java/src/main/java/net/osmand/binary/CommonWords.java
+//  git revision 63f67248593c49f0901738085b5f41d22b992f62
+
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
@@ -819,6 +822,7 @@ namespace OsmAnd
         QStringLiteral("van"),
         QStringLiteral("road"),
         QStringLiteral("street"),
+        QStringLiteral("sector"),
         QStringLiteral("drive"),
         QStringLiteral("avenue"),
         QStringLiteral("rue"),
@@ -1241,7 +1245,15 @@ namespace OsmAnd
         static inline int getCommonSearch(const QString name)
         {
             int i = COMMON_WORDS.indexOf(name);
-            return i == -1 ? getFrequentlyUsed(name) : i + FREQUENTLY_USED_WORDS.size();
+            // higher means better for search
+            if (i == -1) {
+                int fq = getFrequentlyUsed(name);
+                if (fq != -1) {
+                    return COMMON_WORDS.size() + fq;
+                }
+                return -1;
+            }
+            return i;
         }
 
         static inline int getCommonGeocoding(const QString name)

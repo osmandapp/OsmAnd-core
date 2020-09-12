@@ -296,6 +296,9 @@ namespace OsmAnd
         bool updateFromRepository(const QString& id, const QString& filePath);
         
         const std::shared_ptr<const OnlineTileSources> downloadOnlineTileSources() const;
+        
+        // Tests
+        bool addLocalResource(const QString& filePath);
 
         // Observables
         OSMAND_OBSERVER_CALLABLE(LocalResourcesChanged,

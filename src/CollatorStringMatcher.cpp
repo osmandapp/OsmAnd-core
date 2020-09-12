@@ -4,9 +4,19 @@
 
 OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const StringMatcherMode mode)
     : _p(new CollatorStringMatcher_P(this))
-    ,_part(part)
-    , _mode(mode)
 {
+    QString part_ = CollatorStringMatcher_P::simplifyStringAndAlignChars(part);
+    StringMatcherMode mode_ = mode;
+    if (part_.length() > 0 && part_.at(part_.length() - 1) == L'.') {
+        part_ = part_.mid(0, part.length() - 1);
+        if (mode == StringMatcherMode::CHECK_EQUALS_FROM_SPACE) {
+            mode_ = StringMatcherMode::CHECK_STARTS_FROM_SPACE;
+        } else if (mode == StringMatcherMode::CHECK_EQUALS) {
+            mode_ = StringMatcherMode::CHECK_ONLY_STARTS_WITH;
+        }
+    }
+    _part = part_;
+    _mode = mode_;
 }
 
 OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
@@ -32,4 +42,9 @@ bool OsmAnd::CollatorStringMatcher::cstartsWith(const QString& _searchInParam, c
                                                 bool checkBeginning, bool checkSpaces, bool equals)
 {
     return OsmAnd::ICU::cstartsWith(_searchInParam, _theStart, checkBeginning, checkSpaces, equals);
+}
+
+QString OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(const QString& fullText)
+{
+    return CollatorStringMatcher_P::simplifyStringAndAlignChars(fullText);
 }

@@ -19,6 +19,7 @@
 #include "IQueryController.h"
 #include "Utilities.h"
 #include "CollatorStringMatcher.h"
+#include <Logging.h>
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 
@@ -875,8 +876,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
     for (;;)
     {
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        const auto t = cis->ReadTag();
+        const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
+        if (categories.size() == 0 && (tag > OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber || tag == 0))
+        {
+            cis->Skip(cis->BytesUntilLimit());
+            return;
+        }
+        switch (tag)
         {
             case 0:
             {
@@ -1003,7 +1010,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     ? ((rawValue >> 1) & 0xFFFF)
                     : ((rawValue >> 1) & 0x1F);
                 const auto intValue = ((rawValue & 0x1) == 0x1)
-                    ? (rawValue >> 17)
+                    ? (rawValue >> 16)
                     : (rawValue >> 6);
 
                 intValues.insert(subtypeIndex, QVariant(intValue));

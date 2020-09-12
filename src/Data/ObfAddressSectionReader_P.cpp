@@ -21,6 +21,7 @@
 #include "IQueryController.h"
 #include "Utilities.h"
 #include "DataCommonTypes.h"
+#include "Logging.h"
 
 OsmAnd::ObfAddressSectionReader_P::ObfAddressSectionReader_P()
 {

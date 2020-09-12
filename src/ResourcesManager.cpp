@@ -161,6 +161,11 @@ bool OsmAnd::ResourcesManager::uninstallResource(const std::shared_ptr<const Ins
     return _p->uninstallResource(installedResource, resource);
 }
 
+bool OsmAnd::ResourcesManager::addLocalResource(const QString& filePath)
+{
+    return _p->addLocalResource(filePath);
+}
+
 bool OsmAnd::ResourcesManager::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
     return _p->installFromFile(filePath, resourceType);

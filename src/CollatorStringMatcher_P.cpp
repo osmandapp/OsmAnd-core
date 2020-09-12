@@ -2,6 +2,7 @@
 #include "CollatorStringMatcher.h"
 
 #include <ICU.h>
+#include <QLocale>
 
 OsmAnd::CollatorStringMatcher_P::CollatorStringMatcher_P(CollatorStringMatcher* owner_)
     : owner(owner_)
@@ -26,5 +27,17 @@ bool OsmAnd::CollatorStringMatcher_P::startsWith(const QString& _searchInParam, 
                                                   bool checkBeginning, bool checkSpaces, bool equals) const
 {
     return OsmAnd::ICU::cstartsWith(_searchInParam, _theStart, checkBeginning, checkSpaces, equals);
+}
+
+QString OsmAnd::CollatorStringMatcher_P::simplifyStringAndAlignChars(const QString& fullText)
+{
+    int i;
+    QLocale defaultLocale;
+    QString res = defaultLocale.toLower(fullText);
+    while( (i = res.indexOf(QStringLiteral("ß")) ) != -1 )
+    {
+        res = res.mid(0, i) + QStringLiteral("ss") + res.mid(i + 1);
+    }
+    return res;
 }
 

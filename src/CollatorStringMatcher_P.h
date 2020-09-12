@@ -14,6 +14,8 @@ namespace OsmAnd
     
     class OSMAND_CORE_API CollatorStringMatcher_P Q_DECL_FINAL
     {
+    private:
+        static QString simplifyStringAndAlignChars(const QString& fullText);
     protected:
         CollatorStringMatcher_P(CollatorStringMatcher* const owner);
         
