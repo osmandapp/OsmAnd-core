@@ -105,19 +105,16 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
         switch (value.type())
         {
             case QVariant::Int:
+            case QVariant::UInt:
             {
                 const auto intValue = value.toInt();
-
-                if (subtype->isText && subtype->possibleValues.size() > intValue)
+                if (subtype->possibleValues.size() > intValue)
                     decodedValue.value = subtype->possibleValues[intValue];
-                else
-                    decodedValue.value = QString::number(intValue);
                 break;
             }
             case QVariant::String:
             {
                 const auto stringValue = value.toString();
-
                 decodedValue.value = stringValue;
                 break;
             }
@@ -125,17 +122,14 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
             {
                 const auto dataValue = value.toByteArray();
                 const auto stringValue = QString::fromUtf8(zlibUtilities::gzipDecompress(dataValue));
-
                 decodedValue.value = stringValue;
                 break;
             }
             default:
                 break;
         }
-
         result.push_back(decodedValue);
     }
-
     return result;
 }
 

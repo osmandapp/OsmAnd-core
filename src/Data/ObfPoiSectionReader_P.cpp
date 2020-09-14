@@ -394,8 +394,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const auto cis = reader.getCodedInputStream().get();
 
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
-    QSet<uint64_t> tilesToSkip;
     QSet<ObfObjectId> processedObjectsSet;
+    std::shared_ptr<QSet<uint64_t>> tilesToSkip = nullptr;
+    if (zoomFilter >= 0 && zoomFilter < 16) {
+        tilesToSkip = std::make_shared<QSet<uint64_t>>();
+    }
 
     const auto zoomToSkip = zoomFilter == InvalidZoomLevel
         ? ZoomLevel31
@@ -440,20 +443,21 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
             }
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
-                tilesToSkip.clear();
+                if (tilesToSkip)
+                    tilesToSkip->clear();
 
                 for (const auto& dataBoxOffsetMapEntry : rangeOf(constOf(dataBoxesOffsetsMap)))
                 {
                     const auto dataOffset = dataBoxOffsetMapEntry.key();
                     auto tileValue = dataBoxOffsetMapEntry.value();
 
-                    if (zoomFilter != InvalidZoomLevel && tileValue != std::numeric_limits<uint64_t>::max())
+                    if (tilesToSkip && zoomFilter != InvalidZoomLevel && tileValue != std::numeric_limits<uint64_t>::max())
                     {
                         const auto shift = ZoomToSkipFilterRead - ZoomToSkipFilter;
                         const auto dx = tileValue >> ZoomToSkipFilterRead;
-                        const auto dy = tileValue & ~((1ull << ZoomToSkipFilterRead) - 1);
+                        const auto dy = tileValue - (dx << ZoomToSkipFilterRead);
                         tileValue = ((dx >> shift) << ZoomToSkipFilter) | (dy >> shift);
-                        if (tileValue != std::numeric_limits<uint64_t>::max() && tilesToSkip.contains(tileValue))
+                        if (tileValue != std::numeric_limits<uint64_t>::max() && tilesToSkip->contains(tileValue))
                             continue;
                     }
 
@@ -471,13 +475,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         bbox31,
                         tileFilter,
                         zoomToSkip,
-                        &tilesToSkip,
+                        tilesToSkip,
                         categoriesFilter,
                         visitor,
                         queryController);
 
-                    if (zoomFilter != InvalidZoomLevel && atLeastOneAccepted)
-                        tilesToSkip.insert(tileValue);
+                    if (tilesToSkip && zoomFilter != InvalidZoomLevel && atLeastOneAccepted)
+                        tilesToSkip->insert(tileValue);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
@@ -501,7 +505,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const ObfReader_P& reader,
     QMap<uint32_t, uint64_t>& outDataOffsetsMap,
-    QSet<uint64_t>& tilesToSkip,
+    const std::shared_ptr<QSet<uint64_t>> tilesToSkip,
     const ZoomLevel parentZoom,
     const TileId parentTileId,
     const AreaI* const bbox31,
@@ -611,12 +615,12 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
 
                 cis->PopLimit(oldLimit);
 
-                if (zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip && wasAccepted)
+                if (tilesToSkip && zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip && wasAccepted)
                 {
                     const auto tileValue =
                         ((static_cast<uint64_t>(tileId.x) >> (zoom - zoomToSkip)) << zoomToSkip) |
                         (static_cast<uint64_t>(tileId.y) >> (zoom - zoomToSkip));
-                    if (tilesToSkip.contains(tileValue))
+                    if (tilesToSkip->contains(tileValue))
                     {
                         cis->Skip(cis->BytesUntilLimit());
                         return true;
@@ -643,13 +647,13 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
 
                 if (read)
                 {
-                    if (zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip)
+                    if (tilesToSkip && zoomFilter != InvalidZoomLevel && zoom >= zoomToSkip)
                     {
                         const auto tileValue =
                         ((static_cast<uint64_t>(tileId.x) >> (zoom - zoomToSkip)) << zoomToSkip) |
                         (static_cast<uint64_t>(tileId.y) >> (zoom - zoomToSkip));
                         outDataOffsetsMap.insert(dataOffset, tileValue);
-                        tilesToSkip.insert(tileValue);
+                        tilesToSkip->insert(tileValue);
                     }
                     else
                     {
@@ -720,7 +724,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const ZoomLevel zoomFilter,
-    QSet<uint64_t>* const pTilesToSkip,
+    const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -805,7 +809,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 processedObjects.insert(amenity->id);
 
                 auto tileValue = std::numeric_limits<uint64_t>::max();
-                if (pTilesToSkip != nullptr)
+                if (pTilesToSkip)
                 {
                     TileId amenityTileId;
                     amenityTileId.x = amenity->position31.x >> (MaxZoomLevel - zoomFilter);

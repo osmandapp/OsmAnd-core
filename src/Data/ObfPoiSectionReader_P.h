@@ -33,7 +33,7 @@ namespace OsmAnd
         ~ObfPoiSectionReader_P();
     protected:
         enum {
-            ZoomToSkipFilterRead = 5,
+            ZoomToSkipFilterRead = 6,
             ZoomToSkipFilter = 3,
         };
 
@@ -78,7 +78,7 @@ namespace OsmAnd
         static bool scanTiles(
             const ObfReader_P& reader,
             QMap<uint32_t, uint64_t>& outDataOffsetsMap,
-            QSet<uint64_t>& tilesToSkip,
+            const std::shared_ptr<QSet<uint64_t>> tilesToSkip,
             const ZoomLevel parentZoom,
             const TileId parentTileId,
             const AreaI* const bbox31,
@@ -129,7 +129,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const ZoomLevel zoomFilter,
-            QSet<uint64_t>* const pTilesToSkip,
+            const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
