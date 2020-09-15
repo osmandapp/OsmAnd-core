@@ -394,7 +394,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const auto cis = reader.getCodedInputStream().get();
 
     QMap<uint32_t, uint64_t> dataBoxesOffsetsMap;
-    QSet<ObfObjectId> processedObjectsSet;
     std::shared_ptr<QSet<uint64_t>> tilesToSkip = nullptr;
     if (zoomFilter >= 0 && zoomFilter < 16) {
         tilesToSkip = std::make_shared<QSet<uint64_t>>();
@@ -469,7 +468,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     const auto atLeastOneAccepted = readAmenitiesDataBox(
                         reader,
                         section,
-                        processedObjectsSet,
                         outAmenities,
                         QString::null,
                         bbox31,
@@ -718,7 +716,6 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
 bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QSet<ObfObjectId>& processedObjects,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
     const QString& query,
     const AreaI* const bbox31,
@@ -803,10 +800,6 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
 
                 if (!amenity)
                     break;
-
-                if (processedObjects.contains(amenity->id))
-                    break;
-                processedObjects.insert(amenity->id);
 
                 auto tileValue = std::numeric_limits<uint64_t>::max();
                 if (pTilesToSkip)
@@ -1133,10 +1126,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
-
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
-    QSet<ObfObjectId> processedObjectsSet;
-
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -1206,7 +1196,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     readAmenitiesDataBox(
                         reader,
                         section,
-                        processedObjectsSet,
                         outAmenities,
                         query,
                         bbox31,

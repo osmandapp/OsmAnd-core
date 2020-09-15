@@ -123,7 +123,6 @@ namespace OsmAnd
         static bool readAmenitiesDataBox(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            QSet<ObfObjectId>& processedObjects,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
             const QString& query,
             const AreaI* const bbox31,
