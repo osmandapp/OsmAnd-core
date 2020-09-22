@@ -317,7 +317,8 @@ struct RoutingContext {
 								if (excludedIds.find(o->getId()) == excludedIds.end()) {
 									subregions[j]->add(o);
 								}
-							} else if (o->getId() > 0) {
+							}
+							if (o->getId() > 0) {
 								excludedIds.insert(o->getId());
 								subregions[j]->excludedIds.insert(o->getId());
 							}
