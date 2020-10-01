@@ -87,7 +87,7 @@ public:
     
     inline float getBearing(int point, bool begin, float dist) {
         if (begin) {
-            return (float) (object->directionRoute(point, startPointIndex < endPointIndex) / M_PI * 180);
+            return (float) (object->directionRoute(point, startPointIndex < endPointIndex, dist) / M_PI * 180);
         } else {
             double dr = object->directionRoute(point, startPointIndex > endPointIndex, dist);
             return (float) (alignAngleDifference(dr - M_PI) / M_PI * 180);
