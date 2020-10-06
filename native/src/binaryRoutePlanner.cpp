@@ -752,11 +752,11 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	if (dataObjects.size() == 0) {
 		ctx->loadTileData(px, py, 14, dataObjects);
 	}
-	vector<SHARED_PTR<RouteSegmentPoint> > list ;
+	vector<SHARED_PTR<RouteSegmentPoint> > list;
 	vector<SHARED_PTR<RouteDataObject> >::iterator it = dataObjects.begin();
-	for (; it!= dataObjects.end(); it++) {
+	for (; it != dataObjects.end(); it++) {
 		SHARED_PTR<RouteDataObject> r = *it;
-		if (r->id == roadId && roadId > 0 && segmentInd < r->pointsX.size() ) {
+		if (r->id == roadId && roadId > 0 && segmentInd < r->pointsX.size()) {
 			SHARED_PTR<RouteSegmentPoint> road = std::make_shared<RouteSegmentPoint>(r, segmentInd);
 			road->preciseX = px;
 			road->preciseY = py;
@@ -786,12 +786,15 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 				}
 			}
 			if (road.get() != NULL) {
-				float prio = max(ctx->config->router->defineSpeedPriority(road->road), 0.3);
-				if (prio > 0) {
-					road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
-					list.push_back(road);
-				}
-				
+                if (!transportStop) {
+                    float prio = max(ctx->config->router->defineSpeedPriority(road->road), 0.3);
+                    if (prio > 0) {
+                        road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
+                        list.push_back(road);
+                    }
+                } else {
+                    list.push_back(road);
+                }
 			}
 		}		
 	}	
@@ -821,14 +824,11 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 		}
 		if (ps == nullptr) {
 			ps = list[0];
-			list.erase(list.begin());
-		} else {
-			list.erase(list.begin(), list.begin() + i + 1);
 		}
 		ps->others = list;
 		return ps;
 	}
-	return NULL;
+	return nullptr;
 }
 
 bool combineTwoSegmentResultPlanner(SHARED_PTR<RouteSegmentResult>& toAdd, SHARED_PTR<RouteSegmentResult>& previous, bool reverse) {
