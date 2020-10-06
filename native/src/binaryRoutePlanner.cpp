@@ -173,7 +173,7 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 		//int startX = start->road->pointsX[start->segmentStart];
 		//int startY = start->road->pointsY[start->segmentStart];
 	
-        double estimatedDist = estimatedDistance(ctx, ctx->targetX, ctx->targetY, ctx->startX, ctx->startY);
+		double estimatedDist = estimatedDistance(ctx, ctx->targetX, ctx->targetY, ctx->startX, ctx->startY);
 		if (startPos.get() != NULL) {
 			startPos->distanceToEnd = estimatedDist;
 			graphDirectSegments.push(startPos);
@@ -389,7 +389,7 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	float priority = ctx->config->router->defineSpeedPriority(road);
 	float speed = ctx->config->router->defineRoutingSpeed(road) * priority;
 	if (speed == 0) {
-        speed = ctx->config->router->getDefaultSpeed() * priority;
+		speed = ctx->config->router->getDefaultSpeed() * priority;
 	}
 	// speed can not exceed max default speed according to A*
 	if(speed > ctx->config->router->getMaxSpeed()) {
@@ -443,7 +443,7 @@ bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearc
 						calculateTimeWithObstacles(ctx, road, segmentDist, obstaclesTime);
 			frs->parentRoute = segment;
 			frs->parentSegmentEnd = segmentPoint;
-			frs->reverseWaySearch = reverseWaySearch ? 1 : 0;
+			frs->reverseWaySearch = reverseWaySearch ? 1 : -1;
 			frs->distanceFromStart = opposite->distanceFromStart + distStartObstacles;
 			frs->distanceToEnd = 0;
 			frs->opposite = opposite;
@@ -607,12 +607,12 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 		} else if (type == RESTRICTION_NO_LEFT_TURN || type == RESTRICTION_NO_RIGHT_TURN
 		|| type == RESTRICTION_NO_STRAIGHT_ON || type == RESTRICTION_NO_U_TURN) {
 			// next = next.next; continue;
-            if(via) {
-                auto it = find(ctx->segmentsToVisitPrescripted.begin(), ctx->segmentsToVisitPrescripted.end(), next);
-                if (it != ctx->segmentsToVisitPrescripted.end()) {
-                    ctx->segmentsToVisitPrescripted.erase(it);
-                }
-            }
+			if(via) {
+				auto it = find(ctx->segmentsToVisitPrescripted.begin(), ctx->segmentsToVisitPrescripted.end(), next);
+				if (it != ctx->segmentsToVisitPrescripted.end()) {
+					ctx->segmentsToVisitPrescripted.erase(it);
+				}
+			}
 		} else if (type == -1) {
 			// case no restriction
 			ctx->segmentsToVisitNotForbidden.push_back(next);
@@ -786,15 +786,15 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 				}
 			}
 			if (road.get() != NULL) {
-                if (!transportStop) {
-                    float prio = max(ctx->config->router->defineSpeedPriority(road->road), 0.3);
-                    if (prio > 0) {
-                        road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
-                        list.push_back(road);
-                    }
-                } else {
-                    list.push_back(road);
-                }
+				if (!transportStop) {
+					float prio = max(ctx->config->router->defineSpeedPriority(road->road), 0.3);
+					if (prio > 0) {
+						road->dist = (road->dist + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
+						list.push_back(road);
+					}
+				} else {
+					list.push_back(road);
+				}
 			}
 		}		
 	}	
