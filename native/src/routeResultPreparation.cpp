@@ -207,7 +207,7 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
                 attachRoadSegments(ctx, result, i, next, plus);
             }
             const auto& attachedRoutes = rr->getAttachedRoutes(next);
-			bool tryToSplit = next != rr->getEndPointIndex() && !rr->object->roundabout();
+            bool tryToSplit = next != rr->getEndPointIndex() && !rr->object->roundabout();
             if (rr->getDistance(next, plus ) == 0) {
                 // same point will be processed next step
                 tryToSplit = false;
