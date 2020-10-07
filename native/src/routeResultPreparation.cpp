@@ -125,7 +125,7 @@ void attachSegments(RoutingContext* ctx, SHARED_PTR<RouteSegment>& routeSegment,
     if (routeSegment->road->getId() != road->getId() && routeSegment->road->getId() != previousRoadId) {
         auto addRoad = routeSegment->road;
         //checkAndInitRouteRegion(ctx, addRoad); ? TODO
-        // TODO restrictions can be considered as well
+        // Future: restrictions can be considered as well
         int oneWay = ctx->config->router->isOneWay(addRoad);
         if (oneWay >= 0 && routeSegment->getSegmentStart() < addRoad->getPointsLength() - 1) {
             long pointL = getPoint(addRoad, routeSegment->getSegmentStart() + 1);
@@ -207,7 +207,7 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
                 attachRoadSegments(ctx, result, i, next, plus);
             }
             const auto& attachedRoutes = rr->getAttachedRoutes(next);
-            bool tryToSplit = next != rr->getEndPointIndex() && !rr->object->roundabout() && !attachedRoutes.empty();
+            bool tryToSplit = next != rr->getEndPointIndex() && !rr->object->roundabout();
             if (rr->getDistance(next, plus ) == 0) {
                 // same point will be processed next step
                 tryToSplit = false;
@@ -739,8 +739,6 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
         }
     }
     
-    t->setPossibleLeftTurn(possiblyLeftTurn);
-    t->setPossibleRightTurn(possiblyRightTurn);
     if (rs.keepLeft || rs.keepRight) {
         vector<string> splitLaneOptions = split_string(turnLanes, "|");
         int activeBeginIndex = findActiveIndex(rawLanes, splitLaneOptions, rs.leftLanes, true,
@@ -874,45 +872,48 @@ SHARED_PTR<TurnType> getTurnInfo(vector<SHARED_PTR<RouteSegmentResult> >& result
         return processRoundaboutTurn(result, i, leftSide, prev, rr);
     }
     SHARED_PTR<TurnType> t = nullptr;
-    // add description about turn
-    // avoid small zigzags is covered at (search for "zigzags")
-    float bearingDist = DIST_BEARING_DETECT;
-    // could be || noAttachedRoads, boolean noAttachedRoads = rr.getAttachedRoutes(rr.getStartPointIndex()).size() == 0;
-    if (UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway()) {
-        bearingDist = DIST_BEARING_DETECT_UNMATCHED;
-    }
-    double mpi = degreesDiff(prev->getBearingEnd(prev->getEndPointIndex(), bearingDist), rr->getBearingBegin(rr->getStartPointIndex(), bearingDist));
-    if (mpi >= TURN_DEGREE_MIN) {
-        if (mpi < TURN_DEGREE_MIN) {
-            // Slight turn detection here causes many false positives where drivers would expect a "normal" TL. Best use limit-angle=TURN_DEGREE_MIN, this reduces TSL to the turn-lanes cases.
-            t = TurnType::ptrValueOf(TurnType::TSLL, leftSide);
-        } else if (mpi < 120) {
-            t = TurnType::ptrValueOf(TurnType::TL, leftSide);
-        } else if (mpi < 150 || leftSide) {
-            t = TurnType::ptrValueOf(TurnType::TSHL, leftSide);
-        } else {
-            t = TurnType::ptrValueOf(TurnType::TU, leftSide);
-        }
-        const auto& lanes = getTurnLanesInfo(prev, t->getValue());
-        t->setLanes(lanes);
-    } else if (mpi < -TURN_DEGREE_MIN) {
-        if (mpi > -TURN_DEGREE_MIN) {
-            t = TurnType::ptrValueOf(TurnType::TSLR, leftSide);
-        } else if (mpi > -120) {
-            t = TurnType::ptrValueOf(TurnType::TR, leftSide);
-        } else if (mpi > -150 || !leftSide) {
-            t = TurnType::ptrValueOf(TurnType::TSHR, leftSide);
-        } else {
-            t = TurnType::ptrValueOf(TurnType::TRU, leftSide);
-        }
-        const auto& lanes = getTurnLanesInfo(prev, t->getValue());
-        t->setLanes(lanes);
-    } else {
-        t = attachKeepLeftInfoAndLanes(leftSide, prev, rr);
-    }
-    if (t) {
-        t->setTurnAngle((float) -mpi);
-    }
+	if (prev != nullptr)
+	{
+		// add description about turn
+		// avoid small zigzags is covered at (search for "zigzags")
+		float bearingDist = DIST_BEARING_DETECT;
+		// could be || noAttachedRoads, boolean noAttachedRoads = rr.getAttachedRoutes(rr.getStartPointIndex()).size() == 0;
+		if (UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway()) {
+			bearingDist = DIST_BEARING_DETECT_UNMATCHED;
+		}
+		double mpi = degreesDiff(prev->getBearingEnd(prev->getEndPointIndex(), bearingDist), rr->getBearingBegin(rr->getStartPointIndex(), bearingDist));
+		if (mpi >= TURN_DEGREE_MIN) {
+			if (mpi < TURN_DEGREE_MIN) {
+				// Slight turn detection here causes many false positives where drivers would expect a "normal" TL. Best use limit-angle=TURN_DEGREE_MIN, this reduces TSL to the turn-lanes cases.
+				t = TurnType::ptrValueOf(TurnType::TSLL, leftSide);
+			} else if (mpi < 120) {
+				t = TurnType::ptrValueOf(TurnType::TL, leftSide);
+			} else if (mpi < 150 || leftSide) {
+				t = TurnType::ptrValueOf(TurnType::TSHL, leftSide);
+			} else {
+				t = TurnType::ptrValueOf(TurnType::TU, leftSide);
+			}
+			const auto& lanes = getTurnLanesInfo(prev, t->getValue());
+			t->setLanes(lanes);
+		} else if (mpi < -TURN_DEGREE_MIN) {
+			if (mpi > -TURN_DEGREE_MIN) {
+				t = TurnType::ptrValueOf(TurnType::TSLR, leftSide);
+			} else if (mpi > -120) {
+				t = TurnType::ptrValueOf(TurnType::TR, leftSide);
+			} else if (mpi > -150 || !leftSide) {
+				t = TurnType::ptrValueOf(TurnType::TSHR, leftSide);
+			} else {
+				t = TurnType::ptrValueOf(TurnType::TRU, leftSide);
+			}
+			const auto& lanes = getTurnLanesInfo(prev, t->getValue());
+			t->setLanes(lanes);
+		} else {
+			t = attachKeepLeftInfoAndLanes(leftSide, prev, rr);
+		}
+		if (t) {
+			t->setTurnAngle((float) -mpi);
+		}
+	}
 
     return t;
 }
@@ -1084,7 +1085,7 @@ void inferActiveTurnLanesFromTurn(const SHARED_PTR<TurnType>& tt, int type) {
 }
 
 bool sortArray(int o1, int o2) {
-    return TurnType::orderFromLeftToRight(o1) > TurnType::orderFromLeftToRight(o2);
+    return TurnType::orderFromLeftToRight(o1) < TurnType::orderFromLeftToRight(o2);
 }
 
 vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueFromActive) {
@@ -1111,9 +1112,13 @@ vector<int> getPossibleTurns(vector<int>& oLanes, bool onlyPrimary, bool uniqueF
             //                    possibleTurns.addAll(upossibleTurns);
             //                }
         } else if ((oLanes[i] & 1) == 1) {
-            if (possibleTurns.size() != 0) {
-                possibleTurns.clear();
-                possibleTurns.insert(upossibleTurns.begin(), upossibleTurns.end());
+            if (possibleTurns.size() > 0) {
+                auto it = possibleTurns.begin();
+                while(it != possibleTurns.end()) {
+                    auto current = it++;
+                    if (upossibleTurns.find(*current) == upossibleTurns.end())
+                        possibleTurns.erase(current);
+                }
                 if(possibleTurns.size() == 0) {
                     break;
                 }
@@ -1328,7 +1333,7 @@ vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingCont
     vector<SHARED_PTR<RouteSegmentResult> > result;
     if (finalSegment) {
         if (ctx->progress)
-            ctx->progress->routingCalculatedTime = finalSegment->distanceFromStart;
+            ctx->progress->routingCalculatedTime += finalSegment->distanceFromStart;
 
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
         // Get results from opposite direction roads

@@ -19,6 +19,8 @@ const char* GeneralRouterConstants::DEFAULT_SPEED = "default_speed";
 const char* GeneralRouterConstants::MIN_SPEED = "min_speed";
 const char* GeneralRouterConstants::MAX_SPEED = "max_speed";
 
+static const bool USE_CACHE = true;
+
 GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
 		heightObstacles(false), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), 
 		shortestRoute(false), allowPrivate(false) {
