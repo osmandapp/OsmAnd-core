@@ -5,8 +5,6 @@
 #include "binaryRead.h"
 #include "turnType.h"
 #include <algorithm>
-#include "routeDataResources.h"
-#include <routeTypeRule.h>
 
 // this should be bigger (50-80m) but tests need to be fixed first
 #define DIST_BEARING_DETECT 5
@@ -42,7 +40,6 @@ public:
     void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift);
     vector<SHARED_PTR<RouteSegmentResult> > getPreAttachedRoutes(int routeInd);
     vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
-    void fillNames(SHARED_PTR<RouteDataResources> resources);
 
     inline void updateCapacity() {
         int capacity = abs(endPointIndex - startPointIndex) + 1;
