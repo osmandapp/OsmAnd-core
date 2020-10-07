@@ -222,6 +222,59 @@ struct RouteDataObject {
         }
         return "";
     }
+    
+    inline bool isExitPoint() {
+        const auto ptSz = pointTypes.size();
+        for (int i = 0; i < ptSz; i++) {
+            const auto& point = pointTypes[i];
+            const auto pSz = point.size();
+            for (int j = 0; j < pSz; j++) {
+                if (region->routeEncodingRules[point[j]].getValue() == "motorway_junction") {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    inline string getExitName() {
+        const auto pnSz = pointNames.size();
+        for (int i = 0; i < pnSz; i++) {
+            const auto& point = pointNames[i];
+            
+            const auto pSz = point.size();
+            for (int j = 0; j < pSz; j++) {
+                if (pointNameTypes[i][j] == region->nameTypeRule) {
+                    return point[j];
+                }
+            }
+        }
+        return "";
+    }
+
+    inline string getExitRef() {
+        const auto pnSz = pointNames.size();
+        for (int i = 0; i < pnSz; i++) {
+            const auto& point = pointNames[i];
+            const auto pSz = point.size();
+            for (int j = 0; j < pSz; j++) {
+                if (pointNameTypes[i][j] == region->refTypeRule) {
+                    return point[j];
+                }
+            }
+        }
+        return "";
+    }
+    
+    inline bool hasNameTagStartsWith(string tagStartsWith) {
+        for (int nm = 0; nm < namesIds.size(); nm++) {
+            auto rtr = region->quickGetEncodingRule(namesIds[nm].first);
+            if (rtr.getTag().rfind(tagStartsWith, 0) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     void processConditionalTags(const tm& time);
 
