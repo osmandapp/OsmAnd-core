@@ -743,17 +743,8 @@ SHARED_PTR<TurnType> createKeepLeftRightTurnBasedOnTurnTypes(RoadSplitStructure&
         vector<string> splitLaneOptions = split_string(turnLanes, "|");
         int activeBeginIndex = findActiveIndex(rawLanes, splitLaneOptions, rs.leftLanes, true,
                                                rs.leftLanesInfo, rs.roadsOnLeft, rs.addRoadsOnLeft);
-        
-        if (!rs.keepLeft && activeBeginIndex != -1 && splitLaneOptions.size() > 0 &&
-            splitLaneOptions.back().find(";") == string::npos) {
-            activeBeginIndex = max(activeBeginIndex, 1);
-        }
         int activeEndIndex = findActiveIndex(rawLanes, splitLaneOptions, rs.rightLanes, false,
                                              rs.rightLanesInfo, rs.roadsOnRight, rs.addRoadsOnRight);
-        if(!rs.keepRight && activeEndIndex != -1  &&
-           splitLaneOptions.size() > 0 && splitLaneOptions.front().find(";") == string::npos ) {
-            activeEndIndex = min(activeEndIndex, (int)rawLanes.size() - 1);
-        }
         if (activeBeginIndex == -1 || activeEndIndex == -1 || activeBeginIndex > activeEndIndex) {
             // something went wrong
             return createSimpleKeepLeftRightTurn(leftSide, prevSegm, currentSegm, rs);
