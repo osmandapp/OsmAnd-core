@@ -119,6 +119,23 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 	return NULL;
 }
 
+string prepareIconValue(MapDataObject &object, string qval) {
+	if (qval.find('?') == std::string::npos) {
+		return qval;
+	}
+	int st = qval.find('?');
+	int en = qval.find_last_of('?');
+	string tagVal = qval.substr(0, st);
+	string tagName = qval.substr(0, en).substr(st + 1);
+	for (int i = 0; i < object.additionalTypes.size(); i++) {
+		if (object.additionalTypes[i].first == tagName) {
+			tagVal += object.additionalTypes[i].second;
+			break;
+		}
+	}
+	tagVal += qval.substr(en + 1, qval.length());
+	return tagVal;
+}
 
 UNORDERED(map)<std::string, SkBitmap*> cachedBitmaps;
 SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource)

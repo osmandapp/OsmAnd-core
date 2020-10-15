@@ -342,6 +342,8 @@ public:
 
 };
 
+string prepareIconValue(MapDataObject &object, string qval);
+
 SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource);
 void purgeCachedBitmaps();
 

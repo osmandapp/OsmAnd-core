@@ -848,8 +848,8 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	req->setInitialTagValueZoom(tag, value, rc->getZoom(), mObj);
 	req->setIntFilter(req->props()->R_TEXT_LENGTH, mObj->objectNames["name"].length());
 	req->searchRule(1);
-	std::string resId = req->getStringPropertyValue(req-> props()-> R_ICON);
-	std::string shieldId = req->getStringPropertyValue(req-> props()-> R_SHIELD);
+	std::string resId = prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_ICON));
+	std::string shieldId = prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_SHIELD));
 
 	SkBitmap* bmp = getCachedBitmap(rc, resId);	
 	
@@ -883,13 +883,13 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.reset(new IconDrawInfo(mObj));
 		ico->x = px;
 		ico->y = py;
-		ico->bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON_1));	
+		ico->bmp_1 = getCachedBitmap(rc, prepareIconValue(*mObj, req->getStringPropertyValue(req->props()->R_ICON_1)));
 		ico->bmp = bmp;
 		ico->bmpId = resId;
-		ico->bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
-		ico->bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
-		ico->bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
-		ico->bmp5 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON5));	
+		ico->bmp2 = getCachedBitmap(rc, prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_ICON2)));	
+		ico->bmp3 = getCachedBitmap(rc, prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_ICON3)));	
+		ico->bmp4 = getCachedBitmap(rc, prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_ICON4)));	
+		ico->bmp5 = getCachedBitmap(rc, prepareIconValue(*mObj, req->getStringPropertyValue(req-> props()-> R_ICON5)));	
 		ico->shield = shield;
 		ico->shiftPy = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PY, 0);
 		ico->shiftPx = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PX, 0);
@@ -904,7 +904,6 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	if (renderTxt) {
 		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL, ico);
 	}
-
 }
 
 void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest* req,
