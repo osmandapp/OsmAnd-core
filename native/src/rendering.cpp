@@ -297,18 +297,8 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				}
 				info->drawOnPath = (path != NULL) && (req->getIntPropertyValue(req->props()->R_TEXT_ON_PATH, 0) > 0);
 				// distribute shields along the full length
-				int minDist = req->getIntPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0);
-				fillTextProperties(rc, info, req, xText, yText);
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
-								  "Rendering %s-%s min dist=%d,?%d?, color=%d from fill minDist=%d, color=%d: length=%d\n",
-								  tagName.c_str(), name.c_str(),
-								  req->getIntPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0),
-								  (int)req->getFloatPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0),
-								  req->getIntPropertyValue(req->props()->R_TEXT_COLOR),
-								  (int)info->minDistance, (int)info->textColor, (int)lineLength);
-				minDist = info->minDistance;
-				
-				if (path != NULL && !info->drawOnPath && minDist > 0 && lineLength >= minDist * 3) {
+				int minDist = (int) req->getFloatPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0);
+				if (path != NULL && !info->drawOnPath && minDist > 0 && lineLength >= minDist * 6) {
 					std::vector<SkPoint> pointsP;
 					int lenP = path->countPoints();
 					pointsP.resize(lenP);
@@ -338,6 +328,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 					} else {
 						info->path = NULL;
 					}
+					fillTextProperties(rc, info, req, xText, yText);
 					info->secondOrder = ((obj->id %10000) << 8) + k;
 					rc->textToDraw.push_back(info);
 				}
@@ -620,10 +611,10 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				}
 			}
 			if (startPoint) {
-				lineLen += sqrt((x - px) * (x - px) + (y - py) * (y  - py));
 				path.moveTo(x, y);
 				startPoint = false;
 			} else {
+				lineLen += sqrt((x - px) * (x - px) + (y - py) * (y - py));
 				path.lineTo(x, y);
 			}
 		} else {

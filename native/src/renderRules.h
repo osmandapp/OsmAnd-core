@@ -402,11 +402,11 @@ public:
 		R_SHADOW_LEVEL = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowLevel"));
 
 		// text properties
-		R_TEXT_WRAP_WIDTH = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textWrapWidth"));
-		R_TEXT_DY = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textDy"));
-		R_TEXT_HALO_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textHaloRadius"));
+		R_TEXT_WRAP_WIDTH = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textWrapWidth"));
+		R_TEXT_DY = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textDy"));
+		R_TEXT_HALO_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textHaloRadius"));
 		R_TEXT_HALO_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textHaloColor"));
-		R_TEXT_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textSize"));
+		R_TEXT_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textSize"));
 		R_TEXT_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textOrder"));
 		R_TEXT_MIN_DISTANCE = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textMinDistance"));
 		R_TEXT_SHIELD = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("textShield"));
@@ -427,7 +427,7 @@ public:
 		R_ICON5 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_5"));
 		R_ICON_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconOrder"));
 		R_SHIELD = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shield"));
-		R_ICON_VISIBLE_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconVisibleSize"));
+		R_ICON_VISIBLE_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("iconVisibleSize"));
 
 		// polygon/way
 		R_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color"));
@@ -468,7 +468,7 @@ public:
 
 		R_SHADER = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shader"));
 		R_SHADOW_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("shadowColor"));
-		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowRadius"));
+		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("shadowRadius"));
 		R_ONEWAY_ARROWS_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("onewayArrowsColor"));
 		R_IGNORE_POLYGON_AS_POINT_AREA = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("ignorePolygonAsPointArea"));
 		R_ADD_POINT = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("addPoint"));

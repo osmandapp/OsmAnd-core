@@ -55,7 +55,8 @@ RenderingRule::RenderingRule(map<string, string>& attrs, bool isGroup, Rendering
 	storage->childRules.push_back(this);
 	this->isGroup = isGroup;
 	properties.reserve(attrs.size());
-	intProperties.assign(attrs.size(), -1);
+	intProperties.assign(attrs.size(), 0);
+	floatProperties.assign(attrs.size(), 0);
 	map<string, string>::iterator it = attrs.begin();
 	int i = 0;
 	for (; it != attrs.end(); it++) {
@@ -69,12 +70,7 @@ RenderingRule::RenderingRule(map<string, string>& attrs, bool isGroup, Rendering
 		if (property->isString()) {
 			intProperties[i] = storage->getDictionaryValue(it->second);
 		} else {
-			float fv = property->parseFloatValue(it->second);
-			if (floatProperties.size() == 0 && fv != 0) {
-				// lazy creates
-				floatProperties.assign(attrs.size(), - 1);
-				floatProperties[i] = fv;
-			}
+			floatProperties[i] = property->parseFloatValue(it->second);
 			intProperties[i] = property->parseIntValue(it->second);
 		}
 		i++;
