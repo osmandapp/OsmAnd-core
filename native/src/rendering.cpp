@@ -252,7 +252,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 }
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
-		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
+		std::string value, float xText, float yText, float lineLength, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
 	while (it != obj->namesOrder.end()) {
@@ -286,22 +286,61 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
 					&& req->isSpecified(req->props()->R_TEXT_SIZE)) {
-				SHARED_PTR<TextDrawInfo> info(new TextDrawInfo(name,obj));
+				SHARED_PTR<TextDrawInfo> info(new TextDrawInfo(name, obj));
 				info->icon = ico;
 				std::string tagName2 = req->getStringPropertyValue(req->props()->R_NAME_TAG2);
-				if(tagName2 != "") {
+				if (tagName2 != "") {
 					std::string tv = obj->objectNames[tagName2];
 					if(tv != "") {
 						info->text = name + " (" + tv+ ")";
 					}
 				}
 				info->drawOnPath = (path != NULL) && (req->getIntPropertyValue(req->props()->R_TEXT_ON_PATH, 0) > 0);
-				if (path != NULL)
-					info->path = new SkPath(*path);
-
+				// distribute shields along the full length
+				int minDist = req->getIntPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0);
 				fillTextProperties(rc, info, req, xText, yText);
-				info->secondOrder = ((obj->id %10000) << 8) + k;
-				rc->textToDraw.push_back(info);
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+								  "Rendering %s-%s min dist=%d,?%d?, color=%d from fill minDist=%d, color=%d: length=%d\n",
+								  tagName.c_str(), name.c_str(),
+								  req->getIntPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0),
+								  (int)req->getFloatPropertyValue(req->props()->R_TEXT_MIN_DISTANCE, 0),
+								  req->getIntPropertyValue(req->props()->R_TEXT_COLOR),
+								  (int)info->minDistance, (int)info->textColor, (int)lineLength);
+				minDist = info->minDistance;
+				
+				if (path != NULL && !info->drawOnPath && minDist > 0 && lineLength >= minDist * 3) {
+					std::vector<SkPoint> pointsP;
+					int lenP = path->countPoints();
+					pointsP.resize(lenP);
+					path->getPoints(&pointsP[0], lenP);
+					float accDist = 0;
+					for (uint ind = 1; ind < lenP; ind++ ) {
+						float px = pointsP[ind - 1].x();
+						float py = pointsP[ind - 1].y();
+						float x = pointsP[ind].x();
+						float y = pointsP[ind].y();
+						accDist += sqrt((x - px) * (x - px) + (y - py) * (y - py));
+						if (accDist > minDist * 2) {
+							accDist = 0;
+							SHARED_PTR<TextDrawInfo> dupInfo(new TextDrawInfo(name, obj));
+							dupInfo->text = info->text;
+							dupInfo->drawOnPath = info->drawOnPath;
+							// dupInfo->path = new SkPath(*path);;
+							dupInfo->icon = info->icon;
+							fillTextProperties(rc, dupInfo, req, x, y);
+							dupInfo->secondOrder = ((obj->id % 10000) << 8) + k;
+							rc->textToDraw.push_back(dupInfo);
+						}
+					}
+				} else {
+					if (path != NULL) {
+						info->path = new SkPath(*path);
+					} else {
+						info->path = NULL;
+					}
+					info->secondOrder = ((obj->id %10000) << 8) + k;
+					rc->textToDraw.push_back(info);
+				}
 			}
 		}
 		it++;
@@ -534,6 +573,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	bool middleSet = false;
 	bool intersect = false;
 	uint prevCross = 15, pprevCross = 15;
+	float lineLen = 0;
 	int x, y, px, py;
 	bool startPoint = true;
 	for (uint i = 0; i <= length; i++) {
@@ -580,6 +620,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				}
 			}
 			if (startPoint) {
+				lineLen += sqrt((x - px) * (x - px) + (y - py) * (y  - py));
 				path.moveTo(x, y);
 				startPoint = false;
 			} else {
@@ -644,7 +685,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
 		}
 		if (!drawOnlyShadow) {
-			renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path, NULL);
+			renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, lineLen, &path, NULL);
 		}
 	}
 }
@@ -833,7 +874,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	bool addTextForSmallAreas = req->getBoolPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA);
 	// ignorePointArea = false;
 	if (!prim.pointAdded && (prim.area > MAX_V_AREA || addTextForSmallAreas) && !ignoreText) {
-		renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
+		renderText(mObj, req, rc, pair.first, pair.second, xText, yText, 0, NULL, NULL);
 	}
 	
 }
@@ -902,7 +943,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 			rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
-		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL, ico);
+		renderText(mObj, req, rc, pair.first, pair.second, px, py, 0, NULL, ico);
 	}
 }
 

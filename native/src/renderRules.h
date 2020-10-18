@@ -85,15 +85,16 @@ public:
 	int parseIntValue(string value) {
 		if (type == INT_TYPE) {
 			size_t colon = value.find_first_of(':');
-			if(colon != std::string::npos) {
-				int res = 0;
-				if(colon > 0) {
-					res += atoi(value.substr(0, colon).c_str());
-				}
-				res += atoi(value.substr(colon + 1).c_str());
-				return res;
+			if (colon != std::string::npos) {
+				return atoi(value.substr(colon + 1).c_str());
 			}
 			return atoi(value.c_str());
+		} else if (type == FLOAT_TYPE) {
+			size_t colon = value.find_first_of(':');
+			if (colon != std::string::npos) {
+				return atoi(value.substr(colon + 1).c_str());
+			}
+			return 0;
 		} else if (type == BOOLEAN_TYPE) {
 			return value == "true" ? TRUE_VALUE : FALSE_VALUE;
 		} else if (type == STRING_TYPE) {
@@ -109,17 +110,22 @@ public:
 	float parseFloatValue(string value) {
 		if (type == FLOAT_TYPE) {
 			size_t colon = value.find_first_of(':');
-			if(colon != std::string::npos) {
-				float res = 0;
-				if(colon > 0) {
-					res += atof(value.substr(0, colon).c_str());
+			if (colon != std::string::npos) {
+				if (colon > 0) {
+					return atof(value.substr(0, colon).c_str());
+				} else {
+					return 0;
 				}
-				res += atof(value.substr(colon + 1).c_str());
-				return res;
 			}
 			return atof(value.c_str());
+		} else if (type == INT_TYPE) {
+			size_t colon = value.find_first_of(':');
+			if (colon != std::string::npos && colon > 0) {
+				return atof(value.substr(0, colon).c_str());
+			}
+			return 0;
 		} else {
-			return -1;
+			return 0;
 		}
 	}
 
@@ -402,7 +408,7 @@ public:
 		R_TEXT_HALO_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textHaloColor"));
 		R_TEXT_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textSize"));
 		R_TEXT_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textOrder"));
-		R_TEXT_MIN_DISTANCE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("textMinDistance"));
+		R_TEXT_MIN_DISTANCE = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("textMinDistance"));
 		R_TEXT_SHIELD = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("textShield"));
 
 		R_TEXT_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textColor"));

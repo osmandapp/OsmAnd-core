@@ -14,10 +14,8 @@ float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, 
 		render->getIntPropertyValue(prop, defValue));
 }
 
-float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop) 
-{
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop)  {
 	return getDensityValue(rc, render, prop, 0);
-
 }
 #endif
 
@@ -70,13 +68,13 @@ RenderingRule::RenderingRule(map<string, string>& attrs, bool isGroup, Rendering
 
 		if (property->isString()) {
 			intProperties[i] = storage->getDictionaryValue(it->second);
-		} else if (property->isFloat()) {
-			if (floatProperties.size() == 0) {
+		} else {
+			float fv = property->parseFloatValue(it->second);
+			if (floatProperties.size() == 0 && fv != 0) {
 				// lazy creates
 				floatProperties.assign(attrs.size(), - 1);
+				floatProperties[i] = fv;
 			}
-			floatProperties[i] = property->parseFloatValue(it->second);
-		} else {
 			intProperties[i] = property->parseIntValue(it->second);
 		}
 		i++;
