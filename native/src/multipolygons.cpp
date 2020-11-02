@@ -4,7 +4,7 @@
 #include "multipolygons.h"
 #include "binaryRead.h"
 
-const bool DEBUG_LINE = true;
+const bool DEBUG_LINE = false;
 
 void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
 	if(!DEBUG_LINE) {
@@ -401,11 +401,10 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 2 << ((zoom >= 19 ? 23 : 19) - zoom);
+		const int EVAL_DELTA = 2 << (22 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		const double h = bottomY - topY;
 		const double w = rightX - leftX;
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Eval delta for zoom %d = %d", zoom, EVAL_DELTA);
 		if(DEBUG_LINE) {
 			 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %.4f %.4f %.4f %.4f", 
 					(ir->at(0).first - leftX) / w, (ir->at(0).second - topY) / h,
@@ -490,28 +489,22 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				if (mindiff != UNDEFINED_MIN_DIFF) {
 					break;
 				} else {
-					string side = "";
 					if (h % 4 == 0) {
-						side = "top";
 						// top
 						y = topY;
 						x = rightX;
 					} else if (h % 4 == 1) {
-						side = "right";
 						// right
 						y = bottomY;
 						x = rightX;
 					} else if (h % 4 == 2) {
 						// bottom
-						side = "bottom";
 						y = bottomY;
 						x = leftX;
 					} else if (h % 4 == 3) {
-						side = "left";
 						y = topY;
 						x = leftX;
 					}
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Point %s (x: %d, y: %d)", side.c_str(),x,y);
 					ir->push_back(int_pair(x, y));
 				}
 
