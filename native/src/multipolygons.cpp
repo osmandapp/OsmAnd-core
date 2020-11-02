@@ -401,11 +401,10 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		int x = ir->at(ir->size() - 1).first;
 		int y = ir->at(ir->size() - 1).second;
 		// 31 - (zoom + 8)
-		const int EVAL_DELTA = 6 << (23 - zoom);
+		const int EVAL_DELTA = 2 << (22 - zoom);
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		const double h = bottomY - topY;
 		const double w = rightX - leftX;
-
 		if(DEBUG_LINE) {
 			 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %.4f %.4f %.4f %.4f", 
 					(ir->at(0).first - leftX) / w, (ir->at(0).second - topY) / h,
