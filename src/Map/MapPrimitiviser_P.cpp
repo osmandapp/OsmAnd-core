@@ -2624,13 +2624,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             env->styleBuiltinValueDefs->id_OUTPUT_ICON,
             text->underlayIconResourceName);
         
-        if (text->shieldResourceName.contains('?')) {
-            text->shieldResourceName = parseGenericTag(primitive->sourceObject,text->shieldResourceName);
-        }
-        
-        if (text->underlayIconResourceName.contains('?')) {
-            text->underlayIconResourceName = parseGenericTag(primitive->sourceObject,text->underlayIconResourceName);
-        }
+        text->shieldResourceName = prepareIconValue(primitive->sourceObject,text->shieldResourceName);
+        text->underlayIconResourceName = prepareIconValue(primitive->sourceObject,text->underlayIconResourceName);
         
         QString intersectsWith;
         ok = evaluationResult.getStringValue(
@@ -2693,10 +2688,13 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     }
 }
 
-QString OsmAnd::MapPrimitiviser_P::parseGenericTag(
+QString OsmAnd::MapPrimitiviser_P::prepareIconValue(
     const std::shared_ptr<const MapObject>& object,
     const QString& genTagVal)
 {
+    if (!genTagVal.contains('?')) {
+        return genTagVal;
+    }
     int startQ = genTagVal.indexOf('?');
     int endQ = genTagVal.lastIndexOf('?');
     QString res = genTagVal.left(startQ);
@@ -2751,22 +2749,22 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
     icon->location31 = location;
     icon->scaleFactor = env->symbolsScaleFactor;
-
-    icon->resourceName = qMove(iconResourceName);
+    
+    icon->resourceName = prepareIconValue(primitive->sourceObject, iconResourceName);
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__3, iconResourceName))
-        icon->underlayResourceNames.push_back(qMove(iconResourceName));
+        icon->underlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__2, iconResourceName))
-        icon->underlayResourceNames.push_back(qMove(iconResourceName));
+        icon->underlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__1, iconResourceName))
-        icon->underlayResourceNames.push_back(qMove(iconResourceName));
+        icon->underlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_2, iconResourceName))
-        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+        icon->overlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_3, iconResourceName))
-        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+        icon->overlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_4, iconResourceName))
-        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+        icon->overlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_5, iconResourceName))
-        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+        icon->overlayResourceNames.push_back(prepareIconValue(primitive->sourceObject, iconResourceName));
 
     //NOTE: Also divide by 2, since for some reason factor is calculated using half-size, not size
     if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX, icon->offsetFactor.x))

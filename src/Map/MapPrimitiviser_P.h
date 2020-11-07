@@ -200,9 +200,10 @@ namespace OsmAnd
             SymbolsCollection& outSymbols,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
         
-        static QString parseGenericTag(
+        static QString prepareIconValue(
             const std::shared_ptr<const MapObject>& object,
             const QString& genTagVal);
+
     public:
         ~MapPrimitiviser_P();
 
