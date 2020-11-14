@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_ONLINE_RASTER_MAP_LAYER_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
@@ -20,7 +21,9 @@
 namespace OsmAnd
 {
     class OnlineRasterMapLayerProvider_P;
-    class OSMAND_CORE_API OnlineRasterMapLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API OnlineRasterMapLayerProvider
+        : public std::enable_shared_from_this<OnlineRasterMapLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(OnlineRasterMapLayerProvider);
     private:

@@ -17,7 +17,9 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API ImageMapLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API ImageMapLayerProvider
+        : public std::enable_shared_from_this<ImageMapLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ImageMapLayerProvider);
 
@@ -57,7 +59,6 @@ namespace OsmAnd
         void setLastRequestedZoom(const ZoomLevel zoomLevel);
     protected:
         ImageMapLayerProvider();
-        void waitForTasksDone(bool clear = true);
         const std::shared_ptr<const SkBitmap> decodeBitmap(const QByteArray& image);
     public:
         virtual ~ImageMapLayerProvider();

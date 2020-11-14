@@ -25,14 +25,8 @@ _threadPool(new QThreadPool())
 
 OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 {
-    waitForTasksDone();
-    delete _threadPool;
-}
-
-void OsmAnd::ImageMapLayerProvider::waitForTasksDone(bool clear /* = true*/)
-{
     _threadPool->clear();
-    _threadPool->waitForDone();
+    delete _threadPool;
 }
 
 bool OsmAnd::ImageMapLayerProvider::supportsObtainImageBitmap() const
@@ -181,20 +175,24 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
     const auto& request = MapDataProviderHelpers::castRequest<Request>(request_);
     setLastRequestedZoom(request.zoom);
     
+    const auto selfWeak = std::weak_ptr<ImageMapLayerProvider>(shared_from_this());
     const auto requestClone = request_.clone();
     const QRunnableFunctor::Callback task =
-    [this, requestClone, callback, collectMetric]
+    [selfWeak, requestClone, callback, collectMetric]
     (const QRunnableFunctor* const runnable)
     {
-        std::shared_ptr<IMapDataProvider::Data> data;
-        std::shared_ptr<Metric> metric;
-        const auto& r = MapDataProviderHelpers::castRequest<Request>(*requestClone);
-        
-        bool requestSucceeded = false;
-        if (r.zoom == getLastRequestedZoom())
-            requestSucceeded = this->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
-
-        callback(this, requestSucceeded, data, metric);
+        const auto self = selfWeak.lock();
+        if (self)
+        {
+            std::shared_ptr<IMapDataProvider::Data> data;
+            std::shared_ptr<Metric> metric;
+            const auto& r = MapDataProviderHelpers::castRequest<Request>(*requestClone);
+            bool requestSucceeded = false;
+            if (r.zoom == self->getLastRequestedZoom())
+                requestSucceeded = self->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
+            
+            callback(self.get(), requestSucceeded, data, metric);
+        }
     };
     
     const auto taskRunnable = new QRunnableFunctor(task);
