@@ -900,7 +900,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	} else {
 		uint i = 0;
 		for (; i < length; i++) {
-			calcPoint(fixZoomPOI(mObj->points.at(i)), rc);
+			calcPoint(rc->getZoom() > 18 ? mObj->points.at(i) : fixZoomPOI(mObj->points.at(i)), rc);
 			px += rc->calcX;
 			py += rc->calcY;
 		}
