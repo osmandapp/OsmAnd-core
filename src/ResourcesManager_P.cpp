@@ -1432,7 +1432,8 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
 
     // Copy that file
     const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
-    if (!QFile::copy(filePath, localFileName))
+    bool shouldCopy = filePath.compare(localFileName) != 0;
+    if (shouldCopy && !QFile::copy(filePath, localFileName))
     {
         QFile(localFileName).remove();
         return false;
