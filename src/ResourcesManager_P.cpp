@@ -1262,6 +1262,113 @@ bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const 
     return QDir(resource->localPath).removeRecursively();
 }
 
+bool OsmAnd::ResourcesManager_P::installObfFile(const QString &filePath, const QString &id, const QString &localFileName, std::shared_ptr<const InstalledResource> &outResource, OsmAnd::ResourcesManager_P::ResourceType resourceType)
+{
+    auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
+    QFile indCache(QDir(owner->localStoragePath).absoluteFilePath(QLatin1String("ind.cache")));
+    if (indCache.exists())
+    {
+        cachedOsmandIndexes->readFromFile(indCache.fileName(), CachedOsmandIndexes::VERSION);
+    }
+    else
+    {
+        indCache.open(QIODevice::ReadWrite);
+        if (indCache.isOpen())
+            indCache.close();
+    }
+    // Read information from OBF
+    const auto obfFile = cachedOsmandIndexes->getObfFile(localFileName);
+    if (!obfFile->obfInfo)
+    {
+        LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(localFileName));
+        QFile(filePath).remove();
+        return false;
+    }
+    else
+    {
+        cachedOsmandIndexes->writeToFile(indCache.fileName());
+    }
+    
+    // Create local resource entry
+    const auto pLocalResource = new InstalledResource(
+                                                      id,
+                                                      resourceType,
+                                                      localFileName,
+                                                      obfFile->fileSize,
+                                                      obfFile->obfInfo->creationTimestamp);
+    outResource.reset(pLocalResource);
+    pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
+    _localResources.insert(id, outResource);
+    
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installUnzippedObfFromFile(
+    const QString& id,
+    const QString& filePath,
+    const ResourceType resourceType,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString& localPath_ /*= QString::null*/)
+{
+    assert(id.endsWith(QStringLiteral(".obf")));
+    const bool isLive = (id.endsWith(QStringLiteral(".live.obf")));
+
+    // Extract that file without keeping directory structure
+    QString localPath = owner->localStoragePath;
+    const auto localFileName = localPath_.isNull() ? QDir(isLive ? localPath + QStringLiteral("/live") : localPath).absoluteFilePath(id) : localPath_;
+    if (!QFile::copy(filePath, localFileName))
+        return false;
+
+    return installObfFile(filePath, id, localFileName, outResource, resourceType);
+}
+
+bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath, const QString& newName, const ResourceType resourceType)
+{
+    QWriteLocker scopedLocker(&_localResourcesLock);
+
+    uninstallResource(newName);
+
+    bool ok = false;
+    std::shared_ptr<const InstalledResource> resource;
+    switch (resourceType)
+    {
+        case ResourceType::MapRegion:
+        case ResourceType::LiveUpdateRegion:
+        case ResourceType::RoadMapRegion:
+        case ResourceType::SrtmMapRegion:
+        case ResourceType::WikiMapRegion:
+        case ResourceType::DepthContourRegion:
+            ok = installUnzippedObfFromFile(newName, filePath, resourceType, resource);
+            break;
+        case ResourceType::HillshadeRegion:
+        case ResourceType::HeightmapRegion:
+        case ResourceType::SlopeRegion:
+            ok = installSQLiteDBFromFile(newName, filePath, resourceType, resource);
+            break;
+        case ResourceType::VoicePack:
+            ok = installVoicePackFromFile(newName, filePath, resource);
+            break;
+        default:
+            break;
+    }
+
+    scopedLocker.unlock();
+
+    if (ok)
+    {
+        QList<QString> added;
+        added << resource->id;
+        owner->localResourcesChangeObservable.postNotify(owner,
+            added,
+            QList<QString>(),
+            QList<QString>());
+        
+        changesManager->onLocalResourcesChanged(added, QList<QString>());
+    }
+
+    return ok;
+}
+
 bool OsmAnd::ResourcesManager_P::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
     const auto guessedResourceName = QFileInfo(filePath).fileName().remove(QLatin1String(".zip")).toLower();
@@ -1382,43 +1489,7 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
     if (!archive.extractItemToFile(obfArchiveItem.name, localFileName, isLive))
         return false;
 
-    auto cachedOsmandIndexes = std::make_shared<CachedOsmandIndexes>();
-    QFile indCache(QDir(owner->localStoragePath).absoluteFilePath(QLatin1String("ind.cache")));
-    if (indCache.exists())
-    {
-        cachedOsmandIndexes->readFromFile(indCache.fileName(), CachedOsmandIndexes::VERSION);
-    }
-    else
-    {
-        indCache.open(QIODevice::ReadWrite);
-        if (indCache.isOpen())
-            indCache.close();
-    }
-    // Read information from OBF
-    const auto obfFile = cachedOsmandIndexes->getObfFile(localFileName);
-    if (!obfFile->obfInfo)
-    {
-        LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(localFileName));
-        QFile(filePath).remove();
-        return false;
-    }
-    else
-    {
-        cachedOsmandIndexes->writeToFile(indCache.fileName());
-    }
-
-    // Create local resource entry
-    const auto pLocalResource = new InstalledResource(
-        id,
-        resourceType,
-        localFileName,
-        obfFile->fileSize,
-        obfFile->obfInfo->creationTimestamp);
-    outResource.reset(pLocalResource);
-    pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
-    _localResources.insert(id, outResource);
-
-    return true;
+    return installObfFile(filePath, id, localFileName, outResource, resourceType);
 }
 
 bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(

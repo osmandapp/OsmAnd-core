@@ -166,6 +166,11 @@ bool OsmAnd::ResourcesManager::addLocalResource(const QString& filePath)
     return _p->addLocalResource(filePath);
 }
 
+bool OsmAnd::ResourcesManager::installImportedResource(const QString& filePath, const QString& newName, const OsmAnd::ResourcesManager::ResourceType resourceType)
+{
+    return _p->installImportedResource(filePath, newName, resourceType);
+}
+
 bool OsmAnd::ResourcesManager::installFromFile(const QString& filePath, const ResourceType resourceType)
 {
     return _p->installFromFile(filePath, resourceType);
