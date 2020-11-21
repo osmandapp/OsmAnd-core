@@ -111,6 +111,18 @@ namespace OsmAnd
 
         void installOsmAndOnlineTileSource();
         bool installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source);
+        
+        bool installObfFile(const QString &filePath,
+            const QString &id,
+            const QString &localFileName,
+            std::shared_ptr<const InstalledResource> &outResource,
+            OsmAnd::ResourcesManager_P::ResourceType resourceType);
+        bool installUnzippedObfFromFile(
+            const QString& id,
+            const QString& filePath,
+            const ResourceType resourceType,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath_ = QString::null);
         bool installObfFromFile(
             const QString& id,
             const QString& filePath,
@@ -252,6 +264,7 @@ namespace OsmAnd
         bool uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
+        bool installImportedResource(const QString& filePath, const QString& newName, const ResourceType resourceType);
         bool installFromRepository(
             const QString& id,
             const IWebClient::RequestProgressCallbackSignature downloadProgressCallback);

@@ -280,6 +280,7 @@ namespace OsmAnd
         void installOsmAndOnlineTileSource();
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
+        bool installImportedResource(const QString& filePath, const QString& newName, const ResourceType resourceType);
         bool installFromRepository(
             const QString& id,
             const IWebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
