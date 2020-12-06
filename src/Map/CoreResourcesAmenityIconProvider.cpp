@@ -49,3 +49,17 @@ std::shared_ptr<SkBitmap> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
 
     return nullptr;
 }
+
+OsmAnd::TextRasterizer::Style OsmAnd::CoreResourcesAmenityIconProvider::getCaptionStyle(
+    const std::shared_ptr<const Amenity>& amenity,
+    const ZoomLevel zoomLevel) const
+{
+    return TextRasterizer::Style();
+}
+
+QString OsmAnd::CoreResourcesAmenityIconProvider::getCaption(
+    const std::shared_ptr<const Amenity>& amenity,
+    const ZoomLevel zoomLevel) const
+{
+    return QString::null;
+}

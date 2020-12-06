@@ -32,6 +32,14 @@ namespace OsmAnd
             const std::shared_ptr<const Amenity>& amenity,
             const ZoomLevel zoomLevel,
             const bool largeIcon = false) const Q_DECL_OVERRIDE;
+        
+        virtual TextRasterizer::Style getCaptionStyle(
+            const std::shared_ptr<const Amenity>& amenity,
+            const ZoomLevel zoomLevel) const Q_DECL_OVERRIDE;
+
+        virtual QString getCaption(
+            const std::shared_ptr<const Amenity>& amenity,
+            const ZoomLevel zoomLevel) const Q_DECL_OVERRIDE;
     };
 }
 

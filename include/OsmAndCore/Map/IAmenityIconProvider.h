@@ -14,6 +14,7 @@ class SkBitmap;
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/MemoryCommon.h>
+#include <OsmAndCore/TextRasterizer.h>
 
 namespace OsmAnd
 {
@@ -32,6 +33,14 @@ namespace OsmAnd
             const std::shared_ptr<const Amenity>& amenity,
             const ZoomLevel zoomLevel,
             const bool largeIcon = false) const = 0;
+        
+        virtual TextRasterizer::Style getCaptionStyle(
+            const std::shared_ptr<const Amenity>& amenity,
+            const ZoomLevel zoomLevel) const = 0;
+
+        virtual QString getCaption(
+            const std::shared_ptr<const Amenity>& amenity,
+            const ZoomLevel zoomLevel) const = 0;
     };
 }
 

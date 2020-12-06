@@ -18,6 +18,7 @@
 #include "IMapTiledSymbolsProvider.h"
 #include "Amenity.h"
 #include "AmenitySymbolsProvider.h"
+#include "TextRasterizer.h"
 
 namespace OsmAnd
 {
@@ -27,6 +28,7 @@ namespace OsmAnd
         typedef AmenitySymbolsProvider::AmenitySymbolsGroup AmenitySymbolsGroup;
 
     private:
+        std::shared_ptr<const TextRasterizer> textRasterizer;
     protected:
         AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner);
 

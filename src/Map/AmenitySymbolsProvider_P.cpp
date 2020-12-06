@@ -13,7 +13,8 @@
 #include "Utilities.h"
 
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
-    : owner(owner_)
+: owner(owner_)
+, textRasterizer(TextRasterizer::getDefault())
 {
 }
 
@@ -46,9 +47,10 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
     QList< std::shared_ptr<MapSymbolsGroup> > mapSymbolsGroups;
     QSet<ObfObjectId> searchedIds;
+    const float displayDensityFactor = 3.0f;
     const auto requestedZoom = request.zoom;
     const auto visitorFunction =
-        [this, requestedZoom, &mapSymbolsGroups, &searchedIds]
+        [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
@@ -70,15 +72,31 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
             mapSymbol->order = 100000;
             mapSymbol->bitmap = icon;
-            mapSymbol->size = PointI(
-                icon->width(),
-                icon->height());
+            mapSymbol->size = PointI(icon->width(), icon->height());
             mapSymbol->languageId = LanguageId::Invariant;
             mapSymbol->position31 = amenity->position31;
             mapSymbolsGroup->symbols.push_back(mapSymbol);
 
             mapSymbolsGroups.push_back(mapSymbolsGroup);
 
+            const auto caption = owner->amenityIconProvider->getCaption(amenity, requestedZoom);
+            if (!caption.isEmpty())
+            {
+                const auto textStyle = owner->amenityIconProvider->getCaptionStyle(amenity, requestedZoom);
+                const auto textBmp = textRasterizer->rasterize(caption, textStyle);
+                if (textBmp)
+                {
+                    const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
+                    mapSymbolCaption->order = 100001;
+                    mapSymbolCaption->bitmap = textBmp;
+                    mapSymbolCaption->setOffset(PointI(0, icon->height() / 2 + textBmp->height() / 2 + 2 * displayDensityFactor));
+                    mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
+                    mapSymbolCaption->languageId = LanguageId::Invariant;
+                    mapSymbolCaption->position31 = amenity->position31;
+                    mapSymbolsGroup->symbols.push_back(mapSymbolCaption);
+                }
+            }
+            
             return true;
         };
     dataInterface->loadAmenities(
