@@ -154,6 +154,42 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconModulationColor(co
     return *this;
 }
 
+QString OsmAnd::MapMarkerBuilder::getCaption() const
+{
+    return _p->getCaption();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setCaption(const QString& caption)
+{
+    _p->setCaption(caption);
+
+    return *this;
+}
+
+OsmAnd::TextRasterizer::Style OsmAnd::MapMarkerBuilder::getCaptionStyle() const
+{
+    return _p->getCaptionStyle();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setCaptionStyle(const TextRasterizer::Style captionStyle)
+{
+    _p->setCaptionStyle(captionStyle);
+
+    return *this;
+}
+
+double OsmAnd::MapMarkerBuilder::getCaptionTopSpace() const
+{
+    return _p->getCaptionTopSpace();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setCaptionTopSpace(const double captionTopSpace)
+{
+    _p->setCaptionTopSpace(captionTopSpace);
+
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

@@ -12,6 +12,7 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapMarker.h"
+#include "TextRasterizer.h"
 
 class SkBitmap;
 
@@ -50,6 +51,10 @@ namespace OsmAnd
         MapMarker::PinIconHorisontalAlignment _pinIconHorisontalAlignment;
         ColorARGB _pinIconModulationColor;
 
+        QString _caption;
+        TextRasterizer::Style _captionStyle;
+        double _captionTopSpace;
+
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > _onMapSurfaceIcons;
     public:
         virtual ~MapMarkerBuilder_P();
@@ -87,6 +92,13 @@ namespace OsmAnd
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
+
+        QString getCaption() const;
+        void setCaption(const QString& caption);
+        TextRasterizer::Style getCaptionStyle() const;
+        void setCaptionStyle(const TextRasterizer::Style captionStyle);
+        double getCaptionTopSpace() const;
+        void setCaptionTopSpace(const double captionTopSpace);
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
         void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);

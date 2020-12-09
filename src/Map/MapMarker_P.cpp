@@ -14,6 +14,7 @@
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
+    , textRasterizer(TextRasterizer::getDefault())
 {
 }
 
@@ -185,8 +186,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         ok = owner->pinIcon->deepCopyTo(pinIcon.get());
         assert(ok);
         
-        const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
-                                                                                                   symbolsGroup));
+        const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
         pinIconSymbol->order = order++;
         pinIconSymbol->bitmap = pinIcon;
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
@@ -228,6 +228,24 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
+        
+        const auto caption = owner->caption;
+        if (!caption.isEmpty())
+        {
+            const auto textStyle = owner->captionStyle;
+            const auto textBmp = textRasterizer->rasterize(caption, textStyle);
+            if (textBmp)
+            {
+                const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
+                mapSymbolCaption->order = order;
+                mapSymbolCaption->bitmap = textBmp;
+                mapSymbolCaption->setOffset(PointI(0, pinIcon->height() / 2 + textBmp->height() / 2 + offset.y + owner->captionTopSpace));
+                mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
+                mapSymbolCaption->languageId = LanguageId::Invariant;
+                mapSymbolCaption->position31 = _position;
+                symbolsGroup->symbols.push_back(mapSymbolCaption);
+            }
+        }
     }
     
     order++;

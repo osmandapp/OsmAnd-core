@@ -14,6 +14,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
+#include <OsmAndCore/TextRasterizer.h>
 
 class SkBitmap;
 
@@ -77,6 +78,9 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& pinIcon,
             const PinIconVerticalAlignment pinIconVerticalAlignment,
             const PinIconHorisontalAlignment pinIconHorisontalAlignment,
+            const QString& caption,
+            const TextRasterizer::Style captionStyle,
+            const double captionTopSpace,
             const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons,
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
@@ -93,6 +97,9 @@ namespace OsmAnd
         const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;
+        const QString caption;
+        const TextRasterizer::Style captionStyle;
+        const double captionTopSpace;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);

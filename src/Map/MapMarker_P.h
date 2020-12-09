@@ -33,6 +33,7 @@ namespace OsmAnd
         typedef MapMarker::PinIconHorisontalAlignment PinIconHorisontalAlignment;
 
     private:
+        std::shared_ptr<const TextRasterizer> textRasterizer;
     protected:
         MapMarker_P(MapMarker* const owner);
 

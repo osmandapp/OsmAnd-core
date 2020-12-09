@@ -62,6 +62,12 @@ namespace OsmAnd
         MapMarkerBuilder& setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value);
         ColorARGB getPinIconModulationColor() const;
         MapMarkerBuilder& setPinIconModulationColor(const ColorARGB colorValue);
+        QString getCaption() const;
+        MapMarkerBuilder& setCaption(const QString& caption);
+        TextRasterizer::Style getCaptionStyle() const;
+        MapMarkerBuilder& setCaptionStyle(const TextRasterizer::Style captionStyle);
+        double getCaptionTopSpace() const;
+        MapMarkerBuilder& setCaptionTopSpace(const double captionTopSpace);
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
         MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);

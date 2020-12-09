@@ -195,6 +195,48 @@ void OsmAnd::MapMarkerBuilder_P::setPinIconModulationColor(const ColorARGB color
     _pinIconModulationColor = colorValue;
 }
 
+QString OsmAnd::MapMarkerBuilder_P::getCaption() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _caption;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setCaption(const QString& caption)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _caption = caption;
+}
+
+OsmAnd::TextRasterizer::Style OsmAnd::MapMarkerBuilder_P::getCaptionStyle() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _captionStyle;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setCaptionStyle(const TextRasterizer::Style captionStyle)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _captionStyle = captionStyle;
+}
+
+double OsmAnd::MapMarkerBuilder_P::getCaptionTopSpace() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _captionTopSpace;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setCaptionTopSpace(const double captionTopSpace)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _captionTopSpace = captionTopSpace;
+}
+
 QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >
 OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 {
@@ -238,6 +280,9 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _pinIcon,
         _pinIconVerticalAlignment,
         _pinIconHorisontalAlignment,
+        _caption,
+        _captionStyle,
+        _captionTopSpace,
         detachedOf(_onMapSurfaceIcons),
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));
