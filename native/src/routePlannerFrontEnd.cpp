@@ -355,4 +355,43 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
 	return res;
 }
 
+SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment(float averageSpeed, std::vector<pair<double, double>> points)
+{
+    RoutingIndex reg;
+    reg.initRouteEncodingRule(0, "highway", "unmatched");
+    SHARED_PTR<RouteDataObject> rdo;
+    rdo->region = &reg;
+    unsigned long size = points.size();
+    
+    vector<uint32_t> x(size);
+    vector<uint32_t> y(size);
+    double distance = 0;
+    double distOnRoadToPass = 0;
+    pair<double, double> prev = {NAN, NAN};
+    for (int i = 0; i < size; i++) {
+        const auto& l = points[i];
+        if (l.first != NAN && l.second != NAN) {
+            x.push_back(get31TileNumberX(l.second));
+            y.push_back(get31TileNumberY(l.first));
+            if (prev.first != NAN && prev.second != NAN)
+            {
+                double d = getDistance(l.first, l.second, prev.first, prev.second);
+                distance += d;
+                distOnRoadToPass += d / averageSpeed;
+            }
+        }
+        prev = l;
+    }
+    rdo->pointsX = x;
+    rdo->pointsY = y;
+    rdo->types = { 0 };
+    rdo->id = -1;
+    SHARED_PTR<RouteSegmentResult> segment = make_shared<RouteSegmentResult>(rdo, 0, rdo->getPointsLength() - 1);
+    segment->segmentTime = (float) distOnRoadToPass;
+    segment->segmentSpeed = (float) averageSpeed;
+    segment->distance = (float) distance;
+    segment->turnType = TurnType::ptrStraight();
+    return segment;
+}
+
 #endif /*_OSMAND_ROUTE_PLANNER_FRONT_END_CPP*/

@@ -40,6 +40,8 @@ public:
                                            int endX, int endY,
                                            vector<int>& intermediatesX, vector<int>& intermediatesY,
                                            SHARED_PTR<PrecalculatedRouteDirection> routeDirection = nullptr);
+    
+    static SHARED_PTR<RouteSegmentResult> generateStraightLineSegment(float averageSpeed, vector<pair<double, double>> points);
 };
 
 #endif /*_OSMAND_ROUTE_PLANNER_FRONT_END_H*/
