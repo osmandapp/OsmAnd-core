@@ -359,7 +359,7 @@ SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment
 {
     RoutingIndex reg;
     reg.initRouteEncodingRule(0, "highway", "unmatched");
-    SHARED_PTR<RouteDataObject> rdo;
+    SHARED_PTR<RouteDataObject> rdo = make_shared<RouteDataObject>();
     rdo->region = &reg;
     unsigned long size = points.size();
     
