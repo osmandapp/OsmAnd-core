@@ -1607,7 +1607,7 @@ void combineWayPointsForAreaRouting(RoutingContext* ctx, vector<SHARED_PTR<Route
         simplifyAreaRouteWay(routeWay, originalWay);
         uint64_t newsize = routeWay.size();
         if (routeWay.size() != originalSize) {
-            SHARED_PTR<RouteDataObject> nobj = std::make_shared<RouteDataObject>(*obj);
+            SHARED_PTR<RouteDataObject> nobj = std::make_shared<RouteDataObject>(obj);
             nobj->pointsX.clear();
             nobj->pointsY.clear();
             nobj->pointsX.resize(newsize);

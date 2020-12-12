@@ -357,10 +357,9 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
 
 SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment(float averageSpeed, std::vector<pair<double, double>> points)
 {
-    RoutingIndex reg;
-    reg.initRouteEncodingRule(0, "highway", "unmatched");
-    SHARED_PTR<RouteDataObject> rdo = make_shared<RouteDataObject>();
-    rdo->region = &reg;
+    RoutingIndex *reg = new RoutingIndex();
+    reg->initRouteEncodingRule(0, "highway", "unmatched");
+    SHARED_PTR<RouteDataObject> rdo = make_shared<RouteDataObject>(&reg);
     unsigned long size = points.size();
     
     vector<uint32_t> x(size);
