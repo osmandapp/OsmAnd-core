@@ -824,6 +824,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 		}
 		if (ps == nullptr) {
 			ps = list[0];
+            list.erase(list.begin());
 		}
 		ps->others = list;
 		return ps;
