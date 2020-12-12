@@ -136,37 +136,37 @@ struct RouteDataObject {
 	std::vector<std::vector<std::string> > pointNames;
 	std::vector<double> heightDistanceArray;
 	int64_t id;
-    bool ownsRegion = false;
+	bool ownsRegion = false;
 
 	UNORDERED(map)<int, std::string > names;
 	vector<pair<uint32_t, uint32_t> > namesIds;
 
-    RouteDataObject() : region(NULL), id(0) {
-    }
-    
-    RouteDataObject(RoutingIndex *region) : region(region), id(0), ownsRegion(true) {
-    }
-    
-    RouteDataObject(SHARED_PTR<RouteDataObject>& copy) {
-        region = copy->region;
-        pointsX = copy->pointsX;
-        pointsY = copy->pointsY;
-        types = copy->types;
-        names = copy->names;
-        namesIds = copy->namesIds;
-        restrictions = copy->restrictions;
-        restrictions = copy->restrictions;
-        pointTypes = copy->pointTypes;
-        pointNames = copy->pointNames;
-        pointNameTypes = copy->pointNameTypes;
-        id = copy->id;
-    }
-    
-    ~RouteDataObject() {
-        if (ownsRegion) {
-            delete region;
-        }
-    }
+	RouteDataObject() : region(NULL), id(0) {
+	}
+	
+	RouteDataObject(RoutingIndex *region) : region(region), id(0), ownsRegion(true) {
+	}
+	
+	RouteDataObject(SHARED_PTR<RouteDataObject>& copy) {
+		region = copy->region;
+		pointsX = copy->pointsX;
+		pointsY = copy->pointsY;
+		types = copy->types;
+		names = copy->names;
+		namesIds = copy->namesIds;
+		restrictions = copy->restrictions;
+		restrictions = copy->restrictions;
+		pointTypes = copy->pointTypes;
+		pointNames = copy->pointNames;
+		pointNameTypes = copy->pointNameTypes;
+		id = copy->id;
+	}
+	
+	~RouteDataObject() {
+		if (ownsRegion) {
+			delete region;
+		}
+	}
     
 	inline string getName() {
 		if(names.size() > 0) {
