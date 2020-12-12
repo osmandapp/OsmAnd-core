@@ -144,7 +144,7 @@ struct RouteDataObject {
 	RouteDataObject() : region(NULL), id(0) {
 	}
 	
-	RouteDataObject(RoutingIndex *region) : region(region), id(0), ownsRegion(true) {
+	RouteDataObject(RoutingIndex *region, bool ownsRegion = false) : region(region), id(0), ownsRegion(ownsRegion) {
 	}
 	
 	RouteDataObject(SHARED_PTR<RouteDataObject>& copy) {
@@ -163,7 +163,7 @@ struct RouteDataObject {
 	}
 	
 	~RouteDataObject() {
-		if (ownsRegion) {
+		if (ownsRegion && region != NULL) {
 			delete region;
 		}
 	}
