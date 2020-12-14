@@ -11,6 +11,7 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
+#include "MapSymbolIntersectionClassesRegistry.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
@@ -172,6 +173,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
 
     bool ok;
 
+    auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
+
     // Construct new map symbols group for this marker
     const std::shared_ptr<MapMarker::SymbolsGroup> symbolsGroup(new MapMarker::SymbolsGroup(
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
@@ -237,8 +240,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             if (textBmp)
             {
                 const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
-                mapSymbolCaption->order = order;
+                mapSymbolCaption->order = order - 2;
                 mapSymbolCaption->bitmap = textBmp;
+                mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
+                mapSymbolCaption->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
                 mapSymbolCaption->setOffset(PointI(0, pinIcon->height() / 2 + textBmp->height() / 2 + offset.y + owner->captionTopSpace));
                 mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
                 mapSymbolCaption->languageId = LanguageId::Invariant;

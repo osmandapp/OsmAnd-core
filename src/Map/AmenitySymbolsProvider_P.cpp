@@ -11,6 +11,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "SkiaUtilities.h"
 #include "Utilities.h"
+#include "MapSymbolIntersectionClassesRegistry.h"
 
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
 : owner(owner_)
@@ -38,6 +39,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         return true;
     }
 
+    auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
     const auto dataInterface = owner->obfsCollection->obtainDataInterface(
         &tileBBox31,
@@ -50,7 +52,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     const float displayDensityFactor = 3.0f;
     const auto requestedZoom = request.zoom;
     const auto visitorFunction =
-        [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds]
+        [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds, &mapSymbolIntersectionClassesRegistry]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
@@ -89,6 +91,8 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
                     const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
                     mapSymbolCaption->order = 100001;
                     mapSymbolCaption->bitmap = textBmp;
+                    mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
+                    mapSymbolCaption->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
                     mapSymbolCaption->setOffset(PointI(0, icon->height() / 2 + textBmp->height() / 2 + 2 * displayDensityFactor));
                     mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
                     mapSymbolCaption->languageId = LanguageId::Invariant;

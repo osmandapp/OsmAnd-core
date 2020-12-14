@@ -424,7 +424,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Prepare text and break by lines
     const auto text = ICU::convertToVisualOrder(text_);
     const auto lineRefs = style.wrapWidth > 0
-        ? ICU::getTextWrappingRefs(text, style.wrapWidth)
+        ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
 
     // Obtain paints from lines and style

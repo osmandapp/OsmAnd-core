@@ -21,9 +21,9 @@ namespace OsmAnd
             const QString& input,
             const bool keepAccentsAndDiacriticsInInput = true,
             const bool keepAccentsAndDiacriticsInOutput = true);
-        OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL getTextWrapping(const QString& input, const int maxCharsPerLine);
-        OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL getTextWrappingRefs(const QString& input, const int maxCharsPerLine);
-        OSMAND_CORE_API QStringList OSMAND_CORE_CALL wrapText(const QString& input, const int maxCharsPerLine);
+        OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL getTextWrapping(const QString& input, const int maxCharsPerLine, const int maxLines = 0);
+        OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL getTextWrappingRefs(const QString& input, const int maxCharsPerLine, const int maxLines = 0);
+        OSMAND_CORE_API QStringList OSMAND_CORE_CALL wrapText(const QString& input, const int maxCharsPerLine, const int maxLines = 0);
         OSMAND_CORE_API QString OSMAND_CORE_CALL stripAccentsAndDiacritics(const QString& input);
         OSMAND_CORE_API bool OSMAND_CORE_CALL cmatches(const QString& _fullName, const QString& _part, StringMatcherMode _mode);
         OSMAND_CORE_API bool OSMAND_CORE_CALL ccontains(const QString& _base, const QString& _part);

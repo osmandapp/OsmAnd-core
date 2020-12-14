@@ -226,7 +226,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     return output;
 }
 
-OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const QString& input, const int maxCharsPerLine)
+OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
 {
     assert(maxCharsPerLine > 0);
     QVector<int> result;
@@ -249,6 +249,8 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
     auto cursor = 0;
     while(ok && cursor < input.length())
     {
+        if (maxLines > 0 && result.size() > maxLines)
+            break;
         // Get next desired breaking position
         auto lookAheadCursor = cursor + maxCharsPerLine;
         if (lookAheadCursor >= input.length())
@@ -304,34 +306,46 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
     return result;
 }
 
-OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappingRefs(const QString& input, const int maxCharsPerLine)
+OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappingRefs(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
 {
     QVector<QStringRef> result;
-    const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine);
+    const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine, maxLines);
     result.reserve(lineStartIndices.size());
     auto lastStartIndex = lineStartIndices[0];
+    int linesCount = 0;
     for(auto idx = 1, count = lineStartIndices.size(); idx < count; idx++)
     {
         auto startIndex = lineStartIndices[idx];
         result.push_back(input.midRef(lastStartIndex, startIndex - lastStartIndex));
         lastStartIndex = startIndex;
+        linesCount++;
+        if (maxLines > 0 && linesCount == maxLines)
+            break;
     }
-    result.push_back(input.midRef(lastStartIndex));
+    if (maxLines <= 0 || linesCount < maxLines)
+        result.push_back(input.midRef(lastStartIndex));
+    
     return result;
 }
 
-OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(const QString& input, const int maxCharsPerLine)
+OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
 {
     QStringList result;
-    const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine);
+    const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine, maxLines);
     auto lastStartIndex = lineStartIndices[0];
+    int linesCount = 0;
     for(auto idx = 1, count = lineStartIndices.size(); idx < count; idx++)
     {
         auto startIndex = lineStartIndices[idx];
         result.push_back(input.mid(lastStartIndex, startIndex - lastStartIndex));
         lastStartIndex = startIndex;
+        linesCount++;
+        if (maxLines > 0 && linesCount == maxLines)
+            break;
     }
-    result.push_back(input.mid(lastStartIndex));
+    if (maxLines <= 0 || linesCount < maxLines)
+        result.push_back(input.mid(lastStartIndex));
+    
     return result;
 }
 

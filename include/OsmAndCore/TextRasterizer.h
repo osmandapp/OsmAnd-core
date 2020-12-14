@@ -30,6 +30,7 @@ namespace OsmAnd
         {
             Style()
                 : wrapWidth(0)
+                , maxLines(0)
                 , size(16.0f)
                 , bold(false)
                 , italic(false)
@@ -48,6 +49,16 @@ namespace OsmAnd
             }
 #endif // !defined(SWIG)
 
+            unsigned int maxLines;
+#if !defined(SWIG)
+            inline Style& setMaxLines(const unsigned int newMaxLines)
+            {
+                maxLines = newMaxLines;
+
+                return *this;
+            }
+#endif // !defined(SWIG)
+            
             float size;
 #if !defined(SWIG)
             inline Style& setSize(const float newSize)
