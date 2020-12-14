@@ -50,11 +50,13 @@ namespace OsmAnd
         std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const PointI position,
             const QString& title,
+            const QString& description,
             const QString& group,
             const ColorRGB color);
         std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
             const QString& title,
+            const QString& description,
             const QString& group,
             const ColorRGB color);
         bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);

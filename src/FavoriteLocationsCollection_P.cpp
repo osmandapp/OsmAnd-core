@@ -28,12 +28,13 @@ void OsmAnd::FavoriteLocationsCollection_P::notifyFavoriteLocationChanged(Favori
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
     const PointI position,
     const QString& title,
+    const QString& description,
     const QString& group,
     const ColorRGB color)
 {
 	QWriteLocker scopedLocker(&_collectionLock);
 
-	std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, title, QString::null, group, color));
+	std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, title, description, group, color));
 	_collection.insert(newItem.get(), newItem);
 
 	notifyCollectionChanged();
@@ -44,12 +45,13 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
     const LatLon latLon,
     const QString& title,
+    const QString& description,
     const QString& group,
     const ColorRGB color)
 {
     QWriteLocker scopedLocker(&_collectionLock);
 
-    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, title, QString::null, group, color));
+    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, title, description, group, color));
     _collection.insert(newItem.get(), newItem);
 
     notifyCollectionChanged();
