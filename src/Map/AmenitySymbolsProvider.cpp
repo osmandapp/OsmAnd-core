@@ -6,11 +6,15 @@
 
 OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
+    const float displayDensityFactor_,
+    const float referenceTileSizeOnScreenInPixels_,
     const QHash<QString, QStringList>* const categoriesFilter_ /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction amentitiesFilter_ /*= nullptr*/,
     const std::shared_ptr<const IAmenityIconProvider>& amenityIconProvider_ /*= std::make_shared<CoreResourcesAmenityIconProvider>()*/)
     : _p(new AmenitySymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
+    , displayDensityFactor(displayDensityFactor_)
+    , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
     , categoriesFilter(categoriesFilter_)
     , amentitiesFilter(amentitiesFilter_)
     , amenityIconProvider(amenityIconProvider_)
@@ -23,7 +27,7 @@ OsmAnd::AmenitySymbolsProvider::~AmenitySymbolsProvider()
 
 OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMinZoom() const
 {
-    return MinZoomLevel;
+    return ZoomLevel6;
 }
 
 OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMaxZoom() const

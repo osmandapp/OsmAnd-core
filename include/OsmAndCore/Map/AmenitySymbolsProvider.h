@@ -66,12 +66,16 @@ namespace OsmAnd
     public:
         AmenitySymbolsProvider(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
+            const float displayDensityFactor,
+            const float referenceTileSizeOnScreenInPixels,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction amentitiesFilter = nullptr,
             const std::shared_ptr<const IAmenityIconProvider>& amenityIconProvider = std::make_shared<CoreResourcesAmenityIconProvider>());
         virtual ~AmenitySymbolsProvider();
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
+        const float displayDensityFactor;
+        const float referenceTileSizeOnScreenInPixels;
         const Nullable< QHash<QString, QStringList> > categoriesFilter;
         const ObfPoiSectionReader::VisitorFunction amentitiesFilter;
         const std::shared_ptr<const IAmenityIconProvider> amenityIconProvider;
