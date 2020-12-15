@@ -21,24 +21,6 @@ OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const PointI position31,
     const QString& title /*= QString::null*/,
-    const QString& group /*= QString::null*/,
-    const ColorRGB color /*= ColorRGB()*/)
-{
-    return createFavoriteLocation(position31, title, QString::null, group, color);
-}
-
-std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
-    const LatLon latLon,
-    const QString& title /*= QString::null*/,
-    const QString& group /*= QString::null*/,
-    const ColorRGB color /*= ColorRGB()*/)
-{
-    return createFavoriteLocation(latLon, title, QString::null, group, color);
-}
-
-std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
-    const PointI position31,
-    const QString& title /*= QString::null*/,
     const QString& description /*= QString::null*/,
     const QString& group /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
