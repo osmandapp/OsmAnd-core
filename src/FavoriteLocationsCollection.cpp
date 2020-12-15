@@ -24,7 +24,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& group /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(position31, title, group, color);
+    return createFavoriteLocation(position31, title, QString::null, group, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
@@ -33,7 +33,27 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& group /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(latLon, title, group, color);
+    return createFavoriteLocation(latLon, title, QString::null, group, color);
+}
+
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
+    const PointI position31,
+    const QString& title /*= QString::null*/,
+    const QString& description /*= QString::null*/,
+    const QString& group /*= QString::null*/,
+    const ColorRGB color /*= ColorRGB()*/)
+{
+    return _p->createFavoriteLocation(position31, title, description, group, color);
+}
+
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
+    const LatLon latLon,
+    const QString& title /*= QString::null*/,
+    const QString& description /*= QString::null*/,
+    const QString& group /*= QString::null*/,
+    const ColorRGB color /*= ColorRGB()*/)
+{
+    return _p->createFavoriteLocation(latLon, title, description, group, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other)
@@ -43,6 +63,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
         return _p->createFavoriteLocation(
             other->getPosition31(),
             other->getTitle(),
+            other->getDescription(),
             other->getGroup(),
             other->getColor());
     }
@@ -51,6 +72,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
         return _p->createFavoriteLocation(
             other->getLatLon(),
             other->getTitle(),
+            other->getDescription(),
             other->getGroup(),
             other->getColor());
     }
