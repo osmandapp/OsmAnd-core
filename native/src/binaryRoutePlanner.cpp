@@ -806,17 +806,20 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 		SHARED_PTR<RouteSegmentPoint> ps = nullptr;
 		int i = 0;
 		if (ctx->publicTransport) {
-			for (auto p : list) {
-				if (transportStop && p->dist > 100) {
+			vector<SHARED_PTR<RouteSegmentPoint> >::iterator it = list.begin();
+			for (; it != list.end(); it++) {
+				if (transportStop && (*it)->dist > 100) {
 					break;
 				}
-				bool platform = p->road->platform();
+				bool platform = (*it)->road->platform();
 				if (transportStop && platform) {
-					ps = p;
+					ps = *it;
+					list.erase(it);
 					break;
 				}
 				if (!transportStop && !platform) {
-					ps = p;
+					ps = *it;
+					list.erase(it);
 					break;
 				}
 			}
@@ -824,6 +827,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 		}
 		if (ps == nullptr) {
 			ps = list[0];
+			list.erase(list.begin());
 		}
 		ps->others = list;
 		return ps;
