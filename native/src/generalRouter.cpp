@@ -1,17 +1,19 @@
 #ifndef _OSMAND_GENERAL_ROUTER_CPP
 #define _OSMAND_GENERAL_ROUTER_CPP
 #include "generalRouter.h"
+
+#include <cmath>
+#include <sstream>
+
+#include "Logging.h"
 #include "binaryRoutePlanner.h"
 #include "routeSegment.h"
-#include <sstream>
-#include <cmath>
-#include "Logging.h"
 
 const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
 const int RouteAttributeExpression::EQUAL_EXPRESSION = 3;
 
-const double GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
+const double GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED = 55 / 3.6f;
 const char* GeneralRouterConstants::USE_SHORTEST_WAY = "short_way";
 const char* GeneralRouterConstants::USE_HEIGHT_OBSTACLES = "height_obstacles";
 const char* GeneralRouterConstants::ALLOW_PRIVATE = "allow_private";
@@ -21,21 +23,34 @@ const char* GeneralRouterConstants::MAX_SPEED = "max_speed";
 
 static const bool USE_CACHE = true;
 
-GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
-		heightObstacles(false), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), 
-		shortestRoute(false), allowPrivate(false) {
-	cacheEval.resize((std::size_t) RouteDataObjectAttribute::COUNT);
+GeneralRouter::GeneralRouter()
+	: profile(GeneralRouterProfile::CAR),
+	  _restrictionsAware(true),
+	  heightObstacles(false),
+	  minSpeed(0.28),
+	  defaultSpeed(1.0),
+	  maxSpeed(10.0),
+	  shortestRoute(false),
+	  allowPrivate(false) {
+	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, 
-		const MAP_STR_STR& attributes) : 
-		profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
-		heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), 
-		rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes)
+	: profile(GeneralRouterProfile::CAR),
+	  _restrictionsAware(true),
+	  heightObstacles(false),
+	  leftTurn(.0),
+	  roundaboutTurn(.0),
+	  rightTurn(.0),
+	  minSpeed(0.28),
+	  defaultSpeed(1.0),
+	  maxSpeed(10.0),
+	  shortestRoute(false),
+	  allowPrivate(false) {
 	this->profile = profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = attributes.begin();
-	for (;it != attributes.end(); it++) {
+	for (; it != attributes.end(); it++) {
 		addAttribute(it->first, it->second);
 	}
 	for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
@@ -43,11 +58,22 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile,
 	}
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params)
+	: profile(GeneralRouterProfile::CAR),
+	  _restrictionsAware(true),
+	  heightObstacles(false),
+	  leftTurn(.0),
+	  roundaboutTurn(.0),
+	  rightTurn(.0),
+	  minSpeed(0.28),
+	  defaultSpeed(1.0),
+	  maxSpeed(10.0),
+	  shortestRoute(false),
+	  allowPrivate(false) {
 	this->profile = parent.profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = parent.attributes.begin();
-	for (;it != parent.attributes.end(); it++) {
+	for (; it != parent.attributes.end(); it++) {
 		addAttribute(it->first, it->second);
 	}
 
@@ -61,7 +87,7 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
 	for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
 		newRouteAttributeContext(parent.objectAttributes[i], params);
 	}
-		
+
 	this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
 	this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
 	this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
@@ -75,7 +101,7 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
 }
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
-	if(attributes.find(key) != attributes.end() && attributes[key] != "") {
+	if (attributes.find(key) != attributes.end() && attributes[key] != "") {
 		return atof(attributes[key].c_str());
 	}
 	return def;
@@ -117,7 +143,7 @@ string parseString(string value, string def) {
 }
 
 dynbitset& increaseSize(dynbitset& t, uint targetSize) {
-	if(t.size() < targetSize) {
+	if (t.size() < targetSize) {
 		t.resize(targetSize);
 	}
 	return t;
@@ -132,14 +158,13 @@ dynbitset& align(dynbitset& t, uint targetSize) {
 	return t;
 }
 
-
 double parseValue(string value, string type) {
 	double vl = -1;
-	if("speed" == type) {
+	if ("speed" == type) {
 		vl = parseSpeed(value, vl);
-	} else if("weight" == type) {
+	} else if ("weight" == type) {
 		vl = RouteDataObject::parseWeightInTon(value, vl);
-	} else if("length" == type) {
+	} else if ("length" == type) {
 		vl = RouteDataObject::parseLength(value, vl);
 	} else {
 		int i = findFirstNumberEndIndex(value);
@@ -148,12 +173,11 @@ double parseValue(string value, string type) {
 			return atof(value.substr(0, i).c_str());
 		}
 	}
-	if(vl == -1) {
+	if (vl == -1) {
 		return DOUBLE_MISSING;
 	}
 	return vl;
 }
-
 
 void GeneralRouter::addAttribute(string k, string v) {
 	attributes[k] = v;
@@ -174,11 +198,11 @@ void GeneralRouter::addAttribute(string k, string v) {
 	}
 }
 
-void toStr(std::ostringstream& s, UNORDERED(set)<string>& v) {
+void toStr(std::ostringstream& s, UNORDERED(set) < string > &v) {
 	s << "[";
 	UNORDERED(set)<string>::iterator i = v.begin();
-	for(; i != v.end(); i++) {
-		if(i != v.begin()) s <<", ";
+	for (; i != v.end(); i++) {
+		if (i != v.begin()) s << ", ";
 		s << (string)*i;
 	}
 
@@ -188,16 +212,16 @@ void toStr(std::ostringstream& s, UNORDERED(set)<string>& v) {
 void RouteAttributeEvalRule::printRule(GeneralRouter* r) {
 	std::ostringstream s;
 	s << " Select ";
-	if(selectValue == DOUBLE_MISSING) {
+	if (selectValue == DOUBLE_MISSING) {
 		s << selectValueDef;
 	} else {
 		s << selectValue;
 	}
 
 	bool f = true;
-	for(uint k = 0; k < filterTypes.size(); k++) {
-		if(filterTypes.test(k)) {
-			if(f) {
+	for (uint k = 0; k < filterTypes.size(); k++) {
+		if (filterTypes.test(k)) {
+			if (f) {
 				s << " if ";
 				f = !f;
 			}
@@ -206,9 +230,9 @@ void RouteAttributeEvalRule::printRule(GeneralRouter* r) {
 		}
 	}
 	f = true;
-	for(uint k = 0; k < filterNotTypes.size(); k++) {		
-		if(filterNotTypes.test(k)) {
-			if(f) {
+	for (uint k = 0; k < filterNotTypes.size(); k++) {
+		if (filterNotTypes.test(k)) {
+			if (f) {
 				s << " if ";
 				f = !f;
 			}
@@ -216,28 +240,28 @@ void RouteAttributeEvalRule::printRule(GeneralRouter* r) {
 			s << key.first << "/" << key.second;
 		}
 	}
-	for(uint k = 0; k < parameters.size(); k++) {
+	for (uint k = 0; k < parameters.size(); k++) {
 		s << " param=" << parameters[k];
 	}
-	if(onlyTags.size() > 0) {
+	if (onlyTags.size() > 0) {
 		s << " match tag = ";
 		toStr(s, onlyTags);
 	}
-	if(onlyNotTags.size() > 0) {
+	if (onlyNotTags.size() > 0) {
 		s << " not match tag = ";
 		toStr(s, onlyNotTags);
 	}
-	if(expressions.size() > 0) {
+	if (expressions.size() > 0) {
 		s << " subexpressions " << expressions.size();
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "%s", s.str().c_str());
 }
 
-RouteAttributeExpression::RouteAttributeExpression(vector<string>&vls, int type, string vType) : 
-		 values(vls), expressionType(type), valueType(vType){
+RouteAttributeExpression::RouteAttributeExpression(vector<string>& vls, int type, string vType)
+	: values(vls), expressionType(type), valueType(vType) {
 	cacheValues.resize(vls.size());
 	for (uint i = 0; i < vls.size(); i++) {
-		if(vls[i][0] != '$' && vls[i][0] != ':') {
+		if (vls[i][0] != '$' && vls[i][0] != ':') {
 			double o = parseValue(vls[i], valueType);
 			cacheValues[i] = o;
 		} else {
@@ -253,11 +277,11 @@ RouteAttributeEvalRule::RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule
 	selectType = original->selectType;
 	filterTypes = original->filterTypes;
 	filterNotTypes = original->filterNotTypes;
-	
+
 	onlyTags = original->onlyTags;
 	onlyNotTags = original->onlyNotTags;
 	expressions = original->expressions;
-	
+
 	tagValueCondDefValue = original->tagValueCondDefValue;
 	tagValueCondDefTag = original->tagValueCondDefTag;
 	tagValueCondDefNot = original->tagValueCondDefNot;
@@ -276,7 +300,7 @@ void RouteAttributeEvalRule::registerAndTagValueCondition(GeneralRouter* r, stri
 	} else {
 		tag_value t = tag_value(tag, value);
 		int vtype = r->registerTagValueAttribute(t);
-		if(nt) {
+		if (nt) {
 			increaseSize(filterNotTypes, vtype + 1).set(vtype);
 		} else {
 			increaseSize(filterTypes, vtype + 1).set(vtype);
@@ -301,12 +325,11 @@ void RouteAttributeEvalRule::registerSelectValue(string value, string type) {
 		selectValue = DOUBLE_MISSING;
 	} else {
 		selectValue = parseValue(value, type);
-		if(selectValue == DOUBLE_MISSING) {
-		//	System.err.println("Routing.xml select value '" + value+"' was not registered");
+		if (selectValue == DOUBLE_MISSING) {
+			//	System.err.println("Routing.xml select value '" + value+"' was not registered");
 		}
 	}
 }
-
 
 double GeneralRouter::parseValueFromTag(uint id, string type, GeneralRouter* router) {
 	while (ruleToValue.size() <= id) {
@@ -327,7 +350,6 @@ double GeneralRouter::parseValueFromTag(uint id, string type, GeneralRouter* rou
 	return res;
 }
 
-
 bool GeneralRouter::containsAttribute(string attribute) {
 	return attributes.find(attribute) != attributes.end();
 }
@@ -341,10 +363,10 @@ float GeneralRouter::getFloatAttribute(string attr, float defVal) {
 }
 
 int GeneralRouter::getIntAttribute(string attr, int defVal) {
-	return (int) parseFloat(getAttribute(attr), (float) defVal);
+	return (int)parseFloat(getAttribute(attr), (float)defVal);
 }
 
-double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def) {
+double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject>& way, double def) {
 	return evaluateCache(attr, way->region, way->types, def, false);
 }
 
@@ -356,11 +378,11 @@ SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint3
 	for (int i = 0; i < pointTypes.size(); i++) {
 		if (pointTypes[i] == reg->directionBackward) {
 			direction = -1;
-		} else if(pointTypes[i] == reg->directionForward) {
+		} else if (pointTypes[i] == reg->directionForward) {
 			direction = 1;
 		} else if (pointTypes[i] == reg->directionTrafficSignalsBackward) {
 			tdirection = -1;
-		} else if(pointTypes[i] == reg->directionTrafficSignalsForward) {
+		} else if (pointTypes[i] == reg->directionTrafficSignalsForward) {
 			tdirection = 1;
 		}
 	}
@@ -368,8 +390,7 @@ SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint3
 		ptr = shared_ptr<vector<uint32_t>>(new vector<uint32_t>());
 		for (uint32_t r : pointTypes) {
 			bool skip = false;
-			if ((r == reg->stopSign || r == reg->giveWaySign) 
-				&& direction == wayOppositeDirection) {
+			if ((r == reg->stopSign || r == reg->giveWaySign) && direction == wayOppositeDirection) {
 				skip = true;
 			} else if (r == reg->trafficSignals && tdirection == wayOppositeDirection) {
 				skip = true;
@@ -380,9 +401,10 @@ SHARED_PTR<vector<uint32_t>> filterDirectionTags(RoutingIndex* reg, vector<uint3
 		}
 	}
 	return ptr;
-} 
+}
 
-double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex * reg, std::vector<uint32_t> & types, double def, bool extra) {
+double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex* reg, std::vector<uint32_t>& types,
+									double def, bool extra) {
 	auto regCacheIt = cacheEval[(unsigned int)attr].find(reg);
 	MAP_INTV_DOUBLE* regCache;
 	if (regCacheIt == cacheEval[(unsigned int)attr].end()) {
@@ -398,7 +420,7 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 		return r->second;
 	}
 	auto ptr = filterDirectionTags(reg, types, extra);
-	double res = getObjContext(attr).evaluateDouble(reg, ptr != nullptr ? *ptr : types, def);	
+	double res = getObjContext(attr).evaluateDouble(reg, ptr != nullptr ? *ptr : types, def);
 	types.push_back(extra ? 1 : 0);
 	(*regCache)[types] = res;
 	types.pop_back();
@@ -406,62 +428,62 @@ double GeneralRouter::evaluateCache(RouteDataObjectAttribute attr, RoutingIndex 
 }
 
 bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject>& way) {
-	int res = (int) evaluateCache(RouteDataObjectAttribute::ACCESS, way, 0);
-	if(impassableRoadIds.find(way->id) != impassableRoadIds.end()) {
+	int res = (int)evaluateCache(RouteDataObjectAttribute::ACCESS, way, 0);
+	if (impassableRoadIds.find(way->id) != impassableRoadIds.end()) {
 		return false;
 	}
 	return res >= 0;
 }
 
 int GeneralRouter::isOneWay(SHARED_PTR<RouteDataObject>& road) {
-	return (int) evaluateCache(RouteDataObjectAttribute::ONEWAY, road, 0);
+	return (int)evaluateCache(RouteDataObjectAttribute::ONEWAY, road, 0);
 }
 
 bool GeneralRouter::isArea(SHARED_PTR<RouteDataObject>& road) {
-	return ((int) evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
+	return ((int)evaluateCache(RouteDataObjectAttribute::AREA, road, 0)) == 1;
 }
 
 double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
-	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
+	if (road->pointTypes.size() > point && road->pointTypes[point].size() > 0) {
 		return evaluateCache(RouteDataObjectAttribute::OBSTACLES, road->region, road->pointTypes[point], 0, dir);
 	}
 	return 0;
 }
 
 double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, uint startIndex, uint endIndex) {
-	if(!heightObstacles) {
- 		return 0;
- 	}
- 	vector<double> heightArray = road->calculateHeightArray();
- 	if(heightArray.size() == 0 ) {
- 		return 0;
- 	}
- 	
- 	double sum = 0;
- 	int knext;
- 	vector<uint32_t> types;
- 	RouteAttributeContext& objContext = getObjContext(RouteDataObjectAttribute::OBSTACLE_SRTM_ALT_SPEED);
- 	for(uint k = startIndex; k != endIndex; k = knext) {
- 		knext = startIndex < endIndex ? k + 1 : k - 1;
- 		double dist = startIndex < endIndex ? heightArray[2 * knext] : heightArray[2 * k]  ;
- 		double diff = heightArray[2 * knext + 1] - heightArray[2 * k + 1] ;
- 		if(diff != 0 && dist > 0) {
- 			double incl = abs(diff / dist);
- 			int percentIncl = (int) (incl * 100);
- 			percentIncl = (percentIncl + 2)/ 3 * 3 - 2; // 1, 4, 7, 10, .   
- 			if(percentIncl >= 1) {
- 				objContext.paramContext.incline = diff > 0 ? percentIncl : -percentIncl;
- 				sum += objContext.evaluateDouble(road->region, road->types, 0) * (diff > 0 ? diff : -diff);
- 			}
- 		}
- 	}
- 	return sum;
- }
+	if (!heightObstacles) {
+		return 0;
+	}
+	vector<double> heightArray = road->calculateHeightArray();
+	if (heightArray.size() == 0) {
+		return 0;
+	}
 
+	double sum = 0;
+	int knext;
+	vector<uint32_t> types;
+	RouteAttributeContext& objContext = getObjContext(RouteDataObjectAttribute::OBSTACLE_SRTM_ALT_SPEED);
+	for (uint k = startIndex; k != endIndex; k = knext) {
+		knext = startIndex < endIndex ? k + 1 : k - 1;
+		double dist = startIndex < endIndex ? heightArray[2 * knext] : heightArray[2 * k];
+		double diff = heightArray[2 * knext + 1] - heightArray[2 * k + 1];
+		if (diff != 0 && dist > 0) {
+			double incl = abs(diff / dist);
+			int percentIncl = (int)(incl * 100);
+			percentIncl = (percentIncl + 2) / 3 * 3 - 2;  // 1, 4, 7, 10, .
+			if (percentIncl >= 1) {
+				objContext.paramContext.incline = diff > 0 ? percentIncl : -percentIncl;
+				sum += objContext.evaluateDouble(road->region, road->types, 0) * (diff > 0 ? diff : -diff);
+			}
+		}
+	}
+	return sum;
+}
 
 double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir) {
-	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0) {
-		return evaluateCache(RouteDataObjectAttribute::ROUTING_OBSTACLES, road->region, road->pointTypes[point], 0, dir);
+	if (road->pointTypes.size() > point && road->pointTypes[point].size() > 0) {
+		return evaluateCache(RouteDataObjectAttribute::ROUTING_OBSTACLES, road->region, road->pointTypes[point], 0,
+							 dir);
 	}
 	return 0;
 }
@@ -477,12 +499,11 @@ double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road) {
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject>& road) {
-	if(!isObjContextAvailable(RouteDataObjectAttribute::PENALTY_TRANSITION)) {
+	if (!isObjContextAvailable(RouteDataObjectAttribute::PENALTY_TRANSITION)) {
 		return 0;
 	}
 	return evaluateCache(RouteDataObjectAttribute::PENALTY_TRANSITION, road, 0);
 }
-
 
 double GeneralRouter::defineSpeedPriority(SHARED_PTR<RouteDataObject>& road) {
 	return evaluateCache(RouteDataObjectAttribute::ROAD_PRIORITIES, road, 1.);
@@ -504,12 +525,11 @@ bool GeneralRouter::restrictionsAware() {
 	return _restrictionsAware;
 }
 
-
 double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int segmentEnd,
-		SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd) {
+										SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd) {
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
-	if(prevTs != ts) {
+	if (prevTs != ts) {
 		return abs(ts - prevTs) / 2;
 	}
 	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
@@ -523,16 +543,16 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 	// 		}
 	// 	}
 	// }
-	
-	
-	if(segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
+
+	if (segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;
-		if(rt > 0) {
+		if (rt > 0) {
 			return rt;
 		}
 	}
 	if (leftTurn > 0 || rightTurn > 0) {
-		double a1 = segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
+		double a1 =
+			segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
 		double a2 = prev->getRoad()->directionRoute(prevSegmentEnd, prevSegmentEnd < prev->getSegmentStart());
 		double diff = abs(alignAngleDifference(a1 - a2 - M_PI));
 		// more like UT
@@ -582,7 +602,7 @@ dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t
 	for (uint k = 0; k < types.size(); k++) {
 		MAP_INT_INT::iterator nid = map.find(types[k]);
 		int vl;
-		if(nid == map.end()){
+		if (nid == map.end()) {
 			auto& r = reg->routeEncodingRules[types[k]];
 			vl = router->registerTagValueAttribute(tag_value(r.getTag(), r.getValue()));
 			map[types[k]] = vl;
@@ -601,23 +621,23 @@ double RouteAttributeEvalRule::eval(dynbitset& types, ParameterContext& paramCon
 	return DOUBLE_MISSING;
 }
 
-
-double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	if(selectValue != DOUBLE_MISSING) {
+double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContext& paramContext,
+											   GeneralRouter* router) {
+	if (selectValue != DOUBLE_MISSING) {
 		return selectValue;
 	}
-	if (selectValueDef.length() > 0 && selectValueDef[0]=='$') {
-		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(selectValueDef.substr(1));
-		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
-		{
+	if (selectValueDef.length() > 0 && selectValueDef[0] == '$') {
+		UNORDERED(map)<string, dynbitset>::iterator ms = router->tagRuleMask.find(selectValueDef.substr(1));
+		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
 			dynbitset findBit(ms->second.size());
 			findBit |= ms->second;
 			findBit &= types;
 			uint value = findBit.find_first();
-			double vd = router->parseValueFromTag(value, selectType, router);;
+			double vd = router->parseValueFromTag(value, selectType, router);
+			;
 			return vd;
 		}
-	} else if (selectValueDef.length() > 0 && selectValueDef[0]==':') {
+	} else if (selectValueDef.length() > 0 && selectValueDef[0] == ':') {
 		string p = selectValueDef.substr(1);
 		MAP_STR_STR::iterator it = paramContext.vars.find(p);
 		if (it != paramContext.vars.end()) {
@@ -632,7 +652,7 @@ double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContex
 bool RouteAttributeExpression::matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
 	double f1 = calculateExprValue(0, types, paramContext, router);
 	double f2 = calculateExprValue(1, types, paramContext, router);
-	if(f1 == DOUBLE_MISSING || f2 == DOUBLE_MISSING) {
+	if (f1 == DOUBLE_MISSING || f2 == DOUBLE_MISSING) {
 		return false;
 	}
 
@@ -646,62 +666,60 @@ bool RouteAttributeExpression::matches(dynbitset& types, ParameterContext& param
 	return false;
 }
 
-
-double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	
+double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext,
+													GeneralRouter* router) {
 	double cacheValue = cacheValues[id];
 	string value = values[id];
 	double o = DOUBLE_MISSING;
-	if(cacheValue != DOUBLE_MISSING) {
+	if (cacheValue != DOUBLE_MISSING) {
 		return cacheValue;
 	}
-	if (value.length() > 0 && value[0]=='$') {
-		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
-		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types))
-		{
+	if (value.length() > 0 && value[0] == '$') {
+		UNORDERED(map)<string, dynbitset>::iterator ms = router->tagRuleMask.find(value.substr(1));
+		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
 			dynbitset findBit(ms->second.size());
 			findBit |= ms->second;
 			findBit &= types;
 			uint value = findBit.find_first();
 			return router->parseValueFromTag(value, valueType, router);
 		}
-	} else if(value == ":incline") {
+	} else if (value == ":incline") {
 		return paramContext.incline;
-	} else if (value.length() > 0 && value[0]==':') {
+	} else if (value.length() > 0 && value[0] == ':') {
 		string p = value.substr(1);
 		MAP_STR_STR::iterator it = paramContext.vars.find(p);
 		if (it != paramContext.vars.end()) {
 			o = parseValue(it->second, valueType);
 		} else {
-			return DOUBLE_MISSING;		
+			return DOUBLE_MISSING;
 		}
 	}
 	cacheValues[id] = o;
 	return o;
-} 
+}
 
 bool RouteAttributeEvalRule::matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	if(!checkAllTypesShouldBePresent(types, paramContext, router)) {
+	if (!checkAllTypesShouldBePresent(types, paramContext, router)) {
 		return false;
 	}
-	if(!checkAllTypesShouldNotBePresent(types, paramContext, router)) {
+	if (!checkAllTypesShouldNotBePresent(types, paramContext, router)) {
 		return false;
 	}
-	if(!checkFreeTags(types, paramContext, router)) {
+	if (!checkFreeTags(types, paramContext, router)) {
 		return false;
 	}
-	if(!checkNotFreeTags(types, paramContext, router)) {
+	if (!checkNotFreeTags(types, paramContext, router)) {
 		return false;
 	}
-	if(!checkExpressions(types, paramContext, router)) {
+	if (!checkExpressions(types, paramContext, router)) {
 		return false;
 	}
 	return true;
 }
 
 bool RouteAttributeEvalRule::checkExpressions(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	for(uint i = 0; i < expressions.size(); i++) {
-		if(!expressions[i].matches(types, paramContext, router)) {
+	for (uint i = 0; i < expressions.size(); i++) {
+		if (!expressions[i].matches(types, paramContext, router)) {
 			return false;
 		}
 	}
@@ -709,8 +727,8 @@ bool RouteAttributeEvalRule::checkExpressions(dynbitset& types, ParameterContext
 }
 
 bool RouteAttributeEvalRule::checkFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	for(UNORDERED(set)<string>::iterator it = onlyTags.begin(); it != onlyTags.end(); it++) {
-		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(*it);
+	for (UNORDERED(set) < string > ::iterator it = onlyTags.begin(); it != onlyTags.end(); it++) {
+		UNORDERED(map)<string, dynbitset>::iterator ms = router->tagRuleMask.find(*it);
 		if (ms == router->tagRuleMask.end() || !align(ms->second, types.size()).intersects(types)) {
 			return false;
 		}
@@ -719,8 +737,8 @@ bool RouteAttributeEvalRule::checkFreeTags(dynbitset& types, ParameterContext& p
 }
 
 bool RouteAttributeEvalRule::checkNotFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	for(UNORDERED(set)<string>::iterator it = onlyNotTags.begin(); it != onlyNotTags.end(); it++) {
-		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(*it);
+	for (UNORDERED(set) < string > ::iterator it = onlyNotTags.begin(); it != onlyNotTags.end(); it++) {
+		UNORDERED(map)<string, dynbitset>::iterator ms = router->tagRuleMask.find(*it);
 		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
 			return false;
 		}
@@ -728,15 +746,17 @@ bool RouteAttributeEvalRule::checkNotFreeTags(dynbitset& types, ParameterContext
 	return true;
 }
 
-bool RouteAttributeEvalRule::checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	if(align(filterNotTypes, types.size()).intersects(types)) {
+bool RouteAttributeEvalRule::checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext,
+															 GeneralRouter* router) {
+	if (align(filterNotTypes, types.size()).intersects(types)) {
 		return false;
 	}
 	return true;
 }
 
-bool RouteAttributeEvalRule::checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	// Bitset method subset is missing "filterTypes.isSubset(types)"    
+bool RouteAttributeEvalRule::checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext,
+														  GeneralRouter* router) {
+	// Bitset method subset is missing "filterTypes.isSubset(types)"
 	// reset previous evaluation
 	return align(filterTypes, types.size()).is_subset_of(types);
 	// evalFilterTypes.clear();

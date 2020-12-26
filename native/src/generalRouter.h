@@ -1,12 +1,13 @@
 #ifndef _OSMAND_GENERAL_ROUTER_H
 #define _OSMAND_GENERAL_ROUTER_H
 
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include <algorithm>
-#include "boost/dynamic_bitset.hpp"
+
+#include "CommonCollections.h"
 #include "binaryRead.h"
+#include "boost/dynamic_bitset.hpp"
 #include "boost/functional/hash.hpp"
+#include "commonOsmAndCore.h"
 
 struct RouteSegment;
 class GeneralRouter;
@@ -14,7 +15,7 @@ class RouteAttributeContext;
 
 //#include "binaryRoutePlanner.h"
 
-template <typename Container> // we can make this generic for any container [1]
+template <typename Container>  // we can make this generic for any container [1]
 struct container_hash {
 	std::size_t operator()(Container const& c) const {
 		return boost::hash_range(c.begin(), c.end());
@@ -28,7 +29,7 @@ typedef UNORDERED(map)<vector<uint32_t>, double, container_hash<vector<uint32_t>
 typedef UNORDERED(map)<string, int> MAP_STR_INT;
 typedef boost::dynamic_bitset<> dynbitset;
 
-#define DOUBLE_MISSING -1.1e9 // random big negative number
+#define DOUBLE_MISSING -1.1e9  // random big negative number
 
 struct GeneralRouterConstants {
 	static const double CAR_SHORTEST_DEFAULT_SPEED;
@@ -41,16 +42,16 @@ struct GeneralRouterConstants {
 };
 
 enum class RouteDataObjectAttribute : unsigned int {
-	ROAD_SPEED = 0, //"speed"
-	ROAD_PRIORITIES = 1, // "priority"
-	ACCESS = 2, // "access"
-	OBSTACLES = 3, // "obstacle_time"
-	ROUTING_OBSTACLES = 4, // "obstacle"
-	ONEWAY = 5,// "oneway"
-	PENALTY_TRANSITION = 6, // "penalty_transition"
-	OBSTACLE_SRTM_ALT_SPEED = 7, // "obstacle_srtm_alt_speed"
-	AREA = 8, // "area"
-	
+	ROAD_SPEED = 0,				  //"speed"
+	ROAD_PRIORITIES = 1,		  // "priority"
+	ACCESS = 2,					  // "access"
+	OBSTACLES = 3,				  // "obstacle_time"
+	ROUTING_OBSTACLES = 4,		  // "obstacle"
+	ONEWAY = 5,					  // "oneway"
+	PENALTY_TRANSITION = 6,		  // "penalty_transition"
+	OBSTACLE_SRTM_ALT_SPEED = 7,  // "obstacle_srtm_alt_speed"
+	AREA = 8,					  // "area"
+
 	UNDEFINED = 100000,
 	COUNT = 9
 };
@@ -79,13 +80,7 @@ static RouteDataObjectAttribute parseRouteDataObjectAttribute(string attr, Route
 	}
 }
 
-enum class GeneralRouterProfile {
-	CAR,
-	PEDESTRIAN,
-	BICYCLE,
-	BOAT, 
-	PUBLIC_TRANSPORT
-};
+enum class GeneralRouterProfile { CAR, PEDESTRIAN, BICYCLE, BOAT, PUBLIC_TRANSPORT };
 
 static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRouterProfile def) {
 	if ("car" == to_lowercase(profile)) {
@@ -100,12 +95,8 @@ static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRou
 		return def;
 	}
 }
-	
-enum class RoutingParameterType {
-	NUMERIC,
-	BOOLEAN,
-	SYMBOLIC
-};
+
+enum class RoutingParameterType { NUMERIC, BOOLEAN, SYMBOLIC };
 
 struct RoutingParameter {
 	string id;
@@ -113,7 +104,7 @@ struct RoutingParameter {
 	string name;
 	string description;
 	RoutingParameterType type;
-	vector<double> possibleValues; // Object TODO;
+	vector<double> possibleValues;	// Object TODO;
 	vector<string> possibleValueDescriptions;
 	bool defaultBoolean;
 };
@@ -121,38 +112,38 @@ struct RoutingParameter {
 struct ParameterContext {
 	MAP_STR_STR vars;
 	double incline;
-	ParameterContext(): incline(0) {}
+	ParameterContext() : incline(0) {
+	}
 };
 
 struct RouteAttributeExpression {
 	static const int LESS_EXPRESSION;
 	static const int GREAT_EXPRESSION;
-	static const int EQUAL_EXPRESSION ;
-		
+	static const int EQUAL_EXPRESSION;
+
 	vector<string> values;
 	int expressionType;
 	string valueType;
-	vector<double> cacheValues; 
+	vector<double> cacheValues;
 
-	RouteAttributeExpression(vector<string>&vls, int type, string vType);
+	RouteAttributeExpression(vector<string>& vls, int type, string vType);
 
-	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 
-	double calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter* router); 
+	double calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 };
-
 
 class RouteAttributeEvalRule {
 	friend class RouteAttributeContext;
 
-private: 
-	vector<string> parameters ;
-	double selectValue ;
-	string selectValueDef ;
+   private:
+	vector<string> parameters;
+	double selectValue;
+	string selectValueDef;
 	string selectType;
 	dynbitset filterTypes;
 	dynbitset filterNotTypes;
-		
+
 	UNORDERED(set)<string> onlyTags;
 	UNORDERED(set)<string> onlyNotTags;
 	vector<RouteAttributeExpression> expressions;
@@ -161,29 +152,28 @@ private:
 	vector<string> tagValueCondDefTag;
 	vector<bool> tagValueCondDefNot;
 
-
 	bool matches(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 	double eval(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 	double calcSelectValue(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 
-	bool checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
-	bool checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
-	bool checkNotFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
-	bool checkFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
-	bool checkExpressions(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) ;
+	bool checkAllTypesShouldBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	bool checkAllTypesShouldNotBePresent(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	bool checkNotFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	bool checkFreeTags(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
+	bool checkExpressions(dynbitset& types, ParameterContext& paramContext, GeneralRouter* router);
 
 	void printRule(GeneralRouter* r);
-public:
-	
+
+   public:
 	RouteAttributeEvalRule() : selectValue(0), selectValueDef(""), selectType("") {
 	}
 
 	RouteAttributeEvalRule(SHARED_PTR<RouteAttributeEvalRule>& original);
 
-	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt); 
+	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt);
 
 	// formated as [param1,-param2]
-	void registerParamConditions(vector<string>& params); 
+	void registerParamConditions(vector<string>& params);
 
 	void registerAndParamCondition(string param, bool nt);
 
@@ -192,21 +182,21 @@ public:
 	void registerExpression(RouteAttributeExpression& expression) {
 		expressions.push_back(expression);
 	}
-	
+
 	void registerLessCondition(string value1, string value2, string valueType) {
-		vector<string> vls{ value1, value2 };
+		vector<string> vls{value1, value2};
 		RouteAttributeExpression exp(vls, RouteAttributeExpression::LESS_EXPRESSION, valueType);
 		registerExpression(exp);
 	}
-	
+
 	void registerGreatCondition(string value1, string value2, string valueType) {
-		vector<string> vls{ value1, value2 };
+		vector<string> vls{value1, value2};
 		RouteAttributeExpression exp(vls, RouteAttributeExpression::GREAT_EXPRESSION, valueType);
 		registerExpression(exp);
 	}
-	
+
 	void registerEqualCondition(string value1, string value2, string valueType) {
-		vector<string> vls{ value1, value2 };
+		vector<string> vls{value1, value2};
 		RouteAttributeExpression exp(vls, RouteAttributeExpression::EQUAL_EXPRESSION, valueType);
 		registerExpression(exp);
 	}
@@ -215,15 +205,15 @@ public:
 class RouteAttributeContext {
 	friend class GeneralRouter;
 
-private:
-	vector<SHARED_PTR<RouteAttributeEvalRule> > rules;
-	ParameterContext paramContext ;
+   private:
+	vector<SHARED_PTR<RouteAttributeEvalRule>> rules;
+	ParameterContext paramContext;
 	GeneralRouter* router;
 
-public: 
+   public:
 	RouteAttributeContext(GeneralRouter* r) : router(r) {
 	}
-	
+
 	RouteAttributeContext(GeneralRouter* r, RouteAttributeContext* original, MAP_STR_STR params) : router(r) {
 		if (!params.empty()) {
 			paramContext.vars = params;
@@ -234,7 +224,7 @@ public:
 			}
 		}
 	}
-	
+
 	bool checkParameter(SHARED_PTR<RouteAttributeEvalRule>& r) {
 		if (r->parameters.size() > 0) {
 			for (string p : r->parameters) {
@@ -254,9 +244,9 @@ public:
 		}
 		return true;
 	}
-	
+
 	void registerParams(vector<string>& keys, vector<string>& vls) {
-		for(uint i = 0; i < keys.size(); i++) {
+		for (uint i = 0; i < keys.size(); i++) {
 			paramContext.vars[keys[i]] = vls[i];
 		}
 	}
@@ -277,50 +267,44 @@ public:
 	SHARED_PTR<RouteAttributeEvalRule> getLastRule() {
 		return rules.back();
 	}
-	
-	int evaluateInt(dynbitset& rawTypes, int defValue)
-	{
+
+	int evaluateInt(dynbitset& rawTypes, int defValue) {
 		double o = evaluate(rawTypes);
-		if(o == DOUBLE_MISSING)
-		{
+		if (o == DOUBLE_MISSING) {
 			return defValue;
 		}
-		return (int) o;
-	}
-	
-	float evaluateFloat(dynbitset& rawTypes, float defValue)
-	{
-		double o = evaluate(rawTypes);
-		if(o == DOUBLE_MISSING)
-		{
-			return defValue;
-		}
-		return (float) o;
+		return (int)o;
 	}
 
-private:
+	float evaluateFloat(dynbitset& rawTypes, float defValue) {
+		double o = evaluate(rawTypes);
+		if (o == DOUBLE_MISSING) {
+			return defValue;
+		}
+		return (float)o;
+	}
+
+   private:
 	double evaluate(dynbitset& types) {
-		for (uint k = 0; k < rules.size(); k++) {			
-			double o = rules[k]->eval(types, paramContext, router);			
+		for (uint k = 0; k < rules.size(); k++) {
+			double o = rules[k]->eval(types, paramContext, router);
 			if (o != DOUBLE_MISSING) {
 				return o;
 			}
 		}
 		return DOUBLE_MISSING;
 	}
-	
 
 	dynbitset convert(RoutingIndex* reg, std::vector<uint32_t>& types);
 
 	double evaluateDouble(RoutingIndex* reg, std::vector<uint32_t>& types, double defValue) {
-		dynbitset local =  convert(reg, types);		
+		dynbitset local = convert(reg, types);
 		double d = evaluate(local);
-		if(d == DOUBLE_MISSING) {
+		if (d == DOUBLE_MISSING) {
 			return defValue;
 		}
 		return d;
 	}
-
 };
 
 float parseFloat(MAP_STR_STR attributes, string key, float def);
@@ -332,13 +316,12 @@ bool parseBool(string value, bool def);
 string parseString(MAP_STR_STR attributes, string key, string def);
 string parseString(string value, string def);
 
-
 class GeneralRouter {
 	friend class RouteAttributeContext;
 	friend class RouteAttributeEvalRule;
 	friend struct RouteAttributeExpression;
-	
-private:
+
+   private:
 	GeneralRouterProfile profile;
 	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
@@ -346,15 +329,15 @@ private:
 	UNORDERED(map)<string, RoutingParameter> parameters;
 	MAP_STR_INT universalRules;
 	vector<tag_value> universalRulesById;
-	UNORDERED(map)<string, dynbitset > tagRuleMask;
-	vector<double> ruleToValue; // Object TODO;
-	
+	UNORDERED(map)<string, dynbitset> tagRuleMask;
+	vector<double> ruleToValue;	 // Object TODO;
+
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
-	vector<UNORDERED(map)<RoutingIndex*, MAP_INTV_DOUBLE>> cacheEval;
-		
-public:
+	vector<UNORDERED(map) < RoutingIndex*, MAP_INTV_DOUBLE> > cacheEval;
+
+   public:
 	// cached values
-	bool _restrictionsAware ;
+	bool _restrictionsAware;
 	bool heightObstacles;
 	double leftTurn;
 	double roundaboutTurn;
@@ -386,7 +369,7 @@ public:
 	GeneralRouterProfile getProfile() {
 		return profile;
 	}
-	
+
 	UNORDERED(map)<string, RoutingParameter>& getParameters() {
 		return parameters;
 	}
@@ -406,9 +389,9 @@ public:
 		parameters[rp.id] = rp;
 		parametersList.push_back(rp);
 	}
-	
-	void registerNumericParameter(string id, string name, string description,
-								  vector<double> vls, vector<string> vlsDescriptions) {
+
+	void registerNumericParameter(string id, string name, string description, vector<double> vls,
+								  vector<string> vlsDescriptions) {
 		RoutingParameter rp{};
 		rp.name = name;
 		rp.description = description;
@@ -419,57 +402,56 @@ public:
 		parameters[rp.id] = rp;
 		parametersList.push_back(rp);
 	}
-	
+
 	RouteAttributeContext* newRouteAttributeContext() {
-		RouteAttributeContext *c = new RouteAttributeContext(this);
+		RouteAttributeContext* c = new RouteAttributeContext(this);
 		objectAttributes.push_back(c);
 		return objectAttributes.back();
 	}
 
 	RouteAttributeContext* newRouteAttributeContext(RouteAttributeContext* original, const MAP_STR_STR& params) {
-		RouteAttributeContext *c = new RouteAttributeContext(this, original, params);
+		RouteAttributeContext* c = new RouteAttributeContext(this, original, params);
 		objectAttributes.push_back(c);
 		return objectAttributes.back();
 	}
 
-	void addAttribute(string k, string v) ;
+	void addAttribute(string k, string v);
 
 	bool containsAttribute(string attribute);
-	
+
 	string getAttribute(string attribute);
 
 	float getFloatAttribute(string attr, float defVal);
 
 	int getIntAttribute(string attr, int defVal);
-	
+
 	uint64_t getBitSetSize();
-	
+
 	/**
 	 * return if the road is accepted for routing
 	 */
 	bool acceptLine(SHARED_PTR<RouteDataObject>& way);
-	
+
 	/**
 	 * return oneway +/- 1 if it is oneway and 0 if both ways
 	 */
 	int isOneWay(SHARED_PTR<RouteDataObject>& road);
-	
+
 	/**
 	 * return true if area == 1 and false otherwise
 	 */
 	bool isArea(SHARED_PTR<RouteDataObject>& road);
-	
+
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
 	double defineObstacle(SHARED_PTR<RouteDataObject>& road, uint point, bool dir);
 
+	/**
+	 * return delay in seconds for height obstacles
+	 */
+	double defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, uint startIndex, uint endIndex);
 
-  	/**
- 	 * return delay in seconds for height obstacles
- 	 */
- 	double defineHeightObstacle(SHARED_PTR<RouteDataObject>& road, uint startIndex, uint endIndex);
-	
 	/**
 	 * return delay in seconds (0 no obstacles)
 	 */
@@ -481,17 +463,17 @@ public:
 	double defineRoutingSpeed(SHARED_PTR<RouteDataObject>& road);
 
 	/*
-	* return transition penalty between different road classes in seconds
-	*/
+	 * return transition penalty between different road classes in seconds
+	 */
 	double definePenaltyTransition(SHARED_PTR<RouteDataObject>& road);
-	
+
 	/**
 	 * return real speed in m/s for vehicle for specified road
 	 */
 	double defineVehicleSpeed(SHARED_PTR<RouteDataObject>& road);
-	
+
 	/**
-	 * define priority to multiply the speed for g(x) A* 
+	 * define priority to multiply the speed for g(x) A*
 	 */
 	double defineSpeedPriority(SHARED_PTR<RouteDataObject>& road);
 
@@ -501,52 +483,50 @@ public:
 	 * @return minimal speed at road in m/s
 	 */
 	double getDefaultSpeed();
-	
+
 	/**
 	 * Used as minimal threshold of default speed
 	 *
 	 * @return minimal speed at road in m/s
 	 */
 	double getMinSpeed();
-	
+
 	/**
 	 * Used for A* routing to predict h(x) : it should be great any g(x)
-	 * 
+	 *
 	 * @return maximum speed to calculate shortest distance
 	 */
 	double getMaxSpeed();
-	
+
 	/**
 	 * aware of road restrictions
 	 */
 	bool restrictionsAware();
-	
+
 	/**
-	 * Calculate turn time 
+	 * Calculate turn time
 	 */
-	double calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int segmentEnd, 
-		SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd);
+	double calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int segmentEnd, SHARED_PTR<RouteSegment>& prev,
+							 int prevSegmentEnd);
 
 	void printRules();
-	
-private:
 
+   private:
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
-	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex *reg, std::vector<uint32_t> &types, double def, bool dir);
-	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject> &way, double def);
+	double evaluateCache(RouteDataObjectAttribute attr, RoutingIndex* reg, std::vector<uint32_t>& types, double def,
+						 bool dir);
+	double evaluateCache(RouteDataObjectAttribute attr, SHARED_PTR<RouteDataObject>& way, double def);
 
-public:
+   public:
 	uint registerTagValueAttribute(const tag_value& r);
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}
-	
+
 	RouteAttributeContext& getObjContext(RouteDataObjectAttribute a) {
 		return *objectAttributes[(unsigned int)a];
 	}
-
 };
-
 
 #endif /*_OSMAND_GENERAL_ROUTER_H*/
