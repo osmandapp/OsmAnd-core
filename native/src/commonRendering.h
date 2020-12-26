@@ -159,34 +159,16 @@ struct RenderingContext {
 
    public:
 	RenderingContext()
-		: preferredLocale(""),
-		  transliterate(false),
-		  density(1),
-		  screenDensityRatio(1),
+		: preferredLocale(""), transliterate(false), density(1), screenDensityRatio(1),
 		  textScale(1),	 // leftX, topY, width, height
-		  defaultColor(0xfff1eee8),
-		  zoom(15),
-		  rotate(0),
-		  shadowRenderingMode(2),
-		  shadowRenderingColor(0xff969696),
+		  defaultColor(0xfff1eee8), zoom(15), rotate(0), shadowRenderingMode(2), shadowRenderingColor(0xff969696),
 		  noHighwayOnewayArrows(0),	 // defaultIconsDir
-		  pointCount(0),
-		  pointInsideCount(0),
-		  visible(0),
-		  allObjects(0),
-		  lastRenderedKey(0),
+		  pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
 		  // textRendering, nativeOperations, oneWayPaints, reverseWayPaints
 		  // tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
 		  // textToDraw, iconsToDraw,
-		  textIntersect(),
-		  iconsIntersect(),
-		  shadowLevelMin(256),
-		  shadowLevelMax(0),
-		  polygonMinSizeToDisplay(0),
-		  roadDensityZoomTile(0),
-		  roadsDensityLimitPerTile(0)
-
-	{
+		  textIntersect(), iconsIntersect(), shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
+		  roadDensityZoomTile(0), roadsDensityLimitPerTile(0) {
 	}
 	virtual ~RenderingContext();
 

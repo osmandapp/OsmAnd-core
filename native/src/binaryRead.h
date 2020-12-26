@@ -108,10 +108,7 @@ struct RoutingIndex : BinaryPartIndex {
 	int giveWaySign = -1;
 
 	RoutingIndex()
-		: BinaryPartIndex(ROUTING_INDEX),
-		  nameTypeRule(-1),
-		  refTypeRule(-1),
-		  destinationTypeRule(-1),
+		: BinaryPartIndex(ROUTING_INDEX), nameTypeRule(-1), refTypeRule(-1), destinationTypeRule(-1),
 		  destinationRefTypeRule(-1) {
 	}
 

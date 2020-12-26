@@ -1,39 +1,40 @@
 #ifndef _MULTIPOLYGONS_CPP
 #define _MULTIPOLYGONS_CPP
-#include "Logging.h"
 #include "multipolygons.h"
+
+#include "Logging.h"
 #include "binaryRead.h"
 
 const bool DEBUG_LINE = false;
 
-void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c,  int leftX, int rightX, int bottomY, int topY) {
-	if(!DEBUG_LINE) {
+void printLine(OsmAnd::LogSeverityLevel level, std::string msg, int64_t id, coordinates& c, int leftX, int rightX,
+			   int bottomY, int topY) {
+	if (!DEBUG_LINE) {
 		return;
 	}
-	if(c.size() == 0) {
+	if (c.size() == 0) {
 		return;
 	}
 	double h = bottomY - topY;
 	double w = rightX - leftX;
-	OsmAnd::LogPrintf(level, "%s %lld (osm %lld) sx=%.4f sy=%.4f ex=%.4f ey=%.4f - top/left [%d, %d] width/height [%.0f, %.0f]", msg.c_str(), id, id/64, 
-			(c.at(0).first-leftX)/w, (c.at(0).second - topY)/h,
-			(c.at(c.size()-1).first-leftX)/w, (c.at(c.size()-1).second - topY)/h,
-			leftX, topY, w, h);
+	OsmAnd::LogPrintf(
+		level, "%s %lld (osm %lld) sx=%.4f sy=%.4f ex=%.4f ey=%.4f - top/left [%d, %d] width/height [%.0f, %.0f]",
+		msg.c_str(), id, id / 64, (c.at(0).first - leftX) / w, (c.at(0).second - topY) / h,
+		(c.at(c.size() - 1).first - leftX) / w, (c.at(c.size() - 1).second - topY) / h, leftX, topY, w, h);
 }
 
-
 // returns true if coastlines were added!
-bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,
-		bool showIfThereIncompleted, bool addDebugIncompleted, std::vector<FoundMapDataObject>& res) {
+bool processCoastlines(std::vector<FoundMapDataObject>& coastLines, int leftX, int rightX, int bottomY, int topY,
+					   int zoom, bool showIfThereIncompleted, bool addDebugIncompleted,
+					   std::vector<FoundMapDataObject>& res) {
 	// try out (quite dirty fix to align boundaries to grid)
 	leftX = (leftX >> 5) << 5;
 	rightX = (rightX >> 5) << 5;
 	bottomY = (bottomY >> 5) << 5;
-	topY = (topY >> 5) << 5;	
-	
-	
+	topY = (topY >> 5) << 5;
+
 	std::vector<coordinates> completedRings;
-	std::vector<coordinates > uncompletedRings;
+	std::vector<coordinates> uncompletedRings;
 	std::vector<FoundMapDataObject>::iterator val = coastLines.begin();
 	int64_t dbId = 0;
 	for (; val != coastLines.end(); val++) {
@@ -74,13 +75,13 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 	}
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
 		// printf("No completed & uncompleted");
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: no completed & incompleted coastlines %d",
-			coastLines.size());
-		return false; // Fix 5833
-		// fix is not fully correct cause now zoom in causes land 
-		// return coastLines.size() != 0;
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Ocean: no completed & incompleted coastlines %d",
+						  coastLines.size());
+		return false;  // Fix 5833
+					   // fix is not fully correct cause now zoom in causes land
+					   // return coastLines.size() != 0;
 	}
-	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
+	bool coastlineCrossScreen = uncompletedRings.size() > 0;
 	if (coastlineCrossScreen) {
 		unifyIncompletedRings(uncompletedRings, completedRings, leftX, rightX, bottomY, topY, dbId, zoom);
 	}
@@ -99,12 +100,11 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 			o->types.push_back(tag_value("natural", "coastline_line"));
 			res.push_back(FoundMapDataObject(o, NULL, zoom));
 		}
-
 	}
 	if (!showIfThereIncompleted && uncompletedRings.size() > 0) {
 		// printf("There are ignored uncompleted");
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: incompleted coastlines %d from %d",
-			uncompletedRings.size(), coastLines.size());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Ocean: incompleted coastlines %d from %d",
+						  uncompletedRings.size(), coastLines.size());
 		return false;
 	}
 	int landFound = 0;
@@ -114,18 +114,18 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 		MapDataObject* o = new MapDataObject();
 		o->points = completedRings[i];
 		if (clockwise) {
-			waterFound ++;
+			waterFound++;
 			o->types.push_back(tag_value("natural", "coastline"));
 		} else {
-		 	landFound ++;
+			landFound++;
 			o->types.push_back(tag_value("natural", "land"));
 		}
 		o->id = dbId--;
 		o->area = true;
 		res.push_back(FoundMapDataObject(o, NULL, zoom));
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,  "Ocean: islands %d, closed water %d, coastline touches screen %d",
-			landFound, waterFound, coastlineCrossScreen);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Ocean: islands %d, closed water %d, coastline touches screen %d",
+					  landFound, waterFound, coastlineCrossScreen);
 	if (!waterFound && !coastlineCrossScreen) {
 		// add complete water tile
 		MapDataObject* o = new MapDataObject();
@@ -137,7 +137,6 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
 		o->id = dbId--;
 		o->types.push_back(tag_value("natural", "coastline"));
 		res.push_back(FoundMapDataObject(o, NULL, zoom));
-
 	}
 	return true;
 }
@@ -158,69 +157,66 @@ bool processCoastlines(std::vector<FoundMapDataObject>&  coastLines, int leftX, 
  */
 
 bool linesIntersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
-    
-    // Return false if either of the lines have zero length
-    if ((x1 == x2 && y1 == y2) ||
-        (x3 == x4 && y3 == y4)){
-        return false;
-    }
-    
-    // Fastest method, based on Franklin Antonio's "Faster Line Segment Intersection" topic "in Graphics Gems III" book (http://www.graphicsgems.org/)
-    
-    double ax = x2-x1;
-    double ay = y2-y1;
-    double bx = x3-x4;
-    double by = y3-y4;
-    double cx = x1-x3;
-    double cy = y1-y3;
-    
-    
-    double alphaNumerator = by*cx - bx*cy;
-    double commonDenominator = ay*bx - ax*by;
-    if (commonDenominator > 0){
-        if (alphaNumerator < 0 || alphaNumerator > commonDenominator){
-            return false;
-        }
-    } else if (commonDenominator < 0){
-        if (alphaNumerator > 0 || alphaNumerator < commonDenominator){
-            return false;
-        }
-    }
-    
-    double betaNumerator = ax*cy - ay*cx;
-    if (commonDenominator > 0){
-        if (betaNumerator < 0 || betaNumerator > commonDenominator){
-            return false;
-        }
-    } else if (commonDenominator < 0){
-        if (betaNumerator > 0 || betaNumerator < commonDenominator){
-            return false;
-        }
-    }
-    
-    if (commonDenominator == 0){
-        // This code wasn't in Franklin Antonio's method. It was added by Keith Woodward.
-        // The lines are parallel.
-        // Check if they're collinear.
-        double y3LessY1 = y3-y1;
-        double collinearityTestForP3 = x1*(y2-y3) + x2*(y3LessY1) + x3*(y1-y2);   // see http://mathworld.wolfram.com/Collinear.html
-        // If p3 is collinear with p1 and p2 then p4 will also be collinear, since p1-p2 is parallel with p3-p4
-        
-        if (collinearityTestForP3 == 0){
-            // The lines are collinear. Now check if they overlap.
-            if ((x1 >= x3 && x1 <= x4) || (x1 <= x3 && x1 >= x4) ||
-                (x2 >= x3 && x2 <= x4) || (x2 <= x3 && x2 >= x4) ||
-                (x3 >= x1 && x3 <= x2) || (x3 <= x1 && x3 >= x2)){
-                if ((y1 >= y3 && y1 <= y4) || (y1 <= y3 && y1 >= y4) ||
-                    (y2 >= y3 && y2 <= y4) || (y2 <= y3 && y2 >= y4) ||
-                    (y3 >= y1 && y3 <= y2) || (y3 <= y1 && y3 >= y2)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    return true;
+	// Return false if either of the lines have zero length
+	if ((x1 == x2 && y1 == y2) || (x3 == x4 && y3 == y4)) {
+		return false;
+	}
+
+	// Fastest method, based on Franklin Antonio's "Faster Line Segment Intersection" topic "in Graphics Gems III" book
+	// (http://www.graphicsgems.org/)
+
+	double ax = x2 - x1;
+	double ay = y2 - y1;
+	double bx = x3 - x4;
+	double by = y3 - y4;
+	double cx = x1 - x3;
+	double cy = y1 - y3;
+
+	double alphaNumerator = by * cx - bx * cy;
+	double commonDenominator = ay * bx - ax * by;
+	if (commonDenominator > 0) {
+		if (alphaNumerator < 0 || alphaNumerator > commonDenominator) {
+			return false;
+		}
+	} else if (commonDenominator < 0) {
+		if (alphaNumerator > 0 || alphaNumerator < commonDenominator) {
+			return false;
+		}
+	}
+
+	double betaNumerator = ax * cy - ay * cx;
+	if (commonDenominator > 0) {
+		if (betaNumerator < 0 || betaNumerator > commonDenominator) {
+			return false;
+		}
+	} else if (commonDenominator < 0) {
+		if (betaNumerator > 0 || betaNumerator < commonDenominator) {
+			return false;
+		}
+	}
+
+	if (commonDenominator == 0) {
+		// This code wasn't in Franklin Antonio's method. It was added by Keith Woodward.
+		// The lines are parallel.
+		// Check if they're collinear.
+		double y3LessY1 = y3 - y1;
+		double collinearityTestForP3 =
+			x1 * (y2 - y3) + x2 * (y3LessY1) + x3 * (y1 - y2);	// see http://mathworld.wolfram.com/Collinear.html
+		// If p3 is collinear with p1 and p2 then p4 will also be collinear, since p1-p2 is parallel with p3-p4
+
+		if (collinearityTestForP3 == 0) {
+			// The lines are collinear. Now check if they overlap.
+			if ((x1 >= x3 && x1 <= x4) || (x1 <= x3 && x1 >= x4) || (x2 >= x3 && x2 <= x4) || (x2 <= x3 && x2 >= x4) ||
+				(x3 >= x1 && x3 <= x2) || (x3 <= x1 && x3 >= x2)) {
+				if ((y1 >= y3 && y1 <= y4) || (y1 <= y3 && y1 >= y4) || (y2 >= y3 && y2 <= y4) ||
+					(y2 <= y3 && y2 >= y4) || (y3 >= y1 && y3 <= y2) || (y3 <= y1 && y3 >= y2)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	return true;
 }
 
 // Copied from MapAlgorithms
@@ -246,8 +242,8 @@ int ray_intersect_x(int prevX, int prevY, int x, int y, int middleY) {
 			return x;
 		}
 		// that tested on all cases (left/right)
-		double rx = x + ((double) middleY - y) * ((double) x - prevX) / (((double) y - prevY));
-		return (int) rx;
+		double rx = x + ((double)middleY - y) * ((double)x - prevX) / (((double)y - prevY));
+		return (int)rx;
 	}
 }
 
@@ -276,7 +272,7 @@ bool isClockwiseWay(std::vector<int_pair>& c) {
 	for (size_t i = 1; i < c.size(); i++) {
 		int x = c.at(i).first;
 		int y = c.at(i).second;
-		int rX = ray_intersect_x(prevX, prevY, x, y, (int) middleY);
+		int rX = ray_intersect_x(prevX, prevY, x, y, (int)middleY);
 		if (rX != INT_MIN) {
 			bool skipSameSide = (y <= middleY) == (prevY <= middleY);
 			if (skipSameSide) {
@@ -312,10 +308,8 @@ bool isClockwiseWay(std::vector<int_pair>& c) {
 	return clockwiseSum >= 0;
 }
 
-
-
 void combineMultipolygonLine(std::vector<coordinates>& completedRings, std::vector<coordinates>& incompletedRings,
-			coordinates& coordinates) {
+							 coordinates& coordinates) {
 	if (coordinates.size() > 0) {
 		if (coordinates.at(0) == coordinates.at(coordinates.size() - 1)) {
 			completedRings.push_back(coordinates);
@@ -325,12 +319,12 @@ void combineMultipolygonLine(std::vector<coordinates>& completedRings, std::vect
 				bool remove = false;
 				std::vector<int_pair> i = incompletedRings.at(k);
 				if (coordinates.at(0) == i.at(i.size() - 1)) {
-					std::vector<int_pair>::iterator tit =  coordinates.begin();
+					std::vector<int_pair>::iterator tit = coordinates.begin();
 					i.insert(i.end(), ++tit, coordinates.end());
 					remove = true;
 					coordinates = i;
 				} else if (coordinates.at(coordinates.size() - 1) == i.at(0)) {
-					std::vector<int_pair>::iterator tit =  i.begin();
+					std::vector<int_pair>::iterator tit = i.begin();
 					coordinates.insert(coordinates.end(), ++tit, i.end());
 					remove = true;
 				}
@@ -364,14 +358,15 @@ int safelyAddDelta(int number, int delta) {
 	return res;
 }
 
-void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std::vector<std::vector<int_pair> >& completedRings,
-		int leftX, int rightX, int bottomY, int topY, int64_t dbId, int zoom) {
+void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess,
+						   std::vector<std::vector<int_pair> >& completedRings, int leftX, int rightX, int bottomY,
+						   int topY, int64_t dbId, int zoom) {
 	std::set<int> nonvisitedRings;
-	std::vector<coordinates > incompletedRings(toProccess);
+	std::vector<coordinates> incompletedRings(toProccess);
 	toProccess.clear();
-	std::vector<coordinates >::iterator ir = incompletedRings.begin();
+	std::vector<coordinates>::iterator ir = incompletedRings.begin();
 	int j = 0;
-	for (j = 0; ir != incompletedRings.end(); ir++,j++) {
+	for (j = 0; ir != incompletedRings.end(); ir++, j++) {
 		int x = ir->at(0).first;
 		int y = ir->at(0).second;
 		int sx = ir->at(ir->size() - 1).first;
@@ -383,12 +378,13 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		// However this situation could happen because of broken multipolygons (so it should data causes app error)
 		// that's why these exceptions could be replaced with return; statement.
 		if (!end || !st) {
-			 printLine(OsmAnd::LogSeverityLevel::Error, 
-			 	"Error processing multipolygon", 0, *ir, leftX, rightX, bottomY, topY);
+			printLine(OsmAnd::LogSeverityLevel::Error, "Error processing multipolygon", 0, *ir, leftX, rightX, bottomY,
+					  topY);
 			toProccess.push_back(*ir);
 		} else {
-			if(DEBUG_LINE) {
-				printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean line touch:  ", -dbId, *ir, leftX, rightX, bottomY, topY);
+			if (DEBUG_LINE) {
+				printLine(OsmAnd::LogSeverityLevel::Debug, "Ocean line touch:  ", -dbId, *ir, leftX, rightX, bottomY,
+						  topY);
 			}
 			nonvisitedRings.insert(j);
 		}
@@ -405,14 +401,13 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 		const int UNDEFINED_MIN_DIFF = -1 - EVAL_DELTA;
 		const double h = bottomY - topY;
 		const double w = rightX - leftX;
-		if(DEBUG_LINE) {
-			 OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %.4f %.4f %.4f %.4f", 
-					(ir->at(0).first - leftX) / w, (ir->at(0).second - topY) / h,
-					(x - leftX) / w, (y - topY) / h);
-
+		if (DEBUG_LINE) {
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Visit incomplete ring %.4f %.4f %.4f %.4f",
+							  (ir->at(0).first - leftX) / w, (ir->at(0).second - topY) / h, (x - leftX) / w,
+							  (y - topY) / h);
 		}
 		while (true) {
-			int st = 0; // st already checked to be one of the four
+			int st = 0;	 // st already checked to be one of the four
 			if (y == topY) {
 				st = 0;
 			} else if (x == rightX) {
@@ -433,15 +428,15 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 					if (nonvisitedRings.find(cnik) == nonvisitedRings.end()) {
 						continue;
 					}
-					int csx = cni -> at(0).first;
-					int csy = cni -> at(0).second;
+					int csx = cni->at(0).first;
+					int csy = cni->at(0).second;
 					bool lastSegment = h == st + 4;
 					int currentStartPoint = 0;
 					int prevEndPoint = 0;
 					int currentStartPointIsGreater = -1;
 					if (h % 4 == 0 && csy == topY) {
 						// top
-						if(csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
+						if (csy == topY && csx >= safelyAddDelta(x, -EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (csx - x) <= mindiff) {
 								mindiff = (csx - x);
 								nextRingIndex = cnik;
@@ -463,7 +458,7 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 								nextRingIndex = cnik;
 							}
 						}
-					} else if (h % 4 == 3 ) {
+					} else if (h % 4 == 3) {
 						// left
 						if (csx == leftX && csy <= safelyAddDelta(y, EVAL_DELTA)) {
 							if (mindiff == UNDEFINED_MIN_DIFF || (y - csy) <= mindiff) {
@@ -472,10 +467,10 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 							}
 						}
 					}
-					if(currentStartPointIsGreater >= 0) {
-						bool checkMinDiff = currentStartPointIsGreater == 1 ?
-							prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA):
-							safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
+					if (currentStartPointIsGreater >= 0) {
+						bool checkMinDiff = currentStartPointIsGreater == 1
+												? prevEndPoint <= safelyAddDelta(currentStartPoint, EVAL_DELTA)
+												: safelyAddDelta(prevEndPoint, EVAL_DELTA) >= currentStartPoint;
 						int delta = abs(currentStartPoint - prevEndPoint);
 						if (checkMinDiff && (mindiff == UNDEFINED_MIN_DIFF || delta <= mindiff)) {
 							mindiff = delta;
@@ -508,16 +503,17 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 					ir->push_back(int_pair(x, y));
 				}
 
-			} // END go clockwise around rectangle
+			}  // END go clockwise around rectangle
 
 			if (nextRingIndex == -1) {
 				// error - current start should always be found
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX, y - topY);
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring %d %d", x - leftX,
+								  y - topY);
 				ir->push_back(ir->at(0));
 				nonvisitedRings.erase(j);
 				break;
 			} else if (nextRingIndex == j) {
-				if(DEBUG_LINE) {
+				if (DEBUG_LINE) {
 					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Ring is closed as island");
 				}
 				ir->push_back(ir->at(0));
@@ -532,27 +528,24 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 				// get last point and start again going clockwise
 				x = ir->at(ir->size() - 1).first;
 				y = ir->at(ir->size() - 1).second;
-				if(DEBUG_LINE) {
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line from %.4f %.4f to %.4f %.4f", 
-						(csx - leftX) / w, (csy - topY) / h, (x - leftX) / w, (y - topY) / h);
+				if (DEBUG_LINE) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Attach line from %.4f %.4f to %.4f %.4f",
+									  (csx - leftX) / w, (csy - topY) / h, (x - leftX) / w, (y - topY) / h);
 				}
 			}
 		}
 
 		completedRings.push_back(*ir);
 	}
-
 }
 
-
-
-	/**
+/**
  * @return -1 if there is no instersection or x<<32 | y
  */
 bool calculateIntersection(int x, int y, int px, int py, int leftX, int rightX, int bottomY, int topY, int_pair& b) {
 	// firstly try to search if the line goes in
 	if (py < topY && y >= topY) {
-		int tx = (int) (px + ((double) (x - px) * (topY - py)) / (y - py));
+		int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
 		if (leftX <= tx && tx <= rightX) {
 			b.first = tx;
 			b.second = topY;
@@ -560,7 +553,7 @@ bool calculateIntersection(int x, int y, int px, int py, int leftX, int rightX, 
 		}
 	}
 	if (py > bottomY && y <= bottomY) {
-		int tx = (int) (px + ((double) (x - px) * (py - bottomY)) / (py - y));
+		int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
 		if (leftX <= tx && tx <= rightX) {
 			b.first = tx;
 			b.second = bottomY;
@@ -568,27 +561,25 @@ bool calculateIntersection(int x, int y, int px, int py, int leftX, int rightX, 
 		}
 	}
 	if (px < leftX && x >= leftX) {
-		int ty = (int) (py + ((double) (y - py) * (leftX - px)) / (x - px));
+		int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
 		if (ty >= topY && ty <= bottomY) {
 			b.first = leftX;
 			b.second = ty;
 			return true;
 		}
-
 	}
 	if (px > rightX && x <= rightX) {
-		int ty = (int) (py + ((double) (y - py) * (px - rightX)) / (px - x));
+		int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
 		if (ty >= topY && ty <= bottomY) {
 			b.first = rightX;
 			b.second = ty;
 			return true;
 		}
-
 	}
 
 	// try to search if point goes out
 	if (py > topY && y <= topY) {
-		int tx = (int) (px + ((double) (x - px) * (topY - py)) / (y - py));
+		int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
 		if (leftX <= tx && tx <= rightX) {
 			b.first = tx;
 			b.second = topY;
@@ -596,7 +587,7 @@ bool calculateIntersection(int x, int y, int px, int py, int leftX, int rightX, 
 		}
 	}
 	if (py < bottomY && y >= bottomY) {
-		int tx = (int) (px + ((double) (x - px) * (py - bottomY)) / (py - y));
+		int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
 		if (leftX <= tx && tx <= rightX) {
 			b.first = tx;
 			b.second = bottomY;
@@ -604,35 +595,33 @@ bool calculateIntersection(int x, int y, int px, int py, int leftX, int rightX, 
 		}
 	}
 	if (px > leftX && x <= leftX) {
-		int ty = (int) (py + ((double) (y - py) * (leftX - px)) / (x - px));
+		int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
 		if (ty >= topY && ty <= bottomY) {
 			b.first = leftX;
 			b.second = ty;
 			return true;
 		}
-
 	}
 	if (px < rightX && x >= rightX) {
-		int ty = (int) (py + ((double) (y - py) * (px - rightX)) / (px - x));
+		int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
 		if (ty >= topY && ty <= bottomY) {
 			b.first = rightX;
 			b.second = ty;
 			return true;
 		}
-
 	}
 
 	if (px == rightX || px == leftX || py == topY || py == bottomY) {
 		b.first = px;
 		b.second = py;
-//		return true;
+		//		return true;
 		// Is it right? to not return anything?
 	}
 	return false;
 }
 
 bool calculateLineCoordinates(bool inside, int x, int y, bool pinside, int px, int py, int leftX, int rightX,
-		int bottomY, int topY, std::vector<int_pair>& coordinates) {
+							  int bottomY, int topY, std::vector<int_pair>& coordinates) {
 	bool lineEnded = false;
 	int_pair b(x, y);
 	if (pinside) {

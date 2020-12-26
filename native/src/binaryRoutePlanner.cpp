@@ -518,8 +518,8 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			//				long nt = System.nanoTime();
 			//				float devDistance = ctx.precalculatedRouteDirection.getDeviationDistance(x, y);
 			//				// 1. linear method
-			//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x, y) /
-			//ctx.config->DEVIATION_RADIUS);
+			//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x, y)
+			/// ctx.config->DEVIATION_RADIUS);
 			//				// 2. exponential method
 			//				segmentDist = segmentDist * (float) Math.pow(1.5, devDistance / 500);
 			//				ctx.timeNanoToCalcDeviation += (System.nanoTime() - nt);

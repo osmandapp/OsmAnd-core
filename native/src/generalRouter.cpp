@@ -24,28 +24,14 @@ const char* GeneralRouterConstants::MAX_SPEED = "max_speed";
 static const bool USE_CACHE = true;
 
 GeneralRouter::GeneralRouter()
-	: profile(GeneralRouterProfile::CAR),
-	  _restrictionsAware(true),
-	  heightObstacles(false),
-	  minSpeed(0.28),
-	  defaultSpeed(1.0),
-	  maxSpeed(10.0),
-	  shortestRoute(false),
-	  allowPrivate(false) {
+	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minSpeed(0.28),
+	  defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 }
 
 GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes)
-	: profile(GeneralRouterProfile::CAR),
-	  _restrictionsAware(true),
-	  heightObstacles(false),
-	  leftTurn(.0),
-	  roundaboutTurn(.0),
-	  rightTurn(.0),
-	  minSpeed(0.28),
-	  defaultSpeed(1.0),
-	  maxSpeed(10.0),
-	  shortestRoute(false),
+	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0),
+	  roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
 	  allowPrivate(false) {
 	this->profile = profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
@@ -59,16 +45,8 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_S
 }
 
 GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params)
-	: profile(GeneralRouterProfile::CAR),
-	  _restrictionsAware(true),
-	  heightObstacles(false),
-	  leftTurn(.0),
-	  roundaboutTurn(.0),
-	  rightTurn(.0),
-	  minSpeed(0.28),
-	  defaultSpeed(1.0),
-	  maxSpeed(10.0),
-	  shortestRoute(false),
+	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0),
+	  roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
 	  allowPrivate(false) {
 	this->profile = parent.profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
