@@ -4,21 +4,22 @@
 #include <SkBitmap.h>
 #include <SkCanvas.h>
 #include <SkCodec.h>
-#include <SkStream.h>
 #include <SkImageGenerator.h>
-#include "java_renderRules.h"
+#include <SkStream.h>
+
 #include "CommonCollections.h"
-#include "java_wrap.h"
 #include "binaryRead.h"
-#include "rendering.h"
 #include "binaryRoutePlanner.h"
+#include "java_renderRules.h"
+#include "java_wrap.h"
+#include "rendering.h"
 #include "routingContext.h"
 #include "transportRoutePlanner.h"
-#include "transportRoutingContext.h"
-#include "transportRoutingConfiguration.h"
 #include "transportRouteResult.h"
 #include "transportRouteResultSegment.h"
 #include "transportRouteSegment.h"
+#include "transportRoutingConfiguration.h"
+#include "transportRoutingContext.h"
 //#include "routingConfiguration.h"
 //#include "routeSegmentResult.h"
 //#include "routeSegment.h"
@@ -29,20 +30,19 @@
 JavaVM* globalJVM = NULL;
 void loadJniRenderingContext(JNIEnv* env);
 void loadJniRenderingRules(JNIEnv* env);
-jclass jclassIntArray ;
+jclass jclassIntArray;
 jclass jclassString;
 jclass jclassStringArray;
 jclass jclassLongArray;
 jclass jclassDoubleArray;
 jmethodID jmethod_Object_toString = NULL;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order, bool visible) ;
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order,
+									bool visible);
 
-extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
-{
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
 	JNIEnv* globalJniEnv;
-	if(vm->GetEnv((void **)&globalJniEnv, JNI_VERSION_1_6))
-		return JNI_ERR; /* JNI version not supported */
+	if (vm->GetEnv((void**)&globalJniEnv, JNI_VERSION_1_6)) return JNI_ERR; /* JNI version not supported */
 	globalJVM = vm;
 	loadJniRenderingContext(globalJniEnv);
 	loadJniRenderingRules(globalJniEnv);
@@ -52,82 +52,76 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 	jclassStringArray = findGlobalClass(globalJniEnv, "[Ljava/lang/String;");
 	jclassString = findGlobalClass(globalJniEnv, "java/lang/String");
 
-
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "JNI_OnLoad completed");
-	
+
 	return JNI_VERSION_1_6;
 }
 
-
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteNativeRoutingContext(JNIEnv* ienv, jobject obj, jlong searchResult) {
-	RoutingContext *result = (RoutingContext*)searchResult;
-	if (result != NULL){
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteNativeRoutingContext(JNIEnv* ienv, jobject obj,
+																						   jlong searchResult) {
+	RoutingContext* result = (RoutingContext*)searchResult;
+	if (result != NULL) {
 		delete result;
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResult(JNIEnv* ienv, jobject obj, jlong searchResult) {
-	ResultPublisher* result = (ResultPublisher*) searchResult;
-	if(result != NULL){
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResult(JNIEnv* ienv, jobject obj,
+																				   jlong searchResult) {
+	ResultPublisher* result = (ResultPublisher*)searchResult;
+	if (result != NULL) {
 		delete result;
 	}
 }
 
-
-
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRenderingContextHandle(JNIEnv* ienv,
-		jobject obj, jlong searchResult) {
-	RenderingContextResults* result = (RenderingContextResults*) searchResult;
-	if(result != NULL){
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRenderingContextHandle(JNIEnv* ienv, jobject obj,
+																							 jlong searchResult) {
+	RenderingContextResults* result = (RenderingContextResults*)searchResult;
+	if (result != NULL) {
 		delete result;
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_closeBinaryMapFile(JNIEnv* ienv,
-		jobject obj, jobject path) {
-	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_closeBinaryMapFile(JNIEnv* ienv, jobject obj,
+																				   jobject path) {
+	const char* utf = ienv->GetStringUTFChars((jstring)path, NULL);
 	std::string inputName(utf);
-	ienv->ReleaseStringUTFChars((jstring) path, utf);
+	ienv->ReleaseStringUTFChars((jstring)path, utf);
 	closeBinaryMapFile(inputName);
 }
 
-
-extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initCacheMapFiles(JNIEnv* ienv,
-		jobject obj,
-		jobject path) {
-	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
+extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initCacheMapFiles(JNIEnv* ienv, jobject obj,
+																					  jobject path) {
+	const char* utf = ienv->GetStringUTFChars((jstring)path, NULL);
 	std::string inputName(utf);
-	ienv->ReleaseStringUTFChars((jstring) path, utf);
+	ienv->ReleaseStringUTFChars((jstring)path, utf);
 	return initMapFilesFromCache(inputName);
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initBinaryMapFile(JNIEnv* ienv,
-		jobject obj, jobject path, jboolean useLive) {
+extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initBinaryMapFile(JNIEnv* ienv, jobject obj,
+																					  jobject path, jboolean useLive) {
 	// Verify that the version of the library that we linked against is
-	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
+	const char* utf = ienv->GetStringUTFChars((jstring)path, NULL);
 	std::string inputName(utf);
-	ienv->ReleaseStringUTFChars((jstring) path, utf);
+	ienv->ReleaseStringUTFChars((jstring)path, utf);
 	BinaryMapFile* fl = initBinaryMapFile(inputName, useLive, false);
-	if(fl == NULL) {
+	if (fl == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File %s was not initialized", inputName.c_str());
 	}
 	return fl != NULL;
 }
 
-
-extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initFontType(JNIEnv* ienv,
-		jobject obj, jbyteArray byteData, jstring name, jboolean bold, jboolean italic) {
-	
+extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initFontType(JNIEnv* ienv, jobject obj,
+																				 jbyteArray byteData, jstring name,
+																				 jboolean bold, jboolean italic) {
 	std::string fName = getString(ienv, name);
 	jbyte* be = ienv->GetByteArrayElements(byteData, NULL);
 	jsize sz = ienv->GetArrayLength(byteData);
 	globalFontRegistry.registerStream((const char*)be, sz, fName, bold, italic);
-		
+
 	ienv->ReleaseByteArrayElements(byteData, be, JNI_ABORT);
 	ienv->DeleteLocalRef(byteData);
 	return true;
 }
-
 
 // Global object
 UNORDERED(map)<std::string, RenderingRulesStorage*> cachedStorages;
@@ -141,9 +135,8 @@ RenderingRulesStorage* getStorage(JNIEnv* env, jobject storage) {
 	return cachedStorages[hash];
 }
 
-
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_initRenderingRulesStorage(JNIEnv* ienv,
-		jobject obj, jobject storage) {
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_initRenderingRulesStorage(JNIEnv* ienv, jobject obj,
+																						  jobject storage) {
 	getStorage(ienv, storage);
 }
 
@@ -156,41 +149,39 @@ RenderingRuleSearchRequest* initSearchRequest(JNIEnv* env, jobject renderingRule
 	return res;
 }
 
-
-extern "C" JNIEXPORT jlong JNICALL Java_net_osmand_NativeLibrary_searchNativeObjectsForRendering(JNIEnv* ienv,
-		jobject obj, jint sleft, jint sright, jint stop, jint sbottom, jint zoom,
-		jobject renderingRuleSearchRequest, bool skipDuplicates,
-		int renderRouteDataFile , // deprecated parameter
-		jobject objInterrupted, jstring msgNothingFound) {
+extern "C" JNIEXPORT jlong JNICALL Java_net_osmand_NativeLibrary_searchNativeObjectsForRendering(
+	JNIEnv* ienv, jobject obj, jint sleft, jint sright, jint stop, jint sbottom, jint zoom,
+	jobject renderingRuleSearchRequest, bool skipDuplicates,
+	int renderRouteDataFile,  // deprecated parameter
+	jobject objInterrupted, jstring msgNothingFound) {
 	RenderingRuleSearchRequest* req = initSearchRequest(ienv, renderingRuleSearchRequest);
 	jfieldID interruptedField = 0;
-	if(objInterrupted != NULL) {
+	if (objInterrupted != NULL) {
 		jclass clObjInterrupted = ienv->GetObjectClass(objInterrupted);
 		interruptedField = getFid(ienv, clObjInterrupted, "interrupted", "Z");
 		ienv->DeleteLocalRef(clObjInterrupted);
 	}
 	jfieldID renderedStateField = 0;
 	int renderedState = 0;
-	if(objInterrupted != NULL) {
+	if (objInterrupted != NULL) {
 		jclass clObjInterrupted = ienv->GetObjectClass(objInterrupted);
 		renderedStateField = getFid(ienv, clObjInterrupted, "renderedState", "I");
 		ienv->DeleteLocalRef(clObjInterrupted);
 	}
 
-	ResultJNIPublisher* j = new ResultJNIPublisher( objInterrupted, interruptedField, ienv);
+	ResultJNIPublisher* j = new ResultJNIPublisher(objInterrupted, interruptedField, ienv);
 	SearchQuery q(sleft, sright, stop, sbottom, req, j);
 	q.zoom = zoom;
 
-
-	/*ResultPublisher* res =*/ searchObjectsForRendering(&q, skipDuplicates, getString(ienv, msgNothingFound), renderedState);
-	if(objInterrupted != NULL) {
+	/*ResultPublisher* res =*/searchObjectsForRendering(&q, skipDuplicates, getString(ienv, msgNothingFound),
+														renderedState);
+	if (objInterrupted != NULL) {
 		ienv->SetIntField(objInterrupted, renderedStateField, renderedState);
 	}
-	
-	delete req;
-	return (jlong) j;
-}
 
+	delete req;
+	return (jlong)j;
+}
 
 //////////////////////////////////////////
 ///////////// JNI RENDERING //////////////
@@ -234,22 +225,23 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 
 // libJniGraphics interface
 
-extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect( JNIEnv* ienv, jobject obj,
-    jobject renderingContext, jlong searchResult, jobject targetBitmap, jobject renderingRuleSearchRequest) {
-
+extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect(
+	JNIEnv* ienv, jobject obj, jobject renderingContext, jlong searchResult, jobject targetBitmap,
+	jobject renderingRuleSearchRequest) {
 	// Gain information about bitmap
 	AndroidBitmapInfo bitmapInfo;
-	if(AndroidBitmap_getInfo(ienv, targetBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_getInfo");
+	if (AndroidBitmap_getInfo(ienv, targetBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_getInfo");
 
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d s:%d f:%d!", bitmapInfo.width, bitmapInfo.height, bitmapInfo.stride, bitmapInfo.format);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d s:%d f:%d!",
+					  bitmapInfo.width, bitmapInfo.height, bitmapInfo.stride, bitmapInfo.format);
 
 	SkBitmap* bitmap = new SkBitmap();
 	SkImageInfo imageInfo;
-	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
+	if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", bitmapInfo.stride);
 		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kN32_SkColorType, kPremul_SkAlphaType);
-	} else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
+	} else if (bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", bitmapInfo.stride);
 		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kRGB_565_SkColorType, kOpaque_SkAlphaType);
 	} else {
@@ -257,10 +249,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	}
 
 	void* lockedBitmapData = NULL;
-	if(AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
+	if (AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS ||
+		!lockedBitmapData) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_lockPixels");
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmapInfo.stride * bitmapInfo.height, lockedBitmapData);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmapInfo.stride * bitmapInfo.height,
+					  lockedBitmapData);
 
 	bitmap->installPixels(imageInfo, lockedBitmapData, bitmapInfo.stride);
 
@@ -271,17 +265,16 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	RenderingRuleSearchRequest* req = initSearchRequest(ienv, renderingRuleSearchRequest);
 	JNIRenderingContext rc;
 	pullFromJavaRenderingContext(ienv, renderingContext, &rc);
-	ResultPublisher* result = ((ResultPublisher*) searchResult);
+	ResultPublisher* result = ((ResultPublisher*)searchResult);
 	fillRenderingAttributes(rc, req);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Rendering image");
 	initObjects.Pause();
-
 
 	// Main part do rendering
 	rc.nativeOperations.Start();
 	SkCanvas* canvas = new SkCanvas(*bitmap);
 	canvas->drawColor(rc.getDefaultColor());
-	if(result != NULL) {
+	if (result != NULL) {
 		doRendering(result->result, canvas, req, &rc);
 	}
 
@@ -289,7 +282,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 
 	pushToJavaRenderingContext(ienv, renderingContext, &rc);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End Rendering image");
-	if(AndroidBitmap_unlockPixels(ienv, targetBitmap) != ANDROID_BITMAP_RESUT_SUCCESS) {
+	if (AndroidBitmap_unlockPixels(ienv, targetBitmap) != ANDROID_BITMAP_RESUT_SUCCESS) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_unlockPixels");
 	}
 
@@ -304,9 +297,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	jmethodID resultClassCtorId = ienv->GetMethodID(resultClass, "<init>", "(Ljava/nio/ByteBuffer;)V");
 
 #ifdef DEBUG_NAT_OPERATIONS
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, native op %d) ", (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, native op %d) ",
+					  (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
 #else
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, rendering %d) ", (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, rendering %d) ",
+					  (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
 #endif
 
 	/* Construct a result object */
@@ -316,18 +311,16 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 }
 #endif
 
-
 void* bitmapData = NULL;
 size_t bitmapDataSize = 0;
-extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRenderingIndirect( JNIEnv* ienv,
-		jobject obj, jobject renderingContext, jlong searchResult, jboolean isTransparent,
-		jobject renderingRuleSearchRequest, jboolean encodePNG) {
-
-
+extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRenderingIndirect(
+	JNIEnv* ienv, jobject obj, jobject renderingContext, jlong searchResult, jboolean isTransparent,
+	jobject renderingRuleSearchRequest, jboolean encodePNG) {
 	JNIRenderingContext rc;
 	pullFromJavaRenderingContext(ienv, renderingContext, &rc);
 
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d!", rc.getWidth(), rc.getHeight());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d!", rc.getWidth(),
+					  rc.getHeight());
 
 	SkBitmap* bitmap = new SkBitmap();
 	SkImageInfo imageInfo;
@@ -354,13 +347,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 
 	RenderingRuleSearchRequest* req = initSearchRequest(ienv, renderingRuleSearchRequest);
 
-	ResultPublisher* result = ((ResultPublisher*) searchResult);
+	ResultPublisher* result = ((ResultPublisher*)searchResult);
 	//    std::vector <BaseMapDataObject* > mapDataObjects = marshalObjects(binaryMapDataObjects);
 
 	initObjects.Pause();
 	// Main part do rendering
 	fillRenderingAttributes(rc, req);
-
 
 	SkCanvas* canvas = new SkCanvas(*bitmap);
 	canvas->drawColor(rc.getDefaultColor());
@@ -374,15 +366,17 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	jmethodID resultClassCtorId = ienv->GetMethodID(resultClass, "<init>", "(Ljava/nio/ByteBuffer;)V");
 
 #ifdef DEBUG_NAT_OPERATIONS
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, native op %d) ", (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, native op %d) ",
+					  (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
 #else
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, rendering %d) ", (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Native ok (init %d, rendering %d) ",
+					  (int)initObjects.GetElapsedMs(), (int)rc.nativeOperations.GetElapsedMs());
 #endif
 	// Allocate ctor paramters
 	jobject bitmapBuffer;
-	if(encodePNG) { 
+	if (encodePNG) {
 		SkDynamicMemoryWStream* stream = new SkDynamicMemoryWStream();
-        if (SkEncodeImage(stream, *bitmap, SkEncodedImageFormat::kPNG, 100)) {
+		if (SkEncodeImage(stream, *bitmap, SkEncodedImageFormat::kPNG, 100)) {
 			// clean previous data
 			if (bitmapData != NULL) {
 				free(bitmapData);
@@ -391,8 +385,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 			bitmapData = malloc(bitmapDataSize);
 
 			stream->copyTo(bitmapData);
-        }
-        delete stream;
+		}
+		delete stream;
 	}
 	bitmapBuffer = ienv->NewDirectByteBuffer(bitmapData, bitmapDataSize);
 
@@ -408,7 +402,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 
 	return resultObject;
 }
-
 
 ///////////////////////////////////////////////
 //////////  JNI Rendering Context //////////////
@@ -454,7 +447,7 @@ jfieldID jfield_RouteCalculationProgress_timeToFindInitialSegments = NULL;
 jfieldID jfield_RouteCalculationProgress_timeToCalculate = NULL;
 jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
-jclass jclass_RenderedObject = NULL;	
+jclass jclass_RenderedObject = NULL;
 jmethodID jmethod_RenderedObject_putTag = NULL;
 jmethodID jmethod_RenderedObject_setIconRes = NULL;
 jmethodID jmethod_RenderedObject_addLocation = NULL;
@@ -526,7 +519,7 @@ jmethodID jmethod_RouteAttributeEvalRule_getExpressions = NULL;
 
 jclass jclass_RouteAttributeExpression = NULL;
 jfieldID jfield_RouteAttributeExpression_values = NULL;
-jfieldID jfield_RouteAttributeExpression_expressionType= NULL;
+jfieldID jfield_RouteAttributeExpression_expressionType = NULL;
 jfieldID jfield_RouteAttributeExpression_valueType = NULL;
 
 jclass jclass_PrecalculatedRouteDirection = NULL;
@@ -535,7 +528,7 @@ jfieldID jfield_PrecalculatedRouteDirection_pointsY = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_pointsX = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_minSpeed = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_maxSpeed = NULL;
-jfieldID jfield_PrecalculatedRouteDirection_followNext= NULL;
+jfieldID jfield_PrecalculatedRouteDirection_followNext = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_endFinishTime = NULL;
 jfieldID jfield_PrecalculatedRouteDirection_startFinishTime = NULL;
 
@@ -583,10 +576,9 @@ jmethodID jmethod_RouteDataObject_init = NULL;
 jclass jclass_NativeRouteSearchResult = NULL;
 jmethodID jmethod_NativeRouteSearchResult_init = NULL;
 
-
 jclass jclass_RouteSubregion = NULL;
 jfieldID jfield_RouteSubregion_length = NULL;
-jfieldID jfield_RouteSubregion_filePointer= NULL;
+jfieldID jfield_RouteSubregion_filePointer = NULL;
 jfieldID jfield_RouteSubregion_left = NULL;
 jfieldID jfield_RouteSubregion_right = NULL;
 jfieldID jfield_RouteSubregion_top = NULL;
@@ -595,7 +587,7 @@ jfieldID jfield_RouteSubregion_shiftToData = NULL;
 
 jclass jclass_RouteRegion = NULL;
 jfieldID jfield_RouteRegion_length = NULL;
-jfieldID jfield_RouteRegion_filePointer= NULL;
+jfieldID jfield_RouteRegion_filePointer = NULL;
 
 jclass jclass_RouteSegmentResult = NULL;
 jclass jclass_RouteSegmentResultAr = NULL;
@@ -608,7 +600,7 @@ jclass jclass_NativeTransportRoutingResult = NULL;
 jfieldID jfield_NativeTransportRoutingResult_segments = NULL;
 jfieldID jfield_NativeTransportRoutingResult_finishWalkDist = NULL;
 jfieldID jfield_NativeTransportRoutingResult_routeTime = NULL;
-jmethodID jmethod_NativeTransportRoutingResult_init = NULL; 
+jmethodID jmethod_NativeTransportRoutingResult_init = NULL;
 
 jclass jclass_NativeTransportRouteResultSegment = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_route = NULL;
@@ -619,7 +611,7 @@ jfieldID jfield_NativeTransportRouteResultSegment_start = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_end = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_walkDist = NULL;
 jfieldID jfield_NativeTransportRouteResultSegment_depTime = NULL;
-jmethodID jmethod_NativeTransportRouteResultSegment_init = NULL; 
+jmethodID jmethod_NativeTransportRouteResultSegment_init = NULL;
 
 jclass jclass_NativeTransportRoute = NULL;
 jfieldID jfield_NativeTransportRoute_id = NULL;
@@ -642,7 +634,7 @@ jfieldID jfield_NativeTransportRoute_avgWaitIntervals = NULL;
 jfieldID jfield_NativeTransportRoute_waysIds = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLats = NULL;
 jfieldID jfield_NativeTransportRoute_waysNodesLons = NULL;
-jmethodID jmethod_NativeTransportRoute_init = NULL; 
+jmethodID jmethod_NativeTransportRoute_init = NULL;
 
 jclass jclass_NativeTransportStop = NULL;
 jfieldID jfield_NativeTransportStop_id = NULL;
@@ -666,35 +658,44 @@ jfieldID jfield_NativeTransportStop_pTStopExit_y31s = NULL;
 jfieldID jfield_NativeTransportStop_pTStopExit_refs = NULL;
 jmethodID jmethod_NativeTransportStop_init = NULL;
 
-
-
-void loadJniRenderingContext(JNIEnv* env)
-{
+void loadJniRenderingContext(JNIEnv* env) {
 	jclass_NativeTransportRoutingResult = findGlobalClass(env, "net/osmand/router/NativeTransportRoutingResult");
-	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments", "[Lnet/osmand/router/NativeTransportRouteResultSegment;");
-	jfield_NativeTransportRoutingResult_finishWalkDist = getFid(env, jclass_NativeTransportRoutingResult, "finishWalkDist", "D");
+	jfield_NativeTransportRoutingResult_segments = getFid(env, jclass_NativeTransportRoutingResult, "segments",
+														  "[Lnet/osmand/router/NativeTransportRouteResultSegment;");
+	jfield_NativeTransportRoutingResult_finishWalkDist =
+		getFid(env, jclass_NativeTransportRoutingResult, "finishWalkDist", "D");
 	jfield_NativeTransportRoutingResult_routeTime = getFid(env, jclass_NativeTransportRoutingResult, "routeTime", "D");
 	jmethod_NativeTransportRoutingResult_init = env->GetMethodID(jclass_NativeTransportRoutingResult, "<init>", "()V");
 
-	jclass_NativeTransportRouteResultSegment = findGlobalClass(env, "net/osmand/router/NativeTransportRouteResultSegment");
-	jfield_NativeTransportRouteResultSegment_route = getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/NativeTransportRoute;");
-	jfield_NativeTransportRouteResultSegment_walkTime = getFid(env, jclass_NativeTransportRouteResultSegment, "walkTime", "D");
-	jfield_NativeTransportRouteResultSegment_travelDistApproximate = getFid(env, jclass_NativeTransportRouteResultSegment, "travelDistApproximate", "D");
-	jfield_NativeTransportRouteResultSegment_travelTime = getFid(env, jclass_NativeTransportRouteResultSegment, "travelTime", "D");
-	jfield_NativeTransportRouteResultSegment_start = getFid(env, jclass_NativeTransportRouteResultSegment, "start", "I");
+	jclass_NativeTransportRouteResultSegment =
+		findGlobalClass(env, "net/osmand/router/NativeTransportRouteResultSegment");
+	jfield_NativeTransportRouteResultSegment_route =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "route", "Lnet/osmand/router/NativeTransportRoute;");
+	jfield_NativeTransportRouteResultSegment_walkTime =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "walkTime", "D");
+	jfield_NativeTransportRouteResultSegment_travelDistApproximate =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "travelDistApproximate", "D");
+	jfield_NativeTransportRouteResultSegment_travelTime =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "travelTime", "D");
+	jfield_NativeTransportRouteResultSegment_start =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "start", "I");
 	jfield_NativeTransportRouteResultSegment_end = getFid(env, jclass_NativeTransportRouteResultSegment, "end", "I");
-	jfield_NativeTransportRouteResultSegment_walkDist = getFid(env, jclass_NativeTransportRouteResultSegment, "walkDist", "D");
-	jfield_NativeTransportRouteResultSegment_depTime = getFid(env, jclass_NativeTransportRouteResultSegment, "depTime", "I");
-	jmethod_NativeTransportRouteResultSegment_init = env->GetMethodID(jclass_NativeTransportRouteResultSegment, "<init>", "()V");
+	jfield_NativeTransportRouteResultSegment_walkDist =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "walkDist", "D");
+	jfield_NativeTransportRouteResultSegment_depTime =
+		getFid(env, jclass_NativeTransportRouteResultSegment, "depTime", "I");
+	jmethod_NativeTransportRouteResultSegment_init =
+		env->GetMethodID(jclass_NativeTransportRouteResultSegment, "<init>", "()V");
 
 	jclass_NativeTransportStop = findGlobalClass(env, "net/osmand/router/NativeTransportStop");
-	jfield_NativeTransportStop_id = getFid(env, jclass_NativeTransportStop,  "id", "J");
-	jfield_NativeTransportStop_stopLat = getFid(env, jclass_NativeTransportStop,  "stopLat", "D");
-	jfield_NativeTransportStop_stopLon = getFid(env, jclass_NativeTransportStop,  "stopLon", "D");
-	jfield_NativeTransportStop_name = getFid(env, jclass_NativeTransportStop,  "name", "Ljava/lang/String;");
-	jfield_NativeTransportStop_enName = getFid(env, jclass_NativeTransportStop,  "enName", "Ljava/lang/String;");
+	jfield_NativeTransportStop_id = getFid(env, jclass_NativeTransportStop, "id", "J");
+	jfield_NativeTransportStop_stopLat = getFid(env, jclass_NativeTransportStop, "stopLat", "D");
+	jfield_NativeTransportStop_stopLon = getFid(env, jclass_NativeTransportStop, "stopLon", "D");
+	jfield_NativeTransportStop_name = getFid(env, jclass_NativeTransportStop, "name", "Ljava/lang/String;");
+	jfield_NativeTransportStop_enName = getFid(env, jclass_NativeTransportStop, "enName", "Ljava/lang/String;");
 	jfield_NativeTransportStop_namesLng = getFid(env, jclass_NativeTransportStop, "namesLng", "[Ljava/lang/String;");
-	jfield_NativeTransportStop_namesNames = getFid(env, jclass_NativeTransportStop, "namesNames", "[Ljava/lang/String;");
+	jfield_NativeTransportStop_namesNames =
+		getFid(env, jclass_NativeTransportStop, "namesNames", "[Ljava/lang/String;");
 	jfield_NativeTransportStop_fileOffset = getFid(env, jclass_NativeTransportStop, "fileOffset", "I");
 	jfield_NativeTransportStop_referencesToRoutes = getFid(env, jclass_NativeTransportStop, "referencesToRoutes", "[I");
 	jfield_NativeTransportStop_deletedRoutesIds = getFid(env, jclass_NativeTransportStop, "deletedRoutesIds", "[J");
@@ -702,22 +703,27 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportStop_distance = getFid(env, jclass_NativeTransportStop, "distance", "I");
 	jfield_NativeTransportStop_x31 = getFid(env, jclass_NativeTransportStop, "x31", "I");
 	jfield_NativeTransportStop_y31 = getFid(env, jclass_NativeTransportStop, "y31", "I");
-	jfield_NativeTransportStop_routes = getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/NativeTransportRoute;");
+	jfield_NativeTransportStop_routes =
+		getFid(env, jclass_NativeTransportStop, "routes", "[Lnet/osmand/router/NativeTransportRoute;");
 	jfield_NativeTransportStop_pTStopExit_x31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_x31s", "[I");
 	jfield_NativeTransportStop_pTStopExit_y31s = getFid(env, jclass_NativeTransportStop, "pTStopExit_y31s", "[I");
-	jfield_NativeTransportStop_pTStopExit_refs = getFid(env, jclass_NativeTransportStop, "pTStopExit_refs", "[Ljava/lang/String;");
+	jfield_NativeTransportStop_pTStopExit_refs =
+		getFid(env, jclass_NativeTransportStop, "pTStopExit_refs", "[Ljava/lang/String;");
 	jmethod_NativeTransportStop_init = env->GetMethodID(jclass_NativeTransportStop, "<init>", "()V");
 
 	jclass_NativeTransportRoute = findGlobalClass(env, "net/osmand/router/NativeTransportRoute");
 	jfield_NativeTransportRoute_id = getFid(env, jclass_NativeTransportRoute, "id", "J");
 	jfield_NativeTransportRoute_name = getFid(env, jclass_NativeTransportRoute, "name", "Ljava/lang/String;");
-	jfield_NativeTransportRoute_enName =  getFid(env, jclass_NativeTransportRoute, "enName", "Ljava/lang/String;");
+	jfield_NativeTransportRoute_enName = getFid(env, jclass_NativeTransportRoute, "enName", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_namesLng = getFid(env, jclass_NativeTransportRoute, "namesLng", "[Ljava/lang/String;");
-	jfield_NativeTransportRoute_namesNames = getFid(env, jclass_NativeTransportRoute, "namesNames", "[Ljava/lang/String;");
+	jfield_NativeTransportRoute_namesNames =
+		getFid(env, jclass_NativeTransportRoute, "namesNames", "[Ljava/lang/String;");
 	jfield_NativeTransportRoute_fileOffset = getFid(env, jclass_NativeTransportRoute, "fileOffset", "I");
-	jfield_NativeTransportRoute_forwardStops = getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/NativeTransportStop;");
+	jfield_NativeTransportRoute_forwardStops =
+		getFid(env, jclass_NativeTransportRoute, "forwardStops", "[Lnet/osmand/router/NativeTransportStop;");
 	jfield_NativeTransportRoute_ref = getFid(env, jclass_NativeTransportRoute, "ref", "Ljava/lang/String;");
-	jfield_NativeTransportRoute_routeOperator = getFid(env, jclass_NativeTransportRoute, "routeOperator", "Ljava/lang/String;");
+	jfield_NativeTransportRoute_routeOperator =
+		getFid(env, jclass_NativeTransportRoute, "routeOperator", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_type = getFid(env, jclass_NativeTransportRoute, "type", "Ljava/lang/String;");
 	jfield_NativeTransportRoute_dist = getFid(env, jclass_NativeTransportRoute, "dist", "I");
 	jfield_NativeTransportRoute_color = getFid(env, jclass_NativeTransportRoute, "color", "Ljava/lang/String;");
@@ -728,15 +734,14 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_NativeTransportRoute_waysNodesLats = getFid(env, jclass_NativeTransportRoute, "waysNodesLats", "[[D");
 	jfield_NativeTransportRoute_waysNodesLons = getFid(env, jclass_NativeTransportRoute, "waysNodesLons", "[[D");
 	jmethod_NativeTransportRoute_init = env->GetMethodID(jclass_NativeTransportRoute, "<init>", "()V");
-	
+
 	jclass_RouteSegmentResult = findGlobalClass(env, "net/osmand/router/RouteSegmentResult");
 	jclass_RouteSegmentResultAr = findGlobalClass(env, "[Lnet/osmand/router/RouteSegmentResult;");
-	jmethod_RouteSegmentResult_ctor = env->GetMethodID(jclass_RouteSegmentResult,
-			"<init>", "(Lnet/osmand/binary/RouteDataObject;II)V");
-	jfield_RouteSegmentResult_routingTime = getFid(env, jclass_RouteSegmentResult, "routingTime",
-			"F"); 
-	jfield_RouteSegmentResult_preAttachedRoutes = getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes",
-			"[[Lnet/osmand/router/RouteSegmentResult;");
+	jmethod_RouteSegmentResult_ctor =
+		env->GetMethodID(jclass_RouteSegmentResult, "<init>", "(Lnet/osmand/binary/RouteDataObject;II)V");
+	jfield_RouteSegmentResult_routingTime = getFid(env, jclass_RouteSegmentResult, "routingTime", "F");
+	jfield_RouteSegmentResult_preAttachedRoutes =
+		getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes", "[[Lnet/osmand/router/RouteSegmentResult;");
 
 	jclass_RoutingContext = findGlobalClass(env, "net/osmand/router/RoutingContext");
 	jfield_RoutingContext_startX = getFid(env, jclass_RoutingContext, "startX", "I");
@@ -751,60 +756,100 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RoutingContext_targetTransportStop = getFid(env, jclass_RoutingContext, "targetTransportStop", "Z");
 	jfield_RoutingContext_publicTransport = getFid(env, jclass_RoutingContext, "publicTransport", "Z");
 	jfield_RoutingContext_nativeRoutingContext = getFid(env, jclass_RoutingContext, "nativeRoutingContext", "J");
-	jfield_RoutingContext_keepNativeRoutingContext = getFid(env, jclass_RoutingContext, "keepNativeRoutingContext", "Z");
-	jfield_RoutingContext_config = getFid(env, jclass_RoutingContext, "config", "Lnet/osmand/router/RoutingConfiguration;");
-	jfield_RoutingContext_precalculatedRouteDirection = getFid(env, jclass_RoutingContext, "precalculatedRouteDirection", "Lnet/osmand/router/PrecalculatedRouteDirection;");
-	jfield_RoutingContext_calculationProgress = getFid(env, jclass_RoutingContext, "calculationProgress", "Lnet/osmand/router/RouteCalculationProgress;");
+	jfield_RoutingContext_keepNativeRoutingContext =
+		getFid(env, jclass_RoutingContext, "keepNativeRoutingContext", "Z");
+	jfield_RoutingContext_config =
+		getFid(env, jclass_RoutingContext, "config", "Lnet/osmand/router/RoutingConfiguration;");
+	jfield_RoutingContext_precalculatedRouteDirection = getFid(
+		env, jclass_RoutingContext, "precalculatedRouteDirection", "Lnet/osmand/router/PrecalculatedRouteDirection;");
+	jfield_RoutingContext_calculationProgress =
+		getFid(env, jclass_RoutingContext, "calculationProgress", "Lnet/osmand/router/RouteCalculationProgress;");
 
 	jclass_RouteCalculationProgress = findGlobalClass(env, "net/osmand/router/RouteCalculationProgress");
-	jfield_RouteCalculationProgress_isCancelled  = getFid(env, jclass_RouteCalculationProgress, "isCancelled", "Z");
-	jfield_RouteCalculationProgress_segmentNotFound  = getFid(env, jclass_RouteCalculationProgress, "segmentNotFound", "I");
-	jfield_RouteCalculationProgress_distanceFromBegin  = getFid(env, jclass_RouteCalculationProgress, "distanceFromBegin", "F");
-	jfield_RouteCalculationProgress_distanceFromEnd  = getFid(env, jclass_RouteCalculationProgress, "distanceFromEnd", "F");
-	jfield_RouteCalculationProgress_directSegmentQueueSize  = getFid(env, jclass_RouteCalculationProgress, "directSegmentQueueSize", "I");
-	jfield_RouteCalculationProgress_reverseSegmentQueueSize  = getFid(env, jclass_RouteCalculationProgress, "reverseSegmentQueueSize", "I");
-	jfield_RouteCalculationProgress_routingCalculatedTime  = getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
-	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
-	jfield_RouteCalculationProgress_visitedDirectSegments = getFid(env, jclass_RouteCalculationProgress, "visitedDirectSegments", "I");
-	jfield_RouteCalculationProgress_visitedOppositeSegments = getFid(env, jclass_RouteCalculationProgress, "visitedOppositeSegments", "I");
-	jfield_RouteCalculationProgress_directQueueSize = getFid(env, jclass_RouteCalculationProgress, "directQueueSize", "I");
-	jfield_RouteCalculationProgress_oppositeQueueSize = getFid(env, jclass_RouteCalculationProgress, "oppositeQueueSize", "I");
-	jfield_RouteCalculationProgress_timeNanoToCalcDeviation = getFid(env, jclass_RouteCalculationProgress, "timeNanoToCalcDeviation", "J");
+	jfield_RouteCalculationProgress_isCancelled = getFid(env, jclass_RouteCalculationProgress, "isCancelled", "Z");
+	jfield_RouteCalculationProgress_segmentNotFound =
+		getFid(env, jclass_RouteCalculationProgress, "segmentNotFound", "I");
+	jfield_RouteCalculationProgress_distanceFromBegin =
+		getFid(env, jclass_RouteCalculationProgress, "distanceFromBegin", "F");
+	jfield_RouteCalculationProgress_distanceFromEnd =
+		getFid(env, jclass_RouteCalculationProgress, "distanceFromEnd", "F");
+	jfield_RouteCalculationProgress_directSegmentQueueSize =
+		getFid(env, jclass_RouteCalculationProgress, "directSegmentQueueSize", "I");
+	jfield_RouteCalculationProgress_reverseSegmentQueueSize =
+		getFid(env, jclass_RouteCalculationProgress, "reverseSegmentQueueSize", "I");
+	jfield_RouteCalculationProgress_routingCalculatedTime =
+		getFid(env, jclass_RouteCalculationProgress, "routingCalculatedTime", "F");
+	jfield_RouteCalculationProgress_visitedSegments =
+		getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
+	jfield_RouteCalculationProgress_visitedDirectSegments =
+		getFid(env, jclass_RouteCalculationProgress, "visitedDirectSegments", "I");
+	jfield_RouteCalculationProgress_visitedOppositeSegments =
+		getFid(env, jclass_RouteCalculationProgress, "visitedOppositeSegments", "I");
+	jfield_RouteCalculationProgress_directQueueSize =
+		getFid(env, jclass_RouteCalculationProgress, "directQueueSize", "I");
+	jfield_RouteCalculationProgress_oppositeQueueSize =
+		getFid(env, jclass_RouteCalculationProgress, "oppositeQueueSize", "I");
+	jfield_RouteCalculationProgress_timeNanoToCalcDeviation =
+		getFid(env, jclass_RouteCalculationProgress, "timeNanoToCalcDeviation", "J");
 	jfield_RouteCalculationProgress_timeToLoad = getFid(env, jclass_RouteCalculationProgress, "timeToLoad", "J");
-	jfield_RouteCalculationProgress_timeToLoadHeaders = getFid(env, jclass_RouteCalculationProgress, "timeToLoadHeaders", "J");
-	jfield_RouteCalculationProgress_timeToFindInitialSegments = getFid(env, jclass_RouteCalculationProgress, "timeToFindInitialSegments", "J");
-	jfield_RouteCalculationProgress_timeToCalculate = getFid(env, jclass_RouteCalculationProgress, "timeToCalculate", "J");
-	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
-
+	jfield_RouteCalculationProgress_timeToLoadHeaders =
+		getFid(env, jclass_RouteCalculationProgress, "timeToLoadHeaders", "J");
+	jfield_RouteCalculationProgress_timeToFindInitialSegments =
+		getFid(env, jclass_RouteCalculationProgress, "timeToFindInitialSegments", "J");
+	jfield_RouteCalculationProgress_timeToCalculate =
+		getFid(env, jclass_RouteCalculationProgress, "timeToCalculate", "J");
+	jfield_RouteCalculationProgress_loadedTiles = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
 
 	jclass_TransportRoutingConfiguration = findGlobalClass(env, "net/osmand/router/TransportRoutingConfiguration");
-	jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_TransportRoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
-	jfield_TransportRoutingConfiguration_walkRadius = getFid(env, jclass_TransportRoutingConfiguration, "walkRadius", "I");
-	jfield_TransportRoutingConfiguration_walkChangeRadius = getFid(env, jclass_TransportRoutingConfiguration, "walkChangeRadius", "I");
-	jfield_TransportRoutingConfiguration_maxNumberOfChanges = getFid(env, jclass_TransportRoutingConfiguration, "maxNumberOfChanges", "I");
-	jfield_TransportRoutingConfiguration_finishTimeSeconds = getFid(env, jclass_TransportRoutingConfiguration, "finishTimeSeconds", "I");
-	jfield_TransportRoutingConfiguration_maxRouteTime = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteTime", "I");
-	jfield_TransportRoutingConfiguration_router = getFid(env, jclass_TransportRoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
-	jfield_TransportRoutingConfiguration_walkSpeed = getFid(env, jclass_TransportRoutingConfiguration, "walkSpeed", "F");
-	jfield_TransportRoutingConfiguration_defaultTravelSpeed = getFid(env, jclass_TransportRoutingConfiguration, "defaultTravelSpeed", "F");
+	jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES =
+		getFid(env, jclass_TransportRoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
+	jfield_TransportRoutingConfiguration_walkRadius =
+		getFid(env, jclass_TransportRoutingConfiguration, "walkRadius", "I");
+	jfield_TransportRoutingConfiguration_walkChangeRadius =
+		getFid(env, jclass_TransportRoutingConfiguration, "walkChangeRadius", "I");
+	jfield_TransportRoutingConfiguration_maxNumberOfChanges =
+		getFid(env, jclass_TransportRoutingConfiguration, "maxNumberOfChanges", "I");
+	jfield_TransportRoutingConfiguration_finishTimeSeconds =
+		getFid(env, jclass_TransportRoutingConfiguration, "finishTimeSeconds", "I");
+	jfield_TransportRoutingConfiguration_maxRouteTime =
+		getFid(env, jclass_TransportRoutingConfiguration, "maxRouteTime", "I");
+	jfield_TransportRoutingConfiguration_router =
+		getFid(env, jclass_TransportRoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
+	jfield_TransportRoutingConfiguration_walkSpeed =
+		getFid(env, jclass_TransportRoutingConfiguration, "walkSpeed", "F");
+	jfield_TransportRoutingConfiguration_defaultTravelSpeed =
+		getFid(env, jclass_TransportRoutingConfiguration, "defaultTravelSpeed", "F");
 	jfield_TransportRoutingConfiguration_stopTime = getFid(env, jclass_TransportRoutingConfiguration, "stopTime", "I");
-	jfield_TransportRoutingConfiguration_changeTime = getFid(env, jclass_TransportRoutingConfiguration, "changeTime", "I");
-	jfield_TransportRoutingConfiguration_boardingTime = getFid(env, jclass_TransportRoutingConfiguration, "boardingTime", "I");
-	jfield_TransportRoutingConfiguration_useSchedule =getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
-	jfield_TransportRoutingConfiguration_scheduleTimeOfDay = getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
-	jfield_TransportRoutingConfiguration_scheduleMaxTime = getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
-	jfield_TransportRoutingConfiguration_maxRouteDistance = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteDistance", "I");
-	jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed = getFid(env, jclass_TransportRoutingConfiguration, "maxRouteIncreaseSpeed", "I");
-	// jfield_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes", "__");
-	// jfield_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed", "___");
+	jfield_TransportRoutingConfiguration_changeTime =
+		getFid(env, jclass_TransportRoutingConfiguration, "changeTime", "I");
+	jfield_TransportRoutingConfiguration_boardingTime =
+		getFid(env, jclass_TransportRoutingConfiguration, "boardingTime", "I");
+	jfield_TransportRoutingConfiguration_useSchedule =
+		getFid(env, jclass_TransportRoutingConfiguration, "useSchedule", "Z");
+	jfield_TransportRoutingConfiguration_scheduleTimeOfDay =
+		getFid(env, jclass_TransportRoutingConfiguration, "scheduleTimeOfDay", "I");
+	jfield_TransportRoutingConfiguration_scheduleMaxTime =
+		getFid(env, jclass_TransportRoutingConfiguration, "scheduleMaxTime", "I");
+	jfield_TransportRoutingConfiguration_maxRouteDistance =
+		getFid(env, jclass_TransportRoutingConfiguration, "maxRouteDistance", "I");
+	jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed =
+		getFid(env, jclass_TransportRoutingConfiguration, "maxRouteIncreaseSpeed", "I");
+	// jfield_TransportRoutingConfiguration_rawTypes = getFid(env, jclass_TransportRoutingConfiguration, "rawTypes",
+	// "__"); jfield_TransportRoutingConfiguration_speed = getFid(env, jclass_TransportRoutingConfiguration, "speed",
+	// "___");
 
 	jclass_RoutingConfiguration = findGlobalClass(env, "net/osmand/router/RoutingConfiguration");
-	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
-	jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_RoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
+	jfield_RoutingConfiguration_heuristicCoefficient =
+		getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
+	jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES =
+		getFid(env, jclass_RoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
 	jfield_RoutingConfiguration_planRoadDirection = getFid(env, jclass_RoutingConfiguration, "planRoadDirection", "I");
-	jfield_RoutingConfiguration_routeCalculationTime = getFid(env, jclass_RoutingConfiguration, "routeCalculationTime", "J");
-	jfield_RoutingConfiguration_routerName = getFid(env, jclass_RoutingConfiguration, "routerName", "Ljava/lang/String;");
-	jfield_RoutingConfiguration_router = getFid(env, jclass_RoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
+	jfield_RoutingConfiguration_routeCalculationTime =
+		getFid(env, jclass_RoutingConfiguration, "routeCalculationTime", "J");
+	jfield_RoutingConfiguration_routerName =
+		getFid(env, jclass_RoutingConfiguration, "routerName", "Ljava/lang/String;");
+	jfield_RoutingConfiguration_router =
+		getFid(env, jclass_RoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
 
 	jclass_GeneralRouter = findGlobalClass(env, "net/osmand/router/GeneralRouter");
 	jfield_GeneralRouter_restrictionsAware = getFid(env, jclass_GeneralRouter, "restrictionsAware", "Z");
@@ -815,16 +860,14 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_defaultSpeed = getFid(env, jclass_GeneralRouter, "defaultSpeed", "F");
 	jfield_GeneralRouter_maxSpeed = getFid(env, jclass_GeneralRouter, "maxSpeed", "F");
 	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "Z");
-	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
-		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
-	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
-				"getImpassableRoadIds", "()[J");
+	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes",
+												   "[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
+	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter, "getImpassableRoadIds", "()[J");
 
-	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");	
-	jmethod_RenderedObject_putTag = env->GetMethodID(jclass_RenderedObject,
-				"putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
-	jmethod_RenderedObject_setIconRes = env->GetMethodID(jclass_RenderedObject,
-				"setIconRes", "(Ljava/lang/String;)V");
+	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");
+	jmethod_RenderedObject_putTag =
+		env->GetMethodID(jclass_RenderedObject, "putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jmethod_RenderedObject_setIconRes = env->GetMethodID(jclass_RenderedObject, "setIconRes", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_addLocation = env->GetMethodID(jclass_RenderedObject, "addLocation", "(II)V");
 	jmethod_RenderedObject_setOrder = env->GetMethodID(jclass_RenderedObject, "setOrder", "(I)V");
 	jmethod_RenderedObject_setVisible = env->GetMethodID(jclass_RenderedObject, "setVisible", "(Z)V");
@@ -834,36 +877,40 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RenderedObject_init = env->GetMethodID(jclass_RenderedObject, "<init>", "()V");
 	jmethod_RenderedObject_setLabelX = env->GetMethodID(jclass_RenderedObject, "setLabelX", "(I)V");
 	jmethod_RenderedObject_setLabelY = env->GetMethodID(jclass_RenderedObject, "setLabelY", "(I)V");
-				
 
-	jclass_RouteAttributeContext = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
-	jmethod_RouteAttributeContext_getRules = env->GetMethodID(jclass_RouteAttributeContext,
-				"getRules", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeEvalRule;");
-	jmethod_RouteAttributeContext_getParamKeys = env->GetMethodID(jclass_RouteAttributeContext,
-				"getParamKeys", "()[Ljava/lang/String;");
-	jmethod_RouteAttributeContext_getParamValues = env->GetMethodID(jclass_RouteAttributeContext,
-				"getParamValues", "()[Ljava/lang/String;");
+	jclass_RouteAttributeContext = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");
+	jmethod_RouteAttributeContext_getRules = env->GetMethodID(
+		jclass_RouteAttributeContext, "getRules", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeEvalRule;");
+	jmethod_RouteAttributeContext_getParamKeys =
+		env->GetMethodID(jclass_RouteAttributeContext, "getParamKeys", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeContext_getParamValues =
+		env->GetMethodID(jclass_RouteAttributeContext, "getParamValues", "()[Ljava/lang/String;");
 
 	jclass_RouteAttributeEvalRule = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeEvalRule");
-	jfield_RouteAttributeEvalRule_selectValueDef = getFid(env, jclass_RouteAttributeEvalRule, "selectValueDef", "Ljava/lang/String;");
-	jfield_RouteAttributeEvalRule_selectType = getFid(env, jclass_RouteAttributeEvalRule, "selectType", "Ljava/lang/String;");
+	jfield_RouteAttributeEvalRule_selectValueDef =
+		getFid(env, jclass_RouteAttributeEvalRule, "selectValueDef", "Ljava/lang/String;");
+	jfield_RouteAttributeEvalRule_selectType =
+		getFid(env, jclass_RouteAttributeEvalRule, "selectType", "Ljava/lang/String;");
 
-	jmethod_RouteAttributeEvalRule_getTagValueCondDefNot = env->GetMethodID(jclass_RouteAttributeEvalRule,
-				"getTagValueCondDefNot", "()[Z");
-	jmethod_RouteAttributeEvalRule_getTagValueCondDefValue = env->GetMethodID(jclass_RouteAttributeEvalRule,
-				"getTagValueCondDefValue", "()[Ljava/lang/String;");
-	jmethod_RouteAttributeEvalRule_getTagValueCondDefTag = env->GetMethodID(jclass_RouteAttributeEvalRule,
-				"getTagValueCondDefTag", "()[Ljava/lang/String;");
-	jmethod_RouteAttributeEvalRule_getParameters = env->GetMethodID(jclass_RouteAttributeEvalRule,
-				"getParameters", "()[Ljava/lang/String;");					
-	jmethod_RouteAttributeEvalRule_getExpressions = env->GetMethodID(jclass_RouteAttributeEvalRule,
-				"getExpressions", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeExpression;");
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefNot =
+		env->GetMethodID(jclass_RouteAttributeEvalRule, "getTagValueCondDefNot", "()[Z");
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefValue =
+		env->GetMethodID(jclass_RouteAttributeEvalRule, "getTagValueCondDefValue", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeEvalRule_getTagValueCondDefTag =
+		env->GetMethodID(jclass_RouteAttributeEvalRule, "getTagValueCondDefTag", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeEvalRule_getParameters =
+		env->GetMethodID(jclass_RouteAttributeEvalRule, "getParameters", "()[Ljava/lang/String;");
+	jmethod_RouteAttributeEvalRule_getExpressions =
+		env->GetMethodID(jclass_RouteAttributeEvalRule, "getExpressions",
+						 "()[Lnet/osmand/router/GeneralRouter$RouteAttributeExpression;");
 
-	jclass_RouteAttributeExpression = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeExpression");	
-    jfield_RouteAttributeExpression_values = getFid(env, jclass_RouteAttributeExpression, "values", "[Ljava/lang/String;");
-   	jfield_RouteAttributeExpression_expressionType = getFid(env, jclass_RouteAttributeExpression, "expressionType", "I");
-   	jfield_RouteAttributeExpression_valueType = getFid(env, jclass_RouteAttributeExpression, "valueType", "Ljava/lang/String;");
-	
+	jclass_RouteAttributeExpression = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeExpression");
+	jfield_RouteAttributeExpression_values =
+		getFid(env, jclass_RouteAttributeExpression, "values", "[Ljava/lang/String;");
+	jfield_RouteAttributeExpression_expressionType =
+		getFid(env, jclass_RouteAttributeExpression, "expressionType", "I");
+	jfield_RouteAttributeExpression_valueType =
+		getFid(env, jclass_RouteAttributeExpression, "valueType", "Ljava/lang/String;");
 
 	jclass_PrecalculatedRouteDirection = findGlobalClass(env, "net/osmand/router/PrecalculatedRouteDirection");
 	jfield_PrecalculatedRouteDirection_tms = getFid(env, jclass_PrecalculatedRouteDirection, "tms", "[F");
@@ -872,138 +919,140 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_PrecalculatedRouteDirection_minSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "minSpeed", "F");
 	jfield_PrecalculatedRouteDirection_maxSpeed = getFid(env, jclass_PrecalculatedRouteDirection, "maxSpeed", "F");
 	jfield_PrecalculatedRouteDirection_followNext = getFid(env, jclass_PrecalculatedRouteDirection, "followNext", "Z");
-	jfield_PrecalculatedRouteDirection_endFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "endFinishTime", "F");
-	jfield_PrecalculatedRouteDirection_startFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "startFinishTime", "F");
+	jfield_PrecalculatedRouteDirection_endFinishTime =
+		getFid(env, jclass_PrecalculatedRouteDirection, "endFinishTime", "F");
+	jfield_PrecalculatedRouteDirection_startFinishTime =
+		getFid(env, jclass_PrecalculatedRouteDirection, "startFinishTime", "F");
 
 	jclass_RenderingContext = findGlobalClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
-	jfield_RenderingContext_leftX = getFid(env,  jclass_RenderingContext, "leftX", "D" );
-	jfield_RenderingContext_topY = getFid(env,  jclass_RenderingContext, "topY", "D" );
-	jfield_RenderingContext_width = getFid(env,  jclass_RenderingContext, "width", "I" );
-	jfield_RenderingContext_height = getFid(env,  jclass_RenderingContext, "height", "I" );
-	jfield_RenderingContext_zoom = getFid(env,  jclass_RenderingContext, "zoom", "I" );
-	jfield_RenderingContext_tileDivisor = getFid(env,  jclass_RenderingContext, "tileDivisor", "D" );
-	jfield_RenderingContext_rotate = getFid(env,  jclass_RenderingContext, "rotate", "F" );
-	jfield_RenderingContext_preferredLocale = getFid(env,  jclass_RenderingContext, "preferredLocale", "Ljava/lang/String;" );
-	jfield_RenderingContext_transliterate = getFid(env,  jclass_RenderingContext, "transliterate", "Z" );
-	jfield_RenderingContext_pointCount = getFid(env,  jclass_RenderingContext, "pointCount", "I" );
-	jfield_RenderingContext_renderingContextHandle = getFid(env,  jclass_RenderingContext, "renderingContextHandle", "J" );
-	jfield_RenderingContext_pointInsideCount = getFid(env,  jclass_RenderingContext, "pointInsideCount", "I" );
-	jfield_RenderingContext_visible = getFid(env,  jclass_RenderingContext, "visible", "I" );
-	jfield_RenderingContext_allObjects = getFid(env,  jclass_RenderingContext, "allObjects", "I" );
-	jfield_RenderingContext_density = getFid(env,  jclass_RenderingContext, "density", "F" );
-	jfield_RenderingContext_textScale = getFid(env,  jclass_RenderingContext, "textScale", "F" );
-	jfield_RenderingContext_screenDensityRatio = getFid(env,  jclass_RenderingContext, "screenDensityRatio", "F" );	
-	jfield_RenderingContext_shadowRenderingMode = getFid(env,  jclass_RenderingContext, "shadowRenderingMode", "I" );
-	jfield_RenderingContext_shadowRenderingColor = getFid(env,  jclass_RenderingContext, "shadowRenderingColor", "I" );
-	jfield_RenderingContext_defaultColor = getFid(env,  jclass_RenderingContext, "defaultColor", "I" );
-	jfield_RenderingContext_textRenderingTime = getFid(env,  jclass_RenderingContext, "textRenderingTime", "I" );
-	jfield_RenderingContext_lastRenderedKey = getFid(env,  jclass_RenderingContext, "lastRenderedKey", "I" );
-	jmethod_RenderingContext_getIconRawData = env->GetMethodID(jclass_RenderingContext,
-				"getIconRawData", "(Ljava/lang/String;)[B");
+	jfield_RenderingContext_leftX = getFid(env, jclass_RenderingContext, "leftX", "D");
+	jfield_RenderingContext_topY = getFid(env, jclass_RenderingContext, "topY", "D");
+	jfield_RenderingContext_width = getFid(env, jclass_RenderingContext, "width", "I");
+	jfield_RenderingContext_height = getFid(env, jclass_RenderingContext, "height", "I");
+	jfield_RenderingContext_zoom = getFid(env, jclass_RenderingContext, "zoom", "I");
+	jfield_RenderingContext_tileDivisor = getFid(env, jclass_RenderingContext, "tileDivisor", "D");
+	jfield_RenderingContext_rotate = getFid(env, jclass_RenderingContext, "rotate", "F");
+	jfield_RenderingContext_preferredLocale =
+		getFid(env, jclass_RenderingContext, "preferredLocale", "Ljava/lang/String;");
+	jfield_RenderingContext_transliterate = getFid(env, jclass_RenderingContext, "transliterate", "Z");
+	jfield_RenderingContext_pointCount = getFid(env, jclass_RenderingContext, "pointCount", "I");
+	jfield_RenderingContext_renderingContextHandle =
+		getFid(env, jclass_RenderingContext, "renderingContextHandle", "J");
+	jfield_RenderingContext_pointInsideCount = getFid(env, jclass_RenderingContext, "pointInsideCount", "I");
+	jfield_RenderingContext_visible = getFid(env, jclass_RenderingContext, "visible", "I");
+	jfield_RenderingContext_allObjects = getFid(env, jclass_RenderingContext, "allObjects", "I");
+	jfield_RenderingContext_density = getFid(env, jclass_RenderingContext, "density", "F");
+	jfield_RenderingContext_textScale = getFid(env, jclass_RenderingContext, "textScale", "F");
+	jfield_RenderingContext_screenDensityRatio = getFid(env, jclass_RenderingContext, "screenDensityRatio", "F");
+	jfield_RenderingContext_shadowRenderingMode = getFid(env, jclass_RenderingContext, "shadowRenderingMode", "I");
+	jfield_RenderingContext_shadowRenderingColor = getFid(env, jclass_RenderingContext, "shadowRenderingColor", "I");
+	jfield_RenderingContext_defaultColor = getFid(env, jclass_RenderingContext, "defaultColor", "I");
+	jfield_RenderingContext_textRenderingTime = getFid(env, jclass_RenderingContext, "textRenderingTime", "I");
+	jfield_RenderingContext_lastRenderedKey = getFid(env, jclass_RenderingContext, "lastRenderedKey", "I");
+	jmethod_RenderingContext_getIconRawData =
+		env->GetMethodID(jclass_RenderingContext, "getIconRawData", "(Ljava/lang/String;)[B");
 
-	jmethod_Object_toString = env->GetMethodID(findGlobalClass(env, "java/lang/Object"),
-					"toString", "()Ljava/lang/String;");
-
+	jmethod_Object_toString =
+		env->GetMethodID(findGlobalClass(env, "java/lang/Object"), "toString", "()Ljava/lang/String;");
 
 	jclass_TransliterationHelper = findGlobalClass(env, "net/osmand/util/TransliterationHelper");
-	jmethod_TransliterationHelper_transliterate = env->GetStaticMethodID(jclass_TransliterationHelper, "transliterate","(Ljava/lang/String;)Ljava/lang/String;");
-    jclass_Reshaper = findGlobalClass(env, "net/osmand/Reshaper");
-    jmethod_Reshaper_reshape = env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
-    jmethod_Reshaper_reshapebytes = env->GetStaticMethodID(jclass_Reshaper, "reshape", "([B)Ljava/lang/String;");
+	jmethod_TransliterationHelper_transliterate =
+		env->GetStaticMethodID(jclass_TransliterationHelper, "transliterate", "(Ljava/lang/String;)Ljava/lang/String;");
+	jclass_Reshaper = findGlobalClass(env, "net/osmand/Reshaper");
+	jmethod_Reshaper_reshape =
+		env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
+	jmethod_Reshaper_reshapebytes = env->GetStaticMethodID(jclass_Reshaper, "reshape", "([B)Ljava/lang/String;");
 
-    jclass_RouteDataObject = findGlobalClass(env, "net/osmand/binary/RouteDataObject");
-    jclass_NativeRouteSearchResult = findGlobalClass(env, "net/osmand/NativeLibrary$NativeRouteSearchResult");
-    jmethod_NativeRouteSearchResult_init = env->GetMethodID(jclass_NativeRouteSearchResult, "<init>", "(J[Lnet/osmand/binary/RouteDataObject;)V");
+	jclass_RouteDataObject = findGlobalClass(env, "net/osmand/binary/RouteDataObject");
+	jclass_NativeRouteSearchResult = findGlobalClass(env, "net/osmand/NativeLibrary$NativeRouteSearchResult");
+	jmethod_NativeRouteSearchResult_init =
+		env->GetMethodID(jclass_NativeRouteSearchResult, "<init>", "(J[Lnet/osmand/binary/RouteDataObject;)V");
 
-    jfield_RouteDataObject_types = getFid(env,  jclass_RouteDataObject, "types", "[I" );
-    jfield_RouteDataObject_pointsX = getFid(env,  jclass_RouteDataObject, "pointsX", "[I" );
-    jfield_RouteDataObject_pointsY = getFid(env,  jclass_RouteDataObject, "pointsY", "[I" );
-    jfield_RouteDataObject_restrictions = getFid(env,  jclass_RouteDataObject, "restrictions", "[J" );
-    jfield_RouteDataObject_pointTypes = getFid(env,  jclass_RouteDataObject, "pointTypes", "[[I" );
-    jfield_RouteDataObject_pointNameTypes = getFid(env,  jclass_RouteDataObject, "pointNameTypes", "[[I" );
-    jfield_RouteDataObject_pointNames = getFid(env,  jclass_RouteDataObject, "pointNames", "[[Ljava/lang/String;" );
-    jfield_RouteDataObject_id = getFid(env,  jclass_RouteDataObject, "id", "J" );
-    jmethod_RouteDataObject_init = env->GetMethodID(jclass_RouteDataObject, "<init>", "(Lnet/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion;[I[Ljava/lang/String;)V");
+	jfield_RouteDataObject_types = getFid(env, jclass_RouteDataObject, "types", "[I");
+	jfield_RouteDataObject_pointsX = getFid(env, jclass_RouteDataObject, "pointsX", "[I");
+	jfield_RouteDataObject_pointsY = getFid(env, jclass_RouteDataObject, "pointsY", "[I");
+	jfield_RouteDataObject_restrictions = getFid(env, jclass_RouteDataObject, "restrictions", "[J");
+	jfield_RouteDataObject_pointTypes = getFid(env, jclass_RouteDataObject, "pointTypes", "[[I");
+	jfield_RouteDataObject_pointNameTypes = getFid(env, jclass_RouteDataObject, "pointNameTypes", "[[I");
+	jfield_RouteDataObject_pointNames = getFid(env, jclass_RouteDataObject, "pointNames", "[[Ljava/lang/String;");
+	jfield_RouteDataObject_id = getFid(env, jclass_RouteDataObject, "id", "J");
+	jmethod_RouteDataObject_init =
+		env->GetMethodID(jclass_RouteDataObject, "<init>",
+						 "(Lnet/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion;[I[Ljava/lang/String;)V");
 
+	jclass_RouteRegion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion");
+	jfield_RouteRegion_length = getFid(env, jclass_RouteRegion, "length", "I");
+	jfield_RouteRegion_filePointer = getFid(env, jclass_RouteRegion, "filePointer", "I");
 
-    jclass_RouteRegion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion");
-    jfield_RouteRegion_length= getFid(env,  jclass_RouteRegion, "length", "I" );
-    jfield_RouteRegion_filePointer= getFid(env,  jclass_RouteRegion, "filePointer", "I" );
-
-    jclass_RouteSubregion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteSubregion");
-    jfield_RouteSubregion_length= getFid(env,  jclass_RouteSubregion, "length", "I" );
-    jfield_RouteSubregion_filePointer= getFid(env,  jclass_RouteSubregion, "filePointer", "I" );
-    jfield_RouteSubregion_left= getFid(env,  jclass_RouteSubregion, "left", "I" );
-    jfield_RouteSubregion_right= getFid(env,  jclass_RouteSubregion, "right", "I" );
-    jfield_RouteSubregion_top= getFid(env,  jclass_RouteSubregion, "top", "I" );
-    jfield_RouteSubregion_bottom= getFid(env,  jclass_RouteSubregion, "bottom", "I" );
-    jfield_RouteSubregion_shiftToData= getFid(env,  jclass_RouteSubregion, "shiftToData", "I" );
+	jclass_RouteSubregion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteSubregion");
+	jfield_RouteSubregion_length = getFid(env, jclass_RouteSubregion, "length", "I");
+	jfield_RouteSubregion_filePointer = getFid(env, jclass_RouteSubregion, "filePointer", "I");
+	jfield_RouteSubregion_left = getFid(env, jclass_RouteSubregion, "left", "I");
+	jfield_RouteSubregion_right = getFid(env, jclass_RouteSubregion, "right", "I");
+	jfield_RouteSubregion_top = getFid(env, jclass_RouteSubregion, "top", "I");
+	jfield_RouteSubregion_bottom = getFid(env, jclass_RouteSubregion, "bottom", "I");
+	jfield_RouteSubregion_shiftToData = getFid(env, jclass_RouteSubregion, "shiftToData", "I");
 	// public final RouteRegion routeReg;
 }
 
-void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc)
-{
+void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc) {
 	rc->env = env;
-	rc->setLocation(env->GetDoubleField( jrc, jfield_RenderingContext_leftX ), env->GetDoubleField( jrc, jfield_RenderingContext_topY ));
-	rc->setDimension(env->GetIntField( jrc, jfield_RenderingContext_width ), env->GetIntField( jrc, jfield_RenderingContext_height ));
+	rc->setLocation(env->GetDoubleField(jrc, jfield_RenderingContext_leftX),
+					env->GetDoubleField(jrc, jfield_RenderingContext_topY));
+	rc->setDimension(env->GetIntField(jrc, jfield_RenderingContext_width),
+					 env->GetIntField(jrc, jfield_RenderingContext_height));
 
-	rc->setZoom(env->GetIntField( jrc, jfield_RenderingContext_zoom ));
-	rc->setTileDivisor(env->GetDoubleField( jrc, jfield_RenderingContext_tileDivisor ));
-	rc->setRotate(env->GetFloatField( jrc, jfield_RenderingContext_rotate ));
-	rc->setDensityScale(env->GetFloatField( jrc, jfield_RenderingContext_density ));
-	rc->setTextScale(env->GetFloatField( jrc, jfield_RenderingContext_textScale ));
-	rc->setScreenDensityRatio(env->GetFloatField( jrc, jfield_RenderingContext_screenDensityRatio ));
-	
-	jstring jpref = (jstring) env->GetObjectField(jrc, jfield_RenderingContext_preferredLocale);
-	jboolean transliterate = (jboolean) env->GetBooleanField(jrc, jfield_RenderingContext_transliterate);
-	
+	rc->setZoom(env->GetIntField(jrc, jfield_RenderingContext_zoom));
+	rc->setTileDivisor(env->GetDoubleField(jrc, jfield_RenderingContext_tileDivisor));
+	rc->setRotate(env->GetFloatField(jrc, jfield_RenderingContext_rotate));
+	rc->setDensityScale(env->GetFloatField(jrc, jfield_RenderingContext_density));
+	rc->setTextScale(env->GetFloatField(jrc, jfield_RenderingContext_textScale));
+	rc->setScreenDensityRatio(env->GetFloatField(jrc, jfield_RenderingContext_screenDensityRatio));
+
+	jstring jpref = (jstring)env->GetObjectField(jrc, jfield_RenderingContext_preferredLocale);
+	jboolean transliterate = (jboolean)env->GetBooleanField(jrc, jfield_RenderingContext_transliterate);
+
 	rc->setPreferredLocale(getString(env, jpref));
 	rc->setTransliterate(transliterate);
 	env->DeleteLocalRef(jpref);
 	rc->javaRenderingContext = jrc;
 }
 
-
 // ElapsedTimer routingTimer;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order, bool visible ) {
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order,
+									bool visible) {
 	jobject resobj = ienv->NewObject(jclass_RenderedObject, jmethod_RenderedObject_init);
-	for(uint i = 0; i < robj->types.size(); i++) 
-	{
+	for (uint i = 0; i < robj->types.size(); i++) {
 		jstring ts = ienv->NewStringUTF(robj->types[i].first.c_str());
 		jstring vs = ienv->NewStringUTF(robj->types[i].second.c_str());
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
-	for(uint i = 0; i < robj->additionalTypes.size(); i++) 
-	{
+	for (uint i = 0; i < robj->additionalTypes.size(); i++) {
 		jstring ts = ienv->NewStringUTF(robj->additionalTypes[i].first.c_str());
 		jstring vs = ienv->NewStringUTF(robj->additionalTypes[i].second.c_str());
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
-	UNORDERED(map)< std::string, std::string >::iterator it = robj->objectNames.begin();
-	for( ; it != robj->objectNames.end(); it++) 
-	{
+	UNORDERED(map)<std::string, std::string>::iterator it = robj->objectNames.begin();
+	for (; it != robj->objectNames.end(); it++) {
 		jstring ts = ienv->NewStringUTF(it->first.c_str());
 		jstring vs = ienv->NewStringUTF(it->second.c_str());
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
-		ienv->DeleteLocalRef(vs);	
+		ienv->DeleteLocalRef(vs);
 	}
-	for(uint i = 0; i < robj->points.size(); i++) 
-	{
-		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_addLocation, 
-			robj->points[i].first, robj->points[i].second);
+	for (uint i = 0; i < robj->points.size(); i++) {
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_addLocation, robj->points[i].first, robj->points[i].second);
 	}
 	if (robj->isLabelSpecified()) {
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setLabelX, robj->getLabelX());
 		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setLabelY, robj->getLabelY());
 	}
-		
 
 	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
 	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setOrder, order);
@@ -1013,16 +1062,16 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setName, nm);
 	ienv->DeleteLocalRef(nm);
 
-	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setBbox, 
-		(jint)bbox.left(), (jint)bbox.top(), (jint)bbox.right(), (jint)bbox.bottom());
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setBbox, (jint)bbox.left(), (jint)bbox.top(),
+						 (jint)bbox.right(), (jint)bbox.bottom());
 	return resobj;
 }
 
 jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobject reg) {
 	jintArray nameInts = ienv->NewIntArray(route->names.size());
 	jobjectArray nameStrings = ienv->NewObjectArray(route->names.size(), jclassString, NULL);
-	jint* ar = new jint[route->names.size()];//NEVER DEALLOCATED
-	UNORDERED(map)<int, std::string >::iterator itNames = route->names.begin();
+	jint* ar = new jint[route->names.size()];  // NEVER DEALLOCATED
+	UNORDERED(map)<int, std::string>::iterator itNames = route->names.begin();
 	jsize sz = 0;
 	for (; itNames != route->names.end(); itNames++, sz++) {
 		std::string name = itNames->second;
@@ -1040,28 +1089,28 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 
 	jintArray types = ienv->NewIntArray(route->types.size());
 	if (route->types.size() > 0) {
-		ienv->SetIntArrayRegion(types, 0, route->types.size(), (jint*) &route->types[0]);
+		ienv->SetIntArrayRegion(types, 0, route->types.size(), (jint*)&route->types[0]);
 	}
 	ienv->SetObjectField(robj, jfield_RouteDataObject_types, types);
 	ienv->DeleteLocalRef(types);
 
 	jintArray pointsX = ienv->NewIntArray(route->pointsX.size());
 	if (route->pointsX.size() > 0) {
-		ienv->SetIntArrayRegion(pointsX, 0, route->pointsX.size(), (jint*) &route->pointsX[0]);
+		ienv->SetIntArrayRegion(pointsX, 0, route->pointsX.size(), (jint*)&route->pointsX[0]);
 	}
 	ienv->SetObjectField(robj, jfield_RouteDataObject_pointsX, pointsX);
 	ienv->DeleteLocalRef(pointsX);
 
 	jintArray pointsY = ienv->NewIntArray(route->pointsY.size());
 	if (route->pointsY.size() > 0) {
-		ienv->SetIntArrayRegion(pointsY, 0, route->pointsY.size(), (jint*) &route->pointsY[0]);
+		ienv->SetIntArrayRegion(pointsY, 0, route->pointsY.size(), (jint*)&route->pointsY[0]);
 	}
 	ienv->SetObjectField(robj, jfield_RouteDataObject_pointsY, pointsY);
 	ienv->DeleteLocalRef(pointsY);
 
 	jlongArray restrictions = ienv->NewLongArray(route->restrictions.size());
 	if (route->restrictions.size() > 0) {
-		ienv->SetLongArrayRegion(restrictions, 0, route->restrictions.size(), (jlong*) &route->restrictions[0]);
+		ienv->SetLongArrayRegion(restrictions, 0, route->restrictions.size(), (jlong*)&route->restrictions[0]);
 	}
 	ienv->SetObjectField(robj, jfield_RouteDataObject_restrictions, restrictions);
 	ienv->DeleteLocalRef(restrictions);
@@ -1071,7 +1120,7 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 		std::vector<uint32_t> ts = route->pointTypes[k];
 		if (ts.size() > 0) {
 			jintArray tos = ienv->NewIntArray(ts.size());
-			ienv->SetIntArrayRegion(tos, 0, ts.size(), (jint*) &ts[0]);
+			ienv->SetIntArrayRegion(tos, 0, ts.size(), (jint*)&ts[0]);
 			ienv->SetObjectArrayElement(pointTypes, k, tos);
 			ienv->DeleteLocalRef(tos);
 		}
@@ -1080,27 +1129,27 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 	ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointTypes);
 	ienv->DeleteLocalRef(pointTypes);
 
-	if(route->pointNameTypes.size() > 0) {
+	if (route->pointNameTypes.size() > 0) {
 		jobjectArray pointNameTypes = ienv->NewObjectArray(route->pointNameTypes.size(), jclassIntArray, NULL);
 		for (uint k = 0; k < route->pointNameTypes.size(); k++) {
 			std::vector<uint32_t> ts = route->pointNameTypes[k];
 			if (ts.size() > 0) {
 				jintArray tos = ienv->NewIntArray(ts.size());
-				ienv->SetIntArrayRegion(tos, 0, ts.size(), (jint*) &ts[0]);
+				ienv->SetIntArrayRegion(tos, 0, ts.size(), (jint*)&ts[0]);
 				ienv->SetObjectArrayElement(pointNameTypes, k, tos);
 				ienv->DeleteLocalRef(tos);
 			}
 		}
-	
+
 		ienv->SetObjectField(robj, jfield_RouteDataObject_pointNameTypes, pointNameTypes);
-		ienv->DeleteLocalRef(pointNameTypes); 
+		ienv->DeleteLocalRef(pointNameTypes);
 	}
 
-	if(route->pointNames.size() > 0) {
+	if (route->pointNames.size() > 0) {
 		jobjectArray pointNames = ienv->NewObjectArray(route->pointNames.size(), jclassStringArray, NULL);
 		for (uint k = 0; k < route->pointNames.size(); k++) {
 			std::vector<std::string> ts = route->pointNames[k];
-			if(ts.size() > 0 ) {
+			if (ts.size() > 0) {
 				jobjectArray nameStrings = ienv->NewObjectArray(ts.size(), jclassString, NULL);
 				jsize sz = 0;
 				for (uint p = 0; p < ts.size(); p++, sz++) {
@@ -1110,7 +1159,7 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 				}
 				ienv->SetObjectArrayElement(pointNames, k, nameStrings);
 				ienv->DeleteLocalRef(nameStrings);
-			}	
+			}
 		}
 		ienv->SetObjectField(robj, jfield_RouteDataObject_pointNames, pointNames);
 		ienv->DeleteLocalRef(pointNames);
@@ -1119,19 +1168,19 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 	return robj;
 }
 
-jobject convertRouteSegmentResultToJava(JNIEnv* ienv, SHARED_PTR<RouteSegmentResult> r, UNORDERED(map)<int64_t, int>& indexes,
-		jobjectArray regions) {
+jobject convertRouteSegmentResultToJava(JNIEnv* ienv, SHARED_PTR<RouteSegmentResult> r, UNORDERED(map) < int64_t,
+										int > &indexes, jobjectArray regions) {
 	RouteDataObject* rdo = r->object.get();
 	jobject reg = NULL;
 	int64_t fp = rdo->region->filePointer;
 	int64_t ln = rdo->region->length;
-	if(indexes.find((fp <<31) + ln) != indexes.end()) {
-		reg = ienv->GetObjectArrayElement(regions, indexes[(fp <<31) + ln]);
+	if (indexes.find((fp << 31) + ln) != indexes.end()) {
+		reg = ienv->GetObjectArrayElement(regions, indexes[(fp << 31) + ln]);
 	}
 	jobjectArray ar = ienv->NewObjectArray(r->attachedRoutes.size(), jclass_RouteSegmentResultAr, NULL);
-	for(jsize k = 0; k < (jsize)r->attachedRoutes.size(); k++) {
+	for (jsize k = 0; k < (jsize)r->attachedRoutes.size(); k++) {
 		jobjectArray art = ienv->NewObjectArray(r->attachedRoutes[k].size(), jclass_RouteSegmentResult, NULL);
-		for(jsize kj = 0; kj < (jsize)r->attachedRoutes[k].size(); kj++) {
+		for (jsize kj = 0; kj < (jsize)r->attachedRoutes[k].size(); kj++) {
 			jobject jo = convertRouteSegmentResultToJava(ienv, r->attachedRoutes[k][kj], indexes, regions);
 			ienv->SetObjectArrayElement(art, kj, jo);
 			ienv->DeleteLocalRef(jo);
@@ -1141,10 +1190,10 @@ jobject convertRouteSegmentResultToJava(JNIEnv* ienv, SHARED_PTR<RouteSegmentRes
 	}
 	jobject robj = convertRouteDataObjectToJava(ienv, rdo, reg);
 	jobject resobj = ienv->NewObject(jclass_RouteSegmentResult, jmethod_RouteSegmentResult_ctor, robj,
-			r->getStartPointIndex(), r->getEndPointIndex());
+									 r->getStartPointIndex(), r->getEndPointIndex());
 	ienv->SetFloatField(resobj, jfield_RouteSegmentResult_routingTime, (jfloat)r->routingTime);
 	ienv->SetObjectField(resobj, jfield_RouteSegmentResult_preAttachedRoutes, ar);
-	if(reg != NULL) {
+	if (reg != NULL) {
 		ienv->DeleteLocalRef(reg);
 	}
 	ienv->DeleteLocalRef(robj);
@@ -1153,16 +1202,15 @@ jobject convertRouteSegmentResultToJava(JNIEnv* ienv, SHARED_PTR<RouteSegmentRes
 }
 
 class NativeRoutingTile {
-public:
+   public:
 	std::vector<RouteDataObject*> result;
-	UNORDERED(map)<uint64_t, std::vector<RouteDataObject*> > cachedByLocations;
+	UNORDERED(map)<uint64_t, std::vector<RouteDataObject*>> cachedByLocations;
 };
 
-
 //	protected static native void deleteRouteSearchResult(long searchResultHandle!);
-extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRouteSearchResult(JNIEnv* ienv,
-		jobject obj, jlong ref) {
-	NativeRoutingTile* t = (NativeRoutingTile*) ref;
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRouteSearchResult(JNIEnv* ienv, jobject obj,
+																						jlong ref) {
+	NativeRoutingTile* t = (NativeRoutingTile*)ref;
 	for (unsigned int i = 0; i < t->result.size(); i++) {
 		delete t->result[i];
 		t->result[i] = NULL;
@@ -1170,46 +1218,49 @@ extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRouteSearc
 	delete t;
 }
 
-class RouteCalculationProgressWrapper: public RouteCalculationProgress {
+class RouteCalculationProgressWrapper : public RouteCalculationProgress {
 	JNIEnv* ienv;
 	jobject j;
-public:
-	RouteCalculationProgressWrapper(JNIEnv* ienv, jobject j) : RouteCalculationProgress(),
-			ienv(ienv), j(j)  {
+
+   public:
+	RouteCalculationProgressWrapper(JNIEnv* ienv, jobject j) : RouteCalculationProgress(), ienv(ienv), j(j) {
 	}
 	virtual bool isCancelled() {
-		if(j == NULL) {
+		if (j == NULL) {
 			return false;
 		}
 		return ienv->GetBooleanField(j, jfield_RouteCalculationProgress_isCancelled);
 	}
 	virtual void setSegmentNotFound(int s) {
-		if(j != NULL) {
+		if (j != NULL) {
 			ienv->SetIntField(j, jfield_RouteCalculationProgress_segmentNotFound, s);
 		}
 	}
 	virtual void updateStatus(float distanceFromBegin, int directSegmentQueueSize, float distanceFromEnd,
-			int reverseSegmentQueueSize) {
-		RouteCalculationProgress::updateStatus(distanceFromBegin, directSegmentQueueSize,
-				distanceFromEnd, reverseSegmentQueueSize);
-		if(j != NULL) {
-		   ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromBegin, this->distanceFromBegin);
-		   ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromEnd, this->distanceFromEnd);
-		   ienv->SetIntField(j, jfield_RouteCalculationProgress_directSegmentQueueSize, this->directSegmentQueueSize);
-		   ienv->SetIntField(j, jfield_RouteCalculationProgress_reverseSegmentQueueSize, this->reverseSegmentQueueSize);
-        }
+							  int reverseSegmentQueueSize) {
+		RouteCalculationProgress::updateStatus(distanceFromBegin, directSegmentQueueSize, distanceFromEnd,
+											   reverseSegmentQueueSize);
+		if (j != NULL) {
+			ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromBegin, this->distanceFromBegin);
+			ienv->SetFloatField(j, jfield_RouteCalculationProgress_distanceFromEnd, this->distanceFromEnd);
+			ienv->SetIntField(j, jfield_RouteCalculationProgress_directSegmentQueueSize, this->directSegmentQueueSize);
+			ienv->SetIntField(j, jfield_RouteCalculationProgress_reverseSegmentQueueSize,
+							  this->reverseSegmentQueueSize);
+		}
 	}
 };
 
-void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext* ctx,  jobject precalculatedRoute) {
+void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext* ctx, jobject precalculatedRoute) {
 	if (precalculatedRoute != NULL) {
-		jintArray pointsY = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsY);
-		jintArray pointsX = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsX);
-		jfloatArray tms = (jfloatArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_tms);
-		jint* pointsYF = (jint*) ienv->GetIntArrayElements(pointsY, NULL);
-		jint* pointsXF = (jint*) ienv->GetIntArrayElements(pointsX, NULL);
-		jfloat* tmsF = (jfloat*) ienv->GetFloatArrayElements(tms, NULL);
-		ctx->precalcRoute = SHARED_PTR < PrecalculatedRouteDirection>(new PrecalculatedRouteDirection());
+		jintArray pointsY =
+			(jintArray)ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsY);
+		jintArray pointsX =
+			(jintArray)ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsX);
+		jfloatArray tms = (jfloatArray)ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_tms);
+		jint* pointsYF = (jint*)ienv->GetIntArrayElements(pointsY, NULL);
+		jint* pointsXF = (jint*)ienv->GetIntArrayElements(pointsX, NULL);
+		jfloat* tmsF = (jfloat*)ienv->GetFloatArrayElements(tms, NULL);
+		ctx->precalcRoute = SHARED_PTR<PrecalculatedRouteDirection>(new PrecalculatedRouteDirection());
 		for (int k = 0; k < ienv->GetArrayLength(pointsY); k++) {
 			int y = pointsYF[k];
 			int x = pointsXF[k];
@@ -1222,11 +1273,16 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext* ctx,  jobject precalc
 		}
 		ctx->precalcRoute->startPoint = ctx->precalcRoute->calc(ctx->startX, ctx->startY);
 		ctx->precalcRoute->endPoint = ctx->precalcRoute->calc(ctx->targetX, ctx->targetY);
-		ctx->precalcRoute->minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
-		ctx->precalcRoute->maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
-		ctx->precalcRoute->followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
-		ctx->precalcRoute->startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
-		ctx->precalcRoute->endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
+		ctx->precalcRoute->minSpeed =
+			ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
+		ctx->precalcRoute->maxSpeed =
+			ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
+		ctx->precalcRoute->followNext =
+			ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
+		ctx->precalcRoute->startFinishTime =
+			ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
+		ctx->precalcRoute->endFinishTime =
+			ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
 		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
 		ienv->ReleaseIntArrayElements(pointsX, pointsXF, 0);
 		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);
@@ -1235,10 +1291,10 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext* ctx,  jobject precalc
 
 vector<string> convertJArrayToStrings(JNIEnv* ienv, jobjectArray ar) {
 	vector<string> res;
-	for(int i = 0; i < ienv->GetArrayLength(ar); i++) {
+	for (int i = 0; i < ienv->GetArrayLength(ar); i++) {
 		// RouteAttributeContext
-		jstring s = (jstring) ienv->GetObjectArrayElement(ar, i);
-		if(s == NULL) {
+		jstring s = (jstring)ienv->GetObjectArrayElement(ar, i);
+		if (s == NULL) {
 			res.push_back("");
 		} else {
 			res.push_back(getString(ienv, s));
@@ -1248,56 +1304,57 @@ vector<string> convertJArrayToStrings(JNIEnv* ienv, jobjectArray ar) {
 	return res;
 }
 
-void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAttributeEvalRule> erule, GeneralRouter* router) {
-	jstring jselectValue = (jstring) ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectValueDef);
+void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAttributeEvalRule> erule,
+								 GeneralRouter* router) {
+	jstring jselectValue = (jstring)ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectValueDef);
 	string selectValue = getString(ienv, jselectValue);
 	ienv->DeleteLocalRef(jselectValue);
-	jstring jselectType = (jstring) ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectType);
+	jstring jselectType = (jstring)ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectType);
 	string selectType;
-	if(jselectType) {
+	if (jselectType) {
 		selectType = getString(ienv, jselectType);
 		ienv->DeleteLocalRef(jselectType);
 	}
 
-	erule->registerSelectValue(selectValue, selectType); 
+	erule->registerSelectValue(selectValue, selectType);
 
-	jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getParameters);
+	jobjectArray ar = (jobjectArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getParameters);
 	vector<string> params = convertJArrayToStrings(ienv, ar);
 	ienv->DeleteLocalRef(ar);
-	erule->registerParamConditions(params); 
+	erule->registerParamConditions(params);
 
-	ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefValue);
+	ar = (jobjectArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefValue);
 	vector<string> tagValueDefValues = convertJArrayToStrings(ienv, ar);
 	ienv->DeleteLocalRef(ar);
 
-	ar = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefTag);
+	ar = (jobjectArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefTag);
 	vector<string> tagValueDefTags = convertJArrayToStrings(ienv, ar);
 	ienv->DeleteLocalRef(ar);
 
-	jbooleanArray tagValueDefNot = (jbooleanArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefNot);
+	jbooleanArray tagValueDefNot =
+		(jbooleanArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getTagValueCondDefNot);
 	jboolean* nots = ienv->GetBooleanArrayElements(tagValueDefNot, NULL);
-	for(uint i = 0; i < tagValueDefValues.size(); i++) {
+	for (uint i = 0; i < tagValueDefValues.size(); i++) {
 		erule->registerAndTagValueCondition(router, tagValueDefTags[i], tagValueDefValues[i], nots[i]);
 	}
 	ienv->ReleaseBooleanArrayElements(tagValueDefNot, nots, 0);
 	ienv->DeleteLocalRef(tagValueDefNot);
-	
 
-	jobjectArray expressions = (jobjectArray) ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getExpressions);
-	for(int j = 0; j < ienv->GetArrayLength(expressions); j++) {
+	jobjectArray expressions =
+		(jobjectArray)ienv->CallObjectMethod(rule, jmethod_RouteAttributeEvalRule_getExpressions);
+	for (int j = 0; j < ienv->GetArrayLength(expressions); j++) {
 		jobject expr = ienv->GetObjectArrayElement(expressions, j);
-		jobjectArray jvls  = (jobjectArray) ienv->GetObjectField(expr, jfield_RouteAttributeExpression_values);
+		jobjectArray jvls = (jobjectArray)ienv->GetObjectField(expr, jfield_RouteAttributeExpression_values);
 		vector<string> values = convertJArrayToStrings(ienv, jvls);
 		ienv->DeleteLocalRef(jvls);
 		int expressionType = ienv->GetIntField(expr, jfield_RouteAttributeExpression_expressionType);
-		
-		jstring jvalueType = (jstring) ienv->GetObjectField(expr, jfield_RouteAttributeExpression_valueType);
+
+		jstring jvalueType = (jstring)ienv->GetObjectField(expr, jfield_RouteAttributeExpression_valueType);
 		string valueType;
-		if(jselectType) {
+		if (jselectType) {
 			valueType = getString(ienv, jvalueType);
 
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "valueType: %s", valueType.c_str());
-
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "valueType: %s", valueType.c_str());
 
 			ienv->DeleteLocalRef(jvalueType);
 		}
@@ -1307,15 +1364,15 @@ void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAtt
 		ienv->DeleteLocalRef(expr);
 	}
 	ienv->DeleteLocalRef(expressions);
-
 }
 
 void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rConfig, jobject jRouteConfig) {
 	rConfig->planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
 	rConfig->heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
 	rConfig->zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
-	rConfig->routeCalculationTime = ienv->GetLongField(jRouteConfig, jfield_RoutingConfiguration_routeCalculationTime) / 1000;
-	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
+	rConfig->routeCalculationTime =
+		ienv->GetLongField(jRouteConfig, jfield_RoutingConfiguration_routeCalculationTime) / 1000;
+	jstring rName = (jstring)ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
 	rConfig->routerName = getString(ienv, rName);
 
 	jobject lrouter = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
@@ -1328,7 +1385,7 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	rConfig->router->defaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
 	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 	rConfig->router->heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
-	
+
 	// Map<String, String> attributes; // Attributes are not sync not used for calculation
 	// Map<String, RoutingParameter> parameters;  // not used for calculation
 	// Map<String, Integer> universalRules; // dynamically managed
@@ -1336,72 +1393,70 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	// Map<String, BitSet> tagRuleMask // dynamically managed
 	// ArrayList<Object> ruleToValue // dynamically managed
 
-
-	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
-	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
+	jobjectArray objectAttributes = (jobjectArray)ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
+	for (int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
 		// RouteAttributeContext
 		RouteAttributeContext* rctx = rConfig->router->newRouteAttributeContext();
 		jobject ctx = ienv->GetObjectArrayElement(objectAttributes, i);
-		jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
+		jobjectArray ar = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
 		vector<string> paramKeys = convertJArrayToStrings(ienv, ar);
 		ienv->DeleteLocalRef(ar);
-		ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
+		ar = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
 		vector<string> paramValues = convertJArrayToStrings(ienv, ar);
 		ienv->DeleteLocalRef(ar);
 
 		rctx->registerParams(paramKeys, paramValues);
-		
-		jobjectArray rules = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
-		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
-		
+
+		jobjectArray rules = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
+		for (int j = 0; j < ienv->GetArrayLength(rules); j++) {
 			shared_ptr<RouteAttributeEvalRule> erule = rctx->newEvaluationRule();
 			jobject rule = ienv->GetObjectArrayElement(rules, j);
 			parseRouteAttributeEvalRule(ienv, rule, erule, rConfig->router.get());
 			ienv->DeleteLocalRef(rule);
 		}
 		ienv->DeleteLocalRef(rules);
-		//printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
+		// printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
 
 		ienv->DeleteLocalRef(ctx);
 	}
-	jlongArray impassableRoadIds = (jlongArray) ienv->CallObjectMethod(router, jmethod_GeneralRouter_getImpassableRoadIds);
-	if(impassableRoadIds != NULL && ienv->GetArrayLength(impassableRoadIds) > 0) {
-		jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);		
-		for(int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
+	jlongArray impassableRoadIds =
+		(jlongArray)ienv->CallObjectMethod(router, jmethod_GeneralRouter_getImpassableRoadIds);
+	if (impassableRoadIds != NULL && ienv->GetArrayLength(impassableRoadIds) > 0) {
+		jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);
+		for (int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
 			rConfig->router->impassableRoadIds.insert(iRi[i]);
 		}
 		ienv->ReleaseLongArrayElements(impassableRoadIds, (jlong*)iRi, 0);
 	}
-	
+
 	ienv->DeleteLocalRef(impassableRoadIds);
 	ienv->DeleteLocalRef(objectAttributes);
 	ienv->DeleteGlobalRef(router);
-	ienv->DeleteLocalRef(lrouter);	
+	ienv->DeleteLocalRef(lrouter);
 	ienv->DeleteLocalRef(rName);
-
 }
 
-void addIntField(JNIEnv *ienv, jobject obj, jfieldID fid, int val) {
-	ienv->SetIntField(obj, fid, ienv->GetIntField(obj, fid)  + val);
+void addIntField(JNIEnv* ienv, jobject obj, jfieldID fid, int val) {
+	ienv->SetIntField(obj, fid, ienv->GetIntField(obj, fid) + val);
 }
 
-void addLongField(JNIEnv *ienv, jobject obj, jfieldID fid, jlong val) {
+void addLongField(JNIEnv* ienv, jobject obj, jfieldID fid, jlong val) {
 	ienv->SetLongField(obj, fid, ienv->GetLongField(obj, fid) + val);
 }
 
-extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(JNIEnv* ienv,
-		jobject obj, jobject jCtx, jfloat initDirection,
-		jobjectArray regions, bool basemap) {
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRouting(
+	JNIEnv* ienv, jobject obj, jobject jCtx, jfloat initDirection, jobjectArray regions, bool basemap) {
 	jobject jRouteConfig = ienv->GetObjectField(jCtx, jfield_RoutingContext_config);
 	jobject precalculatedRoute = ienv->GetObjectField(jCtx, jfield_RoutingContext_precalculatedRouteDirection);
 	jobject progress = ienv->GetObjectField(jCtx, jfield_RoutingContext_calculationProgress);
 
-	RoutingContext* c = (RoutingContext*) ienv->GetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext);
-	if ( c == NULL ) {
-		SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
+	RoutingContext* c = (RoutingContext*)ienv->GetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext);
+	if (c == NULL) {
+		SHARED_PTR<RoutingConfiguration> config =
+			SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
 		parseRouteConfiguration(ienv, config, jRouteConfig);
 		c = new RoutingContext(config);
-		ienv->SetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext, (jlong ) c);
+		ienv->SetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext, (jlong)c);
 	}
 	c->progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	c->startX = ienv->GetIntField(jCtx, jfield_RoutingContext_startX);
@@ -1417,17 +1472,16 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	c->basemap = basemap;
 	c->setConditionalTime(c->config->routeCalculationTime);
 	c->publicTransport = ienv->GetBooleanField(jCtx, jfield_RoutingContext_publicTransport);
-	
-	
+
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
-	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(c, false);
+	vector<SHARED_PTR<RouteSegmentResult>> r = searchRouteInternal(c, false);
 	UNORDERED(map)<int64_t, int> indexes;
-	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
+	for (int t = 0; t < ienv->GetArrayLength(regions); t++) {
 		jobject oreg = ienv->GetObjectArrayElement(regions, t);
 		int64_t fp = ienv->GetIntField(oreg, jfield_RouteRegion_filePointer);
 		int64_t ln = ienv->GetIntField(oreg, jfield_RouteRegion_length);
 		ienv->DeleteLocalRef(oreg);
-		indexes[(fp <<31) + ln] = t;
+		indexes[(fp << 31) + ln] = t;
 	}
 
 	// convert results
@@ -1437,18 +1491,23 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		ienv->SetObjectArrayElement(res, i, resobj);
 		ienv->DeleteLocalRef(resobj);
 	}
-	if(c->finalRouteSegment.get() != NULL) {
-		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime, c->finalRouteSegment->distanceFromStart);
+	if (c->finalRouteSegment.get() != NULL) {
+		ienv->SetFloatField(progress, jfield_RouteCalculationProgress_routingCalculatedTime,
+							c->finalRouteSegment->distanceFromStart);
 	}
 	if (c->progress && c->progress.get()) {
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedSegments, c->progress->visitedSegments);
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_loadedTiles, c->progress->loadedTiles);
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c->progress->directQueueSize);
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c->progress->oppositeQueueSize);
-		addIntField(ienv, progress, jfield_RouteCalculationProgress_directSegmentQueueSize, c->progress->directSegmentQueueSize);
-		addIntField(ienv, progress, jfield_RouteCalculationProgress_reverseSegmentQueueSize, c->progress->reverseSegmentQueueSize);
-		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedDirectSegments, c->progress->visitedDirectSegments);
-		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedOppositeSegments, c->progress->visitedOppositeSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_directSegmentQueueSize,
+					c->progress->directSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_reverseSegmentQueueSize,
+					c->progress->reverseSegmentQueueSize);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedDirectSegments,
+					c->progress->visitedDirectSegments);
+		addIntField(ienv, progress, jfield_RouteCalculationProgress_visitedOppositeSegments,
+					c->progress->visitedOppositeSegments);
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_directQueueSize, c->progress->directQueueSize);
 		addIntField(ienv, progress, jfield_RouteCalculationProgress_oppositeQueueSize, c->progress->oppositeQueueSize);
 
@@ -1471,59 +1530,68 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	ienv->DeleteLocalRef(jRouteConfig);
 	ienv->DeleteLocalRef(progress);
 	ienv->DeleteLocalRef(precalculatedRoute);
-	if (c != NULL && !ienv->GetBooleanField(jCtx, jfield_RoutingContext_keepNativeRoutingContext) ) {
+	if (c != NULL && !ienv->GetBooleanField(jCtx, jfield_RoutingContext_keepNativeRoutingContext)) {
 		ienv->SetLongField(jCtx, jfield_RoutingContext_nativeRoutingContext, 0);
 		delete c;
 	}
 	return res;
 }
 
-void parseTransportRoutingConfiguration(JNIEnv* ienv, shared_ptr<TransportRoutingConfiguration>& rConfig, jobject jTransportConfig) {
-	rConfig->zoomToLoadTiles = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES);
-	rConfig->walkRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkRadius);
-	rConfig->walkChangeRadius = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkChangeRadius);
-	rConfig->maxNumberOfChanges = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_maxNumberOfChanges);
-	rConfig->finishTimeSeconds = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_finishTimeSeconds);
-	rConfig->maxRouteTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_maxRouteTime);
-	rConfig->walkSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_walkSpeed);
-	rConfig->defaultTravelSpeed = ienv->GetFloatField(jTransportConfig,  jfield_TransportRoutingConfiguration_defaultTravelSpeed);
-	rConfig->stopTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_stopTime);
-	rConfig->changeTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_changeTime);
-	rConfig->boardingTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_boardingTime);
-	rConfig->useSchedule = ienv->GetBooleanField(jTransportConfig,  jfield_TransportRoutingConfiguration_useSchedule);
-	rConfig->scheduleTimeOfDay = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
-	rConfig->scheduleMaxTime = ienv->GetIntField(jTransportConfig,  jfield_TransportRoutingConfiguration_scheduleMaxTime);
-	rConfig->maxRouteDistance = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteDistance);
-	rConfig->maxRouteIncreaseSpeed = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed);
+void parseTransportRoutingConfiguration(JNIEnv* ienv, shared_ptr<TransportRoutingConfiguration>& rConfig,
+										jobject jTransportConfig) {
+	rConfig->zoomToLoadTiles =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_ZOOM_TO_LOAD_TILES);
+	rConfig->walkRadius = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_walkRadius);
+	rConfig->walkChangeRadius =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_walkChangeRadius);
+	rConfig->maxNumberOfChanges =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxNumberOfChanges);
+	rConfig->finishTimeSeconds =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_finishTimeSeconds);
+	rConfig->maxRouteTime = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteTime);
+	rConfig->walkSpeed = ienv->GetFloatField(jTransportConfig, jfield_TransportRoutingConfiguration_walkSpeed);
+	rConfig->defaultTravelSpeed =
+		ienv->GetFloatField(jTransportConfig, jfield_TransportRoutingConfiguration_defaultTravelSpeed);
+	rConfig->stopTime = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_stopTime);
+	rConfig->changeTime = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_changeTime);
+	rConfig->boardingTime = ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_boardingTime);
+	rConfig->useSchedule = ienv->GetBooleanField(jTransportConfig, jfield_TransportRoutingConfiguration_useSchedule);
+	rConfig->scheduleTimeOfDay =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_scheduleTimeOfDay);
+	rConfig->scheduleMaxTime =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_scheduleMaxTime);
+	rConfig->maxRouteDistance =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteDistance);
+	rConfig->maxRouteIncreaseSpeed =
+		ienv->GetIntField(jTransportConfig, jfield_TransportRoutingConfiguration_maxRouteIncreaseSpeed);
 	jobject lrouter = ienv->GetObjectField(jTransportConfig, jfield_TransportRoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
-	
+
 	rConfig->router->minSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minSpeed);
 	rConfig->router->defaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
 	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
 
-	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
-	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
+	jobjectArray objectAttributes = (jobjectArray)ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
+	for (int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
 		// RouteAttributeContext
 		RouteAttributeContext* rctx = rConfig->router->newRouteAttributeContext();
 		jobject ctx = ienv->GetObjectArrayElement(objectAttributes, i);
-		jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
+		jobjectArray ar = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
 		vector<string> paramKeys = convertJArrayToStrings(ienv, ar);
 		ienv->DeleteLocalRef(ar);
-		ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
+		ar = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamValues);
 		vector<string> paramValues = convertJArrayToStrings(ienv, ar);
 		ienv->DeleteLocalRef(ar);
 
 		rctx->registerParams(paramKeys, paramValues);
-		jobjectArray rules = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
-		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
-		
+		jobjectArray rules = (jobjectArray)ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
+		for (int j = 0; j < ienv->GetArrayLength(rules); j++) {
 			shared_ptr<RouteAttributeEvalRule> erule = rctx->newEvaluationRule();
 			jobject rule = ienv->GetObjectArrayElement(rules, j);
 			parseRouteAttributeEvalRule(ienv, rule, erule, rConfig->router.get());
 			ienv->DeleteLocalRef(rule);
 		}
-	// 	//printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
+		// 	//printf("\n >>>>>>> %d \n", i + 1); rctx->printRules();
 
 		ienv->DeleteLocalRef(ctx);
 	}
@@ -1533,11 +1601,9 @@ void parseTransportRoutingConfiguration(JNIEnv* ienv, shared_ptr<TransportRoutin
 	ienv->DeleteLocalRef(lrouter);
 }
 
-
 jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop) {
-
 	jobject jstop = ienv->NewObject(jclass_NativeTransportStop, jmethod_NativeTransportStop_init);
-	ienv->SetLongField(jstop, jfield_NativeTransportStop_id, (jlong) stop->id);
+	ienv->SetLongField(jstop, jfield_NativeTransportStop_id, (jlong)stop->id);
 	ienv->SetDoubleField(jstop, jfield_NativeTransportStop_stopLat, stop->lat);
 	ienv->SetDoubleField(jstop, jfield_NativeTransportStop_stopLon, stop->lon);
 	jstring j_name = ienv->NewStringUTF(stop->name.c_str());
@@ -1546,11 +1612,11 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 	ienv->SetObjectField(jstop, jfield_NativeTransportStop_enName, j_enName);
 	ienv->DeleteLocalRef(j_name);
 	ienv->DeleteLocalRef(j_enName);
-	
+
 	jobjectArray j_namesLng = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
 	jobjectArray j_namesNames = ienv->NewObjectArray(stop->names.size(), jclassString, NULL);
 	int n = 0;
-	for (std::pair<string,string> el : stop->names) {
+	for (std::pair<string, string> el : stop->names) {
 		jstring jlng = ienv->NewStringUTF(el.first.c_str());
 		jstring jnm = ienv->NewStringUTF(el.second.c_str());
 		ienv->SetObjectArrayElement(j_namesLng, n, jlng);
@@ -1569,7 +1635,7 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 		jintArray j_referencesToRoutes = ienv->NewIntArray(stop->referencesToRoutes.size());
 		jint tmp[stop->referencesToRoutes.size()];
 		for (int i = 0; i < stop->referencesToRoutes.size(); i++) {
-			tmp[i] = (jint) stop->referencesToRoutes.at(i);
+			tmp[i] = (jint)stop->referencesToRoutes.at(i);
 		}
 		ienv->SetIntArrayRegion(j_referencesToRoutes, 0, stop->referencesToRoutes.size(), tmp);
 		ienv->SetObjectField(jstop, jfield_NativeTransportStop_referencesToRoutes, j_referencesToRoutes);
@@ -1580,7 +1646,7 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 		jlongArray j_deletedRoutesIds = ienv->NewLongArray(stop->deletedRoutesIds.size());
 		jlong tmp[stop->deletedRoutesIds.size()];
 		for (int i = 0; i < stop->deletedRoutesIds.size(); i++) {
-			tmp[i] = (jlong) stop->deletedRoutesIds.at(i);
+			tmp[i] = (jlong)stop->deletedRoutesIds.at(i);
 		}
 		ienv->SetLongArrayRegion(j_deletedRoutesIds, 0, stop->deletedRoutesIds.size(), tmp);
 		ienv->SetObjectField(jstop, jfield_NativeTransportStop_deletedRoutesIds, j_deletedRoutesIds);
@@ -1601,7 +1667,7 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 	ienv->SetIntField(jstop, jfield_NativeTransportStop_x31, stop->x31);
 	ienv->SetIntField(jstop, jfield_NativeTransportStop_y31, stop->y31);
 
-	//maybe we should obscure this field completly? need to look if this info needed for result
+	// maybe we should obscure this field completly? need to look if this info needed for result
 	// jobjectArray j_routes = ienv->NewObjectArray(stop->routes.size(), jclass_NativeTransportRoute, NULL);
 	// for (int i = 0; i < stop->routes.size(); i++){
 	// 	jobject tmp = convertTransportRouteToJava(ienv, stop->routes.at(i));
@@ -1640,20 +1706,20 @@ jobject convertTransportStopToJava(JNIEnv* ienv, SHARED_PTR<TransportStop>& stop
 
 jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& route) {
 	jobject jtr = ienv->NewObject(jclass_NativeTransportRoute, jmethod_NativeTransportRoute_init);
-	
-	ienv->SetLongField(jtr, jfield_NativeTransportRoute_id, (jlong) route->id);
-	
+
+	ienv->SetLongField(jtr, jfield_NativeTransportRoute_id, (jlong)route->id);
+
 	jstring j_name = ienv->NewStringUTF(route->name.c_str());
 	jstring j_enName = ienv->NewStringUTF(route->enName.c_str());
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_name, j_name);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_enName, j_enName);
 	ienv->DeleteLocalRef(j_name);
 	ienv->DeleteLocalRef(j_enName);
-	
+
 	jobjectArray j_namesLng = ienv->NewObjectArray(route->names.size(), jclassString, NULL);
 	jobjectArray j_namesNames = ienv->NewObjectArray(route->names.size(), jclassString, NULL);
 	int n = 0;
-	for (std::pair<string,string> el : route->names) {
+	for (std::pair<string, string> el : route->names) {
 		jstring jlng = ienv->NewStringUTF(el.first.c_str());
 		jstring jnm = ienv->NewStringUTF(el.second.c_str());
 		ienv->SetObjectArrayElement(j_namesLng, n, jlng);
@@ -1676,7 +1742,7 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 	}
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_forwardStops, j_forwardStops);
 	ienv->DeleteLocalRef(j_forwardStops);
-	
+
 	jstring j_ref = ienv->NewStringUTF(route->ref.c_str());
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_ref, j_ref);
 	ienv->DeleteLocalRef(j_ref);
@@ -1693,10 +1759,12 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 
 	jlongArray j_waysIds = ienv->NewLongArray(route->forwardWays.size());
 	jlong tmpIds[route->forwardWays.size()];
-	jobjectArray j_nodesLats = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object longarray
-	jobjectArray j_nodesLons = ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL); //object doublearray
+	jobjectArray j_nodesLats =
+		ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL);  // object longarray
+	jobjectArray j_nodesLons =
+		ienv->NewObjectArray(route->forwardWays.size(), jclassDoubleArray, NULL);  // object doublearray
 	for (int k = 0; k < route->forwardWays.size(); k++) {
-		tmpIds[k] = (jlong) route->forwardWays.at(k)->id;
+		tmpIds[k] = (jlong)route->forwardWays.at(k)->id;
 		int nsize = route->forwardWays.at(k)->nodes.size();
 		jdoubleArray j_wayNodesLats = ienv->NewDoubleArray(nsize);
 		jdoubleArray j_wayNodesLons = ienv->NewDoubleArray(nsize);
@@ -1718,7 +1786,7 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysIds, j_waysIds);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysNodesLats, j_nodesLats);
 	ienv->SetObjectField(jtr, jfield_NativeTransportRoute_waysNodesLons, j_nodesLons);
-	
+
 	ienv->DeleteLocalRef(j_waysIds);
 	ienv->DeleteLocalRef(j_nodesLats);
 	ienv->DeleteLocalRef(j_nodesLons);
@@ -1727,16 +1795,18 @@ jobject convertTransportRouteToJava(JNIEnv* ienv, SHARED_PTR<TransportRoute>& ro
 }
 
 jobject convertPTRouteResultSegmentToJava(JNIEnv* ienv, SHARED_PTR<TransportRouteResultSegment>& trrs) {
-	jobject jtrrs = ienv->NewObject(jclass_NativeTransportRouteResultSegment, jmethod_NativeTransportRouteResultSegment_init);
+	jobject jtrrs =
+		ienv->NewObject(jclass_NativeTransportRouteResultSegment, jmethod_NativeTransportRouteResultSegment_init);
 	jobject jtr = convertTransportRouteToJava(ienv, trrs->route);
 	ienv->SetObjectField(jtrrs, jfield_NativeTransportRouteResultSegment_route, jtr);
 	ienv->DeleteLocalRef(jtr);
-	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_walkTime, (jdouble) trrs->walkTime);
-	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelDistApproximate, (jdouble) trrs->travelDistApproximate);
-	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelTime, (jdouble) trrs->travelTime);
+	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_walkTime, (jdouble)trrs->walkTime);
+	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelDistApproximate,
+						 (jdouble)trrs->travelDistApproximate);
+	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_travelTime, (jdouble)trrs->travelTime);
 	ienv->SetIntField(jtrrs, jfield_NativeTransportRouteResultSegment_start, trrs->start);
 	ienv->SetIntField(jtrrs, jfield_NativeTransportRouteResultSegment_end, trrs->end);
-	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_walkDist, (jdouble) trrs->walkDist);
+	ienv->SetDoubleField(jtrrs, jfield_NativeTransportRouteResultSegment_walkDist, (jdouble)trrs->walkDist);
 	ienv->SetIntField(jtrrs, jfield_NativeTransportRouteResultSegment_depTime, trrs->depTime);
 	return jtrrs;
 }
@@ -1754,26 +1824,25 @@ jobject convertPTResultToJava(JNIEnv* ienv, SHARED_PTR<TransportRouteResult>& r)
 	ienv->SetDoubleField(jtrr, jfield_NativeTransportRoutingResult_finishWalkDist, (jdouble)r->finishWalkDist);
 	ienv->SetDoubleField(jtrr, jfield_NativeTransportRoutingResult_routeTime, (jdouble)r->routeTime);
 	return jtrr;
-
 }
 
-extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTransportRouting(JNIEnv* ienv,
-		jobject obj, 
-		jintArray  coordinates, jobject jTransportRoutingConfig, jobject progress) {
-	shared_ptr<TransportRoutingConfiguration> trConfig = shared_ptr<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTransportRouting(
+	JNIEnv* ienv, jobject obj, jintArray coordinates, jobject jTransportRoutingConfig, jobject progress) {
+	shared_ptr<TransportRoutingConfiguration> trConfig =
+		shared_ptr<TransportRoutingConfiguration>(new TransportRoutingConfiguration);
 	parseTransportRoutingConfiguration(ienv, trConfig, jTransportRoutingConfig);
-	unique_ptr<TransportRoutingContext> c (new TransportRoutingContext(trConfig));
+	unique_ptr<TransportRoutingContext> c(new TransportRoutingContext(trConfig));
 	c->calculationProgress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c->startX = data[0];
 	c->startY = data[1];
 	c->targetX = data[2];
 	c->targetY = data[3];
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "coords start: %d / %d, end: %d/%d", 
-	c->startX, c->startY, c->targetX, c->targetY);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "coords start: %d / %d, end: %d/%d", c->startX, c->startY,
+					  c->targetX, c->targetY);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
-	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>(); 
-	vector<SHARED_PTR<TransportRouteResult>> r; 
+	SHARED_PTR<TransportRoutePlanner> tplanner = make_shared<TransportRoutePlanner>();
+	vector<SHARED_PTR<TransportRouteResult>> r;
 	tplanner->buildTransportRoute(c, r);
 
 	// // convert results
@@ -1791,11 +1860,11 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeTr
 }
 
 //	protected static native RouteDataObject[] getRouteDataObjects(NativeRouteSearchResult rs, int x31, int y31!);
-extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_getRouteDataObjects(JNIEnv* ienv,
-		jobject obj, jobject reg, jlong ref, jint x31, jint y31) {
-
-	NativeRoutingTile* t = (NativeRoutingTile*) ref;
-	uint64_t lr = ((uint64_t) x31 << 31) + y31;
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_getRouteDataObjects(JNIEnv* ienv, jobject obj,
+																							jobject reg, jlong ref,
+																							jint x31, jint y31) {
+	NativeRoutingTile* t = (NativeRoutingTile*)ref;
+	uint64_t lr = ((uint64_t)x31 << 31) + y31;
 	std::vector<RouteDataObject*> collected = t->cachedByLocations[lr];
 	jobjectArray res = ienv->NewObjectArray(collected.size(), jclass_RouteDataObject, NULL);
 	for (jint i = 0; i < (int)collected.size(); i++) {
@@ -1806,40 +1875,39 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_getRoute
 	return res;
 }
 // protected static native boolean searchRenderedObjects(RenderingContext context, int x, int y, boolean notvisible);
-extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRenderedObjects(JNIEnv* ienv,
-		jobject obj, jobject context, jint x, jint y, jboolean notvisible) {
-	jlong handler = ienv->GetLongField( context, jfield_RenderingContext_renderingContextHandle);
-	if(handler != 0) 
-	{
-		RenderingContextResults* results = (RenderingContextResults*) handler;
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRenderedObjects(JNIEnv* ienv, jobject obj,
+																							  jobject context, jint x,
+																							  jint y,
+																							  jboolean notvisible) {
+	jlong handler = ienv->GetLongField(context, jfield_RenderingContext_renderingContextHandle);
+	if (handler != 0) {
+		RenderingContextResults* results = (RenderingContextResults*)handler;
 		vector<jobject> collected;
-		vector<SHARED_PTR<TextDrawInfo> > searchText;
+		vector<SHARED_PTR<TextDrawInfo>> searchText;
 
 		SkRect bbox = SkRect::MakeXYWH(x - 2, y - 2, 4, 4);
 		results->textIntersect.query_in_box(bbox, searchText);
 		bool intersects = false;
 		for (uint32_t i = 0; i < searchText.size(); i++) {
-			if (SkRect::Intersects(searchText[i]->bounds, bbox) && 
-					((searchText[i]->visible && !searchText[i]->drawOnPath && !searchText[i]->path) || 
-					notvisible) )  {
-				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object, 
-					searchText[i]->text, searchText[i]->bounds, searchText[i]->textOrder, searchText[i]->visible);
+			if (SkRect::Intersects(searchText[i]->bounds, bbox) &&
+				((searchText[i]->visible && !searchText[i]->drawOnPath && !searchText[i]->path) || notvisible)) {
+				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object, searchText[i]->text,
+														 searchText[i]->bounds, searchText[i]->textOrder,
+														 searchText[i]->visible);
 				collected.push_back(jo);
 				intersects = true;
 			}
 		}
-		vector<SHARED_PTR<IconDrawInfo> > icons;
+		vector<SHARED_PTR<IconDrawInfo>> icons;
 		results->iconsIntersect.query_in_box(bbox, icons);
 		for (uint32_t i = 0; i < icons.size(); i++) {
-			if (SkRect::Intersects(icons[i]->bbox, bbox) && 
-					(icons[i]->visible || notvisible)) {
-				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox,
-					icons[i]->order, icons[i]->visible);
-				
+			if (SkRect::Intersects(icons[i]->bbox, bbox) && (icons[i]->visible || notvisible)) {
+				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox, icons[i]->order,
+														 icons[i]->visible);
+
 				jstring nm = ienv->NewStringUTF(icons[i]->bmpId.c_str());
 				ienv->CallVoidMethod(jo, jmethod_RenderedObject_setIconRes, nm);
 				ienv->DeleteLocalRef(nm);
-				
 
 				collected.push_back(jo);
 				intersects = true;
@@ -1856,11 +1924,12 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 	return NULL;
 }
 
-//protected static native NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp, RouteSubregion subreg,
-//			boolean loadObjects);
-extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingData(JNIEnv* ienv,
-		jobject obj, jobject reg, jstring regName, jint regFilePointer,
-		jobject subreg, jboolean loadObjects) {
+// protected static native NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp,
+// RouteSubregion subreg, 			boolean loadObjects);
+extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingData(JNIEnv* ienv, jobject obj,
+																				   jobject reg, jstring regName,
+																				   jint regFilePointer, jobject subreg,
+																				   jboolean loadObjects) {
 	RoutingIndex ind;
 	ind.filePointer = regFilePointer;
 	ind.name = getString(ienv, regName);
@@ -1871,11 +1940,10 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingDa
 	sub.right = ienv->GetIntField(subreg, jfield_RouteSubregion_right);
 	sub.top = ienv->GetIntField(subreg, jfield_RouteSubregion_top);
 	sub.bottom = ienv->GetIntField(subreg, jfield_RouteSubregion_bottom);
-	sub.mapDataBlock= ienv->GetIntField(subreg, jfield_RouteSubregion_shiftToData);
+	sub.mapDataBlock = ienv->GetIntField(subreg, jfield_RouteSubregion_shiftToData);
 	std::vector<RouteDataObject*> result;
 	SearchQuery q;
 	searchRouteDataForSubRegion(&q, result, &sub, false);
-
 
 	if (loadObjects) {
 		jobjectArray res = ienv->NewObjectArray(result.size(), jclass_RouteDataObject, NULL);
@@ -1892,7 +1960,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingDa
 			}
 			result[i] = NULL;
 		}
-		return ienv->NewObject(jclass_NativeRouteSearchResult, jmethod_NativeRouteSearchResult_init, ((jlong) 0), res);
+		return ienv->NewObject(jclass_NativeRouteSearchResult, jmethod_NativeRouteSearchResult_init, ((jlong)0), res);
 	} else {
 		NativeRoutingTile* r = new NativeRoutingTile();
 		for (jint i = 0; i < (int)result.size(); i++) {
@@ -1901,72 +1969,67 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingDa
 				for (jint j = 0; j < (int)result[i]->pointsX.size(); j++) {
 					jint x = result[i]->pointsX[j];
 					jint y = result[i]->pointsY[j];
-					uint64_t lr = ((uint64_t) x << 31) + y;
+					uint64_t lr = ((uint64_t)x << 31) + y;
 					r->cachedByLocations[lr].push_back(result[i]);
 				}
 			}
 		}
-		jlong ref = (jlong) r;
-		if(r->result.size() == 0) {
+		jlong ref = (jlong)r;
+		if (r->result.size() == 0) {
 			ref = 0;
 			delete r;
 		}
 
 		return ienv->NewObject(jclass_NativeRouteSearchResult, jmethod_NativeRouteSearchResult_init, ref, NULL);
 	}
-
 }
 
-
-void pushToJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc)
-{
+void pushToJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc) {
 	RenderingContextResults* results = new RenderingContextResults(rc);
-	env->SetLongField( jrc, jfield_RenderingContext_renderingContextHandle, (jlong) results);	
-	env->SetIntField( jrc, jfield_RenderingContext_pointCount, (jint) rc->pointCount);
-	env->SetIntField( jrc, jfield_RenderingContext_pointInsideCount, (jint)rc->pointInsideCount);
-	env->SetIntField( jrc, jfield_RenderingContext_visible, (jint)rc->visible);
-	env->SetIntField( jrc, jfield_RenderingContext_allObjects, rc->allObjects);
-	env->SetIntField( jrc, jfield_RenderingContext_textRenderingTime, rc->textRendering.GetElapsedMs());
-	env->SetIntField( jrc, jfield_RenderingContext_lastRenderedKey, rc->lastRenderedKey);
+	env->SetLongField(jrc, jfield_RenderingContext_renderingContextHandle, (jlong)results);
+	env->SetIntField(jrc, jfield_RenderingContext_pointCount, (jint)rc->pointCount);
+	env->SetIntField(jrc, jfield_RenderingContext_pointInsideCount, (jint)rc->pointInsideCount);
+	env->SetIntField(jrc, jfield_RenderingContext_visible, (jint)rc->visible);
+	env->SetIntField(jrc, jfield_RenderingContext_allObjects, rc->allObjects);
+	env->SetIntField(jrc, jfield_RenderingContext_textRenderingTime, rc->textRendering.GetElapsedMs());
+	env->SetIntField(jrc, jfield_RenderingContext_lastRenderedKey, rc->lastRenderedKey);
 }
 
-bool JNIRenderingContext::interrupted()
-{
+bool JNIRenderingContext::interrupted() {
 	return env->GetBooleanField(javaRenderingContext, jfield_RenderingContext_interrupted);
 }
 
 SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 	JNIEnv* env = this->env;
 	jstring jstr = env->NewStringUTF(bitmapResource.c_str());
-	jbyteArray javaIconRawData = (jbyteArray)env->CallObjectMethod(this->javaRenderingContext, jmethod_RenderingContext_getIconRawData, jstr);
+	jbyteArray javaIconRawData =
+		(jbyteArray)env->CallObjectMethod(this->javaRenderingContext, jmethod_RenderingContext_getIconRawData, jstr);
 	env->DeleteLocalRef(jstr);
-	if(!javaIconRawData)
-		return NULL;
+	if (!javaIconRawData) return NULL;
 
 	jbyte* bitmapBuffer = env->GetByteArrayElements(javaIconRawData, NULL);
 	jint bufferLen = env->GetArrayLength(javaIconRawData);
 
 	// Decode bitmap
-	//TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
-    sk_sp<SkData> resourceData(SkData::MakeWithoutCopy(bitmapBuffer, bufferLen));
-    std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
-    if (!gen) {
+	// TODO: JPEG is badly supported! At the moment it needs sdcard to be present (sic). Patch that
+	sk_sp<SkData> resourceData(SkData::MakeWithoutCopy(bitmapBuffer, bufferLen));
+	std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
+	if (!gen) {
 		this->nativeOperations.Start();
 		env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
 		env->DeleteLocalRef(javaIconRawData);
 
 		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
 
-    	return NULL;
-    }
-    SkPMColor ctStorage[256];
-    sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
-    int count = ctable->count();
+		return NULL;
+	}
+	SkPMColor ctStorage[256];
+	sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
+	int count = ctable->count();
 	SkBitmap* iconBitmap = new SkBitmap();
-    if (!iconBitmap->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) ||
-        !gen->getPixels(gen->getInfo().makeColorSpace(nullptr), iconBitmap->getPixels(), iconBitmap->rowBytes(),
-                       const_cast<SkPMColor*>(ctable->readColors()), &count)) {
-
+	if (!iconBitmap->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) ||
+		!gen->getPixels(gen->getInfo().makeColorSpace(nullptr), iconBitmap->getPixels(), iconBitmap->rowBytes(),
+						const_cast<SkPMColor*>(ctable->readColors()), &count)) {
 		delete iconBitmap;
 
 		this->nativeOperations.Start();
@@ -1975,7 +2038,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 
 		throwNewException(env, (std::string("Failed to decode ") + bitmapResource).c_str());
 
-    	return NULL;
+		return NULL;
 	}
 
 	env->ReleaseByteArrayElements(javaIconRawData, bitmapBuffer, JNI_ABORT);
@@ -1987,7 +2050,8 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
 	if (this->getPreferredLocale() == "en" || this->getTransliterate()) {
 		jstring n = this->env->NewStringUTF(name.c_str());
-		jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_TransliterationHelper, jmethod_TransliterationHelper_transliterate, n);
+		jstring translate = (jstring)this->env->CallStaticObjectMethod(jclass_TransliterationHelper,
+																	   jmethod_TransliterationHelper_transliterate, n);
 		std::string res = getString(this->env, translate);
 		this->env->DeleteLocalRef(translate);
 		this->env->DeleteLocalRef(n);
@@ -1998,16 +2062,14 @@ std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
 
 std::string JNIRenderingContext::getReshapedString(const std::string& name) {
 	jbyteArray n = this->env->NewByteArray(name.length());
-    this->env->SetByteArrayRegion(n, 0, name.length(), (const jbyte *) name.c_str());
-	jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshapebytes, n);
-
+	this->env->SetByteArrayRegion(n, 0, name.length(), (const jbyte*)name.c_str());
+	jstring translate = (jstring)this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshapebytes, n);
 
 	// jstring n = this->env->NewStringUTF(name.c_str());
 	// jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshape, n);
 	std::string res = getString(this->env, translate);
 	this->env->DeleteLocalRef(translate);
-	
+
 	this->env->DeleteLocalRef(n);
 	return res;
 }
-

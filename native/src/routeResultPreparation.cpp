@@ -436,11 +436,11 @@ vector<int> getTurnLanesInfo(SHARED_PTR<RouteSegmentResult>& prevSegm, int mainT
     if (!isSet && lanesArray.size() > 0) {
         // In some cases (at least in the US), the rightmost lane might not have a right turn indicated as per turn:lanes,
         // but is allowed and being used here. This section adds in that indicator.  The same applies for where leftSide is true.
-        bool leftTurn = TurnType::isLeftTurn(mainTurnType);
-        int ind = leftTurn? 0 : (int)lanesArray.size() - 1;
+        bool sharpTurn = TurnType::isLeftTurn(mainTurnType);
+        int ind = sharpTurn? 0 : (int)lanesArray.size() - 1;
         int primaryTurn = TurnType::getPrimaryTurn(lanesArray[ind]);
         int st = TurnType::getSecondaryTurn(lanesArray[ind]);
-        if (leftTurn) {
+        if (sharpTurn) {
             if (!TurnType::isLeftTurn(primaryTurn)) {
                 // This was just to make sure that there's no bad data.
                 TurnType::setPrimaryTurnAndReset(lanesArray, ind, TurnType::TL);

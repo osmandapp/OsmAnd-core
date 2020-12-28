@@ -1,13 +1,13 @@
 #include "commonRendering.h"
 
-#include <SkPath.h>
 #include <SkCodec.h>
 #include <SkImageInfo.h>
-#include "SkImageGenerator.h"
-#include "Logging.h"
+#include <SkPath.h>
 
-RenderingContextResults::RenderingContextResults(RenderingContext* rc)
-{
+#include "Logging.h"
+#include "SkImageGenerator.h"
+
+RenderingContextResults::RenderingContextResults(RenderingContext* rc) {
 	this->zoom = rc->zoom;
 	this->density = rc->density;
 	this->screenDensityRatio = rc->screenDensityRatio;
@@ -21,78 +21,79 @@ RenderingContextResults::RenderingContextResults(RenderingContext* rc)
 }
 
 TextDrawInfo::TextDrawInfo(std::string itext, MapDataObject* mo)
-	: text(itext)
-	, icon(NULL)
-	, visible(false)
-	, combined(false)
-	, drawOnPath(false)
-	, path(NULL)
-	, pathRotate(0)
-	, intersectionMargin(0)
-	, intersectionSizeFactor(1)
-{
+	: text(itext),
+	  icon(NULL),
+	  visible(false),
+	  combined(false),
+	  drawOnPath(false),
+	  path(NULL),
+	  pathRotate(0),
+	  intersectionMargin(0),
+	  intersectionSizeFactor(1) {
 	object = *mo;
 }
 
 bool GetResourceAsBitmap(const char* resourcePath, SkBitmap* dst) {
-    sk_sp<SkData> resourceData = SkData::MakeFromFileName(resourcePath);
-    if (resourceData == nullptr) {
-        return false;
-    }
-    std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
-    if (!gen) {
-        return false;
-    }
-    SkPMColor ctStorage[256];
-    sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
-    int count = ctable->count();
-    return dst->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) &&
-        gen->getPixels(gen->getInfo().makeColorSpace(nullptr), dst->getPixels(), dst->rowBytes(),
-                       const_cast<SkPMColor*>(ctable->readColors()), &count);
+	sk_sp<SkData> resourceData = SkData::MakeFromFileName(resourcePath);
+	if (resourceData == nullptr) {
+		return false;
+	}
+	std::unique_ptr<SkImageGenerator> gen(SkImageGenerator::MakeFromEncoded(resourceData));
+	if (!gen) {
+		return false;
+	}
+	SkPMColor ctStorage[256];
+	sk_sp<SkColorTable> ctable(new SkColorTable(ctStorage, 256));
+	int count = ctable->count();
+	return dst->tryAllocPixels(gen->getInfo(), nullptr, ctable.get()) &&
+		   gen->getPixels(gen->getInfo().makeColorSpace(nullptr), dst->getPixels(), dst->rowBytes(),
+						  const_cast<SkPMColor*>(ctable->readColors()), &count);
 }
 
 SkStreamAsset* GetResourceAsStream(const char* resourcePath) {
-    std::unique_ptr<SkFILEStream> stream(new SkFILEStream(resourcePath));
-    if (!stream->isValid()) {
-        return nullptr;
-    }
-    return stream.release();
+	std::unique_ptr<SkFILEStream> stream(new SkFILEStream(resourcePath));
+	if (!stream->isValid()) {
+		return nullptr;
+	}
+	return stream.release();
 }
 
 sk_sp<SkData> GetResourceAsData(const char* resourcePath) {
-    return SkData::MakeFromFileName(resourcePath);
+	return SkData::MakeFromFileName(resourcePath);
 }
 
 sk_sp<SkTypeface> MakeResourceAsTypeface(const char* resourcePath) {
-    std::unique_ptr<SkStreamAsset> stream(GetResourceAsStream(resourcePath));
-    if (!stream) {
-        return nullptr;
-    }
-    return SkTypeface::MakeFromStream(stream.release());
+	std::unique_ptr<SkStreamAsset> stream(GetResourceAsStream(resourcePath));
+	if (!stream) {
+		return nullptr;
+	}
+	return SkTypeface::MakeFromStream(stream.release());
 }
 
-
-TextDrawInfo::~TextDrawInfo()
-{
-	if (path)
-		delete path;
+TextDrawInfo::~TextDrawInfo() {
+	if (path) delete path;
 }
 
 IconDrawInfo::IconDrawInfo(MapDataObject* obj)
-	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), 
-	  shield(NULL), visible(false), intersectionMargin(0), intersectionSizeFactor(1)
-{
+	: bmp_1(NULL),
+	  bmp(NULL),
+	  bmp2(NULL),
+	  bmp3(NULL),
+	  bmp4(NULL),
+	  bmp5(NULL),
+	  shield(NULL),
+	  visible(false),
+	  intersectionMargin(0),
+	  intersectionSizeFactor(1) {
 	object = *obj;
 }
 
-RenderingContext::~RenderingContext()
-{
+RenderingContext::~RenderingContext() {
 	textToDraw.clear();
 	iconsToDraw.clear();
 }
 
-bool RenderingContext::interrupted()
-{
+bool RenderingContext::interrupted() {
 	return false;
 }
 
@@ -111,7 +112,7 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 			if (!GetResourceAsBitmap(fl.c_str(), bm)) {
 				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unable to decode '%s'", fl.c_str());
 				delete bm;
-		    	return NULL;				
+				return NULL;
 			}
 			return bm;
 		}
@@ -119,7 +120,7 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 	return NULL;
 }
 
-string prepareIconValue(MapDataObject &object, string qval) {
+string prepareIconValue(MapDataObject& object, string qval) {
 	if (qval.find('?') == std::string::npos) {
 		return qval;
 	}
@@ -138,17 +139,13 @@ string prepareIconValue(MapDataObject &object, string qval) {
 }
 
 UNORDERED(map)<std::string, SkBitmap*> cachedBitmaps;
-SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource)
-{
-
-	if(bitmapResource.size() == 0)
-		return NULL;
+SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource) {
+	if (bitmapResource.size() == 0) return NULL;
 
 	// Try to find previously cached
 	UNORDERED(map)<std::string, SkBitmap*>::iterator itPreviouslyCachedBitmap = cachedBitmaps.find(bitmapResource);
-	if (itPreviouslyCachedBitmap != cachedBitmaps.end())
-		return itPreviouslyCachedBitmap->second;
-	
+	if (itPreviouslyCachedBitmap != cachedBitmaps.end()) return itPreviouslyCachedBitmap->second;
+
 	rc->nativeOperations.Pause();
 	SkBitmap* iconBitmap = rc->getCachedBitmap(bitmapResource);
 	cachedBitmaps[bitmapResource] = iconBitmap;

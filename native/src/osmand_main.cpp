@@ -1,29 +1,34 @@
-#include "binaryRead.h"
-#include "renderRules.h"
-#include "rendering.h"
-#include <SkImageEncoder.h>
 #include <SkGraphics.h>
+#include <SkImageEncoder.h>
 #include <stdio.h>
 #include <time.h>
 
-void println(const char * msg) {
+#include "binaryRead.h"
+#include "renderRules.h"
+#include "rendering.h"
+
+void println(const char* msg) {
 	printf("%s\n", msg);
 }
 
 void printUsage(std::string info) {
-	if(info.size() > 0) {
+	if (info.size() > 0) {
 		println(info.c_str());
 	}
 	println("Inspector is console utility for working with binary indexes of OsmAnd.");
 	println("It allows print info about file, extract parts and merge indexes.");
-	println("\nUsage for print info : inspector [-renderingOutputFile=..] [-vaddress] [-vmap] [-vpoi] [-vtransport] [-zoom=Zoom] [-bbox=LeftLon,TopLat,RightLon,BottomLan] [file]");
+	println(
+		"\nUsage for print info : inspector [-renderingOutputFile=..] [-vaddress] [-vmap] [-vpoi] [-vtransport] "
+		"[-zoom=Zoom] [-bbox=LeftLon,TopLat,RightLon,BottomLan] [file]");
 	println("  Prints information about [file] binary index of OsmAnd.");
-	println("  -v.. more verbouse output (like all cities and their streets or all map objects with tags/values and coordinates)");
+	println(
+		"  -v.. more verbouse output (like all cities and their streets or all map objects with tags/values and "
+		"coordinates)");
 	println("  -renderingOutputFile= renders for specified zoom, bbox into a file");
 }
 
 class RenderingInfo {
-public:
+   public:
 	int left, right, top, bottom;
 	double lattop, lonleft;
 	int tileWX, tileHY;
@@ -31,13 +36,13 @@ public:
 	std::string renderingFileName;
 	std::string imagesFileName;
 	int zoom;
-	int width ;
+	int width;
 	int height;
 
-	RenderingInfo(int argc, char **params) {
+	RenderingInfo(int argc, char** params) {
 		double l1, l2;
 		char s[100];
-		int z, z1, z2 ;
+		int z, z1, z2;
 		lattop = 85;
 		tileHY = 2;
 		lonleft = -180;
@@ -71,7 +76,7 @@ public:
 };
 
 class VerboseInfo {
-public:
+   public:
 	bool vaddress;
 	bool vtransport;
 	bool vpoi;
@@ -79,7 +84,7 @@ public:
 	double lattop, latbottom, lonleft, lonright;
 	int zoom;
 
-	VerboseInfo(int argc, char **params) {
+	VerboseInfo(int argc, char** params) {
 		lattop = 85;
 		latbottom = -85;
 		lonleft = -180;
@@ -103,7 +108,6 @@ public:
 				lattop = l2;
 				lonright = l3;
 				latbottom = l4;
-
 			}
 		}
 	}
@@ -115,24 +119,21 @@ public:
 //
 //		}
 
-
-const char* formatBounds(int left, int right, int top, int bottom){
+const char* formatBounds(int left, int right, int top, int bottom) {
 	float l = get31LongitudeX(left);
 	float r = get31LongitudeX(right);
 	float t = get31LatitudeY(top);
 	float b = get31LatitudeY(bottom);
 	char* ch = new char[150];
-	sprintf(ch, "(left top - right bottom) : %g, %g NE - %g, %g NE", l, t,r, b);
+	sprintf(ch, "(left top - right bottom) : %g, %g NE - %g, %g NE", l, t, r, b);
 	return ch;
 }
-
 
 void printFileInformation(const char* fileName, VerboseInfo* verbose) {
 	BinaryMapFile* file = initBinaryMapFile(fileName);
 	std::vector<BinaryPartIndex*>::iterator its = file->indexes.begin();
-	time_t date = file->dateCreated/1000;
-	printf("Obf file.\n Version %d, basemap %d, date %s \n", file->version,
-			file->basemap, ctime(&date));
+	time_t date = file->dateCreated / 1000;
+	printf("Obf file.\n Version %d, basemap %d, date %s \n", file->version, file->basemap, ctime(&date));
 
 	int i = 1;
 	for (; its != file->indexes.end(); its++, i++) {
@@ -151,35 +152,33 @@ void printFileInformation(const char* fileName, VerboseInfo* verbose) {
 		}
 		printf("%d. %s data %s - %d bytes\n", i, partname.c_str(), it->name.c_str(), it->length);
 		if (it->type == MAP_INDEX) {
-			MapIndex* m = ((MapIndex*) it);
+			MapIndex* m = ((MapIndex*)it);
 			int j = 1;
 			std::vector<MapRoot>::iterator rt = m->levels.begin();
 			for (; rt != m->levels.end(); rt++) {
 				const char* ch = formatBounds(rt->left, rt->right, rt->top, rt->bottom);
-				printf("\t%d.%d Map level minZoom = %d, maxZoom = %d, size = %d bytes \n\t\t Bounds %s \n",
-						i, j++, rt->minZoom, rt->maxZoom, rt->length, ch);
+				printf("\t%d.%d Map level minZoom = %d, maxZoom = %d, size = %d bytes \n\t\t Bounds %s \n", i, j++,
+					   rt->minZoom, rt->maxZoom, rt->length, ch);
 			}
 			if ((verbose != NULL && verbose->vmap)) {
-				//printMapDetailInfo(verbose, index);
+				// printMapDetailInfo(verbose, index);
 			}
 		} else if (it->type == TRANSPORT_INDEX) {
-//			TransportIndex ti = ((TransportIndex) p);
-//			int sh = (31 - BinaryMapIndexReader.TRANSPORT_STOP_ZOOM);
-//			println(
-//					"\t Bounds "
-//							+ formatBounds(ti.getLeft() << sh, ti.getRight() << sh, ti.getTop() << sh,
-//									ti.getBottom() << sh));
+			//			TransportIndex ti = ((TransportIndex) p);
+			//			int sh = (31 - BinaryMapIndexReader.TRANSPORT_STOP_ZOOM);
+			//			println(
+			//					"\t Bounds "
+			//							+ formatBounds(ti.getLeft() << sh, ti.getRight() << sh, ti.getTop() << sh,
+			//									ti.getBottom() << sh));
 		} else if (it->type == POI_INDEX && (verbose != NULL && verbose->vpoi)) {
-			//printPOIDetailInfo(verbose, index, (PoiRegion) p);
+			// printPOIDetailInfo(verbose, index, (PoiRegion) p);
 		} else if (it->type == ADDRESS_INDEX && (verbose != NULL && verbose->vaddress)) {
-//			printAddressDetailedInfo(verbose, index);
+			//			printAddressDetailedInfo(verbose, index);
 		}
-
 	}
 }
 
-
-void runSimpleRendering( string renderingFileName, string resourceDir, RenderingInfo* info) {
+void runSimpleRendering(string renderingFileName, string resourceDir, RenderingInfo* info) {
 	SkColor defaultMapColor = SK_ColorLTGRAY;
 
 	if (info->width > 10000 || info->height > 10000) {
@@ -187,8 +186,11 @@ void runSimpleRendering( string renderingFileName, string resourceDir, Rendering
 		return;
 	}
 
-	osmand_log_print(LOG_INFO, "Rendering info bounds(%d, %d, %d, %d) zoom(%d), width/height(%d/%d) tilewidth/tileheight(%d/%d) fileName(%s)",
-			info->left, info->top, info->right, info->bottom, info->zoom, info->width, info->height, info->tileWX, info->tileHY, info->tileFileName.c_str());
+	osmand_log_print(
+		LOG_INFO,
+		"Rendering info bounds(%d, %d, %d, %d) zoom(%d), width/height(%d/%d) tilewidth/tileheight(%d/%d) fileName(%s)",
+		info->left, info->top, info->right, info->bottom, info->zoom, info->width, info->height, info->tileWX,
+		info->tileHY, info->tileFileName.c_str());
 	RenderingRulesStorage* st = new RenderingRulesStorage(renderingFileName.c_str());
 	st->parseRulesFromXmlInputStream(renderingFileName.c_str(), NULL);
 	RenderingRuleSearchRequest* searchRequest = new RenderingRuleSearchRequest(st);
@@ -221,12 +223,10 @@ void runSimpleRendering( string renderingFileName, string resourceDir, Rendering
 	searchRequest->setIntFilter(st->PROPS.R_MINZOOM, info->zoom);
 	if (searchRequest->searchRenderingAttribute(A_SHADOW_RENDERING)) {
 		rc.setShadowRenderingMode(searchRequest->getIntPropertyValue(searchRequest->props()->R_ATTR_INT_VALUE));
-		//rc.setShadowRenderingColor(searchRequest->getIntPropertyValue(searchRequest->props()->R_SHADOW_COLOR));
+		// rc.setShadowRenderingColor(searchRequest->getIntPropertyValue(searchRequest->props()->R_SHADOW_COLOR));
 	}
-	rc.setLocation(
-			((double)info->left)/getPowZoom(31-info->zoom),
-			((double)info->top)/getPowZoom(31-info->zoom)
-			);
+	rc.setLocation(((double)info->left) / getPowZoom(31 - info->zoom),
+				   ((double)info->top) / getPowZoom(31 - info->zoom));
 	rc.setDimension(info->width, info->height);
 	rc.setZoom(info->zoom);
 	rc.setRotate(0);
@@ -238,7 +238,7 @@ void runSimpleRendering( string renderingFileName, string resourceDir, Rendering
 	doRendering(res->result, canvas, searchRequest, &rc);
 	osmand_log_print(LOG_INFO, "End Rendering image");
 	osmand_log_print(LOG_INFO, "Native ok (init %d, rendering %d) ", initObjects.getElapsedTime(),
-			rc.nativeOperations.getElapsedTime());
+					 rc.nativeOperations.getElapsedTime());
 	SkImageEncoder* enc = SkImageEncoder::Create(SkImageEncoder::kPNG_Type);
 	if (enc != NULL && !enc->encodeFile(info->tileFileName.c_str(), *bitmap, 100)) {
 		osmand_log_print(LOG_ERROR, "FAIL to save tile to %s", info->tileFileName.c_str());
@@ -255,13 +255,10 @@ void runSimpleRendering( string renderingFileName, string resourceDir, Rendering
 	return;
 }
 
-
-
 void testRenderingRuleStorage(const char* basePath, const char* name) {
 	string filePath = string(basePath) + string(name);
 	RenderingRulesStorage* st = new RenderingRulesStorage(filePath.c_str());
-	st->parseRulesFromXmlInputStream(filePath.c_str(),
-			new BasePathRenderingRulesStorageResolver(string(basePath)));
+	st->parseRulesFromXmlInputStream(filePath.c_str(), new BasePathRenderingRulesStorageResolver(string(basePath)));
 	st->printDebug(RenderingRulesStorage::TEXT_RULES);
 	RenderingRuleSearchRequest* searchRequest = new RenderingRuleSearchRequest(st);
 	searchRequest->setStringFilter(st->PROPS.R_TAG, "highway");
@@ -277,15 +274,13 @@ void testRenderingRuleStorage(const char* basePath, const char* name) {
 	searchRequest->printDebugResult();
 }
 
-
-
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 	if (argc <= 1) {
 		// 1. Test Rendering rule storage
-//		testRenderingRuleStorage("/home/victor/projects/OsmAnd/git/DataExtractionOSM/src/net/osmand/render/",
-//				"test_depends.render.xml"
-//				"default.render.xml"
-//				);
+		//		testRenderingRuleStorage("/home/victor/projects/OsmAnd/git/DataExtractionOSM/src/net/osmand/render/",
+		//				"test_depends.render.xml"
+		//				"default.render.xml"
+		//				);
 		// 2. Test simple rendering
 		printUsage("");
 		return 1;
@@ -293,14 +288,14 @@ int main(int argc, char **argv) {
 	const char* f = argv[1];
 	if (f[0] == '-') {
 		// command
-		if (f[1]=='v') {
+		if (f[1] == 'v') {
 			if (argc < 2) {
 				printUsage("Missing file parameter");
 			} else {
 				VerboseInfo* vinfo = new VerboseInfo(argc, argv);
-				printFileInformation(argv[argc -1], vinfo);
+				printFileInformation(argv[argc - 1], vinfo);
 			}
-		} else if (f[1]=='r') {
+		} else if (f[1] == 'r') {
 			if (argc < 2) {
 				printUsage("Missing file parameter");
 			} else {
@@ -310,7 +305,7 @@ int main(int argc, char **argv) {
 					if (sscanf(argv[i], "-renderingInputFile=%s", s)) {
 						BinaryMapFile* mf = initBinaryMapFile(s);
 						osmand_log_print(LOG_INFO, "Init %d (success) binary map file %s.", mf->version,
-								mf->inputName.c_str());
+										 mf->inputName.c_str());
 					}
 				}
 				runSimpleRendering(info->renderingFileName, info->imagesFileName, info);

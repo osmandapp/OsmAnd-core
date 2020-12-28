@@ -2,10 +2,10 @@
 #define _JAVA_RENDER_RULES_H
 
 #include <jni.h>
-#include "java_wrap.h"
-#include "CommonCollections.h"
-#include "renderRules.h"
 
+#include "CommonCollections.h"
+#include "java_wrap.h"
+#include "renderRules.h"
 
 jclass ListClass;
 jmethodID List_size;
@@ -44,19 +44,18 @@ jfieldID RenderingRuleSearchRequest_fvalues;
 jfieldID RenderingRuleSearchRequest_savedValues;
 jfieldID RenderingRuleSearchRequest_savedFvalues;
 
-jclass findGlobalClass(JNIEnv* env, string cl) 
-{
+jclass findGlobalClass(JNIEnv* env, string cl) {
 	return (jclass)env->NewGlobalRef(findClass(env, cl.c_str()));
 }
 
 RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesStorage* st) {
-	map<string,string> empty;
+	map<string, string> empty;
 	jboolean isGroup = env->GetBooleanField(rRule, RenderingRule_isGroup);
 	RenderingRule* rule = new RenderingRule(empty, isGroup, st);
-	jobjectArray props = (jobjectArray) env->GetObjectField(rRule, RenderingRule_properties);
-	jobjectArray attrRefs = (jobjectArray) env->GetObjectField(rRule, RenderingRule_attrRefs);
-	jintArray intProps = (jintArray) env->GetObjectField(rRule, RenderingRule_intProperties);
-	jfloatArray floatProps = (jfloatArray) env->GetObjectField(rRule, RenderingRule_floatProperties);
+	jobjectArray props = (jobjectArray)env->GetObjectField(rRule, RenderingRule_properties);
+	jobjectArray attrRefs = (jobjectArray)env->GetObjectField(rRule, RenderingRule_attrRefs);
+	jintArray intProps = (jintArray)env->GetObjectField(rRule, RenderingRule_intProperties);
+	jfloatArray floatProps = (jfloatArray)env->GetObjectField(rRule, RenderingRule_floatProperties);
 	jobject ifChildren = env->GetObjectField(rRule, RenderingRule_ifChildren);
 	jobject ifElseChildren = env->GetObjectField(rRule, RenderingRule_ifElseChildren);
 
@@ -93,10 +92,10 @@ RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesSto
 	}
 	env->DeleteLocalRef(props);
 
-	if(attrRefs != NULL) {
+	if (attrRefs != NULL) {
 		for (jsize i = 0; i < sz; i++) {
 			jobject prop = env->GetObjectArrayElement(attrRefs, i);
-			if(prop == NULL) {				
+			if (prop == NULL) {
 				rule->attrRefs.push_back(NULL);
 			} else {
 				rule->attrRefs.push_back(createRenderingRule(env, prop, st));
@@ -129,13 +128,12 @@ RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesSto
 	return rule;
 }
 
-
 void initDictionary(JNIEnv* env, RenderingRulesStorage* storage, jobject javaStorage) {
 	jobject listDictionary = env->GetObjectField(javaStorage, RenderingRulesStorageClass_dictionary);
 	uint32_t sz = env->CallIntMethod(listDictionary, List_size);
 	uint32_t i = 0;
 	for (; i < sz; i++) {
-		jstring st = (jstring) env->CallObjectMethod(listDictionary, List_get, i);
+		jstring st = (jstring)env->CallObjectMethod(listDictionary, List_get, i);
 		const char* utf = env->GetStringUTFChars(st, NULL);
 		std::string d = std::string(utf);
 
@@ -147,11 +145,13 @@ void initDictionary(JNIEnv* env, RenderingRulesStorage* storage, jobject javaSto
 }
 
 void initAttributes(JNIEnv* env, RenderingRulesStorage* st, jobject javaStorage) {
-	jobjectArray attributeNames = (jobjectArray) env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRenderingAttributeNames);
-	jobjectArray attributeValues = (jobjectArray) env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRenderingAttributeValues);
-	uint32_t sz  = env->GetArrayLength(attributeNames);
+	jobjectArray attributeNames =
+		(jobjectArray)env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRenderingAttributeNames);
+	jobjectArray attributeValues =
+		(jobjectArray)env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRenderingAttributeValues);
+	uint32_t sz = env->GetArrayLength(attributeNames);
 	for (uint32_t i = 0; i < sz; i++) {
-		jstring nm = (jstring) env->GetObjectArrayElement(attributeNames, i);
+		jstring nm = (jstring)env->GetObjectArrayElement(attributeNames, i);
 		jobject vl = env->GetObjectArrayElement(attributeValues, i);
 		RenderingRule* rule = createRenderingRule(env, vl, st);
 		st->renderingAttributes[getString(env, nm)] = rule;
@@ -160,7 +160,6 @@ void initAttributes(JNIEnv* env, RenderingRulesStorage* st, jobject javaStorage)
 	}
 	env->DeleteLocalRef(attributeNames);
 	env->DeleteLocalRef(attributeValues);
-
 }
 
 void initProperties(JNIEnv* env, RenderingRulesStorage* st, jobject javaStorage) {
@@ -180,19 +179,18 @@ void initProperties(JNIEnv* env, RenderingRulesStorage* st, jobject javaStorage)
 	st->PROPS.createDefaultProperties();
 	env->DeleteLocalRef(props);
 	env->DeleteLocalRef(listProps);
-
 }
-
 
 void initRules(JNIEnv* env, RenderingRulesStorage* st, jobject javaStorage) {
 	for (int i = 1; i < RenderingRulesStorage::SIZE_STATES; i++) {
-		jobjectArray rules = (jobjectArray) env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRules, i);
+		jobjectArray rules = (jobjectArray)env->CallObjectMethod(javaStorage, RenderingRulesStorage_getRules, i);
 		jsize len = env->GetArrayLength(rules);
 		for (jsize j = 0; j < len; j++) {
 			jobject rRule = env->GetObjectArrayElement(rules, j);
 			RenderingRule* rule = createRenderingRule(env, rRule, st);
 			env->DeleteLocalRef(rRule);
-			st->registerGlobalRule(rule, i, env->CallIntMethod(javaStorage, RenderingRulesStorage_getRuleTagValueKey, i, j));
+			st->registerGlobalRule(rule, i,
+								   env->CallIntMethod(javaStorage, RenderingRulesStorage_getRuleTagValueKey, i, j));
 		}
 		env->DeleteLocalRef(rules);
 	}
@@ -207,10 +205,9 @@ RenderingRulesStorage* createRenderingRulesStorage(JNIEnv* env, jobject storage)
 	return res;
 }
 
-
 void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, jobject rrs) {
 	jsize sz;
-	jobjectArray oa = (jobjectArray) env->GetObjectField(rrs, RenderingRuleSearchRequest_props);
+	jobjectArray oa = (jobjectArray)env->GetObjectField(rrs, RenderingRuleSearchRequest_props);
 	sz = env->GetArrayLength(oa);
 	std::vector<RenderingRuleProperty*> requestProps;
 	vector<int> values;
@@ -228,8 +225,8 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 	env->DeleteLocalRef(oa);
 	sz = r->storage->PROPS.properties.size();
 	{
-		values.resize(sz , 0);
-		jintArray ia = (jintArray) env->GetObjectField(rrs, RenderingRuleSearchRequest_values);
+		values.resize(sz, 0);
+		jintArray ia = (jintArray)env->GetObjectField(rrs, RenderingRuleSearchRequest_values);
 		jint* ie = env->GetIntArrayElements(ia, NULL);
 		for (int i = 0; i < sz; i++) {
 			values[requestProps.at(i)->id] = ie[i];
@@ -239,8 +236,8 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 	}
 
 	{
-		fvalues .resize(sz , 0);
-		jfloatArray ia = (jfloatArray) env->GetObjectField(rrs, RenderingRuleSearchRequest_fvalues);
+		fvalues.resize(sz, 0);
+		jfloatArray ia = (jfloatArray)env->GetObjectField(rrs, RenderingRuleSearchRequest_fvalues);
 		jfloat* ie = env->GetFloatArrayElements(ia, NULL);
 		for (int i = 0; i < sz; i++) {
 			fvalues[requestProps.at(i)->id] = ie[i];
@@ -250,8 +247,8 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 	}
 
 	{
-		savedValues.resize(sz , 0);
-		jintArray ia = (jintArray) env->GetObjectField(rrs, RenderingRuleSearchRequest_values);
+		savedValues.resize(sz, 0);
+		jintArray ia = (jintArray)env->GetObjectField(rrs, RenderingRuleSearchRequest_values);
 		jint* ie = env->GetIntArrayElements(ia, NULL);
 		for (int i = 0; i < sz; i++) {
 			savedValues[requestProps.at(i)->id] = ie[i];
@@ -261,8 +258,8 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 	}
 
 	{
-		savedFvalues .resize(sz , 0);
-		jfloatArray ia = (jfloatArray) env->GetObjectField(rrs, RenderingRuleSearchRequest_fvalues);
+		savedFvalues.resize(sz, 0);
+		jfloatArray ia = (jfloatArray)env->GetObjectField(rrs, RenderingRuleSearchRequest_fvalues);
 		jfloat* ie = env->GetFloatArrayElements(ia, NULL);
 		for (int i = 0; i < sz; i++) {
 			savedFvalues[requestProps.at(i)->id] = ie[i];
@@ -273,13 +270,11 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 	r->externalInitialize(values, fvalues, savedValues, savedFvalues);
 }
 
-
 void loadJniRenderingRules(JNIEnv* env) {
 	RenderingRuleClass = findGlobalClass(env, "net/osmand/render/RenderingRule");
-	RenderingRule_properties = env->GetFieldID(RenderingRuleClass, "properties",
-			"[Lnet/osmand/render/RenderingRuleProperty;");
-	RenderingRule_attrRefs  = env->GetFieldID(RenderingRuleClass, "attributesRef",
-			"[Lnet/osmand/render/RenderingRule;");
+	RenderingRule_properties =
+		env->GetFieldID(RenderingRuleClass, "properties", "[Lnet/osmand/render/RenderingRuleProperty;");
+	RenderingRule_attrRefs = env->GetFieldID(RenderingRuleClass, "attributesRef", "[Lnet/osmand/render/RenderingRule;");
 	RenderingRule_isGroup = env->GetFieldID(RenderingRuleClass, "isGroup", "Z");
 	RenderingRule_intProperties = env->GetFieldID(RenderingRuleClass, "intProperties", "[I");
 	RenderingRule_floatProperties = env->GetFieldID(RenderingRuleClass, "floatProperties", "[F");
@@ -287,45 +282,41 @@ void loadJniRenderingRules(JNIEnv* env) {
 	RenderingRule_ifChildren = env->GetFieldID(RenderingRuleClass, "ifChildren", "Ljava/util/List;");
 
 	RenderingRuleStoragePropertiesClass = findGlobalClass(env, "net/osmand/render/RenderingRuleStorageProperties");
-	RenderingRuleStorageProperties_rules = env->GetFieldID(RenderingRuleStoragePropertiesClass, "rules",
-			"Ljava/util/List;");
+	RenderingRuleStorageProperties_rules =
+		env->GetFieldID(RenderingRuleStoragePropertiesClass, "rules", "Ljava/util/List;");
 
 	RenderingRulePropertyClass = findGlobalClass(env, "net/osmand/render/RenderingRuleProperty");
 	RenderingRuleProperty_type = env->GetFieldID(RenderingRulePropertyClass, "type", "I");
 	RenderingRuleProperty_input = env->GetFieldID(RenderingRulePropertyClass, "input", "Z");
-	RenderingRuleProperty_attrName = env->GetFieldID(RenderingRulePropertyClass, "attrName",
-			"Ljava/lang/String;");
+	RenderingRuleProperty_attrName = env->GetFieldID(RenderingRulePropertyClass, "attrName", "Ljava/lang/String;");
 
 	RenderingRulesStorageClass = findGlobalClass(env, "net/osmand/render/RenderingRulesStorage");
-	RenderingRulesStorageClass_dictionary = env->GetFieldID(RenderingRulesStorageClass, "dictionary",
-			"Ljava/util/List;");
-	RenderingRulesStorage_PROPS = env->GetFieldID(RenderingRulesStorageClass, "PROPS",
-			"Lnet/osmand/render/RenderingRuleStorageProperties;");
-	RenderingRulesStorage_getRules = env->GetMethodID(RenderingRulesStorageClass, "getRules",
-			"(I)[Lnet/osmand/render/RenderingRule;");
-	RenderingRulesStorage_getRuleTagValueKey = env->GetMethodID(RenderingRulesStorageClass, "getRuleTagValueKey",
-			"(II)I");
-	RenderingRulesStorage_getRenderingAttributeNames = env->GetMethodID(RenderingRulesStorageClass, "getRenderingAttributeNames",
-			"()[Ljava/lang/String;");
-	RenderingRulesStorage_getRenderingAttributeValues = env->GetMethodID(RenderingRulesStorageClass, "getRenderingAttributeValues",
-				"()[Lnet/osmand/render/RenderingRule;");
+	RenderingRulesStorageClass_dictionary =
+		env->GetFieldID(RenderingRulesStorageClass, "dictionary", "Ljava/util/List;");
+	RenderingRulesStorage_PROPS =
+		env->GetFieldID(RenderingRulesStorageClass, "PROPS", "Lnet/osmand/render/RenderingRuleStorageProperties;");
+	RenderingRulesStorage_getRules =
+		env->GetMethodID(RenderingRulesStorageClass, "getRules", "(I)[Lnet/osmand/render/RenderingRule;");
+	RenderingRulesStorage_getRuleTagValueKey =
+		env->GetMethodID(RenderingRulesStorageClass, "getRuleTagValueKey", "(II)I");
+	RenderingRulesStorage_getRenderingAttributeNames =
+		env->GetMethodID(RenderingRulesStorageClass, "getRenderingAttributeNames", "()[Ljava/lang/String;");
+	RenderingRulesStorage_getRenderingAttributeValues = env->GetMethodID(
+		RenderingRulesStorageClass, "getRenderingAttributeValues", "()[Lnet/osmand/render/RenderingRule;");
 
 	ListClass = findGlobalClass(env, "java/util/List");
 	List_size = env->GetMethodID(ListClass, "size", "()I");
 	List_get = env->GetMethodID(ListClass, "get", "(I)Ljava/lang/Object;");
 
 	RenderingRuleSearchRequestClass = findGlobalClass(env, "net/osmand/render/RenderingRuleSearchRequest");
-	RenderingRuleSearchRequest_storage = env->GetFieldID(RenderingRuleSearchRequestClass, "storage",
-			"Lnet/osmand/render/RenderingRulesStorage;");
-	RenderingRuleSearchRequest_props = env->GetFieldID(RenderingRuleSearchRequestClass, "props",
-			"[Lnet/osmand/render/RenderingRuleProperty;");
+	RenderingRuleSearchRequest_storage =
+		env->GetFieldID(RenderingRuleSearchRequestClass, "storage", "Lnet/osmand/render/RenderingRulesStorage;");
+	RenderingRuleSearchRequest_props =
+		env->GetFieldID(RenderingRuleSearchRequestClass, "props", "[Lnet/osmand/render/RenderingRuleProperty;");
 	RenderingRuleSearchRequest_values = env->GetFieldID(RenderingRuleSearchRequestClass, "values", "[I");
 	RenderingRuleSearchRequest_fvalues = env->GetFieldID(RenderingRuleSearchRequestClass, "fvalues", "[F");
-	RenderingRuleSearchRequest_savedValues = env->GetFieldID(RenderingRuleSearchRequestClass, "savedValues",
-			"[I");
-	RenderingRuleSearchRequest_savedFvalues = env->GetFieldID(RenderingRuleSearchRequestClass, "savedFvalues",
-			"[F");
-
+	RenderingRuleSearchRequest_savedValues = env->GetFieldID(RenderingRuleSearchRequestClass, "savedValues", "[I");
+	RenderingRuleSearchRequest_savedFvalues = env->GetFieldID(RenderingRuleSearchRequestClass, "savedFvalues", "[F");
 }
 
 void unloadJniRenderRules(JNIEnv* env) {
@@ -335,7 +326,6 @@ void unloadJniRenderRules(JNIEnv* env) {
 	env->DeleteGlobalRef(RenderingRuleStoragePropertiesClass);
 	env->DeleteGlobalRef(RenderingRulesStorageClass);
 	env->DeleteGlobalRef(ListClass);
-
 }
 
 #endif

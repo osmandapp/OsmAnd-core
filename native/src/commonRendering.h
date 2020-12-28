@@ -1,14 +1,14 @@
 #ifndef _OSMAND_COMMON_RENDERING_H
 #define _OSMAND_COMMON_RENDERING_H
 
-#include <SkPaint.h>
 #include <SkBitmap.h>
-#include <SkTypeface.h>
+#include <SkPaint.h>
 #include <SkStream.h>
+#include <SkTypeface.h>
 
 #include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include "SkBlurDrawLooper.h"
+#include "commonOsmAndCore.h"
 
 // Better don't do this
 using namespace std;
@@ -23,16 +23,14 @@ struct FontEntry {
 class FontRegistry {
 	std::vector<FontEntry*> cache;
 
-	public:
-		const sk_sp<SkTypeface> registerStream(const char* data, uint32_t length, string fontName, 
-			bool bold, bool italic);
- 		void updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, sk_sp<SkTypeface> def) ;
+   public:
+	const sk_sp<SkTypeface> registerStream(const char* data, uint32_t length, string fontName, bool bold, bool italic);
+	void updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, sk_sp<SkTypeface> def);
 };
 
 extern FontRegistry globalFontRegistry;
 
-struct IconDrawInfo
-{
+struct IconDrawInfo {
 	SkBitmap* bmp_1;
 	SkBitmap* bmp;
 	std::string bmpId;
@@ -66,7 +64,7 @@ struct TextDrawInfo {
 	SHARED_PTR<IconDrawInfo> icon;
 	bool visible;
 	bool combined;
-	
+
 	SkRect bounds;
 	SkRect textBounds;
 	float centerX;
@@ -85,7 +83,6 @@ struct TextDrawInfo {
 	int textOrder;
 	int secondOrder;
 
-
 	bool drawOnPath;
 	SkPath* path;
 	float pathRotate;
@@ -97,9 +94,8 @@ struct TextDrawInfo {
 
 static const int TILE_SIZE = 256;
 struct RenderingContextResults;
-struct RenderingContext
-{
-private :
+struct RenderingContext {
+   private:
 	// parameters
 	std::string preferredLocale;
 	bool transliterate;
@@ -125,7 +121,7 @@ private :
 	int noHighwayOnewayArrows;
 	string defaultIconsDir;
 
-public:
+   public:
 	// debug purpose
 	int pointCount;
 	int pointInsideCount;
@@ -138,9 +134,8 @@ public:
 	std::vector<SkPaint> oneWayPaints;
 	std::vector<SkPaint> reverseWayPaints;
 
-// because they used in 3rd party functions
-public :
-
+	// because they used in 3rd party functions
+   public:
 	// calculated
 	double tileDivisor;
 	float cosRotateTileSize;
@@ -152,11 +147,9 @@ public :
 
 	std::vector<SHARED_PTR<TextDrawInfo>> textToDraw;
 	std::vector<SHARED_PTR<IconDrawInfo>> iconsToDraw;
-	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect; 
+	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect;
 	quad_tree<SHARED_PTR<IconDrawInfo>> iconsIntersect;
 
-	 
-	
 	// not expect any shadow
 	int shadowLevelMin;
 	int shadowLevelMax;
@@ -164,21 +157,18 @@ public :
 	int roadDensityZoomTile;
 	int roadsDensityLimitPerTile;
 
-public:
-	RenderingContext() : preferredLocale(""), transliterate(false), density(1), screenDensityRatio(1),
-			textScale(1), //leftX, topY, width, height
-			defaultColor(0xfff1eee8), zoom(15), rotate(0),
-			shadowRenderingMode(2), shadowRenderingColor(0xff969696), noHighwayOnewayArrows(0),// defaultIconsDir
-			pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
-			// textRendering, nativeOperations, oneWayPaints, reverseWayPaints
-			// tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
-			// textToDraw, iconsToDraw,
-			textIntersect(), iconsIntersect(),
-			shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
-			roadDensityZoomTile(0), roadsDensityLimitPerTile(0)
-			
-	{
-		
+   public:
+	RenderingContext()
+		: preferredLocale(""), transliterate(false), density(1), screenDensityRatio(1),
+		  textScale(1),	 // leftX, topY, width, height
+		  defaultColor(0xfff1eee8), zoom(15), rotate(0), shadowRenderingMode(2), shadowRenderingColor(0xff969696),
+		  noHighwayOnewayArrows(0),	 // defaultIconsDir
+		  pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
+		  // textRendering, nativeOperations, oneWayPaints, reverseWayPaints
+		  // tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
+		  // textToDraw, iconsToDraw,
+		  textIntersect(), iconsIntersect(), shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
+		  roadDensityZoomTile(0), roadsDensityLimitPerTile(0) {
 	}
 	virtual ~RenderingContext();
 
@@ -220,11 +210,11 @@ public:
 		this->height = height;
 	}
 
-	inline int getShadowRenderingMode(){
+	inline int getShadowRenderingMode() {
 		return shadowRenderingMode;
 	}
 
-	int getShadowRenderingColor(){
+	int getShadowRenderingColor() {
 		return shadowRenderingColor;
 	}
 
@@ -245,15 +235,15 @@ public:
 	int getNoHighwayOnewayArrows() {
 		return noHighwayOnewayArrows;
 	}
-	inline int getWidth(){
+	inline int getWidth() {
 		return width;
 	}
 
-	inline int getDefaultColor(){
+	inline int getDefaultColor() {
 		return defaultColor;
 	}
 
-	inline int getHeight(){
+	inline int getHeight() {
 		return height;
 	}
 
@@ -269,7 +259,7 @@ public:
 		return topY;
 	}
 
-	void setShadowRenderingMode(int mode){
+	void setShadowRenderingMode(int mode) {
 		this->shadowRenderingMode = mode;
 	}
 
@@ -277,7 +267,7 @@ public:
 		density = val;
 	}
 
-	void setScreenDensityRatio(float v)  {
+	void setScreenDensityRatio(float v) {
 		screenDensityRatio = v;
 	}
 
@@ -301,30 +291,27 @@ public:
 		return textScale;
 	}
 
-	void setPreferredLocale(std::string pref){
-		this->preferredLocale = pref;		
+	void setPreferredLocale(std::string pref) {
+		this->preferredLocale = pref;
 	}
 
-	std::string getPreferredLocale(){
+	std::string getPreferredLocale() {
 		return this->preferredLocale;
 	}
 
-	void setTransliterate(bool pref){
-		this->transliterate = pref;		
+	void setTransliterate(bool pref) {
+		this->transliterate = pref;
 	}
 
-	bool getTransliterate(){
+	bool getTransliterate() {
 		return this->transliterate;
 	}
 
 	friend struct RenderingContextResults;
-
 };
 
-struct RenderingContextResults 
-{
-
-public:
+struct RenderingContextResults {
+   public:
 	int zoom;
 	float density;
 	float screenDensityRatio;
@@ -335,14 +322,13 @@ public:
 	int width;
 	int height;
 
-	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect; 
+	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect;
 	quad_tree<SHARED_PTR<IconDrawInfo>> iconsIntersect;
 
-	RenderingContextResults(RenderingContext* context) ;
-
+	RenderingContextResults(RenderingContext* context);
 };
 
-string prepareIconValue(MapDataObject &object, string qval);
+string prepareIconValue(MapDataObject& object, string qval);
 
 SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource);
 void purgeCachedBitmaps();
