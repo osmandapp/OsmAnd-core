@@ -499,9 +499,9 @@ jfieldID jfield_RoutingConfiguration_router = NULL;
 
 jclass jclass_GeneralRouter = NULL;
 jfieldID jfield_GeneralRouter_restrictionsAware = NULL;
-jfieldID jfield_GeneralRouter_leftTurn = NULL;
+jfieldID jfield_GeneralRouter_sharpTurn = NULL;
 jfieldID jfield_GeneralRouter_roundaboutTurn = NULL;
-jfieldID jfield_GeneralRouter_rightTurn = NULL;
+jfieldID jfield_GeneralRouter_slightTurn = NULL;
 jfieldID jfield_GeneralRouter_minSpeed = NULL;
 jfieldID jfield_GeneralRouter_defaultSpeed = NULL;
 jfieldID jfield_GeneralRouter_maxSpeed = NULL;
@@ -808,9 +808,9 @@ void loadJniRenderingContext(JNIEnv* env)
 
 	jclass_GeneralRouter = findGlobalClass(env, "net/osmand/router/GeneralRouter");
 	jfield_GeneralRouter_restrictionsAware = getFid(env, jclass_GeneralRouter, "restrictionsAware", "Z");
-	jfield_GeneralRouter_leftTurn = getFid(env, jclass_GeneralRouter, "leftTurn", "F");
+	jfield_GeneralRouter_sharpTurn = getFid(env, jclass_GeneralRouter, "sharpTurn", "F");
 	jfield_GeneralRouter_roundaboutTurn = getFid(env, jclass_GeneralRouter, "roundaboutTurn", "F");
-	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
+	jfield_GeneralRouter_slightTurn = getFid(env, jclass_GeneralRouter, "slightTurn", "F");
     jfield_GeneralRouter_minSpeed = getFid(env, jclass_GeneralRouter, "minSpeed", "F");
 	jfield_GeneralRouter_defaultSpeed = getFid(env, jclass_GeneralRouter, "defaultSpeed", "F");
 	jfield_GeneralRouter_maxSpeed = getFid(env, jclass_GeneralRouter, "maxSpeed", "F");
@@ -1321,9 +1321,9 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 	jobject lrouter = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
 	rConfig->router->_restrictionsAware = ienv->GetBooleanField(router, jfield_GeneralRouter_restrictionsAware);
-	rConfig->router->leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
+	rConfig->router->sharpTurn = ienv->GetFloatField(router, jfield_GeneralRouter_sharpTurn);
 	rConfig->router->roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
-	rConfig->router->rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
+	rConfig->router->slightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_slightTurn);
     rConfig->router->minSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minSpeed);
 	rConfig->router->defaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_defaultSpeed);
 	rConfig->router->maxSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxSpeed);
