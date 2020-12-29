@@ -159,9 +159,9 @@ void GeneralRouter::addAttribute(string k, string v) {
 	attributes[k] = v;
 	if (k == "restrictionsAware") {
 		_restrictionsAware = parseBool(attributes, k, _restrictionsAware);
-	} else if (k == "sharpTurn") {
+	} else if (k == "sharpTurn" || k == "leftTurn") {
 		sharpTurn = parseFloat(attributes, k, sharpTurn);
-	} else if (k == "easyTurn") {
+	} else if (k == "slightTurn" || k == "rightTurn") {
 		slightTurn = parseFloat(attributes, k, slightTurn);
 	} else if (k == "roundaboutTurn") {
 		roundaboutTurn = parseFloat(attributes, k, roundaboutTurn);
@@ -505,6 +505,13 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 										SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd) {
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
+
+	double totalPenalty = 0;
+
+	if (prevTs != ts) {
+			totalPenalty += abs(ts - prevTs) / 2;
+		}
+
 	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
 	// 	RoutingIndex* reg = prev->getRoad()->region;
 	// 	vector<uint32_t> pt = prev->road->pointTypes[prevSegmentEnd];
@@ -520,27 +527,20 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 	if (segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;
 		if (rt > 0) {
-			return rt;
+			totalPenalty += rt;
 		}
-	}
-	if (sharpTurn > 0 || slightTurn > 0) {
+	} else if (sharpTurn > 0 || slightTurn > 0) {
 		double a1 = segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
 		double a2 = prev->getRoad()->directionRoute(prevSegmentEnd, prevSegmentEnd < prev->getSegmentStart());
 		double diff = abs(alignAngleDifference(a1 - a2 - M_PI));
 		// more like UT
 		if (diff > 2 * M_PI / 3) {
-			return sharpTurn;
+			totalPenalty += sharpTurn;
 		} else if (diff > M_PI / 3) {
-			return slightTurn;
+			totalPenalty += slightTurn;
 		}
-		return 0;
 	}
-
-	if (prevTs != ts) {
-		return ts + prevTs;
-	}
-
-	return 0;
+	return totalPenalty;
 }
 
 void GeneralRouter::printRules() {
