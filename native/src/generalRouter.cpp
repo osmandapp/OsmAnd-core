@@ -29,10 +29,11 @@ GeneralRouter::GeneralRouter()
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes)
-	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0),
-	  roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
-	  allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, 
+		const MAP_STR_STR& attributes) : 
+		profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
+		heightObstacles(false), sharpTurn(.0), roundaboutTurn(.0), 
+		slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
 	this->profile = profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = attributes.begin();
@@ -44,10 +45,7 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_S
 	}
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params)
-	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0),
-	  roundaboutTurn(.0), rightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
-	  allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), sharpTurn(.0), roundaboutTurn(.0), slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
 	this->profile = parent.profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = parent.attributes.begin();
@@ -161,10 +159,10 @@ void GeneralRouter::addAttribute(string k, string v) {
 	attributes[k] = v;
 	if (k == "restrictionsAware") {
 		_restrictionsAware = parseBool(attributes, k, _restrictionsAware);
-	} else if (k == "leftTurn") {
-		leftTurn = parseFloat(attributes, k, leftTurn);
-	} else if (k == "rightTurn") {
-		rightTurn = parseFloat(attributes, k, rightTurn);
+	} else if (k == "sharpTurn" || k == "leftTurn") {
+		sharpTurn = parseFloat(attributes, k, sharpTurn);
+	} else if (k == "slightTurn" || k == "rightTurn") {
+		slightTurn = parseFloat(attributes, k, slightTurn);
 	} else if (k == "roundaboutTurn") {
 		roundaboutTurn = parseFloat(attributes, k, roundaboutTurn);
 	} else if (k == "minDefaultSpeed" || k == "defaultSpeed") {
@@ -507,9 +505,13 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 										SHARED_PTR<RouteSegment>& prev, int prevSegmentEnd) {
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
+
+	double totalPenalty = 0;
+
 	if (prevTs != ts) {
-		return abs(ts - prevTs) / 2;
-	}
+			totalPenalty += abs(ts - prevTs) / 2;
+		}
+
 	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
 	// 	RoutingIndex* reg = prev->getRoad()->region;
 	// 	vector<uint32_t> pt = prev->road->pointTypes[prevSegmentEnd];
@@ -525,23 +527,20 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 	if (segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;
 		if (rt > 0) {
-			return rt;
+			totalPenalty += rt;
 		}
-	}
-	if (leftTurn > 0 || rightTurn > 0) {
-		double a1 =
-			segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
+	} else if (sharpTurn > 0 || slightTurn > 0) {
+		double a1 = segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
 		double a2 = prev->getRoad()->directionRoute(prevSegmentEnd, prevSegmentEnd < prev->getSegmentStart());
 		double diff = abs(alignAngleDifference(a1 - a2 - M_PI));
 		// more like UT
 		if (diff > 2 * M_PI / 3) {
-			return leftTurn;
+			totalPenalty += sharpTurn;
 		} else if (diff > M_PI / 3) {
-			return rightTurn;
+			totalPenalty += slightTurn;
 		}
-		return 0;
 	}
-	return 0;
+	return totalPenalty;
 }
 
 void GeneralRouter::printRules() {

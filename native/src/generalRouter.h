@@ -339,9 +339,9 @@ class GeneralRouter {
 	// cached values
 	bool _restrictionsAware;
 	bool heightObstacles;
-	double leftTurn;
+	double sharpTurn;
 	double roundaboutTurn;
-	double rightTurn;
+	double slightTurn;
 	double minSpeed;
 	double defaultSpeed;
 	double maxSpeed;
