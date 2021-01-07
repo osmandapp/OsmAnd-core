@@ -562,10 +562,14 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 			for (uint i = 0; i < road->restrictions.size(); i++) {
 				if (road->restrictions[i].to == next->road->id) {
 					if (!via || road->restrictions[i].via == viaId) {
-						type = road->restrictions[i].type;
+						type = road->restrictions[i].type;;
 						break;
 					}
 				}
+				if (road->restrictions[i].via == viaId && road->restrictions[i].type == RESTRICTION_ONLY_STRAIGHT_ON) {
+						type = RESTRICTION_NO_STRAIGHT_ON;
+						break;
+					}
 			}
 		} else {
 			for (uint i = 0; i < next->road->restrictions.size(); i++) {
@@ -577,6 +581,10 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 						break;
 					}
 				}
+				if (next->road->restrictions[i].via == viaId && rt == RESTRICTION_ONLY_STRAIGHT_ON) {
+						type = REVERSE_WAY_RESTRICTION_ONLY;
+						break;
+					}
 
 				// Check if there is restriction only to the other than current road
 				if (rt == RESTRICTION_ONLY_RIGHT_TURN || rt == RESTRICTION_ONLY_LEFT_TURN ||
@@ -596,6 +604,12 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 			}
 		}
 		if (type == REVERSE_WAY_RESTRICTION_ONLY) {
+			if (via) {
+				auto it = find(ctx->segmentsToVisitPrescripted.begin(), ctx->segmentsToVisitPrescripted.end(), next);
+				if (it != ctx->segmentsToVisitPrescripted.end()) {
+					ctx->segmentsToVisitPrescripted.erase(it);
+				}
+				}
 			// next = next.next; continue;
 		} else if (type == -1 && exclusiveRestriction) {
 			// next = next.next; continue;
