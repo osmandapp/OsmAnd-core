@@ -98,9 +98,8 @@ task swigGenerateJava(type: Exec) {
         }
     }
 }
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << swigGenerateJava
-}
+
+
 
 // NDK libraries tasks
 task cleanupNdkSharedLibs(type: Delete) {
@@ -122,9 +121,6 @@ task copyNdkSharedLibs(type: Copy) {
 
     into "./jniLibs/NDK"
     includeEmptyDirs = false
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << copyNdkSharedLibs
 }
 
 // Qt shared libraries tasks
@@ -151,9 +147,6 @@ task copyQtSharedLibs(type: Copy) {
     into "./jniLibs/Qt"
     includeEmptyDirs = false
 }
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << copyQtSharedLibs
-}
 
 // Qt JAR libraries tasks
 task cleanupQtJarLibs(type: Delete) {
@@ -176,9 +169,6 @@ task copyQtJarLibs(type: Copy) {
 
     into "./libs/Qt"
     includeEmptyDirs = false
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << copyQtJarLibs
 }
 
 // OsmAnd resources tasks
@@ -355,23 +345,9 @@ task copyOsmAndResources(type: Copy) {
     includeEmptyDirs = false
 }
 
-task packOsmAndResources(type: Exec) {
-    description "Pack OsmAnd resources"
-
-    dependsOn copyOsmAndResources
-
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-    } else {
-        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-    }
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << packOsmAndResources
-}
-
 // OsmAnd resources indexing task
-task indexOsmAndResources << {
+task indexOsmAndResources {
+    dependsOn copyOsmAndResources
     description = "Index OsmAnd resources"
 
     def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
@@ -383,9 +359,23 @@ task indexOsmAndResources << {
     def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
     indexFile.text = resources.join('\n')
 }
-indexOsmAndResources.dependsOn << copyOsmAndResources
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << indexOsmAndResources
+
+task packOsmAndResources(type: Exec) {
+    description "Pack OsmAnd resources"
+    dependsOn copyOsmAndResources
+
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    } else {
+        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    }
+}
+
+
+afterEvaluate {
+	android.applicationVariants.all { variant ->
+		variant.javaCompiler.dependsOn(swigGenerateJava, indexOsmAndResources, packOsmAndResources, copyNdkSharedLibs, copyQtSharedLibs, copyQtJarLibs)
+	}
 }
 
 // Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
@@ -416,6 +406,8 @@ uploadArchives {
         //version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
     }
 }
+
+
 
 dependencies {
     compile fileTree(dir: "libs", include: ["**/*.jar"])
