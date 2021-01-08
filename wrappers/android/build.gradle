@@ -375,7 +375,7 @@ task packOsmAndResources(type: Exec) {
 
 
 afterEvaluate {
-	android.applicationVariants.all { variant ->
+	android.libraryVariants.all { variant ->
 		variant.javaCompiler.dependsOn(swigGenerateJava, indexOsmAndResources, packOsmAndResources, copyNdkSharedLibs, copyQtSharedLibs, copyQtJarLibs)
 	}
 }
