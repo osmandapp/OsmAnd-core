@@ -37,7 +37,6 @@ void RouteSegmentResult::collectNames(SHARED_PTR<RouteDataResources>& resources)
     }
     if (object->namesIds.size() > 0) {
         for (const auto& nameId : object->namesIds) {
-            // TODO: check if name is correct
             const auto& name = object->names[nameId.first];
             const auto& tag = region->quickGetEncodingRule(nameId.first).getTag();
             RouteTypeRule r(tag, name);
@@ -120,14 +119,12 @@ std::vector<uint32_t> RouteSegmentResult::convertNameIds(vector<pair<uint32_t, u
         return res;
     }
     for (int i = 0; i < nameIds.size(); i++) {
-        // TODO: check if this is correct
         uint32_t nameId = nameIds[i].first;
         auto& name = object->names[nameId];
         auto& tag = object->region->quickGetEncodingRule(nameId).getTag();
         RouteTypeRule rule(tag, name);
         uint32_t ruleId = rules[rule];
         if (rules.find(rule) == rules.end()) {
-//            throw new IllegalArgumentException("Cannot find collected rule: " + rule.toString());
             res.clear();
             return res;
         }
@@ -166,7 +163,7 @@ std::vector<std::vector<uint32_t>> RouteSegmentResult::convertPointNames(std::ve
     }
     return res;
 }
-//
+// TODO: port gpx reading for route planning
 //public void fillNames(RouteDataResources resources) {
 //    if (object.nameIds != null && object.nameIds.length > 0) {
 //        RouteRegion region = object.region;
