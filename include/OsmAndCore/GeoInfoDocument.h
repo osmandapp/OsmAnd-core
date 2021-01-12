@@ -41,6 +41,37 @@ namespace OsmAnd
             QUrl url;
             QString text;
         };
+        
+        struct OSMAND_CORE_API Author
+        {
+            Author();
+            virtual ~Author();
+            
+            QString name;
+            QString email;
+            QString link;
+        };
+        
+        struct OSMAND_CORE_API Copyright
+        {
+            Copyright();
+            virtual ~Copyright();
+            
+            QString author;
+            QString year;
+            QString license;
+        };
+        
+        struct OSMAND_CORE_API Bounds
+        {
+            Bounds();
+            virtual ~Bounds();
+            
+            double minlat;
+            double minlon;
+            double maxlat;
+            double maxlon;
+        };
 
         struct OSMAND_CORE_API Metadata
         {
@@ -50,8 +81,12 @@ namespace OsmAnd
             QString name;
             QString description;
             QList< Ref<Link> > links;
+            QString keywords;
             QDateTime timestamp;
             Ref<ExtraData> extraData;
+            Ref<Author> author;
+            Ref<Copyright> copyright;
+            Ref<Bounds> bounds;
         };
 
         struct OSMAND_CORE_API LocationMark

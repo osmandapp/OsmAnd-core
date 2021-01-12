@@ -32,6 +32,34 @@ OsmAnd::GeoInfoDocument::Metadata::~Metadata()
 {
 }
 
+OsmAnd::GeoInfoDocument::Author::Author()
+{
+}
+
+OsmAnd::GeoInfoDocument::Author::~Author()
+{
+}
+
+OsmAnd::GeoInfoDocument::Copyright::Copyright()
+{
+}
+
+OsmAnd::GeoInfoDocument::Copyright::~Copyright()
+{
+}
+
+OsmAnd::GeoInfoDocument::Bounds::Bounds()
+    : minlat(std::numeric_limits<double>::quiet_NaN())
+    , minlon(std::numeric_limits<double>::quiet_NaN())
+    , maxlat(std::numeric_limits<double>::quiet_NaN())
+    , maxlon(std::numeric_limits<double>::quiet_NaN())
+{
+}
+
+OsmAnd::GeoInfoDocument::Bounds::~Bounds()
+{
+}
+
 OsmAnd::GeoInfoDocument::LocationMark::LocationMark()
     : position(LatLon(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()))
     , elevation(std::numeric_limits<double>::quiet_NaN())

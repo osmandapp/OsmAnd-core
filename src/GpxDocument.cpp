@@ -25,9 +25,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::createFrom(const std::
     return nullptr;
 }
 
-bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
+bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const
 {
-    xmlWriter.writeStartDocument(QLatin1String("1.0"), true);
+    xmlWriter.writeStartDocument(QStringLiteral("1.0"), true);
 
     //<gpx
     //	  version="1.1"
@@ -35,26 +35,40 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
     //	  xmlns="http://www.topografix.com/GPX/1/1"
     //	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     //	  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
-    xmlWriter.writeStartElement(QLatin1String("gpx"));
-    xmlWriter.writeAttribute(QLatin1String("version"), version.isEmpty() ? QLatin1String("1.1") : version);
-    xmlWriter.writeAttribute(QLatin1String("creator"), creator.isEmpty() ? QLatin1String("OsmAnd Core") : creator);
-    xmlWriter.writeAttribute(QLatin1String("xmlns"), QLatin1String("http://www.topografix.com/GPX/1/1"));
-    xmlWriter.writeAttribute(QLatin1String("xmlns:xsi"), QLatin1String("http://www.w3.org/2001/XMLSchema-instance"));
-    xmlWriter.writeAttribute(QLatin1String("xsi:schemaLocation"), QLatin1String("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
+    xmlWriter.writeStartElement(QStringLiteral("gpx"));
+    xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
+    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? QStringLiteral("OsmAnd Core") : creator);
+    xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
+    xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
+    xmlWriter.writeAttribute(QStringLiteral("xsi:schemaLocation"), QStringLiteral("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
-    // Write metadata (if present)
+    QString trackName = metadata != nullptr && !metadata->name.isEmpty() ? metadata->name : getFilename(filename);
+    // <metadata>
+    xmlWriter.writeStartElement(QStringLiteral("metadata"));
+    writeNotNullText(xmlWriter, QStringLiteral("name"), trackName);
+    // Write metadata
     if (metadata)
     {
-        // <metadata>
-        xmlWriter.writeStartElement(QLatin1String("metadata"));
-
-        // <name>
-        if (!metadata->name.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("name"), metadata->name);
-
         // <desc>
-        if (!metadata->description.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("desc"), metadata->description);
+        writeNotNullText(xmlWriter, QStringLiteral("desc"), metadata->description);
+        
+        if (metadata->author)
+        {
+            xmlWriter.writeStartElement(QStringLiteral("author"));
+            writeAuthor(xmlWriter, metadata->author);
+            xmlWriter.writeEndElement();
+        }
+        
+        if (metadata->copyright)
+        {
+            xmlWriter.writeStartElement(QStringLiteral("copyright"));
+            writeCopyright(xmlWriter, metadata->copyright);
+            xmlWriter.writeEndElement();
+        }
+        
+        writeNotNullText(xmlWriter, "keywords", metadata->keywords);
+        if (metadata->bounds)
+            writeBounds(xmlWriter, metadata->bounds);
 
         // Links
         if (!metadata->links.isEmpty())
@@ -62,47 +76,46 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
         // <time>
         if (!metadata->timestamp.isNull())
-            xmlWriter.writeTextElement(QLatin1String("time"), metadata->timestamp.toString(Qt::DateFormat::ISODate));
+            xmlWriter.writeTextElement(QStringLiteral("time"), metadata->timestamp.toString(Qt::DateFormat::ISODate));
 
         // Write extensions
         if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(metadata->extraData.shared_ptr()))
             writeExtensions(extensions, xmlWriter);
-
-        // </metadata>
-        xmlWriter.writeEndElement();
     }
+    // </metadata>
+    xmlWriter.writeEndElement();
 
     // <wpt>'s
     for (const auto& locationMark : constOf(locationMarks))
     {
         // <wpt>
-        xmlWriter.writeStartElement(QLatin1String("wpt"));
-        xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(locationMark->position.latitude, 'f', 12));
-        xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(locationMark->position.longitude, 'f', 12));
+        xmlWriter.writeStartElement(QStringLiteral("wpt"));
+        xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(locationMark->position.latitude, 'f', 12));
+        xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(locationMark->position.longitude, 'f', 12));
 
         // <name>
         if (!locationMark->name.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("name"), locationMark->name);
+            xmlWriter.writeTextElement(QStringLiteral("name"), locationMark->name);
 
         // <desc>
         if (!locationMark->description.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("desc"), locationMark->description);
+            xmlWriter.writeTextElement(QStringLiteral("desc"), locationMark->description);
 
         // <ele>
         if (!qIsNaN(locationMark->elevation))
-            xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(locationMark->elevation, 'g', 7));
+            xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(locationMark->elevation, 'g', 7));
 
         // <time>
         if (!locationMark->timestamp.isNull())
-            xmlWriter.writeTextElement(QLatin1String("time"), locationMark->timestamp.toString(Qt::DateFormat::ISODate));
+            xmlWriter.writeTextElement(QStringLiteral("time"), locationMark->timestamp.toString(Qt::DateFormat::ISODate));
 
         // <cmt>
         if (!locationMark->comment.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("cmt"), locationMark->comment);
+            xmlWriter.writeTextElement(QStringLiteral("cmt"), locationMark->comment);
 
         // <type>
         if (!locationMark->type.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("type"), locationMark->type);
+            xmlWriter.writeTextElement(QStringLiteral("type"), locationMark->type);
 
         // Links
         if (!locationMark->links.isEmpty())
@@ -112,41 +125,41 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         {
             // <magvar>
             if (!qIsNaN(wpt->magneticVariation))
-                xmlWriter.writeTextElement(QLatin1String("magvar"), QString::number(wpt->magneticVariation, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("magvar"), QString::number(wpt->magneticVariation, 'f', 12));
 
             // <geoidheight>
             if (!qIsNaN(wpt->geoidHeight))
-                xmlWriter.writeTextElement(QLatin1String("geoidheight"), QString::number(wpt->geoidHeight, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("geoidheight"), QString::number(wpt->geoidHeight, 'f', 12));
 
             // <src>
             if (!wpt->source.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("src"), wpt->source);
+                xmlWriter.writeTextElement(QStringLiteral("src"), wpt->source);
 
             // <sym>
             if (!wpt->symbol.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("sym"), wpt->symbol);
+                xmlWriter.writeTextElement(QStringLiteral("sym"), wpt->symbol);
 
             // <fix>
             switch (wpt->fixType)
             {
                 case GpxFixType::None:
-                    xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("none"));
+                    xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("none"));
                     break;
 
                 case GpxFixType::PositionOnly:
-                    xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("2d"));
+                    xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("2d"));
                     break;
 
                 case GpxFixType::PositionAndElevation:
-                    xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("3d"));
+                    xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("3d"));
                     break;
 
                 case GpxFixType::DGPS:
-                    xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("dgps"));
+                    xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("dgps"));
                     break;
 
                 case GpxFixType::PPS:
-                    xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("pps"));
+                    xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("pps"));
                     break;
 
                 case GpxFixType::Unknown:
@@ -156,27 +169,27 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
             // <sat>
             if (wpt->satellitesUsedForFixCalculation >= 0)
-                xmlWriter.writeTextElement(QLatin1String("sat"), QString::number(wpt->satellitesUsedForFixCalculation));
+                xmlWriter.writeTextElement(QStringLiteral("sat"), QString::number(wpt->satellitesUsedForFixCalculation));
 
             // <hdop>
             if (!qIsNaN(wpt->horizontalDilutionOfPrecision))
-                xmlWriter.writeTextElement(QLatin1String("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 12));
 
             // <vdop>
             if (!qIsNaN(wpt->verticalDilutionOfPrecision))
-                xmlWriter.writeTextElement(QLatin1String("vdop"), QString::number(wpt->verticalDilutionOfPrecision, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(wpt->verticalDilutionOfPrecision, 'f', 12));
 
             // <pdop>
             if (!qIsNaN(wpt->positionDilutionOfPrecision))
-                xmlWriter.writeTextElement(QLatin1String("pdop"), QString::number(wpt->positionDilutionOfPrecision, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("pdop"), QString::number(wpt->positionDilutionOfPrecision, 'f', 12));
 
             // <ageofdgpsdata>
             if (!qIsNaN(wpt->ageOfGpsData))
-                xmlWriter.writeTextElement(QLatin1String("ageofdgpsdata"), QString::number(wpt->ageOfGpsData, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("ageofdgpsdata"), QString::number(wpt->ageOfGpsData, 'f', 12));
 
             // <dgpsid>
             if (wpt->dgpsStationId >= 0)
-                xmlWriter.writeTextElement(QLatin1String("dgpsid"), QString::number(wpt->dgpsStationId));
+                xmlWriter.writeTextElement(QStringLiteral("dgpsid"), QString::number(wpt->dgpsStationId));
         }
 
         // Write extensions
@@ -191,23 +204,23 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
     for (const auto& track : constOf(tracks))
     {
         // <trk>
-        xmlWriter.writeStartElement(QLatin1String("trk"));
+        xmlWriter.writeStartElement(QStringLiteral("trk"));
 
         // <name>
         if (!track->name.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("name"), track->name);
+            xmlWriter.writeTextElement(QStringLiteral("name"), track->name);
 
         // <desc>
         if (!track->description.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("desc"), track->description);
+            xmlWriter.writeTextElement(QStringLiteral("desc"), track->description);
 
         // <cmt>
         if (!track->comment.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("cmt"), track->comment);
+            xmlWriter.writeTextElement(QStringLiteral("cmt"), track->comment);
 
         // <type>
         if (!track->type.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("type"), track->type);
+            xmlWriter.writeTextElement(QStringLiteral("type"), track->type);
 
         // Links
         if (!track->links.isEmpty())
@@ -217,7 +230,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         {
             // <src>
             if (!trk->source.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("src"), trk->source);
+                xmlWriter.writeTextElement(QStringLiteral("src"), trk->source);
         }
 
         // Write extensions
@@ -228,39 +241,39 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         for (const auto& trackSegment : constOf(track->segments))
         {
             // <trkseg>
-            xmlWriter.writeStartElement(QLatin1String("trkseg"));
+            xmlWriter.writeStartElement(QStringLiteral("trkseg"));
 
             // Write track points
             for (const auto& trackPoint : constOf(trackSegment->points))
             {
                 // <trkpt>
-                xmlWriter.writeStartElement(QLatin1String("trkpt"));
-                xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(trackPoint->position.latitude, 'f', 6));
-                xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(trackPoint->position.longitude, 'f', 6));
+                xmlWriter.writeStartElement(QStringLiteral("trkpt"));
+                xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(trackPoint->position.latitude, 'f', 7));
+                xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(trackPoint->position.longitude, 'f', 7));
 
                 // <name>
                 if (!trackPoint->name.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("name"), trackPoint->name);
+                    xmlWriter.writeTextElement(QStringLiteral("name"), trackPoint->name);
 
                 // <desc>
                 if (!trackPoint->description.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("desc"), trackPoint->description);
+                    xmlWriter.writeTextElement(QStringLiteral("desc"), trackPoint->description);
 
                 // <ele>
                 if (!qIsNaN(trackPoint->elevation))
-                    xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(trackPoint->elevation, 'g', 7));
+                    xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(trackPoint->elevation, 'g', 7));
 
                 // <time>
                 if (!trackPoint->timestamp.isNull())
-                    xmlWriter.writeTextElement(QLatin1String("time"), trackPoint->timestamp.toString(Qt::DateFormat::ISODate));
+                    xmlWriter.writeTextElement(QStringLiteral("time"), trackPoint->timestamp.toString(Qt::DateFormat::ISODate));
 
                 // <cmt>
                 if (!trackPoint->comment.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("cmt"), trackPoint->comment);
+                    xmlWriter.writeTextElement(QStringLiteral("cmt"), trackPoint->comment);
 
                 // <type>
                 if (!trackPoint->type.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("type"), trackPoint->type);
+                    xmlWriter.writeTextElement(QStringLiteral("type"), trackPoint->type);
 
                 // Links
                 if (!trackPoint->links.isEmpty())
@@ -270,41 +283,41 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
                 {
                     // <magvar>
                     if (!qIsNaN(trkpt->magneticVariation))
-                        xmlWriter.writeTextElement(QLatin1String("magvar"), QString::number(trkpt->magneticVariation, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("magvar"), QString::number(trkpt->magneticVariation, 'f', 12));
 
                     // <geoidheight>
                     if (!qIsNaN(trkpt->geoidHeight))
-                        xmlWriter.writeTextElement(QLatin1String("geoidheight"), QString::number(trkpt->geoidHeight, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("geoidheight"), QString::number(trkpt->geoidHeight, 'f', 12));
 
                     // <src>
                     if (!trkpt->source.isEmpty())
-                        xmlWriter.writeTextElement(QLatin1String("src"), trkpt->source);
+                        xmlWriter.writeTextElement(QStringLiteral("src"), trkpt->source);
 
                     // <sym>
                     if (!trkpt->symbol.isEmpty())
-                        xmlWriter.writeTextElement(QLatin1String("sym"), trkpt->symbol);
+                        xmlWriter.writeTextElement(QStringLiteral("sym"), trkpt->symbol);
 
                     // <fix>
                     switch (trkpt->fixType)
                     {
                         case GpxFixType::None:
-                            xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("none"));
+                            xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("none"));
                             break;
 
                         case GpxFixType::PositionOnly:
-                            xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("2d"));
+                            xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("2d"));
                             break;
 
                         case GpxFixType::PositionAndElevation:
-                            xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("3d"));
+                            xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("3d"));
                             break;
 
                         case GpxFixType::DGPS:
-                            xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("dgps"));
+                            xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("dgps"));
                             break;
 
                         case GpxFixType::PPS:
-                            xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("pps"));
+                            xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("pps"));
                             break;
 
                         case GpxFixType::Unknown:
@@ -314,27 +327,27 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
                     // <sat>
                     if (trkpt->satellitesUsedForFixCalculation >= 0)
-                        xmlWriter.writeTextElement(QLatin1String("sat"), QString::number(trkpt->satellitesUsedForFixCalculation));
+                        xmlWriter.writeTextElement(QStringLiteral("sat"), QString::number(trkpt->satellitesUsedForFixCalculation));
 
                     // <hdop>
                     if (!qIsNaN(trkpt->horizontalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QLatin1String("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 12));
 
                     // <vdop>
                     if (!qIsNaN(trkpt->verticalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QLatin1String("vdop"), QString::number(trkpt->verticalDilutionOfPrecision, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(trkpt->verticalDilutionOfPrecision, 'f', 12));
 
                     // <pdop>
                     if (!qIsNaN(trkpt->positionDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QLatin1String("pdop"), QString::number(trkpt->positionDilutionOfPrecision, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("pdop"), QString::number(trkpt->positionDilutionOfPrecision, 'f', 12));
 
                     // <ageofdgpsdata>
                     if (!qIsNaN(trkpt->ageOfGpsData))
-                        xmlWriter.writeTextElement(QLatin1String("ageofdgpsdata"), QString::number(trkpt->ageOfGpsData, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("ageofdgpsdata"), QString::number(trkpt->ageOfGpsData, 'f', 12));
 
                     // <dgpsid>
                     if (trkpt->dgpsStationId >= 0)
-                        xmlWriter.writeTextElement(QLatin1String("dgpsid"), QString::number(trkpt->dgpsStationId));
+                        xmlWriter.writeTextElement(QStringLiteral("dgpsid"), QString::number(trkpt->dgpsStationId));
                 }
 
                 // Write extensions
@@ -361,23 +374,23 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
     for (const auto& route : constOf(routes))
     {
         // <rte>
-        xmlWriter.writeStartElement(QLatin1String("rte"));
+        xmlWriter.writeStartElement(QStringLiteral("rte"));
 
         // <name>
         if (!route->name.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("name"), route->name);
+            xmlWriter.writeTextElement(QStringLiteral("name"), route->name);
 
         // <desc>
         if (!route->description.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("desc"), route->description);
+            xmlWriter.writeTextElement(QStringLiteral("desc"), route->description);
 
         // <cmt>
         if (!route->comment.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("cmt"), route->comment);
+            xmlWriter.writeTextElement(QStringLiteral("cmt"), route->comment);
 
         // <type>
         if (!route->type.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("type"), route->type);
+            xmlWriter.writeTextElement(QStringLiteral("type"), route->type);
 
         // Links
         if (!route->links.isEmpty())
@@ -387,7 +400,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         {
             // <src>
             if (!rte->source.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("src"), rte->source);
+                xmlWriter.writeTextElement(QStringLiteral("src"), rte->source);
         }
 
         // Write extensions
@@ -398,33 +411,33 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         for (const auto& routePoint : constOf(route->points))
         {
             // <rtept>
-            xmlWriter.writeStartElement(QLatin1String("rtept"));
-            xmlWriter.writeAttribute(QLatin1String("lat"), QString::number(routePoint->position.latitude, 'f', 6));
-            xmlWriter.writeAttribute(QLatin1String("lon"), QString::number(routePoint->position.longitude, 'f', 6));
+            xmlWriter.writeStartElement(QStringLiteral("rtept"));
+            xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(routePoint->position.latitude, 'g', 7));
+            xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(routePoint->position.longitude, 'g', 7));
 
             // <name>
             if (!routePoint->name.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("name"), routePoint->name);
+                xmlWriter.writeTextElement(QStringLiteral("name"), routePoint->name);
 
             // <desc>
             if (!routePoint->description.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("desc"), routePoint->description);
+                xmlWriter.writeTextElement(QStringLiteral("desc"), routePoint->description);
 
             // <ele>
             if (!qIsNaN(routePoint->elevation))
-                xmlWriter.writeTextElement(QLatin1String("ele"), QString::number(routePoint->elevation, 'g', 7));
+                xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(routePoint->elevation, 'g', 7));
 
             // <time>
             if (!routePoint->timestamp.isNull())
-                xmlWriter.writeTextElement(QLatin1String("time"), routePoint->timestamp.toString(Qt::DateFormat::ISODate));
+                xmlWriter.writeTextElement(QStringLiteral("time"), routePoint->timestamp.toString(Qt::DateFormat::ISODate));
 
             // <cmt>
             if (!routePoint->comment.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("cmt"), routePoint->comment);
+                xmlWriter.writeTextElement(QStringLiteral("cmt"), routePoint->comment);
 
             // <type>
             if (!routePoint->type.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("type"), routePoint->type);
+                xmlWriter.writeTextElement(QStringLiteral("type"), routePoint->type);
 
             // Links
             if (!routePoint->links.isEmpty())
@@ -434,41 +447,41 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
             {
                 // <magvar>
                 if (!qIsNaN(rtept->magneticVariation))
-                    xmlWriter.writeTextElement(QLatin1String("magvar"), QString::number(rtept->magneticVariation, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("magvar"), QString::number(rtept->magneticVariation, 'f', 12));
 
                 // <geoidheight>
                 if (!qIsNaN(rtept->geoidHeight))
-                    xmlWriter.writeTextElement(QLatin1String("geoidheight"), QString::number(rtept->geoidHeight, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("geoidheight"), QString::number(rtept->geoidHeight, 'f', 12));
 
                 // <src>
                 if (!rtept->source.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("src"), rtept->source);
+                    xmlWriter.writeTextElement(QStringLiteral("src"), rtept->source);
 
                 // <sym>
                 if (!rtept->symbol.isEmpty())
-                    xmlWriter.writeTextElement(QLatin1String("sym"), rtept->symbol);
+                    xmlWriter.writeTextElement(QStringLiteral("sym"), rtept->symbol);
 
                 // <fix>
                 switch (rtept->fixType)
                 {
                     case GpxFixType::None:
-                        xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("none"));
+                        xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("none"));
                         break;
 
                     case GpxFixType::PositionOnly:
-                        xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("2d"));
+                        xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("2d"));
                         break;
 
                     case GpxFixType::PositionAndElevation:
-                        xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("3d"));
+                        xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("3d"));
                         break;
 
                     case GpxFixType::DGPS:
-                        xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("dgps"));
+                        xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("dgps"));
                         break;
 
                     case GpxFixType::PPS:
-                        xmlWriter.writeTextElement(QLatin1String("fix"), QLatin1String("pps"));
+                        xmlWriter.writeTextElement(QStringLiteral("fix"), QStringLiteral("pps"));
                         break;
 
                     case GpxFixType::Unknown:
@@ -478,27 +491,27 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
                 // <sat>
                 if (rtept->satellitesUsedForFixCalculation >= 0)
-                    xmlWriter.writeTextElement(QLatin1String("sat"), QString::number(rtept->satellitesUsedForFixCalculation));
+                    xmlWriter.writeTextElement(QStringLiteral("sat"), QString::number(rtept->satellitesUsedForFixCalculation));
 
                 // <hdop>
                 if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QLatin1String("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
 
                 // <vdop>
                 if (!qIsNaN(rtept->verticalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QLatin1String("vdop"), QString::number(rtept->verticalDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(rtept->verticalDilutionOfPrecision, 'f', 12));
 
                 // <pdop>
                 if (!qIsNaN(rtept->positionDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QLatin1String("pdop"), QString::number(rtept->positionDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("pdop"), QString::number(rtept->positionDilutionOfPrecision, 'f', 12));
 
                 // <ageofdgpsdata>
                 if (!qIsNaN(rtept->ageOfGpsData))
-                    xmlWriter.writeTextElement(QLatin1String("ageofdgpsdata"), QString::number(rtept->ageOfGpsData, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("ageofdgpsdata"), QString::number(rtept->ageOfGpsData, 'f', 12));
 
                 // <dgpsid>
                 if (rtept->dgpsStationId >= 0)
-                    xmlWriter.writeTextElement(QLatin1String("dgpsid"), QString::number(rtept->dgpsStationId));
+                    xmlWriter.writeTextElement(QStringLiteral("dgpsid"), QString::number(rtept->dgpsStationId));
             }
 
             // Write extensions
@@ -521,23 +534,38 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
     return true;
 }
 
+QString OsmAnd::GpxDocument::getFilename(const QString& path)
+{
+    QString res;
+    if(path.length() > 0)
+    {
+        int i = path.lastIndexOf('/');
+        if(i > 0)
+            res = path.mid(i + 1);
+        i = res.lastIndexOf('.');
+        if(i > 0)
+            res = res.mid(0, i);
+    }
+    return res;
+}
+
 void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter)
 {
     for (const auto& link : links)
     {
         // <link>
-        xmlWriter.writeStartElement(QLatin1String("link"));
-        xmlWriter.writeAttribute(QLatin1String("href"), link->url.toString());
+        xmlWriter.writeStartElement(QStringLiteral("link"));
+        writeNotNullText(xmlWriter, QStringLiteral("href"), link->url.toString());
 
         // <text>
         if (!link->text.isEmpty())
-            xmlWriter.writeTextElement(QLatin1String("text"), link->text);
+            xmlWriter.writeTextElement(QStringLiteral("text"), link->text);
 
         if (const auto gpxLink = std::dynamic_pointer_cast<const GpxLink>(link.shared_ptr()))
         {
             // <type>
             if (!gpxLink->type.isEmpty())
-                xmlWriter.writeTextElement(QLatin1String("type"), gpxLink->type);
+                xmlWriter.writeTextElement(QStringLiteral("type"), gpxLink->type);
         }
 
         // </link>
@@ -545,12 +573,64 @@ void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStream
     }
 }
 
+void OsmAnd::GpxDocument::writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWriter, const QString& tag, const QString &attribute, const QString& value)
+{
+    if (value != QString::null && !value.isEmpty())
+    {
+        xmlWriter.writeStartElement(tag);
+        xmlWriter.writeTextElement(attribute, value);
+        xmlWriter.writeEndElement();
+    }
+}
+
+void OsmAnd::GpxDocument::writeNotNullText(QXmlStreamWriter& xmlWriter, const QString& tag, const QString& value)
+{
+    if (value != QString::null && !value.isEmpty())
+    {
+        xmlWriter.writeTextElement(tag, value);
+    }
+}
+
+void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Author>& author)
+{
+    writeNotNullText(xmlWriter, QStringLiteral("name"), author->name);
+    if (author->email != QString::null && !author->email.isEmpty() && author->email.contains("@"))
+    {
+        const auto idAndDomain = author->email.split("@");
+        if (idAndDomain.count() == 2 && !idAndDomain[0].isEmpty() && !idAndDomain[1].isEmpty())
+        {
+            xmlWriter.writeStartElement(QStringLiteral("email"));
+            xmlWriter.writeTextElement(QStringLiteral("id"), idAndDomain[0]);
+            xmlWriter.writeTextElement(QStringLiteral("domain"), idAndDomain[1]);
+            xmlWriter.writeEndElement();
+        }
+    }
+    writeNotNullTextWithAttribute(xmlWriter, QStringLiteral("link"), QStringLiteral("href"), author->link);
+}
+
+void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
+{
+    xmlWriter.writeTextElement(QStringLiteral("author"), copyright->author);
+    writeNotNullText(xmlWriter, QStringLiteral("year"), copyright->year);
+    writeNotNullText(xmlWriter, QStringLiteral("license"), copyright->license);
+}
+
+void OsmAnd::GpxDocument::writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bounds>& bounds)
+{
+    xmlWriter.writeStartElement(QStringLiteral("bounds"));
+    xmlWriter.writeTextElement(QStringLiteral("minlat"), QString::number(bounds->minlat, 'g', 7));
+    xmlWriter.writeTextElement(QStringLiteral("minlon"), QString::number(bounds->minlon, 'g', 7));
+    xmlWriter.writeTextElement(QStringLiteral("maxlat"), QString::number(bounds->maxlat, 'g', 7));
+    xmlWriter.writeTextElement(QStringLiteral("maxlon"), QString::number(bounds->minlat, 'g', 7));
+    xmlWriter.writeEndElement();
+}
+
 void OsmAnd::GpxDocument::writeExtensions(const std::shared_ptr<const GpxExtensions>& extensions, QXmlStreamWriter& xmlWriter)
 {
     if (extensions->extensions.count() == 0)
         return;
     // <extensions>
-    xmlWriter.writeStartElement(QLatin1String("extensions"));
+    xmlWriter.writeStartElement(QStringLiteral("extensions"));
     for (const auto attributeEntry : rangeOf(constOf(extensions->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
@@ -578,11 +658,11 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     xmlWriter.writeEndElement();
 }
 
-bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice) const
+bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename) const
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
-    return saveTo(xmlWriter);
+    return saveTo(xmlWriter, filename);
 }
 
 bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
@@ -590,7 +670,7 @@ bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
         return false;
-    const bool ok = saveTo(file);
+    const bool ok = saveTo(file, filename);
     file.close();
 
     return ok;
@@ -599,7 +679,7 @@ bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
 std::shared_ptr<OsmAnd::GpxDocument::GpxWpt> OsmAnd::GpxDocument::parseWpt(QXmlStreamReader& xmlReader)
 {
     bool ok = true;
-    const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
+    const auto latValue = xmlReader.attributes().value(QStringLiteral("lat"));
     const double lat = latValue.toDouble(&ok);
     if (!ok)
     {
@@ -612,7 +692,7 @@ std::shared_ptr<OsmAnd::GpxDocument::GpxWpt> OsmAnd::GpxDocument::parseWpt(QXmlS
         xmlReader.skipCurrentElement();
         return nullptr;
     }
-    const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
+    const auto lonValue = xmlReader.attributes().value(QStringLiteral("lon"));
     const double lon = lonValue.toDouble(&ok);
     if (!ok)
     {
@@ -635,7 +715,7 @@ std::shared_ptr<OsmAnd::GpxDocument::GpxWpt> OsmAnd::GpxDocument::parseWpt(QXmlS
 std::shared_ptr<OsmAnd::GpxDocument::GpxTrkPt> OsmAnd::GpxDocument::parseTrkPt(QXmlStreamReader& xmlReader)
 {
     bool ok = true;
-    const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
+    const auto latValue = xmlReader.attributes().value(QStringLiteral("lat"));
     const double lat = latValue.toDouble(&ok);
     if (!ok)
     {
@@ -648,7 +728,7 @@ std::shared_ptr<OsmAnd::GpxDocument::GpxTrkPt> OsmAnd::GpxDocument::parseTrkPt(Q
         xmlReader.skipCurrentElement();
         return nullptr;
     }
-    const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
+    const auto lonValue = xmlReader.attributes().value(QStringLiteral("lon"));
     const double lon = lonValue.toDouble(&ok);
     if (!ok)
     {
@@ -668,10 +748,41 @@ std::shared_ptr<OsmAnd::GpxDocument::GpxTrkPt> OsmAnd::GpxDocument::parseTrkPt(Q
     return trkpt;
 }
 
+std::shared_ptr<OsmAnd::GpxDocument::Bounds> OsmAnd::GpxDocument::parseBoundsAttributes(QXmlStreamReader& xmlReader)
+{
+    const auto bounds = std::make_shared<Bounds>();
+    QString minlat = xmlReader.attributes().value(QStringLiteral("minlat")).toString();
+    QString minlon = xmlReader.attributes().value(QStringLiteral("minlon")).toString();
+    QString maxlat = xmlReader.attributes().value(QStringLiteral("maxlat")).toString();
+    QString maxlon = xmlReader.attributes().value(QStringLiteral("maxlon")).toString();
+    
+    if (minlat.isEmpty())
+        minlat = xmlReader.attributes().value(QStringLiteral("minLat")).toString();
+    if (minlon.isEmpty())
+        minlon = xmlReader.attributes().value(QStringLiteral("minLon")).toString();
+    if (maxlat.isEmpty())
+        maxlat = xmlReader.attributes().value(QStringLiteral("maxLat")).toString();
+    if (maxlon.isEmpty())
+        maxlon = xmlReader.attributes().value(QStringLiteral("maxlon")).toString();
+    
+    if (!minlat.isEmpty())
+        bounds->minlat = minlat.toDouble();
+    if (!minlon.isEmpty())
+        bounds->minlon = minlon.toDouble();
+    if (!maxlat.isEmpty())
+        bounds->maxlat = maxlat.toDouble();
+    if (!maxlon.isEmpty())
+        bounds->maxlon = maxlon.toDouble();
+    return bounds;
+}
+
 std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamReader& xmlReader)
 {
     std::shared_ptr<GpxDocument> document;
     std::shared_ptr<GpxMetadata> metadata;
+    std::shared_ptr<Author> author;
+    std::shared_ptr<Copyright> copyright;
+    std::shared_ptr<Bounds> bounds;
     std::shared_ptr<GpxWpt> wpt;
     std::shared_ptr<GpxWpt> rpt;
     std::shared_ptr<GpxTrk> trk;
@@ -687,6 +798,8 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     {
         gpx,
         metadata,
+        copyright,
+        author,
         wpt,
         trk,
         rte,
@@ -716,14 +829,14 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 for (const auto& attribute : xmlReader.attributes())
                     extension->attributes[attribute.name().toString()] = attribute.value().toString();
 
-                if (tagName.compare(QLatin1String("routepointextension"), Qt::CaseInsensitive) == 0)
+                if (tagName.compare(QStringLiteral("routepointextension"), Qt::CaseInsensitive) == 0)
                 {
                     routePointExtension = true;                    
                     if (tokens.top() == Token::rtept || (tokens.size() > 1 && tokens.at(tokens.size() - 2) == Token::rtept))
-                        extension->attributes[QLatin1String("offset")] = QString::number(routeTrackSegment->points.size());
+                        extension->attributes[QStringLiteral("offset")] = QString::number(routeTrackSegment->points.size());
                 }
 
-                if (routePointExtension && tagName == QLatin1String("rpt"))
+                if (routePointExtension && tagName == QStringLiteral("rpt"))
                 {
                     rpt = parseWpt(xmlReader);
                     if (!rpt)
@@ -734,7 +847,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 continue;
             }
 
-            if (tagName == QLatin1String("gpx"))
+            if (tagName == QStringLiteral("gpx"))
             {
                 if (document)
                 {
@@ -748,12 +861,12 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
 
                 document.reset(new GpxDocument());
-                document->version = xmlReader.attributes().value(QLatin1String("version")).toString();
-                document->creator = xmlReader.attributes().value(QLatin1String("creator")).toString();
+                document->version = xmlReader.attributes().value(QStringLiteral("version")).toString();
+                document->creator = xmlReader.attributes().value(QStringLiteral("creator")).toString();
 
                 tokens.push(Token::gpx);
             }
-            else if (tagName == QLatin1String("metadata"))
+            else if (tagName == QStringLiteral("metadata"))
             {
                 if (document->metadata)
                 {
@@ -779,12 +892,63 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 metadata.reset(new GpxMetadata());
                 tokens.push(Token::metadata);
 
-                //TODO:<author>
-                //TODO:<copyright>
                 //TODO:<keywords>
                 //TODO:<bounds>
             }
-            else if (tagName == QLatin1String("wpt"))
+            else if (tagName == QStringLiteral("copyright"))
+            {
+                if (copyright)
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <copyright>",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    xmlReader.skipCurrentElement();
+                    continue;
+                }
+
+                copyright.reset(new Copyright());
+                copyright->license = xmlReader.readElementText();
+                copyright->author = xmlReader.attributes().value(QStringLiteral("author")).toString();
+                tokens.push(Token::copyright);
+            }
+            else if (tagName == QStringLiteral("author"))
+            {
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <author> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
+                const auto name = xmlReader.readElementText();
+                switch (tokens.top())
+                {
+                    case Token::metadata:
+                    {
+                        author.reset(new Author());
+                        author->name = name;
+                        tokens.push(Token::author);
+                        break;
+                    }
+                    case Token::copyright:
+                        copyright->author = name;
+                        break;
+
+                    default:
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <author> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                }
+            }
+            else if (tagName == QStringLiteral("wpt"))
             {
                 if (wpt)
                 {
@@ -803,7 +967,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::wpt);
             }
-            else if (tagName == QLatin1String("trk"))
+            else if (tagName == QStringLiteral("trk"))
             {
                 if (trk)
                 {
@@ -820,7 +984,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::trk);
             }
-            else if (tagName == QLatin1String("rte"))
+            else if (tagName == QStringLiteral("rte"))
             {
                 if (rte)
                 {
@@ -837,7 +1001,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::rte);
             }
-            else if (tagName == QLatin1String("category"))
+            else if (tagName == QStringLiteral("category"))
             {
                 const auto name = xmlReader.readElementText();
                 
@@ -869,7 +1033,178 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("name"))
+            else if (tagName == QStringLiteral("email"))
+            {
+                const auto email = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <email> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
+                switch (tokens.top())
+                {
+                    case Token::author:
+                    {
+                        QString id = xmlReader.attributes().value(QStringLiteral("id")).toString();
+                        QString domain = xmlReader.attributes().value(QStringLiteral("domain")).toString();
+                        if (!id.isEmpty() && !domain.isEmpty())
+                        {
+                            author->email = id + QStringLiteral("@") + domain;
+                        }
+                        break;
+                    }
+
+                    default:
+                    {
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <email> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                    }
+                }
+            }
+            else if (tagName == QStringLiteral("license"))
+            {
+                const auto license = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <license> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
+                switch (tokens.top())
+                {
+                    case Token::copyright:
+                    {
+                        copyright->license = license;
+                        break;
+                    }
+
+                    default:
+                    {
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <license> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                    }
+                }
+            }
+            else if (tagName == QStringLiteral("year"))
+            {
+                const auto year = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <year> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
+                switch (tokens.top())
+                {
+                    case Token::copyright:
+                    {
+                        copyright->year = year;
+                        break;
+                    }
+
+                    default:
+                    {
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <year> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                    }
+                }
+            }
+            else if (tagName == QStringLiteral("keywords"))
+            {
+                const auto keywords = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <keywords> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
+                switch (tokens.top())
+                {
+                    case Token::metadata:
+                    {
+                        metadata->keywords = keywords;
+                        break;
+                    }
+
+                    default:
+                    {
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <keywords> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                    }
+                }
+            }
+            else if (tagName == QStringLiteral("bounds"))
+            {
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <bounds> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+                
+                auto bounds = parseBoundsAttributes(xmlReader);
+
+                switch (tokens.top())
+                {
+                    case Token::metadata:
+                    {
+                        metadata->bounds = bounds;
+                        bounds = nullptr;
+                        break;
+                    }
+
+                    default:
+                    {
+                        LogPrintf(
+                            LogSeverityLevel::Warning,
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <bounds> tag",
+                            xmlReader.lineNumber(),
+                            xmlReader.columnNumber());
+                        continue;
+                    }
+                }
+            }
+            else if (tagName == QStringLiteral("name"))
             {
                 const auto name = xmlReader.readElementText();
 
@@ -913,7 +1248,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("desc"))
+            else if (tagName == QStringLiteral("desc"))
             {
                 const auto description = xmlReader.readElementText();
 
@@ -957,7 +1292,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("ele"))
+            else if (tagName == QStringLiteral("ele"))
             {
                 bool ok = false;
                 const auto elevationValue = xmlReader.readElementText();
@@ -1004,7 +1339,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("time"))
+            else if (tagName == QStringLiteral("time"))
             {
                 const auto timestampValue = xmlReader.readElementText();
                 const auto timestamp = QDateTime::fromString(timestampValue, Qt::DateFormat::ISODate);
@@ -1053,7 +1388,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("magvar"))
+            else if (tagName == QStringLiteral("magvar"))
             {
                 bool ok = false;
                 const auto magneticVariationValue = xmlReader.readElementText();
@@ -1100,7 +1435,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("geoidheight"))
+            else if (tagName == QStringLiteral("geoidheight"))
             {
                 bool ok = false;
                 const auto geoidHeightValue = xmlReader.readElementText();
@@ -1147,7 +1482,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("cmt"))
+            else if (tagName == QStringLiteral("cmt"))
             {
                 const auto comment = xmlReader.readElementText();
 
@@ -1188,7 +1523,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("src"))
+            else if (tagName == QStringLiteral("src"))
             {
                 const auto source = xmlReader.readElementText();
 
@@ -1229,7 +1564,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("sym"))
+            else if (tagName == QStringLiteral("sym"))
             {
                 const auto symbol = xmlReader.readElementText();
 
@@ -1264,7 +1599,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("type"))
+            else if (tagName == QStringLiteral("type"))
             {
                 const auto type = xmlReader.readElementText();
 
@@ -1308,19 +1643,19 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("fix"))
+            else if (tagName == QStringLiteral("fix"))
             {
                 const auto fixValue = xmlReader.readElementText();
                 auto fixType = GpxFixType::Unknown;
-                if (fixValue == QLatin1String("none"))
+                if (fixValue == QStringLiteral("none"))
                     fixType = GpxFixType::None;
-                else if (fixValue == QLatin1String("2d"))
+                else if (fixValue == QStringLiteral("2d"))
                     fixType = GpxFixType::PositionOnly;
-                else if (fixValue == QLatin1String("3d"))
+                else if (fixValue == QStringLiteral("3d"))
                     fixType = GpxFixType::PositionAndElevation;
-                else if (fixValue == QLatin1String("dgps"))
+                else if (fixValue == QStringLiteral("dgps"))
                     fixType = GpxFixType::DGPS;
-                else if (fixValue == QLatin1String("pps"))
+                else if (fixValue == QStringLiteral("pps"))
                     fixType = GpxFixType::PPS;
                 else
                 {
@@ -1364,7 +1699,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("sat"))
+            else if (tagName == QStringLiteral("sat"))
             {
                 bool ok = false;
                 const auto satValue = xmlReader.readElementText();
@@ -1411,7 +1746,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("hdop"))
+            else if (tagName == QStringLiteral("hdop"))
             {
                 bool ok = false;
                 const auto hdopValue = xmlReader.readElementText();
@@ -1458,7 +1793,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("vdop"))
+            else if (tagName == QStringLiteral("vdop"))
             {
                 bool ok = false;
                 const auto vdopValue = xmlReader.readElementText();
@@ -1505,7 +1840,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("pdop"))
+            else if (tagName == QStringLiteral("pdop"))
             {
                 bool ok = false;
                 const auto pdopValue = xmlReader.readElementText();
@@ -1552,7 +1887,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("ageofdgpsdata"))
+            else if (tagName == QStringLiteral("ageofdgpsdata"))
             {
                 bool ok = false;
                 const auto ageofdgpsdataValue = xmlReader.readElementText();
@@ -1599,7 +1934,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("dgpsid"))
+            else if (tagName == QStringLiteral("dgpsid"))
             {
                 bool ok = false;
                 const auto dgpsidValue = xmlReader.readElementText();
@@ -1646,7 +1981,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("link"))
+            else if (tagName == QStringLiteral("link"))
             {
                 if (link)
                 {
@@ -1659,7 +1994,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
-                const auto hrefValue = xmlReader.attributes().value(QLatin1String("href")).toString();
+                const auto hrefValue = xmlReader.attributes().value(QStringLiteral("href")).toString();
                 const QUrl url(hrefValue);
                 if (!url.isValid())
                 {
@@ -1678,7 +2013,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::link);
             }
-            else if (tagName == QLatin1String("text"))
+            else if (tagName == QStringLiteral("text"))
             {
                 const auto text = xmlReader.readElementText();
 
@@ -1707,7 +2042,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("number"))
+            else if (tagName == QStringLiteral("number"))
             {
                 bool ok = false;
                 const auto numberValue = xmlReader.readElementText();
@@ -1751,7 +2086,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("trkpt") || tagName == QLatin1String("rpt"))
+            else if (tagName == QStringLiteral("trkpt") || tagName == QStringLiteral("rpt"))
             {
                 if (!trkseg && !trk)
                 {
@@ -1780,7 +2115,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::trkpt);
             }
-            else if (tagName == QLatin1String("trkseg"))
+            else if (tagName == QStringLiteral("trkseg"))
             {
                 if (!trk)
                 {
@@ -1807,7 +2142,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::trkseg);
             }
-            else if (tagName == QLatin1String("csvattributes"))
+            else if (tagName == QStringLiteral("csvattributes"))
             {
                 if (!trkseg)
                 {
@@ -1851,7 +2186,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 trkpt = nullptr;
             }
-            else if (tagName == QLatin1String("rtept"))
+            else if (tagName == QStringLiteral("rtept"))
             {
                 if (!rte)
                 {
@@ -1875,7 +2210,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
 
                 bool ok = true;
-                const auto latValue = xmlReader.attributes().value(QLatin1String("lat"));
+                const auto latValue = xmlReader.attributes().value(QStringLiteral("lat"));
                 const double lat = latValue.toDouble(&ok);
                 if (!ok)
                 {
@@ -1888,7 +2223,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     xmlReader.skipCurrentElement();
                     continue;
                 }
-                const auto lonValue = xmlReader.attributes().value(QLatin1String("lon"));
+                const auto lonValue = xmlReader.attributes().value(QStringLiteral("lon"));
                 const double lon = lonValue.toDouble(&ok);
                 if (!ok)
                 {
@@ -1908,7 +2243,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::rtept);
             }
-            else if (tagName == QLatin1String("extensions"))
+            else if (tagName == QStringLiteral("extensions"))
             {
                 extensions.reset(new GpxExtensions());
                 for (const auto& attribute : xmlReader.attributes())
@@ -1930,12 +2265,12 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
         }
         else if (xmlReader.isEndElement())
         {
-            if (tagName.compare(QLatin1String("routepointextension"), Qt::CaseInsensitive) == 0)
+            if (tagName.compare(QStringLiteral("routepointextension"), Qt::CaseInsensitive) == 0)
                 routePointExtension = false;
             
             if (extensions && !extensionStack.isEmpty())
             {
-                if (routePointExtension && tagName == QLatin1String("rpt"))
+                if (routePointExtension && tagName == QStringLiteral("rpt"))
                 {
                     if (rpt)
                     {
@@ -1953,11 +2288,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 continue;
             }
 
-            if (tagName == QLatin1String("gpx"))
+            if (tagName == QStringLiteral("gpx"))
             {
                 tokens.pop();
             }
-            else if (tagName == QLatin1String("metadata"))
+            else if (tagName == QStringLiteral("metadata"))
             {
                 if (document->metadata)
                     continue;
@@ -1967,100 +2302,147 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 document->metadata = metadata;
                 metadata = nullptr;
             }
-            else if (tagName == QLatin1String("wpt"))
+            else if (tagName == QStringLiteral("wpt"))
             {
                 tokens.pop();
 
                 document->locationMarks.append(wpt);
                 wpt = nullptr;
             }
-            else if (tagName == QLatin1String("csvattributes"))
+            else if (tagName == QStringLiteral("csvattributes"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("trk"))
+            else if (tagName == QStringLiteral("trk"))
             {
                 tokens.pop();
 
                 document->tracks.append(trk);
                 trk = nullptr;
             }
-            else if (tagName == QLatin1String("rte"))
+            else if (tagName == QStringLiteral("rte"))
             {
                 document->routes.append(rte);
                 rte = nullptr;
 
                 tokens.pop();
             }
-            else if (tagName == QLatin1String("name"))
+            else if (tagName == QStringLiteral("copyright"))
+            {
+                if (metadata != nullptr)
+                    metadata->copyright = copyright;
+                
+                copyright = nullptr;
+
+                tokens.pop();
+            }
+            else if (tagName == QStringLiteral("author"))
+            {
+                switch (tokens.top())
+                {
+                    case Token::author:
+                    {
+                        if (metadata != nullptr)
+                            metadata->author = author;
+                        
+                        author = nullptr;
+
+                        tokens.pop();
+                    }
+
+                    default:
+                        continue;
+                }
+            }
+            else if (tagName == QStringLiteral("keywords"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("desc"))
+            else if (tagName == QStringLiteral("bounds"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("ele"))
+            else if (tagName == QStringLiteral("license"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("time"))
+            else if (tagName == QStringLiteral("year"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("magvar"))
+            else if (tagName == QStringLiteral("email"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("geoidheight"))
+            else if (tagName == QStringLiteral("name"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("cmt"))
+            else if (tagName == QStringLiteral("desc"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("src"))
+            else if (tagName == QStringLiteral("ele"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("sym"))
+            else if (tagName == QStringLiteral("time"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("type"))
+            else if (tagName == QStringLiteral("magvar"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("fix"))
+            else if (tagName == QStringLiteral("geoidheight"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("sat"))
+            else if (tagName == QStringLiteral("cmt"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("hdop"))
+            else if (tagName == QStringLiteral("src"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("vdop"))
+            else if (tagName == QStringLiteral("sym"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("pdop"))
+            else if (tagName == QStringLiteral("type"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("ageofdgpsdata"))
+            else if (tagName == QStringLiteral("fix"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("dgpsid"))
+            else if (tagName == QStringLiteral("sat"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("link"))
+            else if (tagName == QStringLiteral("hdop"))
+            {
+                // Do nothing
+            }
+            else if (tagName == QStringLiteral("vdop"))
+            {
+                // Do nothing
+            }
+            else if (tagName == QStringLiteral("pdop"))
+            {
+                // Do nothing
+            }
+            else if (tagName == QStringLiteral("ageofdgpsdata"))
+            {
+                // Do nothing
+            }
+            else if (tagName == QStringLiteral("dgpsid"))
+            {
+                // Do nothing
+            }
+            else if (tagName == QStringLiteral("link"))
             {
                 tokens.pop();
 
@@ -2100,6 +2482,10 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         rtept->links.append(link);
                         link = nullptr;
                         break;
+                    case Token::author:
+                        author->link.append(link->url.toString());
+                        link = nullptr;
+                        break;
 
                     default:
                         LogPrintf(
@@ -2111,15 +2497,15 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         continue;
                 }
             }
-            else if (tagName == QLatin1String("text"))
+            else if (tagName == QStringLiteral("text"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("number"))
+            else if (tagName == QStringLiteral("number"))
             {
                 // Do nothing
             }
-            else if (tagName == QLatin1String("trkpt") || tagName == QLatin1String("rpt"))
+            else if (tagName == QStringLiteral("trkpt") || tagName == QStringLiteral("rpt"))
             {
                 tokens.pop();
 
@@ -2157,21 +2543,21 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 
                 trkpt = nullptr;
             }
-            else if (tagName == QLatin1String("trkseg"))
+            else if (tagName == QStringLiteral("trkseg"))
             {
                 tokens.pop();
 
                 trk->segments.append(trkseg);
                 trkseg = nullptr;
             }
-            else if (tagName == QLatin1String("rtept"))
+            else if (tagName == QStringLiteral("rtept"))
             {
                 tokens.pop();
 
                 rte->points.append(rtept);
                 rtept = nullptr;
             }
-            else if (tagName == QLatin1String("extensions"))
+            else if (tagName == QStringLiteral("extensions"))
             {
                 tokens.pop();
 
@@ -2302,7 +2688,7 @@ QHash<QString, QVariant> OsmAnd::GpxDocument::GpxExtension::getValues(const bool
     if (!value.isEmpty())
         values.insert(name, value);
 
-    const auto prefix = name + QLatin1String(":");
+    const auto prefix = name + QStringLiteral(":");
 
     for (const auto attributeEntry : rangeOf(constOf(attributes)))
         values.insert(prefix + attributeEntry.key(), attributeEntry.value());
