@@ -90,8 +90,8 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     {
         // <wpt>
         xmlWriter.writeStartElement(QStringLiteral("wpt"));
-        xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(locationMark->position.latitude, 'f', 12));
-        xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(locationMark->position.longitude, 'f', 12));
+        xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(locationMark->position.latitude, 'f', 7));
+        xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(locationMark->position.longitude, 'f', 7));
 
         // <name>
         if (!locationMark->name.isEmpty())
@@ -412,8 +412,8 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             // <rtept>
             xmlWriter.writeStartElement(QStringLiteral("rtept"));
-            xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(routePoint->position.latitude, 'g', 7));
-            xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(routePoint->position.longitude, 'g', 7));
+            xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(routePoint->position.latitude, 'f', 7));
+            xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(routePoint->position.longitude, 'f', 7));
 
             // <name>
             if (!routePoint->name.isEmpty())
