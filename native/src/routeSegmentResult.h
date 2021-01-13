@@ -11,48 +11,10 @@
 
 #define DIST_BEARING_DETECT_UNMATCHED 50
 
-struct RouteDataResources {
-private:
-    int currentLocation;
-public:
-    UNORDERED_map<RouteTypeRule, uint32_t> rules;
-    vector<pair<double, double>> locations;
-    UNORDERED_map<SHARED_PTR<RouteDataObject>, vector<vector<uint32_t>>> pointNamesMap;
-    
-    RouteDataResources(vector<pair<double, double>> locations);
-    
-    pair<double, double> getLocation(int index);
-    void incrementCurrentLocation(int index);
-    
-};
-
-struct RouteDataBundle {
-public:
-    SHARED_PTR<RouteDataResources> resources;
-    UNORDERED_map<string, string> data;
-    
-    RouteDataBundle(SHARED_PTR<RouteDataResources>& resources);
-    
-    void put(string key, string value);
-    void putVector(string key, vector<uint32_t> value);
-    void putVectors(string key, vector<vector<uint32_t>> value);
-    
-    string getString(string key);
-private:
-    string vectorToString(vector<uint32_t>& vec);
-    string vectorArrayToString(vector<vector<uint32_t>>& vec);
-};
-
 struct RouteSegmentResult {
 private:
     int startPointIndex;
     int endPointIndex;
-    
-    void collectRules(UNORDERED_map<RouteTypeRule, uint32_t>& rules, vector<uint32_t>& types);
-    vector<uint32_t> convertTypes(vector<uint32_t>& types, UNORDERED_map<RouteTypeRule, uint32_t>& rules);
-    vector<vector<uint32_t>> convertTypes(vector<vector<uint32_t>> &types, UNORDERED_map<RouteTypeRule, uint32_t>& rules);
-    vector<uint32_t> convertNameIds(vector<pair<uint32_t, uint32_t> >& nameIds, UNORDERED_map<RouteTypeRule, uint32_t>& rules);
-    vector<vector<uint32_t>> convertPointNames(vector<vector<uint32_t>>& nameTypes, vector<vector<string>>& pointNames, UNORDERED_map<RouteTypeRule, uint32_t>& rules);
 
 public:
     SHARED_PTR<RouteDataObject> object;
@@ -78,11 +40,6 @@ public:
     void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift);
     vector<SHARED_PTR<RouteSegmentResult> > getPreAttachedRoutes(int routeInd);
     vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
-    
-    void collectTypes(SHARED_PTR<RouteDataResources>& resources);
-    void collectNames(SHARED_PTR<RouteDataResources>& resources);
-    
-    void writeToBundle(SHARED_PTR<RouteDataBundle>& bundle);
 
     inline void updateCapacity() {
         int capacity = abs(endPointIndex - startPointIndex) + 1;
