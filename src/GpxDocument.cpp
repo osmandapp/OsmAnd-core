@@ -594,7 +594,7 @@ void OsmAnd::GpxDocument::writeNotNullText(QXmlStreamWriter& xmlWriter, const QS
 void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Author>& author)
 {
     writeNotNullText(xmlWriter, QStringLiteral("name"), author->name);
-    if (author->email != QString::null && !author->email.isEmpty() && author->email.contains("@"))
+    if (!author->email.isEmpty() && author->email.contains("@"))
     {
         const auto idAndDomain = author->email.split("@");
         if (idAndDomain.count() == 2 && !idAndDomain[0].isEmpty() && !idAndDomain[1].isEmpty())
