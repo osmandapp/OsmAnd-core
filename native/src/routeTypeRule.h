@@ -5,7 +5,11 @@
 #include <vector>
 #include <ctime>
 
+#include "boost/functional/hash.hpp"
+
 #include "openingHoursParser.h"
+
+struct RouteDataBundle;
 
 struct RouteTypeCondition {
     std::string condition;
@@ -54,15 +58,17 @@ public:
         this->analyze();
     }
     
+    void writeToBundle(std::shared_ptr<RouteDataBundle>& bundle) const;
+    
     inline int isForward() {
         return forward;
     }
     
-    inline const std::string& getTag() {
+    inline const std::string& getTag() const {
         return t;
     }
     
-    inline const std::string& getValue() {
+    inline const std::string& getValue() const {
         return v;
     }
 
@@ -114,6 +120,22 @@ public:
         }
         return "";
     }
+    
+    bool operator==(const RouteTypeRule& other) const;
 };
+
+namespace std {
+
+template <>
+struct hash<RouteTypeRule> {
+    std::size_t operator()(const RouteTypeRule &rtr) const {
+        std::size_t result = 0;
+        boost::hash_combine(result, rtr.getTag());
+        boost::hash_combine(result, rtr.getValue());
+        return result;
+    }
+};
+
+}
 
 #endif
