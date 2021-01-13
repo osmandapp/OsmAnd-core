@@ -141,6 +141,13 @@ namespace OsmAnd
     private:
         static std::shared_ptr<GpxWpt> parseWpt(QXmlStreamReader& xmlReader);
         static std::shared_ptr<GpxTrkPt> parseTrkPt(QXmlStreamReader& xmlReader);
+        static std::shared_ptr<Bounds> parseBoundsAttributes(QXmlStreamReader& xmlReader);
+        static QString getFilename(const QString& path);
+        static void writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWriter, const QString& tag, const QString &attribute, const QString& value);
+        static void writeNotNullText(QXmlStreamWriter& xmlWriter, const QString& tag, const QString& value);
+        static void writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Author>& author);
+        static void writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright);
+        static void writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bounds>& bounds);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
         static void writeExtensions(const std::shared_ptr<const GpxExtensions>& extensions, QXmlStreamWriter& xmlWriter);
@@ -154,8 +161,8 @@ namespace OsmAnd
 
         static std::shared_ptr<GpxDocument> createFrom(const std::shared_ptr<const GeoInfoDocument>& document);
 
-        bool saveTo(QXmlStreamWriter& xmlWriter) const;
-        bool saveTo(QIODevice& ioDevice) const;
+        bool saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const;
+        bool saveTo(QIODevice& ioDevice, const QString& filename) const;
         bool saveTo(const QString& filename) const;
         static std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& xmlReader);
         static std::shared_ptr<GpxDocument> loadFrom(QIODevice& ioDevice);
