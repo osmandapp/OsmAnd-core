@@ -95,7 +95,7 @@ void RouteTypeRule::analyze() {
     }
 }
 
-void RouteTypeRule::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) const {
+void RouteTypeRule::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
     bundle->put("t", t);
     if (!v.empty()) {
         bundle->put("v", v);

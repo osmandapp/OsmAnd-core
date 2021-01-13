@@ -58,7 +58,7 @@ public:
         this->analyze();
     }
     
-    void writeToBundle(std::shared_ptr<RouteDataBundle>& bundle) const;
+    void writeToBundle(std::shared_ptr<RouteDataBundle>& bundle);
     
     inline int isForward() {
         return forward;
