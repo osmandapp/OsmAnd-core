@@ -34,8 +34,8 @@ public:
     RouteDataBundle(SHARED_PTR<RouteDataResources>& resources);
     
     void put(string key, string value);
-    void put(string key, vector<uint32_t> value);
-    void put(string key, vector<vector<uint32_t>> value);
+    void putVector(string key, vector<uint32_t> value);
+    void putVectors(string key, vector<vector<uint32_t>> value);
     
     string getString(string key);
 private:

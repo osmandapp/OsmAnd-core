@@ -238,7 +238,7 @@ void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
         }
     }
     bundle->put("id", to_string(object->id >> 6)); // OsmAnd ID to OSM ID
-    bundle->put("types", convertTypes(object->types, rules));
+    bundle->putVector("types", convertTypes(object->types, rules));
     
     int start = min(startPointIndex, endPointIndex);
     int end = max(startPointIndex, endPointIndex) + 1;
@@ -248,9 +248,9 @@ void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
         if (reversed) {
             reverse(types.begin(), types.end());
         }
-        bundle->put("pointTypes", convertTypes(types, rules));
+        bundle->putVectors("pointTypes", convertTypes(types, rules));
     }
-    bundle->put("names", convertNameIds(object->namesIds, rules));
+    bundle->putVector("names", convertNameIds(object->namesIds, rules));
     if (start < object->pointNameTypes.size())
     {
         vector<vector<uint32_t>> types(min(end, (int) object->pointNameTypes.size()) - start);
@@ -261,7 +261,7 @@ void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
             reverse(types.begin(), types.end());
             reverse(names.begin(), names.end());
         }
-        bundle->put("pointNames", convertPointNames(types, names, rules));
+        bundle->putVectors("pointNames", convertPointNames(types, names, rules));
     }
 }
 
@@ -328,11 +328,11 @@ void RouteDataBundle::put(std::string key, std::string value) {
     data[key] = value;
 }
 
-void RouteDataBundle::put(std::string key, std::vector<uint32_t> value) {
+void RouteDataBundle::putVector(std::string key, std::vector<uint32_t> value) {
     put(key, vectorToString(value));
 }
 
-void RouteDataBundle::put(std::string key, std::vector<std::vector<uint32_t>> value) {
+void RouteDataBundle::putVectors(std::string key, std::vector<std::vector<uint32_t>> value) {
     put(key, vectorArrayToString(value));
 }
 
