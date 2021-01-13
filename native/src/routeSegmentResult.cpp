@@ -2,56 +2,6 @@
 #define _OSMAND_ROUTE_SEGMENT_RESULT_CPP
 #include "routeSegmentResult.h"
 
-// RouteDataBundle
-RouteDataBundle::RouteDataBundle(SHARED_PTR<RouteDataResources>& resources)
-    :resources(resources)
-{
-}
-
-void RouteDataBundle::put(std::string key, std::string value) {
-    data[key] = value;
-}
-
-void RouteDataBundle::putVector(std::string key, std::vector<uint32_t> value) {
-    put(key, vectorToString(value));
-}
-
-void RouteDataBundle::putVectors(std::string key, std::vector<std::vector<uint32_t>> value) {
-    put(key, vectorArrayToString(value));
-}
-
-std::string RouteDataBundle::getString(string key) {
-    return data[key];
-}
-
-std::string RouteDataBundle::vectorToString(std::vector<uint32_t>& vec) {
-    std::ostringstream oss;
-    if (!vec.empty())
-    {
-        if (vec.size() > 1) {
-            std::copy(vec.begin(), vec.end() - 1,
-                      std::ostream_iterator<uint32_t>(oss, ";"));
-        }
-        oss << vec.back();
-    }
-    return oss.str();
-}
-
-std::string RouteDataBundle::vectorArrayToString(std::vector<std::vector<uint32_t>>& vec) {
-    string res;
-    if (!vec.empty())
-    {
-        for (auto it = vec.begin(); vec.size() > 1 && it != vec.end() - 1; ++it) {
-            res += vectorToString(*it);
-            res += ";";
-        }
-        res += vectorToString(vec.back());
-    }
-    return res;
-}
-
-// RouteSegmentResult
-
 void RouteSegmentResult::collectTypes(SHARED_PTR<RouteDataResources>& resources)
 {
     auto &rules = resources->rules;
@@ -129,7 +79,7 @@ void RouteSegmentResult::collectRules(UNORDERED_map<RouteTypeRule, uint32_t>& ru
     }
 }
 
-std::vector<uint32_t> RouteSegmentResult::convertTypes(std::vector<uint32_t>& types, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
+vector<uint32_t> RouteSegmentResult::convertTypes(vector<uint32_t>& types, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
     vector<uint32_t> arr;
     if (types.size() == 0) {
         return arr;
@@ -149,7 +99,7 @@ std::vector<uint32_t> RouteSegmentResult::convertTypes(std::vector<uint32_t>& ty
     return res;
 }
 
-std::vector<std::vector<uint32_t>> RouteSegmentResult::convertTypes(std::vector<std::vector<uint32_t>> &types, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
+vector<vector<uint32_t>> RouteSegmentResult::convertTypes(vector<vector<uint32_t>> &types, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
     vector<vector<uint32_t>> res(types.size());
     if (types.size() == 0) {
         return res;
@@ -163,7 +113,7 @@ std::vector<std::vector<uint32_t>> RouteSegmentResult::convertTypes(std::vector<
     return res;
 }
 
-std::vector<uint32_t> RouteSegmentResult::convertNameIds(vector<pair<uint32_t, uint32_t> >& nameIds, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
+vector<uint32_t> RouteSegmentResult::convertNameIds(vector<pair<uint32_t, uint32_t> >& nameIds, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
     vector<uint32_t> res(nameIds.size());
     if (nameIds.size() == 0) {
         return res;
@@ -183,8 +133,8 @@ std::vector<uint32_t> RouteSegmentResult::convertNameIds(vector<pair<uint32_t, u
     return res;
 }
 
-std::vector<std::vector<uint32_t>> RouteSegmentResult::convertPointNames(std::vector<std::vector<uint32_t>>& nameTypes, std::vector<std::vector<std::string>>& pointNames, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
-    std::vector<std::vector<uint32_t>> res(nameTypes.size());
+vector<vector<uint32_t>> RouteSegmentResult::convertPointNames(vector<vector<uint32_t>>& nameTypes, vector<vector<string>>& pointNames, UNORDERED_map<RouteTypeRule, uint32_t>& rules) {
+    vector<vector<uint32_t>> res(nameTypes.size());
     if (nameTypes.size() == 0) {
         return res;
     }
@@ -264,12 +214,12 @@ std::vector<std::vector<uint32_t>> RouteSegmentResult::convertPointNames(std::ve
 void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
     auto& rules = bundle->resources->rules;
     bool reversed = endPointIndex < startPointIndex;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << segmentTime;
+    stringstream ss;
+    ss << fixed << setprecision(2) << segmentTime;
     bundle->put("length", to_string(abs(endPointIndex - startPointIndex) + 1));
     bundle->put("segmentTime", ss.str());
     ss.str("");
-    ss << std::fixed << std::setprecision(2) << segmentSpeed;
+    ss << fixed << setprecision(2) << segmentSpeed;
     bundle->put("speed", ss.str());
     ss.str("");
     if (turnType) {
@@ -278,7 +228,7 @@ void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
             bundle->put("skipTurn", turnType->isSkipToSpeak() ? string("true") : string("false"));
         }
         if (turnType->getTurnAngle() != 0) {
-            ss << std::fixed << std::setprecision(2) << turnType->getTurnAngle();
+            ss << fixed << setprecision(2) << turnType->getTurnAngle();
             bundle->put("turnAngle", ss.str());
             ss.str("");
         }
@@ -351,7 +301,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RouteSegmentResult::getAttachedRoutes(in
 }
 
 // RouteDataResources
-RouteDataResources::RouteDataResources(std::vector<std::pair<double, double>> locations)
+RouteDataResources::RouteDataResources(vector<pair<double, double>> locations)
     : locations(locations)
 {
 }
@@ -366,6 +316,54 @@ pair<double, double> RouteDataResources::getLocation(int index) {
 void RouteDataResources::incrementCurrentLocation(int index)
 {
     currentLocation += index;
+}
+
+// RouteDataBundle
+RouteDataBundle::RouteDataBundle(SHARED_PTR<RouteDataResources>& resources)
+    :resources(resources)
+{
+}
+
+void RouteDataBundle::put(string key, string value) {
+    data[key] = value;
+}
+
+void RouteDataBundle::putVector(string key, vector<uint32_t> value) {
+    put(key, vectorToString(value));
+}
+
+void RouteDataBundle::putVectors(string key, vector<vector<uint32_t>> value) {
+    put(key, vectorArrayToString(value));
+}
+
+string RouteDataBundle::getString(string key) {
+    return data[key];
+}
+
+string RouteDataBundle::vectorToString(vector<uint32_t>& vec) {
+    ostringstream oss;
+    if (!vec.empty())
+    {
+        if (vec.size() > 1) {
+            copy(vec.begin(), vec.end() - 1,
+                      ostream_iterator<uint32_t>(oss, ";"));
+        }
+        oss << vec.back();
+    }
+    return oss.str();
+}
+
+string RouteDataBundle::vectorArrayToString(vector<vector<uint32_t>>& vec) {
+    string res;
+    if (!vec.empty())
+    {
+        for (auto it = vec.begin(); vec.size() > 1 && it != vec.end() - 1; ++it) {
+            res += vectorToString(*it);
+            res += ";";
+        }
+        res += vectorToString(vec.back());
+    }
+    return res;
 }
 
 #endif /*_OSMAND_ROUTE_SEGMENT_RESULT_CPP*/
