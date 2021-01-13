@@ -575,7 +575,7 @@ void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStream
 
 void OsmAnd::GpxDocument::writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWriter, const QString& tag, const QString &attribute, const QString& value)
 {
-    if (value != QString::null && !value.isEmpty())
+    if (!value.isEmpty())
     {
         xmlWriter.writeStartElement(tag);
         xmlWriter.writeTextElement(attribute, value);
@@ -585,7 +585,7 @@ void OsmAnd::GpxDocument::writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWri
 
 void OsmAnd::GpxDocument::writeNotNullText(QXmlStreamWriter& xmlWriter, const QString& tag, const QString& value)
 {
-    if (value != QString::null && !value.isEmpty())
+    if (!value.isEmpty())
     {
         xmlWriter.writeTextElement(tag, value);
     }
