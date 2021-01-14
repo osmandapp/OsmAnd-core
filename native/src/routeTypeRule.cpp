@@ -1,8 +1,7 @@
 #include "routeTypeRule.h"
-#include "routeSegmentResult.h"
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
-
+#include "routeDataBundle.h"
 
 const uint32_t RouteTypeRule::conditionalValue(const tm& dateTime) {
     if (!conditions.empty()) {

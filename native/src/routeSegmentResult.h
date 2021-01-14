@@ -11,37 +11,7 @@
 
 #define DIST_BEARING_DETECT_UNMATCHED 50
 
-struct RouteDataResources {
-private:
-    int currentLocation;
-public:
-    UNORDERED_map<RouteTypeRule, uint32_t> rules;
-    vector<pair<double, double>> locations;
-    UNORDERED_map<SHARED_PTR<RouteDataObject>, vector<vector<uint32_t>>> pointNamesMap;
-    
-    RouteDataResources(vector<pair<double, double>> locations);
-    
-    pair<double, double> getLocation(int index);
-    void incrementCurrentLocation(int index);
-    
-};
-
-struct RouteDataBundle {
-public:
-    SHARED_PTR<RouteDataResources> resources;
-    UNORDERED_map<string, string> data;
-    
-    RouteDataBundle(SHARED_PTR<RouteDataResources>& resources);
-    
-    void put(string key, string value);
-    void putVector(string key, vector<uint32_t> value);
-    void putVectors(string key, vector<vector<uint32_t>> value);
-    
-    string getString(string key);
-private:
-    string vectorToString(vector<uint32_t>& vec);
-    string vectorArrayToString(vector<vector<uint32_t>>& vec);
-};
+struct RouteDataResources;
 
 struct RouteSegmentResult {
 private:
