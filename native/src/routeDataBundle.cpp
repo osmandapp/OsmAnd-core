@@ -5,6 +5,7 @@
 #include "routeDataResources.h"
 
 #include <algorithm>
+#include <iterator>
 #include <sstream>
 #include <iostream>
 
