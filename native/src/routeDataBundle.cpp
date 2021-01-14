@@ -25,7 +25,7 @@ string RouteDataBundle::getString(string key) {
 }
 
 string RouteDataBundle::vectorToString(vector<uint32_t>& vec) {
-    ostringstream oss;
+    std::ostringstream oss;
     if (!vec.empty())
     {
         if (vec.size() > 1) {
