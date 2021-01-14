@@ -4,7 +4,9 @@
 
 #include "routeDataResources.h"
 
+#include <algorithm>
 #include <sstream>
+#include <iostream>
 
 RouteDataBundle::RouteDataBundle(SHARED_PTR<RouteDataResources>& resources) : resources(resources) {
 }
