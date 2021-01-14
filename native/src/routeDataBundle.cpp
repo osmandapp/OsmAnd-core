@@ -4,6 +4,8 @@
 
 #include "routeDataResources.h"
 
+#include <sstream>
+
 RouteDataBundle::RouteDataBundle(SHARED_PTR<RouteDataResources>& resources) : resources(resources) {
 }
 
@@ -24,7 +26,7 @@ string RouteDataBundle::getString(string key) {
 }
 
 string RouteDataBundle::vectorToString(vector<uint32_t>& vec) {
-	ostringstream oss;
+	std::ostringstream oss;
 	if (!vec.empty()) {
 		if (vec.size() > 1) {
 			copy(vec.begin(), vec.end() - 1, ostream_iterator<uint32_t>(oss, ";"));
