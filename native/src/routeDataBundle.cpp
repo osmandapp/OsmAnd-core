@@ -31,7 +31,7 @@ string RouteDataBundle::vectorToString(vector<uint32_t>& vec) {
 	std::ostringstream oss;
 	if (!vec.empty()) {
 		if (vec.size() > 1) {
-			copy(vec.begin(), vec.end() - 1, ostream_iterator<uint32_t>(oss, ";"));
+			std::copy(vec.begin(), vec.end() - 1, std::ostream_iterator<uint32_t>(oss, ";"));
 		}
 		oss << vec.back();
 	}
