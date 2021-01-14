@@ -51,5 +51,6 @@
     "utility": "cpp",
     "algorithm": "cpp"
   },
-  "explorerExcludedFiles.show": true
+  "explorerExcludedFiles.show": true,
+  "C_Cpp.Clang_format_style": "{ BasedOnStyle: Google, UseTab: Always, ColumnLimit: 120, BreakBeforeBraces: Attach,  IndentWidth: 4, TabWidth: 4, AllowShortFunctionsOnASingleLine : false,  AllowAllConstructorInitializersOnNextLine: true, ConstructorInitializerAllOnOneLineOrOnePerLine: false }"
 }

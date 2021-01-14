@@ -3,17 +3,10 @@
 
 #include "CommonCollections.h"
 
-namespace OsmAnd
-{
-    enum class LogSeverityLevel
-    {
-        Error = 1,
-        Warning,
-        Debug,
-        Info
-    };
+namespace OsmAnd {
+enum class LogSeverityLevel { Error = 1, Warning, Debug, Info };
 
-    void LogPrintf(LogSeverityLevel level, const char* format, ...);
-}
+void LogPrintf(LogSeverityLevel level, const char* format, ...);
+}  // namespace OsmAnd
 
-#endif // _OSMAND_LOGGING_H_
+#endif	// _OSMAND_LOGGING_H_

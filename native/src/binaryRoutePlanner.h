@@ -19,10 +19,10 @@ struct RoutingContext;
 struct RouteSegmentResult;
 struct RouteSegmentPoint;
 
-//typedef std::pair<int, std::pair<string, string> > ROUTE_TRIPLE;
+// typedef std::pair<int, std::pair<string, string> > ROUTE_TRIPLE;
 
-SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext *ctx,
-                                               bool transportStop = false, int64_t roadId = -1, int segmentInd = 0);
+SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx, bool transportStop = false,
+											   int64_t roadId = -1, int segmentInd = 0);
 
 vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation);
 
