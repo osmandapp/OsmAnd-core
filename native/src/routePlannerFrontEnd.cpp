@@ -369,10 +369,10 @@ SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment
     pair<double, double> prev = {NAN, NAN};
     for (int i = 0; i < size; i++) {
         const auto& l = points[i];
-        if (l.first != NAN && l.second != NAN) {
+        if (!isnan(l.first)&& !isnan(l.second)) {
             x.push_back(get31TileNumberX(l.second));
             y.push_back(get31TileNumberY(l.first));
-            if (prev.first != NAN && prev.second != NAN)
+            if (!isnan(prev.first)&& !isnan(prev.second))
             {
                 double d = getDistance(l.first, l.second, prev.first, prev.second);
                 distance += d;

@@ -1,7 +1,7 @@
 #include "routeTypeRule.h"
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
-
+#include "routeDataBundle.h"
 
 const uint32_t RouteTypeRule::conditionalValue(const tm& dateTime) {
     if (!conditions.empty()) {
@@ -92,4 +92,19 @@ void RouteTypeRule::analyze() {
     } else if (tl == "tunnel" && !v.empty()) {
         type = TUNNEL;
     }
+}
+
+void RouteTypeRule::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) const {
+    bundle->put("t", t);
+    if (!v.empty()) {
+        bundle->put("v", v);
+    }
+}
+
+bool RouteTypeRule::operator==(const RouteTypeRule& other) const
+{
+    bool res = false;
+    res = t == other.t || res;
+    res = v == other.v || res;
+    return res;
 }
