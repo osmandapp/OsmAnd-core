@@ -364,15 +364,17 @@ task indexOsmAndResources {
     }
 }
 
-task packOsmAndResources(type: Exec) {
+task packOsmAndResources() {
     description "Pack OsmAnd resources"
     dependsOn copyOsmAndResources
 
     doLast {
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-        } else {
-            commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+        exec {
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+            } else {
+                commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+            }
         }
     }
 }
