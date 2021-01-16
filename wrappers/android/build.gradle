@@ -352,24 +352,28 @@ task indexOsmAndResources {
     dependsOn copyOsmAndResources
     description = "Index OsmAnd resources"
 
-    def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
-        include "**/*.*"
-    }.collect {
-        relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "")
-    }
+    doLast {
+        def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
+            include "**/*.*"
+        }.collect {
+            relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "")
+        }
 
-    def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
-    indexFile.text = resources.join('\n')
+        def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
+        indexFile.text = resources.join('\n')
+    }
 }
 
 task packOsmAndResources(type: Exec) {
     description "Pack OsmAnd resources"
     dependsOn copyOsmAndResources
 
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
-    } else {
-        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    doLast {
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+        } else {
+            commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+        }
     }
 }
 
