@@ -167,53 +167,119 @@ vector<vector<uint32_t>> RouteSegmentResult::convertPointNames(vector<vector<uin
 	}
 	return res;
 }
-// TODO: port gpx reading for route planning
-// public void fillNames(RouteDataResources resources) {
-//    if (object.nameIds != null && object.nameIds.length > 0) {
-//        RouteRegion region = object.region;
-//        int nameTypeRule = region.getNameTypeRule();
-//        int refTypeRule = region.getRefTypeRule();
-//        object.names = new TIntObjectHashMap<>();
-//        for (int nameId : object.nameIds) {
-//            RouteTypeRule rule = region.quickGetEncodingRule(nameId);
-//            if (rule != null) {
-//                if (nameTypeRule != -1 && "name".equals(rule.getTag())) {
-//                    nameId = nameTypeRule;
-//                } else if (refTypeRule != -1 && "ref".equals(rule.getTag())) {
-//                    nameId = refTypeRule;
-//                }
-//                object.names.put(nameId, rule.getValue());
-//            }
-//        }
-//    }
-//    String[][] pointNames = null;
-//    int[][] pointNameTypes = null;
-//    int[][] pointNamesArr = resources.getPointNamesMap().get(object);
-//    if (pointNamesArr != null) {
-//        pointNames = new String[pointNamesArr.length][];
-//        pointNameTypes = new int[pointNamesArr.length][];
-//        for (int i = 0; i < pointNamesArr.length; i++) {
-//            int[] namesIds = pointNamesArr[i];
-//            if (namesIds != null) {
-//                pointNames[i] = new String[namesIds.length];
-//                pointNameTypes[i] = new int[namesIds.length];
-//                for (int k = 0; k < namesIds.length; k++) {
-//                    int id = namesIds[k];
-//                    RouteTypeRule r = object.region.quickGetEncodingRule(id);
-//                    if (r != null) {
-//                        pointNames[i][k] = r.getValue();
-//                        int nameType = object.region.searchRouteEncodingRule(r.getTag(), null);
-//                        if (nameType != -1) {
-//                            pointNameTypes[i][k] = nameType;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    object.pointNames = pointNames;
-//    object.pointNameTypes = pointNameTypes;
-//}
+
+void RouteSegmentResult::fillNames(SHARED_PTR<RouteDataResources>& resources) {
+	if (object->namesIds.size() > 0) {
+		RoutingIndex *region = object->region;
+		int nameTypeRule = region->nameTypeRule;
+		int refTypeRule = region->refTypeRule;
+        object->names = {};
+		for (auto &name : object->namesIds) {
+            uint32_t nameId = name.first;
+			RouteTypeRule& rule = region->quickGetEncodingRule(nameId);
+            
+            if (nameTypeRule != -1 && "name" == rule.getTag()) {
+                nameId = nameTypeRule;
+            } else if (refTypeRule != -1 && "ref" == rule.getTag()) {
+                nameId = refTypeRule;
+            }
+            object->names[nameId] = rule.getValue();
+        }
+	}
+	vector<vector<string>> pointNames;
+	vector<vector<uint32_t>> pointNameTypes;
+    vector<vector<uint32_t>> pointNamesArr = resources->pointNamesMap[object];
+	if (pointNamesArr.size() > 0) {
+        pointNames.resize(pointNamesArr.size());
+		pointNameTypes.resize(pointNamesArr.size());
+		for (int i = 0; i < pointNamesArr.size(); i++) {
+			auto& namesIds = pointNamesArr[i];
+            
+            pointNames[i] = vector<string>(namesIds.size());
+            pointNameTypes[i] = vector<uint32_t>(namesIds.size());
+            for (int k = 0; k < namesIds.size(); k++) {
+                uint32_t id = namesIds[k];
+                RouteTypeRule& r = object->region->quickGetEncodingRule(id);
+                
+                pointNames[i][k] = r.getValue();
+                uint32_t nameType = object->region->searchRouteEncodingRule(r.getTag(), "");
+                if (nameType != -1) {
+                    pointNameTypes[i][k] = nameType;
+                }
+            }
+			
+		}
+	}
+	object->pointNames = pointNames;
+	object->pointNameTypes = pointNameTypes;
+}
+
+void RouteSegmentResult::readFromBundle(SHARED_PTR<RouteDataBundle>& bundle) {
+	int length = bundle->getInt("length", 0);
+	bool plus = length >= 0;
+	length = abs(length);
+	startPointIndex = plus ? 0 : length - 1;
+	endPointIndex = plus ? length - 1 : 0;
+	segmentTime = bundle->getFloat("segmentTime", segmentTime);
+	segmentSpeed = bundle->getFloat("speed", segmentSpeed);
+	auto turnTypeStr = bundle->getString("turnType", "");
+	if (!turnTypeStr.empty()) {
+        auto tt = TurnType::fromString(turnTypeStr, false);
+		turnType = std::shared_ptr<TurnType>(&tt);
+		turnType->setSkipToSpeak(bundle->getBool("skipTurn", turnType->isSkipToSpeak()));
+		turnType->setTurnAngle(bundle->getFloat("turnAngle", turnType->getTurnAngle()));
+		auto turnLanes = TurnType::lanesFromString(bundle->getString("turnLanes", ""));
+		turnType->setLanes(turnLanes);
+	}
+	object->id = bundle->getLong("id", object->id) << 6;
+	object->types = bundle->getIntVector("types", {});
+	object->pointTypes = bundle->getIntIntVector("pointTypes", {});
+	const auto names = bundle->getIntVector("names", {});
+	vector<pair<uint32_t, uint32_t>> namesIds(names.size());
+	// TODO: find out what should be the value in namesIds
+	for (uint32_t id : names) {
+		namesIds.push_back({id, 0});
+	}
+	object->namesIds = namesIds;
+	const auto pointNames = bundle->getIntIntVector("pointNames", {});
+	if (!pointNames.empty()) {
+		bundle->resources->pointNamesMap[object] = pointNames;
+	}
+	
+	const auto& resources = bundle->resources;
+	object->pointsX = vector<uint32_t>(length);
+	object->pointsY = vector<uint32_t>(length);
+	object->heightDistanceArray = vector<double>(length * 2);
+	int index = plus ? 0 : length - 1;
+	double distance = 0;
+	Location prevLocation;
+	for (int i = 0; i < length; i++) {
+		Location location = resources->getLocation(index);
+		if (location.isInitialized()) {
+			double dist = 0;
+			if (prevLocation.isInitialized()) {
+				dist = ::getDistance(prevLocation.latitude, prevLocation.longitude, location.latitude, location.longitude);
+				distance += dist;
+			}
+			prevLocation = location;
+			object->pointsX[i] = get31TileNumberX(location.longitude);
+			object->pointsY[i] = get31TileNumberY(location.latitude);
+			if (location.altitude > 0 && object->heightDistanceArray.size() > 0) {
+				object->heightDistanceArray[i * 2] = dist;
+				object->heightDistanceArray[i * 2 + 1] = location.altitude;
+			} else {
+				object->heightDistanceArray = {};
+			}
+		}
+		if (plus) {
+			index++;
+		} else {
+			index--;
+		}
+	}
+	this->distance = distance;
+	resources->incrementCurrentLocation(length - 1);
+}
 
 void RouteSegmentResult::writeToBundle(SHARED_PTR<RouteDataBundle>& bundle) {
 	auto& rules = bundle->resources->rules;

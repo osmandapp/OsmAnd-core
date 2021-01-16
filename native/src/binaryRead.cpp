@@ -58,6 +58,21 @@ uint32_t RoutingIndex::findOrCreateRouteType(const std::string& tag, const std::
 	return i;
 }
 
+uint32_t RoutingIndex::searchRouteEncodingRule(const std::string& tag, const std::string& value) {
+    if(decodingRules.empty()) {
+        for(uint32_t i = 1; i < routeEncodingRules.size(); i++) {
+            RouteTypeRule& rt = routeEncodingRules[i];
+            string ks = rt.getTag() + "#" + rt.getValue();
+            decodingRules[ks] = i;
+        }
+    }
+    string k = tag + "#" + value;
+    if(decodingRules.count(k) == 1) {
+        return decodingRules[k];
+    }
+    return -1;
+}
+
 void RoutingIndex::completeRouteEncodingRules() {
 	for (uint32_t i = 0; i < routeEncodingRules.size(); i++) {
 		RouteTypeRule& rtr = routeEncodingRules[i];
