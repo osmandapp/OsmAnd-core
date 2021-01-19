@@ -193,11 +193,11 @@ string TurnType::toString() {
 
 vector<int> TurnType::lanesFromString(string lanesString)
 {
+    vector<int> lanes;
     if (lanesString.empty()) {
-        return vector<int>();
+        return lanes;
     }
     auto lanesArr = split_string(lanesString, "|");
-    vector<int> lanes(lanesArr.size());
     for (int l = 0; l < lanesArr.size(); l++) {
         string lane = lanesArr[l];
         vector<string> turns = split_string(lane, ",");
