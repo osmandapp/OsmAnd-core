@@ -26,10 +26,10 @@ bool Location::isInitialized() {
 	return latitude != 0 && longitude != 0;
 }
 
-RouteDataResources::RouteDataResources() {
+RouteDataResources::RouteDataResources() : currentLocation(0) {
 }
 
-RouteDataResources::RouteDataResources(vector<Location> locations) : locations(locations) {
+RouteDataResources::RouteDataResources(vector<Location> locations) : currentLocation(0), locations(locations) {
 }
 
 Location RouteDataResources::getLocation(int index) {

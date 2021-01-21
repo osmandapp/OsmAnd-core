@@ -223,20 +223,19 @@ void RouteSegmentResult::readFromBundle(SHARED_PTR<RouteDataBundle>& bundle) {
 	segmentTime = bundle->getFloat("segmentTime", segmentTime);
 	segmentSpeed = bundle->getFloat("speed", segmentSpeed);
 	auto turnTypeStr = bundle->getString("turnType", "");
-//	if (!turnTypeStr.empty()) {
-//        auto tt = TurnType::fromString(turnTypeStr, false);
-//		turnType = std::shared_ptr<TurnType>(&tt);
-//		turnType->setSkipToSpeak(bundle->getBool("skipTurn", turnType->isSkipToSpeak()));
-//		turnType->setTurnAngle(bundle->getFloat("turnAngle", turnType->getTurnAngle()));
-//		auto turnLanes = TurnType::lanesFromString(bundle->getString("turnLanes", ""));
-//		turnType->setLanes(turnLanes);
-//	}
+	if (!turnTypeStr.empty()) {
+        auto tt = TurnType::fromString(turnTypeStr, false);
+        turnType = TurnType::ptrValueOf(tt.getValue(), tt.isLeftSide());
+		turnType->setSkipToSpeak(bundle->getBool("skipTurn", turnType->isSkipToSpeak()));
+		turnType->setTurnAngle(bundle->getFloat("turnAngle", turnType->getTurnAngle()));
+		auto turnLanes = TurnType::lanesFromString(bundle->getString("turnLanes", ""));
+		turnType->setLanes(turnLanes);
+	}
 	object->id = bundle->getLong("id", object->id) << 6;
 	object->types = bundle->getIntVector("types", {});
 	object->pointTypes = bundle->getIntIntVector("pointTypes", {});
 	const auto names = bundle->getIntVector("names", {});
-	vector<pair<uint32_t, uint32_t>> namesIds(names.size());
-	// TODO: find out what should be the value in namesIds
+	vector<pair<uint32_t, uint32_t>> namesIds;
 	for (uint32_t id : names) {
 		namesIds.push_back({id, 0});
 	}
