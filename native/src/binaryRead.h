@@ -92,7 +92,7 @@ struct BinaryPartIndex {
 
 struct RoutingIndex : BinaryPartIndex {
 	vector<RouteTypeRule> routeEncodingRules;
-    UNORDERED_map<std::string, uint32_t> decodingRules;
+	UNORDERED_map<std::string, uint32_t> decodingRules;
 	std::vector<RouteSubregion> subregions;
 	std::vector<RouteSubregion> basesubregions;
 
@@ -119,7 +119,7 @@ struct RoutingIndex : BinaryPartIndex {
 
 	uint32_t findOrCreateRouteType(const std::string& tag, const std::string& value);
     
-    uint32_t searchRouteEncodingRule(const std::string& tag, const std::string& value);
+	uint32_t searchRouteEncodingRule(const std::string& tag, const std::string& value);
 
 	RouteTypeRule& quickGetEncodingRule(uint32_t id) {
 		return routeEncodingRules[id];

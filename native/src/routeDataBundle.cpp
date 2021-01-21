@@ -31,41 +31,41 @@ void RouteDataBundle::putVectors(string key, vector<vector<uint32_t>> value) {
 }
 
 string RouteDataBundle::getString(string key, string def) {
-    if (data.count(key) == 1)
-        return data[key];
-    return def;
+	if (data.count(key) == 1)
+		return data[key];
+	return def;
 }
 
 int RouteDataBundle::getInt(string key, int def) {
-    if (data.count(key) == 1)
-        return std::stoi(data[key]);
-    return def;
+	if (data.count(key) == 1)
+		return std::stoi(data[key]);
+	return def;
 }
 
 float RouteDataBundle::getFloat(string key, float def) {
-    if (data.count(key) == 1)
-        return std::stof(data[key]);
-    return def;
+	if (data.count(key) == 1)
+		return std::stof(data[key]);
+	return def;
 }
 
 bool RouteDataBundle::getBool(string key, bool def) {
-    if (data.count(key) == 1)
-        return data[key] == "true" ? true : false;
-    return def;
+	if (data.count(key) == 1)
+		return data[key] == "true" ? true : false;
+	return def;
 }
 
 int64_t RouteDataBundle::getLong(string key, int64_t def) {
-    if (data.count(key) == 1)
-        return std::stoll(data[key]);
-    return def;
+	if (data.count(key) == 1)
+		return std::stoll(data[key]);
+	return def;
 }
 
 vector<uint32_t> RouteDataBundle::getIntVector(string key, vector<uint32_t> def) {
-    if (data.count(key) == 1) {
-        auto str = data[key];
+	if (data.count(key) == 1) {
+		auto str = data[key];
 		return stringToIntVector(str);
-    }
-    return def;
+	}
+	return def;
 }
 
 vector<vector<uint32_t>> RouteDataBundle::getIntIntVector(string key, vector<vector<uint32_t>> def) {

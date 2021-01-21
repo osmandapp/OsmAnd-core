@@ -6,18 +6,18 @@
 #include "binaryRead.h"
 
 struct Location {
-public:
-    long time;
-    double latitude;
-    double longitude;
-    double altitude;
-    double speed;
-    double bearing;
-    double accuracy;
-    double verticalAccuracy;
-    
-    Location();
-    Location(double latitude, double longitude);
+  public:
+	long time;
+	double latitude;
+	double longitude;
+	double altitude;
+	double speed;
+	double bearing;
+	double accuracy;
+	double verticalAccuracy;
+	
+	Location();
+	Location(double latitude, double longitude);
 	
 	bool isInitialized();
 };

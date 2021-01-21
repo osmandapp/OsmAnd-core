@@ -43,10 +43,10 @@ struct RouteSegmentResult {
 	// this make not possible to make turns in between segment result for now
 	SHARED_PTR<TurnType> turnType;
 
-    RouteSegmentResult(SHARED_PTR<RouteDataObject>& object)
-        : object(object), startPointIndex(0), endPointIndex(0), segmentTime(0),
-          segmentSpeed(0), routingTime(0), distance(0), description("") {
-    }
+	RouteSegmentResult(SHARED_PTR<RouteDataObject>& object)
+		: startPointIndex(0), endPointIndex(0), object(object), segmentTime(0),
+		segmentSpeed(0), routingTime(0), distance(0), description("") {
+	}
     
 	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex)
 		: startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), segmentTime(0),
@@ -62,7 +62,7 @@ struct RouteSegmentResult {
 	void collectTypes(SHARED_PTR<RouteDataResources>& resources);
 	void collectNames(SHARED_PTR<RouteDataResources>& resources);
     
-    void fillNames(SHARED_PTR<RouteDataResources>& resources);
+	void fillNames(SHARED_PTR<RouteDataResources>& resources);
 
 	void readFromBundle(SHARED_PTR<RouteDataBundle>& bundle);
 	void writeToBundle(SHARED_PTR<RouteDataBundle>& bundle);

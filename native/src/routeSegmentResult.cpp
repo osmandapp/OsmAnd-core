@@ -173,40 +173,40 @@ void RouteSegmentResult::fillNames(SHARED_PTR<RouteDataResources>& resources) {
 		RoutingIndex *region = object->region;
 		int nameTypeRule = region->nameTypeRule;
 		int refTypeRule = region->refTypeRule;
-        object->names = {};
+		object->names = {};
 		for (auto &name : object->namesIds) {
-            uint32_t nameId = name.first;
+			uint32_t nameId = name.first;
 			RouteTypeRule& rule = region->quickGetEncodingRule(nameId);
-            
-            if (nameTypeRule != -1 && "name" == rule.getTag()) {
-                nameId = nameTypeRule;
-            } else if (refTypeRule != -1 && "ref" == rule.getTag()) {
-                nameId = refTypeRule;
-            }
-            object->names[nameId] = rule.getValue();
-        }
+			
+			if (nameTypeRule != -1 && "name" == rule.getTag()) {
+				nameId = nameTypeRule;
+			} else if (refTypeRule != -1 && "ref" == rule.getTag()) {
+				nameId = refTypeRule;
+			}
+			object->names[nameId] = rule.getValue();
+		}
 	}
 	vector<vector<string>> pointNames;
 	vector<vector<uint32_t>> pointNameTypes;
-    vector<vector<uint32_t>> pointNamesArr = resources->pointNamesMap[object];
+	vector<vector<uint32_t>> pointNamesArr = resources->pointNamesMap[object];
 	if (pointNamesArr.size() > 0) {
-        pointNames.resize(pointNamesArr.size());
+		pointNames.resize(pointNamesArr.size());
 		pointNameTypes.resize(pointNamesArr.size());
 		for (int i = 0; i < pointNamesArr.size(); i++) {
 			auto& namesIds = pointNamesArr[i];
-            
-            pointNames[i] = vector<string>(namesIds.size());
-            pointNameTypes[i] = vector<uint32_t>(namesIds.size());
-            for (int k = 0; k < namesIds.size(); k++) {
-                uint32_t id = namesIds[k];
-                RouteTypeRule& r = object->region->quickGetEncodingRule(id);
-                
-                pointNames[i][k] = r.getValue();
-                uint32_t nameType = object->region->searchRouteEncodingRule(r.getTag(), "");
-                if (nameType != -1) {
-                    pointNameTypes[i][k] = nameType;
-                }
-            }
+			
+			pointNames[i] = vector<string>(namesIds.size());
+			pointNameTypes[i] = vector<uint32_t>(namesIds.size());
+			for (int k = 0; k < namesIds.size(); k++) {
+				uint32_t id = namesIds[k];
+				RouteTypeRule& r = object->region->quickGetEncodingRule(id);
+				
+				pointNames[i][k] = r.getValue();
+				uint32_t nameType = object->region->searchRouteEncodingRule(r.getTag(), "");
+				if (nameType != -1) {
+					pointNameTypes[i][k] = nameType;
+				}
+			}
 			
 		}
 	}
@@ -224,8 +224,8 @@ void RouteSegmentResult::readFromBundle(SHARED_PTR<RouteDataBundle>& bundle) {
 	segmentSpeed = bundle->getFloat("speed", segmentSpeed);
 	auto turnTypeStr = bundle->getString("turnType", "");
 	if (!turnTypeStr.empty()) {
-        auto tt = TurnType::fromString(turnTypeStr, false);
-        turnType = TurnType::ptrValueOf(tt.getValue(), tt.isLeftSide());
+		auto tt = TurnType::fromString(turnTypeStr, false);
+		turnType = TurnType::ptrValueOf(tt.getValue(), tt.isLeftSide());
 		turnType->setSkipToSpeak(bundle->getBool("skipTurn", turnType->isSkipToSpeak()));
 		turnType->setTurnAngle(bundle->getFloat("turnAngle", turnType->getTurnAngle()));
 		auto turnLanes = TurnType::lanesFromString(bundle->getString("turnLanes", ""));

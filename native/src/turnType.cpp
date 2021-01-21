@@ -191,50 +191,49 @@ string TurnType::toString() {
     return "";
 }
 
-vector<int> TurnType::lanesFromString(string lanesString)
-{
-    vector<int> lanes;
-    if (lanesString.empty()) {
-        return lanes;
-    }
-    auto lanesArr = split_string(lanesString, "|");
-    for (int l = 0; l < lanesArr.size(); l++) {
-        string lane = lanesArr[l];
-        vector<string> turns = split_string(lane, ",");
-        TurnType primaryTurn = straight();
-        TurnType secondaryTurn = straight();
-        TurnType tertiaryTurn = straight();
-        bool hasSecondary = false;
-        bool hasTertiary = false;
-        bool plus = false;
-        for (int i = 0; i < turns.size(); i++) {
-            string turn = turns[i];
-            if (i == 0) {
-                plus = turn.length() > 0 && turn.at(0) == '+';
-                if (plus) {
-                    turn = turn.substr(1);
-                }
-                primaryTurn = TurnType::fromString(turn, false);
-            } else if (i == 1) {
-                secondaryTurn = TurnType::fromString(turn, false);
-                hasSecondary = true;
-            } else if (i == 2) {
-                tertiaryTurn =TurnType::fromString(turn, false);
-                hasTertiary = true;
-            }
-        }
-        TurnType::setPrimaryTurnAndReset(lanes, l, primaryTurn.getValue());
-        if (hasSecondary) {
-            TurnType::setSecondaryTurn(lanes, l, secondaryTurn.getValue());
-        }
-        if (hasTertiary) {
-            TurnType::setTertiaryTurn(lanes, l, tertiaryTurn.getValue());
-        }
-        if (plus) {
-            lanes[l] = lanes[l] | 1;
-        }
-    }
-    return lanes;
+vector<int> TurnType::lanesFromString(string lanesString) {
+	vector<int> lanes;
+	if (lanesString.empty()) {
+		return lanes;
+	}
+	auto lanesArr = split_string(lanesString, "|");
+	for (int l = 0; l < lanesArr.size(); l++) {
+		string lane = lanesArr[l];
+		vector<string> turns = split_string(lane, ",");
+		TurnType primaryTurn = straight();
+		TurnType secondaryTurn = straight();
+		TurnType tertiaryTurn = straight();
+		bool hasSecondary = false;
+		bool hasTertiary = false;
+		bool plus = false;
+		for (int i = 0; i < turns.size(); i++) {
+			string turn = turns[i];
+			if (i == 0) {
+				plus = turn.length() > 0 && turn.at(0) == '+';
+				if (plus) {
+					turn = turn.substr(1);
+				}
+				primaryTurn = TurnType::fromString(turn, false);
+			} else if (i == 1) {
+				secondaryTurn = TurnType::fromString(turn, false);
+				hasSecondary = true;
+			} else if (i == 2) {
+				tertiaryTurn =TurnType::fromString(turn, false);
+				hasTertiary = true;
+			}
+		}
+		TurnType::setPrimaryTurnAndReset(lanes, l, primaryTurn.getValue());
+		if (hasSecondary) {
+			TurnType::setSecondaryTurn(lanes, l, secondaryTurn.getValue());
+		}
+		if (hasTertiary) {
+			TurnType::setTertiaryTurn(lanes, l, tertiaryTurn.getValue());
+		}
+		if (plus) {
+			lanes[l] = lanes[l] | 1;
+		}
+	}
+	return lanes;
 }
 
 void TurnType::collectTurnTypes(int lane, set<int>& set) {
