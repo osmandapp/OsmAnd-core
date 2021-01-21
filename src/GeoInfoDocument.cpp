@@ -63,7 +63,6 @@ OsmAnd::GeoInfoDocument::Bounds::~Bounds()
 OsmAnd::GeoInfoDocument::LocationMark::LocationMark()
     : position(LatLon(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()))
     , elevation(std::numeric_limits<double>::quiet_NaN())
-    , timestamp(QDateTime())
 {
 }
 
