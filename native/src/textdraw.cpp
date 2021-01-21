@@ -449,21 +449,30 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& p, De
 	return true;
 }
 
-void drawTestBox(SkCanvas* cv, SkRect* r, float rot, SkPaint* paintIcon, std::string text, SkPaint* paintText)
-{
+void drawTestBox(SkCanvas* cv, SkRect* r, float rot, SkPaint* paintIcon, SHARED_PTR<TextDrawInfo>& text,
+				 SkPaint* paintText) {
 	cv->save();
-	cv->translate(r->centerX(),r->centerY());
+	cv->translate(r->centerX(), r->centerY());
 	cv->rotate(rot * 180 / M_PI);
-	SkRect rs = SkRect::MakeLTRB(-r->width()/2, -r->height()/2,
-			r->width()/2, r->height()/2);
+	SkRect rs = text->bounds;
+
+	if (text->vOffset < 0) {
+		rs = SkRect::MakeLTRB(-r->width() / 2 + text->textSize, 0, r->width() / 2 - text->textSize / 2,
+							  r->height() / 2 + text->textSize);
+	} else if (text->vOffset == 0) {
+		rs = SkRect::MakeLTRB(-r->width() / 2 - text->textSize * 2, -r->height() / 3,
+							  r->width() / 2 + text->textSize * 2, r->height() / 3);
+	} else {
+		rs = SkRect::MakeLTRB(-r->width() / 2 - text->textSize, -r->height() / 2 + text->textSize,
+							  r->width() / 2 + text->textSize * 2, 0);
+	}
+
 	cv->drawRect(rs, *paintIcon);
 	if (paintText != NULL) {
-		cv->drawText(text.data(), text.length(), rs.centerX(), rs.centerY(),
-				*paintText);
+		cv->drawText(text->text.data(), text->text.length(), rs.centerX(), rs.centerY(), *paintText);
 	}
 	cv->restore();
 }
-
 
 bool intersects(SkRect tRect, float tRot, SHARED_PTR<TextDrawInfo>& s)
 {
@@ -539,7 +548,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 
 	// for text purposes
 	if(db.debugTextDisplayBBox) {
-		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
+		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text, NULL/*paintText*/);
 	}
 	boundIntersections.query_in_box(text->bounds, searchText);
 	for (uint32_t i = 0; i < searchText.size(); i++) {
@@ -554,7 +563,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 		 		-max(rc->getDensityValue(15.0f), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
 		if(db.debugTextDisplayShieldBBox) {
-			drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
+			drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text, paintText);
 		}
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			SHARED_PTR<TextDrawInfo> t = searchText.at(i);
