@@ -148,7 +148,7 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
 	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY) * rc->getTextScale() ;
-	info->centerY = cy + info->vOffset;
+	info->centerY = cy - info->vOffset;
 	info->textColor = render->getIntPropertyValue(render->props()->R_TEXT_COLOR);
 	if (info->textColor == 0) {
 		info->textColor = 0xff000000;
@@ -511,35 +511,43 @@ inline float max(float a, float b) {
   return a > b ? a : b;
 }
 
-bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections, SHARED_PTR<TextDrawInfo>& text,
-		SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
+bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections,
+						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
-	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
+	int text1Line = text->text.length() > textWrap && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->textBounds);
 	text->bounds = text->textBounds;
 	// make wider and multiline
-	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(5) +
-		((text->text.length() - 1) / text1Line) * text->bounds.height()));
+	text->bounds.inset(-rc->getDensityValue(3),
+					   -(rc->getDensityValue(5) + ((text->text.length() - 1) / text1Line) * text->bounds.height()));
 	bool display = calculatePathToRotate(rc, text, db);
 	if (!display) {
 		return true;
 	}
 
-	if(text->path == NULL) {
+	if (text->path == NULL) {
 		text->bounds.offset(text->centerX, text->centerY);
 		// shift to match alignment
-		text->bounds.offset(-text->bounds.width()/2, 0);
+		text->bounds.offset(-text->bounds.width() / 2, 0);
 	} else {
-		text->bounds.offset(text->centerX - text->bounds.width()/2, text->centerY - text->bounds.height()/2);
+		text->bounds.offset(text->centerX - text->bounds.width() / 2, text->centerY - text->bounds.height() / 2);
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
-	float cf = text->intersectionSizeFactor - 1;
-	text->bounds.inset(- cf * text->bounds.width() / 2, - cf * text->bounds.height() / 2);
+	float cf = text->intersectionSizeFactor;
+	float dY = text->vOffset;
+
+	if(cf == 0){
+		cf = 1;
+	} else {
+		cf -= 1;
+	}
+
+	text->bounds.inset(-cf * text->bounds.width() / 2 - text->textSize, -cf * text->bounds.height() / 2 - text->textSize + cf * dY);
 
 	// for text purposes
-	if(db.debugTextDisplayBBox) {
-		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
+	if (db.debugTextDisplayBBox) {
+		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL /*paintText*/);
 	}
 	boundIntersections.query_in_box(text->bounds, searchText);
 	for (uint32_t i = 0; i < searchText.size(); i++) {
@@ -548,18 +556,18 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 			return true;
 		}
 	}
-	if(text->minDistance > 0) {
+	if (text->minDistance > 0) {
 		SkRect boundsSearch = text->bounds;
 		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance),
-		 		-max(rc->getDensityValue(15.0f), text->minDistance));
+						   -max(rc->getDensityValue(15.0f), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
-		if(db.debugTextDisplayShieldBBox) {
+		if (db.debugTextDisplayShieldBBox) {
 			drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		}
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			SHARED_PTR<TextDrawInfo> t = searchText.at(i);
-			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate,  t) &&
-				 !db.debugTextDoNotFindIntersectionsSameName) {
+			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate, t) &&
+				!db.debugTextDoNotFindIntersectionsSameName) {
 				return true;
 			}
 		}
@@ -569,7 +577,6 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 
 	return false;
 }
-
 
 bool textOrder(SHARED_PTR<TextDrawInfo>& text1, SHARED_PTR<TextDrawInfo>& text2) {
 	if(text1->textOrder == text2->textOrder) {
