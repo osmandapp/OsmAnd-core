@@ -43,7 +43,8 @@ public:
     string toXmlString();
     static TurnType fromString(string s, bool leftSide);
     static string toString(vector<int>& lns);
-
+	static vector<int> lanesFromString(string lanesString);
+    
     string toString();
 
     static void collectTurnTypes(int lane, set<int>& set);

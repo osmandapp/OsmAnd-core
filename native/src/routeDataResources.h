@@ -5,17 +5,35 @@
 #include "routeTypeRule.h"
 #include "binaryRead.h"
 
+struct Location {
+  public:
+	long time;
+	double latitude;
+	double longitude;
+	double altitude;
+	double speed;
+	double bearing;
+	double accuracy;
+	double verticalAccuracy;
+	
+	Location();
+	Location(double latitude, double longitude);
+	
+	bool isInitialized();
+};
+
 struct RouteDataResources {
 private:
     int currentLocation;
 public:
     UNORDERED_map<RouteTypeRule, uint32_t> rules;
-    vector<pair<double, double>> locations;
+    vector<Location> locations;
     UNORDERED_map<SHARED_PTR<RouteDataObject>, vector<vector<uint32_t>>> pointNamesMap;
     
-    RouteDataResources(vector<pair<double, double>> locations);
+    RouteDataResources();
+    RouteDataResources(vector<Location> locations);
     
-    pair<double, double> getLocation(int index);
+    Location getLocation(int index);
     void incrementCurrentLocation(int index);
 };
 
