@@ -37,20 +37,20 @@ string RouteDataBundle::getString(string key, string def) {
 }
 
 int RouteDataBundle::getInt(string key, int def) {
-    if (data.count(key) == 1) {
-        auto str = data[key];
-        if (!str.empty())
-            return std::stoi(data[key]);
-    }
+	if (data.count(key) == 1) {
+		auto str = data[key];
+		if (!str.empty())
+			return std::stoi(data[key]);
+	}
 	return def;
 }
 
 float RouteDataBundle::getFloat(string key, float def) {
 	if (data.count(key) == 1) {
-        auto str = data[key];
-        if (!str.empty())
-            return std::stof(str);
-    }
+		auto str = data[key];
+		if (!str.empty())
+			return std::stof(str);
+	}
 	return def;
 }
 
@@ -62,10 +62,10 @@ bool RouteDataBundle::getBool(string key, bool def) {
 
 int64_t RouteDataBundle::getLong(string key, int64_t def) {
 	if (data.count(key) == 1) {
-        auto str = data[key];
-        if (!str.empty())
-            return std::stoll(data[key]);
-    }
+		auto str = data[key];
+		if (!str.empty())
+			return std::stoll(data[key]);
+	}
 	return def;
 }
 
@@ -116,8 +116,8 @@ vector<uint32_t> RouteDataBundle::stringToIntVector(string& a) {
 	
 	vector<uint32_t> res(items.size());
 	for (int i = 0; i < items.size(); i++) {
-        if (!items[i].empty())
-            res[i] = stoi(items[i]);
+		if (!items[i].empty())
+			res[i] = stoi(items[i]);
 	}
 	return res;
 }
@@ -133,8 +133,8 @@ vector<vector<uint32_t>> RouteDataBundle::stringToIntIntVector(string& a) {
 			const auto subItems = split_string(item, ",");
 			res[i] = vector<uint32_t>(subItems.size());
 			for (int k = 0; k < subItems.size(); k++) {
-                if (!subItems[k].empty())
-                    res[i][k] = stoi(subItems[k]);
+				if (!subItems[k].empty())
+					res[i][k] = stoi(subItems[k]);
 			}
 		}
 	}
