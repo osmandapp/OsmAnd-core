@@ -3,23 +3,12 @@
 #include "routeDataResources.h"
 
 Location::Location()
-: latitude(NAN)
-, longitude(NAN)
-, altitude(NAN)
-, speed(NAN)
-, bearing(NAN)
-, accuracy(NAN)
-, verticalAccuracy(NAN) {
+	: latitude(NAN), longitude(NAN), altitude(NAN), speed(NAN), bearing(NAN), accuracy(NAN), verticalAccuracy(NAN) {
 }
 
 Location::Location(double latitude, double longitude)
-: latitude(latitude)
-, longitude(longitude)
-, altitude(NAN)
-, speed(NAN)
-, bearing(NAN)
-, accuracy(NAN)
-, verticalAccuracy(NAN) {
+	: latitude(latitude), longitude(longitude), altitude(NAN), speed(NAN), bearing(NAN), accuracy(NAN),
+	  verticalAccuracy(NAN) {
 }
 
 bool Location::isInitialized() {

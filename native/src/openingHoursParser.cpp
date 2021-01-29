@@ -1581,9 +1581,9 @@ void OpeningHoursParser::buildRule(std::shared_ptr<BasicOpeningHourRule>& basic,
 			if (currentParse == TokenType::TOKEN_MONTH || currentParse == TokenType::TOKEN_DAY_MONTH ||
 				currentParse == TokenType::TOKEN_DAY_WEEK || currentParse == TokenType::TOKEN_HOLIDAY) {
 				bool tokenDayMonth = currentParse == TokenType::TOKEN_DAY_MONTH;
-				std::vector<bool>* array = (currentParse == TokenType::TOKEN_MONTH)
-											   ? &basic->getMonths()
-											   : tokenDayMonth ? NULL : &basic->getDays();
+				std::vector<bool>* array = (currentParse == TokenType::TOKEN_MONTH) ? &basic->getMonths()
+										   : tokenDayMonth							? NULL
+																					: &basic->getDays();
 				for (auto pair : listOfPairs) {
 					if (pair->at(0) != nullptr && pair->at(1) != nullptr) {
 						auto& firstMonthToken = pair->at(0)->parent;

@@ -1,13 +1,15 @@
 #ifndef _OSMAND_ROUTE_PLANNER_FRONT_END_CPP
 #define _OSMAND_ROUTE_PLANNER_FRONT_END_CPP
 #include "routePlannerFrontEnd.h"
+
 #include "binaryRoutePlanner.h"
-#include "routingConfiguration.h"
+#include "routeResultPreparation.h"
 #include "routeSegment.h"
 #include "routeSegmentResult.h"
-#include "routeResultPreparation.h"
+#include "routingConfiguration.h"
 
-SHARED_PTR<RoutingContext> RoutePlannerFrontEnd::buildRoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode rm /*= RouteCalculationMode::NORMAL*/) {
+SHARED_PTR<RoutingContext> RoutePlannerFrontEnd::buildRoutingContext(
+	SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode rm /*= RouteCalculationMode::NORMAL*/) {
 	return SHARED_PTR<RoutingContext>(new RoutingContext(config, rm));
 }
 
@@ -15,7 +17,7 @@ SHARED_PTR<RouteSegment> RoutePlannerFrontEnd::getRecalculationEnd(RoutingContex
 	SHARED_PTR<RouteSegment> recalculationEnd;
 	bool runRecalculation = ctx->previouslyCalculatedRoute.size() > 0 && ctx->config->recalculateDistance != 0;
 	if (runRecalculation) {
-		vector<SHARED_PTR<RouteSegmentResult> > rlist;
+		vector<SHARED_PTR<RouteSegmentResult>> rlist;
 		float distanceThreshold = ctx->config->recalculateDistance;
 		float threshold = 0;
 		for (auto rr : ctx->previouslyCalculatedRoute) {
@@ -49,31 +51,35 @@ void refreshProgressDistance(RoutingContext* ctx) {
 		ctx->progress->distanceFromEnd = 0;
 		ctx->progress->reverseSegmentQueueSize = 0;
 		ctx->progress->directSegmentQueueSize = 0;
-		float rd = (float) squareRootDist31(ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
+		float rd = (float)squareRootDist31(ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
 		float speed = 0.9f * ctx->config->router->maxSpeed;
-		ctx->progress->totalEstimatedDistance = (float) (rd / speed);
+		ctx->progress->totalEstimatedDistance = (float)(rd / speed);
 	}
 }
 
-double projectDistance(vector<SHARED_PTR<RouteSegmentResult> >& res, int k, int px, int py) {
+double projectDistance(vector<SHARED_PTR<RouteSegmentResult>>& res, int k, int px, int py) {
 	auto sr = res[k];
 	auto r = sr->object;
-	std::pair<int, int> pp = getProjectionPoint(px, py, r->pointsX[sr->getStartPointIndex()], r->pointsY[sr->getStartPointIndex()], r->pointsX[sr->getEndPointIndex()], r->pointsY[sr->getEndPointIndex()]);
+	std::pair<int, int> pp =
+		getProjectionPoint(px, py, r->pointsX[sr->getStartPointIndex()], r->pointsY[sr->getStartPointIndex()],
+						   r->pointsX[sr->getEndPointIndex()], r->pointsY[sr->getEndPointIndex()]);
 	double currentsDist = squareRootDist31(pp.first, pp.second, px, py);
 	return currentsDist;
 }
 
 void updateResult(SHARED_PTR<RouteSegmentResult>& routeSegmentResult, int px, int py, bool st) {
 	int pind = st ? routeSegmentResult->getStartPointIndex() : routeSegmentResult->getEndPointIndex();
-	
+
 	auto r = routeSegmentResult->object;
 	std::pair<int, int>* before = NULL;
 	std::pair<int, int>* after = NULL;
 	if (pind > 0) {
-		before = new std::pair<int, int>(getProjectionPoint(px, py, r->pointsX[pind - 1], r->pointsY[pind - 1], r->pointsX[pind], r->pointsY[pind]));
+		before = new std::pair<int, int>(
+			getProjectionPoint(px, py, r->pointsX[pind - 1], r->pointsY[pind - 1], r->pointsX[pind], r->pointsY[pind]));
 	}
 	if (pind < r->getPointsLength() - 1) {
-		after = new std::pair<int, int>(getProjectionPoint(px, py, r->pointsX[pind + 1], r->pointsY[pind + 1], r->pointsX[pind], r->pointsY[pind]));
+		after = new std::pair<int, int>(
+			getProjectionPoint(px, py, r->pointsX[pind + 1], r->pointsY[pind + 1], r->pointsX[pind], r->pointsY[pind]));
 	}
 	int insert = 0;
 	double dd = measuredDist31(px, py, r->pointsX[pind], r->pointsY[pind]);
@@ -87,7 +93,7 @@ void updateResult(SHARED_PTR<RouteSegmentResult>& routeSegmentResult, int px, in
 			i = before;
 		}
 	}
-	
+
 	if (after != NULL) {
 		ddAfter = measuredDist31(px, py, after->first, after->second);
 		if (ddAfter < dd && ddAfter < ddBefore) {
@@ -95,7 +101,7 @@ void updateResult(SHARED_PTR<RouteSegmentResult>& routeSegmentResult, int px, in
 			i = after;
 		}
 	}
-	
+
 	if (insert != 0) {
 		if (st && routeSegmentResult->getStartPointIndex() < routeSegmentResult->getEndPointIndex()) {
 			routeSegmentResult->setEndPointIndex(routeSegmentResult->getEndPointIndex() + 1);
@@ -123,20 +129,22 @@ void updateResult(SHARED_PTR<RouteSegmentResult>& routeSegmentResult, int px, in
 	}
 }
 
-
-bool addSegment(int x31, int y31, RoutingContext* ctx, int indexNotFound, vector<SHARED_PTR<RouteSegmentPoint>>& res, bool transportStop) {
+bool addSegment(int x31, int y31, RoutingContext* ctx, int indexNotFound, vector<SHARED_PTR<RouteSegmentPoint>>& res,
+				bool transportStop) {
 	auto f = findRouteSegment(x31, y31, ctx, transportStop);
 	if (!f) {
 		ctx->progress->segmentNotFound = indexNotFound;
 		return false;
 	} else {
-		//OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] Route segment found %d %s", f->getRoad()->getId(), f->getRoad()->getName().c_str());
+		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] Route segment found %d %s",
+		// f->getRoad()->getId(), f->getRoad()->getName().c_str());
 		res.push_back(f);
 		return true;
 	}
 }
 
-void makeStartEndPointsPrecise(vector<SHARED_PTR<RouteSegmentResult> >& res, int startX, int startY, int endX, int endY, vector<int> intermediatesX, vector<int> intermediatesY) {
+void makeStartEndPointsPrecise(vector<SHARED_PTR<RouteSegmentResult>>& res, int startX, int startY, int endX, int endY,
+							   vector<int> intermediatesX, vector<int> intermediatesY) {
 	if (res.size() > 0) {
 		updateResult(res[0], startX, startY, true);
 		updateResult(res[res.size() - 1], endX, endY, false);
@@ -169,23 +177,25 @@ void makeStartEndPointsPrecise(vector<SHARED_PTR<RouteSegmentResult> >& res, int
 	}
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_PTR<RouteSegment> recalculationEnd) {
+vector<SHARED_PTR<RouteSegmentResult>> runRouting(RoutingContext* ctx, SHARED_PTR<RouteSegment> recalculationEnd) {
 	refreshProgressDistance(ctx);
-	
+
 	OsmAnd::ElapsedTimer timer;
 	timer.Start();
 
-	vector<SHARED_PTR<RouteSegmentResult> > result = searchRouteInternal(ctx, false);
-	
+	vector<SHARED_PTR<RouteSegmentResult>> result = searchRouteInternal(ctx, false);
+
 	timer.Pause();
-	// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] routing took %.3f seconds", (double)timer.GetElapsedMs() / 1000.0);
+	// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] routing took %.3f seconds",
+	// (double)timer.GetElapsedMs() / 1000.0);
 
 	if (recalculationEnd) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] use precalculated route");
 		SHARED_PTR<RouteSegment> current = recalculationEnd;
 		while (current->parentRoute) {
 			SHARED_PTR<RouteSegment> pr = current->parentRoute;
-			auto segmentResult = std::make_shared<RouteSegmentResult>(pr->road, current->parentSegmentEnd, pr->segmentStart);
+			auto segmentResult =
+				std::make_shared<RouteSegmentResult>(pr->road, current->parentSegmentEnd, pr->segmentStart);
 			result.push_back(segmentResult);
 			current = pr;
 		}
@@ -202,7 +212,9 @@ vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_P
 	return prepareResult(ctx, result);
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRouteInternalPrepare(RoutingContext* ctx, SHARED_PTR<RouteSegmentPoint> start, SHARED_PTR<RouteSegmentPoint> end, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
+vector<SHARED_PTR<RouteSegmentResult>> RoutePlannerFrontEnd::searchRouteInternalPrepare(
+	RoutingContext* ctx, SHARED_PTR<RouteSegmentPoint> start, SHARED_PTR<RouteSegmentPoint> end,
+	SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
 	auto recalculationEnd = getRecalculationEnd(ctx);
 	if (recalculationEnd) {
 		ctx->initStartAndTargetPoints(start, recalculationEnd);
@@ -215,16 +227,18 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRouteInterna
 	return runRouting(ctx, recalculationEnd);
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentPoint>>& points, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
+vector<SHARED_PTR<RouteSegmentResult>> RoutePlannerFrontEnd::searchRoute(
+	RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentPoint>>& points,
+	SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
 	if (points.size() <= 2) {
 		if (!useSmartRouteRecalculation) {
 			ctx->previouslyCalculatedRoute.clear();
 		}
 		return searchRouteInternalPrepare(ctx, points[0], points[1], routeDirection);
 	}
-	
-	vector<SHARED_PTR<RouteSegmentResult> > firstPartRecalculatedRoute;
-	vector<SHARED_PTR<RouteSegmentResult> > restPartRecalculatedRoute;
+
+	vector<SHARED_PTR<RouteSegmentResult>> firstPartRecalculatedRoute;
+	vector<SHARED_PTR<RouteSegmentResult>> restPartRecalculatedRoute;
 	if (!ctx->previouslyCalculatedRoute.empty()) {
 		auto prev = ctx->previouslyCalculatedRoute;
 		int64_t id = points[1]->getRoad()->getId();
@@ -234,7 +248,8 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 		for (int i = 0; i < prev.size(); i++) {
 			auto rsr = prev[i];
 			if (id == rsr->object->getId()) {
-				if (measuredDist31(rsr->object->pointsX[rsr->getEndPointIndex()], rsr->object->pointsY[rsr->getEndPointIndex()], px, py) < 50) {
+				if (measuredDist31(rsr->object->pointsX[rsr->getEndPointIndex()],
+								   rsr->object->pointsY[rsr->getEndPointIndex()], px, py) < 50) {
 					firstPartRecalculatedRoute.clear();
 					restPartRecalculatedRoute.clear();
 					for (int k = 0; k < prev.size(); k++) {
@@ -244,13 +259,14 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 							restPartRecalculatedRoute.push_back(prev[k]);
 						}
 					}
-					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] Recalculate only first part of the route");
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+									  "[Native] Recalculate only first part of the route");
 					break;
 				}
 			}
 		}
 	}
-	vector<SHARED_PTR<RouteSegmentResult> > results;
+	vector<SHARED_PTR<RouteSegmentResult>> results;
 	for (int i = 0; i < points.size() - 1; i++) {
 		RoutingContext local(ctx);
 		if (i == 0) {
@@ -260,9 +276,9 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 		}
 		local.progress = ctx->progress;
 		auto res = searchRouteInternalPrepare(&local, points[i], points[i + 1], routeDirection);
-		
+
 		results.insert(results.end(), res.begin(), res.end());
-		
+
 		local.unloadAllData(ctx);
 		if (!restPartRecalculatedRoute.empty()) {
 			results.insert(results.end(), restPartRecalculatedRoute.begin(), restPartRecalculatedRoute.end());
@@ -273,8 +289,9 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
 	return results;
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int>& intermediatesX, vector<int>& intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
-	
+vector<SHARED_PTR<RouteSegmentResult>> RoutePlannerFrontEnd::searchRoute(
+	SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int>& intermediatesX,
+	vector<int>& intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
 	if (!ctx->progress) {
 		ctx->progress = std::make_shared<RouteCalculationProgress>();
 	}
@@ -303,13 +320,16 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
 			y31 = iy31;
 		}
 	}
-	if (ctx->calculationMode == RouteCalculationMode::COMPLEX && !routeDirection && maxDistance > ctx->config->DEVIATION_RADIUS * 6) {
+	if (ctx->calculationMode == RouteCalculationMode::COMPLEX && !routeDirection &&
+		maxDistance > ctx->config->DEVIATION_RADIUS * 6) {
 		SHARED_PTR<RoutingContext> nctx = buildRoutingContext(ctx->config, RouteCalculationMode::BASE);
 		nctx->progress = ctx->progress;
-		vector<SHARED_PTR<RouteSegmentResult> > ls = searchRoute(nctx, startX, startY, endX, endY, intermediatesX, intermediatesY);
-		routeDirection = PrecalculatedRouteDirection::build(ls, ctx->config->DEVIATION_RADIUS, ctx->config->router->maxSpeed);
+		vector<SHARED_PTR<RouteSegmentResult>> ls =
+			searchRoute(nctx, startX, startY, endX, endY, intermediatesX, intermediatesY);
+		routeDirection =
+			PrecalculatedRouteDirection::build(ls, ctx->config->DEVIATION_RADIUS, ctx->config->router->maxSpeed);
 	}
-	
+
 	if (intermediatesEmpty) {
 		ctx->startX = startX;
 		ctx->startY = startY;
@@ -330,21 +350,21 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
 		return res;
 	}
 	int indexNotFound = 0;
-	vector<SHARED_PTR<RouteSegmentPoint> > points;
+	vector<SHARED_PTR<RouteSegmentPoint>> points;
 	if (!addSegment(startX, startY, ctx.get(), indexNotFound++, points, ctx->startTransportStop)) {
-		return vector<SHARED_PTR<RouteSegmentResult> >();
+		return vector<SHARED_PTR<RouteSegmentResult>>();
 	}
 	if (!intermediatesX.empty()) {
 		for (int i = 0; i < intermediatesX.size(); i++) {
 			int x31 = intermediatesX[i];
 			int y31 = intermediatesY[i];
 			if (!addSegment(x31, y31, ctx.get(), indexNotFound++, points, false)) {
-				return vector<SHARED_PTR<RouteSegmentResult> >();
+				return vector<SHARED_PTR<RouteSegmentResult>>();
 			}
 		}
 	}
 	if (!addSegment(endX, endY, ctx.get(), indexNotFound++, points, ctx->targetTransportStop)) {
-		return vector<SHARED_PTR<RouteSegmentResult> >();
+		return vector<SHARED_PTR<RouteSegmentResult>>();
 	}
 	auto res = searchRoute(ctx.get(), points, routeDirection);
 	// make start and end more precise
@@ -355,42 +375,41 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
 	return res;
 }
 
-SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment(float averageSpeed, std::vector<pair<double, double>> points)
-{
-    RoutingIndex *reg = new RoutingIndex();
-    reg->initRouteEncodingRule(0, "highway", "unmatched");
-    SHARED_PTR<RouteDataObject> rdo = make_shared<RouteDataObject>(reg, true);
-    unsigned long size = points.size();
-    
-    vector<uint32_t> x(size);
-    vector<uint32_t> y(size);
-    double distance = 0;
-    double distOnRoadToPass = 0;
-    pair<double, double> prev = {NAN, NAN};
-    for (int i = 0; i < size; i++) {
-        const auto& l = points[i];
-        if (!isnan(l.first)&& !isnan(l.second)) {
-            x.push_back(get31TileNumberX(l.second));
-            y.push_back(get31TileNumberY(l.first));
-            if (!isnan(prev.first)&& !isnan(prev.second))
-            {
-                double d = getDistance(l.first, l.second, prev.first, prev.second);
-                distance += d;
-                distOnRoadToPass += d / averageSpeed;
-            }
-        }
-        prev = l;
-    }
-    rdo->pointsX = x;
-    rdo->pointsY = y;
-    rdo->types = { 0 };
-    rdo->id = -1;
-    SHARED_PTR<RouteSegmentResult> segment = make_shared<RouteSegmentResult>(rdo, 0, rdo->getPointsLength() - 1);
-    segment->segmentTime = (float) distOnRoadToPass;
-    segment->segmentSpeed = (float) averageSpeed;
-    segment->distance = (float) distance;
-    segment->turnType = TurnType::ptrStraight();
-    return segment;
+SHARED_PTR<RouteSegmentResult> RoutePlannerFrontEnd::generateStraightLineSegment(
+	float averageSpeed, std::vector<pair<double, double>> points) {
+	RoutingIndex* reg = new RoutingIndex();
+	reg->initRouteEncodingRule(0, "highway", "unmatched");
+	SHARED_PTR<RouteDataObject> rdo = make_shared<RouteDataObject>(reg, true);
+	unsigned long size = points.size();
+
+	vector<uint32_t> x(size);
+	vector<uint32_t> y(size);
+	double distance = 0;
+	double distOnRoadToPass = 0;
+	pair<double, double> prev = {NAN, NAN};
+	for (int i = 0; i < size; i++) {
+		const auto& l = points[i];
+		if (!isnan(l.first) && !isnan(l.second)) {
+			x.push_back(get31TileNumberX(l.second));
+			y.push_back(get31TileNumberY(l.first));
+			if (!isnan(prev.first) && !isnan(prev.second)) {
+				double d = getDistance(l.first, l.second, prev.first, prev.second);
+				distance += d;
+				distOnRoadToPass += d / averageSpeed;
+			}
+		}
+		prev = l;
+	}
+	rdo->pointsX = x;
+	rdo->pointsY = y;
+	rdo->types = {0};
+	rdo->id = -1;
+	SHARED_PTR<RouteSegmentResult> segment = make_shared<RouteSegmentResult>(rdo, 0, rdo->getPointsLength() - 1);
+	segment->segmentTime = (float)distOnRoadToPass;
+	segment->segmentSpeed = (float)averageSpeed;
+	segment->distance = (float)distance;
+	segment->turnType = TurnType::ptrStraight();
+	return segment;
 }
 
 #endif /*_OSMAND_ROUTE_PLANNER_FRONT_END_CPP*/

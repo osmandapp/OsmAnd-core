@@ -521,7 +521,8 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			//				long nt = System.nanoTime();
 			//				float devDistance = ctx.precalculatedRouteDirection.getDeviationDistance(x, y);
 			//				// 1. linear method
-			//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x, y)
+			//				// segmentDist = segmentDist * (1 + ctx.precalculatedRouteDirection.getDeviationDistance(x,
+			//y)
 			/// ctx.config->DEVIATION_RADIUS);
 			//				// 2. exponential method
 			//				segmentDist = segmentDist * (float) Math.pow(1.5, devDistance / 500);
@@ -565,14 +566,15 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 			for (uint i = 0; i < road->restrictions.size(); i++) {
 				if (road->restrictions[i].to == next->road->id) {
 					if (!via || road->restrictions[i].via == viaId) {
-						type = road->restrictions[i].type;;
+						type = road->restrictions[i].type;
+						;
 						break;
 					}
 				}
 				if (road->restrictions[i].via == viaId && road->restrictions[i].type == RESTRICTION_ONLY_STRAIGHT_ON) {
-						type = RESTRICTION_NO_STRAIGHT_ON;
-						break;
-					}
+					type = RESTRICTION_NO_STRAIGHT_ON;
+					break;
+				}
 			}
 		} else {
 			for (uint i = 0; i < next->road->restrictions.size(); i++) {
@@ -585,9 +587,9 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 					}
 				}
 				if (next->road->restrictions[i].via == viaId && rt == RESTRICTION_ONLY_STRAIGHT_ON) {
-						type = RESTRICTION_NO_STRAIGHT_ON;
-						break;
-					}
+					type = RESTRICTION_NO_STRAIGHT_ON;
+					break;
+				}
 
 				// Check if there is restriction only to the other than current road
 				if (rt == RESTRICTION_ONLY_RIGHT_TURN || rt == RESTRICTION_ONLY_LEFT_TURN ||
