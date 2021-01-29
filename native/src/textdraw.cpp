@@ -783,11 +783,11 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 		paintText.getFontMetrics(&fm);
 
 		// calculate if there is intersection
-		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db);
 		if (textDrawInfo->icon && textDrawInfo->icon->bmp) {
 			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
 			textDrawInfo->centerY += ((-fm.fAscent));
 		}
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db);
 		if (!intersects) {
 			if (rc->interrupted()) {
 				return;
