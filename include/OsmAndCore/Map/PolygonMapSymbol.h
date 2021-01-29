@@ -51,8 +51,7 @@ namespace OsmAnd
 
             TriangleFan,
             TriangleStrip,
-            LineLoop,
-            Triangles
+            LineLoop
         };
 
         enum class ScaleType

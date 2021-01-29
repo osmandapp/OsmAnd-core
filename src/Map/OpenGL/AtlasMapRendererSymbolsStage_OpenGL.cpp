@@ -2209,6 +2209,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             primitivesType = GL_TRIANGLE_STRIP;
             count = gpuResource->vertexBuffer->itemsCount;
             break;
+        case VectorMapSymbol::PrimitiveType::Triangles:
+            primitivesType = GL_TRIANGLES;
+            count = gpuResource->vertexBuffer->itemsCount;
+            break;
         case VectorMapSymbol::PrimitiveType::LineLoop:
             primitivesType = GL_LINE_LOOP;
             count = gpuResource->vertexBuffer->itemsCount;

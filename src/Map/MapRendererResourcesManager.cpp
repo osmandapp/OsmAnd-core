@@ -678,7 +678,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
     {
         requestNeededKeyedResources(
-            keyedResourcesCollection);
+            keyedResourcesCollection,
+            activeZoom);
     }
 }
 
@@ -840,14 +841,15 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
-    const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection)
+    const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection,
+    const ZoomLevel activeZoom)
 {
     // Get keyed provider
     std::shared_ptr<IMapDataProvider> provider_;
     if (!obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_))
         return;
     const auto& provider = std::dynamic_pointer_cast<IMapKeyedDataProvider>(provider_);
-    if (!provider)
+    if (!provider || static_cast<int>(activeZoom) < 3 || static_cast<int>(activeZoom) > 7)
         return;
 
     // Get list of keys this provider has and check that all are present
@@ -1468,7 +1470,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             const auto providedKeysSet = keyedDataProvider->getProvidedDataKeys().toSet();
 
             resourcesCollection->removeResources(
-                [this, &needsResourcesUploadOrUnload, providedKeysSet]
+                [this, activeZoom, &needsResourcesUploadOrUnload, providedKeysSet]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
                 {
                     // If it was previously marked as junk, just leave it
@@ -1482,6 +1484,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
                     // If this key is no longer provided by keyed provider
                     isJunk = isJunk || !providedKeysSet.contains(keyedEntry->key);
+                    isJunk = isJunk || static_cast<int>(activeZoom) < 3;
+                    isJunk = isJunk || static_cast<int>(activeZoom) > 7;
 
                     // Skip cleaning if this resource is not junk
                     if (!isJunk)
