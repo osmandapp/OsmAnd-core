@@ -140,7 +140,7 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
 	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY) * rc->getTextScale();
-	info->centerY = cy + info->vOffset;
+	info->centerY = cy;
 	info->textColor = render->getIntPropertyValue(render->props()->R_TEXT_COLOR);
 	if (info->textColor == 0) {
 		info->textColor = 0xff000000;
@@ -495,9 +495,10 @@ inline float max(float a, float b) {
 }
 
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections,
-						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
+						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db,
+						  RenderingRuleSearchRequest* render) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
-	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
+	int textWrap = text->textWrap == 0 ? 22 : text->textWrap;
 	int text1Line = text->text.length() > textWrap && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->textBounds);
 	text->bounds = text->textBounds;
@@ -518,7 +519,19 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
 	float cf = text->intersectionSizeFactor - 1;
-	text->bounds.inset(-cf * text->bounds.width() / 2, -cf * text->bounds.height() / 2);
+
+	int iconSize = render->getIntPropertyValue(render->props()->R_ICON_VISIBLE_SIZE);
+	float dY = text->vOffset;
+
+	if (dY < 0) {
+		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 + dY);
+	} else if (dY > 0) {
+		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 - dY);
+	} else {
+		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2);
+	}
+
+	text->bounds.offset(0, iconSize);
 
 	// for text purposes
 	if (db.debugTextDisplayBBox) {
@@ -787,7 +800,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
 			textDrawInfo->centerY += ((-fm.fAscent));
 		}
-		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db);
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db, req);
 		if (!intersects) {
 			if (rc->interrupted()) {
 				return;
