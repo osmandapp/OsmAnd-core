@@ -497,7 +497,7 @@ inline float max(float a, float b) {
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections,
 						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
-	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
+	int textWrap = text->textWrap == 0 ? 22 : text->textWrap;
 	int text1Line = text->text.length() > textWrap && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->textBounds);
 	text->bounds = text->textBounds;
@@ -518,7 +518,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
 	float cf = text->intersectionSizeFactor - 1;
-	text->bounds.inset(-cf * text->bounds.width() / 2, -cf * text->bounds.height() / 2);
+	text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 - text->vOffset);
 
 	// for text purposes
 	if (db.debugTextDisplayBBox) {
