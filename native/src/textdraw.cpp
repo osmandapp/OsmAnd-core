@@ -495,8 +495,7 @@ inline float max(float a, float b) {
 }
 
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections,
-						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db,
-						  RenderingRuleSearchRequest* render) {
+						  SHARED_PTR<TextDrawInfo>& text, SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 22 : text->textWrap;
 	int text1Line = text->text.length() > textWrap && !text->drawOnPath ? textWrap : text->text.length();
@@ -796,7 +795,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 			textDrawInfo->centerY += textDrawInfo->icon->bmp->height() / 2;
 			textDrawInfo->centerY += ((-fm.fAscent));
 		}
-		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db, req);
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon, db);
 		if (!intersects) {
 			if (rc->interrupted()) {
 				return;
