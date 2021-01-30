@@ -140,7 +140,7 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo>& info, Re
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
 	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY) * rc->getTextScale();
-	info->centerY = cy;
+	info->centerY = cy + info->vOffset;
 	info->textColor = render->getIntPropertyValue(render->props()->R_TEXT_COLOR);
 	if (info->textColor == 0) {
 		info->textColor = 0xff000000;
@@ -519,19 +519,15 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	}
 	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
 	float cf = text->intersectionSizeFactor - 1;
-
-	int iconSize = render->getIntPropertyValue(render->props()->R_ICON_VISIBLE_SIZE);
 	float dY = text->vOffset;
 
 	if (dY < 0) {
-		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 + dY);
+		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 - dY);
 	} else if (dY > 0) {
 		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2 - dY);
 	} else {
 		text->bounds.inset(-cf * text->textSize / 2, -cf * text->textSize / 2);
 	}
-
-	text->bounds.offset(0, iconSize);
 
 	// for text purposes
 	if (db.debugTextDisplayBBox) {
