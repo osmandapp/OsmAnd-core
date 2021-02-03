@@ -40,3 +40,5 @@ fi
 cd $SRCLOC/upstream.patched/tools
 ./git-sync-deps
 
+#Patch jerror.c after git sync, before it is not available
+patch $SRCLOC/upstream.patched/third_party/externals/libjpeg-turbo/jerror.c $SRCLOC/patches/12-libjpeg-jerror.after_git_sync_patch
