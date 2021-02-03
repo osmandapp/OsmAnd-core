@@ -13,7 +13,7 @@
                 "/Library/Frameworks"
             ],
             "intelliSenseMode": "clang-x64",
-            "compilerPath": "/usr/local/bin/gcc-6",
+            "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }
