@@ -1,0 +1,10 @@
+--- upstream.patched/third_party/externals/libjpeg-turbo/jerror.c_copy	2021-02-03 10:34:26.000000000 +0200
++++ upstream.patched/third_party/externals/libjpeg-turbo/jerror.c	2021-02-03 10:35:51.000000000 +0200
+@@ -26,6 +26,7 @@
+ #include "jpeglib.h"
+ #include "jversion.h"
+ #include "jerror.h"
++#include <stdlib.h>
+ 
+ #ifdef USE_WINDOWS_MESSAGEBOX
+ #include <windows.h>

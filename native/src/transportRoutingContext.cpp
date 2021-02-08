@@ -2,20 +2,20 @@
 #define _OSMAND_TRANSPORT_ROUTING_CONTEXT_CPP
 #include "transportRoutingContext.h"
 
+#include "Logging.h"
 #include "binaryRead.h"
 #include "routeCalculationProgress.h"
 #include "transportRoutePlanner.h"
 #include "transportRouteSegment.h"
+#include "transportRouteStopsReader.h"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingObjects.h"
-#include "transportRouteStopsReader.h"
-#include "Logging.h"
 
-TransportRoutingContext::TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration>& cfg_) {
+TransportRoutingContext::TransportRoutingContext(SHARED_PTR<TransportRoutingConfiguration> &cfg_) {
 	cfg = cfg_;
 	walkRadiusIn31 = (cfg->walkRadius / getTileDistanceWidth(31));
 	walkChangeRadiusIn31 = (cfg->walkChangeRadius / getTileDistanceWidth(31));
-	vector<BinaryMapFile* > files = getOpenMapFiles();
+	vector<BinaryMapFile *> files = getOpenMapFiles();
 	transportStopsReader = std::make_shared<TransportRouteStopsReader>(files);
 
 	startCalcTime = 0;
@@ -32,9 +32,8 @@ void TransportRoutingContext::calcLatLons() {
 	endLon = get31LongitudeX(targetX);
 }
 
-void TransportRoutingContext::getTransportStops(
-	int32_t sx, int32_t sy, bool change,
-	vector<SHARED_PTR<TransportRouteSegment>> &res) {
+void TransportRoutingContext::getTransportStops(int32_t sx, int32_t sy, bool change,
+												vector<SHARED_PTR<TransportRouteSegment>> &res) {
 	loadTime.Start();
 	int32_t d = change ? walkChangeRadiusIn31 : walkRadiusIn31;
 	int32_t lx = (sx - d) >> (31 - cfg->zoomToLoadTiles);
@@ -55,8 +54,7 @@ void TransportRoutingContext::getTransportStops(
 			}
 			for (SHARED_PTR<TransportRouteSegment> &it : list) {
 				SHARED_PTR<TransportStop> st = it->getStop(it->segStart);
-				if (abs(st->x31 - sx) > walkRadiusIn31 ||
-					abs(st->y31 - sy) > walkRadiusIn31) {
+				if (abs(st->x31 - sx) > walkRadiusIn31 || abs(st->y31 - sy) > walkRadiusIn31) {
 					wrongLoadedWays++;
 				} else {
 					loadedWays++;
@@ -68,9 +66,8 @@ void TransportRoutingContext::getTransportStops(
 	loadTime.Pause();
 }
 
-void TransportRoutingContext::buildSearchTransportRequest(
-	SearchQuery *q, int sleft, int sright, int stop, int sbottom, int limit,
-	vector<SHARED_PTR<TransportStop>> &stops) {
+void TransportRoutingContext::buildSearchTransportRequest(SearchQuery *q, int sleft, int sright, int stop, int sbottom,
+														  int limit, vector<SHARED_PTR<TransportStop>> &stops) {
 	q->transportResults = stops;
 	q->left = sleft >> (31 - TRANSPORT_STOP_ZOOM);
 	q->right = sright >> (31 - TRANSPORT_STOP_ZOOM);
@@ -85,8 +82,7 @@ std::vector<SHARED_PTR<TransportRouteSegment>> TransportRoutingContext::loadTile
 	int pz = (31 - cfg->zoomToLoadTiles);
 	vector<SHARED_PTR<TransportStop>> stops;
 	SearchQuery q;
-	buildSearchTransportRequest(&q, (x << pz), ((x + 1) << pz), (y << pz),
-								((y + 1) << pz), -1, stops);
+	buildSearchTransportRequest(&q, (x << pz), ((x + 1) << pz), (y << pz), ((y + 1) << pz), -1, stops);
 
 	stops = transportStopsReader->readMergedTransportStops(&q);
 	loadTransportSegments(stops, lst);
@@ -110,7 +106,7 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 					stopIndex = k;
 					break;
 				}
-				
+
 				double d = getDistance(st->lat, st->lon, s->lat, s->lon);
 				if (d < dist) {
 					stopIndex = k;
@@ -121,43 +117,39 @@ void TransportRoutingContext::loadTransportSegments(vector<SHARED_PTR<TransportS
 				if (cfg->useSchedule) {
 					loadScheduleRouteSegment(lst, route, stopIndex);
 				} else {
-					lst.push_back(
-						make_shared<TransportRouteSegment>(route, stopIndex));
+					lst.push_back(make_shared<TransportRouteSegment>(route, stopIndex));
 				}
 			} else {
-				   OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
-				   "Routing error: missing stop '%s' in route '%s' id: %d",
-				   s->name.c_str(), route->ref.c_str(), route->id / 2);
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error,
+								  "Routing error: missing stop '%s' in route '%s' id: %d", s->name.c_str(),
+								  route->ref.c_str(), route->id / 2);
 			}
 		}
 	}
 	loadSegmentsTime.Pause();
 }
 
-void TransportRoutingContext::loadScheduleRouteSegment(
-	std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
-	SHARED_PTR<TransportRoute> &route, int32_t stopIndex) {
+void TransportRoutingContext::loadScheduleRouteSegment(std::vector<SHARED_PTR<TransportRouteSegment>> &lst,
+													   SHARED_PTR<TransportRoute> &route, int32_t stopIndex) {
 	// if (route->schedule != nullptr) {
-		vector<int32_t> ti = route->schedule.tripIntervals;
-		int32_t cnt = ti.size();
-		int32_t t = 0;
-		// improve by using exact data
-		int32_t stopTravelTime = 0;
-		vector<int32_t> avgStopIntervals = route->schedule.avgStopIntervals;
-		for (int32_t i = 0; i < stopIndex; i++) {
-			if (avgStopIntervals.size() > i) {
-				stopTravelTime += avgStopIntervals[i];
-			}
+	vector<int32_t> ti = route->schedule.tripIntervals;
+	int32_t cnt = ti.size();
+	int32_t t = 0;
+	// improve by using exact data
+	int32_t stopTravelTime = 0;
+	vector<int32_t> avgStopIntervals = route->schedule.avgStopIntervals;
+	for (int32_t i = 0; i < stopIndex; i++) {
+		if (avgStopIntervals.size() > i) {
+			stopTravelTime += avgStopIntervals[i];
 		}
-		for (int32_t i = 0; i < cnt; i++) {
-			t += ti[i];
-			int32_t startTime = t + stopTravelTime;
-			if (startTime >= cfg->scheduleTimeOfDay &&
-				startTime <= cfg->scheduleTimeOfDay + cfg->scheduleMaxTime) {
-				lst.push_back(make_shared<TransportRouteSegment>(
-					route, stopIndex, startTime));
-			}
+	}
+	for (int32_t i = 0; i < cnt; i++) {
+		t += ti[i];
+		int32_t startTime = t + stopTravelTime;
+		if (startTime >= cfg->scheduleTimeOfDay && startTime <= cfg->scheduleTimeOfDay + cfg->scheduleMaxTime) {
+			lst.push_back(make_shared<TransportRouteSegment>(route, stopIndex, startTime));
 		}
+	}
 	// }
 }
 

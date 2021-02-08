@@ -1,17 +1,19 @@
 #ifndef _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #define _OSMAND_TRANSPORT_ROUTE_PLANNER_CPP
 #include "transportRoutePlanner.h"
+
+#include "Logging.h"
 #include "transportRouteResult.h"
 #include "transportRouteResultSegment.h"
 #include "transportRouteSegment.h"
 #include "transportRoutingConfiguration.h"
 #include "transportRoutingContext.h"
 #include "transportRoutingObjects.h"
-#include "Logging.h"
 
 struct TransportSegmentsComparator
 	: public std::binary_function<SHARED_PTR<TransportRouteSegment>&, SHARED_PTR<TransportRouteSegment>&, bool> {
-	TransportSegmentsComparator() {}
+	TransportSegmentsComparator() {
+	}
 	bool operator()(const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) const {
 		int cmp;
 		if (lhs->distFromStart == rhs->distFromStart) {
@@ -23,9 +25,11 @@ struct TransportSegmentsComparator
 	}
 };
 
-TransportRoutePlanner::TransportRoutePlanner() {}
+TransportRoutePlanner::TransportRoutePlanner() {
+}
 
-TransportRoutePlanner::~TransportRoutePlanner() {}
+TransportRoutePlanner::~TransportRoutePlanner() {
+}
 
 bool TransportRoutePlanner::includeRoute(SHARED_PTR<TransportRouteResult>& fastRoute,
 										 SHARED_PTR<TransportRouteResult>& testRoute) {
@@ -50,14 +54,14 @@ bool TransportRoutePlanner::includeRoute(SHARED_PTR<TransportRouteResult>& fastR
 	return true;
 }
 
-void TransportRoutePlanner::prepareResults(
-	unique_ptr<TransportRoutingContext>& ctx, vector<SHARED_PTR<TransportRouteSegment>>& results,
-    vector<SHARED_PTR<TransportRouteResult>>& routes) {
+void TransportRoutePlanner::prepareResults(unique_ptr<TransportRoutingContext>& ctx,
+										   vector<SHARED_PTR<TransportRouteSegment>>& results,
+										   vector<SHARED_PTR<TransportRouteResult>>& routes) {
 	sort(results.begin(), results.end(),
 		 [](const SHARED_PTR<TransportRouteSegment>& lhs, const SHARED_PTR<TransportRouteSegment>& rhs) {
 			 return lhs->distFromStart < rhs->distFromStart;
 		 });
-    
+
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 					  "Found %d results, visited %d routes / %d stops, loaded "
 					  "%d tiles, loaded ways %d (%d wrong)",
@@ -68,7 +72,7 @@ void TransportRoutePlanner::prepareResults(
 		if (ctx->calculationProgress.get() && ctx->calculationProgress->isCancelled()) {
 			return;
 		}
-        SHARED_PTR<TransportRouteResult> route(new TransportRouteResult(ctx->cfg));
+		SHARED_PTR<TransportRouteResult> route(new TransportRouteResult(ctx->cfg));
 		route->routeTime = res->distFromStart;
 		route->finishWalkDist = res->walkDist;
 		SHARED_PTR<TransportRouteSegment> p = res;
@@ -110,14 +114,12 @@ void TransportRoutePlanner::prepareResults(
 }
 
 void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingContext>& ctx,
-    											vector<SHARED_PTR<TransportRouteResult>>& res) {
-	
+												vector<SHARED_PTR<TransportRouteResult>>& res) {
 	OsmAnd::ElapsedTimer pt_timer;
 	pt_timer.Start();
 	ctx->loadTime.Enable();
 	ctx->searchTransportIndexTime.Enable();
 	ctx->readTime.Enable();
-	
 
 	TransportSegmentsComparator trSegmComp;
 	TRANSPORT_SEGMENTS_QUEUE queue(trSegmComp);
@@ -125,16 +127,18 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 	vector<SHARED_PTR<TransportRouteSegment>> endStops;
 	UNORDERED(map)<int64_t, SHARED_PTR<TransportRouteSegment>> endSegments;
 	vector<SHARED_PTR<TransportRouteSegment>> results;
-	
+
 	ctx->getTransportStops(ctx->startX, ctx->startY, false, startStops);
 	ctx->getTransportStops(ctx->targetX, ctx->targetY, false, endStops);
 	ctx->calcLatLons();
-	
+
 	for (SHARED_PTR<TransportRouteSegment>& s : endStops) {
 		endSegments.insert({s->getId(), s});
 	}
 
-	if (startStops.size() == 0) { return; }
+	if (startStops.size() == 0) {
+		return;
+	}
 
 	for (SHARED_PTR<TransportRouteSegment>& r : startStops) {
 		r->walkDist = getDistance(r->getLocationLat(), r->getLocationLon(), ctx->startLat, ctx->startLon);
@@ -146,14 +150,13 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 	double finishTime = ctx->cfg->maxRouteTime;
 	ctx->finishTimeSeconds = ctx->cfg->finishTimeSeconds;
 	if (totalDistance > ctx->cfg->maxRouteDistance && ctx->cfg->maxRouteIncreaseSpeed > 0) {
-		int increaseTime = (int) ((totalDistance - ctx->cfg->maxRouteDistance) 
-			* 3.6 / ctx->cfg->maxRouteIncreaseSpeed);
+		int increaseTime = (int)((totalDistance - ctx->cfg->maxRouteDistance) * 3.6 / ctx->cfg->maxRouteIncreaseSpeed);
 		finishTime += increaseTime;
 		ctx->finishTimeSeconds += increaseTime / 6;
 	}
-	
+
 	double maxTravelTimeCmpToWalk = totalDistance / ctx->cfg->walkSpeed - ctx->cfg->changeTime / 2;
-	
+
 	while (queue.size() > 0) {
 		if (ctx->calculationProgress != nullptr && ctx->calculationProgress->isCancelled()) {
 			ctx->calculationProgress->setSegmentNotFound(0);
@@ -163,7 +166,7 @@ void TransportRoutePlanner::buildTransportRoute(unique_ptr<TransportRoutingConte
 		SHARED_PTR<TransportRouteSegment> segment = queue.top();
 		queue.pop();
 		SHARED_PTR<TransportRouteSegment> ex;
-		
+
 		if (ctx->visitedSegments.find(segment->getId()) != ctx->visitedSegments.end()) {
 			ex = ctx->visitedSegments.find(segment->getId())->second;
 			if (ex->distFromStart > segment->distFromStart) {

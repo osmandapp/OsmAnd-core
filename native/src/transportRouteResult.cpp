@@ -15,22 +15,20 @@ TransportRouteResult::TransportRouteResult(SHARED_PTR<TransportRoutingConfigurat
 // ui/logging
 double TransportRouteResult::TransportRouteResult::getWalkDist() {
 	double d = finishWalkDist;
-	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
-			 segments.begin();
-		 it != segments.end(); it++) {
+	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
 		d += (*it)->walkDist;
 	}
 	return d;
 }
 
-float TransportRouteResult::getWalkSpeed() { return config->walkSpeed; }
+float TransportRouteResult::getWalkSpeed() {
+	return config->walkSpeed;
+}
 
 // logging only
 int TransportRouteResult::getStops() {
 	int stops = 0;
-	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it =
-			 segments.begin();
-		 it != segments.end(); it++) {
+	for (vector<SHARED_PTR<TransportRouteResultSegment>>::iterator it = segments.begin(); it != segments.end(); it++) {
 		stops += ((*it)->end - (*it)->start);
 	}
 	return stops;
@@ -79,42 +77,40 @@ double TransportRouteResult::getWalkTime() {
 	return getWalkDist() / config->walkSpeed;
 }
 // for ui/logs
-double TransportRouteResult::getChangeTime() { return config->changeTime; }
+double TransportRouteResult::getChangeTime() {
+	return config->changeTime;
+}
 // for ui/logs
-double TransportRouteResult::getBoardingTime() { return config->boardingTime; }
+double TransportRouteResult::getBoardingTime() {
+	return config->boardingTime;
+}
 // for ui/logs
-int TransportRouteResult::getChanges() { return segments.size() - 1; }
+int TransportRouteResult::getChanges() {
+	return segments.size() - 1;
+}
 
 void TransportRouteResult::toString() {
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 					  "Route %d stops, %d changes, %.2f min: %.2f m (%.1f min) "
 					  "to walk, %.2f m (%.1f min) to travel\n",
-					  getStops(), getChanges(), routeTime / 60, getWalkDist(),
-					  getWalkTime() / 60.0, getTravelDist(),
+					  getStops(), getChanges(), routeTime / 60, getWalkDist(), getWalkTime() / 60.0, getTravelDist(),
 					  getTravelTime() / 60.0);
 	for (int i = 0; i < segments.size(); i++) {
 		SHARED_PTR<TransportRouteResultSegment>& s = segments[i];
 		string time = "";
 		string arrivalTime = "";
 		if (s->depTime != -1) {
-			time =
-				"at " + std::to_string(
-							s->depTime);  // formatTransportTime(s->deptTime);
+			time = "at " + std::to_string(s->depTime);	// formatTransportTime(s->deptTime);
 		}
 		int aTime = s->getArrivalTime();
 		if (aTime != -1) {
-			arrivalTime =
-				"and arrive at " +
-				std::to_string(
-					aTime);	 // formatTransportTime(s->getArrivalTime());
+			arrivalTime = "and arrive at " + std::to_string(aTime);	 // formatTransportTime(s->getArrivalTime());
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 						  "%d. %s: walk %.1f m to '%s' and travel %s to '%s' "
 						  "by %s %d stops %s\n",
-						  i + 1, s->route->ref.c_str(), s->walkDist,
-						  s->getStart().name.c_str(), time.c_str(),
-						  s->getEnd().name.c_str(), s->route->name.c_str(),
-						  (s->end - s->start), arrivalTime.c_str());
+						  i + 1, s->route->ref.c_str(), s->walkDist, s->getStart().name.c_str(), time.c_str(),
+						  s->getEnd().name.c_str(), s->route->name.c_str(), (s->end - s->start), arrivalTime.c_str());
 	}
 }
 

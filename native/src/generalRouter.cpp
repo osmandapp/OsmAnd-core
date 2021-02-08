@@ -29,11 +29,10 @@ GeneralRouter::GeneralRouter()
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, 
-		const MAP_STR_STR& attributes) : 
-		profile(GeneralRouterProfile::CAR), _restrictionsAware(true), 
-		heightObstacles(false), sharpTurn(.0), roundaboutTurn(.0), 
-		slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes)
+	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), sharpTurn(.0),
+	  roundaboutTurn(.0), slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
+	  allowPrivate(false) {
 	this->profile = profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = attributes.begin();
@@ -45,7 +44,10 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile,
 	}
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), sharpTurn(.0), roundaboutTurn(.0), slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params)
+	: profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), sharpTurn(.0),
+	  roundaboutTurn(.0), slightTurn(.0), minSpeed(0.28), defaultSpeed(1.0), maxSpeed(10.0), shortestRoute(false),
+	  allowPrivate(false) {
 	this->profile = parent.profile;
 	cacheEval.resize((std::size_t)RouteDataObjectAttribute::COUNT);
 	MAP_STR_STR::const_iterator it = parent.attributes.begin();
@@ -509,8 +511,8 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 	double totalPenalty = 0;
 
 	if (prevTs != ts) {
-			totalPenalty += abs(ts - prevTs) / 2;
-		}
+		totalPenalty += abs(ts - prevTs) / 2;
+	}
 
 	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
 	// 	RoutingIndex* reg = prev->getRoad()->region;
@@ -530,7 +532,8 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 			totalPenalty += rt;
 		}
 	} else if (sharpTurn > 0 || slightTurn > 0) {
-		double a1 = segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
+		double a1 =
+			segment->getRoad()->directionRoute(segment->getSegmentStart(), segment->getSegmentStart() < segmentEnd);
 		double a2 = prev->getRoad()->directionRoute(prevSegmentEnd, prevSegmentEnd < prev->getSegmentStart());
 		double diff = abs(alignAngleDifference(a1 - a2 - M_PI));
 		// more like UT

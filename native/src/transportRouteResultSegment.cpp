@@ -4,7 +4,8 @@
 
 #include "transportRoutingObjects.h"
 
-TransportRouteResultSegment::TransportRouteResultSegment() {}
+TransportRouteResultSegment::TransportRouteResultSegment() {
+}
 
 int TransportRouteResultSegment::getArrivalTime() {
 	if (depTime != -1) {
@@ -27,8 +28,8 @@ int TransportRouteResultSegment::getArrivalTime() {
 double TransportRouteResultSegment::getTravelDist() {
 	double d = 0;
 	for (int32_t k = start; k < end; k++) {
-		const auto &stop = route->forwardStops[k];
-		const auto &nextStop = route->forwardStops[k + 1];
+		const auto& stop = route->forwardStops[k];
+		const auto& nextStop = route->forwardStops[k + 1];
 		d += getDistance(stop->lat, stop->lon, nextStop->lat, nextStop->lon);
 	}
 	return d;
@@ -53,10 +54,10 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 
 	SearchNodeInd startInd;
 	SearchNodeInd endInd;
-	
+
 	vector<Node> res;
 	for (int i = 0; i < ways.size(); i++) {
-	// for (auto it = ways.begin(); it != ways.end(); ++it) {
+		// for (auto it = ways.begin(); it != ways.end(); ++it) {
 		vector<Node> nodes = ways[i]->nodes;
 		// for (auto nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
 		for (int j = 0; j < nodes.size(); j++) {
@@ -95,16 +96,16 @@ void TransportRouteResultSegment::getGeometry(vector<shared_ptr<Way>>& list) {
 			validContinuation = false;
 		}
 	}
-		if (validContinuation) {
-			SHARED_PTR<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
-			for (int k = startInd.ind; k < startInd.way->nodes.size(); k++) {
-				way->addNode(startInd.way->nodes[k]);
-			}
-			list.push_back(way);
-			way = make_shared<Way>(GEOMETRY_WAY_ID);
-			for (int k = 0; k <= endInd.ind; k++) {
-				way->addNode(endInd.way->nodes[k]);
-			}
+	if (validContinuation) {
+		SHARED_PTR<Way> way = make_shared<Way>(GEOMETRY_WAY_ID);
+		for (int k = startInd.ind; k < startInd.way->nodes.size(); k++) {
+			way->addNode(startInd.way->nodes[k]);
+		}
+		list.push_back(way);
+		way = make_shared<Way>(GEOMETRY_WAY_ID);
+		for (int k = 0; k <= endInd.ind; k++) {
+			way->addNode(endInd.way->nodes[k]);
+		}
 		list.push_back(way);
 		return;
 	}
@@ -127,10 +128,9 @@ const TransportStop& TransportRouteResultSegment::getEnd() {
 	return *route->forwardStops.at(end).get();
 }
 
-vector<SHARED_PTR<TransportStop>>
-TransportRouteResultSegment::getTravelStops() {
-	return vector<SHARED_PTR<TransportStop>>(
-		route->forwardStops.begin() + start, route->forwardStops.begin() + end + 1);
+vector<SHARED_PTR<TransportStop>> TransportRouteResultSegment::getTravelStops() {
+	return vector<SHARED_PTR<TransportStop>>(route->forwardStops.begin() + start,
+											 route->forwardStops.begin() + end + 1);
 }
 
 const TransportStop& TransportRouteResultSegment::getStop(int32_t i) {

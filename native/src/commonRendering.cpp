@@ -21,15 +21,8 @@ RenderingContextResults::RenderingContextResults(RenderingContext* rc) {
 }
 
 TextDrawInfo::TextDrawInfo(std::string itext, MapDataObject* mo)
-	: text(itext),
-	  icon(NULL),
-	  visible(false),
-	  combined(false),
-	  drawOnPath(false),
-	  path(NULL),
-	  pathRotate(0),
-	  intersectionMargin(0),
-	  intersectionSizeFactor(1) {
+	: text(itext), icon(NULL), visible(false), combined(false), drawOnPath(false), path(NULL), pathRotate(0),
+	  intersectionMargin(0), intersectionSizeFactor(1) {
 	object = *mo;
 }
 
@@ -75,16 +68,8 @@ TextDrawInfo::~TextDrawInfo() {
 }
 
 IconDrawInfo::IconDrawInfo(MapDataObject* obj)
-	: bmp_1(NULL),
-	  bmp(NULL),
-	  bmp2(NULL),
-	  bmp3(NULL),
-	  bmp4(NULL),
-	  bmp5(NULL),
-	  shield(NULL),
-	  visible(false),
-	  intersectionMargin(0),
-	  intersectionSizeFactor(1) {
+	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), shield(NULL), visible(false),
+	  intersectionMargin(0), intersectionSizeFactor(1) {
 	object = *obj;
 }
 
