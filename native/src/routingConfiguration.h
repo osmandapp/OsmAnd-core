@@ -23,7 +23,7 @@ struct RoutingConfiguration {
 
     SHARED_PTR<GeneralRouter> router;
 
-	int memoryLimitation;
+	long memoryLimitation;
 	float initialDirection;
 
 	int zoomToLoad;
@@ -72,7 +72,7 @@ public:
         return build(router, -360, memoryLimitMB, params);
     }
     
-    SHARED_PTR<RoutingConfiguration> build(string router, float direction, int memoryLimitMB, const MAP_STR_STR& params = MAP_STR_STR()) {
+    SHARED_PTR<RoutingConfiguration> build(string router, float direction, long memoryLimitMB, const MAP_STR_STR& params = MAP_STR_STR()) {
         if (routers.find(router) == routers.end()) {
             router = defaultRouter;
         }

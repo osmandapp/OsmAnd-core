@@ -14,7 +14,7 @@ struct RouteSegment {
     
     // search context (needed for searching route)
     // Initially it should be null (!) because it checks was it segment visited before
-    SHARED_PTR<RouteSegment> parentRoute;
+    std::weak_ptr<RouteSegment> parentRoute;
     uint16_t parentSegmentEnd;
     
     

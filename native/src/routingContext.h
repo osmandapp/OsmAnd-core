@@ -23,7 +23,7 @@ struct RoutingSubregionTile {
 	// make it without get/set for fast access
 	int access;
 	int loaded;
-	uint size ;
+	long size;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
 	UNORDERED(set)<int64_t> excludedIds;
 
@@ -52,11 +52,11 @@ struct RoutingSubregionTile {
 		return abs(loaded);
 	}
 
-	int getSize() {
+	long getSize() {
 		return size + routes.size() * sizeof(std::pair<int64_t, SHARED_PTR<RouteSegment> >);
 	}
 
-	void add(SHARED_PTR<RouteDataObject> o) {
+	void add(SHARED_PTR<RouteDataObject>& o) {
 		size += o->getSize() + sizeof(RouteSegment) * o->pointsX.size();
 		for (uint i = 0; i < o->pointsX.size(); i++) {
 			uint64_t x31 = o->pointsX[i];
@@ -155,7 +155,7 @@ struct RoutingContext {
 				for(;itr != tl->routes.end(); itr++) {
 					auto s = itr->second;
 					while (s) {
-						s->parentRoute = nullptr;
+						s->parentRoute.reset();
 						s->parentSegmentEnd = 0;
 						s->distanceFromStart = 0;
 						s->distanceToEnd = 0;
@@ -228,9 +228,9 @@ struct RoutingContext {
 		return config->router->acceptLine(r);
 	}
 
-	int getSize() {
+	long getSize() {
 		// multiply 2 for to maps
-		int sz = subregionTiles.size() * sizeof(pair< int64_t, SHARED_PTR<RoutingSubregionTile> >)  * 2;
+		long sz = subregionTiles.size() * sizeof(pair< int64_t, SHARED_PTR<RoutingSubregionTile> >)  * 2;
 		MAP_SUBREGION_TILES::iterator it = subregionTiles.begin();
 		for (;it != subregionTiles.end(); it++) {
 			sz += it->second->getSize();
@@ -238,8 +238,8 @@ struct RoutingContext {
 		return sz;
 	}
 
-	void unloadUnusedTiles(int memoryLimit) {
-		int sz = getSize();
+	void unloadUnusedTiles(long memoryLimit) {
+		long sz = getSize();
 		float critical = 0.9f * memoryLimit * 1024 * 1024;
 		if (sz < critical) {
 			return;
@@ -275,8 +275,9 @@ struct RoutingContext {
 
 	void loadHeaderObjects(int64_t tileId) {
 		const auto itSubregions = indexedSubregions.find(tileId);
-		if (itSubregions == indexedSubregions.end())
-		return;
+        if (itSubregions == indexedSubregions.end()) {
+            return;
+        }
 		auto& subregions = itSubregions->second;
 		bool gc = false;
 		for (uint j = 0; j < subregions.size(); j++) {
@@ -304,12 +305,12 @@ struct RoutingContext {
 					}
 					subregions[j]->setLoaded();
 					SearchQuery q;
-					vector<RouteDataObject*> res;
+					std::vector<SHARED_PTR<RouteDataObject>> res;
 					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion, geocoding);
-					vector<RouteDataObject*>::iterator i = res.begin();
+					std::vector<SHARED_PTR<RouteDataObject>>::iterator i = res.begin();
 					for (;i != res.end(); i++) {
-						if (*i != NULL) {
-							SHARED_PTR<RouteDataObject> o(*i);
+                        auto& o = *i;
+						if (o.get() != NULL) {
 							if(conditionalTime != 0) {
 								o->processConditionalTags(conditionalTimeStr);
 							}
@@ -336,7 +337,7 @@ struct RoutingContext {
 		if (progress && progress.get()) {
 			progress->timeToLoadHeaders.Start();
 		}
-		int z  = config->zoomToLoad;
+		int z = config->zoomToLoad;
 		int tz = 31 - z;
 		int64_t tileId = (xloc << z) + yloc;
 		if (indexedSubregions.find(tileId) == indexedSubregions.end()) {
@@ -410,7 +411,7 @@ struct RoutingContext {
 		}
 	}
 
-	// void searchRouteRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RoutingIndex* rs, RouteSubregion* sub)
+	// void searchRouteRegion(SearchQuery* q, std::std::vector<SHARED_PTR<RouteDataObject>>& list, RoutingIndex* rs, RouteSubregion* sub)
 	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31) {
 		if (progress && progress.get()) {
 			progress->timeToLoad.Start();
