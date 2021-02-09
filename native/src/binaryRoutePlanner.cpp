@@ -263,7 +263,7 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 	while (graphSegments->size() > 0) {
 		SHARED_PTR<RouteSegment> segment = graphSegments->top();
 		graphSegments->pop();
-        segmentRefs.insert(segment);
+		segmentRefs.insert(segment);
 		// Memory management
 		// ctx.memoryOverhead = calculateSizeOfSearchMaps(graphDirectSegments, graphReverseSegments,
 		// visitedDirectSegments, visitedOppositeSegments);
@@ -923,6 +923,7 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 			}
 			if (distFromStart < visIt->second.get()->distanceFromStart && next->parentRoute.lock().get() == NULL) {
 				toAdd = true;
+				// This log spams values and causes crashes in iOS
 //				if (ctx->getHeuristicCoefficient() <= 1) {
 //					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Alert distance from start %f < %f id=%lld",
 //									  distFromStart, visIt->second.get()->distanceFromStart, next->getRoad()->getId());
@@ -1025,7 +1026,7 @@ vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx,
 		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id / 64);
 	}
 	// Hold references to processed segments to break segment->parentRoute infinite loop
-    std::set<SHARED_PTR<RouteSegment>> segmentRefs;
+	std::set<SHARED_PTR<RouteSegment>> segmentRefs;
 	SHARED_PTR<RouteSegment> finalSegment = searchRouteInternal(ctx, start, end, leftSideNavigation, segmentRefs);
 	vector<SHARED_PTR<RouteSegmentResult> > res = convertFinalSegmentToResults(ctx, finalSegment);
 	attachConnectedRoads(ctx, res);
