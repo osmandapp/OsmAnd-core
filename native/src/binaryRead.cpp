@@ -2969,7 +2969,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 	}
 	std::vector<RouteDataObject*>::iterator dobj = dataObjects.begin();
 	for (; dobj != dataObjects.end(); dobj++) {
-        if (*dobj != NULL) {
+		if (*dobj != NULL) {
 			if ((uint)(*dobj)->id < idTables.size()) {
 				(*dobj)->id = idTables[(*dobj)->id];
 			}
