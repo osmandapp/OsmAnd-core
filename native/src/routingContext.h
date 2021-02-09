@@ -275,9 +275,9 @@ struct RoutingContext {
 
 	void loadHeaderObjects(int64_t tileId) {
 		const auto itSubregions = indexedSubregions.find(tileId);
-        if (itSubregions == indexedSubregions.end()) {
-            return;
-        }
+		if (itSubregions == indexedSubregions.end()) {
+			return;
+		}
 		auto& subregions = itSubregions->second;
 		bool gc = false;
 		for (uint j = 0; j < subregions.size(); j++) {
