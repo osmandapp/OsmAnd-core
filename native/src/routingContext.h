@@ -305,12 +305,12 @@ struct RoutingContext {
 					}
 					subregions[j]->setLoaded();
 					SearchQuery q;
-					std::vector<SHARED_PTR<RouteDataObject>> res;
+                    vector<RouteDataObject*> res;
 					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion, geocoding);
-					std::vector<SHARED_PTR<RouteDataObject>>::iterator i = res.begin();
+                    vector<RouteDataObject*>::iterator i = res.begin();
 					for (;i != res.end(); i++) {
-                        auto& o = *i;
-						if (o.get() != NULL) {
+                        if (*i != NULL) {
+                            SHARED_PTR<RouteDataObject> o(*i);
 							if(conditionalTime != 0) {
 								o->processConditionalTags(conditionalTimeStr);
 							}
@@ -411,7 +411,7 @@ struct RoutingContext {
 		}
 	}
 
-	// void searchRouteRegion(SearchQuery* q, std::std::vector<SHARED_PTR<RouteDataObject>>& list, RoutingIndex* rs, RouteSubregion* sub)
+    // void searchRouteRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RoutingIndex* rs, RouteSubregion* sub)
 	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31) {
 		if (progress && progress.get()) {
 			progress->timeToLoad.Start();

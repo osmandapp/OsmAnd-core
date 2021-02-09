@@ -355,12 +355,12 @@ bool RouteDataObject::roundabout() {
 	return false;
 }
 
-void searchRouteSubRegion(int fileInd, std::vector<SHARED_PTR<RouteDataObject>>& list, RoutingIndex* routingIndex,
+void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list, RoutingIndex* routingIndex,
 						  RouteSubregion* sub);
 void searchRouteRegion(CodedInputStream** input, FileInputStream** fis, BinaryMapFile* file, SearchQuery* q,
 					   RoutingIndex* ind, std::vector<RouteSubregion>& subregions, std::vector<RouteSubregion>& toLoad,
 					   bool geocoding);
-bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<SHARED_PTR<RouteDataObject>>& dataObjects,
+bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects,
 					   RoutingIndex* routingIndex);
 
 bool sortRouteRegions(const RouteSubregion& i, const RouteSubregion& j) {
@@ -2174,13 +2174,13 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 	}
 }
 
-void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<SHARED_PTR<RouteDataObject>>& list,
+void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list,
 									   std::vector<FoundMapDataObject>& tempResult, int& renderedState) {
-	std::vector<SHARED_PTR<RouteDataObject>>::iterator rIterator = list.begin();
+	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t)(list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
-		auto& r = (*rIterator);
-		if (r.get() == NULL) {
+		RouteDataObject* r = (*rIterator);
+		if (r == NULL) {
 			continue;
 		}
 		// if (skipDuplicates && r->id > 0) {
@@ -2227,8 +2227,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<SHARED_PTR<Ro
 		} else {
 			delete obj;
 		}
-//		delete r;
-        r = nullptr;
+		delete r;
 	}
 }
 
@@ -2287,7 +2286,7 @@ void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubreg
 	CodedInputStream cis(&input);
 	cis.SetTotalBytesLimit(INT_MAX, INT_MAX >> 2);
 	for (std::vector<RouteSubregion>::iterator sub = found.begin(); sub != found.end(); sub++) {
-		std::vector<SHARED_PTR<RouteDataObject>> list;
+		std::vector<RouteDataObject*> list;
 		cis.Seek(sub->filePointer + sub->mapDataBlock);
 		uint32_t length;
 		cis.ReadVarint32(&length);
@@ -2720,7 +2719,7 @@ void searchRouteRegion(CodedInputStream** input, FileInputStream** fis, BinaryMa
 	}
 }
 
-bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, SHARED_PTR<RouteDataObject>& obj) {
+bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, RouteDataObject* obj) {
 	int tag;
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
@@ -2838,7 +2837,7 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, S
 	return true;
 }
 
-bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<SHARED_PTR<RouteDataObject>>& dataObjects,
+bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects,
 					   RoutingIndex* routingIndex) {
 	int tag;
 	std::vector<int64_t> idTables;
@@ -2851,7 +2850,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<S
 				uint32_t length;
 				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 				int oldLimit = input->PushLimit(length);
-				SHARED_PTR<RouteDataObject> obj = std::make_shared<RouteDataObject>();
+				RouteDataObject* obj = new RouteDataObject;
 				readRouteDataObject(input, s->left, s->top, obj);
 				if ((uint32_t)dataObjects.size() <= obj->id) {
 					dataObjects.resize((uint32_t)obj->id + 1, NULL);
@@ -2957,8 +2956,8 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<S
 	}
 	UNORDERED(map)<int64_t, std::vector<RestrictionInfo>>::iterator itRestrictions = restrictions.begin();
 	for (; itRestrictions != restrictions.end(); itRestrictions++) {
-		const auto& fromr = dataObjects[itRestrictions->first];
-		if (fromr.get() != NULL) {
+		RouteDataObject* fromr = dataObjects[itRestrictions->first];
+		if (fromr != NULL) {
 			fromr->restrictions = itRestrictions->second;
 			for (uint i = 0; i < fromr->restrictions.size(); i++) {
 				fromr->restrictions[i].to = idTables[fromr->restrictions[i].to];
@@ -2968,9 +2967,9 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<S
 			}
 		}
 	}
-	std::vector<SHARED_PTR<RouteDataObject>>::iterator dobj = dataObjects.begin();
+	std::vector<RouteDataObject*>::iterator dobj = dataObjects.begin();
 	for (; dobj != dataObjects.end(); dobj++) {
-		if ((*dobj).get() != NULL) {
+        if (*dobj != NULL) {
 			if ((uint)(*dobj)->id < idTables.size()) {
 				(*dobj)->id = idTables[(*dobj)->id];
 			}
@@ -3003,7 +3002,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<S
 	return true;
 }
 
-void searchRouteSubRegion(int fileInd, std::vector<SHARED_PTR<RouteDataObject>>& list, RoutingIndex* routingIndex,
+void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list, RoutingIndex* routingIndex,
 						  RouteSubregion* sub) {
 	checkAndInitRouteRegionRules(fileInd, routingIndex);
 
@@ -3022,7 +3021,7 @@ void searchRouteSubRegion(int fileInd, std::vector<SHARED_PTR<RouteDataObject>>&
 	cis.PopLimit(old);
 }
 
-void searchRouteDataForSubRegion(SearchQuery* q, std::vector<SHARED_PTR<RouteDataObject>>& list, RouteSubregion* sub,
+void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub,
 								 bool geocoding) {
 	vector<BinaryMapFile*>::iterator i = openFiles.begin();
 	RoutingIndex* rs = sub->routingIndex;

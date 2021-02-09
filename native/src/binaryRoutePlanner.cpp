@@ -1024,13 +1024,10 @@ vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx,
 	} else {
 		// OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id / 64);
 	}
+	// Hold references to processed segments to break segment->parentRoute infinite loop
     std::set<SHARED_PTR<RouteSegment>> segmentRefs;
 	SHARED_PTR<RouteSegment> finalSegment = searchRouteInternal(ctx, start, end, leftSideNavigation, segmentRefs);
 	vector<SHARED_PTR<RouteSegmentResult> > res = convertFinalSegmentToResults(ctx, finalSegment);
-    segmentRefs.clear();
-    finalSegment.reset();
-    ctx->subregionTiles.clear();
-    ctx->indexedSubregions.clear();
 	attachConnectedRoads(ctx, res);
 	return res;
 }
