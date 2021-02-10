@@ -31,7 +31,7 @@ using google::protobuf::io::FileInputStream;
 static uint zoomForBaseRouteRendering = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps = 11;
-static uint zoomDetailedForCoastlines = 17;
+static uint zoomMaxDetailedForCoastlines = 16;
 std::vector<BinaryMapFile*> openFiles;
 std::vector<TransportIndex*> transportIndexesList;
 OsmAnd::OBF::OsmAndStoredIndex* cache = NULL;
@@ -2409,9 +2409,9 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject>&
 		btop = (q->top >> shift) << shift;
 		bbottom = ((q->bottom >> shift) + 1) << shift;
 	}
-	if (q->zoom > zoomDetailedForCoastlines) {
+	if (q->zoom > zoomMaxDetailedForCoastlines) {
 		// expand area to include more coastlines for bbox
-		int shift = (31 - zoomDetailedForCoastlines);
+		int shift = (31 - zoomMaxDetailedForCoastlines);
 		sleft = (q->left >> shift) << shift;
 		sright = ((q->right >> shift) + 1) << shift;
 		stop = (q->top >> shift) << shift;
@@ -2599,8 +2599,8 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			int bright = q->right;
 			int btop = q->top;
 			int bbottom = q->bottom;
-			if (q->zoom > zoomDetailedForCoastlines + 1) {
-				int shift = (31 - zoomDetailedForCoastlines + 1);
+			if (q->zoom > zoomMaxDetailedForCoastlines) {
+				int shift = (31 - zoomMaxDetailedForCoastlines );
 				bleft = (q->left >> shift) << shift;
 				bright = ((q->right >> shift) + 1) << shift;
 				btop = (q->top >> shift) << shift;
