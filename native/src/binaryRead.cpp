@@ -2409,9 +2409,9 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject>&
 		btop = (q->top >> shift) << shift;
 		bbottom = ((q->bottom >> shift) + 1) << shift;
 	}
-	if (q->zoom > zoomDetailedForCoastlines) {
+	if (q->zoom > zoomDetailedForCoastlines + 1) {
 		// expand area to include more coastlines for bbox
-		int shift = (31 - zoomDetailedForCoastlines);
+		int shift = (31 - zoomDetailedForCoastlines + 1);
 		sleft = (q->left >> shift) << shift;
 		sright = ((q->right >> shift) + 1) << shift;
 		stop = (q->top >> shift) << shift;
@@ -2428,7 +2428,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject>&
 			bool basemap = file->isBasemap();
 			bool external = file->isExternal();
 
-			if (basemap) {
+			if (basemap && q->zoom < zoomDetailedForCoastlines) {
 				q->left = bleft;
 				q->right = bright;
 				q->top = btop;
