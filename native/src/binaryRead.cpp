@@ -2428,7 +2428,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<FoundMapDataObject>&
 			bool basemap = file->isBasemap();
 			bool external = file->isExternal();
 
-			if (basemap && q->zoom < zoomDetailedForCoastlines) {
+			if (basemap) {
 				q->left = bleft;
 				q->right = bright;
 				q->top = btop;
