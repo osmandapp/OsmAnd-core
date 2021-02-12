@@ -572,7 +572,7 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 						break;
 					}
 				}
-				if (road->restrictions[i].via == viaId && road->restrictions[i].type == RESTRICTION_ONLY_STRAIGHT_ON) {
+				if (road->restrictions[i].via == viaId && via && road->restrictions[i].type == RESTRICTION_ONLY_STRAIGHT_ON) {
 					type = RESTRICTION_NO_STRAIGHT_ON;
 					break;
 				}
@@ -587,7 +587,7 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment>& inputNext
 						break;
 					}
 				}
-				if (next->road->restrictions[i].via == viaId && rt == RESTRICTION_ONLY_STRAIGHT_ON) {
+				if (next->road->restrictions[i].via == viaId && via && rt == RESTRICTION_ONLY_STRAIGHT_ON) {
 					type = RESTRICTION_NO_STRAIGHT_ON;
 					break;
 				}
