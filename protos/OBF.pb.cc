@@ -963,7 +963,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndPoiBoxData));
   OsmAndPoiBoxDataAtom_descriptor_ = file->message_type(35);
-  static const int OsmAndPoiBoxDataAtom_offsets_[15] = {
+  static const int OsmAndPoiBoxDataAtom_offsets_[14] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, dx_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, dy_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, categories_),
@@ -977,8 +977,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, note_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, textcategories_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, textvalues_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, precisedx_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, precisedy_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndPoiBoxDataAtom, precisionxy_),
   };
   OsmAndPoiBoxDataAtom_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -1499,38 +1498,38 @@ void protobuf_AddDesc_OBF_2eproto() {
     "tegories\030\003 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\"i\n"
     "\020OsmAndPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n\001x\030\002 \001"
     "(\r\022\t\n\001y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .OsmAnd."
-    "OBF.OsmAndPoiBoxDataAtom\"\226\002\n\024OsmAndPoiBo"
+    "OBF.OsmAndPoiBoxDataAtom\"\205\002\n\024OsmAndPoiBo"
     "xDataAtom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\022\n\ncat"
     "egories\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\022\014\n\004"
     "name\030\006 \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010 \001(\004\022\024"
     "\n\014openingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t\022\r\n\005ph"
     "one\030\014 \001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCategorie"
-    "s\030\016 \003(\r\022\022\n\ntextValues\030\017 \003(\t\022\021\n\tpreciseDx"
-    "\030\020 \001(\021\022\021\n\tpreciseDy\030\021 \001(\021\"\032\n\007IdTable\022\017\n\007"
-    "routeId\030\001 \003(\022\"F\n\017RestrictionData\022\014\n\004type"
-    "\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003 \002(\005\022\013\n\003via\030"
-    "\004 \001(\005\"x\n\tRouteData\022\016\n\006points\030\001 \002(\014\022\022\n\npo"
-    "intTypes\030\004 \001(\014\022\022\n\npointNames\030\005 \001(\014\022\r\n\005ty"
-    "pes\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023\n\013stringName"
-    "s\030\016 \001(\014\"\304\005\n\022OsmAndRoutingIndex\022\014\n\004name\030\001"
-    " \002(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd.OBF.OsmAndR"
-    "outingIndex.RouteEncodingRule\022>\n\trootBox"
-    "es\030\003 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex"
-    ".RouteDataBox\022A\n\014basemapBoxes\030\004 \003(\0132+.Os"
-    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
-    "\022=\n\006blocks\030\005 \003(\0132-.OsmAnd.OBF.OsmAndRout"
-    "ingIndex.RouteDataBlock\032;\n\021RouteEncoding"
-    "Rule\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007"
-    " \001(\r\032\231\001\n\014RouteDataBox\022\014\n\004left\030\001 \002(\021\022\r\n\005r"
-    "ight\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022"
-    "\023\n\013shiftToData\030\005 \001(\007\022:\n\005boxes\030\007 \003(\0132+.Os"
-    "mAnd.OBF.OsmAndRoutingIndex.RouteDataBox"
-    "\032\303\001\n\016RouteDataBlock\022$\n\007idTable\030\005 \001(\0132\023.O"
-    "smAnd.OBF.IdTable\022*\n\013dataObjects\030\006 \003(\0132\025"
-    ".OsmAnd.OBF.RouteData\0221\n\014restrictions\030\007 "
-    "\003(\0132\033.OsmAnd.OBF.RestrictionData\022,\n\013stri"
-    "ngTable\030\010 \001(\0132\027.OsmAnd.OBF.StringTableB\036"
-    "\n\021net.osmand.binaryB\tOsmandOdb", 7630);
+    "s\030\016 \003(\r\022\022\n\ntextValues\030\017 \003(\t\022\023\n\013precision"
+    "XY\030\020 \001(\005\"\032\n\007IdTable\022\017\n\007routeId\030\001 \003(\022\"F\n\017"
+    "RestrictionData\022\014\n\004type\030\001 \002(\005\022\014\n\004from\030\002 "
+    "\002(\005\022\n\n\002to\030\003 \002(\005\022\013\n\003via\030\004 \001(\005\"x\n\tRouteDat"
+    "a\022\016\n\006points\030\001 \002(\014\022\022\n\npointTypes\030\004 \001(\014\022\022\n"
+    "\npointNames\030\005 \001(\014\022\r\n\005types\030\007 \002(\014\022\017\n\007rout"
+    "eId\030\014 \002(\005\022\023\n\013stringNames\030\016 \001(\014\"\304\005\n\022OsmAn"
+    "dRoutingIndex\022\014\n\004name\030\001 \002(\t\022\?\n\005rules\030\002 \003"
+    "(\01320.OsmAnd.OBF.OsmAndRoutingIndex.Route"
+    "EncodingRule\022>\n\trootBoxes\030\003 \003(\0132+.OsmAnd"
+    ".OBF.OsmAndRoutingIndex.RouteDataBox\022A\n\014"
+    "basemapBoxes\030\004 \003(\0132+.OsmAnd.OBF.OsmAndRo"
+    "utingIndex.RouteDataBox\022=\n\006blocks\030\005 \003(\0132"
+    "-.OsmAnd.OBF.OsmAndRoutingIndex.RouteDat"
+    "aBlock\032;\n\021RouteEncodingRule\022\013\n\003tag\030\003 \002(\t"
+    "\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007 \001(\r\032\231\001\n\014RouteDat"
+    "aBox\022\014\n\004left\030\001 \002(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003top"
+    "\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022\023\n\013shiftToData\030\005 "
+    "\001(\007\022:\n\005boxes\030\007 \003(\0132+.OsmAnd.OBF.OsmAndRo"
+    "utingIndex.RouteDataBox\032\303\001\n\016RouteDataBlo"
+    "ck\022$\n\007idTable\030\005 \001(\0132\023.OsmAnd.OBF.IdTable"
+    "\022*\n\013dataObjects\030\006 \003(\0132\025.OsmAnd.OBF.Route"
+    "Data\0221\n\014restrictions\030\007 \003(\0132\033.OsmAnd.OBF."
+    "RestrictionData\022,\n\013stringTable\030\010 \001(\0132\027.O"
+    "smAnd.OBF.StringTableB\036\n\021net.osmand.bina"
+    "ryB\tOsmandOdb", 7613);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -17844,8 +17843,7 @@ const int OsmAndPoiBoxDataAtom::kPhoneFieldNumber;
 const int OsmAndPoiBoxDataAtom::kNoteFieldNumber;
 const int OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber;
 const int OsmAndPoiBoxDataAtom::kTextValuesFieldNumber;
-const int OsmAndPoiBoxDataAtom::kPreciseDxFieldNumber;
-const int OsmAndPoiBoxDataAtom::kPreciseDyFieldNumber;
+const int OsmAndPoiBoxDataAtom::kPrecisionXYFieldNumber;
 #endif  // !_MSC_VER
 
 OsmAndPoiBoxDataAtom::OsmAndPoiBoxDataAtom()
@@ -17873,8 +17871,7 @@ void OsmAndPoiBoxDataAtom::SharedCtor() {
   site_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   phone_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   note_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  precisedx_ = 0;
-  precisedy_ = 0;
+  precisionxy_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -17963,8 +17960,7 @@ void OsmAndPoiBoxDataAtom::Clear() {
         note_->clear();
       }
     }
-    precisedx_ = 0;
-    precisedy_ = 0;
+    precisionxy_ = 0;
   }
   categories_.Clear();
   subcategories_.Clear();
@@ -18210,35 +18206,19 @@ bool OsmAndPoiBoxDataAtom::MergePartialFromCodedStream(
           goto handle_uninterpreted;
         }
         if (input->ExpectTag(122)) goto parse_textValues;
-        if (input->ExpectTag(128)) goto parse_preciseDx;
+        if (input->ExpectTag(128)) goto parse_precisionXY;
         break;
       }
 
-      // optional sint32 preciseDx = 16;
+      // optional int32 precisionXY = 16;
       case 16: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_preciseDx:
+         parse_precisionXY:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_SINT32>(
-                 input, &precisedx_)));
-          set_has_precisedx();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(136)) goto parse_preciseDy;
-        break;
-      }
-
-      // optional sint32 preciseDy = 17;
-      case 17: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_preciseDy:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_SINT32>(
-                 input, &precisedy_)));
-          set_has_precisedy();
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &precisionxy_)));
+          set_has_precisionxy();
         } else {
           goto handle_uninterpreted;
         }
@@ -18360,14 +18340,9 @@ void OsmAndPoiBoxDataAtom::SerializeWithCachedSizes(
       15, this->textvalues(i), output);
   }
 
-  // optional sint32 preciseDx = 16;
-  if (has_precisedx()) {
-    ::google::protobuf::internal::WireFormatLite::WriteSInt32(16, this->precisedx(), output);
-  }
-
-  // optional sint32 preciseDy = 17;
-  if (has_precisedy()) {
-    ::google::protobuf::internal::WireFormatLite::WriteSInt32(17, this->precisedy(), output);
+  // optional int32 precisionXY = 16;
+  if (has_precisionxy()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(16, this->precisionxy(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -18480,14 +18455,9 @@ void OsmAndPoiBoxDataAtom::SerializeWithCachedSizes(
       WriteStringToArray(15, this->textvalues(i), target);
   }
 
-  // optional sint32 preciseDx = 16;
-  if (has_precisedx()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteSInt32ToArray(16, this->precisedx(), target);
-  }
-
-  // optional sint32 preciseDy = 17;
-  if (has_precisedy()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteSInt32ToArray(17, this->precisedy(), target);
+  // optional int32 precisionXY = 16;
+  if (has_precisionxy()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(16, this->precisionxy(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -18566,18 +18536,11 @@ int OsmAndPoiBoxDataAtom::ByteSize() const {
           this->note());
     }
 
-    // optional sint32 preciseDx = 16;
-    if (has_precisedx()) {
+    // optional int32 precisionXY = 16;
+    if (has_precisionxy()) {
       total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::SInt32Size(
-          this->precisedx());
-    }
-
-    // optional sint32 preciseDy = 17;
-    if (has_precisedy()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::SInt32Size(
-          this->precisedy());
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->precisionxy());
     }
 
   }
@@ -18677,11 +18640,8 @@ void OsmAndPoiBoxDataAtom::MergeFrom(const OsmAndPoiBoxDataAtom& from) {
     if (from.has_note()) {
       set_note(from.note());
     }
-    if (from.has_precisedx()) {
-      set_precisedx(from.precisedx());
-    }
-    if (from.has_precisedy()) {
-      set_precisedy(from.precisedy());
+    if (from.has_precisionxy()) {
+      set_precisionxy(from.precisionxy());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -18720,8 +18680,7 @@ void OsmAndPoiBoxDataAtom::Swap(OsmAndPoiBoxDataAtom* other) {
     std::swap(note_, other->note_);
     textcategories_.Swap(&other->textcategories_);
     textvalues_.Swap(&other->textvalues_);
-    std::swap(precisedx_, other->precisedx_);
-    std::swap(precisedy_, other->precisedy_);
+    std::swap(precisionxy_, other->precisionxy_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

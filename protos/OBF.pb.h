@@ -5833,19 +5833,12 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& textvalues() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_textvalues();
 
-  // optional sint32 preciseDx = 16;
-  inline bool has_precisedx() const;
-  inline void clear_precisedx();
-  static const int kPreciseDxFieldNumber = 16;
-  inline ::google::protobuf::int32 precisedx() const;
-  inline void set_precisedx(::google::protobuf::int32 value);
-
-  // optional sint32 preciseDy = 17;
-  inline bool has_precisedy() const;
-  inline void clear_precisedy();
-  static const int kPreciseDyFieldNumber = 17;
-  inline ::google::protobuf::int32 precisedy() const;
-  inline void set_precisedy(::google::protobuf::int32 value);
+  // optional int32 precisionXY = 16;
+  inline bool has_precisionxy() const;
+  inline void clear_precisionxy();
+  static const int kPrecisionXYFieldNumber = 16;
+  inline ::google::protobuf::int32 precisionxy() const;
+  inline void set_precisionxy(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBoxDataAtom)
  private:
@@ -5867,10 +5860,8 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline void clear_has_phone();
   inline void set_has_note();
   inline void clear_has_note();
-  inline void set_has_precisedx();
-  inline void clear_has_precisedx();
-  inline void set_has_precisedy();
-  inline void clear_has_precisedy();
+  inline void set_has_precisionxy();
+  inline void clear_has_precisionxy();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -5887,11 +5878,10 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   ::std::string* note_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > textcategories_;
   ::google::protobuf::RepeatedPtrField< ::std::string> textvalues_;
-  ::google::protobuf::int32 precisedx_;
-  ::google::protobuf::int32 precisedy_;
+  ::google::protobuf::int32 precisionxy_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(15 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -14516,48 +14506,26 @@ OsmAndPoiBoxDataAtom::mutable_textvalues() {
   return &textvalues_;
 }
 
-// optional sint32 preciseDx = 16;
-inline bool OsmAndPoiBoxDataAtom::has_precisedx() const {
+// optional int32 precisionXY = 16;
+inline bool OsmAndPoiBoxDataAtom::has_precisionxy() const {
   return (_has_bits_[0] & 0x00002000u) != 0;
 }
-inline void OsmAndPoiBoxDataAtom::set_has_precisedx() {
+inline void OsmAndPoiBoxDataAtom::set_has_precisionxy() {
   _has_bits_[0] |= 0x00002000u;
 }
-inline void OsmAndPoiBoxDataAtom::clear_has_precisedx() {
+inline void OsmAndPoiBoxDataAtom::clear_has_precisionxy() {
   _has_bits_[0] &= ~0x00002000u;
 }
-inline void OsmAndPoiBoxDataAtom::clear_precisedx() {
-  precisedx_ = 0;
-  clear_has_precisedx();
+inline void OsmAndPoiBoxDataAtom::clear_precisionxy() {
+  precisionxy_ = 0;
+  clear_has_precisionxy();
 }
-inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::precisedx() const {
-  return precisedx_;
+inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::precisionxy() const {
+  return precisionxy_;
 }
-inline void OsmAndPoiBoxDataAtom::set_precisedx(::google::protobuf::int32 value) {
-  set_has_precisedx();
-  precisedx_ = value;
-}
-
-// optional sint32 preciseDy = 17;
-inline bool OsmAndPoiBoxDataAtom::has_precisedy() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void OsmAndPoiBoxDataAtom::set_has_precisedy() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void OsmAndPoiBoxDataAtom::clear_has_precisedy() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void OsmAndPoiBoxDataAtom::clear_precisedy() {
-  precisedy_ = 0;
-  clear_has_precisedy();
-}
-inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::precisedy() const {
-  return precisedy_;
-}
-inline void OsmAndPoiBoxDataAtom::set_precisedy(::google::protobuf::int32 value) {
-  set_has_precisedy();
-  precisedy_ = value;
+inline void OsmAndPoiBoxDataAtom::set_precisionxy(::google::protobuf::int32 value) {
+  set_has_precisionxy();
+  precisionxy_ = value;
 }
 
 // -------------------------------------------------------------------
