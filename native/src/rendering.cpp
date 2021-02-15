@@ -695,11 +695,11 @@ bool contains(vector<pair<int, int>>& points, int x, int y) {
 	return countIntersections(points, x, y) % 2 == 1;
 }
 
-std::pair<int, int> fixZoomPOI(std::pair<int, int> p) {
+/*std::pair<int, int> fixZoomPOI(std::pair<int, int> p) {
 	p.first = (p.first >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
 	p.second = (p.second >> POI_ZOOM_SHIFT) << POI_ZOOM_SHIFT;
 	return p;
-}
+}*/
 
 void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
 				 RenderingContext* rc, tag_value pair, const MapDataObjectPrimitive& prim) {
@@ -773,7 +773,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	yText /= length;
 
 	if (mObj->isLabelSpecified()) {
-		calcPoint(fixZoomPOI(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY())), rc);
+		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
 		xText = rc->calcX;
 		yText = rc->calcY;
 		if (rc->calcX >= 0 && rc->calcY >= 0 && rc->calcX < rc->getWidth() && rc->calcY < rc->getHeight()) {
@@ -842,13 +842,13 @@ void drawPoint(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* c
 	float px = 0;
 	float py = 0;
 	if (mObj->isLabelSpecified()) {
-		calcPoint(fixZoomPOI(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY())), rc);
+		calcPoint(std::pair<int, int>(mObj->getLabelX(), mObj->getLabelY()), rc);
 		px = rc->calcX;
 		py = rc->calcY;
 	} else {
 		uint i = 0;
 		for (; i < length; i++) {
-			calcPoint(fixZoomPOI(mObj->points.at(i)), rc);
+			calcPoint(mObj->points.at(i), rc);
 			px += rc->calcX;
 			py += rc->calcY;
 		}
