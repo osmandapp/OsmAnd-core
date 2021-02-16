@@ -2048,7 +2048,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 }
 
 std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
-	if (this->getPreferredLocale() == "en" || this->getTransliterate()) {
+	if (this->getTransliterate()) {
 		jstring n = this->env->NewStringUTF(name.c_str());
 		jstring translate = (jstring)this->env->CallStaticObjectMethod(jclass_TransliterationHelper,
 																	   jmethod_TransliterationHelper_transliterate, n);
