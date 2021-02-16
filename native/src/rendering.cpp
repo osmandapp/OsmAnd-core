@@ -250,7 +250,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 		}
 		//}
 		if (name.length() > 0) {
-			if (missingName) {
+			if (missingName && rc->getTransliterate()) {
 				name = rc->getTranslatedString(name);
 			}
 			// name = rc->getReshapedString(name);
