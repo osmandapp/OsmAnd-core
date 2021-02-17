@@ -539,7 +539,7 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 		// more like UT
 		if (diff > 2 * M_PI / 3) {
 			totalPenalty += sharpTurn;
-		} else if (diff > M_PI / 3) {
+		} else if (diff > M_PI / 2.1) {
 			totalPenalty += slightTurn;
 		}
 	}
