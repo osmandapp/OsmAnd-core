@@ -526,6 +526,10 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 	// 	}
 	// }
 
+	if (shortestRoute) {
+		return totalPenalty;
+	}
+
 	if (segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;
 		if (rt > 0) {
@@ -539,7 +543,7 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment>& segment, int s
 		// more like UT
 		if (diff > 2 * M_PI / 3) {
 			totalPenalty += sharpTurn;
-		} else if (diff > M_PI / 2.1) {
+		} else if (diff > M_PI / 3) {
 			totalPenalty += slightTurn;
 		}
 	}
