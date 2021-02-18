@@ -5833,6 +5833,13 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& textvalues() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_textvalues();
 
+  // optional int32 precisionXY = 16;
+  inline bool has_precisionxy() const;
+  inline void clear_precisionxy();
+  static const int kPrecisionXYFieldNumber = 16;
+  inline ::google::protobuf::int32 precisionxy() const;
+  inline void set_precisionxy(::google::protobuf::int32 value);
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBoxDataAtom)
  private:
   inline void set_has_dx();
@@ -5853,6 +5860,8 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline void clear_has_phone();
   inline void set_has_note();
   inline void clear_has_note();
+  inline void set_has_precisionxy();
+  inline void clear_has_precisionxy();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -5869,9 +5878,10 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   ::std::string* note_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > textcategories_;
   ::google::protobuf::RepeatedPtrField< ::std::string> textvalues_;
+  ::google::protobuf::int32 precisionxy_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -14494,6 +14504,28 @@ OsmAndPoiBoxDataAtom::textvalues() const {
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 OsmAndPoiBoxDataAtom::mutable_textvalues() {
   return &textvalues_;
+}
+
+// optional int32 precisionXY = 16;
+inline bool OsmAndPoiBoxDataAtom::has_precisionxy() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void OsmAndPoiBoxDataAtom::set_has_precisionxy() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void OsmAndPoiBoxDataAtom::clear_has_precisionxy() {
+  _has_bits_[0] &= ~0x00002000u;
+}
+inline void OsmAndPoiBoxDataAtom::clear_precisionxy() {
+  precisionxy_ = 0;
+  clear_has_precisionxy();
+}
+inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::precisionxy() const {
+  return precisionxy_;
+}
+inline void OsmAndPoiBoxDataAtom::set_precisionxy(::google::protobuf::int32 value) {
+  set_has_precisionxy();
+  precisionxy_ = value;
 }
 
 // -------------------------------------------------------------------
