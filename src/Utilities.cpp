@@ -3,6 +3,7 @@
 #include <cassert>
 #include <limits>
 #include <cmath>
+#include <stdexcept>
 
 #include "QtExtensions.h"
 #include <QtNumeric>
@@ -709,12 +710,16 @@ OsmAnd::PointD OsmAnd::Utilities::getTileEllipsoidNumberAndOffsetY(int zoom, dou
 }
 
 std::pair<int, int> OsmAnd::Utilities::calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
-                                                                              int xBase, int yBase, bool ignoreNotEnoughPrecision) {
+                                                                              int xBase, int yBase, bool ignoreNotEnoughPrecision)
+{
     int finalX = xBase;
     int finalY = yBase;
-    for (int zoom = bazeZoom; zoom < finalZoom; zoom++) {
-        if (!ignoreNotEnoughPrecision) {
-            assert(precisionXY > 1);
+    int precisionCalc = precisionXY;
+    for (int zoom = bazeZoom; zoom < finalZoom; zoom++)
+    {
+        if (precisionXY <= 1 && precisionCalc > 0 && !ignoreNotEnoughPrecision)
+        {
+            throw std::invalid_argument( "Not enough bits to retrieve zoom approximation" );
         }
         finalY = finalY * 2 + (precisionXY & 1);
         finalX = finalX * 2 + ((precisionXY & 2) >> 1);

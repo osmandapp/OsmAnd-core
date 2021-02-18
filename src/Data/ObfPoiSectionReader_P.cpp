@@ -23,9 +23,9 @@
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 const int BASE_POI_SHIFT = 7;
-const int PRECISED_POI_SHIFT = 5;
+const int FINAL_POI_SHIFT = 5;
 const int BASE_POI_ZOOM = 31 - BASE_POI_SHIFT;
-const int PRECISED_POI_ZOOM = 31 - PRECISED_POI_SHIFT;
+const int FINAL_POI_ZOOM = 31 - FINAL_POI_SHIFT;
 
 OsmAnd::ObfPoiSectionReader_P::ObfPoiSectionReader_P()
 {
@@ -874,7 +874,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QHash<int, QVariant> stringOrDataValues;
     auto categoriesFilterChecked = false;
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
-    uint32_t precision = 0;
+    uint32_t precisionXY = 0;
 
     for (;;)
     {
@@ -948,12 +948,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                 amenity->nativeName = qMove(nativeName);
                 amenity->localizedNames = qMove(localizedNames);
-                if (precision > 0) {
+                if (precisionXY > 0)
+                {
                     int xBase = position31.x >> BASE_POI_SHIFT;
                     int yBase = position31.y >> BASE_POI_SHIFT;
-                    std::pair<int, int> precisedXY = OsmAnd::Utilities::calculateFinalXYFromBaseAndPrecisionXY(BASE_POI_ZOOM, PRECISED_POI_ZOOM, precision, xBase, yBase, true);
-                    position31.x = precisedXY.first << PRECISED_POI_SHIFT;
-                    position31.y = precisedXY.second << PRECISED_POI_SHIFT;
+                    std::pair<int, int> precisedXY = OsmAnd::Utilities::calculateFinalXYFromBaseAndPrecisionXY(BASE_POI_ZOOM, FINAL_POI_ZOOM, precisionXY, xBase, yBase, true);
+                    position31.x = precisedXY.first << FINAL_POI_SHIFT;
+                    position31.y = precisedXY.second << FINAL_POI_SHIFT;
                 }
                 amenity->position31 = position31;
                 amenity->categories = qMove(categories);
@@ -1120,7 +1121,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kPrecisionXYFieldNumber:
             {
-                cis->ReadVarint32(&precision);
+                cis->ReadVarint32(&precisionXY);
                 break;
             }
             default:
