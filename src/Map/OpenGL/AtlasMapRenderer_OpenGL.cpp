@@ -523,7 +523,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeOnScreenInPixels() cons
     InternalState internalState;
     bool ok = updateInternalState(internalState, getState(), *getConfiguration());
 
-    return internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    return ok ? internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor : 0.0;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
@@ -679,7 +679,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
         internalState.targetTileId.y,
         1);
 
-    return metersPerTile;
+    return ok ? metersPerTile : 0.0;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() const
@@ -696,7 +696,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() co
         internalState.targetTileId.y,
         tileSizeOnScreenInPixels);
 
-    return metersPerPixel;
+    return ok ? metersPerPixel : 0.0;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const
