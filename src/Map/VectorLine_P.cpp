@@ -60,6 +60,23 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
     _hasUnappliedChanges = true;
 }
 
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::getFillColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _fillColor;
+}
+
+void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _fillColor = color;
+    
+    _hasUnappliedPrimitiveChanges = true;
+    _hasUnappliedChanges = true;
+}
+
 bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -255,6 +272,160 @@ float OsmAnd::VectorLine_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
+QVector<OsmAnd::PointD> OsmAnd::VectorLine_P::splitLine(std::vector<PointD>& points, std::vector<bool>& include) const
+{
+    
+    uint intervalLength = 500;
+    QVector<PointD> output;
+    QVector<PointD> simplifiedPoints;
+    for (auto pointIdx = 0u; pointIdx < points.size(); pointIdx++)
+    {
+        if(!include[pointIdx])
+        {
+            continue;
+        }
+        simplifiedPoints.push_back(points[pointIdx]);
+    }
+    
+    PointD end = simplifiedPoints[simplifiedPoints.count() - 1];
+    PointD start = simplifiedPoints[0];
+    
+    
+    PointD prevPnt = start;
+    uint residualSegLength = 0;
+    for (uint i = 1; i < simplifiedPoints.count(); i++)
+    {
+        PointD pnt = simplifiedPoints[i];
+        // for each line of the dataframe calculate segment length
+        double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
+        
+        // create a vector of direction for the segment
+        QPair<double, double> v(pnt.x - prevPnt.x, pnt.y - prevPnt.y);
+        
+        // unit length
+        QPair<double, double> u(v.first / sqrt(pow(v.first, 2) + pow(v.second, 2)), v.second / sqrt(pow(v.first, 2) + pow(v.second, 2)));
+        
+        // calculate number of segment the segment is split into
+        uint numSeg = floor((segLength - residualSegLength)  /  intervalLength);
+        
+        // skip if next vertex is before interval_length
+        if(numSeg >= 0)
+        {
+            // add interpolated segments
+            for (uint times = 0; times < numSeg; times++)
+            {
+                output.append(PointD(prevPnt.x + u.first * residualSegLength + u.first * intervalLength * times,
+                                     prevPnt.y + u.second * residualSegLength + u.second * intervalLength * times));
+            }
+            output.append(pnt);
+        }
+        else
+        {
+            output.append(pnt);
+            prevPnt = pnt;
+            residualSegLength -= segLength;
+            continue;
+            
+        }
+
+        prevPnt = pnt;
+        // calculate residual segment length
+        residualSegLength = intervalLength - ((segLength - residualSegLength) - (numSeg  *  intervalLength));
+    }
+    output.append(end);
+    return output;
+}
+
+//resample_polyline  = function(polyline, interval_length = 20, add_original_points = TRUE, add_final_point = FALSE) {
+//
+//  # The function splits a polyline into segments of a given length.
+//  # polyline: a spatial polyline data frame
+//  # interval_length: the length of the segments to split the lines into, in units of the polyline coordinates
+//  # add_original_points: whether or not the original points of the polyline should be added to the resulting line
+//  #                      if set FALSE, the resulting line will be shorter
+//  # add_final_point: whether or not the final point of the polyline should be added to the resulting line
+//
+//  # transform input polyline
+//  linedf = data.frame(
+//    x  = polyline$x[1:nrow(polyline)-1],
+//    y  = polyline$y[1:nrow(polyline)-1],
+//    x2 = polyline$x[2:nrow(polyline)],
+//    y2 = polyline$y[2:nrow(polyline)]
+//  )
+//
+//  # prepare output
+//  df = data.frame(
+//    x  = numeric(),
+//    y  = numeric()
+//  )
+//
+//  residual_seg_length = 0
+//  for (i in 1:nrow(linedf)) {
+//
+//    # for each line of the dataframe calculate segment length
+//    v_seg      = linedf[i, ]
+//    seg_length = sqrt((v_seg$x - v_seg$x2) ^ 2 + (v_seg$y - v_seg$y2) ^ 2)
+//
+//    # create a vector of direction for the segment
+//    v = c(v_seg$x2 - v_seg$x, v_seg$y2 - v_seg$y)
+//
+//    # unit length
+//    u = c(v[1]  /  sqrt(v[1]  ^  2 + v[2]  ^  2), v[2]  /  sqrt(v[1]  ^  2 + v[2]  ^ 2))
+//
+//    # calculate number of segment the segment is split into
+//    num_seg = floor((seg_length - residual_seg_length)  /  interval_length)
+//
+//    # skip if next vertex is before interval_length
+//    if(num_seg >= 0) {
+//
+//      # add interpolated segments
+//      for (i in 0:(num_seg)) {
+//        df[nrow(df) + 1,] = c(
+//          v_seg$x  +  u[1] * residual_seg_length  +  u[1]  *  interval_length  *  i ,
+//          v_seg$y  +  u[2] * residual_seg_length  +  u[2]  *  interval_length  *  i
+//        )
+//      }
+//
+//      # add original point (optional)
+//      if(add_original_points){
+//        df[nrow(df) + 1,] = c(
+//          v_seg$x2,
+//          v_seg$y2
+//        )
+//      }
+//
+//    } else {
+//
+//      # add original point (optional)
+//      if(add_original_points){
+//        df[nrow(df) + 1,] = c(
+//          v_seg$x2,
+//          v_seg$y2
+//        )
+//      }
+//
+//      residual_seg_length = residual_seg_length - seg_length
+//      next()
+//
+//    }
+//
+//    # calculate residual segment length
+//    residual_seg_length = interval_length - ((seg_length - residual_seg_length) - (num_seg  *  interval_length))
+//
+//  }
+//
+//  # add final point (optional)
+//  if(add_final_point){
+//    df = rbind(df, data.frame(
+//      x = tail(polyline$x, n=1),
+//      y = tail(polyline$y, n=1)
+//    ))
+//  }
+//
+//  return(df)
+//
+//}
+
 std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
 {
     int order = owner->baseOrder;
@@ -286,25 +457,29 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     std::vector<bool> include(pointsCount, false);
     include[0] = true;
     int pointsSimpleCount = simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1;
+    pointsSimpleCount *= 2;
+    
+    const auto segments = splitLine(pointsToPlot, include);
+    uint splitPointsCount = segments.count();
     
     // generate base points for connecting lines with triangles
-    std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
+    std::vector<OsmAnd::PointD> b1(splitPointsCount), b2(splitPointsCount), e1(splitPointsCount), e2(splitPointsCount), original(splitPointsCount);
     double ntan = 0, nx1 = 0, ny1 = 0;
     uint prevPointIdx = 0;
     uint insertIdx = 0;
-    for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
+    for (auto pointIdx = 0u; pointIdx < splitPointsCount; pointIdx++)
     {
-        if(!include[pointIdx])
-        {
-            continue;
-        }
-        PointD pnt = pointsToPlot[pointIdx];
-        PointD prevPnt = pointsToPlot[prevPointIdx];
+//        if(!include[pointIdx])
+//        {
+//            continue;
+//        }
+        PointD pnt = segments[pointIdx];
+        PointD prevPnt = segments[prevPointIdx];
         original[insertIdx]=pnt;
         if(pointIdx > 0)
         {
-            ntan = atan2(_points[pointIdx].x - _points[prevPointIdx].x,
-                            _points[pointIdx].y - _points[prevPointIdx].y);
+            ntan = atan2(segments[pointIdx].x - segments[prevPointIdx].x,
+                            segments[pointIdx].y - segments[prevPointIdx].y);
             nx1 = radius * sin(M_PI_2 - ntan) ;
             ny1 = radius * cos(M_PI_2 - ntan) ;
             e1[insertIdx] = b1[insertIdx] = OsmAnd::PointD(pnt.x - nx1, pnt.y + ny1);
@@ -331,17 +506,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     // generate triangles
     for (auto pointIdx = 0u; pointIdx < pointsSimpleCount; pointIdx++)
     {
-        
+        FColorARGB fillColor = _fillColor;
+//        fillColor.a = pointIdx % 1 == 0 ? 1.0 : 0.0;
         if (pointIdx == 0)
         {
             pVertex->positionXY[0] = e2[pointIdx].x;
             pVertex->positionXY[1] = e2[pointIdx].y;
-            pVertex->color = owner->fillColor;
+            pVertex->color = fillColor;
             vertices.push_back(vertex);
             
             pVertex->positionXY[0] = e1[pointIdx].x;
             pVertex->positionXY[1] = e1[pointIdx].y;
-            pVertex->color = owner->fillColor;
+            pVertex->color = fillColor;
             vertices.push_back(vertex);
             
             direction = true;
@@ -351,18 +527,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             if(!direction) {
                 pVertex->positionXY[0] = b1[pointIdx].x;
                 pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = owner->fillColor;
+                pVertex->color = fillColor;
                 vertices.push_back(vertex);
             }
             
             pVertex->positionXY[0] = b2[pointIdx].x;
             pVertex->positionXY[1] = b2[pointIdx].y;
-            pVertex->color = owner->fillColor;
+            pVertex->color = fillColor;
             vertices.push_back(vertex);
             if(direction) {
                 pVertex->positionXY[0] = b1[pointIdx].x;
                 pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = owner->fillColor;
+                pVertex->color = fillColor;
                 vertices.push_back(vertex);
             }
         }
@@ -395,20 +571,20 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 if(phase % 3 == 0) {
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
+                    pVertex->color = fillColor;
                     vertices.push_back(vertex);
                     phase++;
                 }
                 
                 pVertex->positionXY[0] = bp[pointIdx].x;
                 pVertex->positionXY[1] = bp[pointIdx].y;
-                pVertex->color = owner->fillColor;
+                pVertex->color = fillColor;
                 vertices.push_back(vertex);
                 phase++;
                 if(phase % 3 == 0) {
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
+                    pVertex->color = fillColor;
                     vertices.push_back(vertex);
                     phase++;
                 }
@@ -424,7 +600,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                     (ry-original[pointIdx].y)*(ry-original[pointIdx].y);
                         pVertex->positionXY[0] = original[pointIdx].x + radius/sqrt(ld)*(rx-original[pointIdx].x);
                         pVertex->positionXY[1] = original[pointIdx].y + radius/sqrt(ld)*(ry-original[pointIdx].y);
-                        pVertex->color = owner->fillColor;
+                        pVertex->color = fillColor;
                         vertices.push_back(vertex);
                         phase++;
                         if(phase % 3 == 0) {
@@ -433,7 +609,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                             
                             pVertex->positionXY[0] = lp.x;
                             pVertex->positionXY[1] = lp.y;
-                            pVertex->color = owner->fillColor;
+                            pVertex->color = fillColor;
                             vertices.push_back(vertex);
                             phase++;
                         }
@@ -441,10 +617,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     }
                 }
                 
-                
                 pVertex->positionXY[0] = ep[pointIdx].x;
                 pVertex->positionXY[1] = ep[pointIdx].y;
-                pVertex->color = owner->fillColor;
+                pVertex->color = fillColor;
                 vertices.push_back(vertex);
                 phase++;
                 if(phase % 3 == 0) {
@@ -453,7 +628,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
+                    pVertex->color = fillColor;
                     vertices.push_back(vertex);
                     phase++;
                 }
@@ -463,8 +638,6 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     direction = !direction;
                 }
             }
-
-            
         }
     }
     

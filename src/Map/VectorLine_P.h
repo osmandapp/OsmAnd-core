@@ -29,6 +29,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
+        QVector<PointD> splitLine(std::vector<PointD>& points, std::vector<bool>& include) const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -39,6 +40,7 @@ namespace OsmAnd
         bool _isHidden;
 
         QVector<PointI> _points;
+        FColorARGB _fillColor;
 
         double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
@@ -81,6 +83,9 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        FColorARGB getFillColor() const;
+        void setFillColor(const FColorARGB color);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

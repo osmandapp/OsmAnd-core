@@ -159,9 +159,9 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _lineId,
                                                           _baseOrder,
                                                           _lineWidth,
-                                                          _fillColor,
                                                           _pathIcon,
                                                           _pathIconStep));
+    line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
     line->setPoints(_points);
     line->applyChanges();

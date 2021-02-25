@@ -5,14 +5,12 @@ OsmAnd::VectorLine::VectorLine(
     const int lineId_,
     const int baseOrder_,
     const double lineWidth_,
-    const FColorARGB fillColor_,
     const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
     const float pathIconStep_/* = -1*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
     , lineWidth(lineWidth_)
-    , fillColor(fillColor_)
     , pathIcon(pathIcon_)
     , pathIconStep(pathIconStep_)
 {
@@ -40,6 +38,11 @@ QVector<OsmAnd::PointI> OsmAnd::VectorLine::getPoints() const
 void OsmAnd::VectorLine::setPoints(const QVector<OsmAnd::PointI>& points)
 {
     _p->setPoints(points);    
+}
+
+void OsmAnd::VectorLine::setFillColor(const FColorARGB color)
+{
+    _p->setFillColor(color);
 }
 
 bool OsmAnd::VectorLine::hasUnappliedChanges() const
