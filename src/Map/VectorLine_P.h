@@ -29,7 +29,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
-        QVector<PointD> splitLine(std::vector<PointD>& points, std::vector<bool>& include) const;
+        QVector<PointI> splitLine(const QVector<PointI>& points) const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
