@@ -253,6 +253,38 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
     }
 }
 
+void SHARED_PTR<RouteSegmentResult> filterMinorStops(SHARED_PTR<RouteSegmentResult>& rr) {
+	stops = std::vector<std::int> stops;
+	bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
+	int next;
+
+	for (int j = rr->getStartPointIndex(); j != rr->getEndPointIndex(); j = next) {
+		next = plus ? j + 1 : j - 1;
+		auto pointTypes = rr->object->pointTypes(i);
+
+		if (pointTypes != null) {
+			for (int j = 0; j < pointTypes.length; j++) {
+				if (pointTypes[j] == rr->object->region->stopMinor) {
+					stops.add(i);
+				}
+			}
+		}
+	}
+
+	for (int stop : stops) {
+		std::vector<SHARED_PTR<RouteSegmentResult>> attachedRoutes = rr->getAttachedRoutes(stop);
+		for (SHARED_PTR<RouteSegmentResult> attached : attachedRoutes) {
+			int attStopPriority = highwaySpeakPriority(attached->object.getHighway());
+			int segStopPriority = highwaySpeakPriority(rr->object.getHighway());
+			if (segStopPriority < attStopPriority) {
+				rr->object.removePointType(stop, rr->object.region.stopSign);
+				break;
+			}
+		}
+	}
+	return rr;
+}
+
 void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     // for Naismith
     bool usePedestrianHeight = ctx->config->router->getProfile() == GeneralRouterProfile::PEDESTRIAN && ctx->config->router->heightObstacles;
@@ -1640,14 +1672,17 @@ void prepareTurnResults(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
     addTurnInfoDescriptions(result);
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    combineWayPointsForAreaRouting(ctx, result);
-    validateAllPointsConnected(result);
-    splitRoadsAndAttachRoadSegments(ctx, result);
-    calculateTimeSpeed(ctx, result);
-    
-    prepareTurnResults(ctx, result);
-    return result;
+vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx,
+													  vector<SHARED_PTR<RouteSegmentResult> >& result) {
+	combineWayPointsForAreaRouting(ctx, result);
+	validateAllPointsConnected(result);
+	splitRoadsAndAttachRoadSegments(ctx, result);
+	for (int i = 0; i < result.size(); i++) {
+		filterMinorStops(result.get(i));
+	}
+	calculateTimeSpeed(ctx, result);
+	prepareTurnResults(ctx, result);
+	return result;
 }
 
 vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, const SHARED_PTR<FinalRouteSegment>& finalSegment) {

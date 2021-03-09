@@ -106,6 +106,8 @@ void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::stri
 		destinationRefTypeRule = id;
 	} else if (tag == "highway" && val == "traffic_signals") {
 		trafficSignals = id;
+	} else if (tag == "stop" && val == "minor") {
+		stopMinor = id;
 	} else if (tag == "highway" && val == "stop") {
 		stopSign = id;
 	} else if (tag == "highway" && val == "give_way") {
