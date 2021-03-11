@@ -8,8 +8,11 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 	const PointI position31_,
 	const QString& title_,
     const QString& description_,
+    const QString& address_,
 	const QString& group_,
-	const ColorRGB color_)
+    const QString& icon_,
+    const QString& background_,
+    const ColorRGB color_)
 	: _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::Point31)
     , position31(position31_)
@@ -27,7 +30,10 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const LatLon latLon_,
     const QString& title_,
     const QString& description_,
+    const QString& address_,
     const QString& group_,
+    const QString& icon_,
+    const QString& background_,
     const ColorRGB color_)
     : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::LatLon)
@@ -107,6 +113,16 @@ void OsmAnd::FavoriteLocation::setDescription(const QString& newDescription)
     _p->setDescription(newDescription);
 }
 
+QString OsmAnd::FavoriteLocation::getAddress() const
+{
+    return _p->getAddress();
+}
+
+void OsmAnd::FavoriteLocation::setAddress(const QString& newAddress)
+{
+    _p->setAddress(newAddress);
+}
+
 QString OsmAnd::FavoriteLocation::getGroup() const
 {
     return _p->getGroup();
@@ -115,6 +131,27 @@ QString OsmAnd::FavoriteLocation::getGroup() const
 void OsmAnd::FavoriteLocation::setGroup(const QString& newGroup)
 {
     _p->setGroup(newGroup);
+}
+
+QString OsmAnd::FavoriteLocation::getIcon() const
+{
+    return _p->getIcon();
+}
+
+void OsmAnd::FavoriteLocation::setIcon(const QString& newIcon)
+{
+    _p->setIcon(newIcon);
+}
+
+QString OsmAnd::FavoriteLocation::getBackground() const
+{
+    return _p->getBackground();
+}
+
+void OsmAnd::FavoriteLocation::setBackground(const QString& newBackground)
+{
+    
+    _p->setBackground(newBackground);
 }
 
 OsmAnd::ColorRGB OsmAnd::FavoriteLocation::getColor() const

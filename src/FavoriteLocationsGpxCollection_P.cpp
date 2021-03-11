@@ -96,6 +96,21 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         {
             // <extensions>
             writer.writeStartElement(QLatin1String("extensions"));
+            
+            // <address>
+            const auto address = item->getAddress();
+            if (!address.isEmpty())
+                writer.writeTextElement(QLatin1String("address"), address);
+            
+            // <icon>
+            const auto icon = item->getIcon();
+            if (!icon.isEmpty())
+                writer.writeTextElement(QLatin1String("icon"), icon);
+            
+            // <background>
+            const auto background = item->getBackground();
+            if (!background.isEmpty())
+                writer.writeTextElement(QLatin1String("background"), background);
 
             // <color>
             const auto colorValue = color.toString();
@@ -174,6 +189,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem->setDescription(xmlReader.readElementText());
             }
+            else if (tagName == QLatin1String("address"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <address>");
+                    return false;
+                }
+       
+                newItem->setAddress(xmlReader.readElementText());
+            }
             else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
             {
                 if (!newItem)
@@ -185,6 +210,26 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 const auto& group = xmlReader.readElementText();
                 if (!group.isEmpty())
                     newItem->setGroup(group);
+            }
+            else if (tagName == QLatin1String("icon"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <icon>");
+                    return false;
+                }
+       
+                newItem->setIcon(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("background"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <background>");
+                    return false;
+                }
+       
+                newItem->setBackground(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("color"))
             {

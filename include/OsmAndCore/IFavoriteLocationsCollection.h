@@ -34,13 +34,19 @@ namespace OsmAnd
             const PointI position31,
             const QString& title = QString::null,
             const QString& description = QString::null,
+            const QString& address = QString::null,
             const QString& group = QString::null,
+            const QString& icon = QString::null,
+            const QString& background = QString::null,
             const ColorRGB color = ColorRGB()) = 0;
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
             const QString& title = QString::null,
             const QString& description = QString::null,
+            const QString& address = QString::null,
             const QString& group = QString::null,
+            const QString& icon = QString::null,
+            const QString& background = QString::null,
             const ColorRGB color = ColorRGB()) = 0;
         
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other) = 0;

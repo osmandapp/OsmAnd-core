@@ -22,20 +22,26 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const PointI position31,
     const QString& title /*= QString::null*/,
     const QString& description /*= QString::null*/,
+    const QString& address /*= QString::null*/,
     const QString& group /*= QString::null*/,
+    const QString& icon /*= QString::null*/,
+    const QString& background /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(position31, title, description, group, color);
+    return _p->createFavoriteLocation(position31, title, description, address, group, icon, background, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const LatLon latLon,
     const QString& title /*= QString::null*/,
     const QString& description /*= QString::null*/,
+    const QString& address /*= QString::null*/,
     const QString& group /*= QString::null*/,
+    const QString& icon /*= QString::null*/,
+    const QString& background /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(latLon, title, description, group, color);
+    return _p->createFavoriteLocation(latLon, title, description, address, group, icon, background, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other)
@@ -46,7 +52,10 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
             other->getPosition31(),
             other->getTitle(),
             other->getDescription(),
+            other->getAddress(),
             other->getGroup(),
+            other->getIcon(),
+            other->getBackground(),
             other->getColor());
     }
     else //if (other->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
@@ -55,7 +64,10 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
             other->getLatLon(),
             other->getTitle(),
             other->getDescription(),
+            other->getAddress(),
             other->getGroup(),
+            other->getIcon(),
+            other->getBackground(),
             other->getColor());
     }
 }

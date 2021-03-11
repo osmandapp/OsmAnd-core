@@ -31,7 +31,10 @@ namespace OsmAnd
             const PointI position31,
             const QString& title,
             const QString& description,
+            const QString& address,
             const QString& group,
+            const QString& icon,
+            const QString& background,
             const ColorRGB color);
 
         FavoriteLocation(
@@ -39,7 +42,10 @@ namespace OsmAnd
             const LatLon latLon,
             const QString& title,
             const QString& description,
+            const QString& address,
             const QString& group,
+            const QString& icon,
+            const QString& background,
             const ColorRGB color);
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
@@ -66,10 +72,19 @@ namespace OsmAnd
 
         virtual QString getDescription() const;
         virtual void setDescription(const QString& newDescription);
+        
+        virtual QString getAddress() const;
+        virtual void setAddress(const QString& newAddress);
 
         virtual QString getGroup() const;
         virtual void setGroup(const QString& newGroup);
 
+        virtual QString getIcon() const;
+        virtual void setIcon(const QString& newIcon);
+        
+        virtual QString getBackground() const;
+        virtual void setBackground(const QString& newBackground);
+        
         virtual ColorRGB getColor() const;
         virtual void setColor(const ColorRGB newColor);
 

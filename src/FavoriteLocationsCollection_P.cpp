@@ -29,12 +29,15 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const PointI position,
     const QString& title,
     const QString& description,
+    const QString& address,
     const QString& group,
+    const QString& icon,
+    const QString& background,
     const ColorRGB color)
 {
 	QWriteLocker scopedLocker(&_collectionLock);
 
-	std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, title, description, group, color));
+	std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, title, description, address, group, icon, background, color));
 	_collection.insert(newItem.get(), newItem);
 
 	notifyCollectionChanged();
@@ -46,12 +49,15 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const LatLon latLon,
     const QString& title,
     const QString& description,
+    const QString& address,
     const QString& group,
+    const QString& icon,
+    const QString& background,
     const ColorRGB color)
 {
     QWriteLocker scopedLocker(&_collectionLock);
 
-    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, title, description, group, color));
+    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, title, description, address, group, icon, background, color));
     _collection.insert(newItem.get(), newItem);
 
     notifyCollectionChanged();
@@ -164,7 +170,10 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getPosition31(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -175,7 +184,10 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getLatLon(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -198,7 +210,10 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getPosition31(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -209,7 +224,10 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getLatLon(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -231,7 +249,10 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getPosition31(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -242,7 +263,10 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getLatLon(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -264,7 +288,10 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getPosition31(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }
@@ -275,7 +302,10 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getLatLon(),
                 item->getTitle(),
                 item->getDescription(),
+                item->getAddress(),
                 item->getGroup(),
+                item->getIcon(),
+                item->getBackground(),
                 item->getColor()));
             _collection.insert(newItem.get(), newItem);
         }

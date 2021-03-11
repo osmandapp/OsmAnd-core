@@ -65,6 +65,23 @@ void OsmAnd::FavoriteLocation_P::setDescription(const QString& newDescription)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QString OsmAnd::FavoriteLocation_P::getAddress() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _address;
+}
+
+void OsmAnd::FavoriteLocation_P::setAddress(const QString& newAddress)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _address = newAddress;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
 QString OsmAnd::FavoriteLocation_P::getGroup() const
 {
 	QReadLocker scopedLocker(&_lock);
@@ -97,6 +114,40 @@ void OsmAnd::FavoriteLocation_P::setColor(const ColorRGB newColor)
 
 	if (const auto link = _weakLink.lock())
 		link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+QString OsmAnd::FavoriteLocation_P::getIcon() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _icon;
+}
+
+void OsmAnd::FavoriteLocation_P::setIcon(const QString& newIcon)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _icon = newIcon;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+QString OsmAnd::FavoriteLocation_P::getBackground() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _background;
+}
+
+void OsmAnd::FavoriteLocation_P::setBackground(const QString& newBackground)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _background = newBackground;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 void OsmAnd::FavoriteLocation_P::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)

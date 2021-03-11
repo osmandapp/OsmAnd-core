@@ -35,7 +35,10 @@ namespace OsmAnd
         bool _isHidden;
         QString _title;
         QString _description;
+        QString _address;
         QString _group;
+        QString _icon;
+        QString _background;
         ColorRGB _color;
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
@@ -53,10 +56,19 @@ namespace OsmAnd
 
         QString getDescription() const;
         void setDescription(const QString& newDescription);
+        
+        QString getAddress() const;
+        void setAddress(const QString& newAddress);
 
         QString getGroup() const;
         void setGroup(const QString& newGroup);
 
+        QString getIcon() const;
+        void setIcon(const QString& newIcon);
+        
+        QString getBackground() const;
+        void setBackground(const QString& newBackground);
+        
         ColorRGB getColor() const;
         void setColor(const ColorRGB newColor);
 
