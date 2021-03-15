@@ -585,7 +585,7 @@ struct RouteDataObject {
 		// 14'10" 14 - inches, 10 feet
 		int i = findFirstNumberEndIndex(v);
 		if (i > 0) {
-			f += atof(v.substr(0, i).c_str());
+			f += strtod_li(v.substr(0, i));
 			string pref = v.substr(i, v.length());
 			float add = 0;
 			for (int ik = 0; ik < pref.length(); ik++) {
@@ -621,7 +621,7 @@ struct RouteDataObject {
 	//		// 14"10' not supported
 	//		int i = findFirstNumberEndIndex(v);
 	//		if (i > 0) {
-	//			double f = atof(v.substr(0, i).c_str());
+	//			double f = strtod_li(v.substr(0, i));
 	//			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
 	//				// foot to meters
 	//				f *= 0.3048;
@@ -634,7 +634,7 @@ struct RouteDataObject {
 	static double parseWeightInTon(string v, double def) {
 		int i = findFirstNumberEndIndex(v);
 		if (i > 0) {
-			double f = atof(v.substr(0, i).c_str());
+			double f = strtod_li(v.substr(0, i));
 			if (v.find("\"") != string::npos || v.find("lbs") != string::npos) {
 				// lbs -> kg -> ton
 				f = (f * 0.4535) / 1000.0;

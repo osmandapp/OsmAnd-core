@@ -80,14 +80,14 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
 	if (attributes.find(key) != attributes.end() && attributes[key] != "") {
-		return atof(attributes[key].c_str());
+		return strtod_li(attributes[key]);
 	}
 	return def;
 }
 
 float parseFloat(string value, float def) {
 	if (value != "") {
-		return atof(value.c_str());
+		return strtod_li(value);
 	}
 	return def;
 }
@@ -148,7 +148,7 @@ double parseValue(string value, string type) {
 		int i = findFirstNumberEndIndex(value);
 		if (i > 0) {
 			// could be negative
-			return atof(value.substr(0, i).c_str());
+			return strtod_li(value.substr(0, i));
 		}
 	}
 	if (vl == -1) {
