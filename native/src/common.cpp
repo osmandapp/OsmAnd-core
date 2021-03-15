@@ -227,6 +227,14 @@ double getDistance(double lat1, double lon1, double lat2, double lon2) {
 	return R * c * 1000;
 }
 
+double strtod_li(string s) {
+	std::istringstream text( s );
+	text.imbue(std::locale::classic());
+	double result;
+	text >> result;
+	return result;
+}
+
 int findFirstNumberEndIndex(string value) {
 	uint i = 0;
 	bool valid = false;
@@ -250,7 +258,7 @@ double parseSpeed(string v, double def) {
 	} else {
 		int i = findFirstNumberEndIndex(v);
 		if (i > 0) {
-			double f = atof(v.substr(0, i).c_str());
+			double f = strtod_li(v.substr(0, i));
 			f /= 3.6;  // km/h -> m/s
 			if (v.find("mph") != string::npos) {
 				f *= 1.6;

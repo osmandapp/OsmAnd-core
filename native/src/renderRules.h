@@ -112,16 +112,16 @@ public:
 			size_t colon = value.find_first_of(':');
 			if (colon != std::string::npos) {
 				if (colon > 0) {
-					return atof(value.substr(0, colon).c_str());
+					return strtod_li(value.substr(0, colon));
 				} else {
 					return 0;
 				}
 			}
-			return atof(value.c_str());
+			return strtod_li(value);
 		} else if (type == INT_TYPE) {
 			size_t colon = value.find_first_of(':');
 			if (colon != std::string::npos && colon > 0) {
-				return atof(value.substr(0, colon).c_str());
+				return strtod_li(value.substr(0, colon));
 			}
 			return 0;
 		} else {

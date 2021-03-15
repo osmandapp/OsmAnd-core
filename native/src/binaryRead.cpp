@@ -258,10 +258,10 @@ std::vector<double> RouteDataObject::calculateHeightArray() {
 		return heightDistanceArray;
 	}
 	string strEnd = getValue("osmand_ele_end");
-	int startHeight = (int)atof(strStart.c_str());
+	int startHeight = (int) atof(strStart.c_str());
 	int endHeight = startHeight;
 	if (strEnd != "") {
-		endHeight = (int)atof(strEnd.c_str());
+		endHeight = (int) atof(strEnd.c_str());
 	}
 
 	heightDistanceArray.resize(2 * getPointsLength(), 0);
@@ -279,11 +279,11 @@ std::vector<double> RouteDataObject::calculateHeightArray() {
 			} else {
 				string asc = getValue(k, "osmand_ele_asc");
 				if (asc != "") {
-					height = (prevHeight + atof(asc.c_str()));
+					height = (prevHeight + strtod_li(asc));
 				} else {
 					string desc = getValue(k, "osmand_ele_desc");
 					if (desc != "") {
-						height = (prevHeight - atof(desc.c_str()));
+						height = (prevHeight - strtod_li(desc));
 					}
 				}
 			}

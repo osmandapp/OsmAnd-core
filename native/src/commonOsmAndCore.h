@@ -307,6 +307,8 @@ double convert31YToMeters(int y1, int y2, int x);
 double convert31XToMeters(int y1, int y2, int y);
 double alignAngleDifference(double diff);
 
+double strtod_li(string v);
+
 double degreesDiff(const double a1, const double a2);
 
 int findFirstNumberEndIndex(string value);
