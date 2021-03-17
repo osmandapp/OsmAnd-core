@@ -20,7 +20,10 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
 	setTitle(title_);
     setDescription(description_);
+    setAddress(address_);
     setGroup(group_);
+    setIcon(icon_);
+    setBackground(background_);
     setColor(color_);
 	attach(containerLink_);
 }
@@ -42,7 +45,10 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
     setTitle(title_);
     setDescription(description_);
+    setAddress(address_);
     setGroup(group_);
+    setIcon(icon_);
+    setBackground(background_);
     setColor(color_);
     attach(containerLink_);
 }
