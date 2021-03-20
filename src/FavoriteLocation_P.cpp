@@ -120,7 +120,7 @@ QString OsmAnd::FavoriteLocation_P::getIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _icon;
+    return _icon.isEmpty() ? QStringLiteral("special_star") : _icon;
 }
 
 void OsmAnd::FavoriteLocation_P::setIcon(const QString& newIcon)
@@ -137,7 +137,7 @@ QString OsmAnd::FavoriteLocation_P::getBackground() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _background;
+    return _background.isEmpty() ? QStringLiteral("circle") : _background;
 }
 
 void OsmAnd::FavoriteLocation_P::setBackground(const QString& newBackground)
