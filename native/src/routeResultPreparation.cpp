@@ -476,46 +476,38 @@ int highwaySpeakPriority(const string& highway) {
     return 0;
 }
 
-void filterMinorStops(SHARED_PTR<RouteSegmentResult> seg)
-{
-    std::vector<uint32_t> stops;
-    bool plus = seg->getStartPointIndex() < seg->getEndPointIndex();
-    int next;
+void filterMinorStops(SHARED_PTR<RouteSegmentResult> seg) {
+	std::vector<uint32_t> stops;
+	bool plus = seg->getStartPointIndex() < seg->getEndPointIndex();
+	int next;
 
-    for (int i = seg->getStartPointIndex(); i != seg->getEndPointIndex(); i = next)
-    {
-        next = plus ? i + 1 : i - 1;
-        std::vector<uint32_t> pointTypes = seg->object->pointTypes[i];
-        if (pointTypes.size() > 0)
-        {
-            for (int j = 0; j < pointTypes.size(); j++)
-            {
-                if (pointTypes[j] == seg->object->region->stopMinor)
-                {
-                    stops.push_back(i);
-                }
-            }
-        }
-    }
+	for (int i = seg->getStartPointIndex(); i != seg->getEndPointIndex(); i = next) {
+		next = plus ? i + 1 : i - 1;
+		std::vector<uint32_t> pointTypes = seg->object->pointTypes[i];
+		if (pointTypes.size() > 0) {
+			for (int j = 0; j < pointTypes.size(); j++) {
+				if (pointTypes[j] == seg->object->region->stopMinor) {
+					stops.push_back(i);
+				}
+			}
+		}
+	}
 
-    for (uint32_t stop : stops)
-    {
-        std::vector<SHARED_PTR<RouteSegmentResult>> attachedRoutes = seg->getAttachedRoutes(stop);
-        std::vector<SHARED_PTR<RouteSegmentResult>>::iterator it = attachedRoutes.begin();
-        while (it != attachedRoutes.end())
-        {
-            const std::string highway = (*it)->object->getHighway();
-            const std::string segHighway = seg->object->getHighway();
-            int attStopPriority = highwaySpeakPriority(highway);
-            int segStopPriority = highwaySpeakPriority(segHighway);
-            if (segStopPriority < attStopPriority)
-            {
-                seg->object->removePointType(stop, seg->object->region->stopSign);
-                break;
-            }
-            it++;
-        }
-    }
+	for (uint32_t stop : stops) {
+		std::vector<SHARED_PTR<RouteSegmentResult>> attachedRoutes = seg->getAttachedRoutes(stop);
+		std::vector<SHARED_PTR<RouteSegmentResult>>::iterator it = attachedRoutes.begin();
+		while (it != attachedRoutes.end()) {
+			const std::string highway = (*it)->object->getHighway();
+			const std::string segHighway = seg->object->getHighway();
+			int attStopPriority = highwaySpeakPriority(highway);
+			int segStopPriority = highwaySpeakPriority(segHighway);
+			if (segStopPriority < attStopPriority) {
+				seg->object->removePointType(stop, seg->object->region->stopSign);
+				break;
+			}
+			it++;
+		}
+	}
 }
 
 int countOccurrences(const string& haystack, char needle) {
@@ -1683,15 +1675,15 @@ void prepareTurnResults(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
 }
 
 vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
-    combineWayPointsForAreaRouting(ctx, result);
-    validateAllPointsConnected(result);
-    splitRoadsAndAttachRoadSegments(ctx, result);
+	combineWayPointsForAreaRouting(ctx, result);
+	validateAllPointsConnected(result);
+	splitRoadsAndAttachRoadSegments(ctx, result);
 	for (int i = 0; i < result.size(); i++) {
 		filterMinorStops(result[i]);
 	}
-    calculateTimeSpeed(ctx, result);
+	calculateTimeSpeed(ctx, result);
 	prepareTurnResults(ctx, result);
-    return result;
+	return result;
 }
 
 vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, const SHARED_PTR<FinalRouteSegment>& finalSegment) {
