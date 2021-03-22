@@ -106,6 +106,7 @@ struct RoutingIndex : BinaryPartIndex {
 	int directionTrafficSignalsBackward = -1;
 	int trafficSignals = -1;
 	int stopSign = -1;
+	int stopMinor = -1;
 	int giveWaySign = -1;
 
 	RoutingIndex()
@@ -306,6 +307,16 @@ struct RouteDataObject {
 			}
 		}
 		return false;
+	}
+
+	void removePointType(int ind, int type) {
+		if (ind < pointTypes.size()) {
+			std::vector<uint32_t>& indArr = pointTypes[ind];
+			std::vector<uint32_t>::iterator it = std::find(indArr.begin(), indArr.end(), type);
+			if (it != indArr.end()) {
+				indArr.erase(it);
+			}
+		}
 	}
 
 	void processConditionalTags(const tm& time);

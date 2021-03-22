@@ -253,6 +253,42 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
     }
 }
 
+void SHARED_PTR<RouteSegmentResult> filterMinorStops(SHARED_PTR<RouteSegmentResult>& rr) {
+	std::vector<std::int> stops;
+	bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
+	int next;
+
+	for (int j = rr->getStartPointIndex(); j != rr->getEndPointIndex(); j = next) {
+		next = plus ? j + 1 : j - 1;
+		auto pointTypes = rr->object->pointTypes[i];
+
+		if (pointTypes != null) {
+			for (int j = 0; j < pointTypes.length; j++) {
+				if (pointTypes[j] == rr->object->region->stopMinor) {
+					stops.push_back(i);
+				}
+			}
+		}
+	}
+
+	auto stopIt = stops.begin();
+	while (stopIt != stops.end()) {
+		std::vector<SHARED_PTR<RouteSegmentResult>> attachedRoutes = rr->getAttachedRoutes(*stopIt);
+		auto routIt = attachedRoutes.begin();
+		while (routIt != attachedRoutes.end()) {
+			int attStopPriority = highwaySpeakPriority(attached->object.getHighway());
+			int segStopPriority = highwaySpeakPriority(rr->object.getHighway());
+			if (segStopPriority < attStopPriority) {
+				rr->object.removePointType(*stopIt, rr->object.region.stopSign);
+				break;
+			}
+			++routIt;
+		}
+		++stopIt;
+	}
+	return rr;
+}
+
 void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     // for Naismith
     bool usePedestrianHeight = ctx->config->router->getProfile() == GeneralRouterProfile::PEDESTRIAN && ctx->config->router->heightObstacles;
@@ -1644,9 +1680,11 @@ vector<SHARED_PTR<RouteSegmentResult> > prepareResult(RoutingContext* ctx, vecto
     combineWayPointsForAreaRouting(ctx, result);
     validateAllPointsConnected(result);
     splitRoadsAndAttachRoadSegments(ctx, result);
+	for (int i = 0; i < result.size(); i++) {
+		filterMinorStops(result[i]);
+	}
     calculateTimeSpeed(ctx, result);
-    
-    prepareTurnResults(ctx, result);
+	prepareTurnResults(ctx, result);
     return result;
 }
 
