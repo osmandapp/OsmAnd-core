@@ -31,6 +31,40 @@ void OsmAnd::FavoriteLocation_P::setIsHidden(const bool isHidden)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QString OsmAnd::FavoriteLocation_P::getElevation() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _elevation;
+}
+
+void OsmAnd::FavoriteLocation_P::setElevation(const QString& newElevation)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _elevation = newElevation;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+QString OsmAnd::FavoriteLocation_P::getTime() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _time;
+}
+
+void OsmAnd::FavoriteLocation_P::setTime(const QString& newTime)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _time = newTime;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
 QString OsmAnd::FavoriteLocation_P::getTitle() const
 {
 	QReadLocker scopedLocker(&_lock);

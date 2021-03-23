@@ -76,6 +76,12 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 12));
         writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 12));
 
+        // <ele>
+        writer.writeTextElement(QLatin1String("ele"), item->getElevation());
+        
+        // <time>
+        writer.writeTextElement(QLatin1String("time"), item->getTime());
+        
         // <name>
         writer.writeTextElement(QLatin1String("name"), item->getTitle());
 
@@ -170,6 +176,26 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 }
 
                 newItem.reset(new FavoriteLocation(LatLon(lat, lon)));
+            }
+            else if (tagName == QLatin1String("ele"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <ele>");
+                    return false;
+                }
+       
+                newItem->setElevation(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("time"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <time>");
+                    return false;
+                }
+       
+                newItem->setTime(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("name"))
             {
