@@ -501,8 +501,8 @@ void filterMinorStops(SHARED_PTR<RouteSegmentResult> seg) {
 			const std::string segHighway = seg->object->getHighway();
 			int attStopPriority = highwaySpeakPriority(highway);
 			int segStopPriority = highwaySpeakPriority(segHighway);
-			if (segStopPriority < attStopPriority) {
-				seg->object->removePointType(stop, seg->object->region->stopSign);
+			if (segStopPriority < attStopPriority && seg->object->region->stopSign != -1) {
+				seg->object->removePointType(stop, (uint32_t)seg->object->region->stopSign);
 				break;
 			}
 			it++;

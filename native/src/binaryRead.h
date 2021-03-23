@@ -309,7 +309,7 @@ struct RouteDataObject {
 		return false;
 	}
 
-	void removePointType(int ind, int type) {
+	void removePointType(uint32_t ind, uint32_t type) {
 		if (ind < pointTypes.size()) {
 			std::vector<uint32_t>& indArr = pointTypes[ind];
 			std::vector<uint32_t>::iterator it = std::find(indArr.begin(), indArr.end(), type);
