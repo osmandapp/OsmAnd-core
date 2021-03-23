@@ -872,7 +872,8 @@ SHARED_PTR<TurnType> getTurnInfo(vector<SHARED_PTR<RouteSegmentResult> >& result
 		if (UNMATCHED_HIGHWAY_TYPE == rr->object->getHighway()) {
 			bearingDist = DIST_BEARING_DETECT_UNMATCHED;
 		}
-		double mpi = degreesDiff(prev->getBearingEnd(prev->getEndPointIndex(), bearingDist), rr->getBearingBegin(rr->getStartPointIndex(), bearingDist));
+		double mpi = degreesDiff(prev->getBearingEnd(prev->getEndPointIndex(),std::min(prev->distance,bearingDist)),
+		 rr->getBearingBegin(rr->getStartPointIndex(),std::min(rr->distance, bearingDist)));
 		if (mpi >= TURN_DEGREE_MIN) {
 			if (mpi < TURN_DEGREE_MIN) {
 				// Slight turn detection here causes many false positives where drivers would expect a "normal" TL. Best use limit-angle=TURN_DEGREE_MIN, this reduces TSL to the turn-lanes cases.

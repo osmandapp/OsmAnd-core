@@ -96,11 +96,11 @@ struct RouteSegmentResult {
 	}
 
 	inline float getBearingBegin() {
-		return getBearingBegin(startPointIndex, DIST_BEARING_DETECT);
+		return getBearingBegin(startPointIndex, distance > 0 && distance < DIST_BEARING_DETECT ? distance : DIST_BEARING_DETECT);
 	}
 
 	inline float getBearingEnd() {
-		return getBearingEnd(endPointIndex, DIST_BEARING_DETECT);
+		return getBearingEnd(endPointIndex, distance > 0 && distance < DIST_BEARING_DETECT ? distance : DIST_BEARING_DETECT);
 	}
 
 	inline float getBearingBegin(int point, float dist) {
