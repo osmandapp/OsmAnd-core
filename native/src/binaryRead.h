@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <algorithm>
 #if defined(_WIN32)
 #include <io.h>
 #else
