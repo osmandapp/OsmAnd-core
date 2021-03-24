@@ -29,17 +29,27 @@ namespace OsmAnd
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const PointI position31,
+            const QString& elevation,
+            const QString& time,
             const QString& title,
             const QString& description,
+            const QString& address,
             const QString& group,
+            const QString& icon,
+            const QString& background,
             const ColorRGB color);
 
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const LatLon latLon,
+            const QString& elevation,
+            const QString& time,
             const QString& title,
             const QString& description,
+            const QString& address,
             const QString& group,
+            const QString& icon,
+            const QString& background,
             const ColorRGB color);
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
@@ -60,16 +70,31 @@ namespace OsmAnd
 
         virtual bool isHidden() const;
         virtual void setIsHidden(const bool isHidden);
+        
+        virtual QString getElevation() const;
+        virtual void setElevation(const QString& newElevation);
+        
+        virtual QString getTime() const;
+        virtual void setTime(const QString& newTime);
 
         virtual QString getTitle() const;
         virtual void setTitle(const QString& newTitle);
 
         virtual QString getDescription() const;
         virtual void setDescription(const QString& newDescription);
+        
+        virtual QString getAddress() const;
+        virtual void setAddress(const QString& newAddress);
 
         virtual QString getGroup() const;
         virtual void setGroup(const QString& newGroup);
 
+        virtual QString getIcon() const;
+        virtual void setIcon(const QString& newIcon);
+        
+        virtual QString getBackground() const;
+        virtual void setBackground(const QString& newBackground);
+        
         virtual ColorRGB getColor() const;
         virtual void setColor(const ColorRGB newColor);
 

@@ -33,9 +33,14 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
+        QString _elevation;
+        QString _time;
         QString _title;
         QString _description;
+        QString _address;
         QString _group;
+        QString _icon;
+        QString _background;
         ColorRGB _color;
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
@@ -47,16 +52,31 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool isHidden);
+        
+        QString getElevation() const;
+        void setElevation(const QString& newElevation);
+        
+        QString getTime() const;
+        void setTime(const QString& newTitle);
 
         QString getTitle() const;
-        void setTitle(const QString& newTitle);
+        void setTitle(const QString& newTime);
 
         QString getDescription() const;
         void setDescription(const QString& newDescription);
+        
+        QString getAddress() const;
+        void setAddress(const QString& newAddress);
 
         QString getGroup() const;
         void setGroup(const QString& newGroup);
 
+        QString getIcon() const;
+        void setIcon(const QString& newIcon);
+        
+        QString getBackground() const;
+        void setBackground(const QString& newBackground);
+        
         ColorRGB getColor() const;
         void setColor(const ColorRGB newColor);
 

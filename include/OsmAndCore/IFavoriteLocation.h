@@ -37,16 +37,31 @@ namespace OsmAnd
 
         virtual bool isHidden() const = 0;
         virtual void setIsHidden(const bool isHidden) = 0;
+        
+        virtual QString getElevation() const = 0;
+        virtual void setElevation(const QString& newElevation) = 0;
+        
+        virtual QString getTime() const = 0;
+        virtual void setTime(const QString& newTime) = 0;
 
         virtual QString getTitle() const = 0;
         virtual void setTitle(const QString& newTitle) = 0;
 
         virtual QString getDescription() const = 0;
         virtual void setDescription(const QString& newDescription) = 0;
+        
+        virtual QString getAddress() const = 0;
+        virtual void setAddress(const QString& newAddress) = 0;
 
         virtual QString getGroup() const = 0;
         virtual void setGroup(const QString& newGroup) = 0;
 
+        virtual QString getIcon() const = 0;
+        virtual void setIcon(const QString& newIcon) = 0;
+        
+        virtual QString getBackground() const = 0;
+        virtual void setBackground(const QString& newBackground) = 0;
+        
         virtual ColorRGB getColor() const = 0;
         virtual void setColor(const ColorRGB newColor) = 0;
 
