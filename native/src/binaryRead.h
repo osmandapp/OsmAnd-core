@@ -442,6 +442,13 @@ struct RouteDataObject {
 	inline int getPointsLength() {
 		return (int)pointsX.size();
 	}
+    
+    std::vector<uint32_t> getPointTypes(int ind) {
+        if (ind >= pointTypes.size()) {
+            return {};
+        }
+        return pointTypes[ind];
+    }
 
 	bool loop() {
 		return pointsX[0] == pointsX[pointsX.size() - 1] && pointsY[0] == pointsY[pointsY.size() - 1];

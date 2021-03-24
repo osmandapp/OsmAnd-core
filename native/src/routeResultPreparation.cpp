@@ -483,7 +483,7 @@ void filterMinorStops(SHARED_PTR<RouteSegmentResult> seg) {
 
 	for (int i = seg->getStartPointIndex(); i != seg->getEndPointIndex(); i = next) {
 		next = plus ? i + 1 : i - 1;
-		std::vector<uint32_t> pointTypes = seg->object->pointTypes[i];
+		std::vector<uint32_t> pointTypes = seg->object->getPointTypes(i);
 		if (pointTypes.size() > 0) {
 			for (int j = 0; j < pointTypes.size(); j++) {
 				if (pointTypes[j] == seg->object->region->stopMinor) {
