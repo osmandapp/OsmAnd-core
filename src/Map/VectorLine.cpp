@@ -45,6 +45,26 @@ void OsmAnd::VectorLine::setFillColor(const FColorARGB color)
     _p->setFillColor(color);
 }
 
+bool OsmAnd::VectorLine::isDashed() const
+{
+    _p->isDashed();
+}
+
+void OsmAnd::VectorLine::setDashed(const bool dashed)
+{
+    _p->setDashed(dashed);
+}
+
+double OsmAnd::VectorLine::getDashWidth() const
+{
+    _p->getDashWidth();
+}
+
+void OsmAnd::VectorLine::setDashWidth(const double dashWidth)
+{
+    _p->setDashWidth(dashWidth);
+}
+
 bool OsmAnd::VectorLine::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();

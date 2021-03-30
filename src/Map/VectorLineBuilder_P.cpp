@@ -14,6 +14,8 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _lineWidth(3.0)
+    , _dash(false)
+    , _dashWidth(9.0)
     , _direction(0.0f)
     , owner(owner_)
 {
@@ -93,6 +95,34 @@ void OsmAnd::VectorLineBuilder_P::setFillColor(const FColorARGB fillColor)
     _fillColor = fillColor;
 }
 
+bool OsmAnd::VectorLineBuilder_P::isDashed() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _dash;
+}
+
+void OsmAnd::VectorLineBuilder_P::setDashed(const bool dashed)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _dash = dashed;
+}
+
+double OsmAnd::VectorLineBuilder_P::getDashWidth() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _dashWidth;
+}
+
+void OsmAnd::VectorLineBuilder_P::setDashWidth(const double dashWidth)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _dashWidth = dashWidth;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder_P::getPoints() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -164,6 +194,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
     line->setPoints(_points);
+    line->setDashed(_dash);
+    line->setDashWidth(_dashWidth);
     line->applyChanges();
     
     return line;

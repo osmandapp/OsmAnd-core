@@ -70,6 +70,30 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setFillColor(const FColorA
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::isDashed() const
+{
+    return _p->isDashed();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setDashed(const bool dashed)
+{
+    _p->setDashed(dashed);
+
+    return *this;
+}
+
+double OsmAnd::VectorLineBuilder::getDashWidth() const
+{
+    return _p->getDashWidth();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setDashWidth(const double dashWidth)
+{
+    _p->setDashWidth(dashWidth);
+
+    return *this;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder::getPoints() const
 {
     return _p->getPoints();

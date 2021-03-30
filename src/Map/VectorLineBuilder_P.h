@@ -38,6 +38,8 @@ namespace OsmAnd
 
         double _lineWidth;
         FColorARGB _fillColor;
+        bool _dash;
+        double _dashWidth;
 
         QVector<PointI> _points;
 
@@ -65,6 +67,11 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB baseColor);
 
+        bool isDashed() const;
+        void setDashed(const bool dashed);
+        double getDashWidth() const;
+        void setDashWidth(const double dashWidth);
+        
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI> poinst);
 

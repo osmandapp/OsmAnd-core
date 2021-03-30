@@ -29,7 +29,16 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
-        QVector<PointI> splitLine(const QVector<PointI>& points) const;
+        void createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
+                            VectorMapSymbol::Vertex &vertex,
+                            std::vector<OsmAnd::PointD> &b1,
+                            std::vector<OsmAnd::PointD> &b2,
+                            std::vector<OsmAnd::PointD> &e1,
+                            std::vector<OsmAnd::PointD> &e2,
+                            std::vector<OsmAnd::PointD> &original,
+                            double radius,
+                            FColorARGB &fillColor,
+                            bool gap) const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -41,6 +50,8 @@ namespace OsmAnd
 
         QVector<PointI> _points;
         FColorARGB _fillColor;
+        bool _dash;
+        double _dashWidth;
 
         double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
@@ -86,6 +97,11 @@ namespace OsmAnd
         
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
+
+        bool isDashed() const;
+        void setDashed(const bool dashed);
+        double getDashWidth() const;
+        void setDashWidth(const double dashWidth);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

@@ -90,6 +90,11 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
 
+        bool isDashed() const;
+        void setDashed(const bool dashed);
+        double getDashWidth() const;
+        void setDashWidth(const double dashWidth);
+
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
