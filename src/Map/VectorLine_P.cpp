@@ -417,7 +417,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             if (numSeg >= 0)
             {
                 // add interpolated segments
-                for (uint times = 0; times < numSeg; times++)
+                for (uint times = 0; times <= numSeg; times++)
                 {
                     OsmAnd::PointD delta(u.x * dashPhase + u.x * dashLength * times,
                                          u.y * dashPhase + u.y * dashLength * times);
@@ -450,13 +450,21 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     }
                     dashCounter++;
                 }
+                if (!origTar.empty())
+                {
+                    b1tar.push_back(b1[pointIdx]);
+                    b2tar.push_back(b2[pointIdx]);
+                    e1tar.push_back(e1[pointIdx]);
+                    e2tar.push_back(e2[pointIdx]);
+                    origTar.push_back(pnt);
+                }
             }
             else
             {
-                b1tar.push_back(e1[pointIdx]);
-                b2tar.push_back(e2[pointIdx]);
-                e1tar.push_back(de1);
-                e2tar.push_back(de1);
+                b1tar.push_back(b1[pointIdx]);
+                b2tar.push_back(b2[pointIdx]);
+                e1tar.push_back(e1[pointIdx]);
+                e2tar.push_back(e2[pointIdx]);
                 de1 = e1[pointIdx];
                 de2 = e2[pointIdx];
                 origTar.push_back(pnt);
