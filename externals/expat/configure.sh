@@ -8,5 +8,7 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/expat-2.3.0.tar.gz"
+# TODO upgrade to 2.3.0 !!! 
+# prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/expat-2.3.0.tar.gz"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/bak/expat-2.1.0.tar.gz"
 patchUpstream "$SRCLOC"
