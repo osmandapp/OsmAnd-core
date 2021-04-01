@@ -44,7 +44,7 @@ fi
 
 mkdir -p "$DEPENDENCIES_MIRROR/"
 mkdir -p "$DEPENDENCIES_MIRROR/bak/"
-find "$DEPENDENCIES_MIRROR/" -maxdepth 1 -type f -exec mv {} "$DEPENDENCIES_MIRROR/bak/" \;
+find "$DEPENDENCIES_MIRROR/" -maxdepth 1 -type f -size +0M -exec mv {} "$DEPENDENCIES_MIRROR/bak/" \;
 
 
 download "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2/download" "$DEPENDENCIES_MIRROR/boost_1_56_0.tar.bz2"
