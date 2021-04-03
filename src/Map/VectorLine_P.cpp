@@ -332,13 +332,13 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     
     float zoom = this->zoom();
     double radius = owner->lineWidth * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    bool dash = _dash && _dashWidth > 0;
-    // debug
-    dash = true;
+    bool dash = true;// _dash && _dashWidth > 0;
     double dashLength = _dashWidth * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    // debug
-    dashLength = 100 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double dashGapLength = _dashWidth / 2 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
     double dashPhase = 0;
+
+    dashLength = 160 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    dashGapLength = 60 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
 
     int pointsCount = _points.size();
     // generate array of points
@@ -401,8 +401,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         OsmAnd::PointD pe2 = e2[0];
         OsmAnd::PointD de1 = pe1;
         OsmAnd::PointD de2 = pe2;
-        int dashCounter = 0;
+
         std::vector<OsmAnd::PointD> b1tar, b2tar, e1tar, e2tar, origTar;
+        b1tar.push_back(b1[0]);
+        b2tar.push_back(b2[0]);
+        e1tar.push_back(e1[0]);
+        e2tar.push_back(e2[0]);
+        origTar.push_back(start);
+
+        int patternIndex = 0;
+        double pattern[] = {dashLength, dashGapLength, dashLength / 2.0, dashGapLength};
+        int patternLength = (sizeof pattern) / (sizeof pattern[0]);
+        bool firstDash = true;
         for (auto pointIdx = 1u; pointIdx < pointsSimpleCount; pointIdx++)
         {
             OsmAnd::PointD pnt = original[pointIdx];
@@ -411,46 +421,22 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             OsmAnd::PointD v = pnt - prevPnt;
             // unit length
             OsmAnd::PointD u(v.x / segLength, v.y / segLength);
-            // calculate number of segment the segment is split into
-            int numSeg = floor((segLength - dashPhase) / dashLength);
-            // skip if next vertex is before interval_length
-            if (numSeg >= 0)
-            {
-                // add interpolated segments
-                for (uint times = 0; times <= numSeg; times++)
-                {
-                    OsmAnd::PointD delta(u.x * dashPhase + u.x * dashLength * times,
-                                         u.y * dashPhase + u.y * dashLength * times);
-                    OsmAnd::PointD b1e1 = pe1 + delta;
-                    OsmAnd::PointD b2e2 = pe2 + delta;
-                    b1tar.push_back(b1e1);
-                    b2tar.push_back(b2e2);
-                    if (times == 0 && !origTar.empty())
-                    {
-                        e1tar.push_back(de1);
-                        e2tar.push_back(de2);
-                    }
-                    else
-                    {
-                        e1tar.push_back(b1e1);
-                        e2tar.push_back(b2e2);
-                    }
-                    origTar.push_back(prevPnt + delta);
-                    de1 = b1e1;
-                    de2 = b2e2;
+            
+            double length = pattern[patternIndex];
+            bool gap = patternIndex % 2 == 1;
+            
+            OsmAnd::PointD delta;
+            double deltaLength;
+            if (dashPhase == 0)
+                deltaLength = length;
+            else
+                deltaLength = dashPhase;
 
-                    if ((dashCounter + 1) % 2 == 0)
-                    {
-                        createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, dashCounter > 1);
-                        b1tar.clear();
-                        b2tar.clear();
-                        e1tar.clear();
-                        e2tar.clear();
-                        origTar.clear();
-                    }
-                    dashCounter++;
-                }
-                if (!origTar.empty())
+            delta = OsmAnd::PointD(u.x * deltaLength, u.y * deltaLength);
+
+            if (segLength <= deltaLength)
+            {
+                if (!gap)
                 {
                     b1tar.push_back(b1[pointIdx]);
                     b2tar.push_back(b2[pointIdx]);
@@ -461,25 +447,55 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             }
             else
             {
-                b1tar.push_back(b1[pointIdx]);
-                b2tar.push_back(b2[pointIdx]);
-                e1tar.push_back(e1[pointIdx]);
-                e2tar.push_back(e2[pointIdx]);
-                de1 = e1[pointIdx];
-                de2 = e2[pointIdx];
-                origTar.push_back(pnt);
+                while (deltaLength < segLength)
+                {
+                    OsmAnd::PointD b1e1 = pe1 + delta;
+                    OsmAnd::PointD b2e2 = pe2 + delta;
+                    b1tar.push_back(b1e1);
+                    b2tar.push_back(b2e2);
+                    e1tar.push_back(b1e1);
+                    e2tar.push_back(b2e2);
+                    origTar.push_back(prevPnt + delta);
 
-                pe1 = e1[pointIdx];
-                pe2 = e2[pointIdx];
-                prevPnt = pnt;
-                dashPhase -= segLength;
-                continue;
+                    if (!gap)
+                    {
+                        createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, !firstDash);
+                        de1 = e1tar.back();
+                        de2 = e2tar.back();
+                        b1tar.clear();
+                        b2tar.clear();
+                        e1tar.clear();
+                        e2tar.clear();
+                        origTar.clear();
+                        firstDash = false;
+                    }
+                    
+                    patternIndex++;
+                    patternIndex %= patternLength;
+                    length = pattern[patternIndex];
+                    gap = patternIndex % 2 == 1;
+                    delta += OsmAnd::PointD(u.x * length, u.y * length);
+                    deltaLength += length;
+                }
+                
+                if (!origTar.empty() && !gap)
+                {
+                    b1tar.push_back(b1[pointIdx]);
+                    b2tar.push_back(b2[pointIdx]);
+                    e1tar.push_back(e1[pointIdx]);
+                    e2tar.push_back(e2[pointIdx]);
+                    origTar.push_back(pnt);
+                }
             }
+            
+            // calculate dash phase
+            dashPhase = length - (segLength - deltaLength);
+            if (dashPhase > length)
+                dashPhase -= length;
+            
             pe1 = e1[pointIdx];
             pe2 = e2[pointIdx];
             prevPnt = pnt;
-            // calculate dash phase
-            dashPhase = dashLength - ((segLength - dashPhase) - (numSeg * dashLength));
         }
         // end point
         if (origTar.size() == 0)
