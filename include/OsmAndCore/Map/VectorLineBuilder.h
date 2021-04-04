@@ -48,10 +48,8 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         VectorLineBuilder& setFillColor(const FColorARGB fillColor);
 
-        bool isDashed() const;
-        VectorLineBuilder& setDashed(const bool dashed);
-        double getDashWidth() const;
-        VectorLineBuilder& setDashWidth(const double dashWidth);
+        std::vector<double> getLineDash() const;
+        VectorLineBuilder& setLineDash(const std::vector<double> dashPattern);
 
         QVector<PointI> getPoints() const;
         VectorLineBuilder& setPoints(const QVector<PointI>& points);

@@ -90,10 +90,8 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
 
-        bool isDashed() const;
-        void setDashed(const bool dashed);
-        double getDashWidth() const;
-        void setDashWidth(const double dashWidth);
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
 
         bool hasUnappliedChanges() const;
 

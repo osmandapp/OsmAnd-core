@@ -70,26 +70,14 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setFillColor(const FColorA
     return *this;
 }
 
-bool OsmAnd::VectorLineBuilder::isDashed() const
+std::vector<double> OsmAnd::VectorLineBuilder::getLineDash() const
 {
-    return _p->isDashed();
+    return _p->getLineDash();
 }
 
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setDashed(const bool dashed)
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setLineDash(const std::vector<double> dashPattern)
 {
-    _p->setDashed(dashed);
-
-    return *this;
-}
-
-double OsmAnd::VectorLineBuilder::getDashWidth() const
-{
-    return _p->getDashWidth();
-}
-
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setDashWidth(const double dashWidth)
-{
-    _p->setDashWidth(dashWidth);
+    _p->setLineDash(dashPattern);
 
     return *this;
 }

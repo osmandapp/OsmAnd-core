@@ -45,24 +45,14 @@ void OsmAnd::VectorLine::setFillColor(const FColorARGB color)
     _p->setFillColor(color);
 }
 
-bool OsmAnd::VectorLine::isDashed() const
+std::vector<double> OsmAnd::VectorLine::getLineDash() const
 {
-    _p->isDashed();
+    _p->getLineDash();
 }
 
-void OsmAnd::VectorLine::setDashed(const bool dashed)
+void OsmAnd::VectorLine::setLineDash(const std::vector<double> dashPattern)
 {
-    _p->setDashed(dashed);
-}
-
-double OsmAnd::VectorLine::getDashWidth() const
-{
-    _p->getDashWidth();
-}
-
-void OsmAnd::VectorLine::setDashWidth(const double dashWidth)
-{
-    _p->setDashWidth(dashWidth);
+    _p->setLineDash(dashPattern);
 }
 
 bool OsmAnd::VectorLine::hasUnappliedChanges() const

@@ -51,7 +51,7 @@ namespace OsmAnd
         QVector<PointI> _points;
         FColorARGB _fillColor;
         bool _dash;
-        double _dashWidth;
+        std::vector<double> _dashPattern;
 
         double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
@@ -98,10 +98,8 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
 
-        bool isDashed() const;
-        void setDashed(const bool dashed);
-        double getDashWidth() const;
-        void setDashWidth(const double dashWidth);
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

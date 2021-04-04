@@ -21,8 +21,6 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
 , _hasUnappliedPrimitiveChanges(false)
 , _isHidden(false)
-, _dash(false)
-, _dashWidth(9.0)
 , _metersPerPixel(1.0)
 , _mapZoomLevel(InvalidZoomLevel)
 , _mapVisualZoom(0.f)
@@ -84,35 +82,18 @@ void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
     _hasUnappliedChanges = true;
 }
 
-bool OsmAnd::VectorLine_P::isDashed() const
+std::vector<double> OsmAnd::VectorLine_P::getLineDash() const
 {
     QReadLocker scopedLocker(&_lock);
     
-    return _dash;
+    return _dashPattern;
 }
 
-void OsmAnd::VectorLine_P::setDashed(const bool dashed)
+void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _dash = dashed;
-    
-    _hasUnappliedPrimitiveChanges = true;
-    _hasUnappliedChanges = true;
-}
-
-double OsmAnd::VectorLine_P::getDashWidth() const
-{
-    QReadLocker scopedLocker(&_lock);
-    
-    return _dashWidth;
-}
-
-void OsmAnd::VectorLine_P::setDashWidth(const double dashWidth)
-{
-    QWriteLocker scopedLocker(&_lock);
-    
-    _dashWidth = dashWidth;
+    _dashPattern = dashPattern;
     
     _hasUnappliedPrimitiveChanges = true;
     _hasUnappliedChanges = true;
@@ -331,14 +312,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->direction = 0.f;
     
     float zoom = this->zoom();
-    double radius = owner->lineWidth * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    bool dash = true;// _dash && _dashWidth > 0;
-    double dashLength = _dashWidth * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    double dashGapLength = _dashWidth / 2 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    double dashPhase = 0;
-
-    dashLength = 160 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    dashGapLength = 60 * Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double scale = Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double radius = owner->lineWidth * scale;
 
     int pointsCount = _points.size();
     // generate array of points
@@ -390,9 +365,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
     //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
     FColorARGB fillColor = _fillColor;
-
+    int patternLength = _dashPattern.size();
     // generate triangles
-    if (dash)
+    if (patternLength > 0)
     {
         OsmAnd::PointD start = original[0];
         OsmAnd::PointD end = original[original.size() - 1];
@@ -409,9 +384,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         e2tar.push_back(e2[0]);
         origTar.push_back(start);
 
+        double dashPhase = 0;
         int patternIndex = 0;
-        double pattern[] = {dashLength, dashGapLength, dashLength / 2.0, dashGapLength};
-        int patternLength = (sizeof pattern) / (sizeof pattern[0]);
         bool firstDash = true;
         for (auto pointIdx = 1u; pointIdx < pointsSimpleCount; pointIdx++)
         {
@@ -422,7 +396,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             // unit length
             OsmAnd::PointD u(v.x / segLength, v.y / segLength);
             
-            double length = pattern[patternIndex];
+            double length = _dashPattern[patternIndex] * scale;
             bool gap = patternIndex % 2 == 1;
             
             OsmAnd::PointD delta;
@@ -472,7 +446,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     
                     patternIndex++;
                     patternIndex %= patternLength;
-                    length = pattern[patternIndex];
+                    length = _dashPattern[patternIndex] * scale;
                     gap = patternIndex % 2 == 1;
                     delta += OsmAnd::PointD(u.x * length, u.y * length);
                     deltaLength += length;
@@ -640,10 +614,9 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                     double nt = dv;
                     while (nt < 1)
                     {
-                        double rx = bp[pointIdx].x*nt + ep[pointIdx].x * (1 - nt);
-                        double ry = bp[pointIdx].y*nt + ep[pointIdx].y * (1 - nt);
-                        double ld = (rx - original[pointIdx].x) * (rx - original[pointIdx].x) +
-                        (ry - original[pointIdx].y) * (ry - original[pointIdx].y);
+                        double rx = bp[pointIdx].x * nt + ep[pointIdx].x * (1 - nt);
+                        double ry = bp[pointIdx].y * nt + ep[pointIdx].y * (1 - nt);
+                        double ld = (rx - original[pointIdx].x) * (rx - original[pointIdx].x) + (ry - original[pointIdx].y) * (ry - original[pointIdx].y);
                         pVertex->positionXY[0] = original[pointIdx].x + radius / sqrt(ld) * (rx - original[pointIdx].x);
                         pVertex->positionXY[1] = original[pointIdx].y + radius / sqrt(ld) * (ry - original[pointIdx].y);
                         pVertex->color = fillColor;
