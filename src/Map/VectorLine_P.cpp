@@ -21,6 +21,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
 , _hasUnappliedPrimitiveChanges(false)
 , _isHidden(false)
+, _isApproximationEnabled(true)
 , _metersPerPixel(1.0)
 , _mapZoomLevel(InvalidZoomLevel)
 , _mapVisualZoom(0.f)
@@ -45,6 +46,21 @@ void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
     QWriteLocker scopedLocker(&_lock);
     
     _isHidden = hidden;
+    _hasUnappliedChanges = true;
+}
+
+bool OsmAnd::VectorLine_P::isApproximationEnabled() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _isApproximationEnabled;
+}
+
+void OsmAnd::VectorLine_P::setApproximationEnabled(const bool enabled)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _isApproximationEnabled = enabled;
     _hasUnappliedChanges = true;
 }
 
@@ -321,10 +337,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         pointsToPlot[pointIdx] = PointD((_points[pointIdx].x - _points[0].x), (_points[pointIdx].y - _points[0].y));
     
-    std::vector<bool> include(pointsCount, false);
+    std::vector<bool> include(pointsCount, !_isApproximationEnabled);
     include[0] = true;
-    int pointsSimpleCount = simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1;
-    
+    int pointsSimpleCount = _isApproximationEnabled
+        ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1
+        : pointsCount;
+
     // generate base points for connecting lines with triangles
     std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
     double ntan = 0, nx1 = 0, ny1 = 0;

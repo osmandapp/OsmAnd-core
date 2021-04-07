@@ -30,6 +30,16 @@ void OsmAnd::VectorLine::setIsHidden(const bool hidden)
     _p->setIsHidden(hidden);
 }
 
+bool OsmAnd::VectorLine::isApproximationEnabled() const
+{
+    return _p->isApproximationEnabled();
+}
+
+void OsmAnd::VectorLine::setApproximationEnabled(const bool enabled)
+{
+    return _p->setApproximationEnabled(enabled);
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLine::getPoints() const
 {
     return _p->getPoints();

@@ -47,6 +47,7 @@ namespace OsmAnd
         bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
+        bool _isApproximationEnabled;
 
         QVector<PointI> _points;
         FColorARGB _fillColor;
@@ -91,6 +92,9 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);

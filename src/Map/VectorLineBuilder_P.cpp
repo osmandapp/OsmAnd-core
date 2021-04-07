@@ -11,6 +11,7 @@
 
 OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_)
     : _isHidden(false)
+    , _isApproximationEnabled(true)
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _lineWidth(3.0)
@@ -35,6 +36,20 @@ void OsmAnd::VectorLineBuilder_P::setIsHidden(const bool hidden)
     QWriteLocker scopedLocker(&_lock);
 
     _isHidden = hidden;
+}
+
+bool OsmAnd::VectorLineBuilder_P::isApproximationEnabled() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _isApproximationEnabled;
+}
+
+void OsmAnd::VectorLineBuilder_P::setApproximationEnabled(const bool enabled)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _isApproximationEnabled = enabled;
 }
 
 int OsmAnd::VectorLineBuilder_P::getLineId() const
@@ -177,6 +192,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _pathIconStep));
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
+    line->setApproximationEnabled(_isApproximationEnabled);
     line->setPoints(_points);
     line->setLineDash(_dashPattern);
     line->applyChanges();

@@ -22,6 +22,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setIsHidden(const bool hid
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::isApproximationEnabled() const
+{
+    return _p->isApproximationEnabled();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setApproximationEnabled(const bool enabled)
+{
+    _p->setApproximationEnabled(enabled);
+
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getLineId() const
 {
     return _p->getLineId();

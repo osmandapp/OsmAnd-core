@@ -84,6 +84,9 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
         

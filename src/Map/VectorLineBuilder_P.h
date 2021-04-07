@@ -32,7 +32,8 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
-
+        bool _isApproximationEnabled;
+        
         int _lineId;
         int _baseOrder;
 
@@ -55,6 +56,9 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+        
         int getLineId() const;
         void setLineId(const int lineId);
 

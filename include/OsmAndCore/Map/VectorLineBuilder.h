@@ -37,6 +37,9 @@ namespace OsmAnd
         bool isHidden() const;
         VectorLineBuilder& setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        VectorLineBuilder& setApproximationEnabled(const bool enabled);
+        
         int getLineId() const;
         VectorLineBuilder& setLineId(const int lineId);
 
