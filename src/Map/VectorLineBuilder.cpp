@@ -22,6 +22,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setIsHidden(const bool hid
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::isApproximationEnabled() const
+{
+    return _p->isApproximationEnabled();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setApproximationEnabled(const bool enabled)
+{
+    _p->setApproximationEnabled(enabled);
+
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getLineId() const
 {
     return _p->getLineId();
@@ -70,6 +82,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setFillColor(const FColorA
     return *this;
 }
 
+std::vector<double> OsmAnd::VectorLineBuilder::getLineDash() const
+{
+    return _p->getLineDash();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setLineDash(const std::vector<double> dashPattern)
+{
+    _p->setLineDash(dashPattern);
+
+    return *this;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder::getPoints() const
 {
     return _p->getPoints();
@@ -84,7 +108,7 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPoints(const QVector<Os
 
 std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder::getPathIcon() const
 {
-    _p->getPathIcon();
+    return _p->getPathIcon();
 }
 
 OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
@@ -96,7 +120,7 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const std::sha
 
 float OsmAnd::VectorLineBuilder::getPathIconStep() const
 {
-    _p->getPathIconStep();
+    return _p->getPathIconStep();
 }
 
 OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconStep(const float step)

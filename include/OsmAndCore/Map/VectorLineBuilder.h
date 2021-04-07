@@ -37,6 +37,9 @@ namespace OsmAnd
         bool isHidden() const;
         VectorLineBuilder& setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        VectorLineBuilder& setApproximationEnabled(const bool enabled);
+        
         int getLineId() const;
         VectorLineBuilder& setLineId(const int lineId);
 
@@ -47,6 +50,9 @@ namespace OsmAnd
         VectorLineBuilder& setLineWidth(const double width);
         FColorARGB getFillColor() const;
         VectorLineBuilder& setFillColor(const FColorARGB fillColor);
+
+        std::vector<double> getLineDash() const;
+        VectorLineBuilder& setLineDash(const std::vector<double> dashPattern);
 
         QVector<PointI> getPoints() const;
         VectorLineBuilder& setPoints(const QVector<PointI>& points);

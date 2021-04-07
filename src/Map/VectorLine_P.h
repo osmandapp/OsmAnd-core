@@ -29,6 +29,16 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
+        void createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
+                            VectorMapSymbol::Vertex &vertex,
+                            std::vector<OsmAnd::PointD> &b1,
+                            std::vector<OsmAnd::PointD> &b2,
+                            std::vector<OsmAnd::PointD> &e1,
+                            std::vector<OsmAnd::PointD> &e2,
+                            std::vector<OsmAnd::PointD> &original,
+                            double radius,
+                            FColorARGB &fillColor,
+                            bool gap) const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -37,8 +47,12 @@ namespace OsmAnd
         bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
+        bool _isApproximationEnabled;
 
         QVector<PointI> _points;
+        FColorARGB _fillColor;
+        bool _dash;
+        std::vector<double> _dashPattern;
 
         double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
@@ -79,8 +93,17 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        FColorARGB getFillColor() const;
+        void setFillColor(const FColorARGB color);
+
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

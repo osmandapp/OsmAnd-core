@@ -18,9 +18,15 @@
 #include "IAtlasMapRenderer.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
-: _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
-  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f),
-  owner(owner_)
+: _hasUnappliedChanges(false)
+, _hasUnappliedPrimitiveChanges(false)
+, _isHidden(false)
+, _isApproximationEnabled(true)
+, _metersPerPixel(1.0)
+, _mapZoomLevel(InvalidZoomLevel)
+, _mapVisualZoom(0.f)
+, _mapVisualZoomShift(0.f)
+, owner(owner_)
 {
 }
 
@@ -43,6 +49,21 @@ void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
     _hasUnappliedChanges = true;
 }
 
+bool OsmAnd::VectorLine_P::isApproximationEnabled() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _isApproximationEnabled;
+}
+
+void OsmAnd::VectorLine_P::setApproximationEnabled(const bool enabled)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _isApproximationEnabled = enabled;
+    _hasUnappliedChanges = true;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLine_P::getPoints() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -55,6 +76,40 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
     QWriteLocker scopedLocker(&_lock);
     
     _points = points;
+    
+    _hasUnappliedPrimitiveChanges = true;
+    _hasUnappliedChanges = true;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::getFillColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _fillColor;
+}
+
+void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _fillColor = color;
+    
+    _hasUnappliedPrimitiveChanges = true;
+    _hasUnappliedChanges = true;
+}
+
+std::vector<double> OsmAnd::VectorLine_P::getLineDash() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _dashPattern;
+}
+
+void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _dashPattern = dashPattern;
     
     _hasUnappliedPrimitiveChanges = true;
     _hasUnappliedChanges = true;
@@ -258,7 +313,6 @@ float OsmAnd::VectorLine_P::zoom() const
 std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
 {
     int order = owner->baseOrder;
-    int pointsCount = _points.size();
     
     vectorLine->order = order++;
     vectorLine->position31 = _points[0];
@@ -274,19 +328,21 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->direction = 0.f;
     
     float zoom = this->zoom();
-    double radius = owner->lineWidth * Utilities::getPowZoom( 31 - _mapZoomLevel) * qSqrt(zoom) /
-                        (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double scale = Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double radius = owner->lineWidth * scale;
+
+    int pointsCount = _points.size();
     // generate array of points
     std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
-    {
-        pointsToPlot[pointIdx] = PointD((_points[pointIdx].x-_points[0].x), (_points[pointIdx].y-_points[0].y));
-    }
+        pointsToPlot[pointIdx] = PointD((_points[pointIdx].x - _points[0].x), (_points[pointIdx].y - _points[0].y));
     
-    std::vector<bool> include(pointsCount, false);
+    std::vector<bool> include(pointsCount, !_isApproximationEnabled);
     include[0] = true;
-    int pointsSimpleCount = simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1;
-    
+    int pointsSimpleCount = _isApproximationEnabled
+        ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1
+        : pointsCount;
+
     // generate base points for connecting lines with triangles
     std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
     double ntan = 0, nx1 = 0, ny1 = 0;
@@ -294,24 +350,24 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     uint insertIdx = 0;
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
-        if(!include[pointIdx])
-        {
+        if (!include[pointIdx])
             continue;
-        }
+
         PointD pnt = pointsToPlot[pointIdx];
         PointD prevPnt = pointsToPlot[prevPointIdx];
-        original[insertIdx]=pnt;
-        if(pointIdx > 0)
+        original[insertIdx] = pnt;
+        if (pointIdx > 0)
         {
-            ntan = atan2(_points[pointIdx].x - _points[prevPointIdx].x,
-                            _points[pointIdx].y - _points[prevPointIdx].y);
+            ntan = atan2(_points[pointIdx].x - _points[prevPointIdx].x, _points[pointIdx].y - _points[prevPointIdx].y);
             nx1 = radius * sin(M_PI_2 - ntan) ;
             ny1 = radius * cos(M_PI_2 - ntan) ;
             e1[insertIdx] = b1[insertIdx] = OsmAnd::PointD(pnt.x - nx1, pnt.y + ny1);
             e2[insertIdx] = b2[insertIdx] = OsmAnd::PointD(pnt.x + nx1, pnt.y - ny1);
-            e1[insertIdx-1] = OsmAnd::PointD(prevPnt.x - nx1, prevPnt.y + ny1);
-            e2[insertIdx-1] = OsmAnd::PointD(prevPnt.x + nx1, prevPnt.y - ny1);
-        } else {
+            e1[insertIdx - 1] = OsmAnd::PointD(prevPnt.x - nx1, prevPnt.y + ny1);
+            e2[insertIdx - 1] = OsmAnd::PointD(prevPnt.x + nx1, prevPnt.y - ny1);
+        }
+        else
+        {
             b2[insertIdx] = b1[insertIdx] = pnt;
         }
         prevPointIdx = pointIdx;
@@ -322,150 +378,136 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
-    VectorMapSymbol::Vertex* pVertex = &vertex;
     
     //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndexes->verticesCount,
     //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
-    bool direction = true;
-    
+    //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
+    FColorARGB fillColor = _fillColor;
+    int patternLength = _dashPattern.size();
     // generate triangles
-    for (auto pointIdx = 0u; pointIdx < pointsSimpleCount; pointIdx++)
+    if (patternLength > 0)
     {
-        
-        if (pointIdx == 0)
-        {
-            pVertex->positionXY[0] = e2[pointIdx].x;
-            pVertex->positionXY[1] = e2[pointIdx].y;
-            pVertex->color = owner->fillColor;
-            vertices.push_back(vertex);
-            
-            pVertex->positionXY[0] = e1[pointIdx].x;
-            pVertex->positionXY[1] = e1[pointIdx].y;
-            pVertex->color = owner->fillColor;
-            vertices.push_back(vertex);
-            
-            direction = true;
-        }
-        else if (pointIdx == pointsSimpleCount - 1)
-        {
-            if(!direction) {
-                pVertex->positionXY[0] = b1[pointIdx].x;
-                pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-            }
-            
-            pVertex->positionXY[0] = b2[pointIdx].x;
-            pVertex->positionXY[1] = b2[pointIdx].y;
-            pVertex->color = owner->fillColor;
-            vertices.push_back(vertex);
-            if(direction) {
-                pVertex->positionXY[0] = b1[pointIdx].x;
-                pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-            }
-        }
-        else
-        {
-            int smoothLevel = 1; // could be constant & could be dynamic depends on the angle
-            PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
-            bool l1Intersects = (l1.x >= qMin(e1[pointIdx-1].x,b1[pointIdx].x)
-                                  && l1.x <= qMax(e1[pointIdx-1].x,b1[pointIdx].x)) ||
-                                (l1.x >= qMin(e1[pointIdx].x,b1[pointIdx+1].x)
-                                  && l1.x <= qMax(e1[pointIdx].x,b1[pointIdx+1].x));
-            bool l2Intersects = (l2.x >= qMin(e2[pointIdx-1].x,b2[pointIdx].x)
-                                 && l2.x <= qMax(e2[pointIdx-1].x,b2[pointIdx].x)) ||
-                                (l2.x >= qMin(e2[pointIdx].x,b2[pointIdx+1].x)
-                                 && l2.x <= qMax(e2[pointIdx].x,b2[pointIdx+1].x));
-            
-            // bewel - connecting only 3 points (one excluded depends on angle)
-            // miter - connecting 4 points
-            // round - generating between 2-3 point triangles (in place of triangle different between bewel/miter)
-            
-            if(!l2Intersects && !l1Intersects) {
-                // skip point
-            } else {
-                bool startDirection = l2Intersects;
-                const PointD& lp = startDirection ? l2 : l1;
-                const std::vector<OsmAnd::PointD>& bp = startDirection ? b1 : b2;
-                const std::vector<OsmAnd::PointD>& ep = startDirection ? e1 : e2;
-                int phase = direction == startDirection ? 0 : 2;
-                if(phase % 3 == 0) {
-                    pVertex->positionXY[0] = lp.x;
-                    pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                    phase++;
-                }
-                
-                pVertex->positionXY[0] = bp[pointIdx].x;
-                pVertex->positionXY[1] = bp[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-                phase++;
-                if(phase % 3 == 0) {
-                    pVertex->positionXY[0] = lp.x;
-                    pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                    phase++;
-                }
-                
-                
-                if(smoothLevel > 0) {
-                    double dv = 1.0 / (1 << smoothLevel);
-                    double nt = dv;
-                    while(nt < 1) {
-                        double rx = bp[pointIdx].x*nt + ep[pointIdx].x*(1-nt);
-                        double ry = bp[pointIdx].y*nt + ep[pointIdx].y*(1-nt);
-                        double ld = (rx-original[pointIdx].x)*(rx-original[pointIdx].x) +
-                                    (ry-original[pointIdx].y)*(ry-original[pointIdx].y);
-                        pVertex->positionXY[0] = original[pointIdx].x + radius/sqrt(ld)*(rx-original[pointIdx].x);
-                        pVertex->positionXY[1] = original[pointIdx].y + radius/sqrt(ld)*(ry-original[pointIdx].y);
-                        pVertex->color = owner->fillColor;
-                        vertices.push_back(vertex);
-                        phase++;
-                        if(phase % 3 == 0) {
-                            // avoid overlap
-                            vertices.push_back(vertex);
-                            
-                            pVertex->positionXY[0] = lp.x;
-                            pVertex->positionXY[1] = lp.y;
-                            pVertex->color = owner->fillColor;
-                            vertices.push_back(vertex);
-                            phase++;
-                        }
-                        nt += dv;
-                    }
-                }
-                
-                
-                pVertex->positionXY[0] = ep[pointIdx].x;
-                pVertex->positionXY[1] = ep[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-                phase++;
-                if(phase % 3 == 0) {
-                    // avoid overlap
-                    vertices.push_back(vertex);
-                    
-                    pVertex->positionXY[0] = lp.x;
-                    pVertex->positionXY[1] = lp.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                    phase++;
-                }
-                if(smoothLevel > 0) {
-                    //direction = direction;
-                } else {
-                    direction = !direction;
-                }
-            }
+        OsmAnd::PointD start = original[0];
+        OsmAnd::PointD end = original[original.size() - 1];
+        OsmAnd::PointD prevPnt = start;
+        OsmAnd::PointD pe1 = e1[0];
+        OsmAnd::PointD pe2 = e2[0];
+        OsmAnd::PointD de1 = pe1;
+        OsmAnd::PointD de2 = pe2;
 
+        std::vector<OsmAnd::PointD> b1tar, b2tar, e1tar, e2tar, origTar;
+        b1tar.push_back(b1[0]);
+        b2tar.push_back(b2[0]);
+        e1tar.push_back(e1[0]);
+        e2tar.push_back(e2[0]);
+        origTar.push_back(start);
+
+        double dashPhase = 0;
+        int patternIndex = 0;
+        bool firstDash = true;
+        for (auto pointIdx = 1u; pointIdx < pointsSimpleCount; pointIdx++)
+        {
+            OsmAnd::PointD pnt = original[pointIdx];
+            double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
+            // create a vector of direction for the segment
+            OsmAnd::PointD v = pnt - prevPnt;
+            // unit length
+            OsmAnd::PointD u(v.x / segLength, v.y / segLength);
             
+            double length = _dashPattern[patternIndex] * scale;
+            bool gap = patternIndex % 2 == 1;
+            
+            OsmAnd::PointD delta;
+            double deltaLength;
+            if (dashPhase == 0)
+                deltaLength = length;
+            else
+                deltaLength = dashPhase;
+
+            delta = OsmAnd::PointD(u.x * deltaLength, u.y * deltaLength);
+
+            if (segLength <= deltaLength)
+            {
+                if (!gap)
+                {
+                    b1tar.push_back(b1[pointIdx]);
+                    b2tar.push_back(b2[pointIdx]);
+                    e1tar.push_back(e1[pointIdx]);
+                    e2tar.push_back(e2[pointIdx]);
+                    origTar.push_back(pnt);
+                }
+            }
+            else
+            {
+                while (deltaLength < segLength)
+                {
+                    OsmAnd::PointD b1e1 = pe1 + delta;
+                    OsmAnd::PointD b2e2 = pe2 + delta;
+                    b1tar.push_back(b1e1);
+                    b2tar.push_back(b2e2);
+                    e1tar.push_back(b1e1);
+                    e2tar.push_back(b2e2);
+                    origTar.push_back(prevPnt + delta);
+
+                    if (!gap)
+                    {
+                        createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, !firstDash);
+                        de1 = e1tar.back();
+                        de2 = e2tar.back();
+                        b1tar.clear();
+                        b2tar.clear();
+                        e1tar.clear();
+                        e2tar.clear();
+                        origTar.clear();
+                        firstDash = false;
+                    }
+                    
+                    patternIndex++;
+                    patternIndex %= patternLength;
+                    length = _dashPattern[patternIndex] * scale;
+                    gap = patternIndex % 2 == 1;
+                    delta += OsmAnd::PointD(u.x * length, u.y * length);
+                    deltaLength += length;
+                }
+                
+                if (!origTar.empty() && !gap)
+                {
+                    b1tar.push_back(b1[pointIdx]);
+                    b2tar.push_back(b2[pointIdx]);
+                    e1tar.push_back(e1[pointIdx]);
+                    e2tar.push_back(e2[pointIdx]);
+                    origTar.push_back(pnt);
+                }
+            }
+            
+            // calculate dash phase
+            dashPhase = length - (segLength - deltaLength);
+            if (dashPhase > length)
+                dashPhase -= length;
+            
+            pe1 = e1[pointIdx];
+            pe2 = e2[pointIdx];
+            prevPnt = pnt;
         }
+        // end point
+        if (origTar.size() == 0)
+        {
+            b1tar.push_back(de1);
+            b2tar.push_back(de2);
+            e1tar.push_back(de1);
+            e2tar.push_back(de2);
+            origTar.push_back(end);
+        }
+        b1tar.push_back(b1[pointsSimpleCount - 1]);
+        b2tar.push_back(b2[pointsSimpleCount - 1]);
+        e1tar.push_back(b1tar.back());
+        e2tar.push_back(b2tar.back());
+        origTar.push_back(end);
+        createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, true);
+    }
+    else
+    {
+        createVertexes(vertices, vertex, b1, b2, e1, e2, original, radius, fillColor, false);
     }
     
     //verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
@@ -474,10 +516,169 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     std::copy(vertices.begin(), vertices.end(), verticesAndIndexes->vertices);
 
     vectorLine->isHidden = _isHidden;
-    
     vectorLine->setVerticesAndIndexes(verticesAndIndexes);
-    
     return vectorLine;
+}
+
+void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
+                  VectorMapSymbol::Vertex &vertex,
+                  std::vector<OsmAnd::PointD> &b1,
+                  std::vector<OsmAnd::PointD> &b2,
+                  std::vector<OsmAnd::PointD> &e1,
+                  std::vector<OsmAnd::PointD> &e2,
+                  std::vector<OsmAnd::PointD> &original,
+                  double radius,
+                  FColorARGB &fillColor,
+                  bool gap) const
+{
+    VectorMapSymbol::Vertex* pVertex = &vertex;
+    bool direction = true;
+    auto pointsCount = original.size();
+    for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
+    {
+        if (pointIdx == 0)
+        {
+            if (pointIdx == pointsCount - 1)
+                return;
+            
+            if (gap)
+                vertices.push_back(vertex);
+            
+            pVertex->positionXY[0] = e2[pointIdx].x;
+            pVertex->positionXY[1] = e2[pointIdx].y;
+            pVertex->color = fillColor;
+            vertices.push_back(vertex);
+            
+            if (gap)
+                vertices.push_back(vertex);
+            
+            pVertex->positionXY[0] = e1[pointIdx].x;
+            pVertex->positionXY[1] = e1[pointIdx].y;
+            pVertex->color = fillColor;
+            vertices.push_back(vertex);
+            
+            direction = true;
+        }
+        else if (pointIdx == pointsCount - 1)
+        {
+            if (!direction) {
+                pVertex->positionXY[0] = b1[pointIdx].x;
+                pVertex->positionXY[1] = b1[pointIdx].y;
+                pVertex->color = fillColor;
+                vertices.push_back(vertex);
+            }
+            
+            pVertex->positionXY[0] = b2[pointIdx].x;
+            pVertex->positionXY[1] = b2[pointIdx].y;
+            pVertex->color = fillColor;
+            vertices.push_back(vertex);
+            if (direction) {
+                pVertex->positionXY[0] = b1[pointIdx].x;
+                pVertex->positionXY[1] = b1[pointIdx].y;
+                pVertex->color = fillColor;
+                vertices.push_back(vertex);
+            }
+        }
+        else
+        {
+            int smoothLevel = 1; // could be constant & could be dynamic depends on the angle
+            PointD l1 = findLineIntersection(e1[pointIdx - 1], b1[pointIdx], e1[pointIdx], b1[pointIdx + 1]);
+            PointD l2 = findLineIntersection(e2[pointIdx - 1], b2[pointIdx], e2[pointIdx], b2[pointIdx + 1]);
+            bool l1Intersects = (l1.x >= qMin(e1[pointIdx - 1].x, b1[pointIdx].x) && l1.x <= qMax(e1[pointIdx - 1].x, b1[pointIdx].x)) ||
+            (l1.x >= qMin(e1[pointIdx].x, b1[pointIdx + 1].x) && l1.x <= qMax(e1[pointIdx].x, b1[pointIdx + 1].x));
+            bool l2Intersects = (l2.x >= qMin(e2[ pointIdx - 1].x, b2[pointIdx].x) && l2.x <= qMax(e2[pointIdx - 1].x, b2[pointIdx].x)) ||
+            (l2.x >= qMin(e2[pointIdx].x, b2[pointIdx + 1].x) && l2.x <= qMax(e2[pointIdx].x, b2[pointIdx + 1].x));
+            
+            // bewel - connecting only 3 points (one excluded depends on angle)
+            // miter - connecting 4 points
+            // round - generating between 2-3 point triangles (in place of triangle different between bewel/miter)
+            
+            if (!l2Intersects && !l1Intersects)
+            {
+                // skip point
+            }
+            else
+            {
+                bool startDirection = l2Intersects;
+                const PointD& lp = startDirection ? l2 : l1;
+                const std::vector<OsmAnd::PointD>& bp = startDirection ? b1 : b2;
+                const std::vector<OsmAnd::PointD>& ep = startDirection ? e1 : e2;
+                int phase = direction == startDirection ? 0 : 2;
+                if (phase % 3 == 0) {
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
+                    pVertex->color = fillColor;
+                    vertices.push_back(vertex);
+                    phase++;
+                }
+                
+                pVertex->positionXY[0] = bp[pointIdx].x;
+                pVertex->positionXY[1] = bp[pointIdx].y;
+                pVertex->color = fillColor;
+                vertices.push_back(vertex);
+                phase++;
+                if (phase % 3 == 0)
+                {
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
+                    pVertex->color = fillColor;
+                    vertices.push_back(vertex);
+                    phase++;
+                }
+                
+                if (smoothLevel > 0)
+                {
+                    double dv = 1.0 / (1 << smoothLevel);
+                    double nt = dv;
+                    while (nt < 1)
+                    {
+                        double rx = bp[pointIdx].x * nt + ep[pointIdx].x * (1 - nt);
+                        double ry = bp[pointIdx].y * nt + ep[pointIdx].y * (1 - nt);
+                        double ld = (rx - original[pointIdx].x) * (rx - original[pointIdx].x) + (ry - original[pointIdx].y) * (ry - original[pointIdx].y);
+                        pVertex->positionXY[0] = original[pointIdx].x + radius / sqrt(ld) * (rx - original[pointIdx].x);
+                        pVertex->positionXY[1] = original[pointIdx].y + radius / sqrt(ld) * (ry - original[pointIdx].y);
+                        pVertex->color = fillColor;
+                        vertices.push_back(vertex);
+                        phase++;
+                        if (phase % 3 == 0)
+                        {
+                            // avoid overlap
+                            vertices.push_back(vertex);
+                            
+                            pVertex->positionXY[0] = lp.x;
+                            pVertex->positionXY[1] = lp.y;
+                            pVertex->color = fillColor;
+                            vertices.push_back(vertex);
+                            phase++;
+                        }
+                        nt += dv;
+                    }
+                }
+                
+                pVertex->positionXY[0] = ep[pointIdx].x;
+                pVertex->positionXY[1] = ep[pointIdx].y;
+                pVertex->color = fillColor;
+                vertices.push_back(vertex);
+                phase++;
+                if (phase % 3 == 0)
+                {
+                    // avoid overlap
+                    vertices.push_back(vertex);
+                    
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
+                    pVertex->color = fillColor;
+                    vertices.push_back(vertex);
+                    phase++;
+                }
+                if (smoothLevel > 0) {
+                    //direction = direction;
+                } else {
+                    direction = !direction;
+                }
+            }
+        }
+    }
 }
 
 void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup) const

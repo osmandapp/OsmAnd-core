@@ -67,7 +67,6 @@ namespace OsmAnd
             const int lineId,
             const int baseOrder,
             const double lineWidth,
-            const FColorARGB fillColor,
             const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
             const float pathIconStep = -1
         );
@@ -79,15 +78,23 @@ namespace OsmAnd
         const int lineId;
         const int baseOrder;
         const double lineWidth;
-        const FColorARGB fillColor;
         const std::shared_ptr<const SkBitmap> pathIcon;
         const float pathIconStep;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        FColorARGB getFillColor() const;
+        void setFillColor(const FColorARGB color);
+
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
 
         bool hasUnappliedChanges() const;
 
