@@ -387,6 +387,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     // generate triangles
     if (patternLength > 0)
     {
+        std::vector<double> dashPattern(_dashPattern);
+        double threshold = dashPattern[0] < 0 ? -dashPattern[0] : 0;
+        if (threshold > 0)
+        {
+            dashPattern.erase(dashPattern.begin());
+            patternLength--;
+        }
+        
         OsmAnd::PointD start = original[0];
         OsmAnd::PointD end = original[original.size() - 1];
         OsmAnd::PointD prevPnt = start;
@@ -396,12 +404,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         OsmAnd::PointD de2 = pe2;
 
         std::vector<OsmAnd::PointD> b1tar, b2tar, e1tar, e2tar, origTar;
-        b1tar.push_back(b1[0]);
-        b2tar.push_back(b2[0]);
-        e1tar.push_back(e1[0]);
-        e2tar.push_back(e2[0]);
-        origTar.push_back(start);
-
+        if (threshold == 0)
+        {
+            b1tar.push_back(b1[0]);
+            b2tar.push_back(b2[0]);
+            e1tar.push_back(e1[0]);
+            e2tar.push_back(e2[0]);
+            origTar.push_back(start);
+        }
         double dashPhase = 0;
         int patternIndex = 0;
         bool firstDash = true;
@@ -414,8 +424,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             // unit length
             OsmAnd::PointD u(v.x / segLength, v.y / segLength);
             
-            double length = _dashPattern[patternIndex] * scale;
-            bool gap = patternIndex % 2 == 1;
+            double length = (firstDash && threshold > 0 ? threshold : dashPattern[patternIndex]) * scale;
+            bool gap = firstDash && threshold > 0 ? true : patternIndex % 2 == 1;
             
             OsmAnd::PointD delta;
             double deltaLength;
@@ -462,9 +472,11 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                         firstDash = false;
                     }
                     
-                    patternIndex++;
+                    if (!firstDash)
+                        patternIndex++;
+                    
                     patternIndex %= patternLength;
-                    length = _dashPattern[patternIndex] * scale;
+                    length = dashPattern[patternIndex] * scale;
                     gap = patternIndex % 2 == 1;
                     delta += OsmAnd::PointD(u.x * length, u.y * length);
                     deltaLength += length;
@@ -490,20 +502,23 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             prevPnt = pnt;
         }
         // end point
-        if (origTar.size() == 0)
+        if (threshold == 0)
         {
-            b1tar.push_back(de1);
-            b2tar.push_back(de2);
-            e1tar.push_back(de1);
-            e2tar.push_back(de2);
+            if (origTar.size() == 0)
+            {
+                b1tar.push_back(de1);
+                b2tar.push_back(de2);
+                e1tar.push_back(de1);
+                e2tar.push_back(de2);
+                origTar.push_back(end);
+            }
+            b1tar.push_back(b1[pointsSimpleCount - 1]);
+            b2tar.push_back(b2[pointsSimpleCount - 1]);
+            e1tar.push_back(b1tar.back());
+            e2tar.push_back(b2tar.back());
             origTar.push_back(end);
+            createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, true);
         }
-        b1tar.push_back(b1[pointsSimpleCount - 1]);
-        b2tar.push_back(b2[pointsSimpleCount - 1]);
-        e1tar.push_back(b1tar.back());
-        e2tar.push_back(b2tar.back());
-        origTar.push_back(end);
-        createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, true);
     }
     else
     {
