@@ -143,11 +143,16 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     ubidi_setReorderingMode(pContext, UBIDI_REORDER_DEFAULT);
 
     // Set data
-    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_RTL, nullptr, &icuError);
+    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_LTR, nullptr, &icuError);
     ok = U_SUCCESS(icuError);
 
     if (ok)
     {
+        auto const direction = ubidi_getDirection(pContext);
+        if (direction == UBIDI_LTR)
+        {
+            return input;
+        }
         QVector<UChar> reordered(len);
         ubidi_writeReordered(pContext, reordered.data(), len, UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS, &icuError);
         ok = U_SUCCESS(icuError);
