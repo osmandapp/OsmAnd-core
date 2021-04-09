@@ -2188,7 +2188,12 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
 
     // Depending on type of point, center is determined differently
     PointI center;
-    if (points31.size() == 1)
+    if (primitive->sourceObject->isLabelSpecified())
+    {
+        center.x = primitive->sourceObject->getLabelX();
+        center.y = primitive->sourceObject->getLabelY();
+    }
+    else if (points31.size() == 1)
     {
         // Regular point
         center = points31.first();

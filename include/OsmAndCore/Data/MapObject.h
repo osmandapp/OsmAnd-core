@@ -145,6 +145,11 @@ namespace OsmAnd
 
         // Default encoding-decoding rules
         static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;
+        int32_t labelX;
+        int32_t labelY;
+        bool isLabelSpecified() const;
+        int32_t getLabelX() const;
+        int32_t getLabelY() const;
     };
 }
 
