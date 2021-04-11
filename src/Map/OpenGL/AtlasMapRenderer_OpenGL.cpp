@@ -591,6 +591,12 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
     return internalState.globalFrustum2D31.getBBox31();
 }
 
+OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(MapRendererInternalState* _internalState) const
+{
+    const auto internalState = static_cast<InternalState*>(_internalState);
+    return internalState->globalFrustum2D31.getBBox31();
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position) const
 {
     InternalState internalState;

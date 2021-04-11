@@ -31,11 +31,11 @@ namespace OsmAnd
     private:
         void createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
                             VectorMapSymbol::Vertex &vertex,
-                            std::vector<OsmAnd::PointD> &b1,
-                            std::vector<OsmAnd::PointD> &b2,
-                            std::vector<OsmAnd::PointD> &e1,
-                            std::vector<OsmAnd::PointD> &e2,
-                            std::vector<OsmAnd::PointD> &original,
+                            std::vector<PointD> &b1,
+                            std::vector<PointD> &b2,
+                            std::vector<PointD> &e1,
+                            std::vector<PointD> &e2,
+                            std::vector<PointD> &original,
                             double radius,
                             FColorARGB &fillColor,
                             bool gap) const;
@@ -55,6 +55,7 @@ namespace OsmAnd
         std::vector<double> _dashPattern;
 
         double _metersPerPixel;
+        AreaI _visibleBBox31;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;
@@ -84,7 +85,9 @@ namespace OsmAnd
         
         int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
                                    std::vector<bool>& include) const;
-        
+        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments) const;
+        static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
+
     public:
         virtual ~VectorLine_P();
 
