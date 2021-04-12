@@ -5,6 +5,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
 #include <google/protobuf/wire_format_lite.h>
+#include "google/protobuf/wire_format_lite.cc"
 #include "restore_internal_warnings.h"
 
 #include "Common.h"
@@ -18,6 +19,8 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 #include "Utilities.h"
+
+using google::protobuf::internal::WireFormatLite;
 
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
 {
@@ -874,6 +877,25 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 break;
             }
+            case OBF::MapData::kLabelcoordinatesFieldNumber:
+            {
+                gpb::uint32 length;
+				cis->ReadVarint32(&length);
+				auto oldLimit = cis->PushLimit(length);
+				u_int i = 0;
+				while (cis->BytesUntilLimit() > 0) {
+					if (i == 0) {
+						WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelX);
+					} else if (i == 1) {
+						WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelY);
+					} else {
+                        break;
+					}
+					i++;
+				}
+				cis->PopLimit(oldLimit);
+				break;
+			}
             case OBF::MapData::kStringNamesFieldNumber:
             {
                 gpb::uint32 length;
