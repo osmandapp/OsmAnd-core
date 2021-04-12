@@ -2188,10 +2188,10 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
 
     // Depending on type of point, center is determined differently
     PointI center;
-    if (primitive->sourceObject->isLabelSpecified())
+    if (primitive->sourceObject->isLabelCoordinatesSpecified())
     {
-        center.x = primitive->sourceObject->getLabelX();
-        center.y = primitive->sourceObject->getLabelY();
+        center.x = primitive->sourceObject->getLabelCoordinateX();
+        center.y = primitive->sourceObject->getLabelCoordinateY();
     }
     else if (points31.size() == 1)
     {

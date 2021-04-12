@@ -488,12 +488,12 @@ bool OsmAnd::MapObject::Comparator::operator()(
     return (l < r);
 }
 
-bool OsmAnd::MapObject::isLabelSpecified() const
+bool OsmAnd::MapObject::isLabelCoordinatesSpecified() const
 {
     return (labelX != 0 || labelY != 0) && points31.size() > 0;
 }
 
-int32_t OsmAnd::MapObject::getLabelX() const
+int32_t OsmAnd::MapObject::getLabelCoordinateX() const
 {
         int64_t sum = 0;
         int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
@@ -508,7 +508,7 @@ int32_t OsmAnd::MapObject::getLabelX() const
         return label31X;
 }
 
-int32_t OsmAnd::MapObject::getLabelY() const
+int32_t OsmAnd::MapObject::getLabelCoordinateY() const
 {
         int64_t sum = 0;
         int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
