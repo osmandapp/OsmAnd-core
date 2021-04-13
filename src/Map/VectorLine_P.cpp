@@ -539,9 +539,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
         
-        std::vector<bool> include(pointsCount, true);
+        std::vector<bool> include(pointsCount, !_isApproximationEnabled);
         include[0] = true;
-        int pointsSimpleCount = false
+        int pointsSimpleCount = _isApproximationEnabled
             ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1
             : pointsCount;
         
