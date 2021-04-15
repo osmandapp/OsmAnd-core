@@ -23,8 +23,7 @@ set(target_specific_sources__none
 	"upstream.patched/src/opts/SkXfermode_opts_none.cpp")
 
 set(target_specific_sources__x86 "")
-if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR
-	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" AND NOT CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat")
 	set(used_arch_specific_sources TRUE)
 	set(target_specific_sources__x86
 		# x86
@@ -572,7 +571,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 	set(ios_iphonesimulator_exclude_list
 		"${target_specific_sources__arm}"
 		"${target_specific_sources__arm64}"
-		"${target_specific_sources__none}")
+		"${target_specific_sources__x86}")
+	list(REMOVE_ITEM ios_iphonesimulator_exclude_list "upstream.patched/src/opts/SkUtils_opts_none.cpp")
 	list(REMOVE_ITEM ios_iphonesimulator_exclude_list "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
 	set_target_properties(skia_static
