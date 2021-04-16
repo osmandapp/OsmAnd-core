@@ -60,9 +60,14 @@ if [[ "$targetOS" == "ios" ]]; then
 	}
 	
 	if [[ "$compiler" == "clang" ]]; then
-		echo "Going to build embedded Qt for ${targetOS}/${compiler}"
-		makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
-		makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
+		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.simulator.${comipiler}.static/lib/libQt5Core.a ]; then
+			echo "Going to build embedded Qt simulator for ${targetOS}/${compiler}"
+			makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
+		fi
+		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.simulator.${compiler}.static/lib/libQt5Core.a ]; then
+                        echo "Going to build embedded Qt device for ${targetOS}/${compiler}"
+			makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
+		fi
 	else
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
