@@ -64,7 +64,7 @@ if [[ "$targetOS" == "ios" ]]; then
 			echo "Going to build embedded Qt simulator for ${targetOS}/${compiler}"
 			makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
 		fi
-		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.simulator.${compiler}.static/lib/libQt5Core.a ]; then
+		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.device.${compiler}.static/lib/libQt5Core.a ]; then
                         echo "Going to build embedded Qt device for ${targetOS}/${compiler}"
 			makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
 		fi
