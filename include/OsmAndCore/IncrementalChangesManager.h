@@ -109,9 +109,6 @@ namespace OsmAnd
             void addUpdate(const std::shared_ptr<const IncrementalUpdate>& update);
             QList<std::shared_ptr<const IncrementalUpdate> > getItemsForUpdate() const;
             
-        public:
-            virtual ~IncrementalUpdateList();
-            
             friend class IncrementalChangesManager_P;
         };
 
