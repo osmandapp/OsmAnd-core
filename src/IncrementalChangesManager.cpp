@@ -139,7 +139,7 @@ QList<std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdate
     return result;
 }
 
-OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList::~IncrementalUpdateList()
+OsmAnd::IncrementalChangesManager::IncrementalUpdateList::~IncrementalUpdateList()
 {
 }
 
