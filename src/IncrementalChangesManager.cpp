@@ -139,6 +139,10 @@ QList<std::shared_ptr<const OsmAnd::IncrementalChangesManager::IncrementalUpdate
     return result;
 }
 
+OsmAnd::IncrementalChangesManager::IncrementalUpdateList::~IncrementalUpdateList()
+{
+}
+
 bool OsmAnd::IncrementalChangesManager::IncrementalUpdateList::isPreferrableLimitForDayUpdates(const QString &monthYearPart) const
 {
     
