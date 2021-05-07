@@ -27,6 +27,8 @@ std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::de
 OsmAnd::MapObject::MapObject()
     : attributeMapping(defaultAttributeMapping)
     , isArea(false)
+    , labelX(0)
+    , labelY(0)
 {
 }
 
