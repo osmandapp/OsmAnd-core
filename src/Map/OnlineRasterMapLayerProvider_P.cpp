@@ -330,7 +330,13 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::buildUrlToLoad(const QStri
     if (bingQuadKeyParamIndex != -1)
         return finalUrl.replace(QStringLiteral("{q}"), eqtBingQuadKey(zoom, x, y));
     
-    return finalUrl.replace(QLatin1String("{0}"), QString::number(zoom)).replace(QLatin1String("{1}"), QString::number(x)).replace(QLatin1String("{2}"), QString::number(y));
+    return finalUrl
+        .replace(QLatin1String("{0}"), QString::number(zoom))
+        .replace(QLatin1String("{1}"), QString::number(x))
+        .replace(QLatin1String("{2}"), QString::number(y))
+        .replace(QLatin1String("{z}"), QString::number(zoom))
+        .replace(QLatin1String("{x}"), QString::number(x))
+        .replace(QLatin1String("{y}"), QString::number(y));
 }
 
 const QString OsmAnd::OnlineRasterMapLayerProvider_P::eqtBingQuadKey(ZoomLevel z, int32_t x, int32_t y)
