@@ -52,6 +52,8 @@ namespace OsmAnd
             MapStyle,
             MapStylesPresets,
             OnlineTileSources,
+            GpxFile,
+            SqliteFile
         };
 
         enum class ResourceOrigin
@@ -316,6 +318,8 @@ namespace OsmAnd
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
         const std::shared_ptr<IncrementalChangesManager>& changesManager;
+        
+        static OsmAnd::ResourcesManager::ResourceType getIndexType(const QStringRef &resourceTypeValue);
     };
 }
 

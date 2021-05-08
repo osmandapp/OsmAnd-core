@@ -231,6 +231,11 @@ const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager:
     return _p->downloadOnlineTileSources();
 }
 
+OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager::getIndexType(const QStringRef &resourceTypeValue)
+{
+    return ResourcesManager_P::getIndexType(resourceTypeValue);
+}
+
 OsmAnd::ResourcesManager::Resource::Metadata::Metadata()
 {
 }
