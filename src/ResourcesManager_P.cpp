@@ -774,6 +774,35 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
+OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(const QStringRef &resourceTypeValue)
+{
+    auto resourceType = ResourceType::Unknown;
+    if (resourceTypeValue == QLatin1String("map"))
+        resourceType = ResourceType::MapRegion;
+    else if (resourceTypeValue == QLatin1String("road_map"))
+        resourceType = ResourceType::RoadMapRegion;
+    else if (resourceTypeValue == QLatin1String("srtm_map"))
+        resourceType = ResourceType::SrtmMapRegion;
+    else if (resourceTypeValue == QLatin1String("wikimap"))
+        resourceType = ResourceType::WikiMapRegion;
+    else if (resourceTypeValue == QLatin1String("hillshade"))
+        resourceType = ResourceType::HillshadeRegion;
+    else if (resourceTypeValue == QLatin1String("slope"))
+        resourceType = ResourceType::SlopeRegion;
+    else if (resourceTypeValue == QLatin1String("heightmap"))
+        resourceType = ResourceType::HeightmapRegion;
+    else if (resourceTypeValue == QLatin1String("voice"))
+        resourceType = ResourceType::VoicePack;
+    else if (resourceTypeValue == QLatin1String("depth"))
+        resourceType = ResourceType::DepthContourRegion;
+    else if (resourceTypeValue == QLatin1String("gpx"))
+        resourceType = ResourceType::GpxFile;
+    else if (resourceTypeValue == QLatin1String("sqlite"))
+        resourceType = ResourceType::SqliteFile;
+    
+    return resourceType;
+}
+
 bool OsmAnd::ResourcesManager_P::parseRepository(
     QXmlStreamReader& xmlReader,
     QList< std::shared_ptr<const ResourceInRepository> >& repository) const
@@ -805,31 +834,13 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
 
         const auto name = nameValue.toString();
 
-        auto resourceType = ResourceType::Unknown;
-        if (resourceTypeValue == QLatin1String("map"))
-            resourceType = ResourceType::MapRegion;
-        else if (resourceTypeValue == QLatin1String("road_map"))
-            resourceType = ResourceType::RoadMapRegion;
-        else if (resourceTypeValue == QLatin1String("srtm_map"))
-            resourceType = ResourceType::SrtmMapRegion;
-        else if (resourceTypeValue == QLatin1String("wikimap"))
-            resourceType = ResourceType::WikiMapRegion;
-        else if (resourceTypeValue == QLatin1String("hillshade"))
-            resourceType = ResourceType::HillshadeRegion;
-        else if (resourceTypeValue == QLatin1String("slope"))
-            resourceType = ResourceType::SlopeRegion;
-        else if (resourceTypeValue == QLatin1String("heightmap"))
-            resourceType = ResourceType::HeightmapRegion;
-        else if (resourceTypeValue == QLatin1String("voice"))
-            resourceType = ResourceType::VoicePack;
-        else if (resourceTypeValue == QLatin1String("depth"))
-            resourceType = ResourceType::DepthContourRegion;
-        else
+        const auto resourceType = getIndexType(resourceTypeValue);
+        if (resourceType == OsmAnd::ResourcesManager::ResourceType::Unknown)
         {
             LogPrintf(LogSeverityLevel::Verbose,
-                "Unsupported resource type '%s' for '%s'",
-                qPrintableRef(resourceTypeValue),
-                qPrintable(name));
+                      "Unsupported resource type '%s' for '%s'",
+                      qPrintableRef(resourceTypeValue),
+                      qPrintable(name));
             continue;
         }
 

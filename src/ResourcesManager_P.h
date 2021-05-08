@@ -103,6 +103,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const ResourceInRepository> >& repository) const;
 
         const std::shared_ptr<const IWebClient> _webClient;
+        
+        static OsmAnd::ResourcesManager::ResourceType getIndexType(const QStringRef &resourceTypeValue);
 
         bool uninstallObf(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource);
