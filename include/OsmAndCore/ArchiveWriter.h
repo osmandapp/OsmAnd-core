@@ -26,7 +26,7 @@ namespace OsmAnd
         ArchiveWriter();
         virtual ~ArchiveWriter();
 
-        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive);
+        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath);
     };
 }
 
