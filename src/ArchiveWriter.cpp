@@ -10,7 +10,7 @@ OsmAnd::ArchiveWriter::~ArchiveWriter()
 {
 }
 
-void OsmAnd::ArchiveWriter::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive)
+void OsmAnd::ArchiveWriter::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath)
 {
-    _p->createArchive(ok_, filePath, filesToArcive);
+    _p->createArchive(ok_, filePath, filesToArcive, basePath);
 }
