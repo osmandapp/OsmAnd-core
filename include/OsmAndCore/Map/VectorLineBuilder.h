@@ -48,6 +48,7 @@ namespace OsmAnd
 
         double getLineWidth() const;
         VectorLineBuilder& setLineWidth(const double width);
+        
         FColorARGB getFillColor() const;
         VectorLineBuilder& setFillColor(const FColorARGB fillColor);
 

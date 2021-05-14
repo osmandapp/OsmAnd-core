@@ -22,6 +22,7 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 , _hasUnappliedPrimitiveChanges(false)
 , _isHidden(false)
 , _isApproximationEnabled(true)
+, _lineWidth(1.0)
 , _metersPerPixel(1.0)
 , _mapZoomLevel(InvalidZoomLevel)
 , _mapVisualZoom(0.f)
@@ -45,8 +46,11 @@ void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _isHidden = hidden;
-    _hasUnappliedChanges = true;
+    if (_isHidden != hidden)
+    {
+        _isHidden = hidden;
+        _hasUnappliedChanges = true;
+    }
 }
 
 bool OsmAnd::VectorLine_P::isApproximationEnabled() const
@@ -60,8 +64,11 @@ void OsmAnd::VectorLine_P::setApproximationEnabled(const bool enabled)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _isApproximationEnabled = enabled;
-    _hasUnappliedChanges = true;
+    if (_isApproximationEnabled != enabled)
+    {
+        _isApproximationEnabled = enabled;
+        _hasUnappliedChanges = true;
+    }
 }
 
 QVector<OsmAnd::PointI> OsmAnd::VectorLine_P::getPoints() const
@@ -75,10 +82,34 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _points = points;
+    if (_points != points)
+    {
+        _points = points;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+double OsmAnd::VectorLine_P::getLineWidth() const
+{
+    QReadLocker scopedLocker(&_lock);
     
-    _hasUnappliedPrimitiveChanges = true;
-    _hasUnappliedChanges = true;
+    return _lineWidth;
+}
+
+void OsmAnd::VectorLine_P::setLineWidth(const double width)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_lineWidth != width)
+    {
+        _lineWidth = width;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+    
 }
 
 OsmAnd::FColorARGB OsmAnd::VectorLine_P::getFillColor() const
@@ -92,10 +123,13 @@ void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _fillColor = color;
-    
-    _hasUnappliedPrimitiveChanges = true;
-    _hasUnappliedChanges = true;
+    if (_fillColor != color)
+    {
+        _fillColor = color;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
 }
 
 std::vector<double> OsmAnd::VectorLine_P::getLineDash() const
@@ -109,10 +143,13 @@ void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _dashPattern = dashPattern;
-    
-    _hasUnappliedPrimitiveChanges = true;
-    _hasUnappliedChanges = true;
+    if (_dashPattern != dashPattern)
+    {
+        _dashPattern = dashPattern;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
 }
 
 bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
@@ -500,7 +537,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     int order = owner->baseOrder;
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    double radius = owner->lineWidth * scale;
+    double radius = _lineWidth * scale;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::TriangleStrip;

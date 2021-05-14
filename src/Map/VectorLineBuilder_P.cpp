@@ -187,9 +187,9 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     const std::shared_ptr<VectorLine> line(new VectorLine(
                                                           _lineId,
                                                           _baseOrder,
-                                                          _lineWidth,
                                                           _pathIcon,
                                                           _pathIconStep));
+    line->setLineWidth(_lineWidth);
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
     line->setApproximationEnabled(_isApproximationEnabled);

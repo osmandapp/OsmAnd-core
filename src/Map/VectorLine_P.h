@@ -50,6 +50,7 @@ namespace OsmAnd
         bool _isApproximationEnabled;
 
         QVector<PointI> _points;
+        double _lineWidth;
         FColorARGB _fillColor;
         bool _dash;
         std::vector<double> _dashPattern;
@@ -102,6 +103,9 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
         
+        double getLineWidth() const;
+        void setLineWidth(const double width);
+
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
 
