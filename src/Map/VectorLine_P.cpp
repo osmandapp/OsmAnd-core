@@ -514,7 +514,8 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                 segment.push_back(drawFrom);
                 segmentStarted = currIn;
             }
-            segment.push_back(drawTo);
+            if (segment.empty() || segment.back() != drawTo)
+                segment.push_back(drawTo);
         }
         else
         {
