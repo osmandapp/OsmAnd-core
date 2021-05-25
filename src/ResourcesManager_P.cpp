@@ -630,6 +630,9 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_MapStyleResource(
 {
     QFileInfoList mapStyleFileInfos;
     Utilities::findFiles(storagePath, QStringList() << QLatin1String("*.render.xml"), mapStyleFileInfos, false);
+    const QFileInfo renderingDir(storagePath + QStringLiteral("/rendering"));
+    if (renderingDir.exists() && renderingDir.isDir())
+        Utilities::findFiles(renderingDir.filePath(), QStringList() << QLatin1String("*.render.xml"), mapStyleFileInfos, false);
     for (const auto& mapStyleFileInfo : constOf(mapStyleFileInfos))
     {
         const auto filePath = mapStyleFileInfo.absoluteFilePath();
