@@ -367,7 +367,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     if (!isUnmanagedStorage)
         loadLocalResourcesFromPath_VoicePack(storagePath, outResult);
 
-    // Find ResourceType::MapStyleResource -> "*.render.xml" files (only in unmanaged storage))
+    // Find ResourceType::MapStyleResource -> "*.render.xml" files (only in unmanaged storage)
     if (isUnmanagedStorage)
         loadLocalResourcesFromPath_MapStyleResource(storagePath, outResult);
 
