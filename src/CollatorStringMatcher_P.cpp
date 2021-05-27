@@ -31,13 +31,19 @@ bool OsmAnd::CollatorStringMatcher_P::startsWith(const QString& _searchInParam, 
 
 QString OsmAnd::CollatorStringMatcher_P::simplifyStringAndAlignChars(const QString& fullText)
 {
-    int i;
     QLocale defaultLocale;
     QString res = defaultLocale.toLower(fullText);
+    res = alignChars(res);
+    return res;
+}
+
+QString OsmAnd::CollatorStringMatcher_P::alignChars(const QString& fullText)
+{
+    int i;
+    QString res = fullText;
     while( (i = res.indexOf(QStringLiteral("ß")) ) != -1 )
     {
         res = res.mid(0, i) + QStringLiteral("ss") + res.mid(i + 1);
     }
     return res;
 }
-
