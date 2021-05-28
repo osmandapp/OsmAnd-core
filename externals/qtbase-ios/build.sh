@@ -16,8 +16,7 @@ targetOS=$1
 compiler=$2
 
 QTBASE_CONFIGURATION=$(echo "
-	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -largefile -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -mp -silent -no-accessibility -sql-sqlite -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 	-v
@@ -50,7 +49,7 @@ if [[ "$targetOS" == "ios" ]]; then
 		fi
 		
 		# Build
-		(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
+		(cd "$path" && make -j4)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to build 'qtbase-ios' for '$name', aborting..."

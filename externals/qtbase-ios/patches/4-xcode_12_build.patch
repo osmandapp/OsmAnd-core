@@ -1,0 +1,11 @@
+--- a/mkspecs/features/toolchain.prf
++++ b/mkspecs/features/toolchain.prf
+@@ -199,7 +199,7 @@ isEmpty($${target_prefix}.INCDIRS) {
+             cxx_flags += -E -v
+ 
+         output = $$system("$$cmd_prefix $$QMAKE_CXX $$qtMakeExpand($$cxx_flags) -xc++ - 2>&1 $$cmd_suffix", lines, ec)
+-        !equals(ec, 0): qtCompilerError($$QMAKE_CXX, $$output)
++        !uikit:!equals(ec, 0): qtCompilerError($$QMAKE_CXX, $$output)
+ 
+         rim_qcc {
+             for (line, output) {
