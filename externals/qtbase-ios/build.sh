@@ -49,7 +49,7 @@ if [[ "$targetOS" == "ios" ]]; then
 		fi
 		
 		# Build
-		(cd "$path" && make -j4)
+		(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to build 'qtbase-ios' for '$name', aborting..."
