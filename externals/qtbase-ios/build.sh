@@ -16,9 +16,8 @@ targetOS=$1
 compiler=$2
 
 QTBASE_CONFIGURATION=$(echo "
-	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -largefile -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
+	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -mp -silent -no-accessibility -sql-sqlite -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-nomake examples -nomake tools -nomake tests -no-feature-testlib -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 	-v
 " | tr '\n' ' ')
@@ -97,7 +96,7 @@ if [[ "$targetOS" == "ios" ]]; then
 			ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
-		libraries=(qtpcre Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
+		libraries=(qtpcre2 Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
