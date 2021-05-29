@@ -1,0 +1,11 @@
+diff -Naur upstream.original/src/corelib/Qt5CoreConfigExtrasMkspecDir.cmake.in upstream.patched/src/corelib/Qt5CoreConfigExtrasMkspecDir.cmake.in
+--- upstream.original/src/corelib/Qt5CoreConfigExtrasMkspecDir.cmake.in	2021-05-29 12:36:30.000000000 +0300
++++ upstream.patched/src/corelib/Qt5CoreConfigExtrasMkspecDir.cmake.in	2021-05-29 12:48:08.000000000 +0300
+@@ -1,6 +1,6 @@
+ 
+ !!IF isEmpty(CMAKE_HOST_DATA_DIR_IS_ABSOLUTE)
+-set(_qt5_corelib_extra_includes \"${_qt5Core_install_prefix}/$${CMAKE_HOST_DATA_DIR}/mkspecs/$${CMAKE_MKSPEC}\")
++set(_qt5_corelib_extra_includes \"$${CMAKE_HOST_DATA_DIR}mkspecs/$${CMAKE_MKSPEC}\")
+ !!ELSE
+ set(_qt5_corelib_extra_includes \"$${CMAKE_HOST_DATA_DIR}mkspecs/$${CMAKE_MKSPEC}\")
+ !!ENDIF
