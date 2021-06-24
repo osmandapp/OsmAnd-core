@@ -76,11 +76,17 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 12));
         writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 12));
 
-        // <ele>
-        writer.writeTextElement(QLatin1String("ele"), item->getElevation());
+        if (!item->getElevation().isNull())
+        {
+            // <ele>
+            writer.writeTextElement(QLatin1String("ele"), item->getElevation());
+        }
         
-        // <time>
-        writer.writeTextElement(QLatin1String("time"), item->getTime());
+        if (!item->getTime().isNull())
+        {
+            // <time>
+            writer.writeTextElement(QLatin1String("time"), item->getTime());
+        }
         
         // <name>
         writer.writeTextElement(QLatin1String("name"), item->getTitle());
