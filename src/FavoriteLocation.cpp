@@ -127,6 +127,16 @@ void OsmAnd::FavoriteLocation::setTime(const QString& newTime)
     _p->setTime(newTime);
 }
 
+void OsmAnd::FavoriteLocation::setCalendarEvent(const bool calendarEvent)
+{
+    _p->setCalendarEvent(calendarEvent);
+}
+
+bool OsmAnd::FavoriteLocation::getCalendarEvent() const
+{
+    return _p->getCalendarEvent();
+}
+
 QString OsmAnd::FavoriteLocation::getTitle() const
 {
     return _p->getTitle();

@@ -131,6 +131,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             // <hidden>
             if (item->isHidden())
                 writer.writeEmptyElement(QLatin1String("hidden"));
+            
+            if (item->getCalendarEvent())
+                writer.writeTextElement(QLatin1String("calendar_event"), "true");
 
             // </extensions>
             writer.writeEndElement();
@@ -230,6 +233,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 }
        
                 newItem->setAddress(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("calendar_event"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <calendar_event>");
+                    return false;
+                }
+       
+                newItem->setCalendarEvent(xmlReader.readElementText() == "true");
             }
             else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
             {
