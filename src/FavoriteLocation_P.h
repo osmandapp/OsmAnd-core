@@ -42,6 +42,7 @@ namespace OsmAnd
         QString _icon;
         QString _background;
         ColorRGB _color;
+        bool _calendarEvent;
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
         void detach();
@@ -61,6 +62,9 @@ namespace OsmAnd
 
         QString getTitle() const;
         void setTitle(const QString& newTime);
+        
+        bool getCalendarEvent() const;
+        void setCalendarEvent(const bool calendarEvent);
 
         QString getDescription() const;
         void setDescription(const QString& newDescription);

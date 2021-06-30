@@ -6,6 +6,7 @@
 
 OsmAnd::FavoriteLocation_P::FavoriteLocation_P(FavoriteLocation* const owner_)
     : _isHidden(false)
+    , _calendarEvent(false)
 	, owner(owner_)
 {
 }
@@ -60,6 +61,23 @@ void OsmAnd::FavoriteLocation_P::setTime(const QString& newTime)
     QWriteLocker scopedLocker(&_lock);
 
     _time = newTime;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+bool OsmAnd::FavoriteLocation_P::getCalendarEvent() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _calendarEvent;
+}
+
+void OsmAnd::FavoriteLocation_P::setCalendarEvent(const bool calendarEvent)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _calendarEvent = calendarEvent;
 
     if (const auto link = _weakLink.lock())
         link->_p->notifyFavoriteLocationChanged(owner);
