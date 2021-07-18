@@ -3,8 +3,11 @@ OsmAnd Core
 
 Multi-platform core for OsmAnd project
 
-Installation on Ubuntu
+Installation on Ubuntu 
 =====================
+
+/!\ outdated information, see here instead : https://docs.osmand.net/en/main@latest/development/build-osmand/setup-the-dev-environment
+
 1. Fresh install Ubuntu 14.04 LTS
 2. Install repo
  * mkdir ~/bin
