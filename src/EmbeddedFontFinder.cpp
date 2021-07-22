@@ -242,7 +242,7 @@ const QStringList OsmAnd::EmbeddedFontFinder::resources = QStringList()
 //         })
 
     // DroidSans
-    << QLatin1String("map/fonts/DroidSansFallback.ttf")
+    << QLatin1String("map/fonts/DroidSansFallback.ttf");
 
     // Misc
-    << QLatin1String("map/fonts/MTLmr3m.ttf");
+    //<< QLatin1String("map/fonts/MTLmr3m.ttf");
