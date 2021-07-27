@@ -130,7 +130,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             if (!tileBBox31.contains(pos31))
                 return false;
 
-            int order = owner->baseOrder;
+            int order = 100000;
             if (intr)
             {
                 icon = owner->amenityIconProvider->getIcon(amenity, ZoomLevel10, false);

@@ -66,7 +66,6 @@ namespace OsmAnd
     public:
         AmenitySymbolsProvider(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
-            const int baseOrder,
             const float displayDensityFactor,
             const float referenceTileSizeOnScreenInPixels,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
@@ -75,7 +74,6 @@ namespace OsmAnd
         virtual ~AmenitySymbolsProvider();
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
-        const int baseOrder;
         const float displayDensityFactor;
         const float referenceTileSizeOnScreenInPixels;
         const Nullable< QHash<QString, QStringList> > categoriesFilter;

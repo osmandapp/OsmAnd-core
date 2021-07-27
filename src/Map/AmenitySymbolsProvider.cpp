@@ -6,7 +6,6 @@
 
 OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
-    const int baseOrder_,
     const float displayDensityFactor_,
     const float referenceTileSizeOnScreenInPixels_,
     const QHash<QString, QStringList>* const categoriesFilter_ /*= nullptr*/,
@@ -14,7 +13,6 @@ OsmAnd::AmenitySymbolsProvider::AmenitySymbolsProvider(
     const std::shared_ptr<const IAmenityIconProvider>& amenityIconProvider_ /*= std::make_shared<CoreResourcesAmenityIconProvider>()*/)
     : _p(new AmenitySymbolsProvider_P(this))
     , obfsCollection(obfsCollection_)
-    , baseOrder(baseOrder_)
     , displayDensityFactor(displayDensityFactor_)
     , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
     , categoriesFilter(categoriesFilter_)
