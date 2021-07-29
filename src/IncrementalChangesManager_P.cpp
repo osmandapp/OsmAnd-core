@@ -55,26 +55,29 @@ const std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> OsmAnd:
 
 void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< QString >& added, const QList< QString >& removed)
 {
-    for (auto & addedFile : added)
+    for (auto &addedFile : added)
     {
         if (addedFile.endsWith(QStringLiteral(".map.obf")))
         {
             QString regionName = QString(addedFile).remove(QStringLiteral(".map.obf"));
             const auto& installedResource = getInstalledResource(addedFile);
-            _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName, installedResource)));
+            if (installedResource && !installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
+            {
+                _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName, installedResource)));
+            }
         }
         else if (addedFile.endsWith(QStringLiteral(".live.obf")))
         {
             QString regionName = QString(addedFile).remove(QRegExp(QStringLiteral("_([0-9]+_){2}[0-9]+\\.live\\.obf")));
             const auto& installedResource = getInstalledResource(addedFile);
             const auto& ruf = _updatesStructure.value(regionName);
-            if (ruf == nullptr)
+            if (ruf == nullptr && !installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
                 _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName,
                                                                                                               getInstalledResource(regionName + QStringLiteral(".map.obf")))));
             _updatesStructure.value(regionName)->addUpdate(installedResource);
         }
     }
-    for (auto & removedFile : removed)
+    for (auto& removedFile : removed)
     {
         if (removedFile.endsWith(QStringLiteral(".map.obf")))
         {
@@ -261,7 +264,7 @@ std::shared_ptr<const OsmAnd::IncrementalChangesManager_P::IncrementalUpdateList
 void OsmAnd::IncrementalChangesManager_P::deleteUpdates(const QString& regionName)
 {
     std::shared_ptr<RegionUpdateFiles> ruf = _updatesStructure.value(regionName);
-    if(ruf->isEmpty())
+    if(!ruf || ruf->isEmpty())
         return;
     
     for (const auto& dayUpdates : ruf->dailyUpdates.values()) {
