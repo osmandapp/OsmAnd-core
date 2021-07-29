@@ -61,7 +61,7 @@ void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< Q
         {
             QString regionName = QString(addedFile).remove(QStringLiteral(".map.obf"));
             const auto& installedResource = getInstalledResource(addedFile);
-            if (installedResource && !installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
+            if (installedResource && installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
             {
                 _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName, installedResource)));
             }
@@ -71,7 +71,7 @@ void OsmAnd::IncrementalChangesManager_P::onLocalResourcesChanged(const QList< Q
             QString regionName = QString(addedFile).remove(QRegExp(QStringLiteral("_([0-9]+_){2}[0-9]+\\.live\\.obf")));
             const auto& installedResource = getInstalledResource(addedFile);
             const auto& ruf = _updatesStructure.value(regionName);
-            if (ruf == nullptr && !installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
+            if (ruf == nullptr && installedResource->localPath.startsWith(_resourcesManager->localStoragePath))
                 _updatesStructure.insert(regionName, std::shared_ptr<RegionUpdateFiles>(new RegionUpdateFiles(regionName,
                                                                                                               getInstalledResource(regionName + QStringLiteral(".map.obf")))));
             _updatesStructure.value(regionName)->addUpdate(installedResource);
