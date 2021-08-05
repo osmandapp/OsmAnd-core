@@ -317,7 +317,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
 
 bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
 {
-    
+    QList<std::shared_ptr<XmlTreeSequence>> sequenceHolder;
     std::shared_ptr<XmlTreeSequence> currentSeqElement = nullptr;
     QStack< std::shared_ptr<RuleNode> > ruleNodesStack;
     auto currentRulesetType = MapStyleRulesetType::Invalid;
@@ -340,6 +340,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             else if (attribs.hasAttribute(SEQ_ATTR) || currentSeqElement != nullptr)
             {
                 std::shared_ptr<XmlTreeSequence> seq = std::make_shared<XmlTreeSequence>();
+                sequenceHolder.append(seq);
                 seq->name += tagName;
                 seq->attrsMap = attribs;
                 seq->parent = currentSeqElement;
@@ -369,7 +370,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             else
             {
                 auto process = currentSeqElement;
-                currentSeqElement = currentSeqElement->parent;
+                currentSeqElement = currentSeqElement->parent.lock();
                 if (currentSeqElement == nullptr)
                 {
                     int seqEnd = process->seqOrder.split(QLatin1Char(':'))[1].toInt();
@@ -552,7 +553,7 @@ void OsmAnd::XmlTreeSequence::process(
 
     parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
     for (const auto& child : children) {
-        child->process(index, parserObj, currentRulesetType, ruleNodesStack);
+        child.lock()->process(index, parserObj, currentRulesetType, ruleNodesStack);
         
     };
     parserObj->processEndElement(currentRulesetType, ruleNodesStack, name, lineNum, columnNum);

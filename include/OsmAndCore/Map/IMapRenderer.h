@@ -53,6 +53,7 @@ namespace OsmAnd
     protected:
         IMapRenderer();
         
+        virtual AreaI getVisibleBBox31(MapRendererInternalState* _internalState) const = 0;
         virtual double getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const = 0;
     public:
         virtual ~IMapRenderer();

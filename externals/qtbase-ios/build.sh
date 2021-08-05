@@ -16,9 +16,8 @@ targetOS=$1
 compiler=$2
 
 QTBASE_CONFIGURATION=$(echo "
-	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -largefile -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
+	-platform macx-clang -release -opensource -confirm-license -c++std c++11 -static -mp -silent -no-accessibility -sql-sqlite -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-nomake examples -nomake tools -nomake tests -no-feature-testlib -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 	-v
 " | tr '\n' ' ')
@@ -60,9 +59,14 @@ if [[ "$targetOS" == "ios" ]]; then
 	}
 	
 	if [[ "$compiler" == "clang" ]]; then
-		echo "Going to build embedded Qt for ${targetOS}/${compiler}"
-		makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
-		makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
+		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.simulator.${compiler}.static/lib/libQt5Core.a ]; then
+			echo "Going to build embedded Qt simulator for ${targetOS}/${compiler}"
+			makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
+		fi
+		if [ -z "$NOT_BUILD_QT_IOS_IF_PRESENT" ] || [ ! -f upstream.patched.ios.device.${compiler}.static/lib/libQt5Core.a ]; then
+                        echo "Going to build embedded Qt device for ${targetOS}/${compiler}"
+			makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
+		fi
 	else
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
@@ -92,7 +96,7 @@ if [[ "$targetOS" == "ios" ]]; then
 			ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
-		libraries=(qtpcre Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
+		libraries=(qtpcre2 Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \

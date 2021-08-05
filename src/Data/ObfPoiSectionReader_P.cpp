@@ -22,6 +22,10 @@
 #include <Logging.h>
 
 const int BUCKET_SEARCH_BY_NAME = 5;
+const int BASE_POI_SHIFT = 7;
+const int FINAL_POI_SHIFT = 5;
+const int BASE_POI_ZOOM = 31 - BASE_POI_SHIFT;
+const int FINAL_POI_ZOOM = 31 - FINAL_POI_SHIFT;
 
 OsmAnd::ObfPoiSectionReader_P::ObfPoiSectionReader_P()
 {
@@ -870,6 +874,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QHash<int, QVariant> stringOrDataValues;
     auto categoriesFilterChecked = false;
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
+    uint32_t precisionXY = 0;
 
     for (;;)
     {
@@ -943,6 +948,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                 amenity->nativeName = qMove(nativeName);
                 amenity->localizedNames = qMove(localizedNames);
+                if (precisionXY > 0)
+                {
+                    int xBase = position31.x >> BASE_POI_SHIFT;
+                    int yBase = position31.y >> BASE_POI_SHIFT;
+                    std::pair<int, int> precisedXY = OsmAnd::Utilities::calculateFinalXYFromBaseAndPrecisionXY(BASE_POI_ZOOM, FINAL_POI_ZOOM, precisionXY, xBase, yBase, true);
+                    position31.x = precisedXY.first << FINAL_POI_SHIFT;
+                    position31.y = precisedXY.second << FINAL_POI_SHIFT;
+                }
                 amenity->position31 = position31;
                 amenity->categories = qMove(categories);
                 if (autogenerateId)
@@ -966,14 +979,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 assert(d >= 0);
-                position31.x = ((boxTileId.x << (24 - boxZoom)) + d) << 7;
+                position31.x = ((boxTileId.x << (BASE_POI_ZOOM - boxZoom)) + d) << BASE_POI_SHIFT;
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 assert(d >= 0);
-                position31.y = ((boxTileId.y << (24 - boxZoom)) + d) << 7;
+                position31.y = ((boxTileId.y << (BASE_POI_ZOOM - boxZoom)) + d) << BASE_POI_SHIFT;
 
                 if (bbox31 && !bbox31->contains(position31))
                 {
@@ -1104,6 +1117,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 ObfReaderUtilities::readQString(cis, valueString);
 
                 stringOrDataValues.insert(subtypes->descriptionSubtypeIndex, valueString);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kPrecisionXYFieldNumber:
+            {
+                cis->ReadVarint32(&precisionXY);
                 break;
             }
             default:

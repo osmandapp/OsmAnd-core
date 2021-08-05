@@ -1,0 +1,12 @@
+diff -Naur upstream.original/qmake/generators/mac/pbuilder_pbx.cpp upstream.patched/qmake/generators/mac/pbuilder_pbx.cpp
+--- upstream.original/qmake/generators/mac/pbuilder_pbx.cpp	2021-05-27 10:26:48.000000000 +0300
++++ upstream.patched/qmake/generators/mac/pbuilder_pbx.cpp	2021-05-27 10:27:51.000000000 +0300
+@@ -1442,7 +1442,7 @@
+         // Bitcode is only supported with a deployment target >= iOS 6.0.
+         // Disable it for now, and consider switching it on when later
+         // bumping the deployment target.
+-        settings.insert("ENABLE_BITCODE", "NO");
++        settings.insert("ENABLE_BITCODE", "YES");
+         settings.insert("GCC_GENERATE_DEBUGGING_SYMBOLS", as_release ? "NO" : "YES");
+         if(!as_release)
+             settings.insert("GCC_OPTIMIZATION_LEVEL", "0");

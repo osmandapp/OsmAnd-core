@@ -33,6 +33,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 	mapState.stubsStyle = stubsStyle;
     
     mapState.metersPerPixel = metersPerPixel;
+    mapState.visibleBBox31 = visibleBBox31;
 
 	return mapState;
 }

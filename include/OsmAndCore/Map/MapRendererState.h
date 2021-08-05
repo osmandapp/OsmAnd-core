@@ -69,6 +69,7 @@ namespace OsmAnd
         MapStubStyle stubsStyle;
         
         double metersPerPixel;
+        AreaI visibleBBox31;
     };
 
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL
@@ -101,6 +102,7 @@ namespace OsmAnd
         MapStubStyle stubsStyle;
         
         double metersPerPixel;
+        AreaI visibleBBox31;
     };
 }
 

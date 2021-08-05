@@ -113,8 +113,8 @@ namespace OsmAnd
         QString seqOrder;
         QXmlStreamAttributes attrsMap;
         QString name;
-        std::vector<std::shared_ptr<XmlTreeSequence>> children;
-        std::shared_ptr<XmlTreeSequence> parent;
+        std::vector<std::weak_ptr<XmlTreeSequence>> children;
+        std::weak_ptr<XmlTreeSequence> parent;
         qint64 lineNum;
         qint64 columnNum;
         

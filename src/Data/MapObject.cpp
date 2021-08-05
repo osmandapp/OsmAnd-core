@@ -13,6 +13,9 @@
 #include "Logging.h"
 #include <ICU.h>
 
+static const int SHIFT_COORDINATES = 5;
+static const int LABEL_ZOOM_ENCODE = 26;
+
 std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::defaultAttributeMapping(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::MapObject::AttributeMapping>(new OsmAnd::MapObject::AttributeMapping()),
     static_cast< std::function<void (std::shared_ptr<OsmAnd::MapObject::AttributeMapping>& instance)> >([]
@@ -24,6 +27,8 @@ std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::de
 OsmAnd::MapObject::MapObject()
     : attributeMapping(defaultAttributeMapping)
     , isArea(false)
+    , labelX(0)
+    , labelY(0)
 {
 }
 
@@ -483,4 +488,39 @@ bool OsmAnd::MapObject::Comparator::operator()(
         return false;
 
     return (l < r);
+}
+
+bool OsmAnd::MapObject::isLabelCoordinatesSpecified() const
+{
+    return (labelX != 0 || labelY != 0) && points31.size() > 0;
+}
+
+int32_t OsmAnd::MapObject::getLabelCoordinateX() const
+{
+        int64_t sum = 0;
+        int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
+        int32_t pointsCount = points31.size();
+        auto pPoint = points31.constData();
+        for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
+        {
+            sum += pPoint->x;
+        }
+        int32_t average = (int32_t)(((sum >> SHIFT_COORDINATES) / pointsCount) << (SHIFT_COORDINATES - LABEL_SHIFT));
+        int32_t label31X = (average + labelX) << LABEL_SHIFT;
+        return label31X;
+}
+
+int32_t OsmAnd::MapObject::getLabelCoordinateY() const
+{
+        int64_t sum = 0;
+        int32_t LABEL_SHIFT = 31 - LABEL_ZOOM_ENCODE;
+        int32_t pointsCount = points31.size();
+        auto pPoint = points31.constData();
+        for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
+        {
+            sum += pPoint->y;
+        }
+        int32_t average = (int32_t)(((sum >> SHIFT_COORDINATES) / pointsCount) << (SHIFT_COORDINATES - LABEL_SHIFT));
+        int32_t label31Y = (average + labelY) << LABEL_SHIFT;
+        return label31Y;
 }

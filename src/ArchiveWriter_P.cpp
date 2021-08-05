@@ -19,7 +19,7 @@ OsmAnd::ArchiveWriter_P::~ArchiveWriter_P()
 {
 }
 
-void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive)
+void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath)
 {
     struct archive *a;
     struct archive_entry *entry;
@@ -38,7 +38,7 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
         *ok_ = false;
         return;
     }
-    for (const QString& fileName : filesToArcive)
+    for (QString fileName : filesToArcive)
     {
         QFile archiveFile(fileName);
         if (!archiveFile.exists())
@@ -48,12 +48,12 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
         const char* filename = fileName.toLocal8Bit().data();
         stat(filename, &st);
         entry = archive_entry_new();
-        archive_entry_set_pathname(entry, fi.fileName().toLocal8Bit().data());
+        archive_entry_set_pathname(entry, fileName.replace(basePath + QStringLiteral("/"), QStringLiteral("")).toLocal8Bit().data());
         archive_entry_set_size(entry, st.st_size);
         archive_entry_set_filetype(entry, AE_IFREG);
-        archive_entry_set_perm(entry, 0644);
+        archive_entry_set_perm(entry, 0664);
         archive_write_header(a, entry);
-        archiveFile.open(QIODevice::ReadOnly | QIODevice::Text);
+        archiveFile.open(QIODevice::ReadOnly);
         len = archiveFile.read(buff, 8192);
         while ( len > 0 ) {
             archive_write_data(a, buff, len);

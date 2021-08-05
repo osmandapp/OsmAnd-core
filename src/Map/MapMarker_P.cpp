@@ -33,9 +33,12 @@ bool OsmAnd::MapMarker_P::isHidden() const
 void OsmAnd::MapMarker_P::setIsHidden(const bool hidden)
 {
     QWriteLocker scopedLocker(&_lock);
-
-    _isHidden = hidden;
-    _hasUnappliedChanges = true;
+    
+    if (_isHidden != hidden)
+    {
+        _isHidden = hidden;
+        _hasUnappliedChanges = true;
+    }
 }
 
 bool OsmAnd::MapMarker_P::isAccuracyCircleVisible() const
@@ -49,8 +52,11 @@ void OsmAnd::MapMarker_P::setIsAccuracyCircleVisible(const bool visible)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _isAccuracyCircleVisible = visible;
-    _hasUnappliedChanges = true;
+    if (_isAccuracyCircleVisible != visible)
+    {
+        _isAccuracyCircleVisible = visible;
+        _hasUnappliedChanges = true;
+    }
 }
 
 double OsmAnd::MapMarker_P::getAccuracyCircleRadius() const
@@ -64,8 +70,11 @@ void OsmAnd::MapMarker_P::setAccuracyCircleRadius(const double radius)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _accuracyCircleRadius = radius;
-    _hasUnappliedChanges = true;
+    if (_accuracyCircleRadius != radius)
+    {
+        _accuracyCircleRadius = radius;
+        _hasUnappliedChanges = true;
+    }
 }
 
 OsmAnd::PointI OsmAnd::MapMarker_P::getPosition() const
@@ -79,8 +88,11 @@ void OsmAnd::MapMarker_P::setPosition(const PointI position)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _position = position;
-    _hasUnappliedChanges = true;
+    if (_position != position)
+    {
+        _position = position;
+        _hasUnappliedChanges = true;
+    }
 }
 
 float OsmAnd::MapMarker_P::getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const
@@ -94,8 +106,11 @@ void OsmAnd::MapMarker_P::setOnMapSurfaceIconDirection(const MapMarker::OnSurfac
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _directions[key] = direction;
-    _hasUnappliedChanges = true;
+    if (_directions[key] != direction)
+    {
+        _directions[key] = direction;
+        _hasUnappliedChanges = true;
+    }
 }
 
 OsmAnd::ColorARGB OsmAnd::MapMarker_P::getPinIconModulationColor() const
@@ -109,8 +124,11 @@ void OsmAnd::MapMarker_P::setPinIconModulationColor(const ColorARGB colorValue)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pinIconModulationColor = colorValue;
-    _hasUnappliedChanges = true;
+    if (_pinIconModulationColor != colorValue)
+    {
+        _pinIconModulationColor = colorValue;
+        _hasUnappliedChanges = true;
+    }
 }
 
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const

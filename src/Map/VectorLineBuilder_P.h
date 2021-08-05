@@ -32,12 +32,14 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
-
+        bool _isApproximationEnabled;
+        
         int _lineId;
         int _baseOrder;
 
         double _lineWidth;
         FColorARGB _fillColor;
+        std::vector<double> _dashPattern;
 
         QVector<PointI> _points;
 
@@ -54,6 +56,9 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+        
         int getLineId() const;
         void setLineId(const int lineId);
 
@@ -65,6 +70,9 @@ namespace OsmAnd
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB baseColor);
 
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
+        
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI> poinst);
 

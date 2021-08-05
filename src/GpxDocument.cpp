@@ -909,7 +909,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
 
                 copyright.reset(new Copyright());
-                copyright->license = xmlReader.readElementText();
+                copyright->license = xmlReader.text().toString();
                 copyright->author = xmlReader.attributes().value(QStringLiteral("author")).toString();
                 tokens.push(Token::copyright);
             }
@@ -925,7 +925,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
-                const auto name = xmlReader.readElementText();
+                const auto name = xmlReader.text().toString();
                 switch (tokens.top())
                 {
                     case Token::metadata:
@@ -1035,8 +1035,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             }
             else if (tagName == QStringLiteral("email"))
             {
-                const auto email = xmlReader.readElementText();
-
                 if (tokens.isEmpty())
                 {
                     LogPrintf(
@@ -1222,6 +1220,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     case Token::metadata:
                         metadata->name = name;
+                        break;
+                    case Token::author:
+                        author->name = name;
                         break;
                     case Token::wpt:
                         wpt->name = name;

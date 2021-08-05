@@ -76,6 +76,18 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 12));
         writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 12));
 
+        if (!item->getElevation().isNull())
+        {
+            // <ele>
+            writer.writeTextElement(QLatin1String("ele"), item->getElevation());
+        }
+        
+        if (!item->getTime().isNull())
+        {
+            // <time>
+            writer.writeTextElement(QLatin1String("time"), item->getTime());
+        }
+        
         // <name>
         writer.writeTextElement(QLatin1String("name"), item->getTitle());
 
@@ -96,6 +108,21 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         {
             // <extensions>
             writer.writeStartElement(QLatin1String("extensions"));
+            
+            // <address>
+            const auto address = item->getAddress();
+            if (!address.isEmpty())
+                writer.writeTextElement(QLatin1String("address"), address);
+            
+            // <icon>
+            const auto icon = item->getIcon();
+            if (!icon.isEmpty())
+                writer.writeTextElement(QLatin1String("icon"), icon);
+            
+            // <background>
+            const auto background = item->getBackground();
+            if (!background.isEmpty())
+                writer.writeTextElement(QLatin1String("background"), background);
 
             // <color>
             const auto colorValue = color.toString();
@@ -104,6 +131,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             // <hidden>
             if (item->isHidden())
                 writer.writeEmptyElement(QLatin1String("hidden"));
+            
+            if (item->getCalendarEvent())
+                writer.writeTextElement(QLatin1String("calendar_event"), "true");
 
             // </extensions>
             writer.writeEndElement();
@@ -156,6 +186,26 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem.reset(new FavoriteLocation(LatLon(lat, lon)));
             }
+            else if (tagName == QLatin1String("ele"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <ele>");
+                    return false;
+                }
+       
+                newItem->setElevation(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("time"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <time>");
+                    return false;
+                }
+       
+                newItem->setTime(xmlReader.readElementText());
+            }
             else if (tagName == QLatin1String("name"))
             {
                 // The <metadata> also contains the name tag, so it's ok to have a name tag without the item
@@ -174,6 +224,26 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem->setDescription(xmlReader.readElementText());
             }
+            else if (tagName == QLatin1String("address"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <address>");
+                    return false;
+                }
+       
+                newItem->setAddress(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("calendar_event"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <calendar_event>");
+                    return false;
+                }
+       
+                newItem->setCalendarEvent(xmlReader.readElementText() == "true");
+            }
             else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
             {
                 if (!newItem)
@@ -185,6 +255,26 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 const auto& group = xmlReader.readElementText();
                 if (!group.isEmpty())
                     newItem->setGroup(group);
+            }
+            else if (tagName == QLatin1String("icon"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <icon>");
+                    return false;
+                }
+       
+                newItem->setIcon(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("background"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <background>");
+                    return false;
+                }
+       
+                newItem->setBackground(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("color"))
             {

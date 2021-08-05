@@ -506,7 +506,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
 
         _currentState.metersPerPixel = getCurrentPixelsToMetersScaleFactor(_currentState.zoomLevel, getInternalStateRef());
-                
+        _currentState.visibleBBox31 = getVisibleBBox31(getInternalStateRef());
+
         // Anyways, invalidate the frame
         invalidateFrame();
 

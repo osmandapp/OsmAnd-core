@@ -29,6 +29,16 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
+        void createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
+                            VectorMapSymbol::Vertex &vertex,
+                            std::vector<PointD> &b1,
+                            std::vector<PointD> &b2,
+                            std::vector<PointD> &e1,
+                            std::vector<PointD> &e2,
+                            std::vector<PointD> &original,
+                            double radius,
+                            FColorARGB &fillColor,
+                            bool gap) const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -37,10 +47,16 @@ namespace OsmAnd
         bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
+        bool _isApproximationEnabled;
 
         QVector<PointI> _points;
+        double _lineWidth;
+        FColorARGB _fillColor;
+        bool _dash;
+        std::vector<double> _dashPattern;
 
         double _metersPerPixel;
+        AreaI _visibleBBox31;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;
@@ -70,7 +86,9 @@ namespace OsmAnd
         
         int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
                                    std::vector<bool>& include) const;
-        
+        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments) const;
+        static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
+
     public:
         virtual ~VectorLine_P();
 
@@ -79,8 +97,20 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
+        bool isApproximationEnabled() const;
+        void setApproximationEnabled(const bool enabled);
+
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        double getLineWidth() const;
+        void setLineWidth(const double width);
+
+        FColorARGB getFillColor() const;
+        void setFillColor(const FColorARGB color);
+
+        std::vector<double> getLineDash() const;
+        void setLineDash(const std::vector<double> dashPattern);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

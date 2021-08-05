@@ -48,3 +48,8 @@ QString OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(const QString
 {
     return CollatorStringMatcher_P::simplifyStringAndAlignChars(fullText);
 }
+
+QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
+{
+    return CollatorStringMatcher_P::alignChars(fullText);
+}

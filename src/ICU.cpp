@@ -143,11 +143,16 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     ubidi_setReorderingMode(pContext, UBIDI_REORDER_DEFAULT);
 
     // Set data
-    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_RTL, nullptr, &icuError);
+    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_LTR, nullptr, &icuError);
     ok = U_SUCCESS(icuError);
 
     if (ok)
     {
+        auto const direction = ubidi_getDirection(pContext);
+        if (direction == UBIDI_LTR)
+        {
+            return input;
+        }
         QVector<UChar> reordered(len);
         ubidi_writeReordered(pContext, reordered.data(), len, UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS, &icuError);
         ok = U_SUCCESS(icuError);
@@ -467,8 +472,11 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     }
     else
     {
+        // FUTURE: This is not effective code, it runs on each comparision
+        // It would be more efficient to normalize all strings in file and normalize search string before collator
         UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(_searchInParam));
-        UnicodeString theStart = qStrToUniStr(_theStart);
+        QString theStartAligned = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
+        UnicodeString theStart = qStrToUniStr(theStartAligned);
         
         int startLength = theStart.length();
         int serchInLength = searchIn.length();
@@ -477,7 +485,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             result = true;
         }
-        // this is not correct because of Auhofstrasse != Auhofstraße
+        // this is not correct without (simplifyStringAndAlignChars) because of Auhofstrasse != Auhofstraße
         if (startLength > serchInLength)
         {
             result = false;

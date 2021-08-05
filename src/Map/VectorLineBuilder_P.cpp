@@ -11,6 +11,7 @@
 
 OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_)
     : _isHidden(false)
+    , _isApproximationEnabled(true)
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _lineWidth(3.0)
@@ -35,6 +36,20 @@ void OsmAnd::VectorLineBuilder_P::setIsHidden(const bool hidden)
     QWriteLocker scopedLocker(&_lock);
 
     _isHidden = hidden;
+}
+
+bool OsmAnd::VectorLineBuilder_P::isApproximationEnabled() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _isApproximationEnabled;
+}
+
+void OsmAnd::VectorLineBuilder_P::setApproximationEnabled(const bool enabled)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _isApproximationEnabled = enabled;
 }
 
 int OsmAnd::VectorLineBuilder_P::getLineId() const
@@ -91,6 +106,20 @@ void OsmAnd::VectorLineBuilder_P::setFillColor(const FColorARGB fillColor)
     QWriteLocker scopedLocker(&_lock);
 
     _fillColor = fillColor;
+}
+
+std::vector<double> OsmAnd::VectorLineBuilder_P::getLineDash() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _dashPattern;
+}
+
+void OsmAnd::VectorLineBuilder_P::setLineDash(const std::vector<double> dashPattern)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _dashPattern = dashPattern;
 }
 
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder_P::getPoints() const
@@ -158,12 +187,14 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     const std::shared_ptr<VectorLine> line(new VectorLine(
                                                           _lineId,
                                                           _baseOrder,
-                                                          _lineWidth,
-                                                          _fillColor,
                                                           _pathIcon,
                                                           _pathIconStep));
+    line->setLineWidth(_lineWidth);
+    line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
+    line->setApproximationEnabled(_isApproximationEnabled);
     line->setPoints(_points);
+    line->setLineDash(_dashPattern);
     line->applyChanges();
     
     return line;

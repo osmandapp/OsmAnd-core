@@ -2010,6 +2010,9 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources(const bool gpuCont
 {
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 
+    _requestedResourcesTasks.clear();
+    _resourcesRequestWorkerPool.dequeueAll();
+    _resourcesRequestWorkerPool.waitForDone();
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
     {
