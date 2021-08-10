@@ -52,8 +52,8 @@ namespace OsmAnd
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
         
-        ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
-        ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;
