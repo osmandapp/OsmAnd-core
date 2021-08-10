@@ -3,12 +3,8 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::MapMarkersCollection::MapMarkersCollection(
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/)
+OsmAnd::MapMarkersCollection::MapMarkersCollection()
     : _p(new MapMarkersCollection_P(this))
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
 {
 }
 
