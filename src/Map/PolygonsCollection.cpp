@@ -3,12 +3,8 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::PolygonsCollection::PolygonsCollection(
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/)
+OsmAnd::PolygonsCollection::PolygonsCollection()
     : _p(new PolygonsCollection_P(this))
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
 {
 }
 
@@ -63,4 +59,14 @@ void OsmAnd::PolygonsCollection::obtainDataAsync(
     const bool collectMetric /*= false*/)
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+}
+
+OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMinZoom() const
+{
+    return OsmAnd::ZoomLevel3;
+}
+
+OsmAnd::ZoomLevel OsmAnd::PolygonsCollection::getMaxZoom() const
+{
+    return OsmAnd::ZoomLevel7;
 }

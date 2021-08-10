@@ -849,7 +849,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
     if (!obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_))
         return;
     const auto& provider = std::dynamic_pointer_cast<IMapKeyedDataProvider>(provider_);
-    if (!provider || static_cast<int>(activeZoom) < 3 || static_cast<int>(activeZoom) > 7)
+    if (!provider || activeZoom < provider->getMinZoom() || activeZoom > provider->getMaxZoom())
         return;
 
     // Get list of keys this provider has and check that all are present
@@ -1177,7 +1177,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
                 {
                     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
-                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet())
+                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet() && provider->getMinZoom() >= mapState.zoomLevel && provider->getMaxZoom() <= mapState.zoomLevel)
                         updatesPresent = true;
                 }
             }
@@ -1470,7 +1470,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             const auto providedKeysSet = keyedDataProvider->getProvidedDataKeys().toSet();
 
             resourcesCollection->removeResources(
-                [this, activeZoom, &needsResourcesUploadOrUnload, providedKeysSet]
+                [this, activeZoom, &keyedDataProvider, &needsResourcesUploadOrUnload, providedKeysSet]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
                 {
                     // If it was previously marked as junk, just leave it
@@ -1484,8 +1484,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
                     // If this key is no longer provided by keyed provider
                     isJunk = isJunk || !providedKeysSet.contains(keyedEntry->key);
-                    isJunk = isJunk || static_cast<int>(activeZoom) < 3;
-                    isJunk = isJunk || static_cast<int>(activeZoom) > 7;
+                    isJunk = isJunk || activeZoom < keyedDataProvider->getMinZoom();
+                    isJunk = isJunk || activeZoom > keyedDataProvider->getMaxZoom();
 
                     // Skip cleaning if this resource is not junk
                     if (!isJunk)

@@ -55,9 +55,8 @@ namespace OsmAnd
     public:
         virtual ~IMapKeyedDataProvider();
 
-        //TODO - implement
-        //virtual ZoomLevel getMinZoom() const = 0;
-        //virtual ZoomLevel getMaxZoom() const = 0;
+        virtual ZoomLevel getMinZoom() const = 0;
+        virtual ZoomLevel getMaxZoom() const = 0;
         
         virtual QList<Key> getProvidedDataKeys() const = 0;
         virtual bool obtainKeyedData(

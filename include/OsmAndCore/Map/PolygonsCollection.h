@@ -28,17 +28,17 @@ namespace OsmAnd
         PrivateImplementation<PolygonsCollection_P> _p;
     protected:
     public:
-        PolygonsCollection(const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel);
+        PolygonsCollection();
         virtual ~PolygonsCollection();
 
         QList< std::shared_ptr<Polygon> > getPolygons() const;
         bool removePolygon(const std::shared_ptr<Polygon>& polygon);
         void removeAllPolygons();
 
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
-
-        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        
+        ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

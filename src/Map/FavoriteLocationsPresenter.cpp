@@ -74,3 +74,13 @@ void OsmAnd::FavoriteLocationsPresenter::obtainDataAsync(
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
+
+OsmAnd::ZoomLevel OsmAnd::FavoriteLocationsPresenter::getMinZoom() const
+{
+    return OsmAnd::ZoomLevel5;
+}
+
+OsmAnd::ZoomLevel OsmAnd::FavoriteLocationsPresenter::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
+}
