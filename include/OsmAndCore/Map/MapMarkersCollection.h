@@ -29,15 +29,12 @@ namespace OsmAnd
         PrivateImplementation<MapMarkersCollection_P> _p;
     protected:
     public:
-        MapMarkersCollection(const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel);
+        MapMarkersCollection();
         virtual ~MapMarkersCollection();
 
         QList< std::shared_ptr<MapMarker> > getMarkers() const;
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
-
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
 
