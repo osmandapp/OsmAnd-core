@@ -274,6 +274,7 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 endif()
 
 file(GLOB includes
+	"include/mapbox/*.h*"
 	"include/proper/*.h*"
 	"include/*.h*"
 	"include/OsmAndCore/*.h*"

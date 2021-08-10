@@ -64,3 +64,13 @@ void OsmAnd::MapMarkersCollection::obtainDataAsync(
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
+
+OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
+{
+    return OsmAnd::ZoomLevel5;
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
+}

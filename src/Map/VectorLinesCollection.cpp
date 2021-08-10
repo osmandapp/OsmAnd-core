@@ -64,3 +64,13 @@ void OsmAnd::VectorLinesCollection::obtainDataAsync(
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
+
+OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMinZoom() const
+{
+    return OsmAnd::ZoomLevel5;
+}
+
+OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
+}

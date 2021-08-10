@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/LatLon.h>
 
 namespace OsmAnd
 {
@@ -35,6 +36,8 @@ namespace OsmAnd
         QString regionRoadSigns;
         QString wikiLink;
         QString population;
+        
+        LatLon regionCenter;
         
         std::shared_ptr<const OsmAnd::BinaryMapObject> mapObject;
     };
