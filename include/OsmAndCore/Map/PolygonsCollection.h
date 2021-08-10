@@ -37,8 +37,8 @@ namespace OsmAnd
 
         QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         
-        ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
-        ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
