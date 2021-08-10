@@ -3,12 +3,8 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::VectorLinesCollection::VectorLinesCollection(
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/)
+OsmAnd::VectorLinesCollection::VectorLinesCollection()
     : _p(new VectorLinesCollection_P(this))
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
 {
 }
 

@@ -28,15 +28,12 @@ namespace OsmAnd
         PrivateImplementation<VectorLinesCollection_P> _p;
     protected:
     public:
-        VectorLinesCollection(const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel);
+        VectorLinesCollection();
         virtual ~VectorLinesCollection();
 
         QList< std::shared_ptr<VectorLine> > getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
-
-        const ZoomLevel minZoom;
-        const ZoomLevel maxZoom;
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
 
