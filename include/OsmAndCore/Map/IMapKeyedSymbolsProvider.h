@@ -39,9 +39,6 @@ namespace OsmAnd
         IMapKeyedSymbolsProvider();
     public:
         virtual ~IMapKeyedSymbolsProvider();
-        
-        virtual ZoomLevel getMinZoom() const = 0;
-        virtual ZoomLevel getMaxZoom() const = 0;
 
         virtual bool obtainKeyedSymbols(
             const Request& request,
