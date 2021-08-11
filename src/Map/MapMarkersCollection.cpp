@@ -63,7 +63,7 @@ void OsmAnd::MapMarkersCollection::obtainDataAsync(
 
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
 {
-    return OsmAnd::ZoomLevel5;
+    return OsmAnd::MinZoomLevel;
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
