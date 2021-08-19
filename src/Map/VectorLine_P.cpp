@@ -168,7 +168,7 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
+    bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.1;
     if (!changed && _visibleBBox31 != mapState.visibleBBox31)
     {
         auto bboxShiftPoint = _visibleBBox31.topLeft - mapState.visibleBBox31.topLeft;
@@ -537,7 +537,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 {
     int order = owner->baseOrder;
     float zoom = this->zoom();
-    double scale = Utilities::getPowZoom(31 - _mapZoomLevel) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
     double radius = _lineWidth * scale;
 
     vectorLine->order = order++;

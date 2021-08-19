@@ -10,6 +10,16 @@ OsmAnd::IMapKeyedDataProvider::~IMapKeyedDataProvider()
 {
 }
 
+OsmAnd::ZoomLevel OsmAnd::IMapKeyedDataProvider::getMinZoom() const
+{
+    return OsmAnd::MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::IMapKeyedDataProvider::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
+}
+
 bool OsmAnd::IMapKeyedDataProvider::obtainKeyedData(
     const Request& request,
     std::shared_ptr<Data>& outKeyedData,

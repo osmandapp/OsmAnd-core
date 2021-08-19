@@ -161,7 +161,8 @@ namespace OsmAnd
             const QVector<TileId>& tiles,
             const ZoomLevel zoom);
         void requestNeededKeyedResources(
-            const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
+            const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection,
+            const ZoomLevel zoom);
         void requestNeededResource(
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool beginResourceRequestProcessing(const std::shared_ptr<MapRendererBaseResource>& resource);
