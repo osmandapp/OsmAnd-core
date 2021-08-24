@@ -311,11 +311,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	set(target_specific_definitions_private ${target_specific_definitions_private}
 		-DSK_USE_POSIX_THREADS
 	)
-	set(library_suffix_tbd "")
-
-	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set(library_suffix_tbd ".tbd")
-	endif()
+	set(library_suffix_tbd ".tbd")
 	find_library(CoreGraphics_LIBRARY CoreGraphics)
 	find_library(CoreText_LIBRARY CoreText)
 	find_library(CoreFoundation_LIBRARY CoreFoundation)
