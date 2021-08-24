@@ -3,12 +3,8 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::VectorLinesCollection::VectorLinesCollection(
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/)
+OsmAnd::VectorLinesCollection::VectorLinesCollection()
     : _p(new VectorLinesCollection_P(this))
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
 {
 }
 
@@ -63,4 +59,14 @@ void OsmAnd::VectorLinesCollection::obtainDataAsync(
     const bool collectMetric /*= false*/)
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+}
+
+OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMinZoom() const
+{
+    return OsmAnd::ZoomLevel3;
+}
+
+OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
 }

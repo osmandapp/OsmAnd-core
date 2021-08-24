@@ -3,12 +3,8 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::MapMarkersCollection::MapMarkersCollection(
-    const ZoomLevel minZoom_ /*= MinZoomLevel*/,
-    const ZoomLevel maxZoom_ /*= MaxZoomLevel*/)
+OsmAnd::MapMarkersCollection::MapMarkersCollection()
     : _p(new MapMarkersCollection_P(this))
-    , minZoom(minZoom_)
-    , maxZoom(maxZoom_)
 {
 }
 
@@ -63,4 +59,14 @@ void OsmAnd::MapMarkersCollection::obtainDataAsync(
     const bool collectMetric /*= false*/)
 {
     MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
+{
+    return OsmAnd::MinZoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
+{
+    return OsmAnd::MaxZoomLevel;
 }

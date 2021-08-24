@@ -314,6 +314,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QLatin1String("*.srtm.obf"),
             ResourceType::SrtmMapRegion);
 
+        // Find ResourceType::SrtmMapRegion -> "*.srtmf.obf" files
+        loadLocalResourcesFromPath_Obf(
+            storagePath,
+            cachedOsmandIndexes,
+            outResult,
+            QLatin1String("*.srtmf.obf"),
+            ResourceType::SrtmMapRegion);
+
         // Find ResourceType::WikiMapRegion -> "*.wiki.obf" files
         loadLocalResourcesFromPath_Obf(
             storagePath,
@@ -437,7 +445,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         // Determine resource type and id
         auto resourceType = ResourceType::Unknown;
         auto resourceId = fileName.toLower();
-        if (fileName.endsWith(".srtm.obf"))
+        if (fileName.endsWith(".srtm.obf") || fileName.endsWith(".srtmf.obf"))
             resourceType = ResourceType::SrtmMapRegion;
         else if (fileName.endsWith(".road.obf"))
             resourceType = ResourceType::RoadMapRegion;
@@ -903,17 +911,20 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     QLatin1String("/download.php?road=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
-            case ResourceType::SrtmMapRegion:
+            case ResourceType::SrtmMapRegion: {
                 // '[region]_2.srtm.obf.zip' -> '[region].srtm.obf'
-                resourceId = QString(name)
-                    .remove(QLatin1String("_2.srtm.obf.zip"))
-                    .toLower()
-                    .append(QLatin1String(".srtm.obf"));
+                QString srtmMapName = QString(name);
+                bool isSRTMF = srtmMapName.endsWith("srtmf.obf.zip");
+                resourceId = srtmMapName
+                        .remove(QLatin1String(!isSRTMF ? "_2.srtm.obf.zip" : "_2.srtmf.obf.zip"))
+                        .toLower()
+                        .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"));
                 downloadUrl =
-                    owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?srtmcountry=yes&file=") +
-                    QUrl::toPercentEncoding(name);
+                        owner->repositoryBaseUrl +
+                                QLatin1String("/download.php?srtmcountry=yes&file=") +
+                                QUrl::toPercentEncoding(name);
                 break;
+            }
             case ResourceType::DepthContourRegion:
                 // '[region]_2.obf.zip' -> '[region].depth.obf'
                 resourceId = QString(name)

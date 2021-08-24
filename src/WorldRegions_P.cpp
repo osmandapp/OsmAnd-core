@@ -182,6 +182,19 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 }
                 worldRegion->nativeName = mapObject->getCaptionInNativeLanguage();
                 worldRegion->localizedNames = mapObject->getCaptionsInAllLanguages();
+                double cx = 0, cy = 0;
+                const auto& points31 = mapObject->points31;
+                for (int i = 0; i < points31.size(); i++)
+                {
+                    cx += points31[i].x;
+                    cy += points31[i].y;
+                }
+                if (!points31.empty())
+                {
+                    cx /= points31.size();
+                    cy /= points31.size();
+                    worldRegion->regionCenter = LatLon(OsmAnd::Utilities::get31LatitudeY(cy), OsmAnd::Utilities::get31LongitudeX(cx));
+                }
                 if (keepMapObjects)
                     worldRegion->mapObject = mapObject;
 

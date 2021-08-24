@@ -30,11 +30,8 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(CFNetwork_LIBRARY CFNetwork)
 	find_library(Security_LIBRARY Security)
 	find_library(z_LIBRARY z)
-	set(library_suffix_tbd "")
-
-	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set(library_suffix_tbd ".tbd")
-	endif()
+	set(library_suffix_tbd ".tbd")
+	
 	message("LIBRARY SUFFIX ${library_suffix_tbd}")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
@@ -274,6 +271,7 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 endif()
 
 file(GLOB includes
+	"include/mapbox/*.h*"
 	"include/proper/*.h*"
 	"include/*.h*"
 	"include/OsmAndCore/*.h*"
