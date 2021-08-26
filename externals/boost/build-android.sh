@@ -80,6 +80,7 @@ export ANDROID_NDK_PLATFORM=android-21
 BOOST_CONFIGURATION=$(echo "
 	--layout=system
 	--with-thread
+	--with-atomic
 	toolset=clang
 	target-os=linux
 	threading=multi

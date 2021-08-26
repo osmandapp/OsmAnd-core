@@ -49,7 +49,7 @@ buildArch()
 	retcode=$?
 	if [[ $retcode -ne 0 ]]; then
 		echo "Failed to build ($retcode), aborting..."
-		rm -rf "$bakedDir"
+		# rm -rf "$bakedDir"
 		exit $retcode
 	fi
 }
