@@ -23,8 +23,8 @@ if [[ "$compiler" != "clang" ]]; then
 	echo "'clang' is the only supported compilers, while '${compiler}' was specified"
 	exit 1
 fi
-if [[ "$targetArch" != "arm64-v8a" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]]; then
-	echo "'arm64-v8a', 'armeabi-v7a', 'x86' are the only supported target architectures, while '${targetArch}' was specified"
+if [[ "$targetArch" != "arm64-v8a" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]] && [[ "$targetArch" != "x86_64" ]]; then
+	echo "'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64' are the only supported target architectures, while '${targetArch}' was specified"
 	exit 1
 fi
 echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
@@ -109,6 +109,7 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
+	fi
 		(cd "$path" && ./configure -xplatform android-clang -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
@@ -116,7 +117,7 @@ makeFlavor()
 			# rm -rf "$path"
 			exit $retcode
 		fi
-	fi
+	#fi
 	
 	# Build
 	(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)

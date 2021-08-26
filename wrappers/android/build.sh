@@ -74,3 +74,10 @@ if [[ $retcode -ne 0 ]]; then
 	echo "buildArch(x86) failed with $retcode, exiting..."
 	exit $retcode
 fi
+
+buildArch "x86_64"
+retcode=$?
+if [[ $retcode -ne 0 ]]; then
+        echo "buildArch(x86_64) failed with $retcode, exiting..."
+        exit $retcode
+fi
