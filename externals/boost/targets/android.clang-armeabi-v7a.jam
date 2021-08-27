@@ -8,11 +8,10 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 using clang : android
 :
-# $(NDK)/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++
-$(NDK)/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi21-clang++
+$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/armv7a-linux-androideabi$(NDK_PLATFORM)-clang++
 :
-<archiver>$(NDK)/toolchains/llvm/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ar
-<ranlib>$(NDK)/toolchains/llvm/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-ranlib
+<archiver>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ar
+<ranlib>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ranlib
 <compileflags>-fexceptions
 <compileflags>-frtti
 #<compileflags>-Wall
@@ -28,23 +27,9 @@ $(NDK)/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi21-cla
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID_STL=c++_static
 <compileflags>-DANDROID
-# <compileflags>-D__ANDROID__
-# <compileflags>-I$(NDK)/sources/cxx-stl/llvm-libc++/include
-# <compileflags>-I$(NDK)/sources/cxx-stl/llvm-libc++abi/include
-# <compileflags>-I$(NDK)/sources/android/support/include
-## <compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++/include \
-## <compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++abi/include \
-## <compileflags>-isystem$(NDK)/sources/android/support/include
 <compileflags>-stdlib=libc++
 <linkflags>-no-canonical-prefixes
 <linkflags>-stdlib=libc++
-#<linkflags>-nodefaultlibs
-#<linkflags>-lc++
-#<linkflags>-lc++abi
-#<linkflags>-lm
-#<linkflags>-lc
-#<linkflags>-lgcc_s
-#<linkflags>-lpthread
 # 'Release/ARM' section
 <compileflags>-O2
 <compileflags>-g
