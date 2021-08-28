@@ -121,10 +121,10 @@ diff -rupN upstream.original/mkspecs/common/android-base-tail.conf upstream.patc
  QMAKE_LFLAGS_APP        = -Wl,--no-undefined -Wl,-z,noexecstack -shared
  QMAKE_LFLAGS_SHLIB      = -Wl,--no-undefined -Wl,-z,noexecstack -shared
  QMAKE_LFLAGS_PLUGIN     = $$QMAKE_LFLAGS_SHLIB
-diff -rupN upstream.original/mkspecs/common/android-base-head.conf upstream.patched/mkspecs/common/android-base-head.conf 
+diff -rupN upstream.original/mkspecs/common/android-base-head.conf upstream.patched/mkspecs/common/android-base-head.conf
 --- upstream.original/mkspecs/common/android-base-head.conf	2021-08-21 14:04:58.000000000 +0200
-+++ upstream.patched/mkspecs/common/android-base-head.conf	2021-08-28 03:42:22.000000000 +0200
-@@ -11,6 +11,8 @@ isEmpty(NDK_HOST): NDK_HOST = $$DEFAULT_
++++ upstream.patched/mkspecs/common/android-base-head.conf	2021-08-28 15:23:22.000000000 +0200
+@@ -11,43 +11,31 @@ isEmpty(NDK_HOST): NDK_HOST = $$DEFAULT_
  
  ANDROID_PLATFORM = $$(ANDROID_NDK_PLATFORM)
  isEmpty(ANDROID_PLATFORM): ANDROID_PLATFORM = $$DEFAULT_ANDROID_PLATFORM
@@ -133,25 +133,29 @@ diff -rupN upstream.original/mkspecs/common/android-base-head.conf upstream.patc
  
  ANDROID_TARGET_ARCH = $$(ANDROID_TARGET_ARCH)
  isEmpty(ANDROID_TARGET_ARCH): ANDROID_TARGET_ARCH = $$DEFAULT_ANDROID_TARGET_ARCH
-@@ -19,8 +21,6 @@ NDK_TOOLCHAIN_PREFIX = $$(ANDROID_NDK_TO
+ 
+ NDK_TOOLCHAIN_PREFIX = $$(ANDROID_NDK_TOOLCHAIN_PREFIX)
  isEmpty(NDK_TOOLCHAIN_PREFIX) {
-     equals(ANDROID_TARGET_ARCH, x86): NDK_TOOLCHAIN_PREFIX = x86
-     else: equals(ANDROID_TARGET_ARCH, x86_64): NDK_TOOLCHAIN_PREFIX = x86_64
+-    equals(ANDROID_TARGET_ARCH, x86): NDK_TOOLCHAIN_PREFIX = x86
+-    else: equals(ANDROID_TARGET_ARCH, x86_64): NDK_TOOLCHAIN_PREFIX = x86_64
 -    else: equals(ANDROID_TARGET_ARCH, mips): NDK_TOOLCHAIN_PREFIX = mipsel-linux-android
 -    else: equals(ANDROID_TARGET_ARCH, mips64): NDK_TOOLCHAIN_PREFIX = mips64el-linux-android
++    equals(ANDROID_TARGET_ARCH, x86): NDK_TOOLCHAIN_PREFIX = i686-linux-android
++    else: equals(ANDROID_TARGET_ARCH, x86_64): NDK_TOOLCHAIN_PREFIX = x86_64-linux-android
      else: equals(ANDROID_TARGET_ARCH, arm64-v8a): NDK_TOOLCHAIN_PREFIX = aarch64-linux-android
      else: NDK_TOOLCHAIN_PREFIX = arm-linux-androideabi
  }
-@@ -29,8 +29,6 @@ NDK_TOOLS_PREFIX = $$(ANDROID_NDK_TOOLS_
- isEmpty(NDK_TOOLS_PREFIX) {
-     equals(ANDROID_TARGET_ARCH, x86): NDK_TOOLS_PREFIX = i686-linux-android
-     else: equals(ANDROID_TARGET_ARCH, x86_64): NDK_TOOLS_PREFIX = x86_64-linux-android
+ 
+-NDK_TOOLS_PREFIX = $$(ANDROID_NDK_TOOLS_PREFIX)
+-isEmpty(NDK_TOOLS_PREFIX) {
+-    equals(ANDROID_TARGET_ARCH, x86): NDK_TOOLS_PREFIX = i686-linux-android
+-    else: equals(ANDROID_TARGET_ARCH, x86_64): NDK_TOOLS_PREFIX = x86_64-linux-android
 -    else: equals(ANDROID_TARGET_ARCH, mips): NDK_TOOLS_PREFIX = mipsel-linux-android
 -    else: equals(ANDROID_TARGET_ARCH, mips64): NDK_TOOLS_PREFIX = mips64el-linux-android
-     else: equals(ANDROID_TARGET_ARCH, arm64-v8a): NDK_TOOLS_PREFIX = aarch64-linux-android
-     else: NDK_TOOLS_PREFIX = arm-linux-androideabi
- }
-@@ -38,16 +36,14 @@ isEmpty(NDK_TOOLS_PREFIX) {
+-    else: equals(ANDROID_TARGET_ARCH, arm64-v8a): NDK_TOOLS_PREFIX = aarch64-linux-android
+-    else: NDK_TOOLS_PREFIX = arm-linux-androideabi
+-}
+-
  NDK_TOOLCHAIN_VERSION = $$(ANDROID_NDK_TOOLCHAIN_VERSION)
  isEmpty(NDK_TOOLCHAIN_VERSION): NDK_TOOLCHAIN_VERSION = $$DEFAULT_ANDROID_NDK_TOOLCHAIN_VERSION
  
@@ -171,7 +175,7 @@ diff -rupN upstream.original/mkspecs/common/android-base-head.conf upstream.patc
  NDK_TOOLCHAIN_PATH = $$NDK_ROOT/toolchains/$$NDK_TOOLCHAIN/prebuilt/$$NDK_HOST
  
  
-@@ -64,11 +60,11 @@ isEmpty(ANDROID_SDK_BUILD_TOOLS_REVISION
+@@ -64,11 +52,11 @@ isEmpty(ANDROID_SDK_BUILD_TOOLS_REVISION
  }
  
  CONFIG += $$ANDROID_PLATFORM
@@ -185,7 +189,7 @@ diff -rupN upstream.original/mkspecs/common/android-base-head.conf upstream.patc
 +CROSS_COMPILE = $$NDK_TOOLCHAIN_PATH/bin/llvm-
  
  QMAKE_PCH_OUTPUT_EXT    = .gch
-
+ 
 diff -rupN upstream.original/mkspecs/features/android/android_deployment_settings.prf upstream.patched/mkspecs/features/android/android_deployment_settings.prf
 --- upstream.original/mkspecs/features/android/android_deployment_settings.prf	2021-08-21 14:04:58.000000000 +0200
 +++ upstream.patched/mkspecs/features/android/android_deployment_settings.prf	2021-08-28 15:13:36.000000000 +0200
