@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash
 
 if [ -z "$BASH_VERSION" ]; then
 	echo "Invalid shell, re-running using bash..."
@@ -109,22 +109,21 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-	fi
 		(cd "$path" && ./configure -xplatform android-clang -android-arch ${targetArch} $QTBASE_CONFIGURATION -$type -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
-			# rm -rf "$path"
+			rm -rf "$path"
 			exit $retcode
 		fi
-	#fi
+	fi
 	
 	# Build
 	(cd "$path" && make -j$OSMAND_BUILD_CPU_CORES_NUM)
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to build 'qtbase-android' for '$name', aborting..."
-#		rm -rf "$path"
+		rm -rf "$path"
 		exit $retcode
 	fi
 }

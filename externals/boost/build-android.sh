@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash
 
 if [[ "$compiler" != "clang" ]]; then
 	echo "'clang' is the only supported compilers, while '${compiler}' was specified"
@@ -101,7 +101,7 @@ if [ ! -d "$STATIC_BUILD_PATH" ]; then
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to configure 'Boost' for '${targetOS}.${compiler}-${targetArch}', aborting..."
-		# rm -rf "$path"
+		rm -rf "$path"
 		exit $retcode
 	fi
 fi	
