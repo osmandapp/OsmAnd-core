@@ -1,0 +1,82 @@
+--- upstream.original/third_party/externals/harfbuzz/src/hb-ot-layout-gsubgpos.hh	2021-08-02 14:37:11.000000000 +0300
++++ upstream.patched/third_party/externals/harfbuzz/src/hb-ot-layout-gsubgpos.hh	2021-08-02 15:04:36.000000000 +0300
+@@ -1777,6 +1777,7 @@
+ };
+ 
+ 
++namespace OsmAnd {
+ struct ContextFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -2267,6 +2268,7 @@
+   public:
+   DEFINE_SIZE_ARRAY (6, coverageZ);
+ };
++}
+ 
+ struct Context
+ {
+@@ -2286,9 +2288,9 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  ContextFormat1	format1;
+-  ContextFormat2	format2;
+-  ContextFormat3	format3;
++  OsmAnd::ContextFormat1	format1;
++  OsmAnd::ContextFormat2	format2;
++  OsmAnd::ContextFormat3	format3;
+   } u;
+ };
+ 
+@@ -2746,6 +2748,7 @@
+   DEFINE_SIZE_ARRAY (2, rule);
+ };
+ 
++namespace OsmAnd {
+ struct ChainContextFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -3349,6 +3352,7 @@
+   public:
+   DEFINE_SIZE_MIN (10);
+ };
++}
+ 
+ struct ChainContext
+ {
+@@ -3368,13 +3372,13 @@
+   protected:
+   union {
+   HBUINT16		format;	/* Format identifier */
+-  ChainContextFormat1	format1;
+-  ChainContextFormat2	format2;
+-  ChainContextFormat3	format3;
++  OsmAnd::ChainContextFormat1	format1;
++  OsmAnd::ChainContextFormat2	format2;
++  OsmAnd::ChainContextFormat3	format3;
+   } u;
+ };
+ 
+-
++namespace OsmAnd {
+ template <typename T>
+ struct ExtensionFormat1
+ {
+@@ -3431,6 +3435,7 @@
+   public:
+   DEFINE_SIZE_STATIC (8);
+ };
++}
+ 
+ template <typename T>
+ struct Extension
+@@ -3477,7 +3482,7 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  ExtensionFormat1<T>	format1;
++  OsmAnd::ExtensionFormat1<T>	format1;
+   } u;
+ };
+ 

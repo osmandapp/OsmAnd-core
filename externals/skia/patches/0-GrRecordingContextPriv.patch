@@ -1,0 +1,14 @@
+--- upstream.original/src/gpu/GrRecordingContextPriv.h	2021-06-16 13:17:29.000000000 +0300
++++ /Users/macmini/OsmAnd/skia/src/gpu/GrRecordingContextPriv.h	2021-05-29 16:05:11.000000000 +0300
+@@ -99,9 +99,9 @@
+         SkDebugf(msg);
+     }
+ 
+-private:
+-    explicit GrRecordingContextPriv(GrRecordingContext* context) : fContext(context) {}
+     GrRecordingContextPriv(const GrRecordingContextPriv&); // unimpl
++private:
++    explicit GrRecordingContextPriv(GrRecordingContext* context) : fContext(context) {}    
+     GrRecordingContextPriv& operator=(const GrRecordingContextPriv&); // unimpl
+ 
+     // No taking addresses of this type.

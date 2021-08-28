@@ -3,7 +3,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
 #include <SkStream.h>
-#include <SkImageDecoder.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 OsmAnd::ICoreResourcesProvider::ICoreResourcesProvider()
@@ -25,16 +25,23 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(
 
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+    sk_sp<SkImage> skImage = SkImage::MakeFromEncoded(skData);
+    /*if (!SkImageDecoder::DecodeStream(
+        &dataStream,
+        bitmap.get(),
+        SkColorType::kUnknown_SkColorType,
+        SkImageDecoder::kDecodePixels_Mode))*/
+    if (!skImage)
     {
         return nullptr;
     }
-
-    return bitmap;
+    //TODO check in runtime if bitmap is created
+    if (skImage->asLegacyBitmap(bitmap.get())) 
+    {
+        return bitmap;
+    }
+    return nullptr;
 }
 
 std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(const QString& name) const
@@ -46,14 +53,21 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(co
 
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+    sk_sp<SkImage> skImage = SkImage::MakeFromEncoded(skData);
+    /*if (!SkImageDecoder::DecodeStream(
+        &dataStream,
+        bitmap.get(),
+        SkColorType::kUnknown_SkColorType,
+        SkImageDecoder::kDecodePixels_Mode))*/
+    if (!skImage)
     {
         return nullptr;
     }
 
-    return bitmap;
+    if (skImage->asLegacyBitmap(bitmap.get()))
+    {
+        return bitmap;
+    }
+    return nullptr;
 }

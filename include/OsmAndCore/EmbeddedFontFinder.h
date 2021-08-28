@@ -18,7 +18,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(EmbeddedFontFinder);
 
     private:
-        QList<SkTypeface*> _fonts;
+        QList<sk_sp<SkTypeface>> _fonts;
     protected:
     public:
         EmbeddedFontFinder(

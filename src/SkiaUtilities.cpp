@@ -38,7 +38,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::scaleBitmap(
 
     SkCanvas canvas(*scaledBitmap);
     canvas.scale(xScale, yScale);
-    canvas.drawBitmap(*original, 0, 0, NULL);
+    canvas.drawImage(SkImage::MakeFromBitmap(*original), 0, 0);
     canvas.flush();
 
     return scaledBitmap;
@@ -56,7 +56,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::offsetBitmap(
     const auto newHeight = original->height() + qAbs(yOffset);
 
     auto imageInfo = original->info().makeWH(newWidth, newHeight);
-    if (imageInfo.colorType() == kIndex_8_SkColorType)
+    if (imageInfo.colorType() == kAlpha_8_SkColorType)
         imageInfo = imageInfo.makeColorType(kRGBA_8888_SkColorType);
 
     const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
@@ -65,7 +65,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::offsetBitmap(
     newBitmap->eraseColor(SK_ColorTRANSPARENT);
 
     SkCanvas canvas(*newBitmap);
-    canvas.drawBitmap(*original, xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0, NULL);
+    canvas.drawImage(SkImage::MakeFromBitmap(*original), xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0);
     canvas.flush();
 
     return newBitmap;
@@ -87,7 +87,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::createTileBitmap(
         return nullptr;
 
     const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
-    if (imageInfo.colorType() == kIndex_8_SkColorType)
+    if (imageInfo.colorType() == kAlpha_8_SkColorType)
         imageInfo = imageInfo.makeColorType(kRGBA_8888_SkColorType);
     
     if (!newBitmap->tryAllocPixels(imageInfo))
@@ -96,22 +96,19 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::createTileBitmap(
 
     SkCanvas canvas(*newBitmap);
     if (firstBitmap)
-        canvas.drawBitmap(*firstBitmap, 0, -yOffset, NULL);
+        canvas.drawImage(SkImage::MakeFromBitmap(*firstBitmap), 0, -yOffset);
     if (secondBitmap)
-        canvas.drawBitmap(*secondBitmap, 0, -yOffset + imageInfo.height(), NULL);
+        canvas.drawImage(SkImage::MakeFromBitmap(*secondBitmap), 0, -yOffset + imageInfo.height());
     canvas.flush();
 
     return newBitmap;
 }
 
-SkTypeface* OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray& data)
+sk_sp<SkTypeface> OsmAnd::SkiaUtilities::createTypefaceFromFile(const QString fontFile, int index)
 {
-    SkTypeface* typeface = nullptr;
-
-    const auto fontDataStream = new SkMemoryStream(data.constData(), data.length(), true);
-    typeface = SkTypeface::CreateFromStream(fontDataStream);
-    fontDataStream->unref();
-    
+    //TODO check font files are correct in runtime
+    sk_sp<SkTypeface> typeface = nullptr;
+    typeface = SkTypeface::MakeFromFile(fontFile.toStdString().c_str(), index);
     return typeface;
 }
 
@@ -136,14 +133,12 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::mergeBitmaps(const QList< std::
         return nullptr;
     outputBitmap->eraseColor(SK_ColorTRANSPARENT);
 
-    SkBitmapDevice target(*outputBitmap);
-    SkCanvas canvas(&target);
+    SkCanvas canvas(*outputBitmap);
     for (const auto& bitmap : constOf(bitmaps))
     {
-        canvas.drawBitmap(*bitmap,
+        canvas.drawImage(SkImage::MakeFromBitmap(*bitmap),
             (maxWidth - bitmap->width()) / 2.0f,
-            (maxHeight - bitmap->height()) / 2.0f,
-            nullptr);
+            (maxHeight - bitmap->height()) / 2.0f);
     }
     canvas.flush();
 

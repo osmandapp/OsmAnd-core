@@ -15,7 +15,6 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkPathMeasure.h>
-#include <SkError.h>
 #include "restore_internal_warnings.h"
 
 #include "MapPresentationEnvironment.h"
@@ -76,12 +75,9 @@ void OsmAnd::MapRasterizer_P::rasterize(
             SkPaint bgPaint;
             bgPaint.setColor(defaultBackgroundColor.toSkColor());
             bgPaint.setStyle(SkPaint::kFill_Style);
-            canvas.drawRectCoords(
-                pDestinationArea->top(),
-                pDestinationArea->left(),
-                pDestinationArea->right(),
-                pDestinationArea->bottom(),
-                bgPaint);
+            // in old code was tlrb
+            SkRect rs = SkRect::MakeLTRB(pDestinationArea->left(), pDestinationArea->top(), pDestinationArea->right(), pDestinationArea->bottom());
+            canvas.drawRect(rs, bgPaint);
         }
         else
         {
@@ -97,7 +93,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
     }
     else
     {
-        const auto targetSize = canvas.getDeviceSize();
+        const auto targetSize = canvas.getBaseLayerSize();
         destinationArea = AreaI(0, 0, targetSize.height(), targetSize.width());
     }
 
@@ -228,7 +224,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 
         paint.setColorFilter(nullptr);
         paint.setShader(nullptr);
-        paint.setLooper(nullptr);
+        //paint.setLooper(nullptr);
         paint.setStyle(SkPaint::kStrokeAndFill_Style);
         paint.setStrokeWidth(0);
     }
@@ -241,7 +237,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 
         paint.setColorFilter(nullptr);
         paint.setShader(nullptr);
-        paint.setLooper(nullptr);
+        //paint.setLooper(nullptr);
         paint.setStyle(SkPaint::kStroke_Style);
         paint.setStrokeWidth(stroke);
 
@@ -271,7 +267,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         }
         else
         {
-            SkPathEffect* pathEffect = nullptr;
+            sk_sp<SkPathEffect> pathEffect = nullptr;
             ok = obtainPathEffect(encodedPathEffect, pathEffect);
 
             if (ok && pathEffect)
@@ -289,14 +285,15 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         ok = evalResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADER, shader);
         if (ok && !shader.isEmpty())
         {
-            SkBitmapProcShader* shaderObj = nullptr;
-            if (obtainBitmapShader(env, shader, shaderObj) && shaderObj)
+            sk_sp<SkShader> shaderObj = nullptr;
+            if (obtainShader(env, shader, shaderObj) && shaderObj)
             {
                 // SKIA requires non-transparent color
                 if (paint.getColor() == SK_ColorTRANSPARENT)
                     paint.setColor(SK_ColorWHITE);
 
-                paint.setShader(static_cast<SkShader*>(shaderObj))->unref();
+                paint.setShader(shaderObj);
+                shaderObj->unref();
             }
         }
     }
@@ -314,11 +311,11 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 
         if (shadowRadius > 0.0f && !shadowColor.isTransparent())
         {
-            paint.setLooper(SkBlurDrawLooper::Create(
+            /*paint.setLooper(SkBlurDrawLooper::Create(
                 shadowColor.toSkColor(),
                 SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius),
                 0,
-                0))->unref();
+                0))->unref();*/
         }
     }
 
@@ -416,7 +413,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
 
     if (!primitive->sourceObject->innerPolygonsPoints31.isEmpty())
     {
-        path.setFillType(SkPath::kEvenOdd_FillType);
+        path.setFillType(SkPathFillType::kEvenOdd);
         for (const auto& polygon : constOf(primitive->sourceObject->innerPolygonsPoints31))
         {
             pointIdx = 0;
@@ -562,20 +559,21 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineShadow(
     if (context.shadowMode == MapPresentationEnvironment::ShadowMode::BlurShadow && shadowRadius > 0.0f)
     {
         // simply draw shadow? difference from option 3 ?
-        paint.setLooper(SkBlurDrawLooper::Create(
+        /*paint.setLooper(SkBlurDrawLooper::Create(
             shadowColor.toSkColor(),
             SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius),
             0,
-            0))->unref();
+            0))->unref();*/
         canvas.drawPath(path, paint);
     }
     else if (context.shadowMode == MapPresentationEnvironment::ShadowMode::SolidShadow && shadowRadius > 0.0f)
     {
-        paint.setLooper(nullptr);
+        //paint.setLooper(nullptr);
         paint.setStrokeWidth(paint.getStrokeWidth() + shadowRadius * 2);
-        paint.setColorFilter(SkColorFilter::CreateModeFilter(
-            shadowColor.toSkColor(),
-            SkXfermode::kSrcIn_Mode))->unref();
+        sk_sp<SkColorFilter> colorFilter = SkColorFilters::Blend(shadowColor.toSkColor(),
+                                                                 SkBlendMode::kSrcIn);
+        paint.setColorFilter(colorFilter);
+        colorFilter->unref();
         canvas.drawPath(path, paint);
     }
 }
@@ -627,7 +625,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
         mIconInstanceTransform.setConcat(mPinPoint, mIconTransform);
         canvas.save();
         canvas.concat(mIconInstanceTransform);
-        canvas.drawBitmap(*pathIcon, 0, 0, &_defaultPaint);
+        canvas.drawImage(SkImage::MakeFromBitmap(*pathIcon), 0, 0);
         canvas.restore();
     }
 }
@@ -708,7 +706,7 @@ bool OsmAnd::MapRasterizer_P::containsHelper(const QVector< PointI >& points, co
     return intersections % 2 == 1;
 }
 
-bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const
+bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect, sk_sp<SkPathEffect> &outPathEffect) const
 {
     QMutexLocker scopedLocker(&_pathEffectsMutex);
 
@@ -749,7 +747,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
             return false;
         }
 
-        SkPathEffect* pathEffect = SkDashPathEffect::Create(intervals, intervalsCount, 0);
+        sk_sp<SkPathEffect> pathEffect = SkDashPathEffect::Make(intervals, intervalsCount, 0);
         delete[] intervals;
 
         itPathEffects = _pathEffects.insert(encodedPathEffect, pathEffect);
@@ -759,13 +757,13 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
     return true;
 }
 
-bool OsmAnd::MapRasterizer_P::obtainBitmapShader(
+bool OsmAnd::MapRasterizer_P::obtainShader(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const QString& name,
-    SkBitmapProcShader* &outShader)
+    sk_sp<SkShader> &outShader)
 {
-    std::shared_ptr<const SkBitmap> bitmap;
-    if (!env->obtainShaderBitmap(name, bitmap))
+    sk_sp<SkImage> image;
+    if (!env->obtainShaderImage(name, image))
     {
         LogPrintf(LogSeverityLevel::Warning,
             "Failed to get '%s' bitmap shader",
@@ -774,7 +772,9 @@ bool OsmAnd::MapRasterizer_P::obtainBitmapShader(
         return false;
     }
 
-    outShader = new SkBitmapProcShader(*bitmap, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
+    const SkSamplingOptions skSamplingOptions;
+    outShader = image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, skSamplingOptions);
+    //outShader = new SkBitmapProcLegacyShader(*bitmap, SkTileMode::kRepeat, SkTileMode::kRepeat);
     return true;
 }
 

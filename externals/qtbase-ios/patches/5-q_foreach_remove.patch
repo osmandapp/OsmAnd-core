@@ -1,0 +1,14 @@
+--- upstream.original/src/corelib/global/qglobal.h	2021-08-06 15:10:58.000000000 +0300
++++ upstream.patched/src/corelib/global/qglobal.h	2021-08-06 15:30:36.000000000 +0300
+@@ -1121,11 +1121,6 @@
+ 
+ #define Q_FOREVER for(;;)
+ #ifndef QT_NO_KEYWORDS
+-# ifndef QT_NO_FOREACH
+-#  ifndef foreach
+-#    define foreach Q_FOREACH
+-#  endif
+-# endif // QT_NO_FOREACH
+ #  ifndef forever
+ #    define forever Q_FOREVER
+ #  endif

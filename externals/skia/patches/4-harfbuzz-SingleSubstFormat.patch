@@ -1,0 +1,131 @@
+--- upstream.original/third_party/externals/harfbuzz/src/hb-ot-layout-gsub-table.hh	2021-08-02 14:37:11.000000000 +0300
++++ upstream.patched/third_party/externals/harfbuzz/src/hb-ot-layout-gsub-table.hh	2021-08-02 15:02:19.000000000 +0300
+@@ -40,7 +40,7 @@
+ static void SingleSubst_serialize (hb_serialize_context_t *c,
+ 				   Iterator it);
+ 
+-
++namespace OsmAnd {
+ struct SingleSubstFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -251,6 +251,7 @@
+   public:
+   DEFINE_SIZE_ARRAY (6, substitute);
+ };
++}
+ 
+ struct SingleSubst
+ {
+@@ -299,8 +300,8 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  SingleSubstFormat1	format1;
+-  SingleSubstFormat2	format2;
++  OsmAnd::SingleSubstFormat1	format1;
++  OsmAnd::SingleSubstFormat2	format2;
+   } u;
+ };
+ 
+@@ -392,6 +393,7 @@
+   DEFINE_SIZE_ARRAY (2, substitute);
+ };
+ 
++namespace OsmAnd {
+ struct MultipleSubstFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -497,6 +499,7 @@
+   public:
+   DEFINE_SIZE_ARRAY (6, sequence);
+ };
++}
+ 
+ struct MultipleSubst
+ {
+@@ -529,7 +532,7 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  MultipleSubstFormat1	format1;
++  OsmAnd::MultipleSubstFormat1	format1;
+   } u;
+ };
+ 
+@@ -623,6 +626,7 @@
+   DEFINE_SIZE_ARRAY (2, alternates);
+ };
+ 
++namespace OsmAnd {
+ struct AlternateSubstFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -736,6 +740,7 @@
+   public:
+   DEFINE_SIZE_ARRAY (6, alternateSet);
+ };
++}
+ 
+ struct AlternateSubst
+ {
+@@ -768,7 +773,7 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  AlternateSubstFormat1	format1;
++  OsmAnd::AlternateSubstFormat1	format1;
+   } u;
+ };
+ 
+@@ -989,6 +994,7 @@
+   DEFINE_SIZE_ARRAY (2, ligature);
+ };
+ 
++namespace OsmAnd {
+ struct LigatureSubstFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -1116,6 +1122,7 @@
+   public:
+   DEFINE_SIZE_ARRAY (6, ligatureSet);
+ };
++}
+ 
+ struct LigatureSubst
+ {
+@@ -1155,7 +1162,7 @@
+   protected:
+   union {
+   HBUINT16		format;		/* Format identifier */
+-  LigatureSubstFormat1	format1;
++  OsmAnd::LigatureSubstFormat1	format1;
+   } u;
+ };
+ 
+@@ -1170,7 +1177,7 @@
+   bool is_reverse () const;
+ };
+ 
+-
++namespace OsmAnd {
+ struct ReverseChainSingleSubstFormat1
+ {
+   bool intersects (const hb_set_t *glyphs) const
+@@ -1381,6 +1388,7 @@
+   public:
+   DEFINE_SIZE_MIN (10);
+ };
++}
+ 
+ struct ReverseChainSingleSubst
+ {
+@@ -1398,7 +1406,7 @@
+   protected:
+   union {
+   HBUINT16				format;		/* Format identifier */
+-  ReverseChainSingleSubstFormat1	format1;
++  OsmAnd::ReverseChainSingleSubstFormat1	format1;
+   } u;
+ };
+ 

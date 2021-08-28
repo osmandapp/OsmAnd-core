@@ -2,7 +2,7 @@
 
 #include <QtGlobal>
 
-void* operator new(std::size_t count) throw(std::bad_alloc)
+void* operator new(std::size_t count)
 {
     const auto ptr = OsmAnd::getMemoryManager()->allocate(count, "global");
     if (!ptr)
@@ -10,7 +10,7 @@ void* operator new(std::size_t count) throw(std::bad_alloc)
     return ptr;
 }
 
-void* operator new[](std::size_t count) throw(std::bad_alloc)
+void* operator new[](std::size_t count)
 {
     const auto ptr = OsmAnd::getMemoryManager()->allocate(count, "global");
     if (!ptr)

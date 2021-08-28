@@ -19,10 +19,13 @@
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
+#include <unicode/uversion.h>
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
 #include "Logging.h"
+
+using namespace U_ICU_NAMESPACE;
 
 std::unique_ptr<QByteArray> g_IcuData;
 const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;

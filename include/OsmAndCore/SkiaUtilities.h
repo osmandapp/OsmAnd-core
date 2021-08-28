@@ -32,8 +32,8 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& secondBitmap,
             const float yOffset);
 
-        static SkTypeface* createTypefaceFromData(
-            const QByteArray& data);
+        static sk_sp<SkTypeface> createTypefaceFromFile(
+            const QString fontFile, int index);
 
         static std::shared_ptr<SkBitmap> mergeBitmaps(
             const QList< std::shared_ptr<const SkBitmap> >& bitmaps);

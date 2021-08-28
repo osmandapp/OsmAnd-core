@@ -50,11 +50,11 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainShaderBitmap(
+bool OsmAnd::MapPresentationEnvironment::obtainShaderImage(
     const QString& name,
-    std::shared_ptr<const SkBitmap>& outShaderBitmap) const
+    sk_sp<SkImage>& outShaderImage) const
 {
-    return _p->obtainShaderBitmap(name, outShaderBitmap);
+    return _p->obtainShaderImage(name, outShaderImage);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(

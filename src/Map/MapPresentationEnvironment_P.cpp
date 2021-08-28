@@ -6,7 +6,7 @@
 #include "QtCommon.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
+#include <SkImage.h>
 #include <SkStream.h>
 #include "restore_internal_warnings.h"
 
@@ -170,12 +170,12 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
     applyTo(evaluator, _settings);
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainShaderImage(const QString& name, sk_sp<SkImage>& outShaderImage) const
 {
     QMutexLocker scopedLocker(&_shadersBitmapsMutex);
 
-    auto itShaderBitmap = _shadersBitmaps.constFind(name);
-    if (itShaderBitmap == _shadersBitmaps.cend())
+    auto itShaderImage = _shadersImages.find(name);
+    if (itShaderImage == _shadersImages.end())
     {
         const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
@@ -183,15 +183,16 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& nam
         const auto data = obtainResourceByName(shaderBitmapPath);
 
         // Decode bitmap for a shader
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+        sk_sp<SkImage> image = SkImage::MakeFromEncoded(skData);
+        if (image == nullptr)
             return false;
-        itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
+        itShaderImage = _shadersImages.insert(name, image);
     }
 
     // Create shader from that bitmap
-    outShaderBitmap = *itShaderBitmap;
+    outShaderImage = *itShaderImage;
     return true;
 }
 
@@ -210,9 +211,11 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, st
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+        sk_sp<SkImage> image = SkImage::MakeFromEncoded(skData);
+        if (image == nullptr)
             return false;
-
+        image->asLegacyBitmap(bitmap.get());
         itIcon = _mapIcons.insert(name, bitmap);
     }
 
@@ -235,9 +238,11 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name,
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+        sk_sp<SkImage> image = SkImage::MakeFromEncoded(skData);
+        if (image == nullptr)
             return false;
-
+        image->asLegacyBitmap(bitmap.get());
         itTextShield = _textShields.insert(name, bitmap);
     }
 
@@ -260,9 +265,11 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+        sk_sp<SkImage> image = SkImage::MakeFromEncoded(skData);
+        if (image == nullptr)
             return false;
-
+        image->asLegacyBitmap(bitmap.get());
         itIconShield = _iconShields.insert(name, bitmap);
     }
 

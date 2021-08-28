@@ -2,8 +2,9 @@
 #include "Logging.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
 #include <SkStream.h>
+#include <SkBitmap.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "QtExtensions.h"
@@ -47,22 +48,29 @@ const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyIma
     return nullptr;
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& image)
+const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& data)
 {
     // Decode image data
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            image.constData(), image.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    SkMemoryStream dataStream(data.constData(), data.length(), false);
+    sk_sp<SkData> skData = SkData::MakeFromStream(&dataStream, dataStream.getLength());
+    sk_sp<SkImage> image = SkImage::MakeFromEncoded(skData);
+    /*if (!SkImageDecoder::DecodeMemory(
+        image.constData(), image.size(),
+        bitmap.get(),
+        SkColorType::kUnknown_SkColorType,
+        SkImageDecoder::kDecodePixels_Mode))*/
+    if (image == nullptr) 
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode image tile");
-
         return nullptr;
     }
-    return bitmap;
+    if (image->asLegacyBitmap(bitmap.get()))
+    {
+        return bitmap;
+    }
+    return nullptr;
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::obtainImageBitmap(const OsmAnd::IMapTiledDataProvider::Request& request)
@@ -254,14 +262,20 @@ void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceed
         // Decode image data
         std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream imageStream(image.constData(), image.length(), false);
-        if (SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        sk_sp<SkData> skData = SkData::MakeFromStream(&imageStream, imageStream.getLength());
+        sk_sp<SkImage> skImage = SkImage::MakeFromEncoded(skData);
+        //if (SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        if (skImage)
         {
-            data.reset(new IRasterMapLayerProvider::Data(
-                request->tileId,
-                request->zoom,
-                provider->getAlphaChannelPresence(),
-                provider->getTileDensityFactor(),
-                bitmap));
+                if (skImage->asLegacyBitmap(bitmap.get()))
+                {
+                    data.reset(new IRasterMapLayerProvider::Data(
+                    request->tileId,
+                    request->zoom,
+                    provider->getAlphaChannelPresence(),
+                    provider->getTileDensityFactor(),
+                    bitmap));
+                }
         }
         else
         {

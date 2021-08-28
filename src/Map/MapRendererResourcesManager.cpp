@@ -6,7 +6,6 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
-#include <SkImageDecoder.h>
 #include "restore_internal_warnings.h"
 
 #include "MapRenderer.h"

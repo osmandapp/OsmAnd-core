@@ -13,6 +13,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkCanvas.h>
 #include <SkPaint.h>
+#include <SkFont.h>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -33,6 +34,7 @@ namespace OsmAnd
 
     private:
         SkPaint _defaultPaint;
+        SkFont _defaultSkFontText;
 
         struct TextPaint
         {
@@ -44,6 +46,7 @@ namespace OsmAnd
 
             QStringRef text;
             SkPaint paint;
+            SkFont skFontText;
             SkScalar height;
             SkScalar width;
             SkRect bounds;

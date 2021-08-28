@@ -1,0 +1,15 @@
+--- upstream.original/src/ports/SkFontHost_FreeType_common.cpp	2021-07-29 17:19:54.000000000 +0300
++++ upstream.patched/src/ports/SkFontHost_FreeType_common.cpp	2021-07-29 17:19:56.000000000 +0300
+@@ -760,8 +760,12 @@
+     };
+ };
+ 
++constexpr const FT_Outline_Funcs SkFTGeometrySink::Funcs;
++
+ }  // namespace
+ 
++
++
+ bool SkScalerContext_FreeType_Base::generateGlyphPath(FT_Face face, SkPath* path) {
+     SkFTGeometrySink sink{path};
+     FT_Error err = FT_Outline_Decompose(&face->glyph->outline, &SkFTGeometrySink::Funcs, &sink);

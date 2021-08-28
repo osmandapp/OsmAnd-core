@@ -16,7 +16,7 @@
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/Map/IMapStyle.h>
 
-class SkBitmap;
+class SkImage;
 
 namespace OsmAnd
 {
@@ -93,7 +93,7 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
-        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const;
+        bool obtainShaderImage(const QString& name, sk_sp<SkImage>& outShaderImage) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
         bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
         bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const;

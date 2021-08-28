@@ -1,14 +1,16 @@
 project(icu4c)
 
-prepare_upstream()
+#prepare_upstream()
 
-file(GLOB_RECURSE source_common "upstream.patched/icu4c/source/common/*.[ch]*")
+set(ICU_FROM_SKIA ${OSMAND_ROOT}/core/externals/skia/upstream.patched/third_party/externals/icu)
+
+file(GLOB_RECURSE source_common "${ICU_FROM_SKIA}/source/common/*.[ch]*")
 set_source_files_properties(${source_common}
 	PROPERTIES
 		COMPILE_DEFINITIONS "U_COMMON_IMPLEMENTATION"
 )
 
-file(GLOB_RECURSE source_i18n "upstream.patched/icu4c/source/i18n/*.[ch]*")
+file(GLOB_RECURSE source_i18n "${ICU_FROM_SKIA}/source/i18n/*.[ch]*")
 set_source_files_properties(${source_i18n}
 	PROPERTIES
 		COMPILE_DEFINITIONS "U_I18N_IMPLEMENTATION"
@@ -17,7 +19,7 @@ set_source_files_properties(${source_i18n}
 add_library(icu4c_static STATIC
 	${source_common}
 	${source_i18n}
-	"upstream.patched/icu4c/source/stubdata/stubdata.c"
+	"${ICU_FROM_SKIA}/source/stubdata/stubdata.cpp"
 )
 
 set(target_specific_private_definitions "")
@@ -43,12 +45,13 @@ target_compile_definitions(icu4c_static
 		-DU_LIB_SUFFIX_C_NAME=_osmand
 		-DUCONFIG_NO_FILE_IO=1
 		-DUCONFIG_NO_SERVICE=1
+		-DU_SHOW_CPLUSPLUS_API
 )
 
 target_include_directories(icu4c_static
 	PUBLIC
-		"upstream.patched/icu4c/source/common"
-		"upstream.patched/icu4c/source/i18n"
+		"${ICU_FROM_SKIA}/source/common"
+		"${ICU_FROM_SKIA}/source/i18n"
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")

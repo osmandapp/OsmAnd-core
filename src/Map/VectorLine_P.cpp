@@ -964,9 +964,10 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<VectorLine
             // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
             const auto& onMapSurfaceIcon = owner->pathIcon;
             
-            std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
+            /*std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
             ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
-            assert(ok);
+            assert(ok);*/
+            std::shared_ptr<SkBitmap> iconClone = std::make_shared<SkBitmap>(*onMapSurfaceIcon);
             
             for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
             {

@@ -14,9 +14,10 @@
 #include <OsmAndCore/IFontFinder.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
+#include <SkBitmap.h>
 
 class SkCanvas;
-class SkBitmap;
+//class SkBitmap;
 class SkTypeface;
 
 namespace OsmAnd

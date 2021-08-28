@@ -789,7 +789,7 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     const bool force16bit =
         (currentConfiguration->limitTextureColorDepthBy16bits && input->colorType() == SkColorType::kRGBA_8888_SkColorType);
     const bool canUsePaletteTextures = currentConfiguration->paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
-    const bool paletteTexture = (input->colorType() == SkColorType::kIndex_8_SkColorType);
+    const bool paletteTexture = (input->colorType() == SkColorType::kAlpha_8_SkColorType);
     const bool unsupportedFormat =
         (canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
         (input->colorType() != SkColorType::kRGBA_8888_SkColorType) ||
@@ -814,40 +814,29 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
     if (force16bit)
     {
-        auto convertedBitmap = new SkBitmap();
+        SkBitmap convertedBitmap(*input);
 
-        const bool ok = input->copyTo(convertedBitmap,
-            convertedAlphaChannelPresence == AlphaChannelPresence::Present
-            ? SkColorType::kARGB_4444_SkColorType
-            : SkColorType::kRGB_565_SkColorType);
-        if (!ok)
-        {
-            assert(false);
-            return false;
-        }
+        SkColorType colorType = convertedAlphaChannelPresence == AlphaChannelPresence::Present
+                                ? SkColorType::kARGB_4444_SkColorType
+                                : SkColorType::kRGB_565_SkColorType;
+        convertedBitmap.setInfo(SkImageInfo::Make(input->info().dimensions(), colorType, input->info().alphaType()));
 
-        output.reset(convertedBitmap);
+        output.reset(&convertedBitmap);
         return true;
     }
 
     // If we have any other unsupported format, convert to proper 16bit or 32bit
     if (unsupportedFormat)
     {
-        auto convertedBitmap = new SkBitmap();
+        SkBitmap convertedBitmap(*input);
+        SkColorType colorType = currentConfiguration->limitTextureColorDepthBy16bits
+                                ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present
+                                    ? SkColorType::kARGB_4444_SkColorType
+                                    : SkColorType::kRGB_565_SkColorType)
+                                : SkColorType::kRGBA_8888_SkColorType;
+        convertedBitmap.setInfo(SkImageInfo::Make(input->info().dimensions(), colorType, input->info().alphaType()));
 
-        const bool ok = input->copyTo(convertedBitmap,
-            currentConfiguration->limitTextureColorDepthBy16bits
-            ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present
-                ? SkColorType::kARGB_4444_SkColorType
-                : SkColorType::kRGB_565_SkColorType)
-            : SkColorType::kRGBA_8888_SkColorType);
-        if (!ok)
-        {
-            assert(false);
-            return false;
-        }
-
-        output.reset(convertedBitmap);
+        output.reset(&convertedBitmap);
         return true;
     }
 

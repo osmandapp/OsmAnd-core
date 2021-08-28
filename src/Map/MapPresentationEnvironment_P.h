@@ -75,7 +75,7 @@ namespace OsmAnd
         MapStubStyle _desiredStubsStyle;
 
         mutable QMutex _shadersBitmapsMutex;
-        mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
+        mutable QHash< QString, sk_sp<SkImage> > _shadersImages;
 
         mutable QMutex _mapIconsMutex;
         mutable QHash< QString, std::shared_ptr<const SkBitmap> > _mapIcons;
@@ -100,7 +100,7 @@ namespace OsmAnd
         void applyTo(MapStyleEvaluator& evaluator) const;
         void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
-        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outBitmap) const;
+        bool obtainShaderImage(const QString& name, sk_sp<SkImage>& outImage) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
         bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
         bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;

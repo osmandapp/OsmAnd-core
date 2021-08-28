@@ -203,9 +203,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     // SpriteMapSymbol with pinIconBitmap as an icon
     if (owner->pinIcon)
     {
-        std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
+        /*std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         ok = owner->pinIcon->deepCopyTo(pinIcon.get());
-        assert(ok);
+        assert(ok);*/
+        std::shared_ptr<SkBitmap> pinIcon = std::make_shared<SkBitmap>(*(owner->pinIcon));
         
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
         pinIconSymbol->order = order++;
@@ -280,9 +281,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         const auto key = itOnMapSurfaceIcon.key();
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
         
-        std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
+        /*std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
         ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
-        assert(ok);
+        assert(ok);*/
+        std::shared_ptr<SkBitmap> iconClone = std::make_shared<SkBitmap>(*onMapSurfaceIcon);
         
         // Get direction
         float direction = 0.0f;

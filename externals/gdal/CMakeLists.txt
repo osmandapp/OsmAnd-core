@@ -1,4 +1,9 @@
 project(gdal)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
+set(CMAKE_CXX_FLAGS "-std=c++14 -fvisibility=hidden -fvisibility-inlines-hidden")
 
 prepare_upstream()
 

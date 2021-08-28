@@ -6,7 +6,6 @@
 #include <SkBitmap.h>
 #include <SkCanvas.h>
 #include <SkBitmapDevice.h>
-#include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
@@ -61,10 +60,9 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_GPU_P::rasterize(
             tileSize);
         return nullptr;
     }
-    SkBitmapDevice rasterizationTarget(*rasterizationSurface);
 
     // Create rasterization canvas
-    SkCanvas canvas(&rasterizationTarget);
+    SkCanvas canvas(*rasterizationSurface);
 
     // Perform actual rasterization
     if (!owner->fillBackground)

@@ -6,6 +6,7 @@
 
 #include <SkTypeface.h>
 #include <SkPaint.h>
+#include <SkFont.h>
 
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
@@ -15,6 +16,7 @@ OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
     : coreResourcesProvider(coreResourcesProvider_)
 {
+    int index = 0;
     for (const auto embeddedFontResource : constOf(resources))
     {
         const auto fontData = coreResourcesProvider->getResource(embeddedFontResource);
@@ -26,7 +28,8 @@ OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
             continue;
         }
 
-        const auto font = SkiaUtilities::createTypefaceFromData(fontData);
+        // TODO need debug font file in runtime
+        const auto font = SkiaUtilities::createTypefaceFromFile(embeddedFontResource, index);
         if (!font)
         {
             LogPrintf(LogSeverityLevel::Error,
@@ -34,6 +37,7 @@ OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
                 qPrintable(embeddedFontResource));
             continue;
         }
+        index++;
 
         _fonts.push_back(font);
     }
@@ -50,16 +54,20 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
     const SkFontStyle style /*= SkFontStyle()*/) const
 {
     SkPaint paint;
-    paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
+    SkFont skFontText;
+    //paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
 
     SkTypeface* bestMatch = nullptr;
     auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
-    for (const auto font : constOf(_fonts))
+    for (const sk_sp<SkTypeface> &font : constOf(_fonts))
     {
-        paint.setTypeface(font);
+        skFontText.setTypeface(font);
+        //paint.setTypeface(font);
 
         // If font doesn't contain requested character, it should be completely ignored
-        if (!paint.containsText(&character, sizeof(uint32_t)))
+        //if (!paint.containsText(&character, sizeof(uint32_t)))
+        bool containsText = 0 != font->unicharToGlyph(character);
+        if (!containsText)
             continue;
 
         // Calculate difference between this font style and requested style
@@ -68,7 +76,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
         if (fontStyle.slant() != style.slant())
             difference += 1.0f;
         if (fontStyle.width() != style.width())
-            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltaExpanded_Width;
+            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltraExpanded_Width;
         if (fontStyle.weight() != style.weight())
             difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 
@@ -76,7 +84,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
         if (bestMatch && bestMatchDifference < difference)
             continue;
         
-        bestMatch = font;
+        bestMatch = font.get();
         bestMatchDifference = difference;
 
         // In case difference is 0, there won't be better match

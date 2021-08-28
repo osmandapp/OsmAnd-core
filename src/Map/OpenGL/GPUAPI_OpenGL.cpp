@@ -889,7 +889,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             case SkColorType::kRGB_565_SkColorType:
                 sourcePixelByteSize = 2;
                 break;
-            case SkColorType::kIndex_8_SkColorType:
+            case SkColorType::kAlpha_8_SkColorType:
                 sourcePixelByteSize = 1;
                 tileUsesPalette = true;
                 break;
@@ -1194,7 +1194,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
         case SkColorType::kRGB_565_SkColorType:
             sourcePixelByteSize = 2;
             break;
-        case SkColorType::kIndex_8_SkColorType:
+        case SkColorType::kAlpha_8_SkColorType:
             sourcePixelByteSize = 1;
             symbolUsesPalette = true;
             break;
