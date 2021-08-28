@@ -8,7 +8,7 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 using clang : android
 :
-$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/x86_64-linux-android-clang++
+$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/x86_64-linux-android-clang++
 :
 <archiver>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ar
 <ranlib>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ranlib
