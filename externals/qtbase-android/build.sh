@@ -124,7 +124,7 @@ makeFlavor()
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to build 'qtbase-android' for '$name', aborting..."
-		rm -rf "$path"
+#		rm -rf "$path"
 		exit $retcode
 	fi
 }
