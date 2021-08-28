@@ -1,0 +1,11 @@
+diff -rupN upstream.original/mkspecs/features/android/sdk.prf upstream.patched/mkspecs/features/android/sdk.prf  
+--- upstream.original/mkspecs/features/android/sdk.prf	2021-08-21 14:04:58.000000000 +0200
++++ upstream.patched/mkspecs/features/android/sdk.prf	2021-08-28 11:49:55.000000000 +0200
+@@ -1,6 +1,6 @@
+ API_VERSION_TO_USE = $$(ANDROID_API_VERSION)
+ isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = $$API_VERSION
+-isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = android-16
++isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = android-24
+ 
+ ANDROID_JAR_FILE = $$ANDROID_SDK_ROOT/platforms/$$API_VERSION_TO_USE/android.jar
+ !exists($$ANDROID_JAR_FILE) {
