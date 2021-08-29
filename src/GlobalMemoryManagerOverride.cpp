@@ -1,7 +1,7 @@
 #include "MemoryCommon.h"
 
 #include <QtGlobal>
-/*
+
 void* operator new(std::size_t count) throw(std::bad_alloc)
 {
     const auto ptr = OsmAnd::getMemoryManager()->allocate(count, "global");
@@ -51,5 +51,3 @@ void operator delete[](void* ptr, const std::nothrow_t& tag) Q_DECL_NOTHROW
     Q_UNUSED(tag);
     OsmAnd::getMemoryManager()->free(ptr, "global");
 }
-
-*/
