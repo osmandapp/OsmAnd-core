@@ -5,7 +5,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        //classpath 'com.android.tools.build:gradle:3.1.4'
         classpath 'com.android.tools.build:gradle:4.1.1'
     }
 }
@@ -42,12 +41,10 @@ android {
         }
     }
     compileSdkVersion 29
-	buildToolsVersion "29.0.3"
-    //compileSdkVersion 21
-    //buildToolsVersion "23.0.3"
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 21
         targetSdkVersion 21
     }
 
@@ -119,6 +116,7 @@ task copyNdkSharedLibs(type: Copy) {
         include "armeabi-v7a/libc++_shared.so"
         include "arm64-v8a/libc++_shared.so"
         include "x86/libc++_shared.so"
+	include "x86_64/libc++_shared.so"
     }
 
     into "./jniLibs/NDK"
@@ -388,7 +386,7 @@ afterEvaluate {
 
 // Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
 artifacts {
-    archives(file("build/intermediates/packaged-classes/release/classes.jar")) {
+    archives(file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
         name "OsmAndCore_android"
         type "jar"
     }
