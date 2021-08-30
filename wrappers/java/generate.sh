@@ -1,11 +1,15 @@
 #!/bin/bash
-
 if [ -z "$BASH_VERSION" ]; then
 	echo "Invalid shell, re-running using bash..."
 	exec bash "$0" "$@"
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ ! -z "$DO_NOT_REGENERATE_SWIG" ]; then
+	echo "Don't regenerate swig (unset env var DO_NOT_REGENERATE_SWIG to regenerate)"
+	exit 0;
+fi
 
 # Prepare output folders
 OUTPUTDIR=$1
