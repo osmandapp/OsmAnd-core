@@ -100,6 +100,7 @@ namespace OsmAnd
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
+        void generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

@@ -367,6 +367,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         }
 
         // </trk>
+        // TODO: write file extensions (show start/finish, width etc.)
         xmlWriter.writeEndElement();
     }
 

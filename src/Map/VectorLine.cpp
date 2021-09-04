@@ -93,6 +93,11 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymb
     return _p->createSymbolsGroup(mapState);
 }
 
+void OsmAnd::VectorLine::generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const
+{
+    return _p->generateArrowsOnPath(symbolsGroup);
+}
+
 OsmAnd::VectorLine::SymbolsGroup::SymbolsGroup(const std::shared_ptr<VectorLine_P>& vectorLineP_)
     : _vectorLineP(vectorLineP_)
 {

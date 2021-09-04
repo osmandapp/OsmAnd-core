@@ -251,9 +251,6 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
         generatePrimitive(vectorLine);
         vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
-        
-        // TODO: needs to be updatable
-        //generateArrowsOnPath(symbolsGroup);
     }
     
     return symbolsGroup;
@@ -938,7 +935,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     }
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup) const
+void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const
 {
     if (owner->pathIconStep > 0 && owner->pathIcon)
     {
@@ -984,7 +981,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<VectorLine
                 
                 arrowSymbol->bitmap = iconClone;
                 arrowSymbol->size = PointI(iconClone->width(), iconClone->height());
-                arrowSymbol->content = QString().sprintf(
+                arrowSymbol->content = QString().asprintf(
                                                          "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
                                                          this,
                                                          symbolsGroup.get(),
