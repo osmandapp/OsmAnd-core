@@ -3,15 +3,18 @@ project(OsmAndCore_JavaWrapper)
 # Custom target to generate files with SWIG
 file(GLOB core_swig "${OSMAND_ROOT}/core/*.swig")
 file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
+
+get_filename_component(CMAKE_ABS_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} ABSOLUTE)
+
 add_generate_swig_target(OsmAndCore_swig_java
 	${core_swig}
 	${core_swig_subfiles})
 set(swig_generated_cpp
-	"${CMAKE_CURRENT_BINARY_DIR}/gen/cpp/swig.cpp"
+	"${CMAKE_ABS_CURRENT_BINARY_DIR}/gen/cpp/swig.cpp"
 )
 set_source_files_properties(${swig_generated_cpp} GENERATED)
 set(swig_generated_java
-	"@${CMAKE_CURRENT_BINARY_DIR}/gen/java.list"
+	"@${CMAKE_ABS_CURRENT_BINARY_DIR}/gen/java.list"
 )
 set_source_files_properties(${swig_generated_java} GENERATED)
 
@@ -19,7 +22,7 @@ set_source_files_properties(${swig_generated_java} GENERATED)
 add_custom_target(OsmAndCore_wrapper_jar
 	"${Java_JAR_EXECUTABLE}"
 		-cf "OsmAndCore_wrapper.jar"
-		-C "${CMAKE_CURRENT_BINARY_DIR}/gen/java"
+		-C "${CMAKE_ABS_CURRENT_BINARY_DIR}/gen/java"
 		.
 	WORKING_DIRECTORY "${CMAKE_JAVA_TARGET_OUTPUT_DIR}"
 	COMMENT "Packing 'OsmAndCore_wrapper.jar'...")
