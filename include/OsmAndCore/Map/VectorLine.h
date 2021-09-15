@@ -59,6 +59,15 @@ namespace OsmAnd
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;
         };
+        
+        struct OnPathSymbolData
+        {
+            OnPathSymbolData(PointI position31, float direction);
+            ~OnPathSymbolData();
+            
+            PointI position31;
+            float direction;
+        };
 
     private:
         PrivateImplementation<VectorLine_P> _p;
@@ -100,7 +109,7 @@ namespace OsmAnd
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
-        void generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const;
+        void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const OsmAnd::AreaI& visibleBBox31, const int screenDensity) const;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

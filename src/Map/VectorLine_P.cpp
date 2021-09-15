@@ -935,36 +935,36 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     }
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const
+SkPath OsmAnd::VectorLine_P::calculateLinePath() const
+{
+    SkPath path;
+    const auto& start = _points.last();
+    path.moveTo(start.x, start.y);
+    for (int i = _points.size() - 2; i >= 0; i--)
+    {
+        const auto& p = _points[i];
+        path.lineTo(p.x, p.y);
+    }
+    return path;
+}
+
+void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const AreaI& visibleBBox31, const int screenDensity) const
 {
     if (owner->pathIconStep > 0 && owner->pathIcon)
     {
-        SkPath path;
-        const auto& start = _points[0];
-        path.moveTo(start.x, start.y);
-        for (int i = 1; i < _points.size(); i++)
-        {
-            const auto& p = _points[i];
-            path.lineTo(p.x, p.y);
-        }
+        SkPath path = calculateLinePath();
         SkPathMeasure pathMeasure(path, false);
         
+        const auto visibleArea = visibleBBox31.getEnlargedBy(PointI(visibleBBox31.width() * 3, visibleBBox31.height() * 3));
+
         bool ok = false;
         const auto length = pathMeasure.getLength();
-        
-        float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel);
+
+        float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel * screenDensity);
         auto iconOffset = 0.5f * step;
         const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
         if (iconInstancesCount > 0)
         {
-            int surfOrder = owner->baseOrder - 1;
-            // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
-            const auto& onMapSurfaceIcon = owner->pathIcon;
-            
-            std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-            ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
-            assert(ok);
-            
             for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
             {
                 SkPoint p;
@@ -972,25 +972,15 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<OsmAnd::Ma
                 ok = pathMeasure.getPosTan(iconOffset, &p, &t);
                 if (!ok)
                     break;
+
+                const auto position = PointI(p.x(), p.y());
+                if (!visibleArea.contains(position))
+                    continue;
                 
-                // Get direction
-                float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())));
-                const auto arrowSymbol = std::make_shared<OnSurfaceRasterMapSymbol>(symbolsGroup);
-                
-                arrowSymbol->order = surfOrder;
-                
-                arrowSymbol->bitmap = iconClone;
-                arrowSymbol->size = PointI(iconClone->width(), iconClone->height());
-                arrowSymbol->content = QString().asprintf(
-                                                         "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
-                                                         this,
-                                                         symbolsGroup.get(),
-                                                         iconClone->getPixels());
-                arrowSymbol->languageId = LanguageId::Invariant;
-                arrowSymbol->position31 = PointI(p.x(), p.y());
-                arrowSymbol->direction = direction;
-                arrowSymbol->isHidden = _isHidden;
-                symbolsGroup->symbols.push_back(arrowSymbol);
+                // Get mirrored direction
+                float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
+                const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
+                symbolsData.push_back(arrowSymbol);
             }
         }
     }

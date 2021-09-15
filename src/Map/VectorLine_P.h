@@ -7,6 +7,7 @@
 #include <QReadWriteLock>
 #include <QHash>
 #include <QVector>
+#include <SkPath.h>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -39,6 +40,8 @@ namespace OsmAnd
                             double radius,
                             FColorARGB &fillColor,
                             bool gap) const;
+        
+        SkPath calculateLinePath() const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -77,7 +80,8 @@ namespace OsmAnd
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
 
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
-        void generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const;
+        
+        void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const OsmAnd::AreaI& visibleBBox31, const int screenDensity) const;
 
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
         

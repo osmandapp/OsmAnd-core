@@ -93,9 +93,9 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymb
     return _p->createSymbolsGroup(mapState);
 }
 
-void OsmAnd::VectorLine::generateArrowsOnPath(const std::shared_ptr<OsmAnd::MapSymbolsGroup>& symbolsGroup) const
+void OsmAnd::VectorLine::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const OsmAnd::AreaI& visibleBBox31, const int screenDensity) const
 {
-    return _p->generateArrowsOnPath(symbolsGroup);
+    return _p->generateArrowsOnPath(symbolsData, visibleBBox31, screenDensity);
 }
 
 OsmAnd::VectorLine::SymbolsGroup::SymbolsGroup(const std::shared_ptr<VectorLine_P>& vectorLineP_)
@@ -155,4 +155,14 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
     }
 
     return result;
+}
+
+OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction)
+: position31(position31)
+, direction(direction)
+{
+}
+
+OsmAnd::VectorLine::OnPathSymbolData::~OnPathSymbolData()
+{
 }
