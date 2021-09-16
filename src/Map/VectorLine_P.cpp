@@ -230,14 +230,14 @@ bool OsmAnd::VectorLine_P::applyChanges()
             }
         }
     }
-
+    owner->lineUpdatedObservable.postNotify(owner);
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
     
     return true;
 }
 
-std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup() const
+std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup()
 {
     QReadLocker scopedLocker(&_lock);
     
@@ -251,6 +251,7 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
         generatePrimitive(vectorLine);
         vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
+        owner->lineUpdatedObservable.postNotify(owner);
     }
     
     return symbolsGroup;
@@ -530,7 +531,7 @@ float OsmAnd::VectorLine_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
+std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
 {
     int order = owner->baseOrder;
     float zoom = this->zoom();
@@ -553,6 +554,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     std::vector<std::vector<PointI>> segments;
     calculateVisibleSegments(segments);
+    // Generate new arrow paths for visible segments
+    _arrowsOnPath.clear();
+    generateArrowsOnPath(_arrowsOnPath, segments);
+    
     PointI startPos;
     bool startPosDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
@@ -935,52 +940,62 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     }
 }
 
-SkPath OsmAnd::VectorLine_P::calculateLinePath() const
+QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(const std::vector<std::vector<PointI>>& visibleSegments) const
 {
-    SkPath path;
-    const auto& start = _points.last();
-    path.moveTo(start.x, start.y);
-    for (int i = _points.size() - 2; i >= 0; i--)
+    QVector<SkPath> paths;
+    if (!visibleSegments.empty())
     {
-        const auto& p = _points[i];
-        path.lineTo(p.x, p.y);
+        for (const auto& segment : visibleSegments)
+        {
+            SkPath path;
+            const auto& start = segment.back();
+            path.moveTo(start.x, start.y);
+            for (int i = (int) segment.size() - 2; i >= 0; i--)
+            {
+                const auto& p = segment[i];
+                path.lineTo(p.x, p.y);
+            }
+            paths.push_back(path);
+        }
     }
-    return path;
+    return paths;
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const AreaI& visibleBBox31, const int screenDensity) const
+const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrowsOnPath() const
+{
+    return _arrowsOnPath;
+}
+
+void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<PointI>>& visibleSegments) const
 {
     if (owner->pathIconStep > 0 && owner->pathIcon)
     {
-        SkPath path = calculateLinePath();
-        SkPathMeasure pathMeasure(path, false);
-        
-        const auto visibleArea = visibleBBox31.getEnlargedBy(PointI(visibleBBox31.width() * 3, visibleBBox31.height() * 3));
-
-        bool ok = false;
-        const auto length = pathMeasure.getLength();
-
-        float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel * screenDensity);
-        auto iconOffset = 0.5f * step;
-        const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
-        if (iconInstancesCount > 0)
+        const auto paths = calculateLinePath(visibleSegments);
+        for (const auto& path : paths)
         {
-            for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
-            {
-                SkPoint p;
-                SkVector t;
-                ok = pathMeasure.getPosTan(iconOffset, &p, &t);
-                if (!ok)
-                    break;
+            SkPathMeasure pathMeasure(path, false);
+            bool ok = false;
+            const auto length = pathMeasure.getLength();
 
-                const auto position = PointI(p.x(), p.y());
-                if (!visibleArea.contains(position))
-                    continue;
-                
-                // Get mirrored direction
-                float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
-                const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
-                symbolsData.push_back(arrowSymbol);
+            float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel * owner->screenScale);
+            auto iconOffset = 0.5f * step;
+            const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
+            if (iconInstancesCount > 0)
+            {
+                for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
+                {
+                    SkPoint p;
+                    SkVector t;
+                    ok = pathMeasure.getPosTan(iconOffset, &p, &t);
+                    if (!ok)
+                        break;
+
+                    const auto position = PointI(p.x(), p.y());
+                    // Get mirrored direction
+                    float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
+                    const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
+                    symbolsData.push_back(arrowSymbol);
+                }
             }
         }
     }

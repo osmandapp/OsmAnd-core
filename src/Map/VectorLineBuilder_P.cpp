@@ -16,6 +16,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _baseOrder(std::numeric_limits<int>::min())
     , _lineWidth(3.0)
     , _direction(0.0f)
+    , _screenScale(2)
     , owner(owner_)
 {
 }
@@ -164,6 +165,20 @@ void OsmAnd::VectorLineBuilder_P::setPathIconStep(const float step)
     _pathIconStep = step;
 }
 
+float OsmAnd::VectorLineBuilder_P::getScreenScale() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _screenScale;
+}
+
+void OsmAnd::VectorLineBuilder_P::setScreenScale(const float screenScale)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _screenScale = screenScale;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<VectorLinesCollection>& collection)
 {
@@ -188,7 +203,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _lineId,
                                                           _baseOrder,
                                                           _pathIcon,
-                                                          _pathIconStep));
+                                                          _pathIconStep,
+                                                          _screenScale));
     line->setLineWidth(_lineWidth);
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);

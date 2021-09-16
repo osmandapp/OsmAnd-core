@@ -47,6 +47,7 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> _pathIcon;
         float _pathIconStep;
+        float _screenScale;
  
     public:
         virtual ~VectorLineBuilder_P();
@@ -81,6 +82,9 @@ namespace OsmAnd
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);
+        
+        float getScreenScale() const;
+        void setScreenScale(const float screenScale);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

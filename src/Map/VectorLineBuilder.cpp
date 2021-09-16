@@ -130,6 +130,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconStep(const floa
     return *this;
 }
 
+float OsmAnd::VectorLineBuilder::getScreenScale() const
+{
+    return _p->getScreenScale();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setScreenScale(const float screenScale)
+{
+    _p->setScreenScale(screenScale);
+
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);
