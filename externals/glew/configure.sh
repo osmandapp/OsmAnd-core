@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/glew-1.11.0.tgz"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/glew-1.12.0.tgz"
 patchUpstream "$SRCLOC"
