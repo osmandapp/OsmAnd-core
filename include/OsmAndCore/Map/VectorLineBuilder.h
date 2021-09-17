@@ -63,6 +63,9 @@ namespace OsmAnd
 
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);
+        
+        float getScreenScale() const;
+        VectorLineBuilder& setScreenScale(const float step);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

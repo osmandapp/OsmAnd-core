@@ -5,12 +5,14 @@ OsmAnd::VectorLine::VectorLine(
     const int lineId_,
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
-    const float pathIconStep_/* = -1*/)
+    const float pathIconStep_/* = -1*/,
+    const float screenScale_/* = 2*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
     , pathIcon(pathIcon_)
     , pathIconStep(pathIconStep_)
+    , screenScale(screenScale_)
 {
 }
 
@@ -93,6 +95,11 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymb
     return _p->createSymbolsGroup(mapState);
 }
 
+const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine::getArrowsOnPath() const
+{
+    return _p->getArrowsOnPath();
+}
+
 OsmAnd::VectorLine::SymbolsGroup::SymbolsGroup(const std::shared_ptr<VectorLine_P>& vectorLineP_)
     : _vectorLineP(vectorLineP_)
 {
@@ -150,4 +157,14 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
     }
 
     return result;
+}
+
+OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction)
+: position31(position31)
+, direction(direction)
+{
+}
+
+OsmAnd::VectorLine::OnPathSymbolData::~OnPathSymbolData()
+{
 }

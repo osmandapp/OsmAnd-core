@@ -7,6 +7,7 @@
 #include <QReadWriteLock>
 #include <QHash>
 #include <QVector>
+#include <SkPath.h>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -39,6 +40,10 @@ namespace OsmAnd
                             double radius,
                             FColorARGB &fillColor,
                             bool gap) const;
+        
+        QVector<SkPath> calculateLinePath(const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
+        void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
+        QList<OsmAnd::VectorLine::OnPathSymbolData> _arrowsOnPath;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -70,14 +75,15 @@ namespace OsmAnd
         bool isMapStateChanged(const MapState& mapState) const;
         void applyMapState(const MapState& mapState);
         
-        std::shared_ptr<VectorLine::SymbolsGroup> inflateSymbolsGroup() const;
+        std::shared_ptr<VectorLine::SymbolsGroup> inflateSymbolsGroup();
         mutable QReadWriteLock _symbolsGroupsRegistryLock;
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
 
-        std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
-        void generateArrowsOnPath(const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup) const;
+        std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
+        
+        const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
         

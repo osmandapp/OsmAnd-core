@@ -59,6 +59,15 @@ namespace OsmAnd
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;
         };
+        
+        struct OnPathSymbolData
+        {
+            OnPathSymbolData(PointI position31, float direction);
+            ~OnPathSymbolData();
+            
+            PointI position31;
+            float direction;
+        };
 
     private:
         PrivateImplementation<VectorLine_P> _p;
@@ -67,7 +76,8 @@ namespace OsmAnd
             const int lineId,
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
-            const float pathIconStep = -1
+            const float pathIconStep = -1,
+            const float screenScale = 2
         );
 
         bool applyChanges();
@@ -78,6 +88,7 @@ namespace OsmAnd
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pathIcon;
         const float pathIconStep;
+        const float screenScale;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
@@ -100,6 +111,11 @@ namespace OsmAnd
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
+        const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
+        
+        OSMAND_OBSERVER_CALLABLE(OnChangesApplied,
+                                 const VectorLine* const vectorLine);
+        const ObservableAs<VectorLine::OnChangesApplied> lineUpdatedObservable;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;
