@@ -63,7 +63,7 @@ void OsmAnd::VectorLinesCollection::obtainDataAsync(
 
 OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMinZoom() const
 {
-    return OsmAnd::ZoomLevel3;
+    return OsmAnd::MinZoomLevel;
 }
 
 OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMaxZoom() const
