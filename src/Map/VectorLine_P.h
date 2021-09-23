@@ -44,6 +44,11 @@ namespace OsmAnd
         QVector<SkPath> calculateLinePath(const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
         void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
         QList<OsmAnd::VectorLine::OnPathSymbolData> _arrowsOnPath;
+        std::shared_ptr<const SkBitmap> _scaledBitmap;
+        
+        double getRadius(double width) const;
+        bool useSpecialArrow() const;
+        double getPointStepPx() const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -53,6 +58,7 @@ namespace OsmAnd
 
         bool _isHidden;
         bool _isApproximationEnabled;
+        bool _showArrows;
 
         QVector<PointI> _points;
         double _lineWidth;
@@ -81,6 +87,8 @@ namespace OsmAnd
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
 
+        const std::shared_ptr<const SkBitmap> getPointBitmap() const;
+        
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
         
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
@@ -102,6 +110,9 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+        
+        bool showArrows() const;
+        void setShowArrows(const bool showArrows);
 
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);

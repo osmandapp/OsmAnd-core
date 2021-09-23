@@ -5,12 +5,14 @@ OsmAnd::VectorLine::VectorLine(
     const int lineId_,
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
+    const std::shared_ptr<const SkBitmap>& specialPathIcon_/* = nullptr*/,
     const float pathIconStep_/* = -1*/,
     const float screenScale_/* = 2*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
     , pathIcon(pathIcon_)
+    , specialPathIcon(specialPathIcon_)
     , pathIconStep(pathIconStep_)
     , screenScale(screenScale_)
 {
@@ -28,6 +30,16 @@ bool OsmAnd::VectorLine::isHidden() const
 void OsmAnd::VectorLine::setIsHidden(const bool hidden)
 {
     _p->setIsHidden(hidden);
+}
+
+bool OsmAnd::VectorLine::showArrows() const
+{
+    return _p->showArrows();
+}
+
+void OsmAnd::VectorLine::setShowArrows(const bool showArrows)
+{
+    _p->setShowArrows(showArrows);
 }
 
 bool OsmAnd::VectorLine::isApproximationEnabled() const
@@ -78,6 +90,11 @@ std::vector<double> OsmAnd::VectorLine::getLineDash() const
 void OsmAnd::VectorLine::setLineDash(const std::vector<double> dashPattern)
 {
     _p->setLineDash(dashPattern);
+}
+
+const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine::getPointBitmap() const
+{
+    return _p->getPointBitmap();
 }
 
 bool OsmAnd::VectorLine::hasUnappliedChanges() const

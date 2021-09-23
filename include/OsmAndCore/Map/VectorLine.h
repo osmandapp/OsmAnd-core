@@ -76,6 +76,7 @@ namespace OsmAnd
             const int lineId,
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
+            const std::shared_ptr<const SkBitmap>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
             const float screenScale = 2
         );
@@ -87,11 +88,15 @@ namespace OsmAnd
         const int lineId;
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pathIcon;
+        const std::shared_ptr<const SkBitmap> specialPathIcon;
         const float pathIconStep;
         const float screenScale;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+        
+        bool showArrows() const;
+        void setShowArrows(const bool showArrows);
 
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);
@@ -107,6 +112,8 @@ namespace OsmAnd
 
         std::vector<double> getLineDash() const;
         void setLineDash(const std::vector<double> dashPattern);
+        
+        const std::shared_ptr<const SkBitmap> getPointBitmap() const;
 
         bool hasUnappliedChanges() const;
 

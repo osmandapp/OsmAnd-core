@@ -32,6 +32,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
+        bool _showArrows;
         bool _isApproximationEnabled;
         
         int _lineId;
@@ -46,6 +47,7 @@ namespace OsmAnd
         float _direction;
 
         std::shared_ptr<const SkBitmap> _pathIcon;
+        std::shared_ptr<const SkBitmap> _specialPathIcon;
         float _pathIconStep;
         float _screenScale;
  
@@ -56,6 +58,9 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
+        
+        bool shouldShowArrows() const;
+        void setShouldShowArrows(const bool showArrows);
 
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);
@@ -79,6 +84,9 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> getPathIcon() const;
         void setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        
+        std::shared_ptr<const SkBitmap> getSpecialPathIcon() const;
+        void setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);

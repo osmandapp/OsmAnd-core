@@ -16,6 +16,11 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "IAtlasMapRenderer.h"
+#include "SkiaUtilities.h"
+
+#define TRACK_WIDTH_THRESHOLD 25.0f
+#define ARROW_DISTANCE_MULTIPLIER 1.5f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 5.0f
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
@@ -49,6 +54,24 @@ void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
     if (_isHidden != hidden)
     {
         _isHidden = hidden;
+        _hasUnappliedChanges = true;
+    }
+}
+
+bool OsmAnd::VectorLine_P::showArrows() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _showArrows;
+}
+
+void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_showArrows != showArrows)
+    {
+        _showArrows = showArrows;
         _hasUnappliedChanges = true;
     }
 }
@@ -106,6 +129,12 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
     {
         _lineWidth = width;
         
+        if (owner->pathIcon)
+        {
+            double newWidth = _lineWidth / 2;
+            double scale = newWidth / owner->pathIcon->width() / owner->screenScale;
+            _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
+        }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -968,7 +997,7 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
 
 void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<PointI>>& visibleSegments) const
 {
-    if (owner->pathIconStep > 0 && owner->pathIcon)
+    if (_showArrows && owner->pathIcon)
     {
         const auto paths = calculateLinePath(visibleSegments);
         for (const auto& path : paths)
@@ -977,7 +1006,9 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
             bool ok = false;
             const auto length = pathMeasure.getLength();
 
-            float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel * owner->screenScale);
+            float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
+            
+            float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
             auto iconOffset = 0.5f * step;
             const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
             if (iconInstancesCount > 0)
@@ -999,5 +1030,22 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
             }
         }
     }
+}
+
+bool OsmAnd::VectorLine_P::useSpecialArrow() const
+{
+    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
+}
+
+double OsmAnd::VectorLine_P::getPointStepPx() const
+{
+    return useSpecialArrow() ?
+    getPointBitmap()->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER :
+    getPointBitmap()->height() * ARROW_DISTANCE_MULTIPLIER;
+}
+
+const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine_P::getPointBitmap() const
+{
+    return useSpecialArrow() ? owner->specialPathIcon : _scaledBitmap;
 }
 

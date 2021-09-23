@@ -36,6 +36,9 @@ namespace OsmAnd
 
         bool isHidden() const;
         VectorLineBuilder& setIsHidden(const bool hidden);
+        
+        bool shouldShowArrows() const;
+        VectorLineBuilder& setShouldShowArrows(const bool showArrows);
 
         bool isApproximationEnabled() const;
         VectorLineBuilder& setApproximationEnabled(const bool enabled);
@@ -60,6 +63,9 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        
+        std::shared_ptr<const SkBitmap> getSpecialPathIcon() const;
+        VectorLineBuilder& setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
 
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);

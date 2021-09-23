@@ -22,6 +22,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setIsHidden(const bool hid
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::shouldShowArrows() const
+{
+    return _p->shouldShowArrows();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setShouldShowArrows(const bool showArrows)
+{
+    _p->setShouldShowArrows(showArrows);
+
+    return *this;
+}
+
 bool OsmAnd::VectorLineBuilder::isApproximationEnabled() const
 {
     return _p->isApproximationEnabled();
@@ -116,6 +128,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const std::sha
     _p->setPathIcon(bitmap);
 
     return *this;    
+}
+
+std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder::getSpecialPathIcon() const
+{
+    return _p->getSpecialPathIcon();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+{
+    _p->setSpecialPathIcon(bitmap);
+
+    return *this;
 }
 
 float OsmAnd::VectorLineBuilder::getPathIconStep() const
