@@ -11,6 +11,7 @@
 
 OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_)
     : _isHidden(false)
+    , _showArrows(false)
     , _isApproximationEnabled(true)
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
