@@ -62,6 +62,16 @@ void OsmAnd::VectorLine::setPoints(const QVector<OsmAnd::PointI>& points)
     _p->setPoints(points);    
 }
 
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLine::getColorizationMapping() const
+{
+    return _p->getColorizationMapping();
+}
+
+void OsmAnd::VectorLine::setColorizationMapping(const QList<FColorARGB> &colorizationMapping)
+{
+    _p->setColorizationMapping(colorizationMapping);
+}
+
 double OsmAnd::VectorLine::getLineWidth() const
 {
     return _p->getLineWidth();

@@ -153,6 +153,20 @@ void OsmAnd::VectorLineBuilder_P::setPoints(const QVector<OsmAnd::PointI> points
     _points = points;
 }
 
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLineBuilder_P::getColorizationMapping() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _colorizationMapping;
+}
+
+void OsmAnd::VectorLineBuilder_P::setColorizationMapping(const QList<OsmAnd::FColorARGB> &colorizationMapping)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _colorizationMapping = colorizationMapping;
+}
+
 std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -242,6 +256,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setIsHidden(_isHidden);
     line->setApproximationEnabled(_isApproximationEnabled);
     line->setPoints(_points);
+    line->setColorizationMapping(_colorizationMapping);
     line->setLineDash(_dashPattern);
     line->applyChanges();
     

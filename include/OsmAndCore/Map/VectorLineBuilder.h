@@ -60,6 +60,9 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         VectorLineBuilder& setPoints(const QVector<PointI>& points);
+        
+        QList<OsmAnd::FColorARGB> getColorizationMapping() const;
+        OsmAnd::VectorLineBuilder& setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
 
         std::shared_ptr<const SkBitmap> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);

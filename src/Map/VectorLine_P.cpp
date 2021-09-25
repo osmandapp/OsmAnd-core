@@ -114,6 +114,33 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
     }
 }
 
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLine_P::getColorizationMapping() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _colorizationMapping;
+}
+
+void OsmAnd::VectorLine_P::setColorizationMapping(const QList<FColorARGB> &colorizationMapping)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_colorizationMapping != colorizationMapping)
+    {
+        _colorizationMapping = colorizationMapping;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+bool OsmAnd::VectorLine_P::hasColorizationMapping() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _colorizationMapping.size() == _points.size();
+}
+
 double OsmAnd::VectorLine_P::getLineWidth() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -486,17 +513,20 @@ bool OsmAnd::VectorLine_P::calculateIntersection(const PointI& p1, const PointI&
     return false;
 }
 
-void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments) const
+void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
 {
     bool segmentStarted = false;
     auto visibleArea = _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3));
     PointI curr, drawFrom, drawTo, inter1, inter2;
     auto prev = drawFrom = _points[0];
+    int drawFromIdx = 0, drawToIdx = 0;
     std::vector<PointI> segment;
+    QList<FColorARGB> colors;
     bool prevIn = visibleArea.contains(prev);
     for (int i = 1; i < _points.size(); i++)
     {
         curr = drawTo = _points[i];
+        drawToIdx = i;
         bool currIn = visibleArea.contains(curr);
         bool draw = false;
         if (prevIn && currIn)
@@ -511,16 +541,20 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                 if (prevIn)
                 {
                     drawTo = inter1;
+                    drawToIdx = i;
                 }
                 else if (currIn)
                 {
                     drawFrom = inter1;
+                    drawFromIdx = i;
                     segmentStarted = false;
                 }
                 else if (calculateIntersection(prev, curr, visibleArea, inter2))
                 {
                     drawFrom = inter1;
                     drawTo = inter2;
+                    drawFromIdx = drawToIdx;
+                    drawToIdx = i;
                     segmentStarted = false;
                 }
                 else
@@ -537,12 +571,23 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                 {
                     segments.push_back(segment);
                     segment = std::vector<PointI>();
+                    
+                    segmentColors.push_back(colors);
+                    colors.clear();
                 }
                 segment.push_back(drawFrom);
+                if (hasColorizationMapping())
+                    colors.push_back(_colorizationMapping[drawFromIdx]);
+                
                 segmentStarted = currIn;
             }
             if (segment.empty() || segment.back() != drawTo)
+            {
                 segment.push_back(drawTo);
+                if (hasColorizationMapping())
+                    colors.push_back(_colorizationMapping[drawToIdx]);
+                
+            }
         }
         else
         {
@@ -550,9 +595,13 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
         }
         prevIn = currIn;
         prev = drawFrom = curr;
+        drawFromIdx = i;
     }
     if (!segment.empty())
         segments.push_back(segment);
+    
+    if (!colors.empty())
+        segmentColors.push_back(colors);
 }
 
 float OsmAnd::VectorLine_P::zoom() const
@@ -582,7 +631,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     VectorMapSymbol::Vertex vertex;
 
     std::vector<std::vector<PointI>> segments;
-    calculateVisibleSegments(segments);
+    QList<QList<FColorARGB>> colors;
+    calculateVisibleSegments(segments, colors);
     // Generate new arrow paths for visible segments
     _arrowsOnPath.clear();
     generateArrowsOnPath(_arrowsOnPath, segments);
@@ -592,6 +642,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
         auto& points = segments[segmentIndex];
+        auto colorsForSegment = hasColorizationMapping() ? colors[segmentIndex] : QList<FColorARGB>();
         if (points.size() < 2)
             continue;
         
@@ -619,10 +670,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         double ntan = 0, nx1 = 0, ny1 = 0;
         uint prevPointIdx = 0;
         uint insertIdx = 0;
+        
+        QList<OsmAnd::FColorARGB> filteredColorsMap;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
             if (!include[pointIdx])
                 continue;
+            
+            if (hasColorizationMapping())
+                filteredColorsMap.push_back(colorsForSegment[pointIdx]);
             
             PointD pnt = pointsToPlot[pointIdx];
             PointD prevPnt = pointsToPlot[prevPointIdx];
@@ -727,7 +783,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                         
                         if (!gap)
                         {
-                            createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, !firstDash || segmentIndex > 0);
+                            createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, filteredColorsMap, !firstDash || segmentIndex > 0);
                             de1 = e1tar.back();
                             de2 = e2tar.back();
                             b1tar.clear();
@@ -783,12 +839,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 e1tar.push_back(b1tar.back());
                 e2tar.push_back(b2tar.back());
                 origTar.push_back(end);
-                createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, true);
+                createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, filteredColorsMap, true);
             }
         }
         else
         {
-            createVertexes(vertices, vertex, b1, b2, e1, e2, original, radius, fillColor, segmentIndex > 0);
+            createVertexes(vertices, vertex, b1, b2, e1, e2, original, radius, fillColor, filteredColorsMap, segmentIndex > 0);
         }
     }
     if (vertices.size() == 0)
@@ -817,6 +873,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                   std::vector<OsmAnd::PointD> &original,
                   double radius,
                   FColorARGB &fillColor,
+                  QList<FColorARGB>& colorMapping,
                   bool gap) const
 {
     VectorMapSymbol::Vertex* pVertex = &vertex;
@@ -824,6 +881,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     auto pointsCount = original.size();
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
+        const auto& mappingColor = colorMapping.isEmpty() ? fillColor : colorMapping[pointIdx];
         if (pointIdx == 0)
         {
             if (pointIdx == pointsCount - 1)
@@ -834,7 +892,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
             
             pVertex->positionXY[0] = e2[pointIdx].x;
             pVertex->positionXY[1] = e2[pointIdx].y;
-            pVertex->color = fillColor;
+            pVertex->color = mappingColor;
             vertices.push_back(vertex);
             
             if (gap)
@@ -842,7 +900,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
             
             pVertex->positionXY[0] = e1[pointIdx].x;
             pVertex->positionXY[1] = e1[pointIdx].y;
-            pVertex->color = fillColor;
+            pVertex->color = mappingColor;
             vertices.push_back(vertex);
             
             direction = true;
@@ -852,18 +910,18 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
             if (!direction) {
                 pVertex->positionXY[0] = b1[pointIdx].x;
                 pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = fillColor;
+                pVertex->color = mappingColor;
                 vertices.push_back(vertex);
             }
             
             pVertex->positionXY[0] = b2[pointIdx].x;
             pVertex->positionXY[1] = b2[pointIdx].y;
-            pVertex->color = fillColor;
+            pVertex->color = mappingColor;
             vertices.push_back(vertex);
             if (direction) {
                 pVertex->positionXY[0] = b1[pointIdx].x;
                 pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = fillColor;
+                pVertex->color = mappingColor;
                 vertices.push_back(vertex);
             }
         }
@@ -895,21 +953,21 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                 if (phase % 3 == 0) {
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = fillColor;
+                    pVertex->color = mappingColor;
                     vertices.push_back(vertex);
                     phase++;
                 }
                 
                 pVertex->positionXY[0] = bp[pointIdx].x;
                 pVertex->positionXY[1] = bp[pointIdx].y;
-                pVertex->color = fillColor;
+                pVertex->color = mappingColor;
                 vertices.push_back(vertex);
                 phase++;
                 if (phase % 3 == 0)
                 {
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = fillColor;
+                    pVertex->color = mappingColor;
                     vertices.push_back(vertex);
                     phase++;
                 }
@@ -925,7 +983,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                         double ld = (rx - original[pointIdx].x) * (rx - original[pointIdx].x) + (ry - original[pointIdx].y) * (ry - original[pointIdx].y);
                         pVertex->positionXY[0] = original[pointIdx].x + radius / sqrt(ld) * (rx - original[pointIdx].x);
                         pVertex->positionXY[1] = original[pointIdx].y + radius / sqrt(ld) * (ry - original[pointIdx].y);
-                        pVertex->color = fillColor;
+                        pVertex->color = mappingColor;
                         vertices.push_back(vertex);
                         phase++;
                         if (phase % 3 == 0)
@@ -935,7 +993,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                             
                             pVertex->positionXY[0] = lp.x;
                             pVertex->positionXY[1] = lp.y;
-                            pVertex->color = fillColor;
+                            pVertex->color = mappingColor;
                             vertices.push_back(vertex);
                             phase++;
                         }
@@ -945,7 +1003,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                 
                 pVertex->positionXY[0] = ep[pointIdx].x;
                 pVertex->positionXY[1] = ep[pointIdx].y;
-                pVertex->color = fillColor;
+                pVertex->color = mappingColor;
                 vertices.push_back(vertex);
                 phase++;
                 if (phase % 3 == 0)
@@ -955,7 +1013,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                     
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
-                    pVertex->color = fillColor;
+                    pVertex->color = mappingColor;
                     vertices.push_back(vertex);
                     phase++;
                 }

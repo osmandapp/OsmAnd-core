@@ -106,6 +106,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setLineDash(const std::vec
     return *this;
 }
 
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLineBuilder::getColorizationMapping() const
+{
+    return _p->getColorizationMapping();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping)
+{
+    _p->setColorizationMapping(colorizationMapping);
+
+    return *this;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder::getPoints() const
 {
     return _p->getPoints();
