@@ -104,6 +104,9 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
         
+        QList<FColorARGB> getColorizationMapping() const;
+        void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);
+        
         double getLineWidth() const;
         void setLineWidth(const double width);
 

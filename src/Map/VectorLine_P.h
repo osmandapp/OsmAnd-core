@@ -39,6 +39,7 @@ namespace OsmAnd
                             std::vector<PointD> &original,
                             double radius,
                             FColorARGB &fillColor,
+                            QList<FColorARGB>& colorMapping,
                             bool gap) const;
         
         QVector<SkPath> calculateLinePath(const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
@@ -49,6 +50,8 @@ namespace OsmAnd
         double getRadius(double width) const;
         bool useSpecialArrow() const;
         double getPointStepPx() const;
+        
+        bool hasColorizationMapping() const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -61,6 +64,7 @@ namespace OsmAnd
         bool _showArrows;
 
         QVector<PointI> _points;
+        QList<FColorARGB> _colorizationMapping;
         double _lineWidth;
         FColorARGB _fillColor;
         bool _dash;
@@ -100,7 +104,7 @@ namespace OsmAnd
         
         int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
                                    std::vector<bool>& include) const;
-        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments) const;
+        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const;
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     public:
@@ -119,6 +123,9 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+        
+        QList<FColorARGB> getColorizationMapping() const;
+        void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);
         
         double getLineWidth() const;
         void setLineWidth(const double width);

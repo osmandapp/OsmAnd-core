@@ -43,6 +43,7 @@ namespace OsmAnd
         std::vector<double> _dashPattern;
 
         QVector<PointI> _points;
+        QList<FColorARGB> _colorizationMapping;
 
         float _direction;
 
@@ -81,6 +82,9 @@ namespace OsmAnd
         
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI> poinst);
+        
+        QList<OsmAnd::FColorARGB> getColorizationMapping() const;
+        void setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
 
         std::shared_ptr<const SkBitmap> getPathIcon() const;
         void setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
