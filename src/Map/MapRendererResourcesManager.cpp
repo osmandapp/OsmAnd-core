@@ -1177,7 +1177,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
                 {
                     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
-                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet() && provider->getMinZoom() >= mapState.zoomLevel && provider->getMaxZoom() <= mapState.zoomLevel)
+                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet() && mapState.zoomLevel >=  provider->getMinZoom() && mapState.zoomLevel <= provider->getMaxZoom())
                         updatesPresent = true;
                 }
             }
