@@ -551,7 +551,7 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getGpxColors() const
     const auto &ruleNode = renderAttr->getRootNodeRef()->getOneOfConditionalSubnodesRef();
     if (ruleNode.isEmpty())
         return result;
-    
+
     const auto &switchNode = ruleNode.first();
     const auto &conditionals = switchNode->getOneOfConditionalSubnodesRef();
     for (const auto& conditional : constOf(conditionals))
