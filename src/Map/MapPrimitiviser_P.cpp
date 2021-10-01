@@ -123,7 +123,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
-
+    
     //////////////////////////////////////////////////////////////////////////
     //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
     //{
@@ -724,10 +724,6 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
     auto fullLandObjects = 0u;
     for (const auto& polygon : constOf(closedPolygons))
     {
-        // If polygon has less than 4 points, it's invalid
-        if (polygon.size() < 4)
-            continue;
-
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
         const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
