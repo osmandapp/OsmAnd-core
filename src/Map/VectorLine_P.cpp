@@ -18,9 +18,9 @@
 #include "IAtlasMapRenderer.h"
 #include "SkiaUtilities.h"
 
-#define TRACK_WIDTH_THRESHOLD 25.0f
+#define TRACK_WIDTH_THRESHOLD 8.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
-#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 5.0f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 10.0f
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
@@ -614,7 +614,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     int order = owner->baseOrder;
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    double radius = _lineWidth * scale;
+    double radius = _lineWidth * scale * owner->screenScale;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::TriangleStrip;
@@ -1099,7 +1099,7 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
 {
     return useSpecialArrow() ?
     getPointBitmap()->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER :
-    getPointBitmap()->height() * ARROW_DISTANCE_MULTIPLIER;
+    getPointBitmap()->height() + _lineWidth * ARROW_DISTANCE_MULTIPLIER;
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine_P::getPointBitmap() const

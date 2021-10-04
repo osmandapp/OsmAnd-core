@@ -574,3 +574,70 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getGpxColors() const
     }
     return result;
 }
+
+QHash<QString, QList<int>> OsmAnd::MapPresentationEnvironment_P::getGpxWidth() const
+{
+    QHash<QString, QList<int>> result;
+    const auto &renderAttr = owner->mapStyle->getAttribute(QStringLiteral("gpx"));
+    const auto &ruleNode = renderAttr->getRootNodeRef()->getOneOfConditionalSubnodesRef();
+    if (ruleNode.isEmpty())
+        return result;
+
+    const auto &switchNode = ruleNode.first();
+    const auto &applyNode = switchNode->getApplySubnodesRef().first();
+    const auto &conditionals = applyNode->getOneOfConditionalSubnodesRef();
+
+    for (const auto& conditional : constOf(conditionals))
+    {
+        const auto& ruleNodeValues = conditional->getValuesRef();
+        QString widthName = QStringLiteral("");
+        int widthNameStep = 1;
+
+        for (const auto &ruleValueEntry : rangeOf(constOf(ruleNodeValues)))
+        {
+            const auto valueDefId = ruleValueEntry.key();
+            const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
+            if (valueDef->dataType == MapStyleValueDataType::String)
+                widthName = owner->mapStyle->getStringById(ruleValueEntry.value().asConstantValue.asSimple.asUInt);
+        }
+
+        const auto &applyIfNodes = conditional->getApplySubnodesRef();
+        for (const auto& conditionalIf : constOf(applyIfNodes))
+        {
+            int minZoomValue = 0;
+            int maxZoomValue = -1;
+            int strokeWidthValue = 1;
+
+            const auto& ruleNodeIfValues = conditionalIf->getValuesRef();
+            for (const auto &ruleValueIfEntry : rangeOf(constOf(ruleNodeIfValues)))
+            {
+                const auto valueDefIfId = ruleValueIfEntry.key();
+                const auto& valueDefIf = owner->mapStyle->getValueDefinitionRefById(valueDefIfId);
+                if (valueDefIf->dataType == MapStyleValueDataType::Integer)
+                {
+                    const auto valueInt = ruleValueIfEntry.value().asConstantValue.asSimple.asInt;
+                    if (minZoomValue < valueInt)
+                    {
+                        if (minZoomValue > 0)
+                            maxZoomValue = valueInt;
+                        else
+                            minZoomValue = valueInt;
+                    }
+                    else
+                    {
+                        maxZoomValue = minZoomValue;
+                        minZoomValue = valueInt;
+                    }
+                }
+                else if (valueDefIf->dataType == MapStyleValueDataType::Float)
+                {
+                    strokeWidthValue = ruleValueIfEntry.value().asConstantValue.asSimple.asFloat;
+                }
+            }
+
+            if (!widthName.isEmpty() && minZoomValue > 0)
+                result.insert(QStringLiteral("%1_%2").arg(widthName).arg(widthNameStep++), QList<int> {minZoomValue, maxZoomValue, strokeWidthValue});
+        }
+    }
+    return result;
+}

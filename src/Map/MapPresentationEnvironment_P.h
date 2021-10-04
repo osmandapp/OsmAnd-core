@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QMap>
+#include <QList>
 #include <QHash>
 #include <QMutex>
 #include "restore_internal_warnings.h"
@@ -117,6 +118,7 @@ namespace OsmAnd
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
         QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
         QHash<QString, int> getGpxColors() const;
+        QHash<QString, QList<int>> getGpxWidth() const;
         QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;
 
     friend class OsmAnd::MapPresentationEnvironment;
