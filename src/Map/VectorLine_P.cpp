@@ -20,7 +20,7 @@
 
 #define TRACK_WIDTH_THRESHOLD 8.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
-#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 10.0f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
@@ -159,7 +159,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         if (owner->pathIcon)
         {
             double newWidth = _lineWidth / 2;
-            double scale = newWidth / owner->pathIcon->width() / owner->screenScale;
+            double scale = newWidth / owner->pathIcon->width();
             _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
         }
         _hasUnappliedPrimitiveChanges = true;
@@ -1092,14 +1092,14 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
+    return _lineWidth <= TRACK_WIDTH_THRESHOLD * owner->screenScale && owner->specialPathIcon != nullptr;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
     return useSpecialArrow() ?
     getPointBitmap()->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER :
-    getPointBitmap()->height() + _lineWidth * ARROW_DISTANCE_MULTIPLIER;
+    getPointBitmap()->height() * ARROW_DISTANCE_MULTIPLIER;
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine_P::getPointBitmap() const
