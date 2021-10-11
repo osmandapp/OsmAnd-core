@@ -20,17 +20,17 @@ uint8_t OsmAnd::MvtReader::getUserDataId(const std::string& key)
      static const int SKEY_ID = 5;        // Key     Sequence key.
      static const int USERKEY_ID = 6;
      */
-    if (key == "ca")
+    if (key == "compass_angle")
         return CA_ID;
     if (key == "captured_at")
         return CAPTURED_AT_ID;
-    if (key == "key")
+    if (key == "id")
         return KEY_ID;
-    if (key == "pano")
+    if (key == "is_pano")
         return PANO_ID;
-    if (key == "skey")
+    if (key == "sequence_id")
         return SKEY_ID;
-    if (key == "userkey")
+    if (key == "organization_id")
         return USERKEY_ID;
     
     return UNKNOWN_ID;
