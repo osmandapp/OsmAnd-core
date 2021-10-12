@@ -18,16 +18,26 @@
 #include "IAtlasMapRenderer.h"
 #include "SkiaUtilities.h"
 
+#include <Polyline2D/Polyline2D.h>
+#include <Polyline2D/Vec2.h>
+
 #define TRACK_WIDTH_THRESHOLD 25.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 5.0f
+
+// Colorization shemes
+#define COLORIZATION_NONE 0
+#define COLORIZATION_GRADIENT 1
+#define COLORIZATION_SOLID 2
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false)
 , _hasUnappliedPrimitiveChanges(false)
 , _isHidden(false)
 , _isApproximationEnabled(true)
+, _colorizationSceme(0)
 , _lineWidth(1.0)
+, _outlineWidth(0.0)
 , _metersPerPixel(1.0)
 , _mapZoomLevel(InvalidZoomLevel)
 , _mapVisualZoom(0.f)
@@ -166,6 +176,39 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         _hasUnappliedChanges = true;
     }
     
+}
+
+double OsmAnd::VectorLine_P::getOutlineWidth() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _outlineWidth;
+}
+
+void OsmAnd::VectorLine_P::setOutlineWidth(const double width)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_outlineWidth != width)
+    {
+        _outlineWidth = width;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+void OsmAnd::VectorLine_P::setColorizationScheme(const int colorizationScheme)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_colorizationSceme != colorizationScheme)
+    {
+        _colorizationSceme = colorizationScheme;
+        
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
 }
 
 OsmAnd::FColorARGB OsmAnd::VectorLine_P::getFillColor() const
@@ -338,23 +381,63 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
 
 OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::PointD p2, OsmAnd::PointD p3, OsmAnd::PointD p4) const
 {
-    double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+//    double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
     //double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
     //double atn2 = atan2(p3.x - p4.x, p3.y - p4.y);
     //double df = qAbs(atn1 - atn2);
     // printf("\n %f %f d=%f df=%f df-PI=%f df-2PI=%f", atn1, atn2, d, df, df - M_PI, df - 2 * M_PI);
     //double THRESHOLD = M_PI / 6;
-    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
-       ) {
+//    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
+//       ) {
         // in case of lines connecting p2 == p3
-        return p2;
-    }
-    OsmAnd::PointD r;
-    r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
-    r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
+//        return p2;
+//    }
+    OsmAnd::PointD Pout;
+//    r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
+//    r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
     
+    //Determine the intersection point of two line segments
+      //http://paulbourke.net/geometry/lineline2d/
+        double mua,mub;
+        double denom,numera,numerb;
+        const double eps = 0.000000000001;
+
+        denom  = (p4.y-p3.y) * (p2.x-p1.x) - (p4.x-p3.x) * (p2.y-p1.y);
+        numera = (p4.x-p3.x) * (p1.y-p3.y) - (p4.y-p3.y) * (p1.x-p3.x);
+        numerb = (p2.x-p1.x) * (p1.y-p3.y) - (p2.y-p1.y) * (p1.x-p3.x);
+
+        if ( (-eps < numera && numera < eps) &&
+                 (-eps < numerb && numerb < eps) &&
+                 (-eps < denom  && denom  < eps) ) {
+            Pout.x = (p1.x + p2.x) * 0.5;
+            Pout.y = (p1.y + p2.y) * 0.5;
+            return Pout; //meaning the lines coincide
+        }
+
+        if (-eps < denom  && denom < eps) {
+            Pout.x = 0;
+            Pout.y = 0;
+            return Pout; //meaning lines are parallel
+        }
+
+        mua = numera / denom;
+        mub = numerb / denom;
+        Pout.x = p1.x + mua * (p2.x - p1.x);
+        Pout.y = p1.y + mua * (p2.y - p1.y);
+        bool out1 = mua < 0 || mua > 1;
+        bool out2 = mub < 0 || mub > 1;
+
+//        if (out1 & out2) {
+//            return Pout; //the intersection lies outside both segments
+//        } else if (out1) {
+//            return p1; //the intersection lies outside segment 1
+//        } else if (out2) {
+//            return p3; //the intersection lies outside segment 2
+//        } else {
+//            return Pout; //the intersection lies inside both segments
+//        }
     
-    return r;
+    return Pout;
 }
 
 OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
@@ -615,9 +698,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
     double radius = _lineWidth * scale;
+    double simplificationRadius = radius - (_outlineWidth * scale);
 
     vectorLine->order = order++;
-    vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::TriangleStrip;
+    vectorLine->primitiveType = _dashPattern.size() > 0 ? VectorMapSymbol::PrimitiveType::TriangleStrip : VectorMapSymbol::PrimitiveType::Triangles;
     vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
@@ -656,21 +740,36 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         int pointsCount = (int) points.size();
         // generate array of points
         std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
+        QSet<uint> colorChangeIndexes;
+        uint prevPointIdx = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
-        pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
-        
-        std::vector<bool> include(pointsCount, !_isApproximationEnabled);
+        {
+            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
+            if (hasColorizationMapping() && _colorizationSceme == COLORIZATION_SOLID)
+            {
+                FColorARGB prevColor = colorsForSegment[prevPointIdx];
+                if (prevColor != colorsForSegment[pointIdx])
+                {
+                    colorChangeIndexes.insert(pointIdx);
+                    prevColor = colorsForSegment[pointIdx];
+                }
+                prevPointIdx = pointIdx;
+            }
+        }
+        // Do not simplify colorization
+        std::vector<bool> include(pointsCount, !_isApproximationEnabled || hasColorizationMapping());
         include[0] = true;
-        int pointsSimpleCount = _isApproximationEnabled
-            ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1
+        int pointsSimpleCount = _isApproximationEnabled && !hasColorizationMapping()
+            ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, simplificationRadius / 3, include) + 1
             : pointsCount;
         
         // generate base points for connecting lines with triangles
         std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
         double ntan = 0, nx1 = 0, ny1 = 0;
-        uint prevPointIdx = 0;
+        prevPointIdx = 0;
         uint insertIdx = 0;
         
+        QVector<uint> solidColorChangeIndexes;
         QList<OsmAnd::FColorARGB> filteredColorsMap;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
@@ -678,7 +777,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 continue;
             
             if (hasColorizationMapping())
-                filteredColorsMap.push_back(colorsForSegment[pointIdx]);
+            {
+                const auto& color = colorsForSegment[pointIdx];
+                filteredColorsMap.push_back(color);
+                if (_colorizationSceme == COLORIZATION_SOLID && colorChangeIndexes.contains(pointIdx))
+                    solidColorChangeIndexes.push_back(insertIdx);
+            }
             
             PointD pnt = pointsToPlot[pointIdx];
             PointD prevPnt = pointsToPlot[prevPointIdx];
@@ -842,9 +946,46 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, filteredColorsMap, true);
             }
         }
+        else if (_colorizationSceme == COLORIZATION_SOLID && !solidColorChangeIndexes.isEmpty())
+        {
+            uint prevIdx = 1;
+            for (const uint idx : solidColorChangeIndexes)
+            {
+                const auto begin = original.begin() + prevIdx;
+                const auto end = original.begin() + idx;
+                std::vector<PointD> subvector(begin, end);
+                const auto fillColor = filteredColorsMap[idx - 1];
+                QList<FColorARGB> colors;
+                for (int i = 0; i < idx - prevIdx; i++)
+                    colors.push_back(fillColor);
+                
+                const auto segmentVertices = crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
+                                                                                                               subvector, radius * owner->screenScale, _fillColor,
+                                                                                                               colors,
+                                                                                                               crushedpixel::Polyline2D::JointStyle::ROUND,
+                                                                                                               crushedpixel::Polyline2D::EndCapStyle::BUTT);
+                vertices.insert(vertices.end(), segmentVertices.begin(), segmentVertices.end());
+                prevIdx = idx - 1;
+            }
+            const auto begin = original.begin() + prevIdx;
+            const auto end = original.end();
+            std::vector<PointD> subvector(begin, end);
+            const auto colors = filteredColorsMap.mid(prevIdx, filteredColorsMap.size() - prevIdx);
+            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
+                                                                                                           vertices,
+                                                                                                           subvector, radius * owner->screenScale,
+                                                                                                           _fillColor, colors,
+                                                                                                           crushedpixel::Polyline2D::JointStyle::ROUND,
+                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
+        }
         else
         {
-            createVertexes(vertices, vertex, b1, b2, e1, e2, original, radius, fillColor, filteredColorsMap, segmentIndex > 0);
+            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
+                                                                                                           vertices,
+                                                                                                           original, radius * owner->screenScale,
+                                                                                                           _fillColor, filteredColorsMap,
+                                                                                                           crushedpixel::Polyline2D::JointStyle::ROUND,
+                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
         }
     }
     if (vertices.size() == 0)

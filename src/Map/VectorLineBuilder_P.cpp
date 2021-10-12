@@ -15,6 +15,8 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _isApproximationEnabled(true)
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
+    , _colorizationScheme(0)
+    , _outlineWidth(0)
     , _lineWidth(3.0)
     , _direction(0.0f)
     , _pathIconStep(-1.0)
@@ -83,6 +85,20 @@ void OsmAnd::VectorLineBuilder_P::setLineId(const int lineId)
     _lineId = lineId;
 }
 
+int OsmAnd::VectorLineBuilder_P::getColorizationScheme() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _colorizationScheme;
+}
+
+void OsmAnd::VectorLineBuilder_P::setColorizationScheme(const int colorizationScheme)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _colorizationScheme = colorizationScheme;
+}
+
 int OsmAnd::VectorLineBuilder_P::getBaseOrder() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -95,6 +111,20 @@ void OsmAnd::VectorLineBuilder_P::setBaseOrder(const int baseOrder)
     QWriteLocker scopedLocker(&_lock);
 
     _baseOrder = baseOrder;
+}
+
+double OsmAnd::VectorLineBuilder_P::getOutlineWidth() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _outlineWidth;
+}
+
+void OsmAnd::VectorLineBuilder_P::setOutlineWidth(const double width)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _outlineWidth = width;
 }
 
 double OsmAnd::VectorLineBuilder_P::getLineWidth() const
@@ -258,6 +288,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setPoints(_points);
     line->setColorizationMapping(_colorizationMapping);
     line->setLineDash(_dashPattern);
+    line->setOutlineWidth(_outlineWidth);
+    line->setColorizationScheme(_colorizationScheme);
     line->applyChanges();
     
     return line;

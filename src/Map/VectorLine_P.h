@@ -65,7 +65,9 @@ namespace OsmAnd
 
         QVector<PointI> _points;
         QList<FColorARGB> _colorizationMapping;
+        int _colorizationSceme;
         double _lineWidth;
+        double _outlineWidth;
         FColorARGB _fillColor;
         bool _dash;
         std::vector<double> _dashPattern;
@@ -135,6 +137,11 @@ namespace OsmAnd
 
         std::vector<double> getLineDash() const;
         void setLineDash(const std::vector<double> dashPattern);
+        
+        double getOutlineWidth() const;
+        void setOutlineWidth(const double width);
+
+        void setColorizationScheme(const int colorizationScheme);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

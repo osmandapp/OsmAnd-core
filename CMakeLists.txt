@@ -272,6 +272,7 @@ endif()
 
 file(GLOB includes
 	"include/mapbox/*.h*"
+	"include/Polyline2D/*.h*"
 	"include/proper/*.h*"
 	"include/*.h*"
 	"include/OsmAndCore/*.h*"

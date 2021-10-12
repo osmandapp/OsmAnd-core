@@ -63,6 +63,12 @@ namespace OsmAnd
         
         QList<OsmAnd::FColorARGB> getColorizationMapping() const;
         OsmAnd::VectorLineBuilder& setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
+        
+        int getColorizationScheme() const;
+        OsmAnd::VectorLineBuilder& setColorizationScheme(const int colorizationScheme);
+        
+        double getOutlineWidth() const;
+        OsmAnd::VectorLineBuilder& setOutlineWidth(const double width);
 
         std::shared_ptr<const SkBitmap> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
