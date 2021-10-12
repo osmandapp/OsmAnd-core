@@ -1,0 +1,24 @@
+diff -rupN upstream.original/mkspecs/features/android/sdk.prf upstream.patched/mkspecs/features/android/sdk.prf  
+--- upstream.original/mkspecs/features/android/sdk.prf	2021-08-21 14:04:58.000000000 +0200
++++ upstream.patched/mkspecs/features/android/sdk.prf	2021-08-28 11:49:55.000000000 +0200
+@@ -1,6 +1,6 @@
+ API_VERSION_TO_USE = $$(ANDROID_API_VERSION)
+ isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = $$API_VERSION
+-isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = android-16
++isEmpty(API_VERSION_TO_USE): API_VERSION_TO_USE = android-24
+ 
+ ANDROID_JAR_FILE = $$ANDROID_SDK_ROOT/platforms/$$API_VERSION_TO_USE/android.jar
+ !exists($$ANDROID_JAR_FILE) {
+
+diff -rupN upstream.original/src/android/jar/jar.pro upstream.patched/src/android/jar/jar.pro 
+--- upstream.original/src/android/jar/jar.pro	2021-08-21 14:04:59.000000000 +0200
++++ upstream.patched/src/android/jar/jar.pro	2021-08-28 12:19:07.000000000 +0200
+@@ -2,7 +2,7 @@ TARGET = QtAndroid
+ 
+ CONFIG += java
+ DESTDIR = $$[QT_INSTALL_PREFIX/get]/jar
+-API_VERSION = android-16
++API_VERSION = android-24
+ 
+ PATHPREFIX = $$PWD/src/org/qtproject/qt5/android/
+ 

@@ -110,6 +110,7 @@ namespace OsmAnd
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
         QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
         QHash<QString, int> getGpxColors() const;
+        QHash<QString, QList<int>> getGpxWidth() const;
         QPair<QString, uint32_t> getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const;
 
         enum {

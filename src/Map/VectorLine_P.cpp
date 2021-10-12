@@ -21,9 +21,9 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define TRACK_WIDTH_THRESHOLD 25.0f
+#define TRACK_WIDTH_THRESHOLD 8.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
-#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 5.0f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
 // Colorization shemes
 #define COLORIZATION_NONE 0
@@ -169,7 +169,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         if (owner->pathIcon)
         {
             double newWidth = _lineWidth / 2;
-            double scale = newWidth / owner->pathIcon->width() / owner->screenScale;
+            double scale = newWidth / owner->pathIcon->width();
             _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
         }
         _hasUnappliedPrimitiveChanges = true;
@@ -697,7 +697,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     int order = owner->baseOrder;
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
-    double radius = _lineWidth * scale;
+
+    double radius = _lineWidth * scale * owner->screenScale;
     double simplificationRadius = radius - (_outlineWidth * scale);
 
     vectorLine->order = order++;
@@ -1233,7 +1234,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
+    return _lineWidth <= TRACK_WIDTH_THRESHOLD * owner->screenScale && owner->specialPathIcon != nullptr;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

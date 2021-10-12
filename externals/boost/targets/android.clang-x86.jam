@@ -8,27 +8,25 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 using clang : android
 :
-$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-clang++
+$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/i686-linux-android$(NDK_PLATFORM)-clang++
 :
-<archiver>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ar
-<ranlib>$(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ranlib
+<archiver>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ar
+<ranlib>$(NDK)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/llvm-ranlib
 <compileflags>-fexceptions
 <compileflags>-frtti
 #<compileflags>-Wall
 <compileflags>-fvisibility=hidden
 <compileflags>-fvisibility-inlines-hidden
 # Configuration taken from $(NDK)/toolchains/x86-$(TOOLCHAIN_VERSION)/setup.mk
+<compileflags>-fpic
 <compileflags>-ffunction-sections
 <compileflags>-funwind-tables
+<compileflags>-fstack-protector
 <compileflags>-no-canonical-prefixes
 <compileflags>-std=c++11
 <compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID_STL=c++_static
 <compileflags>-DANDROID
-<compileflags>-D__ANDROID__
-<compileflags>-isystem$(NDK)/sysroot/usr/include/i686-linux-android 
-<compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++/include \
-<compileflags>-isystem$(NDK)/sources/android/support/include \
-<compileflags>-isystem$(NDK)/sources/cxx-stl/llvm-libc++abi/include
 <compileflags>-stdlib=libc++
 <linkflags>-no-canonical-prefixes
 <linkflags>-stdlib=libc++

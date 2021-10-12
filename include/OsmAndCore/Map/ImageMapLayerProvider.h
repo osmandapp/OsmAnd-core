@@ -99,15 +99,15 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_METHOD(
             QByteArray,
             obtainImage,
-            SWIG_OMIT(const) SWIG_CLARIFY(ImageMapLayerProvider, Request)& request);
+            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
             supportsNaturalObtainDataAsync);
         SWIG_EMIT_DIRECTOR_METHOD(
             void,
             obtainImageAsync,
-            SWIG_OMIT(const) SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImage)* SWIG_OMIT(const) asyncImage);
+            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
+            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImage)* const asyncImage);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,
             getTileSize);
