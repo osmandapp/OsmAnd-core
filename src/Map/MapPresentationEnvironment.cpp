@@ -142,6 +142,11 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment::getGpxColors() const
     return _p->getGpxColors();
 }
 
+QHash<QString, QList<int>> OsmAnd::MapPresentationEnvironment::getGpxWidth() const
+{
+    return _p->getGpxWidth();
+}
+
 QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment::getRoadRenderingAttributes(const QString& renderAttrName, const QHash<QString, QString>& additionalSettings) const
 {
     return _p->getRoadRenderingAttributes(renderAttrName, additionalSettings);
