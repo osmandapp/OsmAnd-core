@@ -960,18 +960,21 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 for (int i = 0; i < idx - prevIdx; i++)
                     colors.push_back(fillColor);
                 
-                const auto segmentVertices = crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
-                                                                                                               subvector, radius * owner->screenScale, _fillColor,
-                                                                                                               colors,
+                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
+                                                                                                               vertices,
+                                                                                                               subvector, radius * owner->screenScale,
+                                                                                                               _fillColor, colors,
                                                                                                                crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                               crushedpixel::Polyline2D::EndCapStyle::BUTT);
-                vertices.insert(vertices.end(), segmentVertices.begin(), segmentVertices.end());
+                                                                                                               crushedpixel::Polyline2D::EndCapStyle::ROUND);
                 prevIdx = idx - 1;
             }
             const auto begin = original.begin() + prevIdx;
             const auto end = original.end();
             std::vector<PointD> subvector(begin, end);
-            const auto colors = filteredColorsMap.mid(prevIdx, filteredColorsMap.size() - prevIdx);
+            const auto fillColor = filteredColorsMap.back();
+            QList<FColorARGB> colors;
+            for (int i = 0; i < original.size() - prevIdx; i++)
+                colors.push_back(fillColor);
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                            vertices,
                                                                                                            subvector, radius * owner->screenScale,
