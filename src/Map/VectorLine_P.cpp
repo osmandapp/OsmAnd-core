@@ -699,7 +699,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
 
     double radius = _lineWidth * scale * owner->screenScale;
-    double simplificationRadius = radius - (_outlineWidth * scale);
+    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * owner->screenScale;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = _dashPattern.size() > 0 ? VectorMapSymbol::PrimitiveType::TriangleStrip : VectorMapSymbol::PrimitiveType::Triangles;
