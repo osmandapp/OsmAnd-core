@@ -381,63 +381,22 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
 
 OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::PointD p2, OsmAnd::PointD p3, OsmAnd::PointD p4) const
 {
-//    double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+    double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
     //double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
     //double atn2 = atan2(p3.x - p4.x, p3.y - p4.y);
     //double df = qAbs(atn1 - atn2);
     // printf("\n %f %f d=%f df=%f df-PI=%f df-2PI=%f", atn1, atn2, d, df, df - M_PI, df - 2 * M_PI);
     //double THRESHOLD = M_PI / 6;
-//    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
-//       ) {
+    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
+       ) {
         // in case of lines connecting p2 == p3
-//        return p2;
-//    }
-    OsmAnd::PointD Pout;
-//    r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
-//    r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
+        return p2;
+    }
+    OsmAnd::PointD r;
+    r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
+    r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
     
-    //Determine the intersection point of two line segments
-      //http://paulbourke.net/geometry/lineline2d/
-        double mua,mub;
-        double denom,numera,numerb;
-        const double eps = 0.000000000001;
-
-        denom  = (p4.y-p3.y) * (p2.x-p1.x) - (p4.x-p3.x) * (p2.y-p1.y);
-        numera = (p4.x-p3.x) * (p1.y-p3.y) - (p4.y-p3.y) * (p1.x-p3.x);
-        numerb = (p2.x-p1.x) * (p1.y-p3.y) - (p2.y-p1.y) * (p1.x-p3.x);
-
-        if ( (-eps < numera && numera < eps) &&
-                 (-eps < numerb && numerb < eps) &&
-                 (-eps < denom  && denom  < eps) ) {
-            Pout.x = (p1.x + p2.x) * 0.5;
-            Pout.y = (p1.y + p2.y) * 0.5;
-            return Pout; //meaning the lines coincide
-        }
-
-        if (-eps < denom  && denom < eps) {
-            Pout.x = 0;
-            Pout.y = 0;
-            return Pout; //meaning lines are parallel
-        }
-
-        mua = numera / denom;
-        mub = numerb / denom;
-        Pout.x = p1.x + mua * (p2.x - p1.x);
-        Pout.y = p1.y + mua * (p2.y - p1.y);
-        bool out1 = mua < 0 || mua > 1;
-        bool out2 = mub < 0 || mub > 1;
-
-//        if (out1 & out2) {
-//            return Pout; //the intersection lies outside both segments
-//        } else if (out1) {
-//            return p1; //the intersection lies outside segment 1
-//        } else if (out2) {
-//            return p3; //the intersection lies outside segment 2
-//        } else {
-//            return Pout; //the intersection lies inside both segments
-//        }
-    
-    return Pout;
+    return r;
 }
 
 OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
