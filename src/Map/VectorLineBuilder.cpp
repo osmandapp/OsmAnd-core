@@ -178,6 +178,30 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setScreenScale(const float
     return *this;
 }
 
+int OsmAnd::VectorLineBuilder::getColorizationScheme() const
+{
+    return _p->getColorizationScheme();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setColorizationScheme(const int colorizationScheme)
+{
+    _p->setColorizationScheme(colorizationScheme);
+    
+    return *this;
+}
+
+double OsmAnd::VectorLineBuilder::getOutlineWidth() const
+{
+    return _p->getOutlineWidth();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setOutlineWidth(const double width)
+{
+    _p->setOutlineWidth(width);
+    
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

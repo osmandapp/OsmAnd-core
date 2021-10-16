@@ -37,7 +37,9 @@ namespace OsmAnd
         
         int _lineId;
         int _baseOrder;
-
+        int _colorizationScheme;
+        
+        double _outlineWidth;
         double _lineWidth;
         FColorARGB _fillColor;
         std::vector<double> _dashPattern;
@@ -66,14 +68,21 @@ namespace OsmAnd
         bool isApproximationEnabled() const;
         void setApproximationEnabled(const bool enabled);
         
+        int getColorizationScheme() const;
+        void setColorizationScheme(const int colorizationScheme);
+        
         int getLineId() const;
         void setLineId(const int lineId);
 
         int getBaseOrder() const;
         void setBaseOrder(const int baseOrder);
+        
+        double getOutlineWidth() const;
+        void setOutlineWidth(const double width);
 
         double getLineWidth() const;
         void setLineWidth(const double width);
+        
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB baseColor);
 
