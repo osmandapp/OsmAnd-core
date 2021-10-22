@@ -95,7 +95,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             basemapReader = obfReader;
 
             // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
-            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+            if (zoom > MAX_BASEMAP_ZOOM_LEVEL)
                 continue;
         }
 
@@ -131,7 +131,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
 
     // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
     // read tile from MaxBasemapZoomLevel that covers requested tile
-    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+    if (basemapReader && zoom > MAX_BASEMAP_ZOOM_LEVEL)
     {
         const auto& obfInfo = basemapReader->obtainInfo();
 
@@ -143,7 +143,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             pBasemapBBox31 = &basemapBBox31;
             basemapBBox31 = Utilities::roundBoundingBox31(
                 *bbox31,
-                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+                MAX_BASEMAP_ZOOM_LEVEL);
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
@@ -156,7 +156,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 basemapReader,
                 mapSection,
-                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
+                MAX_BASEMAP_ZOOM_LEVEL,
                 pBasemapBBox31,
                 resultOut,
                 &surfaceTypeToMerge,
@@ -290,7 +290,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             basemapReader = obfReader;
 
             // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
-            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+            if (zoom > MAX_BASEMAP_ZOOM_LEVEL)
                 continue;
         }
 
@@ -304,11 +304,26 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
             // Read objects from each map section
             auto surfaceTypeToMerge = MapSurfaceType::Undefined;
+
+            // expand area to include more coastlines for bbox
+            const AreaI *expandedBbox31 = nullptr;
+            AreaI eBBox31;
+            if (bbox31 && zoom >= MIN_DETAILED_ZOOM_LEVEL)
+            {
+                expandedBbox31 = &eBBox31;
+                eBBox31 = Utilities::roundBoundingBox31(
+                    *bbox31,
+                    MIN_DETAILED_ZOOM_LEVEL);
+            }
+            else
+            {
+                expandedBbox31 = bbox31;
+            }
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 obfReader,
                 mapSection,
                 zoom,
-                bbox31,
+                expandedBbox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
                 filterMapObjectsById,
@@ -329,7 +344,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
     // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
     // read tile from MaxBasemapZoomLevel that covers requested tile
-    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+    if (basemapReader && zoom > MAX_BASEMAP_ZOOM_LEVEL)
     {
         const auto& obfInfo = basemapReader->obtainInfo();
 
@@ -341,7 +356,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             pBasemapBBox31 = &basemapBBox31;
             basemapBBox31 = Utilities::roundBoundingBox31(
                 *bbox31,
-                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+                MAX_BASEMAP_ZOOM_LEVEL);
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
@@ -354,7 +369,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 basemapReader,
                 mapSection,
-                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
+                MAX_BASEMAP_ZOOM_LEVEL,
                 pBasemapBBox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
@@ -381,7 +396,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+    if (zoom > MAX_BASEMAP_ZOOM_LEVEL)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {

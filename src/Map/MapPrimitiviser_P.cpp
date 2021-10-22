@@ -224,10 +224,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent;
+    const auto detailedLandDataPresent = zoom >= MIN_DETAILED_ZOOM_LEVEL && detailedBinaryMapObjectsPresent;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
-    if (detailedmapCoastlinesPresent && zoom >= static_cast<ZoomLevel>(14))
+    if (detailedmapCoastlinesPresent && zoom >= MIN_DETAILED_ZOOM_LEVEL)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             area31,
@@ -240,7 +240,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
         shouldAddBasemapCoastlines =
             (!coastlinesWereAdded && !detailedLandDataPresent) ||
-            zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap);
+            zoom <= MAX_BASEMAP_ZOOM_LEVEL;
     }
     else
     {
@@ -263,76 +263,21 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
     // to determine use FullLand or FullWater as surface type
     auto surfaceType = surfaceType_;
-    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && basemapCoastlinesPresent && fillEntireArea)
+    if (zoom > MAX_BASEMAP_ZOOM_LEVEL && fillEntireArea)
     {
         const auto center = area31.center();
         assert(area31.contains(center));
+        bool isDeterminedSurfaceType = false;
 
-        std::shared_ptr<const MapObject> neareastCoastlineMapObject;
-        PointI nearestCoastlineSegment0;
-        PointI nearestCoastlineSegment1;
-        PointI mCenter = center;
-        double squaredMinDistance = std::numeric_limits<double>::max();
-
-        for (const auto& coastlineMapObject : constOf(basemapCoastlineObjects))
+        if (detailedmapCoastlinesPresent)
         {
-            int segmentIndex0 = -1;
-            int segmentIndex1 = -1;
-            const auto squaredDistance = Utilities::minimalSquaredDistanceToLineSegmentFromPoint(
-                coastlineMapObject->points31,
-                center,
-                &segmentIndex0,
-                &segmentIndex1);
-            if (segmentIndex0 != -1 && segmentIndex1 != -1 && coastlineMapObject->points31.size() > 1)
-            {
-                const auto pPoints = coastlineMapObject->points31.constData();
-                if(squaredDistance <= squaredMinDistance)
-                {
-                    if(segmentIndex0 == segmentIndex1)
-                    {
-                        if(segmentIndex0 == 0)
-                        {
-                            nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
-                            mCenter = pPoints[segmentIndex0];
-                            if(!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
-                            {
-                                nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                                mCenter = center;
-                            }
-                        } else if(segmentIndex0 == coastlineMapObject->points31.size() - 1) {
-                            nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
-                            mCenter = pPoints[segmentIndex0];
-                            if(!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
-                            {
-                                nearestCoastlineSegment1 = pPoints[segmentIndex1];
-                                mCenter = center;
-                            }
-                        } else {
-                            nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
-                            nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
-                            mCenter = pPoints[segmentIndex0];
-                        }
-                    }
-                    else
-                    {
-                        nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                        nearestCoastlineSegment1 = pPoints[segmentIndex1];
-                        mCenter = center;
-                    }
-                    squaredMinDistance = squaredDistance;
-                    neareastCoastlineMapObject = coastlineMapObject;
-
-                }
-            }
+            isDeterminedSurfaceType = determineSurfaceType(center, detailedmapCoastlineObjects, surfaceType);
         }
 
-        // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment
-        // Rule: Water is always on the right along the direction of coastline segment.
-        if (neareastCoastlineMapObject)
-        { 
-            const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
-            surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
-        }
+        if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
+        {
+            determineSurfaceType(center, basemapCoastlineObjects, surfaceType);
+        }        
     }
 
     if (metric)
@@ -384,14 +329,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain primitives
     const bool detailedDataMissing =
-        (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) &&
+        (zoom > MAX_BASEMAP_ZOOM_LEVEL) &&
         detailedmapMapObjects.isEmpty() &&
         detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) || detailedDataMissing)
+        ((zoom <= MAX_BASEMAP_ZOOM_LEVEL || detailedDataMissing)
             ? basemapMapObjects.size()
             : 0) +
         polygonizedCoastlineObjects.size();
@@ -417,7 +362,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
-    if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
+    if ((zoom <= MAX_BASEMAP_ZOOM_LEVEL) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(
@@ -469,6 +414,79 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
+bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > coastlineObjects, MapSurfaceType &surfaceType)
+{
+    std::shared_ptr<const MapObject> neareastCoastlineMapObject;
+    PointI nearestCoastlineSegment0;
+    PointI nearestCoastlineSegment1;
+    PointI mCenter = center;
+    double squaredMinDistance = std::numeric_limits<double>::max();
+
+    for (const auto &coastlineMapObject : constOf(coastlineObjects))
+    {
+        int segmentIndex0 = -1;
+        int segmentIndex1 = -1;
+        const auto squaredDistance = Utilities::minimalSquaredDistanceToLineSegmentFromPoint(
+            coastlineMapObject->points31,
+            center,
+            &segmentIndex0,
+            &segmentIndex1);
+        if (segmentIndex0 != -1 && segmentIndex1 != -1 && coastlineMapObject->points31.size() > 1)
+        {
+            const auto pPoints = coastlineMapObject->points31.constData();
+            if (squaredDistance <= squaredMinDistance)
+            {
+                if (segmentIndex0 == segmentIndex1)
+                {
+                    if (segmentIndex0 == 0)
+                    {
+                        nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
+                        mCenter = pPoints[segmentIndex0];
+                        if (!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
+                        {
+                            nearestCoastlineSegment0 = pPoints[segmentIndex0];
+                            mCenter = center;
+                        }
+                    }
+                    else if (segmentIndex0 == coastlineMapObject->points31.size() - 1)
+                    {
+                        nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
+                        mCenter = pPoints[segmentIndex0];
+                        if (!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
+                        {
+                            nearestCoastlineSegment1 = pPoints[segmentIndex1];
+                            mCenter = center;
+                        }
+                    }
+                    else
+                    {
+                        nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
+                        nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
+                        mCenter = pPoints[segmentIndex0];
+                    }
+                }
+                else
+                {
+                    nearestCoastlineSegment0 = pPoints[segmentIndex0];
+                    nearestCoastlineSegment1 = pPoints[segmentIndex1];
+                    mCenter = center;
+                }
+                squaredMinDistance = squaredDistance;
+                neareastCoastlineMapObject = coastlineMapObject;
+            }
+        }
+    }
+    // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment
+    // Rule: Water is always on the right along the direction of coastline segment.
+    if (neareastCoastlineMapObject)
+    {
+        const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
+        surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+        return true;
+    }
+    return false;
+}
+
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseWithoutSurface(
     const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
@@ -500,7 +518,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (const auto possiblyBasemapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
         {
             isBasemapObject = possiblyBasemapObject->section->isBasemap;
-            if (zoom < static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) && !isBasemapObject)
+            if (zoom < MAX_BASEMAP_ZOOM_LEVEL && !isBasemapObject)
                 continue;
         }
 
@@ -519,12 +537,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
 
     // Obtain primitives
-    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) && detailedmapMapObjects.isEmpty();
+    const bool detailedDataMissing = (zoom > MAX_BASEMAP_ZOOM_LEVEL) && detailedmapMapObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) || detailedDataMissing) ? basemapMapObjects.size() : 0);
+        ((zoom <= MAX_BASEMAP_ZOOM_LEVEL || detailedDataMissing) ? basemapMapObjects.size() : 0);
     if (mapObjectsCount == 0)
     {
         // Empty area
@@ -540,7 +558,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
-    if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
+    if (zoom <= MAX_BASEMAP_ZOOM_LEVEL || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(context, primitivisedObjects, basemapMapObjects, evaluationResult, cache, queryController, metric);

@@ -142,6 +142,9 @@ namespace OsmAnd
         CHECK_CONTAINS,
         CHECK_EQUALS
     };
+
+    const ZoomLevel MAX_BASEMAP_ZOOM_LEVEL = ZoomLevel11;
+    const ZoomLevel MIN_DETAILED_ZOOM_LEVEL = ZoomLevel14;
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)
