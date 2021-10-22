@@ -168,7 +168,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         
         if (owner->pathIcon)
         {
-            double newWidth = _lineWidth / 2;
+            double newWidth = (_lineWidth * owner->screenScale) / 2;
             double scale = newWidth / owner->pathIcon->width();
             _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
         }
@@ -921,7 +921,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 
                 crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                                vertices,
-                                                                                                               subvector, radius * owner->screenScale,
+                                                                                                               subvector, radius,
                                                                                                                _fillColor, colors,
                                                                                                                crushedpixel::Polyline2D::JointStyle::ROUND,
                                                                                                                crushedpixel::Polyline2D::EndCapStyle::ROUND);
@@ -936,7 +936,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 colors.push_back(fillColor);
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                            vertices,
-                                                                                                           subvector, radius * owner->screenScale,
+                                                                                                           subvector, radius,
                                                                                                            _fillColor, colors,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
                                                                                                            crushedpixel::Polyline2D::EndCapStyle::ROUND);
@@ -1196,7 +1196,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth <= TRACK_WIDTH_THRESHOLD * owner->screenScale && owner->specialPathIcon != nullptr;
+    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

@@ -221,8 +221,14 @@ public:
 				end2 = pathEnd2;
 
 			} else {
+                auto& nextSegment = segments[i + 1];
+                // calculate the angle between the two line segments
+                auto dir1 = segment.center.direction();
+                auto dir2 = nextSegment.center.direction();
+                auto angle = Vec2Maths::angle(dir1, dir2);
+                
 				createJoint(vertex, vertices, segment, segments[i + 1], endColor, jointStyle,
-				            end1, end2, nextStart1, nextStart2, allowOverlap);
+				            end1, end2, nextStart1, nextStart2, angle <= 3 * pi / 4);
 			}
             
             // emit vertices
