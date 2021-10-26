@@ -21,7 +21,7 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define TRACK_WIDTH_THRESHOLD 8.0f
+#define TRACK_WIDTH_THRESHOLD 15.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
@@ -168,7 +168,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         
         if (owner->pathIcon)
         {
-            double newWidth = (_lineWidth * owner->screenScale) / 2;
+            double newWidth = _lineWidth / 2;
             double scale = newWidth / owner->pathIcon->width();
             _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
         }
@@ -657,8 +657,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
 
-    double radius = _lineWidth * scale * owner->screenScale;
-    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * owner->screenScale;
+    double radius = _lineWidth * scale;
+    double simplificationRadius = (_lineWidth - _outlineWidth) * scale;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = _dashPattern.size() > 0 ? VectorMapSymbol::PrimitiveType::TriangleStrip : VectorMapSymbol::PrimitiveType::Triangles;
@@ -921,7 +921,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 
                 crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                                vertices,
-                                                                                                               subvector, radius,
+                                                                                                               subvector, radius * 2,
                                                                                                                _fillColor, colors,
                                                                                                                crushedpixel::Polyline2D::JointStyle::ROUND,
                                                                                                                crushedpixel::Polyline2D::EndCapStyle::ROUND);
@@ -936,7 +936,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 colors.push_back(fillColor);
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                            vertices,
-                                                                                                           subvector, radius,
+                                                                                                           subvector, radius * 2,
                                                                                                            _fillColor, colors,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
                                                                                                            crushedpixel::Polyline2D::EndCapStyle::ROUND);
@@ -945,7 +945,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         {
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
                                                                                                            vertices,
-                                                                                                           original, radius * owner->screenScale,
+                                                                                                           original, radius * 2,
                                                                                                            _fillColor, filteredColorsMap,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
                                                                                                            crushedpixel::Polyline2D::EndCapStyle::ROUND);
