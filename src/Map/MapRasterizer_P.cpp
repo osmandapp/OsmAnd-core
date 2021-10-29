@@ -441,6 +441,65 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
+bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
+    const Context& context,
+    const QVector<PointI>& points31,
+    SkPath& path,
+    float offset)
+{
+    int dir = offset < 0 ? -1: 1;
+    offset = abs(offset);
+    bool shift = static_cast<int>(offset) != 0 ? true : false;
+
+    int pointIdx = 0;
+    bool intersect = false;
+    int prevCross = 0;
+    OsmAnd::PointF vertex;
+    const auto& area31 = context.area31;
+    const auto pointsCount = points31.size();
+    auto pPoint = points31.constData();
+    OsmAnd::PointF pVertex;
+    OsmAnd::PointF tempVertex;
+    for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
+    {
+        const auto& point = *pPoint;
+        calculateVertex(context, point, vertex);
+
+        int cross = 0;
+        cross |= (point.x < area31.left() ? 1 : 0);
+        cross |= (point.x > area31.right() ? 2 : 0);
+        cross |= (point.y < area31.top() ? 4 : 0);
+        cross |= (point.y > area31.bottom() ? 8 : 0);
+        if (pointIdx > 0)
+        {
+            if ((prevCross & cross) == 0)
+            {
+                if (prevCross != 0 || !intersect)
+                {
+                    simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
+                    if (shift)
+                    {
+                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                        tempVertex += normal * offset;
+                    }
+                    path.moveTo(tempVertex.x, tempVertex.y);
+                }
+                simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
+                if (shift)
+                {
+                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                    tempVertex += normal * offset;
+                }
+                path.lineTo(tempVertex.x, tempVertex.y);
+                intersect = true;
+            }
+        }
+        prevCross = cross;
+        pVertex = vertex;
+    }
+    return intersect;
+}
+
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const Context& context,
     SkCanvas& canvas,
@@ -448,7 +507,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     bool drawOnlyShadow)
 {
     const auto& points31 = primitive->sourceObject->points31;
-    const auto& area31 = context.area31;
     const auto& env = context.env;
 
     assert(points31.size() >= 2);
@@ -470,42 +528,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         return;
 
     SkPath path;
-    int pointIdx = 0;
-    bool intersect = false;
-    int prevCross = 0;
-    PointF vertex;
-    const auto pointsCount = points31.size();
-    auto pPoint = points31.constData();
-    PointF pVertex;
-    PointF tempVertex;
-    for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
-    {
-        const auto& point = *pPoint;
-        calculateVertex(context, point, vertex);
-
-        int cross = 0;
-        cross |= (point.x < area31.left() ? 1 : 0);
-        cross |= (point.x > area31.right() ? 2 : 0);
-        cross |= (point.y < area31.top() ? 4 : 0);
-        cross |= (point.y > area31.bottom() ? 8 : 0);
-        if (pointIdx > 0)
-        {
-            if ((prevCross & cross) == 0)
-            {
-                if (prevCross != 0 || !intersect)
-                {
-                    simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-                    path.moveTo(tempVertex.x, tempVertex.y);
-                }
-                simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-                path.lineTo(tempVertex.x, tempVertex.y);
-                intersect = true;
-            }
-        }
-        prevCross = cross;
-        pVertex = vertex;
-    }
-
+    float hmargin = 0.0f;
+    // Uses only id_OUTPUT_PATH_HMARGIN_3 due to need to discuss is it necessary to use it fo different layers.
+    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3, hmargin);
+    bool intersect = calcPathByTrajectory(context, points31, path, hmargin);
     if (!intersect)
         return;
 
@@ -546,7 +572,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
             canvas.drawPath(path, paint);
-            
+
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
 }

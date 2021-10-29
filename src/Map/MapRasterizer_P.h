@@ -114,6 +114,11 @@ namespace OsmAnd
             const SkPath& path,
             const MapStyleEvaluationResult::Packed& evalResult);
 
+        bool calcPathByTrajectory(
+            const Context& context,
+            const QVector<PointI>& points31,
+            SkPath& path,
+            float offset);
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex);
         inline float lineEquation(float x1, float y1, float x2, float y2, float x);
         inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&);
