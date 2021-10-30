@@ -445,11 +445,11 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     const Context& context,
     const QVector<PointI>& points31,
     SkPath& path,
-    float offset)
+    float offset = 0.0f) const
 {
     int dir = offset < 0 ? -1: 1;
     offset = abs(offset);
-    bool shift = static_cast<int>(offset) != 0 ? true : false;
+    bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
 
     int pointIdx = 0;
     bool intersect = false;
@@ -528,10 +528,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         return;
 
     SkPath path;
-    float hmargin = 0.0f;
-    // Uses only id_OUTPUT_PATH_HMARGIN_3 due to need to discuss is it necessary to use it fo different layers.
-    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3, hmargin);
-    bool intersect = calcPathByTrajectory(context, points31, path, hmargin);
+    bool intersect = calcPathByTrajectory(context, points31, path);
     if (!intersect)
         return;
 
@@ -547,31 +544,78 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
+        float hmargin = 0.0f;
+        auto drawShifted = [&, this](float hmargin)
+        {
+            SkPath pathHmargin;
+            if (calcPathByTrajectory(context, points31, pathHmargin, hmargin))
+                canvas.drawPath(pathHmargin, paint);
+        };
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus2, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus1, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         canvas.drawPath(path, paint);
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_3, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_4, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
-            canvas.drawPath(path, paint);
+        {
+            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5, hmargin))
+                drawShifted(hmargin);
+            else
+                canvas.drawPath(path, paint);
+        }
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
@@ -658,7 +702,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     }
 }
 
-float OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x)
+float OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x) const
 {
     if(x2 == x1)
         return y1;
@@ -669,7 +713,7 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     const Context& context,
     const PointF& vertex,
     const PointF& vertexTo,
-    PointF& res)
+    PointF& res) const
 {
     const auto xShiftForSpacing = context.pixelArea.width() / 4;
     const auto yShiftForSpacing = context.pixelArea.height() / 4;
@@ -701,7 +745,7 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     }
 }
 
-void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const PointI& point31, PointF& vertex)
+void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const
 {
     vertex.x = static_cast<float>(point31.x - context.area31.left()) / context.primitivisedObjects->scaleDivisor31ToPixel.x;
     vertex.y = static_cast<float>(point31.y - context.area31.top()) / context.primitivisedObjects->scaleDivisor31ToPixel.y;

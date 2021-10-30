@@ -118,10 +118,10 @@ namespace OsmAnd
             const Context& context,
             const QVector<PointI>& points31,
             SkPath& path,
-            float offset);
-        inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex);
-        inline float lineEquation(float x1, float y1, float x2, float y2, float x);
-        inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&);
+            float offset) const;
+        inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const;
+        inline float lineEquation(float x1, float y1, float x2, float y2, float x) const;
+        inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&) const;
         static bool containsHelper(const QVector< PointI >& points, const PointI& otherPoint);
 
         void initialize();
