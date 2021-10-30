@@ -889,6 +889,38 @@ namespace OsmAnd
         static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
+        template<typename T>
+        inline static T computeDirection(
+            const T& start,
+            const T& end
+        )
+        {
+            auto length = std::sqrt((end.x - start.x)*(end.x - start.x) + (end.y - start.y)*(end.y - start.y));
+            return (end - start)/length;
+        }
+
+        template<typename T>
+        inline static T computeNormalToLine(
+            const T& start,
+            const T& end,
+            int dir
+        )
+        {
+            auto normal = computeDirection<T>(start, end);
+            T res;
+            if (0 > dir)
+            {
+                res.x = -normal.y;
+                res.y = normal.x;
+            }
+            else
+            {
+                res.x = normal.y;
+                res.y = -normal.x;
+            }
+            return res;
+        }
+
     private:
         Utilities();
         ~Utilities();
