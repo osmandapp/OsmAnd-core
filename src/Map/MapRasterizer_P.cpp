@@ -583,7 +583,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
                 canvas.drawPath(path, paint);
         }
 
-        canvas.drawPath(path, paint);
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
         {
