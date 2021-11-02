@@ -367,7 +367,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         }
 
         // </trk>
-        // TODO: write file extensions (show start/finish, width etc.)
         xmlWriter.writeEndElement();
     }
 
@@ -526,6 +525,9 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         // </rte>
         xmlWriter.writeEndElement();
     }
+    // Write gpx extensions
+    if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(extraData.shared_ptr()))
+        writeExtensions(extensions, xmlWriter);
 
     // </gpx>
     xmlWriter.writeEndElement();
