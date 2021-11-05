@@ -44,6 +44,9 @@ namespace OsmAnd
         virtual QString getTime() const = 0;
         virtual void setTime(const QString& newTime) = 0;
         
+        virtual QString getCreationTime() const = 0;
+        virtual void setCreationTime(const QString& newTime) = 0;
+        
         virtual bool getCalendarEvent() const = 0;
         virtual void setCalendarEvent(const bool calendarEvent) = 0;
 

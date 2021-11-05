@@ -8,6 +8,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 	const PointI position31_,
     const QString& elevation_,
     const QString& time_,
+    const QString& creationTime_,
 	const QString& title_,
     const QString& description_,
     const QString& address_,
@@ -22,6 +23,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
     setElevation(elevation_);
     setTime(time_);
+    setCreationTime(creationTime_);
 	setTitle(title_);
     setDescription(description_);
     setAddress(address_);
@@ -37,6 +39,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const LatLon latLon_,
     const QString& elevation_,
     const QString& time_,
+    const QString& creationTime_,
     const QString& title_,
     const QString& description_,
     const QString& address_,
@@ -51,6 +54,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
     setElevation(elevation_);
     setTime(time_);
+    setCreationTime(creationTime_);
     setTitle(title_);
     setDescription(description_);
     setAddress(address_);
@@ -125,6 +129,16 @@ QString OsmAnd::FavoriteLocation::getTime() const
 void OsmAnd::FavoriteLocation::setTime(const QString& newTime)
 {
     _p->setTime(newTime);
+}
+
+QString OsmAnd::FavoriteLocation::getCreationTime() const
+{
+    return _p->getCreationTime();
+}
+
+void OsmAnd::FavoriteLocation::setCreationTime(const QString& newTime)
+{
+    _p->setCreationTime(newTime);
 }
 
 void OsmAnd::FavoriteLocation::setCalendarEvent(const bool calendarEvent)

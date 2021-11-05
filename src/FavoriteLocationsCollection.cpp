@@ -22,6 +22,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const PointI position31,
     const QString& elevation /*= QString::null*/,
     const QString& time /*= QString::null*/,
+    const QString& creationTime /*= QString::null*/,
     const QString& title /*= QString::null*/,
     const QString& description /*= QString::null*/,
     const QString& address /*= QString::null*/,
@@ -30,13 +31,14 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& background /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(position31, elevation, time, title, description, address, group, icon, background, color);
+    return _p->createFavoriteLocation(position31, elevation, time, creationTime, title, description, address, group, icon, background, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const LatLon latLon,
     const QString& elevation /*= QString::null*/,
     const QString& time /*= QString::null*/,
+    const QString& creationTime /*= QString::null*/,
     const QString& title /*= QString::null*/,
     const QString& description /*= QString::null*/,
     const QString& address /*= QString::null*/,
@@ -45,7 +47,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& background /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(latLon, elevation, time, title, description, address, group, icon, background, color);
+    return _p->createFavoriteLocation(latLon, elevation, time, creationTime, title, description, address, group, icon, background, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other)
@@ -56,6 +58,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
             other->getPosition31(),
             other->getElevation(),
             other->getTime(),
+            other->getCreationTime(),
             other->getTitle(),
             other->getDescription(),
             other->getAddress(),
@@ -70,6 +73,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
             other->getLatLon(),
             other->getElevation(),
             other->getTime(),
+            other->getCreationTime(),
             other->getTitle(),
             other->getDescription(),
             other->getAddress(),
