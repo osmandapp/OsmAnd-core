@@ -35,6 +35,7 @@ namespace OsmAnd
         bool _isHidden;
         QString _elevation;
         QString _time;
+        QString _creationTime;
         QString _title;
         QString _description;
         QString _address;
@@ -59,6 +60,9 @@ namespace OsmAnd
         
         QString getTime() const;
         void setTime(const QString& newTitle);
+        
+        QString getCreationTime() const;
+        void setCreationTime(const QString& newTitle);
 
         QString getTitle() const;
         void setTitle(const QString& newTime);

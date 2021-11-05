@@ -31,6 +31,7 @@ namespace OsmAnd
             const PointI position31,
             const QString& elevation,
             const QString& time,
+            const QString& creationTime,
             const QString& title,
             const QString& description,
             const QString& address,
@@ -44,6 +45,7 @@ namespace OsmAnd
             const LatLon latLon,
             const QString& elevation,
             const QString& time,
+            const QString& creationTime,
             const QString& title,
             const QString& description,
             const QString& address,
@@ -76,6 +78,9 @@ namespace OsmAnd
         
         virtual QString getTime() const;
         virtual void setTime(const QString& newTime);
+        
+        virtual QString getCreationTime() const;
+        virtual void setCreationTime(const QString& newTime);
         
         virtual bool getCalendarEvent() const;
         virtual void setCalendarEvent(const bool calendarEvent);

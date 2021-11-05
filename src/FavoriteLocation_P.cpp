@@ -66,6 +66,23 @@ void OsmAnd::FavoriteLocation_P::setTime(const QString& newTime)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QString OsmAnd::FavoriteLocation_P::getCreationTime() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _creationTime;
+}
+
+void OsmAnd::FavoriteLocation_P::setCreationTime(const QString& newTime)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _creationTime = newTime;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
 bool OsmAnd::FavoriteLocation_P::getCalendarEvent() const
 {
     QReadLocker scopedLocker(&_lock);
