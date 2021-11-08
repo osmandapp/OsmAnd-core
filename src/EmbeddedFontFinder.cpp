@@ -15,7 +15,7 @@ OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
     : coreResourcesProvider(coreResourcesProvider_)
 {
-    for (const auto embeddedFontResource : constOf(resources))
+    for (const auto& embeddedFontResource : constOf(resources))
     {
         const auto fontData = coreResourcesProvider->getResource(embeddedFontResource);
         if (fontData.isNull())
@@ -54,7 +54,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
 
     SkTypeface* bestMatch = nullptr;
     auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
-    for (const auto font : constOf(_fonts))
+    for (const auto& font : constOf(_fonts))
     {
         paint.setTypeface(font);
 
@@ -75,7 +75,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
         // If there was previous best match, check if this match is better
         if (bestMatch && bestMatchDifference < difference)
             continue;
-        
+
         bestMatch = font;
         bestMatchDifference = difference;
 
@@ -109,8 +109,8 @@ const QStringList OsmAnd::EmbeddedFontFinder::resources = QStringList()
      << QLatin1String("map/fonts/10_NotoSans-Bold.ttf")
      << QLatin1String("map/fonts/15_NotoSans-Italic.ttf")
      << QLatin1String("map/fonts/20_NotoSans-BoldItalic.ttf")
-     << QLatin1String("map/fonts/25_NotoSansArabic-Regular.ttf")
-     << QLatin1String("map/fonts/30_NotoSansArabic-Bold.ttf")
+//     << QLatin1String("map/fonts/25_NotoSansArabic-Regular.ttf")
+//     << QLatin1String("map/fonts/30_NotoSansArabic-Bold.ttf")
      << QLatin1String("map/fonts/35_NotoSansSouthAsian-Regular.ttf")
      << QLatin1String("map/fonts/40_NotoSansSouthAsian-Bold.ttf")
      << QLatin1String("map/fonts/45_NotoSansSoutheastAsian-Regular.ttf")
