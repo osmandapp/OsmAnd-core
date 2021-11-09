@@ -44,6 +44,7 @@ namespace OsmAnd
 
         static std::shared_ptr<const CoreResourcesEmbeddedBundle> loadFromCurrentExecutable();
         static std::shared_ptr<const CoreResourcesEmbeddedBundle> loadFromLibrary(const QString& libraryNameOrFilename);
+        static std::shared_ptr<const CoreResourcesEmbeddedBundle> loadFromSharedResourcesBundle();
     };
 }
 
