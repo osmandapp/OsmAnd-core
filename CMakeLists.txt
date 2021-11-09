@@ -13,7 +13,7 @@ set(target_specific_dependencies "")
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
 	find_library(rt_LIBRARY rt)
-        find_library(z_LIBRARY z)
+	find_library(z_LIBRARY z)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${dl_LIBRARY}
 		${rt_LIBRARY}
@@ -29,10 +29,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
 	find_library(CFNetwork_LIBRARY CFNetwork)
 	find_library(Security_LIBRARY Security)
+	find_library(IOKit_LIBRARY IOKit)
 	find_library(z_LIBRARY z)
 	set(library_suffix_tbd ".tbd")
-	
-	message("LIBRARY SUFFIX ${library_suffix_tbd}")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
 		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
@@ -42,6 +41,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
 		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
 		"${Security_LIBRARY}/Security${library_suffix_tbd}"
+		"${IOKit_LIBRARY}/IOKit${library_suffix_tbd}"
 		${z_LIBRARY}
 		${objc_LIBRARY}
 	)
@@ -168,23 +168,22 @@ set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
 set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
 file(GLOB legacy_shared_sources
-    "${LEGACY_SRC}/openingHoursParser.h"
-    "${LEGACY_SRC}/openingHoursParser.cpp"
-    "${LEGACY_SRC}/proto/osmand_index.pb.h"
-    "${LEGACY_SRC}/proto/osmand_index.pb.cc"
-    "${LEGACY_SRC}/proto/OBF.pb.h"
-    "${LEGACY_SRC}/proto/OBF.pb.cc"
-    "${LEGACY_SRC}/proto/vector_tile.pb.h"
-    "${LEGACY_SRC}/proto/vector_tile.pb.cc"
-
+	"${LEGACY_SRC}/openingHoursParser.h"
+	"${LEGACY_SRC}/openingHoursParser.cpp"
+	"${LEGACY_SRC}/proto/osmand_index.pb.h"
+	"${LEGACY_SRC}/proto/osmand_index.pb.cc"
+	"${LEGACY_SRC}/proto/OBF.pb.h"
+	"${LEGACY_SRC}/proto/OBF.pb.cc"
+	"${LEGACY_SRC}/proto/vector_tile.pb.h"
+	"${LEGACY_SRC}/proto/vector_tile.pb.cc"
 )
 
 set(legacy_shared_dirs_public
-    "${CORE_LEGACY}/native/src"
+	"${CORE_LEGACY}/native/src"
 )
 
 set(target_legacy_shared_public_includes
-    ${legacy_shared_dirs_public}
+	${legacy_shared_dirs_public}
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
@@ -211,18 +210,17 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/transportRouteResult.h"
 		"${LEGACY_SRC}/transportRouteResultSegment.h"
 		"${LEGACY_SRC}/transportRouteSegment.h"
-        	"${LEGACY_SRC}/transportRouteResult.cpp"
-        	"${LEGACY_SRC}/transportRouteResultSegment.cpp"
-        	"${LEGACY_SRC}/transportRouteSegment.cpp"
-        	"${LEGACY_SRC}/transportRoutingConfiguration.cpp"
-        	"${LEGACY_SRC}/transportRoutingContext.cpp"
-        	"${LEGACY_SRC}/transportRoutingObjects.cpp"
-         "${LEGACY_SRC}/transportRouteStopsReader.h"
-         "${LEGACY_SRC}/transportRouteStopsReader.cpp"
-
-        "${LEGACY_SRC}/turnType.h"
-        "${LEGACY_SRC}/turnType.cpp"
-        "${LEGACY_SRC}/routeSegment.h"
+		"${LEGACY_SRC}/transportRouteResult.cpp"
+		"${LEGACY_SRC}/transportRouteResultSegment.cpp"
+		"${LEGACY_SRC}/transportRouteSegment.cpp"
+		"${LEGACY_SRC}/transportRoutingConfiguration.cpp"
+		"${LEGACY_SRC}/transportRoutingContext.cpp"
+		"${LEGACY_SRC}/transportRoutingObjects.cpp"
+		"${LEGACY_SRC}/transportRouteStopsReader.h"
+		"${LEGACY_SRC}/transportRouteStopsReader.cpp"
+		"${LEGACY_SRC}/turnType.h"
+		"${LEGACY_SRC}/turnType.cpp"
+		"${LEGACY_SRC}/routeSegment.h"
 		"${LEGACY_SRC}/routeCalculationProgress.h"
 		"${LEGACY_SRC}/routeResultPreparation.h"
 		"${LEGACY_SRC}/routeResultPreparation.cpp"
@@ -303,7 +301,7 @@ set(merged_sources
 	${sources_map}
 	${target_specific_sources}
 	${legacy_shared_sources}
-    	${legacy_sources}
+	${legacy_sources}
 )
 set(merged_dependencies
 	skia_static
@@ -338,7 +336,7 @@ set(merged_include_dirs_private
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	${target_specific_public_includes}
-    ${target_legacy_shared_public_includes}
+	${target_legacy_shared_public_includes}
 	${target_legacy_public_includes}
 )
 set(merged_link_libs_public
@@ -356,7 +354,7 @@ set(merged_link_libs_public
 if (OSMAND_OWN_SHIPPED_QT)
 	# When using embedded Qt, we need to use tools from either static or shared
 	# version of qt.
-	set ( Qt5Core_DIR "${OSMAND_OWN_SHIPPED_QT_STATIC}/lib/cmake/Qt5Core" )
+	set(Qt5Core_DIR "${OSMAND_OWN_SHIPPED_QT_STATIC}/lib/cmake/Qt5Core")
 	find_package(Qt5Core REQUIRED)
 else()
 	# If not using embedded QT, find packages it as usual

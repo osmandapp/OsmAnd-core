@@ -52,3 +52,15 @@ std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResources
         return nullptr;
     return bundle;
 }
+
+std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResourcesEmbeddedBundle::loadFromSharedResourcesBundle()
+{
+    const QLatin1String libraryName(
+#if defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_ios)
+        "libOsmAndCore_ResourcesBundle_shared.dylib"
+#else
+        "OsmAndCore_ResourcesBundle_shared"
+#endif
+    );
+    return loadFromLibrary(libraryName);
+}
