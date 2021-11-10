@@ -32,19 +32,18 @@ target_compile_definitions(glew_static
 		${target_specific_private_definitions}
 	PUBLIC
 		-DGLEW_STATIC
-		${OPENGL_DEFINITIONS}
+		${OpenGL_DEFINITIONS}
 		${target_specific_public_definitions}
 )
 target_include_directories(glew_static
 	PUBLIC
-		${OPENGL_INCLUDE_DIRS}
+		${OpenGL_INCLUDE_DIRS}
 		"upstream.patched/include"
 		${target_specific_public_includes}
 )
 target_link_libraries(glew_static
 	LINK_PUBLIC
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
+		${OpenGL_LIBRARIES}
 		${target_specific_public_libraries}
 )
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
