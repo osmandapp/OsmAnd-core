@@ -118,17 +118,16 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
-		${OPENGL_DEFINITIONS}
+		${OpenGL_DEFINITIONS}
 	)
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGL2PLUS_RENDERER_SUPPORTED
 	)
 	set(target_specific_public_includes ${target_specific_public_includes}
-		${OPENGL_INCLUDE_DIRS}
+		${OpenGL_INCLUDE_DIRS}
 	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
+		${OpenGL_LIBRARIES}
 		glew_static
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
@@ -262,10 +261,10 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_PROTOBUF}/src/"
 	)
 
-	set(target_legacy_public_includes 
+	set(target_legacy_public_includes
 		${legacy_dirs_public}
 	)
-	
+
 endif()
 
 file(GLOB includes
@@ -426,7 +425,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static
 		PRIVATE
-			-DOSMAND_CORE_INTERNAL		
+			-DOSMAND_CORE_INTERNAL
 			${merged_compile_definitions_private}
 		PUBLIC
 			-DOSMAND_CORE_STATIC
@@ -519,7 +518,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static_standalone
 		PRIVATE
-			-DOSMAND_CORE_INTERNAL		
+			-DOSMAND_CORE_INTERNAL
 			${merged_compile_definitions_private}
 		PUBLIC
 			-DOSMAND_CORE_STATIC
