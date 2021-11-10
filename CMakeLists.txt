@@ -117,20 +117,17 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
 	CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
-	set(target_specific_public_definitions ${target_specific_public_definitions}
-		${OpenGL_DEFINITIONS}
-	)
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGL2PLUS_RENDERER_SUPPORTED
 	)
-	set(target_specific_public_includes ${target_specific_public_includes}
-		${OpenGL_INCLUDE_DIRS}
-	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		${OpenGL_LIBRARIES}
+		OpenGL::GL
+		OpenGL::GLU
 		glew_static
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
+		OpenGL::GL
+		OpenGL::GLU
 		glew_static
 	)
 	file(GLOB sources_opengl2plus "src/Map/OpenGL/OpenGL2plus/*.c*")
