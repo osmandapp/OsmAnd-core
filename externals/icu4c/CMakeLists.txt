@@ -50,9 +50,3 @@ target_include_directories(icu4c_static
 		"upstream.patched/icu4c/source/common"
 		"upstream.patched/icu4c/source/i18n"
 )
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(icu4c_static
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

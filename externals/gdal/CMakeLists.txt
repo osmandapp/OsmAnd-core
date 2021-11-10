@@ -19,8 +19,8 @@ else()
 	include(CheckLibraryExists)
 	include(CheckTypeSize)
 	include(TestBigEndian)
-	include(CheckCSourceCompiles) 
-	include(CheckCXXSourceCompiles) 
+	include(CheckCSourceCompiles)
+	include(CheckCXXSourceCompiles)
 
 	unset(HAVE_PTHREAD_H)
 	unset(HAVE_PTHREAD_MUTEX_RECURSIVE)
@@ -181,13 +181,13 @@ else()
 	endif()
 	unset(VSI_LARGE_API_SUPPORTED)
 	set(VSI_NEED_LARGEFILE64_SOURCE ON)
-	
+
 	set(CMAKE_EXTRA_INCLUDE_FILES "sys/stat.h")
 	set(CMAKE_REQUIRED_DEFINITIONS
 		-D__USE_LARGEFILE64=1
 		-D_LARGEFILE_SOURCE=1
 		-D_LARGEFILE64_SOURCE=1)
-	
+
 	set(_STAT_IS_64 0)
 	check_function_exists("stat64" HAVE_STAT64)
 	check_function_exists("_stat64" HAVE__STAT64)
@@ -226,12 +226,12 @@ else()
 		set(VSI_STAT64_T "_stat")
         else()
                 set(VSI_STAT64_T "stat64")
-                set(_STAT_STRUCT_IS_64 1) 
+                set(_STAT_STRUCT_IS_64 1)
 	endif()
-	
+
 	unset(CMAKE_REQUIRED_DEFINITIONS)
 	unset(CMAKE_EXTRA_INCLUDE_FILES)
-	
+
 	if ((VSI_STAT64 AND NOT VSI_STAT64_T) OR (NOT VSI_STAT64 AND VSI_STAT64_T))
 		message(FATAL_ERROR "Undeterminted configuration of VSI_STAT64 (${VSI_STAT64}) and VSI_STAT64_T (${VSI_STAT64_T})")
 	endif()
@@ -254,7 +254,7 @@ else()
 			message(FATAL_ERROR "Inconsistent 32-bit vs 64-bit configuration of VSI_STAT64 (${VSI_STAT64}) and VSI_STAT64_T (${VSI_STAT64_T})")
 		endif()
 	endif()
-	
+
 	test_big_endian(WORDS_BIGENDIAN)
 	if (WORDS_BIGENDIAN)
 		set(HOST_FILLORDER "FILLORDER_MSB2LSB")
@@ -262,7 +262,7 @@ else()
 		set(HOST_FILLORDER "FILLORDER_LSB2MSB")
 	endif()
 	check_function_exists("getaddrinfo" HAVE_GETADDRINFO)
-	
+
 	restore(CMAKE_REQUIRED_FLAGS)
 
 	configure_file("cpl_config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/cpl_config.h")
@@ -309,7 +309,7 @@ endif ()
 add_library(gdal_static STATIC
 	"cpl_config.h"
 	${gdal_gcore_sources}
-	
+
 	${gdal_alg_sources}
 	"upstream.patched/alg/gdal_crs.c"
 	"upstream.patched/alg/gdalwarpkernel_opencl.c"
@@ -318,7 +318,7 @@ add_library(gdal_static STATIC
 	${gdal_ogr_frmts_mem_sources}
 	${gdal_frmts_sources}
 	${gdal_frmts_gtiff_sources}
-	
+
 	"upstream.patched/frmts/hfa/hfaband.cpp"
 	"upstream.patched/frmts/hfa/hfadataset.cpp"
 	"upstream.patched/frmts/hfa/hfadictionary.cpp"
@@ -409,8 +409,3 @@ target_link_libraries(gdal_static
 		z_static
 		${target_specific_public_libraries}
 )
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-	set_target_properties(gdal_static
-		PROPERTIES
-			XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

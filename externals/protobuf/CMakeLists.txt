@@ -16,7 +16,7 @@ else()
 		set(HASH_MAP_H "<hash_map>")
 		set(HASH_NAMESPACE "std")
 	endif ()
-	
+
 	check_include_file("unordered_map" _HAVE_UNORDERED_MAP)
 	if (_HAVE_UNORDERED_MAP)
 		set(HAVE_HASH_MAP ON)
@@ -24,7 +24,7 @@ else()
 		set(HASH_MAP_H "<unordered_map>")
 		set(HASH_NAMESPACE "std")
 	endif ()
-	
+
 	check_include_file("hash_set" _HAVE_HASH_SET)
 	if (_HAVE_HASH_SET)
 		set(HAVE_HASH_SET ON)
@@ -32,7 +32,7 @@ else()
 		set(HASH_SET_H "<hash_set>")
 		set(HASH_NAMESPACE "std")
 	endif ()
-	
+
 	check_include_file("unordered_set" _HAVE_UNORDERED_SET)
 	if (_HAVE_UNORDERED_SET)
 		set(HAVE_HASH_SET ON)
@@ -63,7 +63,7 @@ else()
 	set(HAVE_ZLIB ON)
 	unset(PTHREAD_CREATE_JOINABLE)
 	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
-	
+
 	restore(CMAKE_REQUIRED_FLAGS)
 
 	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
@@ -124,8 +124,3 @@ target_include_directories(protobuf_static
 		"upstream.patched/src"
 		"${CMAKE_CURRENT_BINARY_DIR}"
 )
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(protobuf_static
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

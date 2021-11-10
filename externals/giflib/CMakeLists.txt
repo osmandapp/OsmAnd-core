@@ -41,7 +41,7 @@ else()
 	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
 	unset(VERSION)
 	set(X_DISPLAY_MISSING ON)
-	
+
 	restore(CMAKE_REQUIRED_FLAGS)
 
 	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
@@ -84,9 +84,3 @@ target_include_directories(gif_static
 	PUBLIC
 		"upstream.patched/lib"
 )
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(gif_static
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

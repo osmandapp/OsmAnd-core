@@ -17,9 +17,3 @@ add_library(GeographicLib_STATIC
 set(GeographicLib_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/upstream.patched/include)
 
 target_include_directories(GeographicLib_STATIC PUBLIC ${GeographicLib_INCLUDE_DIR})
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(GeographicLib_STATIC
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

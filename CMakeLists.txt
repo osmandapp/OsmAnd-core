@@ -406,11 +406,6 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_shared
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -461,11 +456,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_static
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -542,9 +532,4 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${qtpcre_STATIC_LIBRARIES}
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_static_standalone
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()

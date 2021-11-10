@@ -48,9 +48,3 @@ target_include_directories(z_static
 	PUBLIC
 		"upstream.patched"
 )
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-	set_target_properties(z_static
-		PROPERTIES
-			XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

@@ -39,10 +39,10 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" AND NOT CMAKE_TARGET_CPU_ARCH_FA
 		"upstream.patched/src/opts/SkMorphology_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_SSE2.cpp"
-		
+
 		# SSSE3
 		"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
-		
+
 		# SSE4
 		# SkBlitRow_opts_SSE4_x64_asm.S
 		# SkBlitRow_opts_SSE4_asm.S
@@ -119,7 +119,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR CMAKE_TARGET_CPU_ARCH_FAMILY 
 		"upstream.patched/src/opts/SkTextureCompression_opts_arm.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_arm.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
-		
+
 		# NEON
 		"upstream.patched/src/opts/memset16_neon.S"
 		"upstream.patched/src/opts/memset32_neon.S"
@@ -161,7 +161,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR CMAKE_TARGET_CPU_ARCH_FAMILY 
 		set_source_files_properties(
 			# ARM
 			"upstream.patched/src/opts/memset.arm.S"
-			
+
 			# NEON
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/memset16_neon.S"
@@ -247,7 +247,7 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		${src_utils_win}
 		${src_gpu_gl_win}
 	)
-	
+
 	include(CheckTypeSize)
 	set(CMAKE_EXTRA_INCLUDE_FILES
 		"windows.h"
@@ -272,7 +272,7 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		)
 	endif()
 	unset(CMAKE_EXTRA_INCLUDE_FILES)
-	
+
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_WIN32
 		-DSK_FONTHOST_USES_FONTMGR
@@ -562,7 +562,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 	set_target_properties(skia_static
 		PROPERTIES
 			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=arm64] "${ios_iphoneos_arm64_exclude}"
-			XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+	)
 
 	set(ios_iphonesimulator_exclude_list
 		"${target_specific_sources__arm}"

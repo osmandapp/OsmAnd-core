@@ -37,9 +37,3 @@ target_include_directories(freetype2_static
 	PUBLIC
 		"upstream.patched/include"
 )
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-	set_target_properties(freetype2_static
-		PROPERTIES
-			XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()
