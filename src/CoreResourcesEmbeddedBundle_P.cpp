@@ -138,8 +138,11 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 
     // Find out what number of resources there is in the bundle
     const auto pGetResourcesCount = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol("__get____CoreResourcesEmbeddedBundle__ResourcesCount"));
-    if (pGetResourcesCount == nullptr)
+    if (pGetResourcesCount == nullptr) {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to load resources bundle: no resorces count");
         return false;
+    }
     const auto resourcesCount = *reinterpret_cast<const uint32_t*>(pGetResourcesCount());
 
     for (auto resourceIdx = 0u; resourceIdx < resourcesCount; resourceIdx++)
@@ -148,20 +151,29 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 
         const auto pGetResourceName = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceName_%1")).arg(resourceIdx).toLatin1()));
-        if (pGetResourceName == nullptr)
+        if (pGetResourceName == nullptr) {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed load resources bundle: resource #%d name not found", resourceIdx);
             return false;
+        }
         const auto resourceName = reinterpret_cast<const char*>(pGetResourceName());
 
         const auto pGetResourceSize = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceSize_%1")).arg(resourceIdx).toLatin1()));
-        if (pGetResourceSize == nullptr)
+        if (pGetResourceSize == nullptr) {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed load resources bundle: resource #%d size not found", resourceIdx);
             return false;
+        }
         resourceData.size = *reinterpret_cast<const size_t*>(pGetResourceSize());
 
         const auto pGetResourceData = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceData_%1")).arg(resourceIdx).toLatin1()));
-        if (pGetResourceData == nullptr)
+        if (pGetResourceData == nullptr) {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed load resources bundle: resource #%d data not found", resourceIdx);
             return false;
+        }
         resourceData.data = reinterpret_cast<const uint8_t*>(pGetResourceData());
 
         // Process resource name
