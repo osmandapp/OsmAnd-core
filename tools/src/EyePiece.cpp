@@ -1043,62 +1043,62 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Save bitmap to image (if required)
-    if (!configuration.outputImageFilename.isEmpty())
-    {
-        if (configuration.verbose)
-            output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
+    // if (!configuration.outputImageFilename.isEmpty())
+    // {
+    //     if (configuration.verbose)
+    //         output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
 
-        std::unique_ptr<SkImageEncoder> imageEncoder;
-        switch (configuration.outputImageFormat)
-        {
-            case ImageFormat::PNG:
-                imageEncoder.reset(CreatePNGImageEncoder());
-                break;
+    //     std::unique_ptr<SkImageEncoder> imageEncoder;
+    //     switch (configuration.outputImageFormat)
+    //     {
+    //         case ImageFormat::PNG:
+    //             imageEncoder.reset(CreatePNGImageEncoder());
+    //             break;
 
-            case ImageFormat::JPEG:
-                imageEncoder.reset(CreateJPEGImageEncoder());
-                break;
-        }
+    //         case ImageFormat::JPEG:
+    //             imageEncoder.reset(CreateJPEGImageEncoder());
+    //             break;
+    //     }
 
-        const auto imageData = imageEncoder->encodeData(filledOutputBitmap, 100);
-        if (!imageData)
-        {
-            output << xT("Failed to encode image") << std::endl;
-            success = false;
-        }
-        else
-        {
-            QFile imageFile(configuration.outputImageFilename);
+    //     const auto imageData = imageEncoder->encodeData(filledOutputBitmap, 100);
+    //     if (!imageData)
+    //     {
+    //         output << xT("Failed to encode image") << std::endl;
+    //         success = false;
+    //     }
+    //     else
+    //     {
+    //         QFile imageFile(configuration.outputImageFilename);
 
-            // Just in case try to create entire path
-            auto containingDirectory = QFileInfo(imageFile).absoluteDir();
-            containingDirectory.mkpath(QLatin1String("."));
-            if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
-            {
-                output << xT("'") << QStringToStlString(containingDirectory.absolutePath()) << xT("' is not writable") << std::endl;
-                success = false;
-            }
-            else
-            {
-                if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-                {
-                    output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                    success = false;
-                }
-                else
-                {
-                    if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
-                    {
-                        output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                        success = false;
-                    }
-                    imageFile.close();
-                }
-            }
+    //         // Just in case try to create entire path
+    //         auto containingDirectory = QFileInfo(imageFile).absoluteDir();
+    //         containingDirectory.mkpath(QLatin1String("."));
+    //         if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
+    //         {
+    //             output << xT("'") << QStringToStlString(containingDirectory.absolutePath()) << xT("' is not writable") << std::endl;
+    //             success = false;
+    //         }
+    //         else
+    //         {
+    //             if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    //             {
+    //                 output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+    //                 success = false;
+    //             }
+    //             else
+    //             {
+    //                 if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
+    //                 {
+    //                     output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+    //                     success = false;
+    //                 }
+    //                 imageFile.close();
+    //             }
+    //         }
 
-            imageData->unref();
-        }
-    }
+    //         imageData->unref();
+    //     }
+    // }
 
     if (configuration.verbose)
         output << xT("Going to release OpenGL context...") << std::endl;

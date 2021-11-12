@@ -21,7 +21,7 @@ namespace OsmAnd
     private:
     protected:
     public:
-        SystemFontFinder(const SkFontMgr* const fontManager = SkFontMgr::RefDefault().get());
+        SystemFontFinder(const SkFontMgr* const fontManager = SkFontMgr::RefDefaultRaw());
         virtual ~SystemFontFinder();
 
         const SkFontMgr* const fontManager;

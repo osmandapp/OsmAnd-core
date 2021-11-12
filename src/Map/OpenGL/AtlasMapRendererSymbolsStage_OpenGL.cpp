@@ -326,7 +326,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     if (fsId == 0)
     {
         glDeleteShader(vsId);
-        GL_CHECK_RESULT;
+        //GL_CHECK_RESULT;
+        OGL_CHECK();
 
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
@@ -877,7 +878,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     if (fsId == 0)
     {
         glDeleteShader(vsId);
-        GL_CHECK_RESULT;
+        //GL_CHECK_RESULT;
+        OGL_CHECK();
 
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
@@ -1174,7 +1176,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     if (fsId == 0)
     {
         glDeleteShader(vsId);
-        GL_CHECK_RESULT;
+        //GL_CHECK_RESULT;
+        OGL_CHECK();
 
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
@@ -1698,7 +1701,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     if (fsId == 0)
     {
         glDeleteShader(vsId);
-        GL_CHECK_RESULT;
+        //GL_CHECK_RESULT;
+        OGL_CHECK();
 
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");

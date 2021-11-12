@@ -9,7 +9,7 @@
 #include <QByteArray>
 #include <QFile>
 
-#include <SkBitmap.h>
+#include <SkImage.h>
 
 namespace OsmAnd
 {
@@ -99,7 +99,7 @@ namespace OsmAnd
             {
                 return nullptr;
             }
-            if (bitmap->getSize() < bufferSize)
+            if (bitmap->computeByteSize() < bufferSize)
                 return nullptr;
             memcpy(bitmap->getPixels(), pBuffer, bufferSize);
 

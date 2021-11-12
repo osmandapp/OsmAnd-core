@@ -83,6 +83,34 @@
 #   define GL_POP_GROUP_MARKER
 #endif
 
+//##############################################################################
+#define  TT_LOGI(...) do{printf(__VA_ARGS__);printf("\n");}while(0)
+#define  TT_LOGE(...) do{printf(__VA_ARGS__);printf("\n");}while(0)
+inline bool ogl_check(const char* pcFileLine) {
+    bool bResult = true;
+    GLenum eError;
+    if ((eError = glGetError()) != GL_NO_ERROR) {
+        switch (eError) {
+            case GL_INVALID_ENUM: TT_LOGE("%s : GL ERROR : %s", pcFileLine, "Invalid enum"); break;
+            case GL_INVALID_VALUE: TT_LOGE("%s : GL ERROR : %s", pcFileLine, "Invalid value"); break;
+            case GL_INVALID_OPERATION: TT_LOGE("%s : GL ERROR : %s", pcFileLine, "Invalid operation"); break;
+            case GL_OUT_OF_MEMORY: TT_LOGE("%s : GL ERROR : %s", pcFileLine, "Out of memory"); break;
+            default: TT_LOGE("%s : GL ERROR : 0x%X", pcFileLine, eError); break;
+        }
+        bResult = false;
+    }
+
+    return (bResult);
+}
+#ifndef _STRINGIZE
+#   define _STRINGIZE(x) #x
+#endif
+#ifndef STRINGIZE
+#   define STRINGIZE(x) _STRINGIZE(x)
+#endif
+
+#define OGL_CHECK() ogl_check(__FILE__ " : " STRINGIZE(__LINE__))
+//##############################################################################
 namespace OsmAnd
 {
     class RasterMapSymbol;

@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.21.2)
+
 project(OsmAndCore)
 
 # Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 156
