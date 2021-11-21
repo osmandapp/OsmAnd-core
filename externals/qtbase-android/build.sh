@@ -87,16 +87,16 @@ fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
 
 export ANDROID_NDK_PLATFORM=android-21
+
 # Prepare configuration
 QTBASE_CONFIGURATION=$(echo "
-	-release -opensource -confirm-license -c++std c++11 -sql-sqlite -qt-sqlite
-	-qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre -no-use-gold-linker -nomake tests
-	-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
-	-no-opengl -no-evdev 
-	-no-warnings-are-errors -v
+	-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
+	-qt-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
+	-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
+	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
+	-no-use-gold-linker
+	-v
 " | tr '\n' ' ')
-
-# -no-gcc-sysroot -qt-xcb
 
 # Function: makeFlavor(type)
 makeFlavor()
