@@ -71,7 +71,7 @@ makeStaticAndSharedFlavor()
 if [[ "$targetOS" == "linux" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
-		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-system-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
@@ -106,7 +106,7 @@ if [[ "$targetOS" == "linux" ]]; then
 elif [[ "$targetOS" == "macosx" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-debug-and-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
-		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-system-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
 		-v
@@ -131,7 +131,7 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 	# cygwin-g++ mkspec does not specify C++ standard to allow -c++std c++11 usage
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -no-accessibility -sql-sqlite -qt-sqlite
-		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-system-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
@@ -152,7 +152,7 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 elif [[ "$targetOS" == "windows" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
-		-system-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-system-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
 		-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
