@@ -50,3 +50,7 @@ target_include_directories(icu4c_static
 		"upstream.patched/icu4c/source/common"
 		"upstream.patched/icu4c/source/i18n"
 )
+set_property(TARGET icu4c_static
+	PROPERTY
+		CXX_STANDARD 11
+)
