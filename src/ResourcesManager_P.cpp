@@ -606,7 +606,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_VoicePack(
         }
         else
         {
-            timestamp = QFileInfo(voiceConfig).lastModified().toMSecsSinceEpoch();
+            timestamp = QFileInfo(voiceConfig).lastModified().toUTC().toMSecsSinceEpoch();
         }
 
         // Read special size file

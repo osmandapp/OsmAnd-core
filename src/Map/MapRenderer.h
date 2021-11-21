@@ -47,6 +47,7 @@ namespace OsmAnd
         enum {
             MaxMissingDataZoomShift = 5,
             MaxMissingDataUnderZoomShift = 2,
+            HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
         };
 
     private:
@@ -285,6 +286,10 @@ namespace OsmAnd
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const;
         virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const;
         virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const;
+
+        virtual int getMaxMissingDataZoomShift() const Q_DECL_OVERRIDE;
+        virtual int getMaxMissingDataUnderZoomShift() const Q_DECL_OVERRIDE;
+        virtual int getHeixelsPerTileSide() const Q_DECL_OVERRIDE;
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;

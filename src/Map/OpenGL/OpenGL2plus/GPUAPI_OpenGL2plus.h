@@ -40,19 +40,21 @@ namespace OsmAnd
         QStringList _gdebuggerGroupsStack;
         QMutex _gdebuggerGroupsStackMutex;
     protected:
-        virtual TextureFormat getTextureSizedFormat(const SkColorType skColorFormat) const;
-        virtual TextureFormat getTextureSizedFormat_float() const;
-        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
+        virtual TextureFormat getTextureFormat(const SkColorType colorType) const Q_DECL_OVERRIDE;
+        virtual TextureFormat getTextureFormat_float() const Q_DECL_OVERRIDE;
+        virtual bool isValidTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        virtual GLenum getBaseInteralTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
 
-        virtual SourceFormat getSourceFormat_float() const;
-        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const;
+        virtual SourceFormat getSourceFormat_float() const Q_DECL_OVERRIDE;
+        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const Q_DECL_OVERRIDE;
 
-        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
-        virtual void glPopGroupMarkerEXT_wrapper();
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) Q_DECL_OVERRIDE;
+        virtual void glPopGroupMarkerEXT_wrapper() Q_DECL_OVERRIDE;
 
-        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
-        virtual void glBindVertexArray_wrapper(GLuint array);
-        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) Q_DECL_OVERRIDE;
+        virtual void glBindVertexArray_wrapper(GLuint array) Q_DECL_OVERRIDE;
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) Q_DECL_OVERRIDE;
     public:
         GPUAPI_OpenGL2plus();
         virtual ~GPUAPI_OpenGL2plus();

@@ -56,15 +56,15 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_since_epoch).count();
         _storedIndex->set_datecreated(millis);
     }
-    
+
     const auto& fileInfo = QFileInfo(file->filePath);
     auto obfInfo = file->obfInfo;
-    
+
     auto fileIndex = _storedIndex->add_fileindex();
     auto d = obfInfo->creationTimestamp;
     if (d == 0)
     {
-        auto lastModified = fileInfo.lastModified().toMSecsSinceEpoch();
+        auto lastModified = fileInfo.lastModified().toUTC().toMSecsSinceEpoch();
         fileIndex->set_datemodified(lastModified);
     }
     else
@@ -80,7 +80,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         map->set_size(index->length);
         map->set_offset(index->offset);
         map->set_name(index->name.toStdString());
-        
+
         for (auto& mr : index->levels)
         {
             auto lev = map->add_levels();
@@ -94,7 +94,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
             lev->set_maxzoom(mr->maxZoom);
         }
     }
-    
+
     for (auto& index : obfInfo->addressSections)
     {
         auto addr = fileIndex->add_addressindex();
@@ -115,7 +115,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         for (const auto& s : index->attributeTagsTable)
             addr->add_additionaltags(s.toStdString());
     }
-    
+
     for (auto index : obfInfo->poiSections)
     {
         auto poi = fileIndex->add_poiindex();
@@ -127,7 +127,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         poi->set_top(index->area31.top());
         poi->set_bottom(index->area31.bottom());
     }
-    
+
     for (auto index : obfInfo->transportSections)
     {
         auto transport = fileIndex->add_transportindex();
@@ -145,7 +145,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
         transport->set_stringtablelength(index->stringTable->length);
         transport->set_stringtableoffset(index->stringTable->fileOffset);
     }
-    
+
     auto obfReader = std::make_shared<const ObfReader>(file);
     for (auto index : obfInfo->routingSections)
     {
@@ -170,7 +170,7 @@ void OsmAnd::CachedOsmandIndexes_P::addToCache(const std::shared_ptr<const ObfFi
 
         for (auto node : baseNodes)
             addRouteSubregion(routing, node, true);
-        
+
         for (auto node : detailedNodes)
             addRouteSubregion(routing, node, false);
     }
@@ -197,9 +197,9 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
     auto obfInfo = std::make_shared<ObfInfo>();
     obfInfo->version = found->version();
     obfInfo->creationTimestamp = found->datemodified();
-    
+
     Nullable<AreaI> globalBBox31;
-    
+
     for (int i = 0; i < found->mapindex_size(); i++)
     {
         auto index = found->mapindex(i);
@@ -207,21 +207,22 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
-        
+
         for (int m = 0; m < index.levels_size(); m++) {
-            auto mr = index.levels(m);
+            const auto& mr = index.levels(m);
             Ref<ObfMapSectionLevel> root(new ObfMapSectionLevel());
             root->length = (unsigned int) mr.size();
             root->offset = (unsigned int) mr.offset();
             root->area31 = AreaI(mr.top(), mr.left(), mr.bottom(), mr.right());
             root->minZoom = (ZoomLevel) mr.minzoom();
             root->maxZoom = (ZoomLevel) mr.maxzoom();
-            mi->levels.push_back(qMove(root));
-            
+
             if (globalBBox31.isSet())
                 globalBBox31->enlargeToInclude(root->area31);
             else
                 globalBBox31 = root->area31;
+
+            mi->levels.push_back(qMove(root));
         }
         mi->isBasemap = mi->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
         mi->isBasemapWithCoastlines = mi->name == QLatin1String("basemap");
@@ -230,7 +231,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
 
         obfInfo->mapSections.push_back(qMove(mi));
     }
-    
+
     for (int i = 0; i < found->poiindex_size(); i++)
     {
         auto index = found->poiindex(i);
@@ -246,7 +247,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         else
             globalBBox31 = mi->area31;
     }
-    
+
     for (int i = 0; i < found->transportindex_size(); i++)
     {
         auto index = found->transportindex(i);
@@ -264,13 +265,13 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         stringTable.length = index.stringtablelength();
         mi->_stringTable = stringTable;
         obfInfo->transportSections.push_back(qMove(mi));
-        
+
         if (globalBBox31.isSet())
             globalBBox31->enlargeToInclude(mi->_area31);
         else
             globalBBox31 = mi->_area31;
     }
-    
+
     for (int i = 0; i < found->routingindex_size(); i++)
     {
         auto index = found->routingindex(i);
@@ -278,7 +279,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->length = (unsigned int) index.size();
         mi->offset = (unsigned int) index.offset();
         mi->name = QString::fromStdString(index.name());
-        
+
         Nullable<AreaI> bbox31;
         for (int k = 0; k < index.subregions_size(); k++)
         {
@@ -303,7 +304,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
             AreaI empty;
             mi->area31 = empty;
         }
-        
+
         /*
         for(RoutingSubregion mr : index.getSubregionsList()) {
             RouteSubregion sub = new RouteSubregion(mi);
@@ -321,10 +322,10 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
             }
         }
         */
-        
+
         obfInfo->routingSections.push_back(qMove(mi));
     }
-    
+
     for (int i = 0; i < found->addressindex_size(); i++)
     {
         auto index = found->addressindex(i);
@@ -348,7 +349,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         }
         obfInfo->addressSections.push_back(qMove(mi));
     }
-    
+
     return obfInfo;
 }
 
@@ -404,9 +405,9 @@ void OsmAnd::CachedOsmandIndexes_P::readFromFile(const QString& filePath, int ve
     gpb::io::FileInputStream input(fileDescriptor);
     gpb::io::CodedInputStream cis(&input);
     cis.SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    
+
     Stopwatch totalStopwatch(true);
-    
+
     _storedIndex.reset(new OsmAnd::OBF::OsmAndStoredIndex());
     if (_storedIndex->MergeFromCodedStream(&cis))
     {
@@ -435,7 +436,7 @@ void OsmAnd::CachedOsmandIndexes_P::writeToFile(const QString& filePath)
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Cache file could not be written: %s", qPrintable(filePath));
             return;
         }
-        
+
         gpb::io::FileOutputStream output(fileDescriptor);
         if (!_storedIndex->SerializeToZeroCopyStream(&output))
             OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Cache file could not be serialized: %s", qPrintable(filePath));

@@ -267,7 +267,7 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
     {
         const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
 
-        for(const auto watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
+        for(const auto& watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
             _fileSystemWatcher->removePath(watchedSubdirectory);
         _fileSystemWatcher->removePath(directoryAsSourceOrigin->directory.canonicalPath());
     }

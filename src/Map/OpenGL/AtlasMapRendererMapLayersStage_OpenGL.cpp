@@ -1034,11 +1034,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
 
     // Complex tile patch, that consists of (heightPrimitivesPerSide*heightPrimitivesPerSide) number of
     // height clusters. Height cluster itself consists of 4 vertices and 6 indices (2 polygons)
-    const auto heightPrimitivesPerSide = (1u << MapRenderer::MaxMissingDataZoomShift);
-    const auto heixelsPerTileSide = heightPrimitivesPerSide + 1;
+    const auto heightPrimitivesPerSide = AtlasMapRenderer::HeixelsPerTileSide - 1;
     const GLfloat clusterSize =
         static_cast<GLfloat>(AtlasMapRenderer::TileSize3D) / static_cast<float>(heightPrimitivesPerSide);
-    verticesCount = heixelsPerTileSide * heixelsPerTileSide;
+    verticesCount = AtlasMapRenderer::HeixelsPerTileSide * AtlasMapRenderer::HeixelsPerTileSide;
     pVertices = new Vertex[verticesCount];
     indicesCount = (heightPrimitivesPerSide * heightPrimitivesPerSide) * 6;
     pIndices = new GLushort[indicesCount];
@@ -1047,9 +1046,9 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
 
     // Form vertices
     assert(verticesCount <= std::numeric_limits<GLushort>::max());
-    for (auto row = 0u, count = heixelsPerTileSide; row < count; row++)
+    for (int row = 0, count = AtlasMapRenderer::HeixelsPerTileSide; row < count; row++)
     {
-        for (auto col = 0u, count = heixelsPerTileSide; col < count; col++, pV++)
+        for (int col = 0, count = AtlasMapRenderer::HeixelsPerTileSide; col < count; col++, pV++)
         {
             pV->positionXZ[0] = static_cast<float>(col) * clusterSize;
             pV->positionXZ[1] = static_cast<float>(row) * clusterSize;
@@ -1060,14 +1059,14 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     }
 
     // Form indices
-    for (auto row = 0u; row < heightPrimitivesPerSide; row++)
+    for (int row = 0; row < heightPrimitivesPerSide; row++)
     {
-        for (auto col = 0u; col < heightPrimitivesPerSide; col++)
+        for (int col = 0; col < heightPrimitivesPerSide; col++)
         {
-            const auto p0 = (row + 1) * heixelsPerTileSide + col + 0;//BL
-            const auto p1 = (row + 0) * heixelsPerTileSide + col + 0;//TL
-            const auto p2 = (row + 0) * heixelsPerTileSide + col + 1;//TR
-            const auto p3 = (row + 1) * heixelsPerTileSide + col + 1;//BR
+            const auto p0 = (row + 1) * AtlasMapRenderer::HeixelsPerTileSide + col + 0;//BL
+            const auto p1 = (row + 0) * AtlasMapRenderer::HeixelsPerTileSide + col + 0;//TL
+            const auto p2 = (row + 0) * AtlasMapRenderer::HeixelsPerTileSide + col + 1;//TR
+            const auto p3 = (row + 1) * AtlasMapRenderer::HeixelsPerTileSide + col + 1;//BR
             assert(p0 <= verticesCount);
             assert(p1 <= verticesCount);
             assert(p2 <= verticesCount);
@@ -1283,8 +1282,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
 
         const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
-        assert(arrayBuffer->itemsCount ==
-            (1u << MapRenderer::MaxMissingDataZoomShift)*(1u << MapRenderer::MaxMissingDataZoomShift));
+        assert(arrayBuffer->itemsCount == AtlasMapRenderer::HeixelsPerTileSide * AtlasMapRenderer::HeixelsPerTileSide);
 
         if (!activeElevationVertexAttribArray.isValid())
         {

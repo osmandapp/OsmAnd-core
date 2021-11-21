@@ -42,6 +42,7 @@ namespace OsmAnd
         bool _isSupported_ARM_rgba8;
         bool _isSupported_EXT_texture;
         bool _isSupported_OES_texture_float;
+        bool _isSupported_OES_texture_half_float;
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
         QSet<GLenum> _supportedVertexShaderPrecisionFormats;
@@ -53,19 +54,21 @@ namespace OsmAnd
 
         bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType);
     protected:
-        virtual TextureFormat getTextureSizedFormat(const SkColorType skColorFormat) const;
-        virtual TextureFormat getTextureSizedFormat_float() const;
-        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
+        virtual TextureFormat getTextureFormat(const SkColorType colorType) const Q_DECL_OVERRIDE;
+        virtual TextureFormat getTextureFormat_float() const Q_DECL_OVERRIDE;
+        virtual bool isValidTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        virtual GLenum getBaseInteralTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
 
-        virtual SourceFormat getSourceFormat_float() const;
-        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const;
+        virtual SourceFormat getSourceFormat_float() const Q_DECL_OVERRIDE;
+        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const Q_DECL_OVERRIDE;
 
-        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
-        virtual void glPopGroupMarkerEXT_wrapper();
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) Q_DECL_OVERRIDE;
+        virtual void glPopGroupMarkerEXT_wrapper() Q_DECL_OVERRIDE;
 
-        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
-        virtual void glBindVertexArray_wrapper(GLuint array);
-        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) Q_DECL_OVERRIDE;
+        virtual void glBindVertexArray_wrapper(GLuint array) Q_DECL_OVERRIDE;
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) Q_DECL_OVERRIDE;
     public:
         GPUAPI_OpenGLES2();
         virtual ~GPUAPI_OpenGLES2();
@@ -81,6 +84,7 @@ namespace OsmAnd
         const bool& isSupported_ARM_rgba8;
         const bool& isSupported_EXT_texture;
         const bool& isSupported_OES_texture_float;
+        const bool& isSupported_OES_texture_half_float;
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;
 

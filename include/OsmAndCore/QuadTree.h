@@ -9,6 +9,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/QtCommon.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
 #include <OsmAndCore/restore_internal_warnings.h>
@@ -217,6 +218,7 @@ namespace OsmAnd
             OOBBT& asOOBB;
             BBoxType type;
         };
+        typedef std::pair<BBox, ELEMENT_TYPE> EntryT;
 
         typedef std::function<bool (const ELEMENT_TYPE& element, const BBox& bbox)> Acceptor;
     private:
@@ -247,8 +249,7 @@ namespace OsmAnd
 
             const AreaT area;
             std::array< Ref< Node >, 4 > subnodes;
-            typedef std::pair<BBox, ELEMENT_TYPE> EntryPair;
-            QList< EntryPair > entries;
+            QList< EntryT > entries;
 
             template<typename BBOX_TYPE>
             bool insert(const ELEMENT_TYPE& element, const BBOX_TYPE& bbox_, const uintmax_t allowedDepthRemaining)
@@ -275,7 +276,7 @@ namespace OsmAnd
                 // If depth limit is reached, add to this
                 if (allowedDepthRemaining == 0u)
                 {
-                    entries.push_back(qMove(EntryPair(BBox(bbox_), element)));
+                    entries.push_back(qMove(EntryT(BBox(bbox_), element)));
                     return;
                 }
 
@@ -297,7 +298,7 @@ namespace OsmAnd
                 }
 
                 // Otherwise, add to current node
-                entries.push_back(qMove(EntryPair(BBox(bbox_), element)));
+                entries.push_back(qMove(EntryT(BBox(bbox_), element)));
             }
 
             inline void insertNoCheck(const ELEMENT_TYPE& element, const BBox& bbox_, const uintmax_t allowedDepthRemaining)
@@ -314,6 +315,23 @@ namespace OsmAnd
                 {
                     if (!acceptor || acceptor(entry.second, entry.first))
                         outResults.push_back(entry.second);
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    subnodes[idx]->get(outResults, acceptor);
+                }
+            }
+
+            void get(QList<EntryT>& outResults, const Acceptor acceptor) const
+            {
+                for (const auto& entry : constOf(entries))
+                {
+                    if (!acceptor || acceptor(entry.second, entry.first))
+                        outResults.push_back(entry);
                 }
 
                 for (auto idx = 0u; idx < 4; idx++)
@@ -573,6 +591,18 @@ namespace OsmAnd
                 return removedCount;
             }
 
+            inline void clear()
+            {
+                entries.clear();
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    subnodes[idx] = nullptr;
+                }
+            }
+
             template<typename BBOX_TYPE>
             static bool contains(const BBOX_TYPE& which, const BBox& what)
             {
@@ -786,6 +816,11 @@ namespace OsmAnd
             _rootNode->get(outResults, acceptor);
         }
 
+        inline void get(QList<EntryT>& outResults, const Acceptor acceptor = nullptr) const
+        {
+            _rootNode->get(outResults, acceptor);
+        }
+
         inline void query(
             const OOBBT& bbox,
             QList<ELEMENT_TYPE>& outResults,
@@ -828,6 +863,11 @@ namespace OsmAnd
         inline unsigned int removeSlow(const Acceptor acceptor)
         {
             return _rootNode->removeAllSlow(acceptor);
+        }
+
+        inline void clear()
+        {
+            return _rootNode->clear();
         }
     };
 }

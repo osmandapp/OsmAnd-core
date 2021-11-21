@@ -118,6 +118,31 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL);
     public:
+
+        union TextureFormat
+        {
+            GPUAPI::TextureFormat value;
+            struct
+            {
+                uint16_t type;
+                uint16_t format;
+            };
+
+            static TextureFormat Make(GLenum type, GLenum format);
+        };
+
+        union SourceFormat
+        {
+            GPUAPI::SourceFormat value;
+            struct
+            {
+                uint16_t type;
+                uint16_t format;
+            };
+
+            static SourceFormat Make(GLenum type, GLenum format);
+        };
+
         template <typename T, typename Enable = void>
         struct glPresenseChecker
         {
@@ -245,6 +270,7 @@ namespace OsmAnd
         bool _isSupported_EXT_debug_marker;
         bool _isSupported_texture_storage;
         bool _isSupported_texture_float;
+        bool _isSupported_texture_half_float;
         bool _isSupported_texture_rg;
         bool _isSupported_vertex_array_object;
         GLint _maxVertexUniformVectors;
@@ -257,9 +283,10 @@ namespace OsmAnd
         virtual void glPopGroupMarkerEXT_wrapper() = 0;
 
         virtual TextureFormat getTextureFormat(const SkColorType colorType) const;
-        virtual TextureFormat getTextureSizedFormat(const SkColorType colorType) const = 0;
-        virtual TextureFormat getTextureSizedFormat_float() const = 0;
-        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const = 0;
+        virtual TextureFormat getTextureFormat_float() const;
+        virtual bool isValidTextureFormat(const TextureFormat textureFormat) const = 0;
+        virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const;
+        virtual GLenum getBaseInteralTextureFormat(const TextureFormat textureFormat) const;
 
         virtual SourceFormat getSourceFormat(const SkColorType colorType) const;
         virtual SourceFormat getSourceFormat_float() const = 0;
@@ -287,6 +314,7 @@ namespace OsmAnd
         const bool& isSupported_EXT_debug_marker;
         const bool& isSupported_texture_storage;
         const bool& isSupported_texture_float;
+        const bool& isSupported_texture_half_float;
         const bool& isSupported_texture_rg;
         const bool& isSupported_vertex_array_object;
         const GLint& maxVertexUniformVectors;

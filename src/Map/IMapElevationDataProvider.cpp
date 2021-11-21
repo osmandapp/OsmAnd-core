@@ -1,5 +1,6 @@
 #include "IMapElevationDataProvider.h"
 
+#include "MapRenderer.h"
 #include "MapDataProviderHelpers.h"
 
 OsmAnd::IMapElevationDataProvider::IMapElevationDataProvider()

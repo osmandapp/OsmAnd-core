@@ -28,15 +28,7 @@ namespace OsmAnd
     public:
         typedef const void* RefInGPU;
         typedef uint32_t TextureFormat;
-        union SourceFormat
-        {
-            uint32_t id;
-            struct
-            {
-                uint16_t format;
-                uint16_t type;
-            };
-        };
+        typedef uint32_t SourceFormat;
 
         class ResourceInGPU
         {

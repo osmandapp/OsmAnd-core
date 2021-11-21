@@ -25,6 +25,12 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(AtlasMapRenderer);
 
+    public:
+
+        enum {
+            TileSize3D = 100,
+        };
+
     private:
     protected:
         AtlasMapRenderer(
@@ -84,6 +90,8 @@ namespace OsmAnd
 
         virtual QVector<TileId> getVisibleTiles() const;
         virtual unsigned int getVisibleTilesCount() const;
+
+        virtual int getTileSize3D() const Q_DECL_OVERRIDE;
 
         // Symbols-related
         virtual QList<MapSymbolInformation> getSymbolsAt(const PointI& screenPoint) const;

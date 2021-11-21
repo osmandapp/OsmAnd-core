@@ -48,6 +48,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_texturesNPOT(false)
     , _isSupported_texture_storage(false)
     , _isSupported_texture_float(false)
+    , _isSupported_texture_half_float(false)
     , _isSupported_texture_rg(false)
     , _isSupported_vertex_array_object(false)
     , _maxVertexUniformVectors(-1)
@@ -67,6 +68,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
     , isSupported_texture_storage(_isSupported_texture_storage)
     , isSupported_texture_float(_isSupported_texture_float)
+    , isSupported_texture_half_float(_isSupported_texture_half_float)
     , isSupported_texture_rg(_isSupported_texture_rg)
     , isSupported_vertex_array_object(_isSupported_vertex_array_object)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
@@ -860,7 +862,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     uint32_t tileSize = 0;
     size_t dataRowLength = 0;
     const void* tileData = nullptr;
-    sk_sp<const SkImage> image = nullptr;
+    sk_sp<const SkImage> image;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
         image = rasterMapLayerData->image;
@@ -980,7 +982,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
 
     // Find proper atlas textures pool by format of texture and full size of tile (including padding)
     AtlasTypeId atlasTypeId;
-    atlasTypeId.format = textureFormat;
+    atlasTypeId.format = textureFormat.value;
     atlasTypeId.tileSize = tileSize;
     atlasTypeId.tilePadding = 0;
     const auto atlasTexturesPool = obtainAtlasTexturesPool(atlasTypeId);
@@ -1284,24 +1286,11 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
     {
         assert(isSupported_vertexShaderTextureLookup);
 
-        if (isSupported_texture_storage)
-        {
-            const auto floatTextureSizedFormat = getTextureSizedFormat_float();
-            if (isValidTextureSizedFormat(floatTextureSizedFormat))
-                return floatTextureSizedFormat;
-        }
-
-        // The only supported format
-        const GLenum format = GL_LUMINANCE;
-        const GLenum type = GL_UNSIGNED_BYTE;
-
-        assert((format >> 16) == 0);
-        assert((type >> 16) == 0);
-        return (static_cast<TextureFormat>(format) << 16) | type;
+        return getTextureFormat_float();
     }
 
     assert(false);
-    return static_cast<TextureFormat>(GL_INVALID_ENUM);
+    return TextureFormat::Make(GL_INVALID_ENUM, GL_INVALID_ENUM);
 }
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
@@ -1312,14 +1301,6 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const SkColorType colorType) const
 {
-    // If current device supports glTexStorage2D, lets use sized format
-    if (isSupported_texture_storage)
-    {
-        const auto textureSizedFormat = getTextureSizedFormat(colorType);
-        if (isValidTextureSizedFormat(textureSizedFormat))
-            return textureSizedFormat;
-    }
-
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
     GLenum format = GL_INVALID_ENUM;
     GLenum type = GL_INVALID_ENUM;
@@ -1342,14 +1323,39 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
 
         default:
             assert(false);
-            return static_cast<TextureFormat>(GL_INVALID_ENUM);
     }
 
-    assert(format != GL_INVALID_ENUM);
-    assert(type != GL_INVALID_ENUM);
-    assert((format >> 16) == 0);
-    assert((type >> 16) == 0);
-    return (static_cast<TextureFormat>(format) << 16) | type;
+    return TextureFormat::Make(type, format);
+}
+
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat_float() const
+{
+    GLenum format = GL_LUMINANCE;
+    GLenum type = GL_UNSIGNED_BYTE;
+
+    return TextureFormat::Make(type, format);
+}
+
+size_t OsmAnd::GPUAPI_OpenGL::getTextureFormatPixelSize(const TextureFormat textureFormat) const
+{
+    GLenum format = static_cast<GLenum>(textureFormat.format);
+    GLenum type = static_cast<GLenum>(textureFormat.type);
+    if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+        return 4;
+    else if (format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
+        return 2;
+    else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
+        return 2;
+    else if (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
+        return 1;
+
+    assert(false);
+    return 0;
+}
+
+GLenum OsmAnd::GPUAPI_OpenGL::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
+{
+    return static_cast<GLenum>(textureFormat.format);
 }
 
 OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
@@ -1364,10 +1370,7 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
         return getSourceFormat_float();
     }
 
-    SourceFormat sourceFormat;
-    sourceFormat.format = GL_INVALID_ENUM;
-    sourceFormat.type = GL_INVALID_ENUM;
-    return sourceFormat;
+    return SourceFormat::Make(GL_INVALID_ENUM, GL_INVALID_ENUM);
 }
 
 OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
@@ -1378,27 +1381,29 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
 
 OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const SkColorType colorType) const
 {
-    SourceFormat sourceFormat;
-    sourceFormat.format = GL_INVALID_ENUM;
-    sourceFormat.type = GL_INVALID_ENUM;
+    GLenum format = GL_INVALID_ENUM;
+    GLenum type = GL_INVALID_ENUM;
 
     switch (colorType)
     {
         case SkColorType::kRGBA_8888_SkColorType:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_BYTE;
+            format = GL_RGBA;
+            type = GL_UNSIGNED_BYTE;
             break;
         case SkColorType::kARGB_4444_SkColorType:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+            format = GL_RGBA;
+            type = GL_UNSIGNED_SHORT_4_4_4_4;
             break;
         case SkColorType::kRGB_565_SkColorType:
-            sourceFormat.format = GL_RGB;
-            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+            format = GL_RGB;
+            type = GL_UNSIGNED_SHORT_5_6_5;
             break;
+
+        default:
+            assert(false);
     }
 
-    return sourceFormat;
+    return SourceFormat::Make(type, format);
 }
 
 void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
@@ -1406,23 +1411,14 @@ void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
     GLsizei levels,
     GLsizei width,
     GLsizei height,
-    const TextureFormat encodedFormat)
+    const TextureFormat textureFormat)
 {
-    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
-    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
-    GLsizei pixelSizeInBytes = 0;
-    if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
-        pixelSizeInBytes = 4;
-    else if (format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
-        pixelSizeInBytes = 2;
-    else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
-        pixelSizeInBytes = 2;
-    else if (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
-        pixelSizeInBytes = 1;
+    GLenum format = static_cast<GLenum>(textureFormat.format);
+    GLenum type = static_cast<GLenum>(textureFormat.type);
 
-    uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
+    uint8_t* dummyBuffer = new uint8_t[width * height * getTextureFormatPixelSize(textureFormat)];
 
-    glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
+    glTexImage2D(target, 0, format, width, height, 0, getBaseInteralTextureFormat(textureFormat), type, dummyBuffer);
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
@@ -1639,6 +1635,32 @@ void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao, const bool gpuContextLo
     assert(_vaoSimulationObjects.contains(vao));
 
     _vaoSimulationObjects.remove(vao);
+}
+
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::TextureFormat::Make(GLenum type, GLenum format)
+{
+    TextureFormat textureFormat;
+
+    assert((type >> 16) == 0);
+    textureFormat.type = type;
+
+    assert((format >> 16) == 0);
+    textureFormat.format = format;
+
+    return textureFormat;
+}
+
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::SourceFormat::Make(GLenum type, GLenum format)
+{
+    SourceFormat sourceFormat;
+
+    assert((type >> 16) == 0);
+    sourceFormat.type = type;
+
+    assert((format >> 16) == 0);
+    sourceFormat.format = format;
+
+    return sourceFormat;
 }
 
 OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(

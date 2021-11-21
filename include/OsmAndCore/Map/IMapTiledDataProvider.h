@@ -58,7 +58,7 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom() const = 0;
-        
+
         virtual ZoomLevel getMinVisibleZoom() const;
         virtual ZoomLevel getMaxVisibleZoom() const;
 

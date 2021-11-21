@@ -1,23 +1,22 @@
 #include "MvtReader.h"
 #include "MvtReader_P.h"
+
 #include "QtCommon.h"
-
-#include "Logging.h"
-
+#include "QtExtensions.h"
 #include <QString>
 #include <QFile>
-#include <QFileDeviceInputStream.h>
-#include <QIODeviceInputStream.h>
 #include <QTextStream>
 #include <QIODevice>
-#include <OsmAndCore/Utilities.h>
 #include <QStandardPaths>
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
+
+#include "QFileDeviceInputStream.h"
+#include "QIODeviceInputStream.h"
+#include "Utilities.h"
 #include "Logging.h"
-#include "QtExtensions.h"
 
 #define MIN_LINE_STRING_LEN 6
 
