@@ -9,9 +9,8 @@
 #include <SkStream.h>
 #include <SkBitmap.h>
 #include <SkCanvas.h>
-#include <SkBitmapDevice.h>
-#include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
+#include <SkFont.h>
 #include "restore_internal_warnings.h"
 
 #include "MapDataProviderHelpers.h"
@@ -68,8 +67,7 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
             owner->tileSize);
         return false;
     }
-    SkBitmapDevice target(*bitmap);
-    SkCanvas canvas(&target);
+    SkCanvas canvas(*bitmap);
     canvas.clear(SK_ColorDKGRAY);
 
     QString text;
@@ -97,17 +95,19 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
 
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
-    textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    textPaint.setTextSize(fontSize);
     textPaint.setColor(SK_ColorGREEN);
+
+    SkFont textFont;
+    textFont.setSize(fontSize);
 
     auto topOffset = fontSize;
     const auto lines = text.split(QLatin1Char('\n'), QString::SkipEmptyParts);
     for (const auto& line : lines)
     {
-        canvas.drawText(
-            line.constData(), line.length()*sizeof(QChar),
+        canvas.drawSimpleText(
+            line.constData(), line.length()*sizeof(QChar), SkTextEncoding::kUTF16,
             5, topOffset,
+            textFont,
             textPaint);
         topOffset += 1.15f * fontSize;
     }

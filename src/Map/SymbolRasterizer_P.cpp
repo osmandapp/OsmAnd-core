@@ -5,10 +5,8 @@
 #include <QReadWriteLock>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
-#include <SkError.h>
-#include <SkBitmapDevice.h>
+#include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
 #include "MapPresentationEnvironment.h"

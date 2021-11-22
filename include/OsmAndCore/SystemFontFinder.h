@@ -21,12 +21,12 @@ namespace OsmAnd
     private:
     protected:
     public:
-        SystemFontFinder(const SkFontMgr* const fontManager = SkFontMgr::RefDefault());
+        SystemFontFinder(const sk_sp<SkFontMgr> fontManager = SkFontMgr::RefDefault());
         virtual ~SystemFontFinder();
 
-        const SkFontMgr* const fontManager;
+        const sk_sp<SkFontMgr> fontManager;
 
-        virtual SkTypeface* findFontForCharacterUCS4(
+        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
     };

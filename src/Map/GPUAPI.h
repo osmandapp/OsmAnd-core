@@ -286,12 +286,8 @@ namespace OsmAnd
             AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator);
 
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) = 0;
-
-        bool _isSupported_8bitPaletteRGBA8;
     public:
         virtual ~GPUAPI();
-
-        const bool& isSupported_8bitPaletteRGBA8;
 
         virtual bool initialize() = 0;
         virtual bool release(const bool gpuContextLost) = 0;

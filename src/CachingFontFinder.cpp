@@ -9,13 +9,9 @@ OsmAnd::CachingFontFinder::CachingFontFinder(const std::shared_ptr<const IFontFi
 
 OsmAnd::CachingFontFinder::~CachingFontFinder()
 {
-    QMutexLocker scopedLocker(&_lock);
-
-    for (const auto& font : constOf(_cache))
-        font->unref();
 }
 
-SkTypeface* OsmAnd::CachingFontFinder::findFontForCharacterUCS4(
+sk_sp<SkTypeface> OsmAnd::CachingFontFinder::findFontForCharacterUCS4(
     const uint32_t character,
     const SkFontStyle style /*= SkFontStyle()*/) const
 {

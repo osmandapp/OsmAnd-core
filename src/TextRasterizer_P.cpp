@@ -2,9 +2,11 @@
 #include "TextRasterizer.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBitmapDevice.h>
+#include <SkBitmap.h>
+#include <SkImage.h>
 #include <SkTypeface.h>
 #include <SkUtils.h>
+#include <SkFontMetrics.h>
 #include "restore_internal_warnings.h"
 
 #include "ICU.h"
@@ -24,8 +26,6 @@ OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
 {
     _defaultPaint.setAntiAlias(true);
-    _defaultPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 }
 
 OsmAnd::TextRasterizer_P::~TextRasterizer_P()
@@ -38,8 +38,11 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 {
     // Prepare default paint
     SkPaint paint = _defaultPaint;
-    paint.setTextSize(style.size);
     paint.setColor(style.color.toSkColor());
+
+    // Prepare default font
+    SkFont font = _defaultFont;
+    font.setSize(style.size);
 
     // Transform text style to font style
     const SkFontStyle fontStyle(
@@ -66,35 +69,32 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
             
-            // First of all check previous font if it contains this character
-            auto font = pTextPaint ? pTextPaint->paint.getTypeface() : nullptr;
-            if (font)
+            // First of all check previous typeface if it contains this character
+            auto typeface = pTextPaint ? pTextPaint->font.refTypeface() : nullptr;
+            if (typeface)
             {
-                SkPaint paint;
-                paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
-                paint.setTypeface(font);
-                if (!paint.containsText(&characterUCS4, sizeof(uint32_t)))
-                    font = nullptr;
+                if (typeface->unicharToGlyph(characterUCS4))
+                    typeface = nullptr;
 #if OSMAND_LOG_CHARACTERS_FONT
                 else
                 {
-                    SkString fontName;
-                    font->getFamilyName(&fontName);
+                    SkString typefaceName;
+                    typeface->getFamilyName(&fontName);
 
                     LogPrintf(LogSeverityLevel::Warning,
                         "UCS4 character 0x%08x (%u) has been found in '%s' font (reused)",
                         characterUCS4,
                         characterUCS4,
-                        fontName.c_str());
+                        typefaceName.c_str());
                 }
 #endif // OSMAND_LOG_CHARACTERS_FONT
             }
-            if (!font)
+            if (!typeface)
             {
-                font = owner->fontFinder->findFontForCharacterUCS4(characterUCS4, fontStyle);
+                typeface = owner->fontFinder->findFontForCharacterUCS4(characterUCS4, fontStyle);
 
 #if OSMAND_LOG_CHARACTERS_WITHOUT_FONT
-                if (!font)
+                if (!typeface)
                 {
                     LogPrintf(LogSeverityLevel::Warning,
                         "UCS4 character 0x%08x (%u) has not been found in any font",
@@ -104,31 +104,32 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 #endif // OSMAND_LOG_CHARACTERS_WITHOUT_FONT
 
 #if OSMAND_LOG_CHARACTERS_FONT
-                if (font)
+                if (typeface)
                 {
-                    SkString fontName;
-                    font->getFamilyName(&fontName);
+                    SkString typefaceName;
+                    typeface->getFamilyName(&typefaceName);
 
                     LogPrintf(LogSeverityLevel::Warning,
                         "UCS4 character 0x%08x (%u) has been found in '%s' font",
                         characterUCS4,
                         characterUCS4,
-                        fontName.c_str());
+                        typefaceName.c_str());
                 }
 #endif // OSMAND_LOG_CHARACTERS_FONT
             }
 
-            if (pTextPaint == nullptr || pTextPaint->paint.getTypeface() != font)
+            if (pTextPaint == nullptr || pTextPaint->font.refTypeface() != typeface)
             {
                 linePaint.textPaints.push_back(qMove(TextPaint()));
                 pTextPaint = &linePaint.textPaints.last();
 
                 pTextPaint->text = QStringRef(lineRef.string(), position, 1);
                 pTextPaint->paint = paint;
-                pTextPaint->paint.setTypeface(font);
+                pTextPaint->font = font;
+                pTextPaint->font.setTypeface(typeface);
 
-                SkPaint::FontMetrics metrics;
-                pTextPaint->height = paint.getFontMetrics(&metrics) + 2.0f;
+                SkFontMetrics metrics;
+                pTextPaint->height = pTextPaint->font.getMetrics(&metrics) + 2.0f;
                 linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, pTextPaint->height);
                 linePaint.minFontHeight = qMin(linePaint.minFontHeight, pTextPaint->height);
                 linePaint.maxFontLineSpacing = qMax(linePaint.maxFontLineSpacing, metrics.fLeading);
@@ -139,8 +140,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
                 linePaint.fontAscent = metrics.fAscent;
 
-                if (style.bold && (!font || (font && font->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
-                    pTextPaint->paint.setFakeBoldText(true);
+                if (style.bold && (!typeface || (typeface && typeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
+                    pTextPaint->font.setEmbolden(true);
             }
             else
             {
@@ -166,9 +167,8 @@ void OsmAnd::TextRasterizer_P::measureText(QVector<LinePaint>& paints, SkScalar&
 
         for (auto& textPaint : linePaint.textPaints)
         {
-            textPaint.paint.measureText(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar),
+            textPaint.font.measureText(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 &textPaint.bounds);
 
             textPaint.width = textPaint.bounds.width();
@@ -188,15 +188,21 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
     {
         for (const auto& textPaint : constOf(linePaint.textPaints))
         {
-            const auto glyphsCount = textPaint.paint.countText(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar));
+            const auto glyphsCount = textPaint.font.countText(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
+            );
+
+            QVector<SkGlyphID> glyphs(glyphsCount);
+            textPaint.font.textToGlyphs(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
+                glyphs.data(), glyphsCount
+            );
+
             const auto previousSize = outGlyphWidths.size();
             outGlyphWidths.resize(previousSize + glyphsCount);
             const auto pWidth = outGlyphWidths.data() + previousSize;
-            textPaint.paint.getTextWidths(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar),
+            textPaint.font.getWidths(
+                glyphs.constData(), glyphsCount,
                 pWidth);
 
             *pWidth += -textPaint.bounds.left();
@@ -232,6 +238,13 @@ SkPaint OsmAnd::TextRasterizer_P::getHaloPaint(const SkPaint& paint, const Style
     return haloPaint;
 }
 
+SkFont OsmAnd::TextRasterizer_P::getHaloFont(const SkFont& font, const Style& style) const
+{
+    auto haloFont = font;
+
+    return haloFont;
+}
+
 void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint>& paints) const
 {
     for (auto& linePaint : paints)
@@ -241,7 +254,7 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
 
         for (auto& textPaint : linePaint.textPaints)
         {
-            const auto haloPaint = getHaloPaint(textPaint.paint, style);
+            const auto haloFont = getHaloFont(textPaint.font, style);
             /*
             SkPaint::FontMetrics metrics;
             textPaint.height = haloPaint.getFontMetrics(&metrics);
@@ -255,9 +268,8 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
             linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
             */
             SkRect haloBounds;
-            haloPaint.measureText(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar),
+            haloFont.measureText(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 &haloBounds);
             textPaint.bounds.join(haloBounds);
 
@@ -276,17 +288,23 @@ void OsmAnd::TextRasterizer_P::measureHaloGlyphs(
     {
         for (const auto& textPaint : constOf(linePaint.textPaints))
         {
-            const auto haloPaint = getHaloPaint(textPaint.paint, style);
+            const auto haloFont = getHaloFont(textPaint.font, style);
 
-            const auto glyphsCount = haloPaint.countText(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar));
+            const auto glyphsCount = haloFont.countText(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
+            );
+
+            QVector<SkGlyphID> glyphs(glyphsCount);
+            haloFont.textToGlyphs(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
+                glyphs.data(), glyphsCount
+            );
+
             const auto previousSize = outGlyphWidths.size();
             outGlyphWidths.resize(previousSize + glyphsCount);
             const auto pWidth = outGlyphWidths.data() + previousSize;
-            haloPaint.getTextWidths(
-                textPaint.text.constData(),
-                textPaint.text.length()*sizeof(QChar),
+            haloFont.getWidths(
+                glyphs.constData(), glyphsCount,
                 pWidth);
 
             *pWidth += -textPaint.bounds.left();
@@ -540,16 +558,15 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
         targetBitmap.eraseColor(SK_ColorTRANSPARENT);
     }
-    SkBitmapDevice target(targetBitmap);
-    SkCanvas canvas(&target);
+    SkCanvas canvas(targetBitmap);
 
     // If there is background this text, rasterize it also
     if (style.backgroundBitmap)
     {
-        canvas.drawBitmap(*style.backgroundBitmap,
+        canvas.drawImage(style.backgroundBitmap->asImage(),
             (bitmapWidth - style.backgroundBitmap->width()) / 2.0f,
-            (bitmapHeight - style.backgroundBitmap->height()) / 2.0f,
-            nullptr);
+            (bitmapHeight - style.backgroundBitmap->height()) / 2.0f
+        );
     }
 
     // Rasterize text halo first (if enabled)
@@ -560,11 +577,12 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             for (const auto& textPaint : linePaint.textPaints)
             {
                 const auto haloPaint = getHaloPaint(textPaint.paint, style);
+                const auto haloFont = getHaloFont(textPaint.font, style);
 
-                canvas.drawText(
-                    textPaint.text.constData(), textPaint.text.length()*sizeof(QChar),
+                canvas.drawSimpleText(
+                    textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                     textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                    haloPaint);
+                    haloFont, haloPaint);
             }
         }
     }
@@ -574,10 +592,10 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         for (const auto& textPaint : linePaint.textPaints)
         {
-            canvas.drawText(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar),
+            canvas.drawSimpleText(
+                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                textPaint.paint);
+                textPaint.font, textPaint.paint);
         }
     }
 
