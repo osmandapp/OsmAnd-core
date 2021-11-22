@@ -5,8 +5,6 @@
 #include "Logging.h"
 
 OsmAnd::GPUAPI::GPUAPI()
-    : _isSupported_8bitPaletteRGBA8(false)
-    , isSupported_8bitPaletteRGBA8(_isSupported_8bitPaletteRGBA8)
 {
 }
 

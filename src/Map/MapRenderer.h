@@ -134,7 +134,6 @@ namespace OsmAnd
         {
             ColorDepthForcing,
             TexturesFilteringMode,
-            PaletteTexturesUsage,
 
             __LAST
         };

@@ -6,8 +6,8 @@
 #include "QtCommon.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
-#include <SkStream.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "MapStyleEvaluator.h"
@@ -181,13 +181,27 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& nam
 
         // Get data from embedded resources
         const auto data = obtainResourceByName(shaderBitmapPath);
+        const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+        if (!skData)
+        {
+            return false;
+        }
 
         // Decode bitmap for a shader
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto skImage = SkImage::MakeFromEncoded(skData);
+        if (!skImage)
+        {
             return false;
-        itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
+        }
+
+        // TODO: replace SkBitmap with SkImage
+	const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (!skImage->asLegacyBitmap(bitmap.get())) 
+        {
+            return false;
+        }
+
+	itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
     }
 
     // Create shader from that bitmap
@@ -206,12 +220,25 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, st
 
         // Get data from embedded resources
         auto data = obtainResourceByName(bitmapPath);
-
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+        if (!skData)
+        {
             return false;
+        }
+
+        // Decode bitmap for a shader
+        const auto skImage = SkImage::MakeFromEncoded(skData);
+	if (!skImage)
+        {
+            return false;
+        }
+
+        // TODO: replace SkBitmap with SkImage
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (!skImage->asLegacyBitmap(bitmap.get()))   
+        {
+            return false;
+        }
 
         itIcon = _mapIcons.insert(name, bitmap);
     }
@@ -231,12 +258,25 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name,
 
         // Get data from embedded resources
         auto data = obtainResourceByName(bitmapPath);
-
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+        if (!skData)
+        {
             return false;
+        }
+
+        // Decode bitmap for a shader
+        const auto skImage = SkImage::MakeFromEncoded(skData);
+	if (!skImage)
+        {
+            return false;
+        }
+
+        // TODO: replace SkBitmap with SkImage
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (!skImage->asLegacyBitmap(bitmap.get()))   
+        {
+            return false;
+        }
 
         itTextShield = _textShields.insert(name, bitmap);
     }
@@ -256,12 +296,25 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
 
         // Get data from embedded resources
         auto data = obtainResourceByName(bitmapPath);
-
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+        if (!skData)
+        {
             return false;
+        }
+
+        // Decode bitmap for a shader
+        const auto skImage = SkImage::MakeFromEncoded(skData);
+	if (!skImage)
+        {
+            return false;
+        }
+
+        // TODO: replace SkBitmap with SkImage
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (!skImage->asLegacyBitmap(bitmap.get()))   
+        {
+            return false;
+        }
 
         itIconShield = _iconShields.insert(name, bitmap);
     }

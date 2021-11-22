@@ -16,6 +16,7 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkMath.h>
+#include <SkMathPriv.h>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"

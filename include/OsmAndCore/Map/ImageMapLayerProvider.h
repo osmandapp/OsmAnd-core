@@ -41,7 +41,7 @@ namespace OsmAnd
             const std::shared_ptr<const ImageMapLayerProvider::Request> request;
             const IMapDataProvider::ObtainDataAsyncCallback callback;
 
-            void submit(const bool requestSucceeded, const QByteArray& image) const;
+            void submit(const bool requestSucceeded, const QByteArray& data) const;
 
         friend class OsmAnd::ImageMapLayerProvider;
         };
@@ -59,7 +59,7 @@ namespace OsmAnd
         void setLastRequestedZoom(const ZoomLevel zoomLevel);
     protected:
         ImageMapLayerProvider();
-        const std::shared_ptr<const SkBitmap> decodeBitmap(const QByteArray& image);
+        const std::shared_ptr<const SkBitmap> decodeBitmap(const QByteArray& data);
     public:
         virtual ~ImageMapLayerProvider();
 

@@ -5,7 +5,7 @@
 #include "QtCommon.h"
 
 #include <SkTypeface.h>
-#include <SkPaint.h>
+#include <SkFont.h>
 
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
@@ -41,25 +41,18 @@ OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
 
 OsmAnd::EmbeddedFontFinder::~EmbeddedFontFinder()
 {
-    for (const auto& font : constOf(_fonts))
-        font->unref();
 }
 
-SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
+sk_sp<SkTypeface> OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
     const uint32_t character,
     const SkFontStyle style /*= SkFontStyle()*/) const
 {
-    SkPaint paint;
-    paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
-
-    SkTypeface* bestMatch = nullptr;
+    sk_sp<SkTypeface> bestMatch = nullptr;
     auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
     for (const auto& font : constOf(_fonts))
     {
-        paint.setTypeface(font);
-
         // If font doesn't contain requested character, it should be completely ignored
-        if (!paint.containsText(&character, sizeof(uint32_t)))
+        if (font->unicharToGlyph(character) == 0)
             continue;
 
         // Calculate difference between this font style and requested style
@@ -68,7 +61,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
         if (fontStyle.slant() != style.slant())
             difference += 1.0f;
         if (fontStyle.width() != style.width())
-            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltaExpanded_Width;
+            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltraExpanded_Width;
         if (fontStyle.weight() != style.weight())
             difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 

@@ -47,7 +47,7 @@
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkBitmap.h>
-#include <SkImageEncoder.h>
+#include <SkImage.h>
 #include <SkData.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
@@ -1048,19 +1048,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (configuration.verbose)
             output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
 
-        std::unique_ptr<SkImageEncoder> imageEncoder;
+        auto encodedImageFormat = SkEncodedImageFormat::kBMP;
         switch (configuration.outputImageFormat)
         {
             case ImageFormat::PNG:
-                imageEncoder.reset(CreatePNGImageEncoder());
+                encodedImageFormat = SkEncodedImageFormat::kPNG;
                 break;
 
             case ImageFormat::JPEG:
-                imageEncoder.reset(CreateJPEGImageEncoder());
+                encodedImageFormat = SkEncodedImageFormat::kJPEG;
                 break;
         }
 
-        const auto imageData = imageEncoder->encodeData(filledOutputBitmap, 100);
+        const auto imageData = filledOutputBitmap.asImage()->encodeToData(encodedImageFormat, 100);
         if (!imageData)
         {
             output << xT("Failed to encode image") << std::endl;
@@ -1095,8 +1095,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                     imageFile.close();
                 }
             }
-
-            imageData->unref();
         }
     }
 
