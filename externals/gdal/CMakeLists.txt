@@ -409,3 +409,7 @@ target_link_libraries(gdal_static
 		z_static
 		${target_specific_public_libraries}
 )
+set_property(TARGET gdal_static
+	PROPERTY
+		CXX_STANDARD 11
+)
