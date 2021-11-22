@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/freetype-2.5.0.1.tar.bz2"
+prepareUpstreamFromGit "$SRCLOC" "https://chromium.googlesource.com/chromium/src/third_party/freetype2" "12ef831fc314518bff45278008a568608501a8e4"
 patchUpstream "$SRCLOC"
