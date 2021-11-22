@@ -1,0 +1,10 @@
+--- upstream.original/mkspecs/features/qt_functions.prf	2021-11-21 15:07:06.709868827 +0100
++++ upstream.patched/mkspecs/features/qt_functions.prf	2021-11-22 07:12:43.942265898 +0100
+@@ -1,7 +1,6 @@
+ 
+ defineReplace(qtPlatformTargetSuffix) {
+     suffix =
+-    android: return($${suffix}_$${QT_ARCH})
+     win32 {
+         CONFIG(debug, debug|release) {
+             mingw {

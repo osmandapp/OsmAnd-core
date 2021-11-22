@@ -1,0 +1,14 @@
+--- upstream.original/mkspecs/features/android/default_pre.prf	2021-11-21 15:07:06.677868211 +0100
++++ upstream.patched/mkspecs/features/android/default_pre.prf	2021-11-21 17:12:26.466170220 +0100
+@@ -68,10 +68,7 @@ QMAKE_STRIP             =
+ #$${CROSS_COMPILE}strip
+ 
+ 
+-equals(QT_ARCH, x86): CROSS_COMPILE = $$NDK_LLVM_PATH/bin/i686-linux-android-
+-else: equals(QT_ARCH, x86_64): CROSS_COMPILE = $$NDK_LLVM_PATH/bin/x86_64-linux-android-
+-else: equals(QT_ARCH, arm64-v8a): CROSS_COMPILE = $$NDK_LLVM_PATH/bin/aarch64-linux-android-
+-else: CROSS_COMPILE = $$NDK_LLVM_PATH/bin/arm-linux-androideabi-
++CROSS_COMPILE = $$NDK_LLVM_PATH/bin/llvm-
+ 
+ QMAKE_RANLIB            = $${CROSS_COMPILE}ranlib
+ QMAKE_LINK_SHLIB        = $$QMAKE_LINK
