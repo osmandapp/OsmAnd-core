@@ -82,8 +82,8 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
     }
 
     // Perform actual rasterization
-    const auto bitmap = rasterize(request, primitivesTile, metric);
-    if (!bitmap)
+    const auto image = rasterize(request, primitivesTile, metric);
+    if (!image)
     {
         if (metric)
             metric->elapsedTime += totalStopwatch.elapsed();
@@ -97,7 +97,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
         request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->getTileDensityFactor(),
-        bitmap,
+        image,
         primitivesTile,
         new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata)));
 

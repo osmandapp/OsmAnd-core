@@ -103,7 +103,7 @@ namespace OsmAnd
 
         ImplementationInterface<TextRasterizer> owner;
 
-        std::shared_ptr<SkBitmap> rasterize(
+        sk_sp<SkImage> rasterize(
             const QString& text,
             const Style& style,
             QVector<SkScalar>* const outGlyphWidths,

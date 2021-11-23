@@ -8,7 +8,6 @@
 #include <QRegExp>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
 #include <SkCanvas.h>
 #include "restore_internal_warnings.h"
 
@@ -863,7 +862,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const void* tileData = nullptr;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        switch (rasterMapLayerData->bitmap->alphaType())
+        const auto image = rasterMapLayerData->image;
+
+        switch (image->alphaType())
         {
             case SkAlphaType::kPremul_SkAlphaType:
                 alphaChannelType = AlphaChannelType::Premultiplied;
@@ -879,22 +880,20 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 return false;
         }
 
-        switch (rasterMapLayerData->bitmap->colorType())
-        {
-            case SkColorType::kRGBA_8888_SkColorType:
-                sourcePixelByteSize = 4;
-                break;
-            case SkColorType::kARGB_4444_SkColorType:
-            case SkColorType::kRGB_565_SkColorType:
-                sourcePixelByteSize = 2;
-                break;
-            default:
-                assert(false);
-                return false;
+        sourcePixelByteSize = SkColorTypeBytesPerPixel(image->colorType());
+
+        SkPixmap imagePixmap;
+        if (image->peekPixels(&imagePixmap)) {
+            // Cool, a raster image
+        } else if (image->makeRasterImage(SkImage::kDisallow_CachingHint)->peekPixels(&imagePixmap)) {
+            // Cool, an image convertable to raster
+        } else {
+            return false;
         }
-        tileSize = rasterMapLayerData->bitmap->width();
-        dataRowLength = rasterMapLayerData->bitmap->rowBytes();
-        tileData = rasterMapLayerData->bitmap->getPixels();
+
+        tileSize = imagePixmap.width();
+        dataRowLength = imagePixmap.rowBytes();
+        tileData = imagePixmap.addr();
 
         // No need to generate mipmaps if textureLod is not supported
         mipmapGenerationSupported = isSupported_textureLod;
@@ -1097,10 +1096,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     GL_CHECK_PRESENT(glGenerateMipmap);
     GL_CHECK_PRESENT(glTexParameteri);
 
+    const auto image = symbol->image;
+
     // Determine texture properties:
     auto alphaChannelType = AlphaChannelType::Invalid;
-    GLsizei sourcePixelByteSize = 0;
-    switch (symbol->bitmap->alphaType())
+    const GLsizei sourcePixelByteSize = SkColorTypeBytesPerPixel(image->colorType());
+    switch (image->alphaType())
     {
         case SkAlphaType::kPremul_SkAlphaType:
             alphaChannelType = AlphaChannelType::Premultiplied;
@@ -1115,23 +1116,20 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
             assert(false);
             return false;
     }
-    switch (symbol->bitmap->colorType())
-    {
-        case SkColorType::kRGBA_8888_SkColorType:
-            sourcePixelByteSize = 4;
-            break;
-        case SkColorType::kARGB_4444_SkColorType:
-        case SkColorType::kRGB_565_SkColorType:
-            sourcePixelByteSize = 2;
-            break;
-        default:
-            LogPrintf(LogSeverityLevel::Error,
-                "Tried to upload symbol bitmap with unsupported color type %d to GPU",
-                symbol->bitmap->colorType());
-            assert(false);
-            return false;
-    }
     const auto textureFormat = getTextureFormat(symbol);
+
+    SkPixmap imagePixmap;
+    if (image->peekPixels(&imagePixmap)) {
+        // Cool, a raster image
+    } else if (image->makeRasterImage(SkImage::kDisallow_CachingHint)->peekPixels(&imagePixmap)) {
+        // Cool, an image convertable to raster
+    } else {
+        return false;
+    }
+
+    // tileSize = imagePixmap.width();
+    // dataRowLength = imagePixmap.rowBytes();
+    // tileData = imagePixmap.addr();
 
     // Symbols don't use mipmapping, so there is no difference between POT vs NPOT size of texture.
     // In OpenGLES 2.0 and OpenGL 2.0+, NPOT textures are supported in general.
@@ -1150,12 +1148,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     GL_CHECK_RESULT;
 
     // Allocate square 2D texture
-    allocateTexture2D(GL_TEXTURE_2D, 1, symbol->bitmap->width(), symbol->bitmap->height(), textureFormat);
+    allocateTexture2D(GL_TEXTURE_2D, 1, imagePixmap.width(), imagePixmap.height(), textureFormat);
 
     // Upload data
     uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-        0, 0, (GLsizei)symbol->bitmap->width(), (GLsizei)symbol->bitmap->height(),
-        symbol->bitmap->getPixels(), symbol->bitmap->rowBytes() / sourcePixelByteSize, sourcePixelByteSize,
+        0, 0, (GLsizei)imagePixmap.width(), (GLsizei)imagePixmap.height(),
+        imagePixmap.addr(), imagePixmap.rowBytes() / sourcePixelByteSize, sourcePixelByteSize,
         getSourceFormat(symbol));
 
     // Set maximal mipmap level to 0
@@ -1169,8 +1167,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     resourceInGPU.reset(new TextureInGPU(
         this,
         reinterpret_cast<RefInGPU>(texture),
-        symbol->bitmap->width(),
-        symbol->bitmap->height(),
+        image->width(),
+        image->height(),
         1,
         alphaChannelType));
 
@@ -1279,7 +1277,7 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return getTextureFormat(rasterMapLayerData->bitmap->colorType());
+        return getTextureFormat(rasterMapLayerData->image->colorType());
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
@@ -1308,15 +1306,15 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
     const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
-    return getTextureFormat(symbol->bitmap->colorType());
+    return getTextureFormat(symbol->image->colorType());
 }
 
-OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const SkColorType skBitmapConfig) const
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const SkColorType colorType) const
 {
     // If current device supports glTexStorage2D, lets use sized format
     if (isSupported_texture_storage)
     {
-        const auto textureSizedFormat = getTextureSizedFormat(skBitmapConfig);
+        const auto textureSizedFormat = getTextureSizedFormat(colorType);
         if (isValidTextureSizedFormat(textureSizedFormat))
             return textureSizedFormat;
     }
@@ -1324,7 +1322,7 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
     GLenum format = GL_INVALID_ENUM;
     GLenum type = GL_INVALID_ENUM;
-    switch (skBitmapConfig)
+    switch (colorType)
     {
         case SkColorType::kRGBA_8888_SkColorType:
             format = GL_RGBA;
@@ -1358,7 +1356,7 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return getSourceFormat(rasterMapLayerData->bitmap->colorType());
+        return getSourceFormat(rasterMapLayerData->image->colorType());
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
@@ -1374,16 +1372,16 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
 OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
     const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
-    return getSourceFormat(symbol->bitmap->colorType());
+    return getSourceFormat(symbol->image->colorType());
 }
 
-OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const SkColorType skBitmapConfig) const
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const SkColorType colorType) const
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
 
-    switch (skBitmapConfig)
+    switch (colorType)
     {
         case SkColorType::kRGBA_8888_SkColorType:
             sourceFormat.format = GL_RGBA;

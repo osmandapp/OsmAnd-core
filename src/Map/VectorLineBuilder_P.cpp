@@ -197,32 +197,32 @@ void OsmAnd::VectorLineBuilder_P::setColorizationMapping(const QList<OsmAnd::FCo
     _colorizationMapping = colorizationMapping;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getPathIcon() const
+sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _pathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::VectorLineBuilder_P::setPathIcon(const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pathIcon = bitmap;
+    _pathIcon = image;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
+sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _specialPathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _specialPathIcon = bitmap;
+    _specialPathIcon = image;
 }
 
 float OsmAnd::VectorLineBuilder_P::getPathIconStep() const

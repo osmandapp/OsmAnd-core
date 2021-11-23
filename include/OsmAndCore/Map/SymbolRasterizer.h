@@ -5,7 +5,13 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -15,8 +21,6 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
-class SkCanvas;
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -64,7 +68,7 @@ namespace OsmAnd
             const std::weak_ptr<const RasterizedSymbolsGroup> group;
             const std::shared_ptr<const MapPrimitiviser::Symbol> primitiveSymbol;
 
-            std::shared_ptr<const SkBitmap> bitmap;
+            sk_sp<const SkImage> image;
             int order;
             ContentType contentType;
             QString content;

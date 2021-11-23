@@ -4,16 +4,20 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QtGlobal>
 #include <QThreadPool>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -24,18 +28,18 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ImageMapLayerProvider);
 
     public:
-        class OSMAND_CORE_API AsyncImage Q_DECL_FINAL
+        class OSMAND_CORE_API AsyncImageData Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(AsyncImage);
+            Q_DISABLE_COPY_AND_MOVE(AsyncImageData);
 
         private:
         protected:
-            AsyncImage(
+            AsyncImageData(
                 const ImageMapLayerProvider* const provider,
                 const ImageMapLayerProvider::Request& request,
                 const IMapDataProvider::ObtainDataAsyncCallback callback);
         public:
-            virtual ~AsyncImage();
+            virtual ~AsyncImageData();
 
             const ImageMapLayerProvider* const provider;
             const std::shared_ptr<const ImageMapLayerProvider::Request> request;
@@ -47,7 +51,7 @@ namespace OsmAnd
         };
 
     private:
-        const std::shared_ptr<const SkBitmap> getEmptyImage();
+        sk_sp<const SkImage> getEmptyImage() const;
         
         mutable QReadWriteLock _lock;
         int _priority;
@@ -59,16 +63,15 @@ namespace OsmAnd
         void setLastRequestedZoom(const ZoomLevel zoomLevel);
     protected:
         ImageMapLayerProvider();
-        const std::shared_ptr<const SkBitmap> decodeBitmap(const QByteArray& data);
     public:
         virtual ~ImageMapLayerProvider();
 
         virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
 
-        virtual bool supportsObtainImageBitmap() const;
-        virtual QByteArray obtainImage(
+        virtual bool supportsObtainImage() const;
+        virtual QByteArray obtainImageData(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request) = 0;
-        virtual const std::shared_ptr<const SkBitmap> obtainImageBitmap(
+        virtual sk_sp<SkImage> obtainImage(
             const IMapTiledDataProvider::Request& request);
 
         virtual bool obtainData(
@@ -78,12 +81,12 @@ namespace OsmAnd
 
         virtual void obtainImageAsync(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImage)* const asyncImage) = 0;
+            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImageData)* const asyncImage) = 0;
         virtual void obtainDataAsync(
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE Q_DECL_FINAL;
-        virtual void performAdditionalChecks(std::shared_ptr<const SkBitmap> bitmap);
+        virtual bool performAdditionalChecks(const sk_sp<const SkImage>& image);
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ImageMapLayerProvider);
@@ -98,7 +101,7 @@ namespace OsmAnd
             supportsNaturalObtainData);
         SWIG_EMIT_DIRECTOR_METHOD(
             QByteArray,
-            obtainImage,
+            obtainImageData,
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
@@ -107,7 +110,7 @@ namespace OsmAnd
             void,
             obtainImageAsync,
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImage)* const asyncImage);
+            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImageData)* const asyncImage);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,
             getTileSize);

@@ -4,8 +4,14 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QVector>
 #include <QHash>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -14,8 +20,6 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -75,8 +79,8 @@ namespace OsmAnd
         VectorLine(
             const int lineId,
             const int baseOrder,
-            const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
-            const std::shared_ptr<const SkBitmap>& specialPathIcon = nullptr,
+            const sk_sp<const SkImage>& pathIcon = nullptr,
+            const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
             const float screenScale = 2
         );
@@ -87,8 +91,8 @@ namespace OsmAnd
 
         const int lineId;
         const int baseOrder;
-        const std::shared_ptr<const SkBitmap> pathIcon;
-        const std::shared_ptr<const SkBitmap> specialPathIcon;
+        const sk_sp<const SkImage> pathIcon;
+        const sk_sp<const SkImage> specialPathIcon;
         const float pathIconStep;
         const float screenScale;
 
@@ -121,7 +125,7 @@ namespace OsmAnd
         std::vector<double> getLineDash() const;
         void setLineDash(const std::vector<double> dashPattern);
         
-        const std::shared_ptr<const SkBitmap> getPointBitmap() const;
+        sk_sp<const SkImage> getPointImage() const;
 
         bool hasUnappliedChanges() const;
 

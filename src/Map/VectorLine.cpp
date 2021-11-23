@@ -4,8 +4,8 @@
 OsmAnd::VectorLine::VectorLine(
     const int lineId_,
     const int baseOrder_,
-    const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
-    const std::shared_ptr<const SkBitmap>& specialPathIcon_/* = nullptr*/,
+    const sk_sp<const SkImage>& pathIcon_/* = nullptr*/,
+    const sk_sp<const SkImage>& specialPathIcon_/* = nullptr*/,
     const float pathIconStep_/* = -1*/,
     const float screenScale_/* = 2*/)
     : _p(new VectorLine_P(this))
@@ -117,9 +117,9 @@ void OsmAnd::VectorLine::setLineDash(const std::vector<double> dashPattern)
     _p->setLineDash(dashPattern);
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine::getPointBitmap() const
+sk_sp<const SkImage> OsmAnd::VectorLine::getPointImage() const
 {
-    return _p->getPointBitmap();
+    return _p->getPointImage();
 }
 
 bool OsmAnd::VectorLine::hasUnappliedChanges() const
@@ -202,8 +202,8 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
 }
 
 OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction)
-: position31(position31)
-, direction(direction)
+    : position31(position31)
+    , direction(direction)
 {
 }
 

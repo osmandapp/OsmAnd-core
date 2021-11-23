@@ -17,8 +17,6 @@
 #include "OnSurfaceVectorMapSymbol.h"
 #include "VectorLine.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class VectorLinesCollection;
@@ -30,22 +28,23 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine_P);
 
     private:
-        void createVertexes(std::vector<VectorMapSymbol::Vertex> &vertices,
-                            VectorMapSymbol::Vertex &vertex,
-                            std::vector<PointD> &b1,
-                            std::vector<PointD> &b2,
-                            std::vector<PointD> &e1,
-                            std::vector<PointD> &e2,
-                            std::vector<PointD> &original,
-                            double radius,
-                            FColorARGB &fillColor,
-                            QList<FColorARGB>& colorMapping,
-                            bool gap) const;
+        void createVertexes(
+            std::vector<VectorMapSymbol::Vertex> &vertices,
+            VectorMapSymbol::Vertex &vertex,
+            std::vector<PointD> &b1,
+            std::vector<PointD> &b2,
+            std::vector<PointD> &e1,
+            std::vector<PointD> &e2,
+            std::vector<PointD> &original,
+            double radius,
+            FColorARGB &fillColor,
+            QList<FColorARGB>& colorMapping,
+            bool gap) const;
         
         QVector<SkPath> calculateLinePath(const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
         void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
         QList<OsmAnd::VectorLine::OnPathSymbolData> _arrowsOnPath;
-        std::shared_ptr<const SkBitmap> _scaledBitmap;
+        sk_sp<const SkImage> _scaledPathIcon;
         
         double getRadius(double width) const;
         bool useSpecialArrow() const;
@@ -93,7 +92,7 @@ namespace OsmAnd
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
 
-        const std::shared_ptr<const SkBitmap> getPointBitmap() const;
+        sk_sp<const SkImage> getPointImage() const;
         
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
         

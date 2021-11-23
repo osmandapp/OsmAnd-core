@@ -9,7 +9,6 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkImage.h>
-#include <SkBitmap.h>
 #include <SkBlurMaskFilter.h>
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
@@ -283,7 +282,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         if (ok && !shader.isEmpty())
         {
             sk_sp<SkShader> skShader;
-            if (obtainBitmapShader(env, shader, skShader) && skShader)
+            if (obtainImageShader(env, shader, skShader) && skShader)
             {
                 // SKIA requires non-transparent color
                 if (paint.getColor() == SK_ColorTRANSPARENT)
@@ -595,7 +594,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     if (!ok || pathIconStep <= 0.0f)
         return;
 
-    std::shared_ptr<const SkBitmap> pathIcon;
+    sk_sp<const SkImage> pathIcon;
     ok = context.env->obtainMapIcon(pathIconName, pathIcon);
     if (!ok || !pathIcon)
         return;
@@ -624,7 +623,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
         mIconInstanceTransform.setConcat(mPinPoint, mIconTransform);
         canvas.save();
         canvas.concat(mIconInstanceTransform);
-        canvas.drawImage(pathIcon->asImage(), 0, 0);
+        canvas.drawImage(pathIcon.get(), 0, 0);
         canvas.restore();
     }
 }
@@ -756,23 +755,22 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
     return true;
 }
 
-bool OsmAnd::MapRasterizer_P::obtainBitmapShader(
+bool OsmAnd::MapRasterizer_P::obtainImageShader(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const QString& name,
     sk_sp<SkShader> &outShader)
 {
-    std::shared_ptr<const SkBitmap> bitmap;
-    if (!env->obtainShaderBitmap(name, bitmap))
+    sk_sp<const SkImage> image;
+    if (!env->obtainShader(name, image))
     {
         LogPrintf(LogSeverityLevel::Warning,
-            "Failed to get '%s' bitmap shader",
+            "Failed to get '%s' shader image",
             qPrintable(name));
 
         return false;
     }
 
-    // TODO: replace SkBitmap with SkImage
-    outShader = bitmap->asImage()->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, {});
+    outShader = image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, {});
     return true;
 }
 

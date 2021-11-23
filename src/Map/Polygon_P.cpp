@@ -3,10 +3,8 @@
 #include "Utilities.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include "restore_internal_warnings.h"
-
-#include <SkBitmap.h>
 #include <SkPathMeasure.h>
+#include "restore_internal_warnings.h"
 
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"

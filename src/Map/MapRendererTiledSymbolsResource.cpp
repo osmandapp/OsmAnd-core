@@ -141,8 +141,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             if (!rasterMapSymbol)
                 continue;
 
-            rasterMapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
-                rasterMapSymbol->bitmap,
+            rasterMapSymbol->image = resourcesManager->adjustImageToConfiguration(
+                rasterMapSymbol->image,
                 AlphaChannelPresence::Present);
         }
     }

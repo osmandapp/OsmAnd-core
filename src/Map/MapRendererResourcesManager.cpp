@@ -4,10 +4,6 @@
 
 #include "QtCommon.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
 #include "IMapLayerProvider.h"
@@ -133,20 +129,20 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
     const QString& resourceName,
     std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource)
 {
-    const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(
+    const auto image = getCoreResourcesProvider()->getResourceAsImage(
         resourceName,
         renderer->setupOptions.displayDensityFactor);
-    if (!bitmap)
+    if (!image)
         return false;
 
     std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
-    std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
+    std::shared_ptr<const IRasterMapLayerProvider::Data> tile(new IRasterMapLayerProvider::Data(
         TileId::zero(),
         InvalidZoomLevel,
         AlphaChannelPresence::Unknown,
         1.0f,
-        bitmap));
-    if (!uploadTiledDataToGPU(bitmapTile, resource))
+        image));
+    if (!uploadTiledDataToGPU(tile, resource))
         return false;
     
     outResource = resource;
@@ -178,18 +174,26 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
     return renderer->gpuAPI->uploadSymbolToGPU(mapSymbol, outResourceInGPU);
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(
-    const std::shared_ptr<const SkBitmap>& input,
+bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
+    const sk_sp<const SkImage>& input,
+    sk_sp<SkImage>& output,
     const AlphaChannelPresence alphaChannelPresence) const
 {
-    return renderer->adjustBitmapToConfiguration(input, alphaChannelPresence);
+    return renderer->adjustImageToConfiguration(input, output, alphaChannelPresence);
+}
+
+sk_sp<const SkImage> OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
+    const sk_sp<const SkImage>& input,
+    const AlphaChannelPresence alphaChannelPresence) const
+{
+    return renderer->adjustImageToConfiguration(input, alphaChannelPresence);
 }
 
 void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol)
 {
     if (const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol))
     {
-        rasterMapSymbol->bitmap.reset();
+        rasterMapSymbol->image.reset();
     }
     else if (const auto vectorMapSymbol = std::dynamic_pointer_cast<VectorMapSymbol>(mapSymbol))
     {
