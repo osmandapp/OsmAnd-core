@@ -4,8 +4,14 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
 #include <QHash>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -15,8 +21,6 @@
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/TextRasterizer.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -75,13 +79,13 @@ namespace OsmAnd
         MapMarker(
             const int markerId,
             const int baseOrder,
-            const std::shared_ptr<const SkBitmap>& pinIcon,
+            const sk_sp<const SkImage>& pinIcon,
             const PinIconVerticalAlignment pinIconVerticalAlignment,
             const PinIconHorisontalAlignment pinIconHorisontalAlignment,
             const QString& caption,
             const TextRasterizer::Style captionStyle,
             const double captionTopSpace,
-            const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons,
+            const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons,
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
 
@@ -91,10 +95,10 @@ namespace OsmAnd
 
         const int markerId;
         const int baseOrder;
-        const std::shared_ptr<const SkBitmap> pinIcon;
+        const sk_sp<const SkImage> pinIcon;
         const PinIconVerticalAlignment pinIconVerticalAlignment;
         const PinIconHorisontalAlignment pinIconHorisontalAlignment;
-        const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
+        const QHash< OnSurfaceIconKey, sk_sp<const SkImage> > onMapSurfaceIcons;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;
         const QString caption;

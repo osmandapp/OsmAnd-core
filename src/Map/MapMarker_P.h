@@ -16,8 +16,6 @@
 #include "OnSurfaceVectorMapSymbol.h"
 #include "MapMarker.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class MapMarkersCollection;

@@ -8,10 +8,6 @@
 #include <QStringList>
 #include "restore_internal_warnings.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "MapCommonTypes.h"
 #include "IRasterMapLayerProvider.h"
 #include "MapSymbol.h"

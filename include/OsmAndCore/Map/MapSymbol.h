@@ -7,8 +7,6 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QSet>
 
-class SkBitmap;
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PointsAndAreas.h>

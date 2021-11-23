@@ -5,7 +5,13 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -25,7 +31,7 @@ namespace OsmAnd
     public:
         virtual ~RasterMapSymbol();
 
-        std::shared_ptr<const SkBitmap> bitmap;
+        sk_sp<const SkImage> image;
         PointI size;
         QString content;
         LanguageId languageId;

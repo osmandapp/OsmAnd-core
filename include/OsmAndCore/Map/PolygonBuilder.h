@@ -16,8 +16,6 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/Polygon.h>
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class PolygonsCollection;

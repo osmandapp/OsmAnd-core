@@ -2,7 +2,7 @@
 #include "MapMarker.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "MapSymbol.h"
@@ -200,32 +200,28 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
 
     int order = owner->baseOrder;
 
-    // SpriteMapSymbol with pinIconBitmap as an icon
+    // SpriteMapSymbol with pinIcon as an icon
     if (owner->pinIcon)
     {
-        std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
-        pinIcon->allocPixels(owner->pinIcon->info());
-        owner->pinIcon->readPixels(pinIcon->pixmap());
-        
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
         pinIconSymbol->order = order++;
-        pinIconSymbol->bitmap = pinIcon;
-        pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
+        pinIconSymbol->image = owner->pinIcon;
+        pinIconSymbol->size = PointI(owner->pinIcon->width(), owner->pinIcon->height());
         pinIconSymbol->content = QString().sprintf(
-                                                   "markerGroup(%p:%p)->pinIconBitmap:%p",
-                                                   this,
-                                                   symbolsGroup.get(),
-                                                   pinIcon->getPixels());
+           "markerGroup(%p:%p)->pinIcon:%p",
+           this,
+           symbolsGroup.get(),
+           owner->pinIcon.get());
         pinIconSymbol->languageId = LanguageId::Invariant;
         pinIconSymbol->position31 = _position;
         PointI offset;
         switch (owner->pinIconHorisontalAlignment)
         {
             case PinIconHorisontalAlignment::Left:
-                offset.x = -pinIcon->width() / 2;
+                offset.x = -owner->pinIcon->width() / 2;
                 break;
             case PinIconHorisontalAlignment::Right:
-                offset.x = pinIcon->width() / 2;
+                offset.x = owner->pinIcon->width() / 2;
                 break;
             case PinIconHorisontalAlignment::CenterHorizontal:
             default:
@@ -235,10 +231,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         switch (owner->pinIconVerticalAlignment)
         {
             case PinIconVerticalAlignment::Top:
-                offset.y = -pinIcon->height() / 2;
+                offset.y = -owner->pinIcon->height() / 2;
                 break;
             case PinIconVerticalAlignment::Bottom:
-                offset.y = pinIcon->height() / 2;
+                offset.y = owner->pinIcon->height() / 2;
                 break;
             case PinIconVerticalAlignment::CenterVertical:
             default:
@@ -254,16 +250,17 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         if (!caption.isEmpty())
         {
             const auto textStyle = owner->captionStyle;
-            const auto textBmp = textRasterizer->rasterize(caption, textStyle);
-            if (textBmp)
+            const auto textImage = textRasterizer->rasterize(caption, textStyle);
+            if (textImage)
             {
                 const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(symbolsGroup);
                 mapSymbolCaption->order = order - 2;
-                mapSymbolCaption->bitmap = textBmp;
+                mapSymbolCaption->image = textImage;
                 mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
-                mapSymbolCaption->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
-                mapSymbolCaption->setOffset(PointI(0, pinIcon->height() / 2 + textBmp->height() / 2 + offset.y + owner->captionTopSpace));
-                mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
+                mapSymbolCaption->intersectsWithClasses.insert(
+                    mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
+                mapSymbolCaption->setOffset(PointI(0, owner->pinIcon->height() / 2 + textImage->height() / 2 + offset.y + owner->captionTopSpace));
+                mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
                 mapSymbolCaption->languageId = LanguageId::Invariant;
                 mapSymbolCaption->position31 = _position;
                 symbolsGroup->symbols.push_back(mapSymbolCaption);
@@ -279,11 +276,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     {
         const auto key = itOnMapSurfaceIcon.key();
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
-        
-        std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-        iconClone->allocPixels(onMapSurfaceIcon->info());
-        onMapSurfaceIcon->readPixels(iconClone->pixmap());
-        
+
         // Get direction
         float direction = 0.0f;
         const auto citDirection = _directions.constFind(key);
@@ -291,21 +284,21 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             direction = *citDirection;
         
         const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
-                                                                                                                      key,
-                                                                                                                      symbolsGroup));
+            key,
+            symbolsGroup));
         int o = (int)(surfOrder + (long)key);
         if (order < o)
             order = o;
         
         onMapSurfaceIconSymbol->order = o;
         
-        onMapSurfaceIconSymbol->bitmap = iconClone;
-        onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
+        onMapSurfaceIconSymbol->image = onMapSurfaceIcon;
+        onMapSurfaceIconSymbol->size = PointI(onMapSurfaceIcon->width(), onMapSurfaceIcon->height());
         onMapSurfaceIconSymbol->content = QString().sprintf(
-            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
+            "markerGroup(%p:%p)->onMapSurfaceIcon:%p",
             this,
             symbolsGroup.get(),
-            iconClone->getPixels());
+            onMapSurfaceIcon.get());
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;

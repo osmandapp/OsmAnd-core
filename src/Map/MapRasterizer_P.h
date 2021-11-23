@@ -127,7 +127,9 @@ namespace OsmAnd
         mutable QMutex _pathEffectsMutex;
         mutable QHash< QString, sk_sp<SkPathEffect> > _pathEffects;
         bool obtainPathEffect(const QString& encodedPathEffect, sk_sp<SkPathEffect> &outPathEffect) const;
-        bool obtainBitmapShader(const std::shared_ptr<const MapPresentationEnvironment>& env, const QString& name, sk_sp<SkShader> &outShader);
+        bool obtainImageShader(
+            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const QString& name, sk_sp<SkShader> &outShader);
     public:
         ~MapRasterizer_P();
 

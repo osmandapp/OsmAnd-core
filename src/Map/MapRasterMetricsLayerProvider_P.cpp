@@ -55,8 +55,8 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
     }
 
     // Prepare drawing canvas
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!bitmap->tryAllocPixels(SkImageInfo::MakeN32Premul(owner->tileSize, owner->tileSize)))
+    SkBitmap bitmap;
+    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(owner->tileSize, owner->tileSize)))
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to allocate buffer for rasterization surface %dx%d",
@@ -64,7 +64,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
             owner->tileSize);
         return false;
     }
-    SkCanvas canvas(*bitmap);
+    SkCanvas canvas(bitmap);
     canvas.clear(SK_ColorDKGRAY);
 
     QString text;
@@ -117,7 +117,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->densityFactor,
-        bitmap, 
+        bitmap.asImage(), 
         rasterizedTile,
         new RetainableCacheMetadata(rasterizedTile->retainableCacheMetadata)));
 

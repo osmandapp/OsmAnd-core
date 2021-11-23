@@ -14,8 +14,6 @@
 #include "MapRasterLayerProvider_P.h"
 #include "MapRasterizer.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class MapRasterLayerProvider_GPU;
@@ -25,7 +23,7 @@ namespace OsmAnd
     protected:
         MapRasterLayerProvider_GPU_P(MapRasterLayerProvider_GPU* owner);
 
-        virtual std::shared_ptr<SkBitmap> rasterize(
+        virtual sk_sp<SkImage> rasterize(
             const MapRasterLayerProvider::Request& request,
             const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
             MapRasterLayerProvider_Metrics::Metric_obtainData* const metric);

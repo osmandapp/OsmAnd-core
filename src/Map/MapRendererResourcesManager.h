@@ -15,6 +15,10 @@
 #include <QVector>
 #include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkImage.h>
+#include "restore_internal_warnings.h"
+
 #include "OsmAndCore.h"
 #include "MapRendererTypes_private.h"
 #include "MapRendererState.h"
@@ -217,8 +221,12 @@ namespace OsmAnd
         // Resources management:
         bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
-        std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
-            const std::shared_ptr<const SkBitmap>& input,
+        bool adjustImageToConfiguration(
+            const sk_sp<const SkImage>& input,
+            sk_sp<SkImage>& output,
+            const AlphaChannelPresence alphaChannelPresence) const;
+        sk_sp<const SkImage> adjustImageToConfiguration(
+            const sk_sp<const SkImage>& input,
             const AlphaChannelPresence alphaChannelPresence) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
