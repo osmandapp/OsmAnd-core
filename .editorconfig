@@ -19,6 +19,7 @@ indent_style = tab
 continuation_indent_size = 4
 
 [*.{c,h,cpp,hpp,cc}]
+continuation_indent_size = 4
 cpp_indent_braces = true
 cpp_indent_multi_line_relative_to = outermost_parentesis
 cpp_space_pointer_reference_alignment = left

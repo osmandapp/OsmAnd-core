@@ -39,7 +39,7 @@ namespace OsmAnd
         static int archiveOpen(archive *, void *_client_data);
         static __LA_SSIZE_T archiveRead(archive *, void *_client_data, const void **_buffer);
         static __LA_INT64_T archiveSkip(archive *, void *_client_data, __LA_INT64_T request);
-        static __LA_INT64_T	archiveSeek(archive *, void *_client_data, __LA_INT64_T offset, int whence);
+        static __LA_INT64_T archiveSeek(archive *, void *_client_data, __LA_INT64_T offset, int whence);
         static int archiveClose(archive *, void *_client_data);
 
         enum {

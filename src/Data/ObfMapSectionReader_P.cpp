@@ -880,22 +880,22 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kLabelcoordinatesFieldNumber:
             {
                 gpb::uint32 length;
-				cis->ReadVarint32(&length);
-				auto oldLimit = cis->PushLimit(length);
-				u_int i = 0;
-				while (cis->BytesUntilLimit() > 0) {
-					if (i == 0) {
-						WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelX);
-					} else if (i == 1) {
-						WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelY);
-					} else {
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+                u_int i = 0;
+                while (cis->BytesUntilLimit() > 0) {
+                    if (i == 0) {
+                        WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelX);
+                    } else if (i == 1) {
+                        WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(cis, &mapObject->labelY);
+                    } else {
                         break;
-					}
-					i++;
-				}
-				cis->PopLimit(oldLimit);
-				break;
-			}
+                    }
+                    i++;
+                }
+                cis->PopLimit(oldLimit);
+                break;
+            }
             case OBF::MapData::kStringNamesFieldNumber:
             {
                 gpb::uint32 length;

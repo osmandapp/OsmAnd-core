@@ -4,18 +4,18 @@
 #include "IFavoriteLocation.h"
 
 OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection()
-	: FavoriteLocationsCollection(new FavoriteLocationsCollection_P(this))
+    : FavoriteLocationsCollection(new FavoriteLocationsCollection_P(this))
 {
 }
 
 OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection(FavoriteLocationsCollection_P* const p)
-	: _p(p)
+    : _p(p)
 {
 }
 
 OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 {
-	_p->_containerLink->release();
+    _p->_containerLink->release();
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(

@@ -34,7 +34,7 @@
 #include "ObfDataInterface.h"
 
 OsmAnd::CachedOsmandIndexes_P::CachedOsmandIndexes_P(
-	CachedOsmandIndexes* const owner_)
+    CachedOsmandIndexes* const owner_)
     : _storedIndex(nullptr)
     , _hasChanged(true)
     , owner(owner_)
