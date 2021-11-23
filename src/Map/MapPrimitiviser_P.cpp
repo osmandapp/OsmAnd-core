@@ -930,7 +930,7 @@ bool OsmAnd::MapPrimitiviser_P::calculateIntersection(const PointI& p1, const Po
 
     if (px == rightX || px == leftX || py == topY || py == bottomY) {
         pX = p0;//b.first = px; b.second = py;
-        //		return true;
+        //        return true;
         // Is it right? to not return anything?
     }
     return false;

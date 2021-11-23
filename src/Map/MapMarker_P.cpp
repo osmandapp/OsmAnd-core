@@ -204,8 +204,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
-	pinIcon->allocPixels(owner->pinIcon->info());
-	owner->pinIcon->readPixels(pinIcon->pixmap());
+        pinIcon->allocPixels(owner->pinIcon->info());
+        owner->pinIcon->readPixels(pinIcon->pixmap());
         
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
         pinIconSymbol->order = order++;
@@ -281,7 +281,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
         
         std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-	iconClone->allocPixels(onMapSurfaceIcon->info());
+        iconClone->allocPixels(onMapSurfaceIcon->info());
         onMapSurfaceIcon->readPixels(iconClone->pixmap());
         
         // Get direction

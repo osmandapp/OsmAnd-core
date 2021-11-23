@@ -46,7 +46,7 @@ std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTi
         if (tileFile.exists())
             tileFile.remove();
           
-	return nullptr;
+        return nullptr;
     }
 
     const auto skImage = SkImage::MakeFromEncoded(skData);

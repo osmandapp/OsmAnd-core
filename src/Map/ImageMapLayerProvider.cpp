@@ -284,12 +284,12 @@ void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceed
                 provider->getTileDensityFactor(),
                 bitmap));
         }
-	else
-	{
+        else
+        {
             callback(provider, false, outData, nullptr);
             delete this;
             return;
-	}
+        }
     }
 
     callback(provider, requestSucceeded, outData, nullptr);

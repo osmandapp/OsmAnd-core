@@ -195,13 +195,13 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& nam
         }
 
         // TODO: replace SkBitmap with SkImage
-	const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         if (!skImage->asLegacyBitmap(bitmap.get())) 
         {
             return false;
         }
 
-	itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
+        itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
     }
 
     // Create shader from that bitmap
@@ -228,7 +228,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, st
 
         // Decode bitmap for a shader
         const auto skImage = SkImage::MakeFromEncoded(skData);
-	if (!skImage)
+        if (!skImage)
         {
             return false;
         }
@@ -266,7 +266,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name,
 
         // Decode bitmap for a shader
         const auto skImage = SkImage::MakeFromEncoded(skData);
-	if (!skImage)
+        if (!skImage)
         {
             return false;
         }
@@ -304,7 +304,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
 
         // Decode bitmap for a shader
         const auto skImage = SkImage::MakeFromEncoded(skData);
-	if (!skImage)
+        if (!skImage)
         {
             return false;
         }
