@@ -60,7 +60,7 @@ add_library(freetype2_static STATIC
 	"upstream.patched/src/base/ftdebug.c"
 	${target_specific_sources}
 )
-add_dependencies(archive_static
+add_dependencies(freetype2_static
 	z_static
 )
 
