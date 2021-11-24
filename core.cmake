@@ -13,7 +13,7 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/expat" "core/externals/expat")
 
 if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "android")
-	# External : freetype2
+	# External : freetype
 	add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freetype")
 endif()
 
@@ -50,6 +50,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/glm" "core/externals/glm")
 
 # External: boost
 add_subdirectory("${OSMAND_ROOT}/core/externals/boost" "core/externals/boost")
+
+# External: harfbuzz
+add_subdirectory("${OSMAND_ROOT}/core/externals/harfbuzz" "core/externals/harfbuzz")
 
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core")
