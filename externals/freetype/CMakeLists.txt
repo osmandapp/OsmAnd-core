@@ -1,4 +1,4 @@
-project(freetype2)
+project(freetype)
 
 prepare_upstream()
 
@@ -17,7 +17,7 @@ else ()
 	)
 endif ()
 
-add_library(freetype2_static STATIC
+add_library(freetype_static STATIC
 	"upstream.patched/src/autofit/autofit.c"
 	"upstream.patched/src/base/ftbase.c"
 	"upstream.patched/src/base/ftbbox.c"
@@ -60,7 +60,7 @@ add_library(freetype2_static STATIC
 	"upstream.patched/src/base/ftdebug.c"
 	${target_specific_sources}
 )
-add_dependencies(freetype2_static
+add_dependencies(freetype_static
 	z_static
 )
 
@@ -68,21 +68,21 @@ check_include_file("unistd.h" HAVE_UNISTD_H)
 check_include_file("fcntl.h" HAVE_FCNTL_H)
 configure_file("ftconfig.h.in" "ftconfig-override.h")
 
-target_compile_definitions(freetype2_static
+target_compile_definitions(freetype_static
 	PRIVATE
 		-DFT2_BUILD_LIBRARY
 		-DFT_CONFIG_MODULES_H=<ftmodule-override.h>
 		-DFT_CONFIG_OPTIONS_H=<ftoption-override.h>
 		-DFT_CONFIG_CONFIG_H=<ftconfig-override.h>
 )
-target_include_directories(freetype2_static
+target_include_directories(freetype_static
 	PRIVATE
 		"."
 		"${CMAKE_CURRENT_BINARY_DIR}"
 	PUBLIC
 		"upstream.patched/include"
 )
-target_link_libraries(freetype2_static
+target_link_libraries(freetype_static
 	LINK_PUBLIC
 		z_static
 )
