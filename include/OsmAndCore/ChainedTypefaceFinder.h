@@ -9,23 +9,23 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/IFontFinder.h>
+#include <OsmAndCore/ITypefaceFinder.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API ChainedFontFinder Q_DECL_FINAL : public IFontFinder
+    class OSMAND_CORE_API ChainedTypefaceFinder Q_DECL_FINAL : public ITypefaceFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(ChainedFontFinder);
+        Q_DISABLE_COPY_AND_MOVE(ChainedTypefaceFinder);
 
     private:
     protected:
     public:
-        ChainedFontFinder(const QList< std::shared_ptr<const IFontFinder> >& chain);
-        virtual ~ChainedFontFinder();
+        ChainedTypefaceFinder(const QList< std::shared_ptr<const ITypefaceFinder> >& chain);
+        virtual ~ChainedTypefaceFinder();
 
-        const QList< std::shared_ptr<const IFontFinder> > chain;
+        const QList< std::shared_ptr<const ITypefaceFinder> > chain;
 
-        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
+        virtual std::shared_ptr<const Typeface> findTypefaceForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
     };

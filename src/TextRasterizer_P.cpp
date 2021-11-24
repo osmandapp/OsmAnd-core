@@ -59,6 +59,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         LinePaint linePaint;
         linePaint.line = lineRef;
 
+        std::shared_ptr<const ITypefaceFinder::Typeface> typeface;
         TextPaint* pTextPaint = nullptr;
         const auto pLine = lineRef.constData();
         const auto pEnd = pLine + lineRef.size();
@@ -69,20 +70,18 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
             
-            // First of all check previous typeface if it contains this character
-            auto typeface = pTextPaint ? pTextPaint->font.refTypeface() : nullptr;
             if (typeface)
             {
-                if (typeface->unicharToGlyph(characterUCS4))
+                if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
                     typeface = nullptr;
 #if OSMAND_LOG_CHARACTERS_TYPEFACE
                 else
                 {
                     SkString typefaceName;
-                    typeface->getFamilyName(&fontName);
+                    typeface->skTypeface->getFamilyName(&typefaceName);
 
                     LogPrintf(LogSeverityLevel::Warning,
-                        "UCS4 character 0x%08x (%u) has been found in '%s' font (reused)",
+                        "UCS4 character 0x%08x (%u) has been found in '%s' typeface (reused)",
                         characterUCS4,
                         characterUCS4,
                         typefaceName.c_str());
@@ -91,13 +90,13 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             }
             if (!typeface)
             {
-                typeface = owner->fontFinder->findFontForCharacterUCS4(characterUCS4, fontStyle);
+                typeface = owner->typefaceFinder->findTypefaceForCharacterUCS4(characterUCS4, fontStyle);
 
 #if OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
                 if (!typeface)
                 {
                     LogPrintf(LogSeverityLevel::Warning,
-                        "UCS4 character 0x%08x (%u) has not been found in any font",
+                        "UCS4 character 0x%08x (%u) has not been found in any typeface",
                         characterUCS4,
                         characterUCS4);
                 }
@@ -107,7 +106,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 if (typeface)
                 {
                     SkString typefaceName;
-                    typeface->getFamilyName(&typefaceName);
+                    typeface->skTypeface->getFamilyName(&typefaceName);
 
                     LogPrintf(LogSeverityLevel::Warning,
                         "UCS4 character 0x%08x (%u) has been found in '%s' font",
@@ -118,7 +117,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 #endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
 
-            if (pTextPaint == nullptr || pTextPaint->font.refTypeface() != typeface)
+            if (pTextPaint == nullptr || pTextPaint->font.refTypeface() != typeface->skTypeface)
             {
                 linePaint.textPaints.push_back(qMove(TextPaint()));
                 pTextPaint = &linePaint.textPaints.last();
@@ -126,7 +125,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 pTextPaint->text = QStringRef(lineRef.string(), position, 1);
                 pTextPaint->paint = paint;
                 pTextPaint->font = font;
-                pTextPaint->font.setTypeface(typeface);
+                pTextPaint->font.setTypeface(typeface->skTypeface);
 
                 SkFontMetrics metrics;
                 pTextPaint->height = pTextPaint->font.getMetrics(&metrics) + 2.0f;
@@ -140,7 +139,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
                 linePaint.fontAscent = metrics.fAscent;
 
-                if (style.bold && (!typeface || (typeface && typeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
+                if (style.bold && (!typeface || (typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
                     pTextPaint->font.setEmbolden(true);
             }
             else
