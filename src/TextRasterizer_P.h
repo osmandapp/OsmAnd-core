@@ -92,6 +92,11 @@ namespace OsmAnd
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
+        void drawText(SkCanvas& canvas,
+                     const TextPaint& textPaint,
+                     const SkFont& font,
+                     const SkPaint& paint) const;
+
     protected:
         TextRasterizer_P(TextRasterizer* const owner);
     public:
