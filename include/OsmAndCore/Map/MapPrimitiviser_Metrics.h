@@ -136,7 +136,7 @@ namespace OsmAnd
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitivise__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
 
 
@@ -152,7 +152,7 @@ namespace OsmAnd
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseAllMapObjects__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
 
 #define OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithoutSurface__FIELDS(FIELD_ACTION)     \
@@ -173,7 +173,7 @@ namespace OsmAnd
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithoutSurface__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
 
 #define OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithSurface__FIELDS(FIELD_ACTION)        \
@@ -194,7 +194,7 @@ namespace OsmAnd
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithSurface__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
     }
 }
