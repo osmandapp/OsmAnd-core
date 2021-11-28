@@ -248,15 +248,15 @@ namespace OsmAnd
             Cache();
             virtual ~Cache();
 
-            virtual SharedPrimitivesGroupsContainer& getPrimitivesGroups(const ZoomLevel zoom);
-            virtual const SharedPrimitivesGroupsContainer& getPrimitivesGroups(const ZoomLevel zoom) const;
-            virtual SharedSymbolsGroupsContainer& getSymbolsGroups(const ZoomLevel zoom);
-            virtual const SharedSymbolsGroupsContainer& getSymbolsGroups(const ZoomLevel zoom) const;
+            virtual SharedPrimitivesGroupsContainer& getPrimitivesGroups(ZoomLevel zoom);
+            virtual const SharedPrimitivesGroupsContainer& getPrimitivesGroups(ZoomLevel zoom) const;
+            virtual SharedSymbolsGroupsContainer& getSymbolsGroups(ZoomLevel zoom);
+            virtual const SharedSymbolsGroupsContainer& getSymbolsGroups(ZoomLevel zoom) const;
             
-            SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(const ZoomLevel zoom);
-            const SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(const ZoomLevel zoom) const;
-            SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(const ZoomLevel zoom);
-            const SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(const ZoomLevel zoom) const;
+            SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(ZoomLevel zoom);
+            const SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(ZoomLevel zoom) const;
+            SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(ZoomLevel zoom);
+            const SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(ZoomLevel zoom) const;
         };
         
         class OSMAND_CORE_API PrimitivisedObjects Q_DECL_FINAL

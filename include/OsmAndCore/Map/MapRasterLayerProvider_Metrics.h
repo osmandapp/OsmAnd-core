@@ -25,7 +25,7 @@ namespace OsmAnd
 
             OsmAnd__MapRasterLayerProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
     }
 }

@@ -25,7 +25,7 @@ namespace OsmAnd
 
             OsmAnd__MapRasterizer_Metrics__Metric_rasterize__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
     }
 }

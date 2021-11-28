@@ -297,7 +297,7 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::getUrlToLoad(int32_t x, in
 {
     const auto& source = owner->_tileSource;
     if (source->urlToLoad.isNull() || source->urlToLoad.isEmpty()) {
-        return QString::null;
+        return {};
     }
     if (source->invertedYTile)
         y = (1 << zoom) - 1 - y;
@@ -323,7 +323,7 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::buildUrlToLoad(const QStri
         LogPrintf(LogSeverityLevel::Error,
                   "Failed to resolve randoms for url '%s'",
                   qPrintable(urlToLoad));
-        return QString::null;
+        return {};
     }
     
     int bingQuadKeyParamIndex = urlToLoad.indexOf(QStringLiteral("{q}"));

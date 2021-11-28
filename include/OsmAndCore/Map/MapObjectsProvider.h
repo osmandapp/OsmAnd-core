@@ -28,8 +28,8 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const MapObject> > mapObjects;
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

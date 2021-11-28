@@ -59,7 +59,7 @@ void OsmAnd::ObfPoiSectionReader_P::read(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 ObfReaderUtilities::readTileBox(cis, section->area31);
@@ -116,7 +116,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 QString mainCategory;
@@ -224,7 +224,7 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtypes(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 readSubtypesStructure(reader, subtypes);
@@ -264,7 +264,7 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtypesStructure(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 const std::shared_ptr<ObfPoiSectionSubtype> subtype(new ObfPoiSectionSubtype());
@@ -420,7 +420,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 scanTiles(
@@ -466,14 +466,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 
                     cis->Seek(section->offset + dataOffset);
                     const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                    const auto offset = cis->CurrentPosition();
+                    //const auto offset = cis->CurrentPosition();
                     const auto oldLimit = cis->PushLimit(length);
 
                     const auto atLeastOneAccepted = readAmenitiesDataBox(
                         reader,
                         section,
                         outAmenities,
-                        QString::null,
+                        QString(),
                         bbox31,
                         tileFilter,
                         zoomToSkip,
@@ -583,7 +583,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
                     cis->Skip(length);
                     break;
                 }
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 const auto hasMatchingContent = scanTileForMatchingCategories(reader, *categoriesFilter);
@@ -600,7 +600,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTiles(
             case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 const auto wasAccepted = scanTiles(
@@ -784,7 +784,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
@@ -936,9 +936,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         return;
                 }
 
+                auto categoriesSet = QSet<ObfPoiCategoryId>(categories.begin(), categories.end());
                 if (!categoriesFilterChecked &&
                     categoriesFilter &&
-                    categories.toSet().intersect(*categoriesFilter).isEmpty())
+                    categoriesSet.intersect(*categoriesFilter).isEmpty())
                 {
                     return;
                 }
@@ -1004,9 +1005,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
+                auto categoriesSet = QSet<ObfPoiCategoryId>(categories.begin(), categories.end());
                 if (!categoriesFilterChecked &&
                     categoriesFilter &&
-                    categories.toSet().intersect(*categoriesFilter).isEmpty())
+                    categoriesSet.intersect(*categoriesFilter).isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;
@@ -1158,7 +1160,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
             case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 scanNameIndex(
@@ -1208,7 +1210,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 {
                     cis->Seek(section->offset + dataOffset);
                     const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                    const auto offset = cis->CurrentPosition();
+                    //const auto offset = cis->CurrentPosition();
                     const auto oldLimit = cis->PushLimit(length);
 
                     readAmenitiesDataBox(

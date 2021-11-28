@@ -48,7 +48,7 @@ namespace OsmAnd
             SkScalar width;
             SkRect bounds;
             SkRect positionedBounds;
-            std::shared_ptr<hb_face_t> hbFace;
+            std::shared_ptr<const ITypefaceFinder::Typeface> faceData;
         };
         struct LinePaint
         {

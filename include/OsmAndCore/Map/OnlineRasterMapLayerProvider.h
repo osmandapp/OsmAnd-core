@@ -61,10 +61,10 @@ namespace OsmAnd
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;
 
-        virtual MapStubStyle getDesiredStubsStyle() const;
+        virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 
-        virtual float getTileDensityFactor() const;
-        virtual uint32_t getTileSize() const;
+        virtual float getTileDensityFactor() const Q_DECL_OVERRIDE;
+        virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
@@ -78,8 +78,8 @@ namespace OsmAnd
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false) Q_DECL_OVERRIDE;
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
         
         static const QString buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom);
     };

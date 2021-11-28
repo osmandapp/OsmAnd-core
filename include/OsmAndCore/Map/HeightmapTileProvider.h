@@ -23,7 +23,7 @@ namespace OsmAnd
         PrivateImplementation<HeightmapTileProvider_P> _p;
     protected:
     public:
-        HeightmapTileProvider(const QString& dataPath, const QString& indexFilename = QString::null);
+        HeightmapTileProvider(const QString& dataPath, const QString& indexFilename = {});
         virtual ~HeightmapTileProvider();
 
         const QString dataPath;
@@ -31,9 +31,9 @@ namespace OsmAnd
 
         void rebuildTileDbIndex();
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
-        virtual uint32_t getTileSize() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+        virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool obtainData(
             const IMapDataProvider::Request& request,

@@ -104,7 +104,7 @@ void OsmAnd::ObfMapSectionReader_P::readAttributeMapping(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readAttributeMappingEntry(reader, naturalId++, attributeMapping);
@@ -556,7 +556,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
 
                 // Read map object content
                 const Stopwatch readMapObjectStopwatch(metric != nullptr);
@@ -615,7 +615,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 if (intermediateResult.isEmpty())
                 {

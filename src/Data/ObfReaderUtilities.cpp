@@ -135,7 +135,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                     }
                     else if (query.length() < matchedCharactersCount)
                     {
-                        key = QString::null;
+                        key = QString();
                     }
                 }
                 else if (matchesBackward)
@@ -147,12 +147,12 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                     }
                     else if (key.length() < matchedCharactersCount)
                     {
-                        key = QString::null;
+                        key = QString();
                     }
                 }
                 else
                 {
-                    key = QString::null;
+                    key = QString();
                 }
                 break;
             }

@@ -31,7 +31,7 @@ namespace OsmAnd
 
             OsmAnd__IMapRenderer_Metrics__Metric_update__FIELDS(EMIT_METRIC_FIELD);
             
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
 
 #define OsmAnd__IMapRenderer_Metrics__Metric_prepareFrame__FIELDS(FIELD_ACTION)         \
@@ -45,7 +45,7 @@ namespace OsmAnd
 
             OsmAnd__IMapRenderer_Metrics__Metric_prepareFrame__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
 
 #define OsmAnd__IMapRenderer_Metrics__Metric_renderFrame__FIELDS(FIELD_ACTION)          \
@@ -59,7 +59,7 @@ namespace OsmAnd
 
             OsmAnd__IMapRenderer_Metrics__Metric_renderFrame__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
     }
 }

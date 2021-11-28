@@ -335,42 +335,42 @@ OsmAnd::MapPrimitiviser::Cache::~Cache()
 {
 }
 
-OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroups(const ZoomLevel zoom)
+OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroups(ZoomLevel zoom)
 {
     return _sharedPrimitivesGroups[zoom];
 }
 
-const OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroups(const ZoomLevel zoom) const
+const OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroups(ZoomLevel zoom) const
 {
     return _sharedPrimitivesGroups[zoom];
 }
 
-OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getSymbolsGroups(const ZoomLevel zoom)
+OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getSymbolsGroups(ZoomLevel zoom)
 {
     return _sharedSymbolsGroups[zoom];
 }
 
-const OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getSymbolsGroups(const ZoomLevel zoom) const
+const OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::MapPrimitiviser::Cache::getSymbolsGroups(ZoomLevel zoom) const
 {
     return _sharedSymbolsGroups[zoom];
 }
 
-OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroupsPtr(const ZoomLevel zoom)
+OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroupsPtr(ZoomLevel zoom)
 {
     return &getPrimitivesGroups(zoom);
 }
 
-const OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroupsPtr(const ZoomLevel zoom) const
+const OsmAnd::MapPrimitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getPrimitivesGroupsPtr(ZoomLevel zoom) const
 {
     return &getPrimitivesGroups(zoom);
 }
 
-OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getSymbolsGroupsPtr(const ZoomLevel zoom)
+OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getSymbolsGroupsPtr(ZoomLevel zoom)
 {
     return &getSymbolsGroups(zoom);
 }
 
-const OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getSymbolsGroupsPtr(const ZoomLevel zoom) const
+const OsmAnd::MapPrimitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::MapPrimitiviser::Cache::getSymbolsGroupsPtr(ZoomLevel zoom) const
 {
     return &getSymbolsGroups(zoom);
 }

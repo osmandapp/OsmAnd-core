@@ -301,11 +301,11 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         
         onMapSurfaceIconSymbol->bitmap = iconClone;
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
-        onMapSurfaceIconSymbol->content = QString().sprintf(
-                                                            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
-                                                            this,
-                                                            symbolsGroup.get(),
-                                                            iconClone->getPixels());
+        onMapSurfaceIconSymbol->content = QObject::tr(
+            "markerGroup(0x%1:0x%2)->onMapSurfaceIcon:0x%3")
+            .arg((quintptr)this, QT_POINTER_SIZE * 2, 16, QChar('0'))
+            .arg((quintptr)symbolsGroup.get(), QT_POINTER_SIZE * 2, 16, QChar('0'))
+            .arg((quintptr)iconClone->getPixels(), QT_POINTER_SIZE * 2, 16, QChar('0'));
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;

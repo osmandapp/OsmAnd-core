@@ -55,10 +55,10 @@ namespace OsmAnd
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const bool fillBackground;
 
-        virtual MapStubStyle getDesiredStubsStyle() const;
+        virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 
-        virtual float getTileDensityFactor() const;
-        virtual uint32_t getTileSize() const;
+        virtual float getTileDensityFactor() const Q_DECL_OVERRIDE;
+        virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
@@ -77,8 +77,8 @@ namespace OsmAnd
             std::shared_ptr<Data>& outData,
             MapRasterLayerProvider_Metrics::Metric_obtainData* const metric = nullptr);
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
     };
 }
 

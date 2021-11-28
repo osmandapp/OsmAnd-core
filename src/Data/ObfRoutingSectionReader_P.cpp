@@ -93,7 +93,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeBbox31(
 
     for (;;)
     {
-        const auto tagPos = cis->CurrentPosition();
+        //const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
         const auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
         switch (tgn)
@@ -150,7 +150,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readAttributeMapping(
             case OBF::OsmAndRoutingIndex::kRulesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 readAttributeMappingEntry(reader, naturalId++, attributeMapping);
@@ -382,7 +382,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
 
     for (;;)
     {
-        const auto lastPos = cis->CurrentPosition();
+        //const auto lastPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -503,7 +503,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 readRoadsBlockIdsTable(reader, roadsIdsTable);
@@ -520,7 +520,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readRoad(reader, section, treeNode, bbox31, filterById, roadsIdsTable, internalId, road, metric);
@@ -557,7 +557,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readRoadsBlockRestrictions(reader, resultsByInternalId, roadsIdsTable);
@@ -570,7 +570,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
+                //const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 ObfReaderUtilities::readStringTable(cis, roadsCaptionsTable);

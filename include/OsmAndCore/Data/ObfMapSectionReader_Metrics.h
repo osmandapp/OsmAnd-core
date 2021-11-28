@@ -83,7 +83,7 @@ namespace OsmAnd
 
             OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
         };
     }
 }

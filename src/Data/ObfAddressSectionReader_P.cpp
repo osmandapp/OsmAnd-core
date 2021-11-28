@@ -94,7 +94,7 @@ void OsmAnd::ObfAddressSectionReader_P::read(
             }
             case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                auto name = QString::null;
+                auto name = QString();
                 auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 auto offset = cis->CurrentPosition();
                 uint32_t type = 1;
@@ -490,7 +490,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
 
     for (;;)
     {
-        const auto tagPos = cis->CurrentPosition();
+        //const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -728,7 +728,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
 
     for (;;)
     {
-        const auto tagPos = cis->CurrentPosition();
+        //const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -881,7 +881,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
 
     for (;;)
     {
-        const auto tagPos = cis->CurrentPosition();
+        //const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {

@@ -1023,7 +1023,7 @@ bool OsmAnd::MapRenderer::validatePublishedMapSymbolsIntegrity()
 
     for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
     {
-        const auto order = publishedMapSymbolsEntry.key();
+        //const auto order = publishedMapSymbolsEntry.key();
         const auto& publishedMapSymbols = publishedMapSymbolsEntry.value();
 
         for (const auto& publishedMapSymbolsEntry : constOf(publishedMapSymbols))

@@ -55,7 +55,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     GL_CHECK_PRESENT(glDrawElements);
 
     const auto gpuAPI = getGPUAPI();
-    const auto& internalState = getInternalState();
+    //const auto& internalState = getInternalState();
 
     prepare(metric);
 
@@ -442,7 +442,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
 
     const auto& symbol = std::static_pointer_cast<const BillboardRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-    const auto& symbolGroupPtr = symbol->groupPtr;
+    //const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
     if (lastUsedProgram != _billboardRasterProgram.id)
@@ -1238,7 +1238,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
     const auto& symbol = std::static_pointer_cast<const OnPathRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-    const auto& symbolGroupPtr = symbol->groupPtr;
+    //const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
     if (lastUsedProgram != _onPath2dProgram.id)
@@ -1381,7 +1381,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
     const auto& symbol = std::static_pointer_cast<const OnPathRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-    const auto& symbolGroupPtr = symbol->groupPtr;
+    //const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
     if (lastUsedProgram != _onPath3dProgram.id)
@@ -1812,7 +1812,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
     const auto& symbol = std::static_pointer_cast<const OnSurfaceRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
-    const auto& symbolGroupPtr = symbol->groupPtr;
+    //const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
     if (lastUsedProgram != _onSurfaceRasterProgram.id)
@@ -2072,7 +2072,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
     const auto& symbol = std::static_pointer_cast<const OnSurfaceVectorMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderable->gpuResource);
-    const auto& symbolGroupPtr = symbol->groupPtr;
+    //const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
     if (lastUsedProgram != _onSurfaceVectorProgram.id)
@@ -2217,6 +2217,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             primitivesType = GL_LINE_LOOP;
             count = gpuResource->vertexBuffer->itemsCount;
             break;
+        case VectorMapSymbol::PrimitiveType::Invalid:
+        default:
+            break;
     }
     if (gpuResource->indexBuffer)
     {
@@ -2243,7 +2246,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool gpuContextLost)
 {
-    const auto gpuAPI = getGPUAPI();
+    //const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteProgram);
 
