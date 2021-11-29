@@ -25,39 +25,13 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
             continue;
         }
 
-        const auto skTypeface = SkiaUtilities::createTypefaceFromData(typefaceData);
-        if (!skTypeface)
+        auto newTypefaceItem = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
+        if (nullptr == newTypefaceItem)
         {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to create SkTypeface from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
             continue;
         }
 
-        const auto hbBlob = std::shared_ptr<hb_blob_t>(
-            hb_blob_create_or_fail(
-                typefaceData.constData(),
-                typefaceData.length(),
-                HB_MEMORY_MODE_READONLY,
-                new QByteArray(typefaceData),
-                [](void* pUserData) { delete reinterpret_cast<QByteArray*>(pUserData); }),
-            [](auto p) { hb_blob_destroy(p); });
-        if (!hbBlob) {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to load Harfbuzz blob from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        const auto pHbTypeface = hb_face_create(hbBlob.get(), 0);
-        if (!pHbTypeface || pHbTypeface == hb_face_get_empty()) {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to create Harfbuzz typeface from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        _typefaces.push_back(std::make_shared<Typeface>(skTypeface, pHbTypeface));
+        _typefaces.push_back(std::move(newTypefaceItem));
     }
 }
 

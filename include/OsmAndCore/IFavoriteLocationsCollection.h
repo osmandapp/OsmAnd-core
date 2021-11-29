@@ -56,7 +56,7 @@ namespace OsmAnd
             const QString& background = QString(),
             const ColorRGB color = ColorRGB(),
             const bool calendarEvent = false) = 0;
-        
+
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other) = 0;
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation) = 0;
         virtual bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations) = 0;

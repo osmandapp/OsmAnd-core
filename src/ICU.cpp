@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cstring>
 
+#include <algorithm>
+
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
@@ -19,6 +21,8 @@
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
+#include <unicode/urename.h>
+
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
@@ -34,8 +38,8 @@ bool OsmAnd::ICU::initialize()
 {
     // Initialize ICU
     UErrorCode icuError = U_ZERO_ERROR;
-    g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(
-        getCoreResourcesProvider()->getResource(QLatin1String("misc/icu4c/icu-data-l.dat")))));
+    g_IcuData = std::unique_ptr<QByteArray>(new QByteArray(
+        getCoreResourcesProvider()->getResource(QLatin1String("misc/icu4c/icu-data-l.dat"))));
     udata_setCommonData(g_IcuData->constData(), &icuError);
     if (U_FAILURE(icuError))
     {
@@ -142,10 +146,8 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     // Configure context to reorder from logical to visual
     ubidi_setReorderingMode(pContext, UBIDI_REORDER_DEFAULT);
 
-    // Set data
     ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_LTR, nullptr, &icuError);
     ok = U_SUCCESS(icuError);
-
     if (ok)
     {
         auto const direction = ubidi_getDirection(pContext);
@@ -155,19 +157,17 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
             return input;
         }
         QVector<UChar> reordered(len);
-        ubidi_writeReordered(pContext, reordered.data(), len, UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS, &icuError);
+        ubidi_writeReordered(
+            pContext,
+            reordered.data(),
+            len,
+            UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS,
+            &icuError);
         ok = U_SUCCESS(icuError);
 
         if (ok)
         {
-            QVector<UChar> reshaped(len);
-            const auto newLen = u_shapeArabic(reordered.constData(), len, reshaped.data(), len, U_SHAPE_TEXT_DIRECTION_VISUAL_LTR | U_SHAPE_LETTERS_SHAPE | U_SHAPE_LENGTH_FIXED_SPACES_AT_END, &icuError);
-            ok = U_SUCCESS(icuError);
-
-            if (ok)
-            {
-                output = qMove(QString(reinterpret_cast<const QChar*>(reshaped.constData()), newLen));
-            }
+            output = QString(reinterpret_cast<const QChar*>(reordered.constData()), reordered.size());
         }
     }
 
@@ -203,7 +203,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     // Transliterate from any to latin
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
     pAnyToLatinTransliterator->transliterate(icuString);
-    output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
+    output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
 
     // If input and output differ at this point or accents/diacritics should be converted,
     // normalize the output again
@@ -214,7 +214,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
         if (ok)
         {
             pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
-            output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
+            output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
         }
 
         if (pIcuAccentsAndDiacriticsConverter != nullptr)
@@ -232,7 +232,10 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     return output;
 }
 
-OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
+OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(
+    const QString& input,
+    const int maxCharsPerLine,
+    const int maxLines /*= 0*/)
 {
     assert(maxCharsPerLine > 0);
     QVector<int> result;
@@ -312,7 +315,10 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
     return result;
 }
 
-OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappingRefs(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
+OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappingRefs(
+    const QString& input,
+    const int maxCharsPerLine,
+    const int maxLines /*= 0*/)
 {
     QVector<QStringRef> result;
     const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine, maxLines);
@@ -334,7 +340,10 @@ OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappin
     return result;
 }
 
-OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
+OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(
+    const QString& input,
+    const int maxCharsPerLine,
+    const int maxLines /*= 0*/)
 {
     QStringList result;
     const auto lineStartIndices = getTextWrapping(input, maxCharsPerLine, maxLines);
@@ -351,7 +360,7 @@ OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(const QString
     }
     if (maxLines <= 0 || linesCount < maxLines)
         result.push_back(input.mid(lastStartIndex));
-    
+
     return result;
 }
 
@@ -373,7 +382,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(
     // Remove accents and diacritics
     UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
     pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
-    output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
+    output = QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length());
 
     if (pIcuAccentsAndDiacriticsConverter != nullptr)
         delete pIcuAccentsAndDiacriticsConverter;

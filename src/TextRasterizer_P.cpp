@@ -2,15 +2,19 @@
 #include "TextRasterizer.h"
 
 #include "ignore_warnings_on_external_includes.h"
+#include <hb-ot.h>
 #include <SkBitmap.h>
 #include <SkImage.h>
 #include <SkTypeface.h>
+#include <SkTextBlob.h>
 #include <SkUtils.h>
 #include <SkFontMetrics.h>
 #include "restore_internal_warnings.h"
 
 #include "ICU.h"
+#include "HarfbuzzUtilities.h"
 #include "CoreResourcesEmbeddedBundle.h"
+#include "HarfbuzzUtilities.h"
 
 //#define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 1
 #ifndef OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
@@ -66,7 +70,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         auto pNextCharacter = pLine;
         while (pNextCharacter != pEnd)
         {
-            const auto pCharacter = pNextCharacter;
+            //const auto pCharacter = pNextCharacter;
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
             
@@ -99,7 +103,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                         "UCS4 character 0x%08x (%u) has not been found in any typeface",
                         characterUCS4,
                         characterUCS4);
-                }
+                
 #endif // OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
 
 #if OSMAND_LOG_CHARACTERS_TYPEFACE
@@ -141,6 +145,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 
                 if (style.bold && (!typeface || (typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
                     pTextPaint->font.setEmbolden(true);
+
+                pTextPaint->faceData = typeface;
             }
             else
             {
@@ -428,9 +434,73 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     return target.asImage();
 }
 
+void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
+                                        const TextPaint& textPaint,
+                                        const SkFont& font,
+                                        const SkPaint& paint) const
+{
+    QString inpStr = textPaint.text.toString();
+    auto textQStr = ICU::convertToVisualOrder(inpStr);
+
+    THbFontPtr hb_font_ptr(
+        hb_font_create_sub_font(textPaint.faceData->hbFont.get()),
+        hb_font_destroy);
+    if (nullptr == hb_font_ptr)
+    {
+        return;
+    }
+
+    auto fontSize = HarfbuzzUtilities::kHarfbuzzFontScale * font.getSize();
+    hb_font_set_scale(hb_font_ptr.get(), fontSize, fontSize);
+    hb_ot_font_set_funcs(hb_font_ptr.get());
+
+    /* Create hb-buffer and populate. */
+    std::shared_ptr<hb_buffer_t> hb_buffer_ptr(hb_buffer_create(), hb_buffer_destroy);
+    if (!hb_buffer_allocation_successful(hb_buffer_ptr.get()))
+    {
+        return;
+    }
+
+    hb_buffer_add_utf16(hb_buffer_ptr.get(), textQStr.utf16(), textQStr.size(), 0, -1);
+    hb_buffer_set_direction(hb_buffer_ptr.get(), HB_DIRECTION_LTR);
+    hb_buffer_guess_segment_properties(hb_buffer_ptr.get());
+
+    hb_shape(hb_font_ptr.get(), hb_buffer_ptr.get(), NULL, 0);
+
+    //  draw glyphs
+    unsigned int length = hb_buffer_get_length(hb_buffer_ptr.get());
+    if (length == 0)
+    {
+        return;
+    }
+    hb_glyph_info_t* info = hb_buffer_get_glyph_infos(hb_buffer_ptr.get(), NULL);
+    hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(hb_buffer_ptr.get(), NULL);
+
+    SkTextBlobBuilder textBlobBuilder;
+    auto runBuffer = textBlobBuilder.allocRunPos(font, SkToInt(length));
+
+    double x = 0;
+    double y = 0;
+    for (unsigned int i = 0; i < length; i++)
+    {
+        if (textPaint.faceData->delCodePoints.count(info[i].codepoint))
+        {
+            runBuffer.glyphs[i] = textPaint.faceData->repCodePoint;
+        } else {
+            runBuffer.glyphs[i] = info[i].codepoint;
+        }
+        reinterpret_cast<SkPoint*>(runBuffer.pos)[i] =
+            SkPoint::Make(SkDoubleToScalar(x + pos[i].x_offset / HarfbuzzUtilities::kHarfbuzzFontScale),
+                          SkDoubleToScalar(y - pos[i].y_offset / HarfbuzzUtilities::kHarfbuzzFontScale));
+        x += pos[i].x_advance / HarfbuzzUtilities::kHarfbuzzFontScale;
+        y += pos[i].y_advance / HarfbuzzUtilities::kHarfbuzzFontScale;
+    }
+    canvas.drawTextBlob(textBlobBuilder.make(), textPaint.positionedBounds.left(), textPaint.positionedBounds.top(), paint);
+}
+
 bool OsmAnd::TextRasterizer_P::rasterize(
     SkBitmap& targetBitmap,
-    const QString& text_,
+    const QString& text,
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
@@ -439,11 +509,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     float* const outFontAscent) const
 {
     // Prepare text and break by lines
-    const auto text = ICU::convertToVisualOrder(text_);
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
-
     // Obtain paints from lines and style
     auto paints = evaluatePaints(lineRefs, style);
 
@@ -453,7 +521,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
     // Measure glyphs (if requested and there's no halo)
     if (outGlyphWidths && style.haloRadius == 0)
+    {
         measureGlyphs(paints, *outGlyphWidths);
+    }
 
     // Process halo if exists
     if (style.haloRadius > 0)
@@ -461,7 +531,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         measureHalo(style, paints);
 
         if (outGlyphWidths)
+        {
             measureHaloGlyphs(style, paints, *outGlyphWidths);
+        }
     }
 
     // Set output font ascent
@@ -469,7 +541,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         float fontAscent = 0.0f;
         for (const auto& linePaint : constOf(paints))
+        {
             fontAscent = qMin(fontAscent, linePaint.fontAscent);
+        }
 
         *outFontAscent = fontAscent;
     }
@@ -479,7 +553,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         float lineSpacing = 0.0f;
         for (const auto& linePaint : constOf(paints))
+        {
             lineSpacing = qMax(lineSpacing, linePaint.maxFontLineSpacing);
+        }
 
         *outLineSpacing = lineSpacing;
     }
@@ -489,7 +565,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         SkScalar maxTop = 0;
         for (const auto& linePaint : constOf(paints))
+        {
             maxTop = qMax(maxTop, linePaint.maxFontTop);
+        }
 
         *outExtraTopSpace = qMax(0.0f, maxTop - paints.first().maxFontTop);
     }
@@ -497,7 +575,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         SkScalar maxBottom = 0;
         for (const auto& linePaint : constOf(paints))
+        {
             maxBottom = qMax(maxBottom, linePaint.maxFontBottom);
+        }
 
         *outExtraBottomSpace = qMax(0.0f, maxBottom - paints.last().maxFontBottom);
     }
@@ -527,7 +607,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         for (auto& linePaint : paints)
         {
             for (auto& textPaint : linePaint.textPaints)
+            {
                 textPaint.positionedBounds.offset(offset);
+            }
         }
     }
 
@@ -578,10 +660,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
                 const auto haloPaint = getHaloPaint(textPaint.paint, style);
                 const auto haloFont = getHaloFont(textPaint.font, style);
 
-                canvas.drawSimpleText(
-                    textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
-                    textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                    haloFont, haloPaint);
+                drawText(canvas, textPaint, haloFont, haloPaint);
             }
         }
     }
@@ -591,10 +670,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         for (const auto& textPaint : linePaint.textPaints)
         {
-            canvas.drawSimpleText(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
-                textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                textPaint.font, textPaint.paint);
+            drawText(canvas, textPaint, textPaint.font, textPaint.paint);
         }
     }
 

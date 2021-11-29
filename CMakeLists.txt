@@ -309,6 +309,7 @@ set(merged_compile_definitions_public
 set(merged_compile_definitions_private
 	${target_specific_private_definitions}
 )
+
 set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/include/OsmAndCore"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Concurrent"
