@@ -1234,7 +1234,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
             OsmAnd::ObfTransportSectionReader::initializeNames(false, stringTable.get(), r);
     }
     
-    for (const auto transportRoute : result.values())
+    for (const auto& transportRoute : result.values())
     {
         if (!visitor || visitor(transportRoute))
         {

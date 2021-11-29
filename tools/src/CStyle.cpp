@@ -269,7 +269,7 @@ bool OsmAndTools::CStyle::DebugEmitter::emitStyle(const std::shared_ptr<const Os
         else
         {
             QStringList decodedPossibleValues;
-            for (const auto possibleValue : constOf(possibleValues))
+            for (const auto& possibleValue : constOf(possibleValues))
                 decodedPossibleValues.append(dumpConstantValue(mapStyle, possibleValue, parameter->getDataType()));
 
             dump += QString(QLatin1String("param %1 %2 = (%3);\n"))
@@ -545,7 +545,7 @@ QString OsmAndTools::CStyle::DebugEmitter::dumpResolvedValue(
                 return QString(QLatin1String("color(%1)")).arg(attributeName);
         }
 
-        return QString::null;
+        return {};
     }
 
     return dumpConstantValue(mapStyle, value.asConstantValue, dataType);

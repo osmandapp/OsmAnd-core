@@ -40,7 +40,7 @@ bool OsmAnd::MapStyleConstantValue::parse(
                 else
                 {
                     // "pt:px" format
-                    const auto& complexValue = input.split(QLatin1Char(':'), QString::KeepEmptyParts);
+                    const auto& complexValue = input.split(QLatin1Char(':'), Qt::KeepEmptyParts);
 
                     output.asComplex.asInt.pt = Utilities::parseArbitraryInt(complexValue[0], 0);
                     output.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
@@ -67,7 +67,7 @@ bool OsmAnd::MapStyleConstantValue::parse(
                 else
                 {
                     // 'pt:px' format
-                    const auto& complexValue = input.split(':', QString::KeepEmptyParts);
+                    const auto& complexValue = input.split(':', Qt::KeepEmptyParts);
 
                     output.asComplex.asFloat.pt = Utilities::parseArbitraryFloat(complexValue[0], 0);
                     output.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
@@ -155,5 +155,5 @@ QString OsmAnd::MapStyleConstantValue::toString(const MapStyleValueDataType data
         }
     }
 
-    return QString::null;
+    return {};
 }

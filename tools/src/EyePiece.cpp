@@ -244,7 +244,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("WGL_EXT_extensions_string or WGL_ARB_extensions_string has to be supported") << std::endl;
         return false;
     }
-    const auto wglExtensions = QString::fromLatin1(wglExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    const auto wglExtensions = QString::fromLatin1(wglExtensionsString).split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     if (configuration.verbose)
         output << xT("WGL extensions: ") << QStringToStlString(wglExtensions.join(' ')) << std::endl;
     
@@ -438,19 +438,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     // Get the default screen's GLX extension list
     const auto glxExtensionsString = glXQueryExtensionsString(xDisplay, DefaultScreen(xDisplay));
-    const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     if (configuration.verbose)
         output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // GLX client extensions
     const auto glxClientExtensionsString = glXGetClientString(xDisplay, GLX_EXTENSIONS);
-    const auto glxClientExtensions = QString::fromLatin1(glxClientExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    const auto glxClientExtensions = QString::fromLatin1(glxClientExtensionsString).split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     if (configuration.verbose)
         output << xT("GLX client extensions: ") << QStringToStlString(glxClientExtensions.join(' ')) << std::endl;
 
     // GLX server extensions
     const auto glxServerExtensionsString = glXQueryServerString(xDisplay, DefaultScreen(xDisplay), GLX_EXTENSIONS);
-    const auto glxServerExtensions = QString::fromLatin1(glxServerExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    const auto glxServerExtensions = QString::fromLatin1(glxServerExtensionsString).split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     if (configuration.verbose)
         output << xT("GLX server extensions: ") << QStringToStlString(glxServerExtensions.join(' ')) << std::endl;
 

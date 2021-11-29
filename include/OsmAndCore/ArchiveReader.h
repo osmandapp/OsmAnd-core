@@ -32,7 +32,7 @@ namespace OsmAnd
 
             bool isValid() const;
             
-            QString name;
+            QString name = {};
             uint64_t size;
             QDateTime creationTime;
             QDateTime modificationTime;

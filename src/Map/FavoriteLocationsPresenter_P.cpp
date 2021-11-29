@@ -8,8 +8,8 @@
 #include "IFavoriteLocationsCollection.h"
 
 OsmAnd::FavoriteLocationsPresenter_P::FavoriteLocationsPresenter_P(FavoriteLocationsPresenter* const owner_)
-    : owner(owner_)
-    , _markersCollection(new MapMarkersCollection())
+    : _markersCollection(new MapMarkersCollection())
+    , owner(owner_)
 {
 }
 

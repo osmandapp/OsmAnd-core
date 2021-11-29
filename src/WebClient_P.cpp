@@ -151,10 +151,10 @@ QString OsmAnd::WebClient_P::downloadString(
     _threadPool.start(&request);
     request.waitUntilFinished();
 
-    QString charset = QString::null;
+    QString charset = {};
     if (request._lastNetworkReply->hasRawHeader("Content-Type"))
     {
-        const auto contentTypeParameters = QString(request._lastNetworkReply->rawHeader("Content-Type")).split(';', QString::SkipEmptyParts);
+        const auto contentTypeParameters = QString(request._lastNetworkReply->rawHeader("Content-Type")).split(';', Qt::SkipEmptyParts);
         for(const auto& contentTypeParam : constOf(contentTypeParameters))
         {
             const auto trimmed = contentTypeParam.trimmed();
@@ -170,7 +170,7 @@ QString OsmAnd::WebClient_P::downloadString(
     {
         if (requestResult != nullptr)
             requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-        return QString::null;
+        return {};
     }
 
     if (requestResult != nullptr)

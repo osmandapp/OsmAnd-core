@@ -121,7 +121,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processStartElement(OsmAnd::MapStyleRulesetTy
         const auto name = attribs.value(QStringLiteral("attr")).toString();
         const auto valueType = attribs.value(QStringLiteral("type")).toString();
         const auto possibleValues = attribs.value(QStringLiteral("possibleValues")).toString()
-        .split(QLatin1Char(','), QString::SkipEmptyParts);
+        .split(QLatin1Char(','), Qt::SkipEmptyParts);
         const auto defaultValueDescription = attribs.value(QStringLiteral("defaultValueDescription")).toString();
         
         MapStyleValueDataType dataType;

@@ -32,7 +32,6 @@ bool OsmAnd::ArchiveReader::extractAllItemsTo(const QString& destinationPath, ui
 }
 
 OsmAnd::ArchiveReader::Item::Item()
-    : name(QString::null)
 {
 }
 

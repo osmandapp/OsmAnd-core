@@ -16,8 +16,8 @@ OsmAnd::HeightmapTileProvider_P::HeightmapTileProvider_P(
     HeightmapTileProvider* const owner_,
     const QString& dataPath,
     const QString& indexFilename)
-    : owner(owner_)
-    , _tileDb(dataPath, indexFilename)
+    : _tileDb(dataPath, indexFilename)
+    , owner(owner_)
 {
 }
 
@@ -68,8 +68,7 @@ bool OsmAnd::HeightmapTileProvider_P::obtainData(
     // We have the data, use GDAL to decode this GeoTIFF
     const auto tileSize = getTileSize();
     bool success = false;
-    QString vmemFilename;
-    vmemFilename.sprintf("/vsimem/heightmapTile@%p", data.data());
+    auto vmemFilename = QString::asprintf("/vsimem/heightmapTile@%p", data.data());
     VSIFileFromMemBuffer(qPrintable(vmemFilename), reinterpret_cast<GByte*>(data.data()), data.length(), FALSE);
     auto dataset = reinterpret_cast<GDALDataset*>(GDALOpen(qPrintable(vmemFilename), GA_ReadOnly));
     if (dataset != nullptr)

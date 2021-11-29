@@ -74,8 +74,8 @@ namespace OsmAnd
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
         const int symbolsOrder;
 

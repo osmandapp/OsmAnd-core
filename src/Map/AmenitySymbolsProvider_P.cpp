@@ -17,8 +17,8 @@ static const int kSkipTilesZoom = 13;
 static const int kSkipTileDivider = 16;
 
 OsmAnd::AmenitySymbolsProvider_P::AmenitySymbolsProvider_P(AmenitySymbolsProvider* owner_)
-: owner(owner_)
-, textRasterizer(TextRasterizer::getDefault())
+    : textRasterizer(TextRasterizer::getDefault())
+    , owner(owner_)
 {
 }
 

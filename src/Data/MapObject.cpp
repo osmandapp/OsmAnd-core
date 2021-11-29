@@ -207,7 +207,7 @@ QString OsmAnd::MapObject::getCaptionInNativeLanguage() const
 {
     const auto citName = captions.constFind(attributeMapping->nativeNameAttributeId);
     if (citName == captions.cend())
-        return QString::null;
+        return {};
     return *citName;
 }
 
@@ -215,11 +215,11 @@ QString OsmAnd::MapObject::getCaptionInLanguage(const QString& lang) const
 {
     const auto citNameAttributeId = attributeMapping->localizedNameAttributes.constFind(&lang);
     if (citNameAttributeId == attributeMapping->localizedNameAttributes.cend())
-        return QString::null;
+        return {};
 
     const auto citCaption = captions.constFind(*citNameAttributeId);
     if (citCaption == captions.cend())
-        return QString::null;
+        return {};
     return *citCaption;
 }
 
@@ -316,13 +316,13 @@ void OsmAnd::MapObject::AttributeMapping::registerRequiredMapping(uint32_t& last
     if (nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
     {
         registerMapping(++lastUsedEntryId,
-            QLatin1String("name"), QString::null);
+            QLatin1String("name"), {});
     }
 
     if (refAttributeId == std::numeric_limits<uint32_t>::max())
     {
         registerMapping(++lastUsedEntryId,
-            QLatin1String("ref"), QString::null);
+            QLatin1String("ref"), {});
     }
 
     if (naturalCoastlineAttributeId == std::numeric_limits<uint32_t>::max())

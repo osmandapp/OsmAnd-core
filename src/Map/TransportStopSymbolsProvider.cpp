@@ -94,5 +94,5 @@ bool OsmAnd::TransportStopSymbolsProvider::TransportStopSymbolsGroup::obtainSort
 
 QString OsmAnd::TransportStopSymbolsProvider::TransportStopSymbolsGroup::toString() const
 {
-    return QString::null;
+    return {};
 }

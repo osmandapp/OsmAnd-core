@@ -367,7 +367,7 @@ void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const 
         while (i.hasNext())
         {
             i.next();
-            out << QStringLiteral("[") << i.key() << QStringLiteral("]") << endl << i.value() << endl;
+            out << QStringLiteral("[") << i.key() << QStringLiteral("]") << Qt::endl << i.value() << Qt::endl;
         }
         fileOut.flush();
         fileOut.close();

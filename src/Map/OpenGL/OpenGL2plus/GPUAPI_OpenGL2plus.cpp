@@ -143,7 +143,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     {
         const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
         GL_CHECK_RESULT;
-        _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+        _extensions = extensionsString.split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
 

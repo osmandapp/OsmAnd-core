@@ -17,10 +17,10 @@
 #include "CachedOsmandIndexes.h"
 
 OsmAnd::ObfsCollection_P::ObfsCollection_P(ObfsCollection* owner_)
-    : owner(owner_)
-    , _fileSystemWatcher(new QFileSystemWatcher())
+    : _fileSystemWatcher(new QFileSystemWatcher())
     , _lastUnusedSourceOriginId(0)
     , _collectedSourcesInvalidated(1)
+    , owner(owner_)
 {
     _fileSystemWatcher->moveToThread(gMainThread);
 
@@ -267,7 +267,7 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
     {
         const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
 
-        for(const auto watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
+        for(const auto& watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
             _fileSystemWatcher->removePath(watchedSubdirectory);
         _fileSystemWatcher->removePath(directoryAsSourceOrigin->directory.canonicalPath());
     }

@@ -3,7 +3,7 @@
 float OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance(const glm::mat4& P, const AreaI& viewport, const float Ax, const float Sx, const float k)
 {
     const float w = viewport.width();
-    const float x = viewport.left();
+    // const float x = viewport.left();
 
     const float fw = (Sx*k) / (0.5f * w);
 

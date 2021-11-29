@@ -48,13 +48,13 @@ OsmAnd::MapRenderer::MapRenderer(
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
     , _requestedDebugSettings(baseDebugSettings_->createCopy())
+    , gpuAPI(gpuAPI_)
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
     , publishedMapSymbolsByOrderLock(_publishedMapSymbolsByOrderLock)
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
-    , gpuAPI(gpuAPI_)
 {
 }
 

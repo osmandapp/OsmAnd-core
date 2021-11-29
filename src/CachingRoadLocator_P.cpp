@@ -69,7 +69,7 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
         const OsmAnd::ObfRoutingSectionReader::VisitorFunction filter,
         QList<std::shared_ptr<const OsmAnd::ObfRoutingSectionReader::DataBlock>> * const outReferencedCacheEntries) const
 {
-
+    return {};
 }
 
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findRoadsInArea(

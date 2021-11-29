@@ -159,12 +159,12 @@ int OsmAnd::MvtReader::Tile::addSequenceKey(const QString& sequenceKey)
 
 QString OsmAnd::MvtReader::Tile::getUserKey(const uint32_t userKeyId) const
 {
-    return userKeyId < _userKeys.size() ? _userKeys.at(userKeyId) : QString::null;
+    return userKeyId < _userKeys.size() ? _userKeys.at(userKeyId) : QString();
 }
 
 QString OsmAnd::MvtReader::Tile::getSequenceKey(const uint32_t sequenceKeyId) const
 {
-    return sequenceKeyId < _sequenceKeys.size() ? _sequenceKeys.at(sequenceKeyId) : QString::null;
+    return sequenceKeyId < _sequenceKeys.size() ? _sequenceKeys.at(sequenceKeyId) : QString();
 }
 
 void OsmAnd::MvtReader::Tile::addGeometry(const std::shared_ptr<const Geometry> geometry)

@@ -161,7 +161,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 
 bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
-    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+    // const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();

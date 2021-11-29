@@ -515,6 +515,6 @@ QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > Osm
 QString OsmAnd::ResolvedMapStyle_P::getStringById(const StringId id) const
 {
     if (id >= _stringsForwardLUT.size())
-        return QString::null;
+        return {};
     return _stringsForwardLUT[id];
 }

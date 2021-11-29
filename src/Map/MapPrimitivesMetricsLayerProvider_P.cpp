@@ -172,7 +172,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
     textPaint.setColor(SK_ColorGREEN);
 
     auto topOffset = fontSize;
-    const auto lines = text.split(QLatin1Char('\n'), QString::SkipEmptyParts);
+    const auto lines = text.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     for (const auto& line : lines)
     {
         canvas.drawText(

@@ -15,8 +15,8 @@
 #include "Logging.h"
 
 OsmAnd::MapStylesCollection_P::MapStylesCollection_P(MapStylesCollection* owner_)
-    : owner(owner_)
-    , _stylesLock(QReadWriteLock::Recursive)
+    : _stylesLock(QReadWriteLock::Recursive)
+    , owner(owner_)
 {
     bool ok = true;
     ok = ok && addStyleFromCoreResource(QLatin1String("map/styles/default.render.xml"));

@@ -284,7 +284,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     bool anyUploadFailed = false;
 
     const auto link_ = link.lock();
-    const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
+    // const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Unique
     QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > uniqueUploaded;
@@ -418,7 +418,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     // Shared (referenced)
     for (const auto& entry : rangeOf(constOf(sharedReferenced)))
     {
-        const auto& groupResources = entry.key();
+        // const auto& groupResources = entry.key();
         auto symbol = entry.value().first;
         auto& resource = entry.value().second;
 
@@ -575,7 +575,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
         // Otherwise, groupResources->resourcesInGPU array is empty for unique group resources
         for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
-            const auto& symbol = entryResourceInGPU.key();
+            // const auto& symbol = entryResourceInGPU.key();
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Unload symbol from GPU thread (using dispatcher)
@@ -631,7 +631,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
         // by anyone anywhere
         for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
         {
-            const auto& symbol = entryResourceInGPU.key();
+            // const auto& symbol = entryResourceInGPU.key();
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Unload symbol from GPU thread (using dispatcher)

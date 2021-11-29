@@ -204,7 +204,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 
     const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
     GL_CHECK_RESULT;
-    _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    _extensions = extensionsString.split(QRegExp("\\s+"), Qt::SkipEmptyParts);
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensions.join(' ')));
 
     GLboolean shaderCompilerPresent = GL_FALSE;

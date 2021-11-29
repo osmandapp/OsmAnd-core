@@ -72,7 +72,7 @@ namespace OsmAnd {
 
             RouteCalculationSegment(const std::shared_ptr<const Model::Road>& road, uint32_t pointIndex);
 
-            void dump(const QString& prefix = QString::null) const;
+            void dump(const QString& prefix = {}) const;
         public:
             virtual ~RouteCalculationSegment();
 

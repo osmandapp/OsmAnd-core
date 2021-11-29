@@ -26,7 +26,7 @@ bool OsmAnd::MapSymbolsGroup::obtainSortingKey(SortingKey& outKey) const
 
 QString OsmAnd::MapSymbolsGroup::toString() const
 {
-    return QString().sprintf("(@%p)", this);
+    return QString::asprintf("(@%p)", this);
 }
 
 std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbolsGroup::getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const

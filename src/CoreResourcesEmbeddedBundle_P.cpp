@@ -130,8 +130,8 @@ void* OsmAnd::CoreResourcesEmbeddedBundle_P::loadSymbol(const char* const symbol
 bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 {
     typedef const void* (*GetPointerFunctionPtr)();
-    typedef const char* NamePtr;
-    typedef const uint8_t* DataPtr;
+    // typedef const char* NamePtr;
+    // typedef const uint8_t* DataPtr;
 
     // Regular expressions to extract pure resource name or qualifiers
     const QRegularExpression resourceNameWithQualifiersRegExp("(?:\\[(.*)\\])(.*)");
@@ -182,7 +182,7 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
         const auto resourceNameComponents = resourceNameWithQualifiersRegExp.match(QLatin1String(resourceName));
         if (resourceNameComponents.hasMatch())
         {
-            qualifiers = resourceNameComponents.captured(1).split(QLatin1Char(';'), QString::SkipEmptyParts);
+            qualifiers = resourceNameComponents.captured(1).split(QLatin1Char(';'), Qt::SkipEmptyParts);
             pureResourceName = resourceNameComponents.captured(2);
         }
         else
@@ -200,7 +200,7 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
         {
             for (const auto& qualifier : constOf(qualifiers))
             {
-                const auto qualifierComponents = qualifier.trimmed().split(QLatin1Char('='), QString::SkipEmptyParts);
+                const auto qualifierComponents = qualifier.trimmed().split(QLatin1Char('='), Qt::SkipEmptyParts);
 
                 bool ok = false;
                 if (qualifierComponents.size() == 2 && qualifierComponents.first() == QLatin1String("ddf"))

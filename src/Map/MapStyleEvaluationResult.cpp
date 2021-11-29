@@ -175,7 +175,7 @@ QHash<OsmAnd::IMapStyle::ValueDefinitionId, QVariant> OsmAnd::MapStyleEvaluation
 
     const auto size = _storage.size();
     auto pValue = _storage.constData();
-    int valuesCount = 0;
+    // int valuesCount = 0;
     for (int index = 0; index < size; index++)
     {
         const auto& value = *(pValue++);
@@ -213,7 +213,7 @@ bool OsmAnd::MapStyleEvaluationResult::isEmpty() const
 {
     const auto size = _storage.size();
     auto pValue = _storage.constData();
-    int valuesCount = 0;
+    // int valuesCount = 0;
     for (int index = 0; index < size; index++)
     {
         if ((pValue++)->isValid())

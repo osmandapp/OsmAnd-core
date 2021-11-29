@@ -16,7 +16,7 @@ QString OsmAnd::MapSymbolIntersectionClassesRegistry_P::getClassNameById(const C
     QReadLocker scopedLocker(&_lock);
 
     if (_nameById.size() <= classId)
-        return QString::null;
+        return {};
     return _nameById[classId];
 }
 

@@ -19,12 +19,12 @@ OsmAnd::MapMarker::MapMarker(
     , pinIcon(pinIcon_)
     , pinIconVerticalAlignment(pinIconVerticalAlignment_)
     , pinIconHorisontalAlignment(pinIconHorisontalAlignment_)
-    , caption(caption_)
-    , captionStyle(captionStyle_)
-    , captionTopSpace(captionTopSpace_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
     , isAccuracyCircleSupported(isAccuracyCircleSupported_)
     , accuracyCircleBaseColor(accuracyCircleBaseColor_)
+    , caption(caption_)
+    , captionStyle(captionStyle_)
+    , captionTopSpace(captionTopSpace_)
 {
 }
 

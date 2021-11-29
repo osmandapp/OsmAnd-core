@@ -31,9 +31,9 @@ const float DISTANCE_BUILDING_PROXIMITY = 100;
 OsmAnd::ReverseGeocoder_P::ReverseGeocoder_P(
         OsmAnd::ReverseGeocoder* owner_,
         const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator_)
-    : owner(owner_)
-    , roadLocator(roadLocator_)
+    : roadLocator(roadLocator_)
     , addressByNameSearch(std::make_shared<AddressesByNameSearch>(owner_->obfsCollection))
+    , owner(owner_)
 {
 
 }
@@ -180,7 +180,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     {
         std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
-        for (const std::shared_ptr<ResultEntry> street : streetList)
+        for (const std::shared_ptr<ResultEntry>& street : streetList)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();
@@ -221,7 +221,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QHash<std::shared_ptr<const Street>, QList<std::shared_ptr<const Building>>> buildingsForStreet{};
     dataInterface->loadBuildingsFromStreets(streets, &buildingsForStreet);
     auto const& buildings = buildingsForStreet[street->street];
-    for (const std::shared_ptr<const Building> b : buildings)
+    for (const std::shared_ptr<const Building>& b : buildings)
     {
         auto makeResult = [b, street, &result](){
             auto bld = std::make_shared<ResultEntry>();
@@ -264,14 +264,14 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
     auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2, OsmAnd::RoutingDataLevel::Detailed,
-                                               [this]
+                                               []
                                                (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
                                                {
                                                    return !road->captions.isEmpty();
                                                });
     if (roads.isEmpty())
         roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10, OsmAnd::RoutingDataLevel::Detailed,
-                                              [this]
+                                              []
                                               (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
                                               {
                                                   return !road->captions.isEmpty();

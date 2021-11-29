@@ -41,7 +41,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
-    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+    // const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
     bool ok = true;
 
     const auto& internalState = getInternalState();
@@ -642,7 +642,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_PRESENT(glVertexAttribPointer);
     GL_CHECK_PRESENT(glDisableVertexAttribArray);
 
-    const auto& currentConfiguration = getCurrentConfiguration();
+    // const auto& currentConfiguration = getCurrentConfiguration();
     const auto& internalState = getInternalState();
 
     const auto batchedLayersCount = batch->layers.size();
@@ -657,7 +657,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         lastUsedProgram,
         activeElevationVertexAttribArray);
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
-    const auto& vao = _rasterTileVAOs[batchedLayersCount];
+    // const auto& vao = _rasterTileVAOs[batchedLayersCount];
 
     // Set tile coordinates offset
     glUniform2f(program.vs.param.tileCoordsOffset,
@@ -878,6 +878,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
                 break;
             case TextureFilteringQuality::Best:
                 bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_TrilinearMipmap;
+                break;
+            case TextureFilteringQuality::Normal:
+            default:
                 break;
         }
     }

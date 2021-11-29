@@ -2,9 +2,9 @@
 #include "AccessLockCounter.h"
 
 OsmAnd::AccessLockCounter_P::AccessLockCounter_P(AccessLockCounter* const owner_)
-    : owner(owner_)
-    , _lockCounter(0)
+    : _lockCounter(0)
     , _isBeingDestroyed(false)
+    , owner(owner_)
 {
 }
 

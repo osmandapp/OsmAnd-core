@@ -14,8 +14,8 @@
 #include "MapSymbolIntersectionClassesRegistry.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
-    : owner(owner_)
-    , textRasterizer(TextRasterizer::getDefault())
+    : textRasterizer(TextRasterizer::getDefault())
+    , owner(owner_)
 {
 }
 

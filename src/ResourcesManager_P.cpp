@@ -28,11 +28,11 @@
 OsmAnd::ResourcesManager_P::ResourcesManager_P(
     ResourcesManager* owner_,
     const std::shared_ptr<const IWebClient>& webClient_)
-    : owner(owner_)
-    , _fileSystemWatcher(new QFileSystemWatcher())
+    : _fileSystemWatcher(new QFileSystemWatcher())
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
     , _webClient(webClient_)
+    , owner(owner_)
     , changesManager(new IncrementalChangesManager(webClient_, owner_))
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
@@ -1428,6 +1428,11 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         case ResourceType::VoicePack:
             ok = installVoicePackFromFile(id, filePath, resource);
             break;
+        case ResourceType::MapStyle:
+        case ResourceType::MapStylesPresets:
+        case ResourceType::Unknown:
+        default:
+            break;
     }
 
     scopedLocker.unlock();
@@ -1777,6 +1782,11 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
             break;
         case ResourceType::VoicePack:
             ok = updateVoicePackFromFile(installedResource, filePath);
+            break;
+        case ResourceType::MapStyle:
+        case ResourceType::MapStylesPresets:
+        case ResourceType::Unknown:
+        default:
             break;
     }
     if (!ok)

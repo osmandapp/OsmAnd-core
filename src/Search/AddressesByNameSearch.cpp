@@ -35,7 +35,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
             case AddressType::StreetGroup:
             {
                 const ObfAddressSectionReader::StreetVisitorFunction visitorFunction =
-                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                [newResultEntryCallback, criteria_, criteria, &stringMatcher]
                 (const std::shared_ptr<const OsmAnd::Street>& street) -> bool
                 {
                     bool accept = criteria.name.isEmpty();
@@ -74,7 +74,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
             case AddressType::Street:
             {
                 const ObfAddressSectionReader::BuildingVisitorFunction visitorFunction =
-                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                [newResultEntryCallback, criteria_, criteria, &stringMatcher]
                 (const std::shared_ptr<const OsmAnd::Building>& building) -> bool
                 {
                     bool accept = true;
@@ -117,7 +117,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 
                 
                 const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
-                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                [newResultEntryCallback, criteria_, criteria, &stringMatcher]
                 (const std::shared_ptr<const OsmAnd::StreetIntersection>& intersection) -> bool
                 {
                     bool accept = criteria.name.isEmpty();
@@ -151,6 +151,10 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 
                 break;
             }
+            case AddressType::Building:
+            case AddressType::StreetIntersection:
+            default:
+                break;
         }
     }
     else

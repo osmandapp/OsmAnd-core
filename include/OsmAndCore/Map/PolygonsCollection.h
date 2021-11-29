@@ -35,7 +35,7 @@ namespace OsmAnd
         bool removePolygon(const std::shared_ptr<Polygon>& polygon);
         void removeAllPolygons();
 
-        QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
         
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;

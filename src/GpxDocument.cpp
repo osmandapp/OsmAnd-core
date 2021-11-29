@@ -2170,11 +2170,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 
                 QString points = xmlReader.readElementText();
-                QStringList list = points.split(QStringLiteral("\n"), QString::SkipEmptyParts);
+                QStringList list = points.split(QStringLiteral("\n"), Qt::SkipEmptyParts);
 
                 for (int i = 0; i < list.count(); i++)
                 {
-                    QStringList coords = list[i].split(QStringLiteral(","), QString::SkipEmptyParts);
+                    QStringList coords = list[i].split(QStringLiteral(","), Qt::SkipEmptyParts);
                     int arrLength = coords.count();
                     if (arrLength > 1)
                     {
@@ -2723,7 +2723,7 @@ QHash<QString, QVariant> OsmAnd::GpxDocument::GpxExtensions::getValues(const boo
     QHash<QString, QVariant> values;
 
     if (!value.isEmpty())
-        values.insert(QString::null, value);
+        values.insert({}, value);
 
     for (const auto attributeEntry : rangeOf(constOf(attributes)))
         values.insert(attributeEntry.key(), attributeEntry.value());

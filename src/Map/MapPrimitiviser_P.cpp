@@ -2634,7 +2634,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             intersectsWith);
         if (!ok)
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
-        text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+        text->intersectsWith = intersectsWith.split(QLatin1Char(','), Qt::SkipEmptyParts).toSet();
 
         float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
         ok = evaluationResult.getFloatValue(
@@ -2788,7 +2788,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
         intersectsWith);
     if (!ok)
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
-    icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+    icon->intersectsWith = intersectsWith.split(QLatin1Char(','), Qt::SkipEmptyParts).toSet();
 
     float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
     ok = primitive->evaluationResult.getFloatValue(

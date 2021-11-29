@@ -35,7 +35,7 @@ namespace OsmAnd
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
 
-        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

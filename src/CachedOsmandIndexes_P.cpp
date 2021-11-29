@@ -339,7 +339,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::CachedOsmandIndexes_P::initFileIn
         mi->nameIndexInnerOffset = index.indexnameoffset();
         for (int m = 0; m < index.cities_size(); m++) {
             auto mr = index.cities(m);
-            auto cblock = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(QString::null, mr.offset(), mr.size(), mr.type());
+            auto cblock = std::make_shared<ObfAddressSectionInfo::CitiesBlock>(QString(), mr.offset(), mr.size(), mr.type());
             mi->cities.push_back(cblock);
         }
         for (int m = 0; m < index.additionaltags_size(); m++) {

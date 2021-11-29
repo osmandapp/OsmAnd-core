@@ -169,7 +169,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     bool anyUploadFailed = false;
 
     const auto link_ = link.lock();
-    const auto collection = static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection);
+    // const auto collection = static_cast<MapRendererKeyedResourcesCollection*>(&link_->collection);
 
     QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > uploaded;
     for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))

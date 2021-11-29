@@ -22,8 +22,7 @@ OsmAnd::QIODeviceLogSink::~QIODeviceLogSink()
 
 void OsmAnd::QIODeviceLogSink::log(const LogSeverityLevel level, const char* format, va_list args)
 {
-    QString line;
-    line.vsprintf(format, args);
+    auto line = QString::vasprintf(format, args);
     switch (level)
     {
         case LogSeverityLevel::Verbose:

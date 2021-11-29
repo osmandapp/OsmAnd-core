@@ -728,7 +728,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
     std::shared_ptr<GenericAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
         key,
         AnimatedValue::Zoom,
-        [this]
+        []
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
             // If shared context contains no data it means that parabolic effect was disabled
@@ -808,7 +808,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
     std::shared_ptr<GenericAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
         key,
         AnimatedValue::Zoom,
-        [this]
+        []
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
             // If shared context contains no data it means that parabolic effect was disabled
@@ -982,8 +982,8 @@ OsmAnd::MapAnimator_P::GenericAnimation::GenericAnimation(
     , _sharedContext(sharedContext_)
     , key(key_)
     , animatedValue(animatedValue_)
-    , duration(duration_)
     , delay(delay_)
+    , duration(duration_)
     , timingFunction(timingFunction_)
 {
 }

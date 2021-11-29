@@ -351,7 +351,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    // const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     const auto fTL_g = internalState->mCameraViewInv * fTL_c;
     const auto fTR_g = internalState->mCameraViewInv * fTR_c;
     const auto fBL_g = internalState->mCameraViewInv * fBL_c;

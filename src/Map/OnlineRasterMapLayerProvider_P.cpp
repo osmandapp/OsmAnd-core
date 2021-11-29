@@ -23,9 +23,9 @@
 OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(
     OnlineRasterMapLayerProvider* owner_,
     const std::shared_ptr<const IWebClient>& downloadManager_)
-    : owner(owner_)
-    , _downloadManager(downloadManager_)
+    : _downloadManager(downloadManager_)
     , _networkAccessAllowed(true)
+    , owner(owner_)
 {
 }
 

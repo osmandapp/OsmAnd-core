@@ -52,7 +52,7 @@ bool OsmAnd::AtlasMapRenderer::updateInternalState(
 
 bool OsmAnd::AtlasMapRenderer::prePrepareFrame()
 {
-    const auto internalState = static_cast<AtlasMapRendererInternalState*>(getInternalStateRef());
+    // const auto internalState = static_cast<AtlasMapRendererInternalState*>(getInternalStateRef());
 
     if (!MapRenderer::prePrepareFrame())
         return false;

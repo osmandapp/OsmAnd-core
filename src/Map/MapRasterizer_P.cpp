@@ -715,7 +715,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
     auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
     if (itPathEffects == _pathEffects.cend())
     {
-        const auto& strIntervals = encodedPathEffect.split(QLatin1Char('_'), QString::SkipEmptyParts);
+        const auto& strIntervals = encodedPathEffect.split(QLatin1Char('_'), Qt::SkipEmptyParts);
         const auto intervalsCount = strIntervals.size();
 
         const auto intervals = new SkScalar[intervalsCount];
@@ -731,7 +731,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
             else
             {
                 // "pt:px" format
-                const auto& complexValue = strInterval.split(QLatin1Char(':'), QString::KeepEmptyParts);
+                const auto& complexValue = strInterval.split(QLatin1Char(':'), Qt::KeepEmptyParts);
 
                 computedValue = complexValue[0].toFloat()*owner->mapPresentationEnvironment->displayDensityFactor + complexValue[1].toFloat();
             }

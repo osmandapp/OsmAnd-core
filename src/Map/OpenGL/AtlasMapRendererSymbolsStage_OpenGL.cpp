@@ -485,7 +485,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) billboard raster \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1273,7 +1273,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-2D \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1416,7 +1416,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-3D \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1847,7 +1847,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface raster \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -2092,7 +2092,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface vector]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString()));
 
     if (currentAlphaChannelType != AlphaChannelType::Straight)

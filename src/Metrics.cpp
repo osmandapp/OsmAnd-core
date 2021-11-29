@@ -31,11 +31,13 @@ void OsmAnd::Metric::addSubmetric(const std::shared_ptr<Metric>& submetric)
 
 void OsmAnd::Metric::addOrReplaceSubmetric(const std::shared_ptr<Metric>& submetric)
 {
-    const auto& submetricType = typeid(*submetric);
+    auto barePtrSubmetric = submetric.get();
+    const auto& submetricType = typeid(*barePtrSubmetric);
 
     for (auto& otherSubmetric : submetrics)
     {
-        if (submetricType == typeid(*otherSubmetric))
+        auto barePtrOtherSubmetric = otherSubmetric.get();
+        if (submetricType == typeid(*barePtrOtherSubmetric))
         {
             otherSubmetric = submetric;
             return;
@@ -49,7 +51,8 @@ std::shared_ptr<OsmAnd::Metric> OsmAnd::Metric::findSubmetricOfExactType(const s
 {
     for (auto& submetric : submetrics)
     {
-        if (typeid(*submetric) == requestedType)
+        auto barePtrSubmetric = submetric.get();
+        if (typeid(*barePtrSubmetric) == requestedType)
             return submetric.shared_ptr();
     }
 
@@ -60,7 +63,8 @@ std::shared_ptr<const OsmAnd::Metric> OsmAnd::Metric::findSubmetricOfExactType(c
 {
     for (auto& submetric : submetrics)
     {
-        if (typeid(*submetric) == requestedType)
+        auto barePtrSubmetric = submetric.get();
+        if (typeid(*barePtrSubmetric) == requestedType)
             return submetric.shared_ptr();
     }
 

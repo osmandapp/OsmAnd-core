@@ -124,24 +124,24 @@ namespace OsmAnd
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath_ = QString::null);
+            const QString& localPath_ = {});
         bool installObfFromFile(
             const QString& id,
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = {});
         bool installSQLiteDBFromFile(
             const QString& id,
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = {});
         bool installVoicePackFromFile(
             const QString& id,
             const QString& filePath,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = {});
 
         bool updateObfFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
