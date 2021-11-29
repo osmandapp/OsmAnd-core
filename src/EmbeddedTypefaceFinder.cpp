@@ -6,6 +6,8 @@
 
 #include <SkTypeface.h>
 
+#include <hb-ot.h>
+
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
@@ -42,7 +44,8 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
                 new QByteArray(typefaceData),
                 [](void* pUserData) { delete reinterpret_cast<QByteArray*>(pUserData); }),
             [](auto p) { hb_blob_destroy(p); });
-        if (!hbBlob) {
+        if (!hbBlob)
+        {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to load Harfbuzz blob from embedded data for '%s'",
                 qPrintable(embeddedTypefaceResource));
@@ -50,14 +53,43 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
         }
 
         const auto pHbTypeface = hb_face_create(hbBlob.get(), 0);
-        if (!pHbTypeface || pHbTypeface == hb_face_get_empty()) {
+        if (!pHbTypeface || pHbTypeface == hb_face_get_empty())
+        {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to create Harfbuzz typeface from embedded data for '%s'",
                 qPrintable(embeddedTypefaceResource));
             continue;
         }
 
-        _typefaces.push_back(std::make_shared<Typeface>(skTypeface, pHbTypeface));
+		//here calculating replacement symbols
+        std::set<uint32_t> delCodePoints;
+        uint32_t repCodePoint;
+		hb_font_t *hb_font = hb_font_create(pHbTypeface);
+		hb_ot_font_set_funcs(hb_font);
+		hb_buffer_t *hb_buffer = hb_buffer_create();
+		hb_buffer_add_utf8(hb_buffer, ITypefaceFinder::Typeface::sRepChars, -1, 0, -1);
+		hb_buffer_guess_segment_properties(hb_buffer);
+		hb_shape(hb_font, hb_buffer, NULL, 0);
+		unsigned int length = hb_buffer_get_length(hb_buffer);
+		hb_glyph_info_t *info = hb_buffer_get_glyph_infos(hb_buffer, NULL);
+		for (size_t i = 0; i < length; ++i)
+        {
+			if (i == 0)
+            {
+				repCodePoint = info[i].codepoint;
+			} else if (i == 1) {
+				continue;
+			} else {
+				delCodePoints.insert(info[i].codepoint);
+			}
+		}
+		hb_buffer_destroy(hb_buffer);
+		hb_font_destroy(hb_font);
+
+        _typefaces.push_back(std::make_shared<Typeface>(skTypeface,
+                                                        pHbTypeface,
+                                                        std::move(delCodePoints),
+                                                        repCodePoint));
     }
 }
 

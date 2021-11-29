@@ -51,6 +51,7 @@ namespace OsmAnd
             SkScalar width;
             SkRect bounds;
             SkRect positionedBounds;
+            std::shared_ptr<const ITypefaceFinder::Typeface> faceData;
         };
         struct LinePaint
         {
@@ -63,8 +64,8 @@ namespace OsmAnd
                 , minFontTop(std::numeric_limits<SkScalar>::max())
                 , maxFontBottom(0)
                 , minFontBottom(std::numeric_limits<SkScalar>::max())
-                , maxBoundsTop(0)
                 , fontAscent(0)
+                , maxBoundsTop(0)
                 , minBoundsTop(std::numeric_limits<SkScalar>::max())
                 , width(0)
             {
@@ -96,6 +97,11 @@ namespace OsmAnd
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
+        void drawText(SkCanvas& canvas,
+                     const TextPaint& textPaint,
+                     const SkFont& font,
+                     const SkPaint& paint) const;
+
     protected:
         TextRasterizer_P(TextRasterizer* const owner);
     public:

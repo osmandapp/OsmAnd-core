@@ -142,31 +142,24 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     // Configure context to reorder from logical to visual
     ubidi_setReorderingMode(pContext, UBIDI_REORDER_DEFAULT);
 
-    // Set data
-    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_LTR, nullptr, &icuError);
+    auto const direction = ubidi_getDirection(pContext);
+    if (direction == UBIDI_LTR)
+    {
+        return input;
+    }
+    QVector<UChar> reordered(len);
+    ubidi_writeReordered(pContext, reordered.data(), len, UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS, &icuError);
     ok = U_SUCCESS(icuError);
 
     if (ok)
     {
-        auto const direction = ubidi_getDirection(pContext);
-        if (direction == UBIDI_LTR)
-        {
-            return input;
-        }
-        QVector<UChar> reordered(len);
-        ubidi_writeReordered(pContext, reordered.data(), len, UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS, &icuError);
+        QVector<UChar> reshaped(len);
+        const auto newLen = u_shapeArabic(reordered.constData(), len, reshaped.data(), len, U_SHAPE_TEXT_DIRECTION_VISUAL_LTR | U_SHAPE_LETTERS_SHAPE | U_SHAPE_LENGTH_FIXED_SPACES_AT_END, &icuError);
         ok = U_SUCCESS(icuError);
 
         if (ok)
         {
-            QVector<UChar> reshaped(len);
-            const auto newLen = u_shapeArabic(reordered.constData(), len, reshaped.data(), len, U_SHAPE_TEXT_DIRECTION_VISUAL_LTR | U_SHAPE_LETTERS_SHAPE | U_SHAPE_LENGTH_FIXED_SPACES_AT_END, &icuError);
-            ok = U_SUCCESS(icuError);
-
-            if (ok)
-            {
-                output = qMove(QString(reinterpret_cast<const QChar*>(reshaped.constData()), newLen));
-            }
+            output = qMove(QString(reinterpret_cast<const QChar*>(reshaped.constData()), newLen));
         }
     }
 

@@ -307,6 +307,7 @@ set(merged_compile_definitions_public
 	${target_specific_public_definitions}
 )
 set(merged_compile_definitions_private
+	-DOSMAND_USE_HARFBUZZ
 	${target_specific_private_definitions}
 )
 set(merged_include_dirs_private
