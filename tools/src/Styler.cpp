@@ -451,7 +451,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\t\tDraw along path: ") << (symbol->drawAlongPath ? xT("yes") : xT("no")) << std::endl;
                     output
                         << xT("\t\tIntersects with: ")
-                        << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", ")))
+                        << QStringToStlString(QStringList(symbol->intersectsWith.values()).join(QLatin1String(", ")))
                         << std::endl;
                     output << xT("\t\tMinDistance: ") << symbol->minDistance << std::endl;
                     if (textSymbol)

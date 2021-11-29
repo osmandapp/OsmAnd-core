@@ -1222,7 +1222,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
         auto reader = readers[sectionId];
         auto section = sections[sectionId];
         auto pointers = entry.value();
-        qSort(pointers);
+        std::sort(pointers.begin(), pointers.end());
         auto stringTable = std::make_shared<ObfSectionInfo::StringTable>();
         for (const auto& filePointer : pointers)
         {

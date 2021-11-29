@@ -345,7 +345,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
 
     for (int typeIdx = 0; typeIdx < sizeof(types) / sizeof(types[0]); typeIdx++)
     {
-        auto type = types[typeIdx];
+        // auto type = types[typeIdx];
 
         QList< std::shared_ptr<const OsmAnd::StreetGroup> > streetGroups;
         OsmAnd::ObfAddressStreetGroupTypesMask typesMask;

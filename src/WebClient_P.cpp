@@ -17,10 +17,10 @@ OsmAnd::WebClient_P::WebClient_P(
     const unsigned int concurrentRequestsLimit_,
     const unsigned int retriesLimit_,
     const bool followRedirects_)
-    : owner(owner_)
-    , _userAgent(userAgent_)
+    : _userAgent(userAgent_)
     , _retriesLimit(retriesLimit_)
     , _followRedirects(followRedirects_ ? 1 : 0)
+    , owner(owner_)
 {
     _threadPool.setMaxThreadCount(concurrentRequestsLimit_);
 }
