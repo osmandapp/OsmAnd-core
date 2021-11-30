@@ -160,6 +160,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 {
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
+    bool isInsideMetadataTag = false;
 
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -167,6 +168,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
         const auto tagName = xmlReader.name();
         if (xmlReader.isStartElement())
         {
+            if (tagName == QLatin1String("metadata"))
+                isInsideMetadataTag = true;
+            
             if (tagName == QLatin1String("wpt"))
             {
                 if (newItem)
@@ -196,30 +200,39 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <ele>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setElevation(xmlReader.readElementText());
+                else
+                {
+                    newItem->setElevation(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("time"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <time>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setTime(xmlReader.readElementText());
+                else
+                {
+                    newItem->setTime(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("creation_date"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <creation_date>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setCreationTime(xmlReader.readElementText());
+                else
+                {
+                    newItem->setCreationTime(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("name"))
             {
@@ -234,95 +247,123 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <desc>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-
-                newItem->setDescription(xmlReader.readElementText());
+                else
+                {
+                    newItem->setDescription(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("address"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <address>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setAddress(xmlReader.readElementText());
+                else
+                {
+                    newItem->setAddress(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("calendar_event"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <calendar_event>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setCalendarEvent(xmlReader.readElementText() == "true");
+                else
+                {
+                    newItem->setCalendarEvent(xmlReader.readElementText() == "true");
+                }
             }
             else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <category>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-
-                const auto& group = xmlReader.readElementText();
-                if (!group.isEmpty())
-                    newItem->setGroup(group);
+                else
+                {
+                    const auto& group = xmlReader.readElementText();
+                    if (!group.isEmpty())
+                        newItem->setGroup(group);
+                }
             }
             else if (tagName == QLatin1String("icon"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <icon>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setIcon(xmlReader.readElementText());
+                else
+                {
+                    newItem->setIcon(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("background"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <background>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-       
-                newItem->setBackground(xmlReader.readElementText());
+                else
+                {
+                    newItem->setBackground(xmlReader.readElementText());
+                }
             }
             else if (tagName == QLatin1String("color"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <color>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-
-                bool ok = false;
-                const auto color = Utilities::parseColor(xmlReader.readElementText(), ColorARGB(), &ok);
-                if (!ok)
+                else
                 {
-                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid color");
-                    continue;
-                }
+                    bool ok = false;
+                    const auto color = Utilities::parseColor(xmlReader.readElementText(), ColorARGB(), &ok);
+                    if (!ok)
+                    {
+                        LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid color");
+                        continue;
+                    }
 
-                newItem->setColor(static_cast<ColorRGB>(color));
+                    newItem->setColor(static_cast<ColorRGB>(color));
+                }
             }
             else if (tagName == QLatin1String("color"))
             {
                 if (!newItem)
                 {
                     LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unexpected <hidden/>");
-                    return false;
+                    if (!isInsideMetadataTag)
+                        return false;
                 }
-
-                newItem->setIsHidden(true);
+                else
+                {
+                    newItem->setIsHidden(true);
+                }
             }
         }
         else if (xmlReader.isEndElement())
         {
-            if (tagName == QLatin1String("wpt"))
+            if (tagName == QLatin1String("metadata"))
+            {
+                isInsideMetadataTag = false;
+            }
+            else if (tagName == QLatin1String("wpt"))
             {
                 if (!newItem)
                 {
