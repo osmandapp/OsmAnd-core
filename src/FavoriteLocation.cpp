@@ -214,7 +214,13 @@ void OsmAnd::FavoriteLocation::setBackground(const QString& newBackground)
 
 OsmAnd::ColorRGB OsmAnd::FavoriteLocation::getColor() const
 {
-    return _p->getColor();
+    auto undefinedColor = OsmAnd::ColorRGB(0xFF, 0xFF, 0xFF);
+    auto defaultColor = OsmAnd::ColorRGB(0x3F, 0x51, 0xB5);
+    
+    OsmAnd::ColorRGB color = _p->getColor();
+    if (color == undefinedColor)
+        return defaultColor;
+    return color;
 }
 
 void OsmAnd::FavoriteLocation::setColor(const ColorRGB newColor)

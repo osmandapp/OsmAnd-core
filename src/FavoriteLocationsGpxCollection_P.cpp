@@ -160,6 +160,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 {
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
+    bool isInsideMetadataTag = false;
 
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -167,6 +168,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
         const auto tagName = xmlReader.name();
         if (xmlReader.isStartElement())
         {
+            if (tagName == QLatin1String("metadata"))
+                isInsideMetadataTag = true;
+            if (isInsideMetadataTag)
+                continue;
+            
             if (tagName == QLatin1String("wpt"))
             {
                 if (newItem)
@@ -322,7 +328,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
         }
         else if (xmlReader.isEndElement())
         {
-            if (tagName == QLatin1String("wpt"))
+            if (tagName == QLatin1String("metadata"))
+            {
+                isInsideMetadataTag = false;
+            }
+            else if (tagName == QLatin1String("wpt"))
             {
                 if (!newItem)
                 {
