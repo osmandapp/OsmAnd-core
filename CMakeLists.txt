@@ -9,6 +9,10 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 set(target_specific_dependencies "")
 
+# Build options
+option(USE_HARFBUZZ "Use Harfbuzz" ON) #ON by default
+# Build options
+
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
@@ -307,9 +311,16 @@ set(merged_compile_definitions_public
 	${target_specific_public_definitions}
 )
 set(merged_compile_definitions_private
-	-DOSMAND_USE_HARFBUZZ
 	${target_specific_private_definitions}
 )
+
+if(USE_HARFBUZZ)
+	set(merged_compile_definitions_private
+		${merged_compile_definitions_private}
+		-DOSMAND_USE_HARFBUZZ
+	)
+endif(USE_HARFBUZZ)
+
 set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/include/OsmAndCore"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Concurrent"
