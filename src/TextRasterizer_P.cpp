@@ -517,7 +517,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 
 bool OsmAnd::TextRasterizer_P::rasterize(
     SkBitmap& targetBitmap,
-    const QString& text_,
+    const QString& text,
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
