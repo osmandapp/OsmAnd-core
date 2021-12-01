@@ -527,7 +527,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 {
     // Prepare text and break by lines
     //const auto text = QString("Constantine ⵇⵙⴻⵏⵟⵉⵏⴰ قسنطينة");
-    //const auto text = ICU::convertToVisualOrder(text_);  // loks like it's not necessary
+    //const auto text = ICU::convertToVisualOrder(text_);  // looks like it's not necessary
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
