@@ -178,6 +178,13 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setScreenScale(const float
     return *this;
 }
 
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const LineEndCapStyle endCapStyle)
+{
+    _p->setEndCapStyle(endCapStyle);
+    
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getColorizationScheme() const
 {
     return _p->getColorizationScheme();

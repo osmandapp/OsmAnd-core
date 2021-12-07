@@ -39,6 +39,8 @@ namespace OsmAnd
         int _baseOrder;
         int _colorizationScheme;
         
+        LineEndCapStyle _endCapStyle;
+        
         double _outlineWidth;
         double _lineWidth;
         FColorARGB _fillColor;
@@ -106,6 +108,8 @@ namespace OsmAnd
         
         float getScreenScale() const;
         void setScreenScale(const float screenScale);
+        
+        void setEndCapStyle(const LineEndCapStyle endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

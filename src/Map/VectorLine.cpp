@@ -7,7 +7,8 @@ OsmAnd::VectorLine::VectorLine(
     const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
     const std::shared_ptr<const SkBitmap>& specialPathIcon_/* = nullptr*/,
     const float pathIconStep_/* = -1*/,
-    const float screenScale_/* = 2*/)
+    const float screenScale_/* = 2*/,
+    const LineEndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
@@ -15,6 +16,7 @@ OsmAnd::VectorLine::VectorLine(
     , specialPathIcon(specialPathIcon_)
     , pathIconStep(pathIconStep_)
     , screenScale(screenScale_)
+    , endCapStyle(endCapStlye_)
 {
 }
 
