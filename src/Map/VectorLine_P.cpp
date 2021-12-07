@@ -168,7 +168,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         
         if (owner->pathIcon)
         {
-            double newWidth = _lineWidth / 2;
+            double newWidth = _lineWidth / 3;
             double scale = newWidth / owner->pathIcon->width();
             _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
         }
@@ -924,7 +924,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                                subvector, radius * 2,
                                                                                                                _fillColor, colors,
                                                                                                                crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                               crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                               owner->endCapStyle);
                 prevIdx = idx - 1;
             }
             const auto begin = original.begin() + prevIdx;
@@ -939,7 +939,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                            subvector, radius * 2,
                                                                                                            _fillColor, colors,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                           owner->endCapStyle);
         }
         else
         {
@@ -948,7 +948,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                            original, radius * 2,
                                                                                                            _fillColor, filteredColorsMap,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                           owner->endCapStyle);
         }
     }
     if (vertices.size() == 0)

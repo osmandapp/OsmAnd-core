@@ -14,6 +14,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
+#include <Polyline2D/Polyline2D.h>
 
 class SkBitmap;
 
@@ -25,6 +26,8 @@ namespace OsmAnd
     class VectorLinesCollection_P;
 
     class VectorLine_P;
+
+    typedef crushedpixel::Polyline2D::EndCapStyle LineEndCapStyle;
     typedef enum
     {
         kRoundJoinType = 0,
@@ -78,7 +81,8 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
             const std::shared_ptr<const SkBitmap>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
-            const float screenScale = 2
+            const float screenScale = 2,
+            const LineEndCapStyle endCapStyle = LineEndCapStyle::ROUND
         );
 
         bool applyChanges();
@@ -91,6 +95,7 @@ namespace OsmAnd
         const std::shared_ptr<const SkBitmap> specialPathIcon;
         const float pathIconStep;
         const float screenScale;
+        LineEndCapStyle endCapStyle;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
