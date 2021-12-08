@@ -943,26 +943,21 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     }
 }
 
-bool OsmAnd::ObfMapSectionReader_P::isCoastline(std::shared_ptr<const BinaryMapObject> mObj) {
-    if (mObj) {
-        return mObj->containsAttribute(mObj->attributeMapping->naturalCoastlineAttributeId);
-    }
-    return false;
+bool OsmAnd::ObfMapSectionReader_P::isCoastline(const std::shared_ptr<const BinaryMapObject> & mObj) {
+    return mObj && mObj->containsAttribute(mObj->attributeMapping->naturalCoastlineAttributeId);
 }
 
-void OsmAnd::ObfMapSectionReader_P::filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> & list) 
+QList< std::shared_ptr<const OsmAnd::BinaryMapObject>> OsmAnd::ObfMapSectionReader_P::filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> list)
 {
     QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
-    QList<std::shared_ptr<const BinaryMapObject>>::iterator i;
-    for (i = list.begin(); i != list.end(); ++i)
+    for (const auto & bmo : list)
     {
-        std::shared_ptr<const BinaryMapObject> bmo = *i;
         if (isCoastline(bmo))
         {
             mapObjects.push_back(qMove(bmo));
         }
-    }
-    list = mapObjects;
+    }    
+    return mapObjects;
 }
 
 void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
@@ -1065,9 +1060,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             if (metric)
                 metric->elapsedTimeForLevelsBbox += bboxLevelCheckStopwatch.elapsed();
-
-            // if (shouldSkip)
-            //     continue;
         }
 
         const Stopwatch treeNodesStopwatch(metric != nullptr);
@@ -1234,7 +1226,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     if (isExpandedBBox && levelSkip)
                     {
                         // select only coastlines if they aren't entering in mapLevel area
-                        filterCoastline(mapObjects);
+                        mapObjects = filterCoastline(mapObjects);
                         if (mapObjects.size() == 0)
                             continue;
                     }
@@ -1336,7 +1328,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     if (levelSkip)
                     {
                         // select only coastlines if they aren't entering in mapLevel area
-                        filterCoastline(mapObjects);
+                        mapObjects = filterCoastline(mapObjects);
                         if (mapObjects.size() == 0)
                             continue;
                     }

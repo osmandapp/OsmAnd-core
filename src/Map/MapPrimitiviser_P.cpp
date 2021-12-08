@@ -267,16 +267,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     {
         const auto center = area31.center();
         assert(area31.contains(center));
-        bool isDeterminedSurfaceType = false;
 
         if (detailedmapCoastlinesPresent)
         {
-            isDeterminedSurfaceType = determineSurfaceType(center, detailedmapCoastlineObjects, surfaceType);
+            surfaceType = determineSurfaceType(center, detailedmapCoastlineObjects);
         }
 
-        if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
+        if (surfaceType == MapSurfaceType::Undefined && basemapCoastlinesPresent)
         {
-            determineSurfaceType(center, basemapCoastlineObjects, surfaceType);
+            surfaceType = determineSurfaceType(center, basemapCoastlineObjects);
         }
     }
 
@@ -414,13 +413,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
-bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > coastlineObjects, MapSurfaceType &surfaceType)
+OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > coastlineObjects)
 {
     std::shared_ptr<const MapObject> neareastCoastlineMapObject;
     PointI nearestCoastlineSegment0;
     PointI nearestCoastlineSegment1;
     PointI mCenter = center;
     double squaredMinDistance = std::numeric_limits<double>::max();
+    MapSurfaceType surfaceType = MapSurfaceType::Undefined;
 
     for (const auto &coastlineMapObject : constOf(coastlineObjects))
     {
@@ -481,10 +481,9 @@ bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::s
     if (neareastCoastlineMapObject)
     {
         const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
-        surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
-        return true;
+        surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;        
     }
-    return false;
+    return surfaceType;
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseWithoutSurface(
