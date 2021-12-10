@@ -44,7 +44,7 @@ namespace OsmAnd
         ObfMapSectionReader_P();
         ~ObfMapSectionReader_P();
         static bool isCoastline(const std::shared_ptr<const BinaryMapObject> & mObj);
-        static QList< std::shared_ptr<const BinaryMapObject>> filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> list);
+        static QList< std::shared_ptr<const BinaryMapObject>> filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> & list);
 
     protected:
         static void read(

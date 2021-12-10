@@ -413,7 +413,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
-OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > coastlineObjects)
+OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > & coastlineObjects)
 {
     std::shared_ptr<const MapObject> neareastCoastlineMapObject;
     PointI nearestCoastlineSegment0;

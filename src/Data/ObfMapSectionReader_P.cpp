@@ -947,7 +947,7 @@ bool OsmAnd::ObfMapSectionReader_P::isCoastline(const std::shared_ptr<const Bina
     return mObj && mObj->containsAttribute(mObj->attributeMapping->naturalCoastlineAttributeId);
 }
 
-QList< std::shared_ptr<const OsmAnd::BinaryMapObject>> OsmAnd::ObfMapSectionReader_P::filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> list)
+QList< std::shared_ptr<const OsmAnd::BinaryMapObject>> OsmAnd::ObfMapSectionReader_P::filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> & list)
 {
     QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
     for (const auto & bmo : list)
