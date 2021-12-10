@@ -203,6 +203,8 @@ namespace OsmAnd
         static QString prepareIconValue(
             const std::shared_ptr<const MapObject>& object,
             const QString& genTagVal);
+        
+        static OsmAnd::MapSurfaceType determineSurfaceType(PointI center, QList< std::shared_ptr<const MapObject> > & coastlineObjects);
 
     public:
         ~MapPrimitiviser_P();

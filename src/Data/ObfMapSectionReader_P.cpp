@@ -943,6 +943,23 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     }
 }
 
+bool OsmAnd::ObfMapSectionReader_P::isCoastline(const std::shared_ptr<const BinaryMapObject> & mObj) {
+    return mObj && mObj->containsAttribute(mObj->attributeMapping->naturalCoastlineAttributeId);
+}
+
+QList< std::shared_ptr<const OsmAnd::BinaryMapObject>> OsmAnd::ObfMapSectionReader_P::filterCoastline(QList< std::shared_ptr<const BinaryMapObject>> & list)
+{
+    QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
+    for (const auto & bmo : list)
+    {
+        if (isCoastline(bmo))
+        {
+            mapObjects.push_back(qMove(bmo));
+        }
+    }    
+    return mapObjects;
+}
+
 void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -959,6 +976,21 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 {
     const auto cis = reader.getCodedInputStream().get();
 
+    // expand bbox for read coastline in bigger tile (zoom=14)
+    const bool isExpandedBBox = zoom >= ZoomLevel::ZoomLevel14;
+    const AreaI *expandBbox31 = nullptr;
+    AreaI expBbox;
+    if (bbox31 && isExpandedBBox)
+    {
+        expBbox = Utilities::roundBoundingBox31(*bbox31, ZoomLevel::ZoomLevel14);
+        expandBbox31 = &expBbox;
+    }
+    else
+    {
+        expandBbox31 = bbox31;
+    }
+    
+    
     const auto filterReadById =
         [filterById, zoom]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -1005,20 +1037,29 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if (mapLevel->minZoom > zoom || mapLevel->maxZoom < zoom)
             continue;
 
+        if (expandBbox31)
+        {
+            bool shouldSkip =
+                !expandBbox31->contains(mapLevel->area31) &&
+                !mapLevel->area31.contains(*expandBbox31) &&
+                !expandBbox31->intersects(mapLevel->area31);
+
+            if (shouldSkip)
+                continue;
+        }
+
+        bool levelSkip = false;
         if (bbox31)
         {
             const Stopwatch bboxLevelCheckStopwatch(metric != nullptr);
 
-            const auto shouldSkip =
+            levelSkip =
                 !bbox31->contains(mapLevel->area31) &&
                 !mapLevel->area31.contains(*bbox31) &&
                 !bbox31->intersects(mapLevel->area31);
 
             if (metric)
                 metric->elapsedTimeForLevelsBbox += bboxLevelCheckStopwatch.elapsed();
-
-            if (shouldSkip)
-                continue;
         }
 
         const Stopwatch treeNodesStopwatch(metric != nullptr);
@@ -1056,15 +1097,15 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (metric)
                 metric->visitedNodes++;
 
-            if (bbox31)
+            if (expandBbox31)
             {
                 const Stopwatch bboxNodeCheckStopwatch(metric != nullptr);
-
+                
                 const auto shouldSkip =
-                    !bbox31->contains(rootNode->area31) &&
-                    !rootNode->area31.contains(*bbox31) &&
-                    !bbox31->intersects(rootNode->area31);
-
+                    !expandBbox31->contains(rootNode->area31) &&
+                    !rootNode->area31.contains(*expandBbox31) &&
+                    !expandBbox31->intersects(rootNode->area31);
+                
                 // Update metric
                 if (metric)
                     metric->elapsedTimeForNodesBbox += bboxNodeCheckStopwatch.elapsed();
@@ -1087,7 +1128,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 auto oldLimit = cis->PushLimit(rootNode->length);
 
                 cis->Skip(rootNode->firstDataBoxInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, queryController, metric);
+                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, expandBbox31, queryController, metric);
                 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -1181,6 +1222,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     // Update metric
                     if (metric)
                         metric->mapObjectsBlocksRead++;
+                    
+                    if (isExpandedBBox && levelSkip)
+                    {
+                        // select only coastlines if they aren't entering in mapLevel area
+                        mapObjects = filterCoastline(mapObjects);
+                        if (mapObjects.size() == 0)
+                            continue;
+                    }
 
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
@@ -1209,13 +1258,25 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     if (metric)
                         metric->visitedMapObjects++;
 
+                    if (expandBbox31)
+                    {
+                        bool shouldNotSkip =
+                            mapObject->bbox31.contains(*expandBbox31) ||
+                            expandBbox31->intersects(mapObject->bbox31);
+
+                        if (!shouldNotSkip)
+                        {
+                            continue;
+                        }
+                    }
+
                     if (bbox31)
                     {
                         const auto shouldNotSkip =
                             mapObject->bbox31.contains(*bbox31) ||
                             bbox31->intersects(mapObject->bbox31);
 
-                        if (!shouldNotSkip)
+                        if (!shouldNotSkip && !isCoastline(mapObject))
                             continue;
                     }
 
@@ -1250,16 +1311,55 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
-                readMapObjectsBlock(
-                    reader,
-                    section,
-                    treeNode,
-                    resultOut,
-                    bbox31,
-                    filterById != nullptr ? filterReadById : FilterReadingByIdFunction(),
-                    visitor,
-                    queryController,
-                    metric);
+                if (isExpandedBBox)
+                {
+                    QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
+                    readMapObjectsBlock(
+                        reader,
+                        section,
+                        treeNode,
+                        &mapObjects,
+                        expandBbox31,
+                        filterById != nullptr ? filterReadById : FilterReadingByIdFunction(),
+                        visitor,
+                        queryController,
+                        metric);
+
+                    if (levelSkip)
+                    {
+                        // select only coastlines if they aren't entering in mapLevel area
+                        mapObjects = filterCoastline(mapObjects);
+                        if (mapObjects.size() == 0)
+                            continue;
+                    }
+
+                    for (auto& mapObject : mapObjects)
+                    {
+                        if (bbox31)
+                        {
+                            const auto shouldNotSkip =
+                                mapObject->bbox31.contains(*bbox31) ||
+                                bbox31->intersects(mapObject->bbox31);
+                            // no processed if it isn't coastline
+                            if (!shouldNotSkip && !isCoastline(mapObject))                            
+                                continue;                            
+                        }
+                        resultOut->push_back(qMove(mapObject));
+                    }
+                }
+                else
+                {
+                    readMapObjectsBlock(
+                        reader,
+                        section,
+                        treeNode,
+                        resultOut,
+                        bbox31,
+                        filterById != nullptr ? filterReadById : FilterReadingByIdFunction(),
+                        visitor,
+                        queryController,
+                        metric);
+                }
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
