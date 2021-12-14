@@ -32,28 +32,30 @@ namespace OsmAnd
 
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const PointI position31,
-            const QString& elevation = QString::null,
-            const QString& time = QString::null,
-            const QString& creationTime = QString::null,
-            const QString& title = QString::null,
-            const QString& description = QString::null,
-            const QString& address = QString::null,
-            const QString& group = QString::null,
-            const QString& icon = QString::null,
-            const QString& background = QString::null,
-            const ColorRGB color = ColorRGB());
+            const QString& elevation = QString(),
+            const QString& time = QString(),
+            const QString& creationTime = QString(),
+            const QString& title = QString(),
+            const QString& description = QString(),
+            const QString& address = QString(),
+            const QString& group = QString(),
+            const QString& icon = QString(),
+            const QString& background = QString(),
+            const ColorRGB color = ColorRGB(),
+            const bool calendarEvent = false);
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
-            const QString& elevation = QString::null,
-            const QString& time = QString::null,
-            const QString& creationTime = QString::null,
-            const QString& title = QString::null,
-            const QString& description = QString::null,
-            const QString& address = QString::null,
-            const QString& group = QString::null,
-            const QString& icon = QString::null,
-            const QString& background = QString::null,
-            const ColorRGB color = ColorRGB());
+            const QString& elevation = QString(),
+            const QString& time = QString(),
+            const QString& creationTime = QString(),
+            const QString& title = QString(),
+            const QString& description = QString(),
+            const QString& address = QString(),
+            const QString& group = QString(),
+            const QString& icon = QString(),
+            const QString& background = QString(),
+            const ColorRGB color = ColorRGB(),
+            const bool calendarEvent = false);
         
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other);
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
