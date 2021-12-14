@@ -459,6 +459,8 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 {
     //std::string textS = ICU::convertToVisualOrder(*textPaint.text.string()).toUtf8().constData();
     std::string textS = textPaint.text.string()->toUtf8().constData();
+    // auto qtext = ICU::convertToVisualOrder(*textPaint.text.string());
+    // std::string textS = qtext.toUtf8().constData();
 #ifndef OSMAND_USE_HARFBUZZ
     canvas.drawSimpleText(
         textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
@@ -466,7 +468,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
         font, paint);
 #else
     // ToDo
-    //trimspec(textS);
+    trimspec(textS);
     const char* text = textS.c_str();
     
     hb_font_t* hb_font = hb_font_create(textPaint.faceData->hbTypeface.get());
@@ -527,46 +529,13 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     float* const outFontAscent) const
 {
     // Prepare text and break by lines
-    //
     QString text = text_;
-    // auto text = QString::fromUtf8("Что-то такое ეილათი אילת - My name Constantine ⵇⵙⴻⵏⵟⵉⵏⴰ (قسنطينة)");
-    // switch (rand() % 9) {
-    //     case 1:
-    //         text = QString::fromUtf8("قسنطينة(12345) 123 روبل 456789");
-    //         break; 
-    //     case 2:
-    //         text = QString::fromUtf8("איל(123)ת");
-    //         break; 
-    //     case 3:    
-    //         text = QString::fromUtf8("אילת");
-    //         break;
-    //     case 4:
-    //         text = QString::fromUtf8("(123)אילת");
-    //         break;
-    //     case 5:
-    //         text = QString::fromUtf8("אילת(123)");
-    //         break;
-    //     case 6:
-    //         text = QString::fromUtf8("قسنطين(123)ة");
-    //         break;
-    //     case 7:
-    //         text = QString::fromUtf8("قسنطينة");
-    //         break;
-    //     case 8:
-    //         text = QString::fromUtf8("(456)قسنطينة");
-    //         break;
-    //     case 9:
-    //         text = QString::fromUtf8("قسنطينة(456)");
-    //         break;
-    //     default:
-    //         break; 
-    // }
-    // auto text = QString("אילת");
     text = ICU::convertToVisualOrder(text);
+    //trimspec(text);
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
-
+    //const auto lineRefs = (QVector<QStringRef>() << QStringRef(&text));
     // Obtain paints from lines and style
     auto paints = evaluatePaints(lineRefs, style);
 
