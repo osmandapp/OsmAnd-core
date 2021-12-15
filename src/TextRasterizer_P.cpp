@@ -228,7 +228,7 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
-            *pWidth += -textPaint.bounds.left();
+            //*pWidth += -textPaint.bounds.left();
 
             ///////
             /*
@@ -457,18 +457,14 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
                                         const SkFont& font,
                                         const SkPaint& paint) const
 {
-    //std::string textS = ICU::convertToVisualOrder(*textPaint.text.string()).toUtf8().constData();
-    std::string textS = textPaint.text.string()->toUtf8().constData();
-    // auto qtext = ICU::convertToVisualOrder(*textPaint.text.string());
-    // std::string textS = qtext.toUtf8().constData();
+    QString inpStr = textPaint.text.toString();
+    std::string textS = ICU::convertToVisualOrder(inpStr).toUtf8().constData();
 #ifndef OSMAND_USE_HARFBUZZ
     canvas.drawSimpleText(
         textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
         textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
         font, paint);
 #else
-    // ToDo
-    trimspec(textS);
     const char* text = textS.c_str();
     
     hb_font_t* hb_font = hb_font_create(textPaint.faceData->hbTypeface.get());
@@ -520,7 +516,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 
 bool OsmAnd::TextRasterizer_P::rasterize(
     SkBitmap& targetBitmap,
-    const QString& text_,
+    const QString& text,
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
@@ -529,9 +525,6 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     float* const outFontAscent) const
 {
     // Prepare text and break by lines
-    QString text = text_;
-    text = ICU::convertToVisualOrder(text);
-    //trimspec(text);
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));

@@ -355,108 +355,6 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     return output;
 }
 
-#if CUSTOM_IMPL == 0
-// modification
-OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
-{
-    if (input.isEmpty())
-    {
-        return {};
-    }
-
-    bool ltr = false;
-    assert(maxCharsPerLine > 0);
-    QVector<int> result;
-    UErrorCode icuError = U_ZERO_ERROR;
-    bool ok = true;
-
-    // Create break iterator
-    const auto pBreakIterator = g_pIcuLineBreakIterator->clone();
-    if (pBreakIterator == nullptr || U_FAILURE(icuError))
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        if (pBreakIterator != nullptr)
-            delete pBreakIterator;
-        return (result << 0);
-    }
-
-    // Set text for breaking
-    pBreakIterator->setText(UnicodeString(reinterpret_cast<const UChar*>(input.unicode()), input.length()));
-
-    auto findBreakPos = [&input, ltr] (auto& cursor)
-    {
-        bool inBounds = ltr ? cursor < input.length() : cursor > 0;
-        while(inBounds)
-        {
-            const auto c = static_cast<UChar>(input[cursor].unicode());
-            if (!u_isspace(c) && u_charType(c) != U_CONTROL_CHAR && u_charType(c) != U_NON_SPACING_MARK)
-            {
-                break;
-            }
-            cursor = ltr ? cursor + 1 : cursor - 1;
-            inBounds = ltr ? cursor < input.length() : cursor > 0;
-        }
-    };
-
-    auto cursor = ltr ? 0 : input.length() - 1;
-    while(ok && ltr ? cursor < input.length() : cursor >= 0)
-    {
-        if (maxLines > 0 && result.size() > maxLines)
-            break;
-        // Get next desired breaking position
-        auto lookAheadCursor = ltr ? cursor + maxCharsPerLine : cursor - maxCharsPerLine;
-        bool needsBreak = ltr ? lookAheadCursor >= input.length() : lookAheadCursor <= 0;
-        if (needsBreak)
-        {
-            break;
-        }
-
-        // If look-ahead cursor is still in bounds of input, and is pointing to:
-        //  - control character
-        //  - space character
-        //  - non-spacing mark
-        // then move forward until a valuable character is found
-        findBreakPos(lookAheadCursor);
-
-        // Now locate last legal line-break at or before the look-ahead cursor
-        const auto lastBreak = ltr ? pBreakIterator->preceding(lookAheadCursor + 1) : pBreakIterator->following(lookAheadCursor);
-
-        // If last legal line-break wasn't found since current cursor, perform a hard-break
-        bool hardBreak = ltr ? lastBreak <= cursor : lastBreak >= cursor;
-        if (hardBreak)
-        {
-            result.push_back(lookAheadCursor);
-            cursor = lookAheadCursor;
-            continue;
-        }
-
-        // Otherwise a legal line-break was found, so move there and find next valuable character
-        // and place line start there
-        cursor = lastBreak;
-        // while(cursor < input.length())
-        // {
-        //     const auto c = static_cast<UChar>(input[cursor].unicode());
-        //     if (!u_isspace(c) && u_charType(c) != U_CONTROL_CHAR && u_charType(c) != U_NON_SPACING_MARK)
-        //         break;
-        //     cursor++;
-        // }
-        findBreakPos(cursor);
-        result.push_back(cursor);
-    }
-    if (result.isEmpty() || result.first() != 0)
-        result.prepend(0);
-
-    if (pBreakIterator != nullptr)
-        delete pBreakIterator;
-
-    if (!ok)
-    {
-        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        return (result << 0);
-    }
-    return result;
-}
-#else
 OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const QString& input, const int maxCharsPerLine, const int maxLines /*= 0*/)
 {
     assert(maxCharsPerLine > 0);
@@ -536,9 +434,8 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
     }
     return result;
 }
-#endif
 
-#if CUSTOM_IMPL == 1
+#if CUSTOM_IMPL != 1
 int nextWord(uint8_t* s, uint* charRead)
 {
     uint8_t* init = s;
@@ -556,51 +453,39 @@ OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappin
     const int maxCharsPerLine,
     const int maxLines /*= 0*/)
 {
-    QVector<QStringRef> result = {};
-    auto inpSize = input.size();
+    QVector<QStringRef> result {};
     std::string text = input.toUtf8().constData();
-    logBytes(text.c_str(), text.length());
     if (text.length() > maxCharsPerLine) {
-        const char* c_str = text.c_str();
 
-        int end = text.length();
-        int endCh = input.length();
-        int line = 0;
+        int end = input.length();
+        int lines = 0;
         int pos = 0;
         int start = 0;
-        int startCh = 0;
-        int posCh = 0;
-        while (start < end)
+        size_t charInLine = 0;
+        while (start < end || maxLines > lines)
         {
-            const char* p_str = c_str;
             uint charRead = 0;
-            uint charInLine = 0;
             do
-            {
-                int lastSpace = nextWord((uint8_t*)p_str, &charRead);
-                if (lastSpace == -1){
+            {   auto indexSpace = input.indexOf(' ', pos + 1);
+                auto indexTab = input.indexOf('\t', pos + 1);
+                auto indexBreak = indexSpace != -1 ? indexSpace : indexTab != -1 ? indexTab : -1;
+                charRead = indexBreak - pos;
+                if (indexBreak == -1) {
                     pos = end;
-                    posCh = endCh;
                 } else {
-                    p_str += lastSpace;
-                    charInLine += charRead;
-                    if (pos != start && charInLine >= maxCharsPerLine) {
+                    if (pos != start && (charInLine + charRead) > maxCharsPerLine) {
                         break;
                     }
-                    posCh += charRead;
-                    pos += lastSpace;
+                    charInLine += charRead;
+                    pos = indexBreak;
                 }
             }
-            while (pos < end && charRead < maxCharsPerLine);
+            while (pos < end && charInLine < maxCharsPerLine);
 
-            // PROFILE_NATIVE_OPERATION(
-            //     rc, drawTextOnCanvas(rc, cv, c_str, pos - start, text->centerX, text->centerY + line * (textSize + 2),
-            //                             paintText, text->textShadowColor, text->textShadow, skFontText, fontEntry));
-            result.push_back(input.midRef(startCh, posCh - startCh));
-            c_str += (pos - start);
+            result.push_back(input.midRef(start, pos - start));
             start = pos;
-            startCh = posCh;
-            line++;
+            lines++;
+            charInLine = 0;
         }
     }
     else
@@ -610,6 +495,80 @@ OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappin
 
     return result;
 }
+
+// int nextWord(uint8_t* s, uint* charRead)
+// {
+//     uint8_t* init = s;
+//     while ((*s) != 0) {
+//         uint32_t tp = utf8::unchecked::next(s);
+//         (*charRead)++;
+//         if (tp == ' ' || tp == '\t') {
+//             return (s - init);
+//         }
+//     }
+//     return -1;
+// }
+// OSMAND_CORE_API QVector<QStringRef> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrappingRefs(
+//     const QString& input,
+//     const int maxCharsPerLine,
+//     const int maxLines /*= 0*/)
+// {
+//     QVector<QStringRef> result = {};
+//     auto inpSize = input.size();
+//     std::string text = input.toUtf8().constData();
+//     logBytes(text.c_str(), text.length());
+//     if (text.length() > maxCharsPerLine) {
+//         const char* c_str = text.c_str();
+
+//         int end = text.length();
+//         int endCh = input.length();
+//         int line = 0;
+//         int pos = 0;
+//         int start = 0;
+//         int startCh = 0;
+//         int posCh = 0;
+//         while (start < end)
+//         {
+//             const char* p_str = c_str;
+//             uint charRead = 0;
+//             uint charInLine = 0;
+//             do
+//             {
+//                 int lastSpace = nextWord((uint8_t*)p_str, &charRead);
+//                 if (lastSpace == -1){
+//                     pos = end;
+//                     posCh = endCh;
+//                 } else {
+//                     p_str += lastSpace;
+//                     charInLine += charRead;
+//                     if (pos != start && charInLine >= maxCharsPerLine) {
+//                         break;
+//                     }
+//                     posCh += charRead;
+//                     pos += lastSpace;
+//                 }
+//             }
+//             while (pos < end && charRead < maxCharsPerLine);
+
+//             // PROFILE_NATIVE_OPERATION(
+//             //     rc, drawTextOnCanvas(rc, cv, c_str, pos - start, text->centerX, text->centerY + line * (textSize + 2),
+//             //                             paintText, text->textShadowColor, text->textShadow, skFontText, fontEntry));
+//             result.push_back(input.midRef(startCh, posCh - startCh));
+//             c_str += (pos - start);
+//             start = pos;
+//             startCh = posCh;
+//             line++;
+//         }
+//     }
+//     else
+//     {
+//         result.push_back(input.midRef(0));
+//     }
+
+//     return result;
+// }
+
+
 // {
 //     bool ltr = false;
 //     QVector<QStringRef> result;
