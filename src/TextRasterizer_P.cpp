@@ -475,7 +475,8 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 
     double x = 0;
     double y = 0;
-    for (unsigned int i = 0; i < length; i++) {
+    for (unsigned int i = 0; i < length; i++)
+    {
         if (textPaint.faceData->delCodePoints.count(info[i].codepoint))
         {
             runBuffer.glyphs[i] = textPaint.faceData->repCodePoint;

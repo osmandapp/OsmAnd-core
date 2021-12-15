@@ -142,7 +142,7 @@ void logBytes(const T* buf, size_t sz)
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const QString& input)
 {
     QString output;
-    auto len = input.length();
+    const auto len = input.length();
     UErrorCode icuError = U_ZERO_ERROR;
     bool ok = true;
 
