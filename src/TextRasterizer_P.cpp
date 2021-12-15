@@ -25,25 +25,6 @@
 #endif // !defined(OSMAND_LOG_CHARACTERS_TYPEFACE)
 const double HARFBUZZ_FONT_SIZE_SCALE = 64.0f;
 
-static void trimspec(std::string &text) {
-	// unicode symbols \u200e \u200f \u202a \u202c \u202b
-	const char *symbols[] = { "\xE2\x80\x8E", "\xE2\x80\x8F", "\xE2\x80\xAA", "\xE2\x80\xAC", "\xE2\x80\xAB"};
-	int length = text.length();
-	for (auto t : symbols) {
-		if (length >= 3 && t[0] == text.at(0) && t[1] == text.at(1) && t[2] == text.at(2)) {
-			text.erase(0, 3);
-			length = text.length();
-		}
-		if (length >= 3 && t[0] == text.at(length - 3) && t[1] == text.at(length - 2) && t[2] == text.at(length - 1)) {
-			text.erase(length - 3);
-			length = text.length();
-		}
-		if (length < 3) {
-			return;
-		}
-	}
-}
-
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
 {
@@ -228,7 +209,7 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
-            //*pWidth += -textPaint.bounds.left();
+            *pWidth += -textPaint.bounds.left();
 
             ///////
             /*
@@ -457,14 +438,14 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
                                         const SkFont& font,
                                         const SkPaint& paint) const
 {
-    QString inpStr = textPaint.text.toString();
-    std::string textS = ICU::convertToVisualOrder(inpStr).toUtf8().constData();
 #ifndef OSMAND_USE_HARFBUZZ
     canvas.drawSimpleText(
         textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
         textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
         font, paint);
 #else
+    QString inpStr = textPaint.text.toString();
+    std::string textS = ICU::convertToVisualOrder(inpStr).toUtf8().constData();
     const char* text = textS.c_str();
     
     hb_font_t* hb_font = hb_font_create(textPaint.faceData->hbTypeface.get());
@@ -528,7 +509,6 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
-    //const auto lineRefs = (QVector<QStringRef>() << QStringRef(&text));
     // Obtain paints from lines and style
     auto paints = evaluatePaints(lineRefs, style);
 
