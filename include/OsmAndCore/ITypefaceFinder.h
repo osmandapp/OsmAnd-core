@@ -52,6 +52,10 @@ namespace OsmAnd
         virtual std::shared_ptr<const SWIG_CLARIFY(ITypefaceFinder, Typeface)> findTypefaceForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const = 0;
+
+        static std::shared_ptr<Typeface> constructTypeface(
+            const sk_sp<SkTypeface>& skTypeface, const std::shared_ptr<hb_blob_t>& hbBlob);
+
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ITypefaceFinder);
