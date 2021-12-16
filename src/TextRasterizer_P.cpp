@@ -447,8 +447,8 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     QString inpStr = textPaint.text.toString();
     std::string textS = ICU::convertToVisualOrder(inpStr).toUtf8().constData();
     const char* text = textS.c_str();
-    
-    hb_font_t* hb_font = hb_font_create(textPaint.faceData->hbTypeface.get());
+
+    auto hb_font = textPaint.faceData->hbFont.get();
     hb_font_set_scale(hb_font,
                       HARFBUZZ_FONT_SIZE_SCALE * font.getSize(),
                       HARFBUZZ_FONT_SIZE_SCALE * font.getSize());
@@ -466,7 +466,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     if (length == 0)
     {
         return;
-    }	
+    }
     hb_glyph_info_t* info = hb_buffer_get_glyph_infos(hb_buffer, NULL);
     hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(hb_buffer, NULL);
 
@@ -492,7 +492,6 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     canvas.drawTextBlob(textBlobBuilder.make(), textPaint.positionedBounds.left(), textPaint.positionedBounds.top(), paint);
 
     hb_buffer_destroy(hb_buffer);
-    hb_font_destroy(hb_font);
 #endif  // OSMAND_USE_HARFBUZZ
 }
 
