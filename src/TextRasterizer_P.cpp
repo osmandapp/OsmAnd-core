@@ -445,8 +445,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
         font, paint);
 #else
     QString inpStr = textPaint.text.toString();
-    std::string textS = ICU::convertToVisualOrder(inpStr).toUtf8().constData();
-    const char* text = textS.c_str();
+    auto textQStr = ICU::convertToVisualOrder(inpStr);
 
     auto hb_font = textPaint.faceData->hbFont.get();
     hb_font_set_scale(hb_font,
@@ -456,7 +455,8 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 
     /* Create hb-buffer and populate. */
     hb_buffer_t* hb_buffer = hb_buffer_create();
-    hb_buffer_add_utf8(hb_buffer, text, -1, 0, -1);
+    hb_buffer_add_utf16(hb_buffer, textQStr.utf16(), textQStr.size(), 0, -1);
+    hb_buffer_set_direction(hb_buffer, HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hb_buffer);
 
     hb_shape(hb_font, hb_buffer, NULL, 0);

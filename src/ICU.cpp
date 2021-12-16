@@ -150,36 +150,23 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     ok = U_SUCCESS(icuError);
     if (ok)
     {
-        auto direction = ubidi_getDirection(pContext);
-        if (direction == UBIDI_LTR || direction == UBIDI_RTL)
+        auto const direction = ubidi_getDirection(pContext);
+        if (direction == UBIDI_LTR)
         {
-            output = input;
+            return input;
         }
-        else if (direction == UBIDI_MIXED)
+        QVector<UChar> reordered(len);
+        ubidi_writeReordered(
+            pContext,
+            reordered.data(),
+            len,
+            UBIDI_DO_MIRRORING | UBIDI_REMOVE_BIDI_CONTROLS,
+            &icuError);
+        ok = U_SUCCESS(icuError);
+
+        if (ok)
         {
-            int numberOfParts = ubidi_countRuns(pContext, &icuError);
-            ok = U_SUCCESS(icuError);
-            if (ok)
-            {
-                QString outputReversed;
-                int start;
-                int subLength;
-                for(int i = 0; i < numberOfParts; ++i)
-                {
-                    direction = ubidi_getVisualRun(pContext, i, &start, &subLength);
-                    outputReversed = input.mid(start, subLength);
-                    if (UBIDI_RTL == direction)
-                    {
-                        std::reverse(outputReversed.begin(), outputReversed.end());
-                        output += outputReversed;
-                    }
-                    else
-                    {
-                        output += outputReversed;
-                    }
-                }
-            }
-            std::reverse(output.begin(), output.end());
+            output = QString(reinterpret_cast<const QChar*>(reordered.constData()), reordered.size());
         }
     }
 
