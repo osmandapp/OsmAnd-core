@@ -128,17 +128,6 @@ void OsmAnd::ICU::release()
     u_cleanup();
 }
 
-template <typename T>
-void logBytes(const T* buf, size_t sz)
-{
-    for (size_t i = 0; i < sz; ++i)
-    {
-        if (i > 0) printf(":");
-        printf("0x%02X", buf[i]);
-    }
-    printf("\n");
-}
-
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const QString& input)
 {
     QString output;
@@ -170,23 +159,23 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
         {
             int numberOfParts = ubidi_countRuns(pContext, &icuError);
             ok = U_SUCCESS(icuError);
-            if(ok)
+            if (ok)
             {
-                QString outputReverted;
+                QString outputReversed;
                 int start;
                 int subLength;
                 for(int i = 0; i < numberOfParts; ++i)
                 {
                     direction = ubidi_getVisualRun(pContext, i, &start, &subLength);
-                    outputReverted = input.mid(start, subLength);
+                    outputReversed = input.mid(start, subLength);
                     if (UBIDI_RTL == direction)
                     {
-                        std::reverse(outputReverted.begin(), outputReverted.end());
-                        output += outputReverted;
+                        std::reverse(outputReversed.begin(), outputReversed.end());
+                        output += outputReversed;
                     }
                     else
                     {
-                        output += outputReverted;
+                        output += outputReversed;
                     }
                 }
             }
