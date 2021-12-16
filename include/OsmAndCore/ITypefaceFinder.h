@@ -6,6 +6,8 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <set>
+#include <functional>
+#include <memory>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkFontStyle.h>
@@ -19,6 +21,7 @@
 
 namespace OsmAnd
 {
+    using TFontPtr = std::unique_ptr<hb_font_t, std::function<void (hb_font_t*)>>;
     class OSMAND_CORE_API ITypefaceFinder
     {
         Q_DISABLE_COPY_AND_MOVE(ITypefaceFinder);
@@ -27,14 +30,14 @@ namespace OsmAnd
         struct OSMAND_CORE_API Typeface Q_DECL_FINAL
         {
             Typeface(const sk_sp<SkTypeface>& skTypeface,
-                     hb_face_t* hbTypeface,
+                     TFontPtr hbFont_,
                      std::set<uint32_t> delCodePoints,
                      uint32_t repCodePoint);
             ~Typeface();
 
             sk_sp<SkTypeface> skTypeface;
 
-            std::shared_ptr<hb_face_t> hbTypeface;
+            TFontPtr hbFont;
             std::set<uint32_t> delCodePoints;//calculated deleting codepoint for current ttf
             uint32_t repCodePoint = 0;//calculated replacement codepoint for current ttf
             //\xE2\x80\x8B (\u200b) ZERO WIDTH SPACE - used for replacement, must be always in 0 index!
@@ -54,7 +57,8 @@ namespace OsmAnd
             const SkFontStyle style = SkFontStyle()) const = 0;
 
         static std::shared_ptr<Typeface> constructTypeface(
-            const sk_sp<SkTypeface>& skTypeface, const std::shared_ptr<hb_blob_t>& hbBlob);
+            const sk_sp<SkTypeface>& skTypeface,
+            const std::shared_ptr<hb_blob_t>& hbBlob);
 
     };
 
