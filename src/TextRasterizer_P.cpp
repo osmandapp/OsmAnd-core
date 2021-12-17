@@ -439,14 +439,14 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
                                         const SkFont& font,
                                         const SkPaint& paint) const
 {
+    QString inpStr = textPaint.text.toString();
+    auto textQStr = ICU::convertToVisualOrder(inpStr);
 #ifndef OSMAND_USE_HARFBUZZ
     canvas.drawSimpleText(
-        textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
+        textQStr.constData(), textQStr.length()*sizeof(QChar), SkTextEncoding::kUTF16,
         textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
         font, paint);
 #else
-    QString inpStr = textPaint.text.toString();
-    auto textQStr = ICU::convertToVisualOrder(inpStr);
 
     auto hb_font = textPaint.faceData->hbFont.get();
     hb_font_set_scale(hb_font,

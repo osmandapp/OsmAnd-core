@@ -64,8 +64,7 @@ OsmAnd::ITypefaceFinder::Typeface::~Typeface()
 
 
 /*static*/
- std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Typeface::fromData(
-            const QByteArray& data)
+ std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Typeface::fromData(QByteArray data)
 {
     if (data.isEmpty())
     {

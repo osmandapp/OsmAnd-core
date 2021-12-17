@@ -37,7 +37,7 @@ namespace OsmAnd
             Typeface(const sk_sp<SkTypeface>& skTypeface_,
                      const THbFontPtr hbFont_);
 
-            static std::shared_ptr<Typeface> fromData(const QByteArray& data);
+            static std::shared_ptr<Typeface> fromData(QByteArray data);
 
             ~Typeface();
 

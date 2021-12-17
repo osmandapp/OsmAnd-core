@@ -43,12 +43,12 @@ std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::SystemTypefaceF
     }
 
     const auto dataLength = skTypefaceStream->getLength();
-    const auto pData = new char[dataLength];
-    const auto actualLength = skTypefaceStream->read(pData, dataLength);
+    QByteArray data(dataLength, 0);
+    const auto actualLength = skTypefaceStream->read(data.data(), dataLength);
     if (dataLength != actualLength)
     {
         return nullptr;
     }
 
-    return OsmAnd::ITypefaceFinder::Typeface::fromData(QByteArray(pData, dataLength));
+    return OsmAnd::ITypefaceFinder::Typeface::fromData(std::move(data));
 }
