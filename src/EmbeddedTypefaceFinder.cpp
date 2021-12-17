@@ -6,8 +6,6 @@
 
 #include <SkTypeface.h>
 
-#include <hb-ot.h>
-
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
@@ -27,38 +25,13 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
             continue;
         }
 
-        const auto skTypeface = SkiaUtilities::createTypefaceFromData(typefaceData);
-        if (!skTypeface)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to create SkTypeface from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        const auto hbBlob = std::shared_ptr<hb_blob_t>(
-            hb_blob_create_or_fail(
-                typefaceData.constData(),
-                typefaceData.length(),
-                HB_MEMORY_MODE_READONLY,
-                new QByteArray(typefaceData),
-                [](void* pUserData) { delete reinterpret_cast<QByteArray*>(pUserData); }),
-            [](auto p) { hb_blob_destroy(p); });
-        if (!hbBlob)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to load Harfbuzz blob from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        auto newItem = OsmAnd::ITypefaceFinder::constructTypeface(skTypeface, hbBlob);
-        if (nullptr == newItem)
+        auto newTypefaceItem = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
+        if (nullptr == newTypefaceItem)
         {
             continue;
         }
 
-        _typefaces.push_back(std::move(newItem));
+        _typefaces.push_back(std::move(newTypefaceItem));
     }
 }
 

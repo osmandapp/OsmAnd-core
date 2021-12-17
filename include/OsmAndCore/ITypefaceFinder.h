@@ -19,9 +19,10 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 
+#include "HarfbuzzUtilities.h"
+
 namespace OsmAnd
 {
-    using TFontPtr = std::unique_ptr<hb_font_t, std::function<void (hb_font_t*)>>;
     class OSMAND_CORE_API ITypefaceFinder
     {
         Q_DISABLE_COPY_AND_MOVE(ITypefaceFinder);
@@ -30,20 +31,27 @@ namespace OsmAnd
         struct OSMAND_CORE_API Typeface Q_DECL_FINAL
         {
             Typeface(const sk_sp<SkTypeface>& skTypeface,
-                     TFontPtr hbFont_,
+                     THbFontPtr hbFont_,
                      std::set<uint32_t> delCodePoints,
                      uint32_t repCodePoint);
+            Typeface(const sk_sp<SkTypeface>& skTypeface_,
+                     const THbFontPtr hbFont_);
+
+            static std::shared_ptr<Typeface> fromData(const QByteArray& data);
+
             ~Typeface();
 
+        public:
             sk_sp<SkTypeface> skTypeface;
+            THbFontPtr hbFont;
 
-            TFontPtr hbFont;
-            std::set<uint32_t> delCodePoints;//calculated deleting codepoint for current ttf
+            std::set<uint32_t> delCodePoints = {};//calculated deleting codepoint for current ttf
             uint32_t repCodePoint = 0;//calculated replacement codepoint for current ttf
             //\xE2\x80\x8B (\u200b) ZERO WIDTH SPACE - used for replacement, must be always in 0 index!
             //\x41 - character A just use as divider
             //\xE2\x80\x8C (\u200c) ZERO WIDTH NON-JOINER for avoid create ligature in arabic text
             static const char sRepChars[];//just add code to the end with \x41 divider
+
         };
 
     private:
@@ -55,10 +63,6 @@ namespace OsmAnd
         virtual std::shared_ptr<const SWIG_CLARIFY(ITypefaceFinder, Typeface)> findTypefaceForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const = 0;
-
-        static std::shared_ptr<Typeface> constructTypeface(
-            const sk_sp<SkTypeface>& skTypeface,
-            const std::shared_ptr<hb_blob_t>& hbBlob);
 
     };
 

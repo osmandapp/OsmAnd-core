@@ -2,6 +2,7 @@
 #include "TextRasterizer.h"
 
 #include "ignore_warnings_on_external_includes.h"
+#include <hb-ot.h>
 #include <SkBitmap.h>
 #include <SkImage.h>
 #include <SkTypeface.h>
@@ -11,7 +12,7 @@
 #include "restore_internal_warnings.h"
 
 #include "ICU.h"
-#include <hb-ot.h>
+#include "HarfbuzzUtilities.h"
 #include "CoreResourcesEmbeddedBundle.h"
 
 //#define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 1
@@ -454,21 +455,26 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     hb_ot_font_set_funcs(hb_font);
 
     /* Create hb-buffer and populate. */
-    hb_buffer_t* hb_buffer = hb_buffer_create();
-    hb_buffer_add_utf16(hb_buffer, textQStr.utf16(), textQStr.size(), 0, -1);
-    hb_buffer_set_direction(hb_buffer, HB_DIRECTION_LTR);
-    hb_buffer_guess_segment_properties(hb_buffer);
+    THbBufferPtr hb_buffer_ptr(hb_buffer_create(), [](auto* p) { hb_buffer_destroy(p); });
+    if (!hb_buffer_allocation_successful(hb_buffer_ptr.get()))
+    {
+        return;
+    }
 
-    hb_shape(hb_font, hb_buffer, NULL, 0);
+    hb_buffer_add_utf16(hb_buffer_ptr.get(), textQStr.utf16(), textQStr.size(), 0, -1);
+    hb_buffer_set_direction(hb_buffer_ptr.get(), HB_DIRECTION_LTR);
+    hb_buffer_guess_segment_properties(hb_buffer_ptr.get());
+
+    hb_shape(hb_font, hb_buffer_ptr.get(), NULL, 0);
 
     //  draw glyphs
-    unsigned int length = hb_buffer_get_length(hb_buffer);
+    unsigned int length = hb_buffer_get_length(hb_buffer_ptr.get());
     if (length == 0)
     {
         return;
     }
-    hb_glyph_info_t* info = hb_buffer_get_glyph_infos(hb_buffer, NULL);
-    hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(hb_buffer, NULL);
+    hb_glyph_info_t* info = hb_buffer_get_glyph_infos(hb_buffer_ptr.get(), NULL);
+    hb_glyph_position_t* pos = hb_buffer_get_glyph_positions(hb_buffer_ptr.get(), NULL);
 
     SkTextBlobBuilder textBlobBuilder;
     auto runBuffer = textBlobBuilder.allocRunPos(font, SkToInt(length));
@@ -491,7 +497,6 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     }
     canvas.drawTextBlob(textBlobBuilder.make(), textPaint.positionedBounds.left(), textPaint.positionedBounds.top(), paint);
 
-    hb_buffer_destroy(hb_buffer);
 #endif  // OSMAND_USE_HARFBUZZ
 }
 

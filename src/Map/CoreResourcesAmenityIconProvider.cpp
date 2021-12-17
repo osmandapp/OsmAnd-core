@@ -61,5 +61,5 @@ QString OsmAnd::CoreResourcesAmenityIconProvider::getCaption(
     const std::shared_ptr<const Amenity>& amenity,
     const ZoomLevel zoomLevel) const
 {
-    return QString::null;
+    return {};
 }

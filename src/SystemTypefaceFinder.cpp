@@ -1,10 +1,13 @@
 #include "SystemTypefaceFinder.h"
 
-#include <hb-ot.h>
+#include <QByteArray>
+
+#include <hb.h>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkStream.h>
 #include "restore_internal_warnings.h"
+#include "HarfbuzzUtilities.h"
 
 OsmAnd::SystemTypefaceFinder::SystemTypefaceFinder(
     const sk_sp<SkFontMgr> fontManager_ /*= SkTypefaceMgr::RefDefault()*/)
@@ -22,30 +25,30 @@ std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::SystemTypefaceF
 {
     const auto pTypeface = fontManager->matchFamilyStyleCharacter(nullptr, style, nullptr, 0, character);
     if (!pTypeface)
+    {
         return nullptr;
+    }
 
     const auto skTypeface = pTypeface->makeClone({});
     if (!skTypeface)
+    {
         return nullptr;
+    }
 
     int ttcIndex = 0;
     const auto skTypefaceStream = skTypeface->openStream(&ttcIndex);
     if (!skTypefaceStream || !skTypefaceStream->hasLength())
+    {
         return nullptr;
+    }
 
     const auto dataLength = skTypefaceStream->getLength();
-    const auto pData = new uint8_t[dataLength];
-
-    const auto hbBlob = std::shared_ptr<hb_blob_t>(
-        hb_blob_create_or_fail(
-            reinterpret_cast<const char*>(pData),
-            dataLength,
-            HB_MEMORY_MODE_READONLY,
-            pData,
-            [](void* pUserData) { delete reinterpret_cast<uint8_t*>(pUserData); }),
-        [](auto p) { hb_blob_destroy(p); });
-    if (!hbBlob)
+    const auto pData = new char[dataLength];
+    const auto actualLength = skTypefaceStream->read(pData, dataLength);
+    if (dataLength != actualLength)
+    {
         return nullptr;
+    }
 
-    return OsmAnd::ITypefaceFinder::constructTypeface(skTypeface, hbBlob);
+    return OsmAnd::ITypefaceFinder::Typeface::fromData(QByteArray(pData, dataLength));
 }
