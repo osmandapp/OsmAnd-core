@@ -14,6 +14,7 @@
 #include "ICU.h"
 #include "HarfbuzzUtilities.h"
 #include "CoreResourcesEmbeddedBundle.h"
+#include "HarfbuzzUtilities.h"
 
 //#define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 1
 #ifndef OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
@@ -24,7 +25,6 @@
 #ifndef OSMAND_LOG_CHARACTERS_TYPEFACE
 #   define OSMAND_LOG_CHARACTERS_TYPEFACE 0
 #endif // !defined(OSMAND_LOG_CHARACTERS_TYPEFACE)
-const double HARFBUZZ_FONT_SIZE_SCALE = 64.0f;
 
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
@@ -441,17 +441,10 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
 {
     QString inpStr = textPaint.text.toString();
     auto textQStr = ICU::convertToVisualOrder(inpStr);
-#ifndef OSMAND_USE_HARFBUZZ
-    canvas.drawSimpleText(
-        textQStr.constData(), textQStr.length()*sizeof(QChar), SkTextEncoding::kUTF16,
-        textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-        font, paint);
-#else
 
     auto hb_font = textPaint.faceData->hbFont.get();
-    hb_font_set_scale(hb_font,
-                      HARFBUZZ_FONT_SIZE_SCALE * font.getSize(),
-                      HARFBUZZ_FONT_SIZE_SCALE * font.getSize());
+    auto fontSize = HarfbuzzUtilities::kHarfbuzzFontScale * font.getSize();
+    hb_font_set_scale(hb_font, fontSize, fontSize);
     hb_ot_font_set_funcs(hb_font);
 
     /* Create hb-buffer and populate. */
@@ -489,15 +482,13 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
         } else {
             runBuffer.glyphs[i] = info[i].codepoint;
         }
-        reinterpret_cast<SkPoint *>(runBuffer.pos)[i] =
-            SkPoint::Make(SkDoubleToScalar(x + pos[i].x_offset / HARFBUZZ_FONT_SIZE_SCALE),
-                          SkDoubleToScalar(y - pos[i].y_offset / HARFBUZZ_FONT_SIZE_SCALE));
-        x += pos[i].x_advance / HARFBUZZ_FONT_SIZE_SCALE;
-        y += pos[i].y_advance / HARFBUZZ_FONT_SIZE_SCALE;
+        reinterpret_cast<SkPoint*>(runBuffer.pos)[i] =
+            SkPoint::Make(SkDoubleToScalar(x + pos[i].x_offset / HarfbuzzUtilities::kHarfbuzzFontScale),
+                          SkDoubleToScalar(y - pos[i].y_offset / HarfbuzzUtilities::kHarfbuzzFontScale));
+        x += pos[i].x_advance / HarfbuzzUtilities::kHarfbuzzFontScale;
+        y += pos[i].y_advance / HarfbuzzUtilities::kHarfbuzzFontScale;
     }
     canvas.drawTextBlob(textBlobBuilder.make(), textPaint.positionedBounds.left(), textPaint.positionedBounds.top(), paint);
-
-#endif  // OSMAND_USE_HARFBUZZ
 }
 
 bool OsmAnd::TextRasterizer_P::rasterize(

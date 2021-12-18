@@ -13,6 +13,7 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API HarfbuzzUtilities Q_DECL_FINAL
     {
+        static constexpr float kHarfbuzzFontScale = 64.0;
         HarfbuzzUtilities() = delete;
         ~HarfbuzzUtilities() = delete;
 
