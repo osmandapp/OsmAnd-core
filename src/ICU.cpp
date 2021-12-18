@@ -151,6 +151,7 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
         auto const direction = ubidi_getDirection(pContext);
         if (direction == UBIDI_LTR)
         {
+            ubidi_close(pContext);
             return input;
         }
         QVector<UChar> reordered(len);
