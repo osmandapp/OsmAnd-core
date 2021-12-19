@@ -39,7 +39,7 @@ OsmAnd::ITypefaceFinder::Typeface::Typeface(const sk_sp<SkTypeface>& skTypeface_
     assert(nullptr != hbFont);
 
     /* Create hb-buffer and populate. */
-    THbBufferPtr hb_buffer_ptr(hb_buffer_create(), [](auto* p) { hb_buffer_destroy(p); });
+    std::shared_ptr<hb_buffer_t> hb_buffer_ptr(hb_buffer_create(), [](auto* p) { hb_buffer_destroy(p); });
     if (!hb_buffer_allocation_successful(hb_buffer_ptr.get()))
     {
         return;
