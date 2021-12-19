@@ -8,8 +8,7 @@
 
 namespace OsmAnd
 {
-    using THbFontPtr = std::unique_ptr<hb_font_t, std::function<void (hb_font_t*)>>;
-    using THbBufferPtr = std::unique_ptr<hb_buffer_t, std::function<void (hb_buffer_t*)>>;
+    using THbFontPtr = std::shared_ptr<hb_font_t>;
 
     struct OSMAND_CORE_API HarfbuzzUtilities Q_DECL_FINAL
     {

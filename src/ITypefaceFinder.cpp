@@ -9,7 +9,7 @@
 #include "Logging.h"
 #include "SkiaUtilities.h"
 
-/*static */const char OsmAnd::ITypefaceFinder::Typeface::sRepChars[] = "\xE2\x80\x8B\x41\xE2\x80\x8C";//just add code to the end with \x41 divider
+static constexpr char kRepChars[] = "\xE2\x80\x8B\x41\xE2\x80\x8C";//just add code to the end with \x41 divider
 
 OsmAnd::ITypefaceFinder::ITypefaceFinder()
 {
@@ -45,7 +45,7 @@ OsmAnd::ITypefaceFinder::Typeface::Typeface(const sk_sp<SkTypeface>& skTypeface_
         return;
     }
 
-    hb_buffer_add_utf8(hb_buffer_ptr.get(), ITypefaceFinder::Typeface::sRepChars, -1, 0, -1);
+    hb_buffer_add_utf8(hb_buffer_ptr.get(), kRepChars, -1, 0, -1);
     hb_buffer_guess_segment_properties(hb_buffer_ptr.get());
     hb_shape(hbFont.get(), hb_buffer_ptr.get(), NULL, 0);
     unsigned int length = hb_buffer_get_length(hb_buffer_ptr.get());

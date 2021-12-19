@@ -442,13 +442,20 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     QString inpStr = textPaint.text.toString();
     auto textQStr = ICU::convertToVisualOrder(inpStr);
 
-    auto hb_font = textPaint.faceData->hbFont.get();
+    THbFontPtr hb_font_ptr(
+        hb_font_create_sub_font(textPaint.faceData->hbFont.get()),
+        hb_font_destroy);
+    if (nullptr == hb_font_ptr)
+    {
+        return;
+    }
+
     auto fontSize = HarfbuzzUtilities::kHarfbuzzFontScale * font.getSize();
-    hb_font_set_scale(hb_font, fontSize, fontSize);
-    hb_ot_font_set_funcs(hb_font);
+    hb_font_set_scale(hb_font_ptr.get(), fontSize, fontSize);
+    hb_ot_font_set_funcs(hb_font_ptr.get());
 
     /* Create hb-buffer and populate. */
-    THbBufferPtr hb_buffer_ptr(hb_buffer_create(), [](auto* p) { hb_buffer_destroy(p); });
+    std::shared_ptr<hb_buffer_t> hb_buffer_ptr(hb_buffer_create(), hb_buffer_destroy);
     if (!hb_buffer_allocation_successful(hb_buffer_ptr.get()))
     {
         return;
@@ -458,7 +465,7 @@ void OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas,
     hb_buffer_set_direction(hb_buffer_ptr.get(), HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hb_buffer_ptr.get());
 
-    hb_shape(hb_font, hb_buffer_ptr.get(), NULL, 0);
+    hb_shape(hb_font_ptr.get(), hb_buffer_ptr.get(), NULL, 0);
 
     //  draw glyphs
     unsigned int length = hb_buffer_get_length(hb_buffer_ptr.get());
