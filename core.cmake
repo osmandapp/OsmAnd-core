@@ -1,4 +1,3 @@
-
 # External : geographiclib
 add_subdirectory("${OSMAND_ROOT}/core/externals/geographiclib" "core/externals/geographiclib")
 
@@ -28,6 +27,12 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/protobuf" "core/externals/protob
 
 # External : skia
 add_subdirectory("${OSMAND_ROOT}/core/externals/skia" "core/externals/skia")
+
+# External : sqlite
+add_subdirectory("${OSMAND_ROOT}/core/externals/sqlite" "core/externals/sqlite")
+
+# External : proj
+add_subdirectory("${OSMAND_ROOT}/core/externals/proj" "core/externals/proj")
 
 # External : GDAL
 add_subdirectory("${OSMAND_ROOT}/core/externals/gdal" "core/externals/gdal")
