@@ -19,16 +19,16 @@ bool OsmAnd::IRasterMapLayerProvider::obtainRasterTile(
 }
 
 OsmAnd::IRasterMapLayerProvider::Data::Data(
-    const TileId tileId_,
-    const ZoomLevel zoom_,
-    const AlphaChannelPresence alphaChannelPresence_,
-    const float densityFactor_,
-    const std::shared_ptr<const SkBitmap>& bitmap_,
-    const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
+    TileId tileId_,
+    ZoomLevel zoom_,
+    AlphaChannelPresence alphaChannelPresence_,
+    float densityFactor_,
+    sk_sp<const SkImage> image_,
+    const RetainableCacheMetadata* pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapLayerProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , bitmap(bitmap_)
+    , image(qMove(image_))
 {
 }
 

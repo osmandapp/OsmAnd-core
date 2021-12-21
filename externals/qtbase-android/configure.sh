@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromGit "$SRCLOC" "https://github.com/qt/qtbase" "5.12"
+prepareUpstreamFromGit "$SRCLOC" "https://github.com/qt/qtbase" "v5.15.2"
 patchUpstream "$SRCLOC"

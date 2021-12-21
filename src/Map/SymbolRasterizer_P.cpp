@@ -5,10 +5,7 @@
 #include <QReadWriteLock>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
-#include <SkError.h>
-#include <SkBitmapDevice.h>
 #include "restore_internal_warnings.h"
 
 #include "MapPresentationEnvironment.h"
@@ -89,10 +86,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     style.wrapWidth = textSymbol->wrapWidth;
 
-                QList< std::shared_ptr<const SkBitmap> > backgroundLayers;
+                QList< sk_sp<const SkImage> > backgroundLayers;
                 if (!textSymbol->shieldResourceName.isEmpty())
                 {
-                    std::shared_ptr<const SkBitmap> shield;
+                    sk_sp<const SkImage> shield;
                     env->obtainTextShield(textSymbol->shieldResourceName, shield);
 
                     if (shield)
@@ -100,17 +97,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
                 if (!textSymbol->underlayIconResourceName.isEmpty())
                 {
-                    std::shared_ptr<const SkBitmap> icon;
+                    sk_sp<const SkImage> icon;
                     env->obtainMapIcon(textSymbol->underlayIconResourceName, icon);
                     if (icon)
                         backgroundLayers.push_back(icon);
                 }
 
-                style.backgroundBitmap = SkiaUtilities::mergeBitmaps(backgroundLayers);
-                if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap)
+                style.backgroundImage = SkiaUtilities::mergeImages(backgroundLayers);
+                if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundImage)
                 {
-                    style.backgroundBitmap = SkiaUtilities::scaleBitmap(
-                        style.backgroundBitmap,
+                    style.backgroundImage = SkiaUtilities::scaleImage(
+                        style.backgroundImage,
                         textSymbol->scaleFactor,
                         textSymbol->scaleFactor);
                 }
@@ -160,7 +157,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     const std::shared_ptr<RasterizedOnPathSymbol> rasterizedSymbol(new RasterizedOnPathSymbol(
                         group,
                         textSymbol));
-                    rasterizedSymbol->bitmap = qMove(rasterizedText);
+                    rasterizedSymbol->image = qMove(rasterizedText);
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
                     rasterizedSymbol->content = textSymbol->value;
@@ -194,7 +191,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
                     // Publish new rasterized symbol
                     const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, textSymbol));
-                    rasterizedSymbol->bitmap = rasterizedText;
+                    rasterizedSymbol->image = rasterizedText;
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
                     rasterizedSymbol->content = textSymbol->value;
@@ -246,54 +243,54 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             }
             else if (const auto& iconSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::IconSymbol>(symbol))
             {
-                std::shared_ptr<const SkBitmap> iconBitmap;
-                if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
+                sk_sp<const SkImage> icon;
+                if (!env->obtainMapIcon(iconSymbol->resourceName, icon) || !icon)
                     continue;
                 if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f))
                 {
-                    iconBitmap = SkiaUtilities::scaleBitmap(
-                        iconBitmap,
+                    icon = SkiaUtilities::scaleImage(
+                        icon,
                         iconSymbol->scaleFactor,
                         iconSymbol->scaleFactor);
                 }
 
-                std::shared_ptr<const SkBitmap> backgroundBitmap;
+                sk_sp<const SkImage> background;
                 if (!iconSymbol->shieldResourceName.isEmpty())
                 {
-                    env->obtainIconShield(iconSymbol->shieldResourceName, backgroundBitmap);
+                    env->obtainIconShield(iconSymbol->shieldResourceName, background);
 
-                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && backgroundBitmap)
+                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && background)
                     {
-                        backgroundBitmap = SkiaUtilities::scaleBitmap(
-                            backgroundBitmap,
+                        background = SkiaUtilities::scaleImage(
+                            background,
                             iconSymbol->scaleFactor,
                             iconSymbol->scaleFactor);
                     }
                 }
 
-                QList< std::shared_ptr<const SkBitmap> > layers;
-                if (backgroundBitmap)
-                    layers.push_back(backgroundBitmap);
+                QList< sk_sp<const SkImage> > layers;
+                if (background)
+                    layers.push_back(background);
                 for (const auto& overlayResourceName : constOf(iconSymbol->underlayResourceNames))
                 {
-                    std::shared_ptr<const SkBitmap> underlayBitmap;
-                    if (!env->obtainMapIcon(overlayResourceName, underlayBitmap) || !underlayBitmap)
+                    sk_sp<const SkImage> underlay;
+                    if (!env->obtainMapIcon(overlayResourceName, underlay) || !underlay)
                         continue;
 
-                    layers.push_back(underlayBitmap);
+                    layers.push_back(underlay);
                 }
-                layers.push_back(iconBitmap);
+                layers.push_back(icon);
                 for (const auto& overlayResourceName : constOf(iconSymbol->overlayResourceNames))
                 {
-                    std::shared_ptr<const SkBitmap> overlayBitmap;
-                    if (!env->obtainMapIcon(overlayResourceName, overlayBitmap) || !overlayBitmap)
+                    sk_sp<const SkImage> overlay;
+                    if (!env->obtainMapIcon(overlayResourceName, overlay) || !overlay)
                         continue;
 
-                    layers.push_back(overlayBitmap);
+                    layers.push_back(overlay);
                 }
 
                 // Compose final image
-                const auto rasterizedIcon = SkiaUtilities::mergeBitmaps(layers);
+                const auto rasterizedIcon = SkiaUtilities::mergeImages(layers);
 
 #if OSMAND_DUMP_SYMBOLS
                 {
@@ -322,7 +319,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
                 // Publish new rasterized symbol
                 const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, iconSymbol));
-                rasterizedSymbol->bitmap = rasterizedIcon;
+                rasterizedSymbol->image = rasterizedIcon;
                 rasterizedSymbol->order = iconSymbol->order;
                 rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Icon;
                 rasterizedSymbol->content = iconSymbol->resourceName;

@@ -1,11 +1,6 @@
 #include "CoreResourcesEmbeddedBundle.h"
 #include "CoreResourcesEmbeddedBundle_P.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkStream.h>
-#include <SkImageDecoder.h>
-#include "restore_internal_warnings.h"
-
 #include "Logging.h"
 
 OsmAnd::CoreResourcesEmbeddedBundle::CoreResourcesEmbeddedBundle()
@@ -51,4 +46,16 @@ std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResources
     if (!bundle->_p->loadFromLibrary(libraryNameOrFilename))
         return nullptr;
     return bundle;
+}
+
+std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResourcesEmbeddedBundle::loadFromSharedResourcesBundle()
+{
+    const QLatin1String libraryName(
+#if defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_ios)
+        "libOsmAndCore_ResourcesBundle_shared.dylib"
+#else
+        "OsmAndCore_ResourcesBundle_shared"
+#endif
+    );
+    return loadFromLibrary(libraryName);
 }

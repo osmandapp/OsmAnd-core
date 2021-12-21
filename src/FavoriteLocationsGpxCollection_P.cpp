@@ -57,11 +57,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
     writer.writeStartDocument(QLatin1String("1.0"), true);
 
     //<gpx
-    //	  version="1.1"
-    //	  creator="OsmAnd"
-    //	  xmlns="http://www.topografix.com/GPX/1/1"
-    //	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    //	  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+    //      version="1.1"
+    //      creator="OsmAnd"
+    //      xmlns="http://www.topografix.com/GPX/1/1"
+    //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     writer.writeStartElement(QLatin1String("gpx"));
     writer.writeAttribute(QLatin1String("version"), QLatin1String("1.1"));
     writer.writeAttribute(QLatin1String("creator"), QLatin1String("OsmAnd"));
@@ -114,6 +114,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             if (!address.isEmpty())
                 writer.writeTextElement(QLatin1String("address"), address);
             
+            // <creation_date>
+            const auto creationTime = item->getCreationTime();
+            if (!creationTime.isEmpty())
+                writer.writeTextElement(QLatin1String("creation_date"), creationTime);
+            
             // <icon>
             const auto icon = item->getIcon();
             if (!icon.isEmpty())
@@ -155,6 +160,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 {
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
+    bool isInsideMetadataTag = false;
 
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -162,6 +168,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
         const auto tagName = xmlReader.name();
         if (xmlReader.isStartElement())
         {
+            if (tagName == QLatin1String("metadata"))
+                isInsideMetadataTag = true;
+            if (isInsideMetadataTag)
+                continue;
+            
             if (tagName == QLatin1String("wpt"))
             {
                 if (newItem)
@@ -205,6 +216,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 }
        
                 newItem->setTime(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("creation_date"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <creation_date>");
+                    return false;
+                }
+       
+                newItem->setCreationTime(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("name"))
             {
@@ -307,7 +328,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
         }
         else if (xmlReader.isEndElement())
         {
-            if (tagName == QLatin1String("wpt"))
+            if (tagName == QLatin1String("metadata"))
+            {
+                isInsideMetadataTag = false;
+            }
+            else if (tagName == QLatin1String("wpt"))
             {
                 if (!newItem)
                 {

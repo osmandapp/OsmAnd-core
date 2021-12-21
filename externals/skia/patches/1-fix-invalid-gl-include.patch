@@ -1,0 +1,11 @@
+--- upstream.original/tools/gpu/gl/win/CreatePlatformGLTestContext_win.cpp	2021-11-22 08:24:48.180766513 +0100
++++ upstream.patched/tools/gpu/gl/win/CreatePlatformGLTestContext_win.cpp	2021-11-22 08:38:20.564307241 +0100
+@@ -19,7 +19,7 @@ GLTestContext* CreatePlatformGLTestConte
+ #else
+ 
+ #include <windows.h>
+-#include <GL/GL.h>
++#include <GL/gl.h>
+ #include "src/utils/win/SkWGL.h"
+ 
+ #include <windows.h>

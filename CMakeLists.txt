@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 156
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 157
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -13,7 +13,7 @@ set(target_specific_dependencies "")
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
 	find_library(rt_LIBRARY rt)
-        find_library(z_LIBRARY z)
+	find_library(z_LIBRARY z)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		${dl_LIBRARY}
 		${rt_LIBRARY}
@@ -29,38 +29,31 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
 	find_library(CFNetwork_LIBRARY CFNetwork)
 	find_library(Security_LIBRARY Security)
+	find_library(IOKit_LIBRARY IOKit)
 	find_library(z_LIBRARY z)
-	set(library_suffix_tbd ".tbd")
-	
-	message("LIBRARY SUFFIX ${library_suffix_tbd}")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
-		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
-		"${CoreText_LIBRARY}/CoreText${library_suffix_tbd}"
-		"${CoreGraphics_LIBRARY}/CoreGraphics${library_suffix_tbd}"
-		"${CoreFoundation_LIBRARY}/CoreFoundation${library_suffix_tbd}"
-		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
-		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
-		"${Security_LIBRARY}/Security${library_suffix_tbd}"
+		"${Cocoa_LIBRARY}/Cocoa.tbd"
+		"${CoreServices_LIBRARY}/CoreServices.tbd"
+		"${CoreText_LIBRARY}/CoreText.tbd"
+		"${CoreGraphics_LIBRARY}/CoreGraphics.tbd"
+		"${CoreFoundation_LIBRARY}/CoreFoundation.tbd"
+		"${SystemConfiguration_LIBRARY}/SystemConfiguration.tbd"
+		"${CFNetwork_LIBRARY}/CFNetwork.tbd"
+		"${Security_LIBRARY}/Security.tbd"
+		"${IOKit_LIBRARY}/IOKit.tbd"
 		${z_LIBRARY}
 		${objc_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "android")
 	find_library(dl_LIBRARY dl)
-	#find_library(c++_shared_LIBRARY c++_shared)
 	find_library(log_LIBRARY log)
 	find_library(c_LIBRARY c)
-	#find_library(c++_LIBRARY c++)
 	find_library(stdc++_LIBRARY stdc++)
-	#find_library(gcc_LIBRARY gcc)
 	find_library(m_LIBRARY m)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		#${c++_shared_LIBRARY}
 		${log_LIBRARY}
 		${c_LIBRARY}
-		#${c++_LIBRARY}
 		${stdc++_LIBRARY}
-		#${gcc_LIBRARY}
 		${m_LIBRARY}
 		${dl_LIBRARY}
 	)
@@ -117,21 +110,17 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
 	CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
-	set(target_specific_public_definitions ${target_specific_public_definitions}
-		${OPENGL_DEFINITIONS}
-	)
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGL2PLUS_RENDERER_SUPPORTED
 	)
-	set(target_specific_public_includes ${target_specific_public_includes}
-		${OPENGL_INCLUDE_DIRS}
-	)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
+		OpenGL::GL
+		OpenGL::GLU
 		glew_static
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
+		OpenGL::GL
+		OpenGL::GLU
 		glew_static
 	)
 	file(GLOB sources_opengl2plus "src/Map/OpenGL/OpenGL2plus/*.c*")
@@ -168,23 +157,22 @@ set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
 set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
 file(GLOB legacy_shared_sources
-    "${LEGACY_SRC}/openingHoursParser.h"
-    "${LEGACY_SRC}/openingHoursParser.cpp"
-    "${LEGACY_SRC}/proto/osmand_index.pb.h"
-    "${LEGACY_SRC}/proto/osmand_index.pb.cc"
-    "${LEGACY_SRC}/proto/OBF.pb.h"
-    "${LEGACY_SRC}/proto/OBF.pb.cc"
-    "${LEGACY_SRC}/proto/vector_tile.pb.h"
-    "${LEGACY_SRC}/proto/vector_tile.pb.cc"
-
+	"${LEGACY_SRC}/openingHoursParser.h"
+	"${LEGACY_SRC}/openingHoursParser.cpp"
+	"${LEGACY_SRC}/proto/osmand_index.pb.h"
+	"${LEGACY_SRC}/proto/osmand_index.pb.cc"
+	"${LEGACY_SRC}/proto/OBF.pb.h"
+	"${LEGACY_SRC}/proto/OBF.pb.cc"
+	"${LEGACY_SRC}/proto/vector_tile.pb.h"
+	"${LEGACY_SRC}/proto/vector_tile.pb.cc"
 )
 
 set(legacy_shared_dirs_public
-    "${CORE_LEGACY}/native/src"
+	"${CORE_LEGACY}/native/src"
 )
 
 set(target_legacy_shared_public_includes
-    ${legacy_shared_dirs_public}
+	${legacy_shared_dirs_public}
 )
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
@@ -211,18 +199,17 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/transportRouteResult.h"
 		"${LEGACY_SRC}/transportRouteResultSegment.h"
 		"${LEGACY_SRC}/transportRouteSegment.h"
-        	"${LEGACY_SRC}/transportRouteResult.cpp"
-        	"${LEGACY_SRC}/transportRouteResultSegment.cpp"
-        	"${LEGACY_SRC}/transportRouteSegment.cpp"
-        	"${LEGACY_SRC}/transportRoutingConfiguration.cpp"
-        	"${LEGACY_SRC}/transportRoutingContext.cpp"
-        	"${LEGACY_SRC}/transportRoutingObjects.cpp"
-         "${LEGACY_SRC}/transportRouteStopsReader.h"
-         "${LEGACY_SRC}/transportRouteStopsReader.cpp"
-
-        "${LEGACY_SRC}/turnType.h"
-        "${LEGACY_SRC}/turnType.cpp"
-        "${LEGACY_SRC}/routeSegment.h"
+		"${LEGACY_SRC}/transportRouteResult.cpp"
+		"${LEGACY_SRC}/transportRouteResultSegment.cpp"
+		"${LEGACY_SRC}/transportRouteSegment.cpp"
+		"${LEGACY_SRC}/transportRoutingConfiguration.cpp"
+		"${LEGACY_SRC}/transportRoutingContext.cpp"
+		"${LEGACY_SRC}/transportRoutingObjects.cpp"
+		"${LEGACY_SRC}/transportRouteStopsReader.h"
+		"${LEGACY_SRC}/transportRouteStopsReader.cpp"
+		"${LEGACY_SRC}/turnType.h"
+		"${LEGACY_SRC}/turnType.cpp"
+		"${LEGACY_SRC}/routeSegment.h"
 		"${LEGACY_SRC}/routeCalculationProgress.h"
 		"${LEGACY_SRC}/routeResultPreparation.h"
 		"${LEGACY_SRC}/routeResultPreparation.cpp"
@@ -264,10 +251,10 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_PROTOBUF}/src/"
 	)
 
-	set(target_legacy_public_includes 
+	set(target_legacy_public_includes
 		${legacy_dirs_public}
 	)
-	
+
 endif()
 
 file(GLOB includes
@@ -303,13 +290,14 @@ set(merged_sources
 	${sources_map}
 	${target_specific_sources}
 	${legacy_shared_sources}
-    	${legacy_sources}
+	${legacy_sources}
 )
 set(merged_dependencies
 	skia_static
 	protobuf_static
 	gdal_static
 	icu4c_static
+	harfbuzz_static
 	archive_static
 	z_static
 	${target_specific_dependencies}
@@ -338,7 +326,7 @@ set(merged_include_dirs_private
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	${target_specific_public_includes}
-    ${target_legacy_shared_public_includes}
+	${target_legacy_shared_public_includes}
 	${target_legacy_public_includes}
 )
 set(merged_link_libs_public
@@ -346,6 +334,7 @@ set(merged_link_libs_public
 	protobuf_static
 	gdal_static
 	icu4c_static
+	harfbuzz_static
 	archive_static
 	glm_headers_only
 	boost_static_precompiled
@@ -356,7 +345,7 @@ set(merged_link_libs_public
 if (OSMAND_OWN_SHIPPED_QT)
 	# When using embedded Qt, we need to use tools from either static or shared
 	# version of qt.
-	set ( Qt5Core_DIR "${OSMAND_OWN_SHIPPED_QT_STATIC}/lib/cmake/Qt5Core" )
+	set(Qt5Core_DIR "${OSMAND_OWN_SHIPPED_QT_STATIC}/lib/cmake/Qt5Core")
 	find_package(Qt5Core REQUIRED)
 else()
 	# If not using embedded QT, find packages it as usual
@@ -412,11 +401,6 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_shared
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -428,7 +412,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static
 		PRIVATE
-			-DOSMAND_CORE_INTERNAL		
+			-DOSMAND_CORE_INTERNAL
 			${merged_compile_definitions_private}
 		PUBLIC
 			-DOSMAND_CORE_STATIC
@@ -467,11 +451,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		LINK_PUBLIC
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_static
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -521,7 +500,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static_standalone
 		PRIVATE
-			-DOSMAND_CORE_INTERNAL		
+			-DOSMAND_CORE_INTERNAL
 			${merged_compile_definitions_private}
 		PUBLIC
 			-DOSMAND_CORE_STATIC
@@ -548,9 +527,4 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${qtpcre_STATIC_LIBRARIES}
 			${merged_link_libs_public}
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-		set_target_properties(OsmAndCore_static_standalone
-			PROPERTIES
-				XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-	endif()
 endif()

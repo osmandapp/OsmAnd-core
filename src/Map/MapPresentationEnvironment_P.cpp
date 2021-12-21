@@ -6,8 +6,8 @@
 #include "QtCommon.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
-#include <SkStream.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "MapStyleEvaluator.h"
@@ -170,100 +170,113 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
     applyTo(evaluator, _settings);
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
+    const QString& name,
+    sk_sp<const SkImage>& outShader) const
 {
-    QMutexLocker scopedLocker(&_shadersBitmapsMutex);
+    QMutexLocker scopedLocker(&_shadersMutex);
 
-    auto itShaderBitmap = _shadersBitmaps.constFind(name);
-    if (itShaderBitmap == _shadersBitmaps.cend())
+    auto itShader = _shaders.constFind(name);
+    if (itShader == _shaders.cend())
     {
-        const auto shaderBitmapPath = QString::fromLatin1("map/shaders/%1.png").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
         // Get data from embedded resources
-        const auto data = obtainResourceByName(shaderBitmapPath);
-
+        const auto data = obtainResourceByName(resourcePath);
+        
         // Decode bitmap for a shader
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        if (!image)
+        {
             return false;
-        itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
+        }
+
+        itShader = _shaders.insert(name, image);
     }
 
     // Create shader from that bitmap
-    outShaderBitmap = *itShaderBitmap;
+    outShader = *itShader;
     return true;
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
+    const QString& name,
+    sk_sp<const SkImage>& outIcon) const
 {
     QMutexLocker scopedLocker(&_mapIconsMutex);
 
     auto itIcon = _mapIcons.constFind(name);
     if (itIcon == _mapIcons.cend())
     {
-        const auto bitmapPath = QString::fromLatin1("map/icons/%1.png").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/icons/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = obtainResourceByName(bitmapPath);
-
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        auto data = obtainResourceByName(resourcePath);
+        
+        // Decode bitmap for a shader
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        if (!image)
+        {
             return false;
+        }
 
-        itIcon = _mapIcons.insert(name, bitmap);
+        itIcon = _mapIcons.insert(name, image);
     }
 
     outIcon = *itIcon;
     return true;
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
+    const QString& name,
+    sk_sp<const SkImage>& outTextShield) const
 {
     QMutexLocker scopedLocker(&_textShieldsMutex);
 
     auto itTextShield = _textShields.constFind(name);
     if (itTextShield == _textShields.cend())
     {
-        const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = obtainResourceByName(bitmapPath);
+        auto data = obtainResourceByName(resourcePath);
 
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        // Decode bitmap for a shader
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        if (!image)
+        {
             return false;
+        }
 
-        itTextShield = _textShields.insert(name, bitmap);
+        itTextShield = _textShields.insert(name, image);
     }
 
     outTextShield = *itTextShield;
     return true;
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
+    const QString& name,
+    sk_sp<const SkImage>& outIconShield) const
 {
     QMutexLocker scopedLocker(&_iconShieldsMutex);
 
     auto itIconShield = _iconShields.constFind(name);
     if (itIconShield == _iconShields.cend())
     {
-        const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
         // Get data from embedded resources
-        auto data = obtainResourceByName(bitmapPath);
+        auto data = obtainResourceByName(resourcePath);
 
-        // Decode data
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        // Decode bitmap for a shader
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        if (!image)
+        {
             return false;
+        }
 
-        itIconShield = _iconShields.insert(name, bitmap);
+        itIconShield = _iconShields.insert(name, image);
     }
 
     outIconShield = *itIconShield;

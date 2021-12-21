@@ -9,14 +9,16 @@
 #include <QList>
 #include <OsmAndCore/restore_internal_warnings.h>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/Map/IMapStyle.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -93,10 +95,10 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
-        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const;
-        bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
-        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
-        bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const;
+        bool obtainShader(const QString& name, sk_sp<const SkImage>& outShader) const;
+        bool obtainMapIcon(const QString& name, sk_sp<const SkImage>& outIcon) const;
+        bool obtainTextShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainIconShield(const QString& name, sk_sp<const SkImage>& outIconShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;

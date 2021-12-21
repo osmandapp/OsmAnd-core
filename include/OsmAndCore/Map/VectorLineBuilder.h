@@ -8,6 +8,10 @@
 #include <QVector>
 #include <QHash>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -15,8 +19,6 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/VectorLine.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -70,17 +72,19 @@ namespace OsmAnd
         double getOutlineWidth() const;
         OsmAnd::VectorLineBuilder& setOutlineWidth(const double width);
 
-        std::shared_ptr<const SkBitmap> getPathIcon() const;
-        VectorLineBuilder& setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getPathIcon() const;
+        VectorLineBuilder& setPathIcon(const sk_sp<const SkImage>& image);
         
-        std::shared_ptr<const SkBitmap> getSpecialPathIcon() const;
-        VectorLineBuilder& setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getSpecialPathIcon() const;
+        VectorLineBuilder& setSpecialPathIcon(const sk_sp<const SkImage>& image);
 
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);
         
         float getScreenScale() const;
         VectorLineBuilder& setScreenScale(const float step);
+        
+        VectorLineBuilder& setEndCapStyle(const LineEndCapStyle endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

@@ -47,12 +47,18 @@ target_compile_definitions(icu4c_static
 
 target_include_directories(icu4c_static
 	PUBLIC
+		"upstream.patched/icu4c/source"
 		"upstream.patched/icu4c/source/common"
 		"upstream.patched/icu4c/source/i18n"
 )
-
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(icu4c_static
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
+set_property(TARGET icu4c_static
+	PROPERTY
+		CXX_STANDARD 11
+)
+if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+	# NOTE: Workaround https://gitlab.kitware.com/cmake/cmake/-/issues/19713
+	set_property(TARGET icu4c_static
+		PROPERTY
+			XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11"
+	)
 endif()

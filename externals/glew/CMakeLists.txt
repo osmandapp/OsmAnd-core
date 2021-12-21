@@ -14,6 +14,7 @@ set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
 
 find_package(OpenGL REQUIRED)
+
 if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx")
 	find_package(X11 REQUIRED)
 	set(target_specific_public_includes ${target_specific_public_includes}
@@ -32,23 +33,16 @@ target_compile_definitions(glew_static
 		${target_specific_private_definitions}
 	PUBLIC
 		-DGLEW_STATIC
-		${OPENGL_DEFINITIONS}
 		${target_specific_public_definitions}
 )
 target_include_directories(glew_static
 	PUBLIC
-		${OPENGL_INCLUDE_DIRS}
 		"upstream.patched/include"
 		${target_specific_public_includes}
 )
 target_link_libraries(glew_static
 	LINK_PUBLIC
-		${OPENGL_gl_LIBRARY}
-		${OPENGL_glu_LIBRARY}
+		OpenGL::GL
+		OpenGL::GLU
 		${target_specific_public_libraries}
 )
-if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
-    set_target_properties(glew_static
-        PROPERTIES
-            XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES")
-endif()

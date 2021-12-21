@@ -1,82 +1,97 @@
-#include "EmbeddedFontFinder.h"
-#include "EmbeddedFontFinder_internal.h"
+#include "EmbeddedTypefaceFinder.h"
+#include "EmbeddedTypefaceFinder_internal.h"
 
 #include "QtExtensions.h"
 #include "QtCommon.h"
 
 #include <SkTypeface.h>
-#include <SkPaint.h>
 
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
 
-OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
+OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
     : coreResourcesProvider(coreResourcesProvider_)
 {
-    for (const auto embeddedFontResource : constOf(resources))
+    for (const auto& embeddedTypefaceResource : constOf(resources))
     {
-        const auto fontData = coreResourcesProvider->getResource(embeddedFontResource);
-        if (fontData.isNull())
+        const auto typefaceData = coreResourcesProvider->getResource(embeddedTypefaceResource);
+        if (typefaceData.isNull())
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to load embedded font data for '%s'",
-                qPrintable(embeddedFontResource));
+                "Failed to load embedded typeface data for '%s'",
+                qPrintable(embeddedTypefaceResource));
             continue;
         }
 
-        const auto font = SkiaUtilities::createTypefaceFromData(fontData);
-        if (!font)
+        const auto skTypeface = SkiaUtilities::createTypefaceFromData(typefaceData);
+        if (!skTypeface)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create SkTypeface from embedded font data for '%s'",
-                qPrintable(embeddedFontResource));
+                "Failed to create SkTypeface from embedded data for '%s'",
+                qPrintable(embeddedTypefaceResource));
             continue;
         }
 
-        _fonts.push_back(font);
+        const auto hbBlob = std::shared_ptr<hb_blob_t>(
+            hb_blob_create_or_fail(
+                typefaceData.constData(),
+                typefaceData.length(),
+                HB_MEMORY_MODE_READONLY,
+                new QByteArray(typefaceData),
+                [](void* pUserData) { delete reinterpret_cast<QByteArray*>(pUserData); }),
+            [](auto p) { hb_blob_destroy(p); });
+        if (!hbBlob) {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to load Harfbuzz blob from embedded data for '%s'",
+                qPrintable(embeddedTypefaceResource));
+            continue;
+        }
+
+        const auto pHbTypeface = hb_face_create(hbBlob.get(), 0);
+        if (!pHbTypeface || pHbTypeface == hb_face_get_empty()) {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to create Harfbuzz typeface from embedded data for '%s'",
+                qPrintable(embeddedTypefaceResource));
+            continue;
+        }
+
+        _typefaces.push_back(std::make_shared<Typeface>(skTypeface, pHbTypeface));
     }
 }
 
-OsmAnd::EmbeddedFontFinder::~EmbeddedFontFinder()
+OsmAnd::EmbeddedTypefaceFinder::~EmbeddedTypefaceFinder()
 {
-    for (const auto& font : constOf(_fonts))
-        font->unref();
 }
 
-SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
+std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::EmbeddedTypefaceFinder::findTypefaceForCharacterUCS4(
     const uint32_t character,
     const SkFontStyle style /*= SkFontStyle()*/) const
 {
-    SkPaint paint;
-    paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
-
-    SkTypeface* bestMatch = nullptr;
+    std::shared_ptr<const Typeface> bestMatch = nullptr;
     auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
-    for (const auto font : constOf(_fonts))
+    for (const auto& typeface : constOf(_typefaces))
     {
-        paint.setTypeface(font);
-
         // If font doesn't contain requested character, it should be completely ignored
-        if (!paint.containsText(&character, sizeof(uint32_t)))
+        if (typeface->skTypeface->unicharToGlyph(character) == 0)
             continue;
 
-        // Calculate difference between this font style and requested style
+        // Calculate difference between this typeface font style and requested style
         auto difference = 0.0f;
-        const auto fontStyle = font->fontStyle();
+        const auto fontStyle = typeface->skTypeface->fontStyle();
         if (fontStyle.slant() != style.slant())
             difference += 1.0f;
         if (fontStyle.width() != style.width())
-            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltaExpanded_Width;
+            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltraExpanded_Width;
         if (fontStyle.weight() != style.weight())
             difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 
         // If there was previous best match, check if this match is better
         if (bestMatch && bestMatchDifference < difference)
             continue;
-        
-        bestMatch = font;
+
+        bestMatch = typeface;
         bestMatchDifference = difference;
 
         // In case difference is 0, there won't be better match
@@ -87,30 +102,30 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
     return bestMatch;
 }
 
-static std::shared_ptr<OsmAnd::EmbeddedFontFinder> s_embeddedFontFinderDefaultInstance;
-std::shared_ptr<const OsmAnd::EmbeddedFontFinder> OsmAnd::EmbeddedFontFinder::getDefaultInstance()
+static std::shared_ptr<OsmAnd::EmbeddedTypefaceFinder> s_embeddedTypefaceFinderDefaultInstance;
+std::shared_ptr<const OsmAnd::EmbeddedTypefaceFinder> OsmAnd::EmbeddedTypefaceFinder::getDefaultInstance()
 {
-    return s_embeddedFontFinderDefaultInstance;
+    return s_embeddedTypefaceFinderDefaultInstance;
 }
 
-void OsmAnd::EmbeddedFontFinder_initialize()
+void OsmAnd::EmbeddedTypefaceFinder_initialize()
 {
-    s_embeddedFontFinderDefaultInstance.reset(new EmbeddedFontFinder());
+    s_embeddedTypefaceFinderDefaultInstance.reset(new EmbeddedTypefaceFinder());
 }
 
-void OsmAnd::EmbeddedFontFinder_release()
+void OsmAnd::EmbeddedTypefaceFinder_release()
 {
-    s_embeddedFontFinderDefaultInstance.reset();
+    s_embeddedTypefaceFinderDefaultInstance.reset();
 }
 
-const QStringList OsmAnd::EmbeddedFontFinder::resources = QStringList()
+const QStringList OsmAnd::EmbeddedTypefaceFinder::resources = QStringList()
 
      << QLatin1String("map/fonts/05_NotoSans-Regular.ttf")
      << QLatin1String("map/fonts/10_NotoSans-Bold.ttf")
      << QLatin1String("map/fonts/15_NotoSans-Italic.ttf")
      << QLatin1String("map/fonts/20_NotoSans-BoldItalic.ttf")
-     << QLatin1String("map/fonts/25_NotoSansArabic-Regular.ttf")
-     << QLatin1String("map/fonts/30_NotoSansArabic-Bold.ttf")
+//     << QLatin1String("map/fonts/25_NotoSansArabic-Regular.ttf")
+//     << QLatin1String("map/fonts/30_NotoSansArabic-Bold.ttf")
      << QLatin1String("map/fonts/35_NotoSansSouthAsian-Regular.ttf")
      << QLatin1String("map/fonts/40_NotoSansSouthAsian-Bold.ttf")
      << QLatin1String("map/fonts/45_NotoSansSoutheastAsian-Regular.ttf")

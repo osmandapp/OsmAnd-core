@@ -31,18 +31,18 @@
 #define COLORIZATION_SOLID 2
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
-: _hasUnappliedChanges(false)
-, _hasUnappliedPrimitiveChanges(false)
-, _isHidden(false)
-, _isApproximationEnabled(true)
-, _colorizationSceme(0)
-, _lineWidth(1.0)
-, _outlineWidth(0.0)
-, _metersPerPixel(1.0)
-, _mapZoomLevel(InvalidZoomLevel)
-, _mapVisualZoom(0.f)
-, _mapVisualZoomShift(0.f)
-, owner(owner_)
+    : _hasUnappliedChanges(false)
+    , _hasUnappliedPrimitiveChanges(false)
+    , _isHidden(false)
+    , _isApproximationEnabled(true)
+    , _colorizationSceme(0)
+    , _lineWidth(1.0)
+    , _outlineWidth(0.0)
+    , _metersPerPixel(1.0)
+    , _mapZoomLevel(InvalidZoomLevel)
+    , _mapVisualZoom(0.f)
+    , _mapVisualZoomShift(0.f)
+    , owner(owner_)
 {
 }
 
@@ -168,9 +168,9 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         
         if (owner->pathIcon)
         {
-            double newWidth = _lineWidth / 2;
+            double newWidth = _lineWidth / 3;
             double scale = newWidth / owner->pathIcon->width();
-            _scaledBitmap = SkiaUtilities::scaleBitmap(owner->pathIcon, scale, 1);
+            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
         }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -924,7 +924,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                                subvector, radius * 2,
                                                                                                                _fillColor, colors,
                                                                                                                crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                               crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                               owner->endCapStyle);
                 prevIdx = idx - 1;
             }
             const auto begin = original.begin() + prevIdx;
@@ -939,7 +939,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                            subvector, radius * 2,
                                                                                                            _fillColor, colors,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                           owner->endCapStyle);
         }
         else
         {
@@ -948,7 +948,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                                                                                                            original, radius * 2,
                                                                                                            _fillColor, filteredColorsMap,
                                                                                                            crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           crushedpixel::Polyline2D::EndCapStyle::ROUND);
+                                                                                                           owner->endCapStyle);
         }
     }
     if (vertices.size() == 0)
@@ -1201,13 +1201,15 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
-    return useSpecialArrow() ?
-    getPointBitmap()->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER :
-    getPointBitmap()->height() * ARROW_DISTANCE_MULTIPLIER;
+    if (useSpecialArrow())
+    {
+        return owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
+    }
+    return _scaledPathIcon->height() * ARROW_DISTANCE_MULTIPLIER;
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::VectorLine_P::getPointBitmap() const
+sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
 {
-    return useSpecialArrow() ? owner->specialPathIcon : _scaledBitmap;
+    return useSpecialArrow() ? owner->specialPathIcon : _scaledPathIcon;
 }
 

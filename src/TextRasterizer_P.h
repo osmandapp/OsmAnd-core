@@ -13,6 +13,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkCanvas.h>
 #include <SkPaint.h>
+#include <SkFont.h>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -33,6 +34,7 @@ namespace OsmAnd
 
     private:
         SkPaint _defaultPaint;
+        SkFont _defaultFont;
 
         struct TextPaint
         {
@@ -44,6 +46,7 @@ namespace OsmAnd
 
             QStringRef text;
             SkPaint paint;
+            SkFont font;
             SkScalar height;
             SkScalar width;
             SkRect bounds;
@@ -86,6 +89,7 @@ namespace OsmAnd
         void measureText(QVector<LinePaint>& paints, SkScalar& outMaxLineWidth) const;
         void measureGlyphs(const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
         SkPaint getHaloPaint(const SkPaint& paint, const Style& style) const;
+        SkFont getHaloFont(const SkFont& font, const Style& style) const;
         void measureHalo(const Style& style, QVector<LinePaint>& paints) const;
         void measureHaloGlyphs(const Style& style, const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
         SkRect positionText(
@@ -99,7 +103,7 @@ namespace OsmAnd
 
         ImplementationInterface<TextRasterizer> owner;
 
-        std::shared_ptr<SkBitmap> rasterize(
+        sk_sp<SkImage> rasterize(
             const QString& text,
             const Style& style,
             QVector<SkScalar>* const outGlyphWidths,

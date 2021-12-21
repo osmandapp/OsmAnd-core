@@ -1,0 +1,14 @@
+diff -rupN upstream.original/src/testlib/qappletestlogger.cpp upstream.patched/src/testlib/qappletestlogger.cpp
+--- upstream.original/src/testlib/qappletestlogger.cpp	2021-11-01 15:01:05.000000000 +0100
++++ upstream.patched/src/testlib/qappletestlogger.cpp	2021-11-01 20:44:03.000000000 +0100
+@@ -85,8 +85,8 @@ void QAppleTestLogger::leaveTestFunction
+ 
+ struct MessageData
+ {
+-    QtMsgType messageType = QtFatalMsg;
+-    const char *categorySuffix = nullptr;
++    QtMsgType messageType;
++    const char *categorySuffix;
+ 
+     void generateCategory(QTestCharBuffer *category)
+     {

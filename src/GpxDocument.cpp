@@ -30,11 +30,11 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     xmlWriter.writeStartDocument(QStringLiteral("1.0"), true);
 
     //<gpx
-    //	  version="1.1"
-    //	  creator="OsmAnd"
-    //	  xmlns="http://www.topografix.com/GPX/1/1"
-    //	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    //	  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+    //      version="1.1"
+    //      creator="OsmAnd"
+    //      xmlns="http://www.topografix.com/GPX/1/1"
+    //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
     xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? QStringLiteral("OsmAnd Core") : creator);
@@ -367,7 +367,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         }
 
         // </trk>
-        // TODO: write file extensions (show start/finish, width etc.)
         xmlWriter.writeEndElement();
     }
 
@@ -526,6 +525,9 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         // </rte>
         xmlWriter.writeEndElement();
     }
+    // Write gpx extensions
+    if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(extraData.shared_ptr()))
+        writeExtensions(extensions, xmlWriter);
 
     // </gpx>
     xmlWriter.writeEndElement();

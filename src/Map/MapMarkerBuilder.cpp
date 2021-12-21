@@ -106,14 +106,14 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPosition(const PointI pos
     return *this;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder::getPinIcon() const
+sk_sp<const SkImage> OsmAnd::MapMarkerBuilder::getPinIcon() const
 {
     return _p->getPinIcon();
 }
 
-OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const sk_sp<const SkImage>& image)
 {
-    _p->setPinIcon(bitmap);
+    _p->setPinIcon(image);
 
     return *this;
 }
@@ -190,19 +190,20 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setCaptionTopSpace(const dou
     return *this;
 }
 
-std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(
+    const std::shared_ptr<MapMarkersCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);
 }
 
-QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > OsmAnd::MapMarkerBuilder::getOnMapSurfaceIcons() const
+QHash< OsmAnd::MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > OsmAnd::MapMarkerBuilder::getOnMapSurfaceIcons() const
 {
     return _p->getOnMapSurfaceIcons();
 }
 
-OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image)
 {
-    _p->addOnMapSurfaceIcon(key, bitmap);
+    _p->addOnMapSurfaceIcon(key, image);
 
     return *this;
 }

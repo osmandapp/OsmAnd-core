@@ -699,17 +699,17 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
                 }
                 break;
             }
-            //			case OsmandOdb.OsmAndPoiCategories.SUBCATEGORIES_FIELD_NUMBER:
-            //				int subcatvl = codedIS.readUInt32();
-            //				if(req.poiTypeFilter.filterSubtypes()) {
-            //					subType.setLength(0);
-            //					PoiSubType pt = region.getSubtypeFromId(subcatvl, subType);
-            //					if(pt != null && req.poiTypeFilter.accept(pt.name, subType.toString())) {
-            //						codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
-            //						return true;
-            //					}
-            //				}
-            //				break;
+            //            case OsmandOdb.OsmAndPoiCategories.SUBCATEGORIES_FIELD_NUMBER:
+            //                int subcatvl = codedIS.readUInt32();
+            //                if(req.poiTypeFilter.filterSubtypes()) {
+            //                    subType.setLength(0);
+            //                    PoiSubType pt = region.getSubtypeFromId(subcatvl, subType);
+            //                    if(pt != null && req.poiTypeFilter.accept(pt.name, subType.toString())) {
+            //                        codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+            //                        return true;
+            //                    }
+            //                }
+            //                break;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;

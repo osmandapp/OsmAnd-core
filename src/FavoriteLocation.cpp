@@ -4,53 +4,27 @@
 #include "Utilities.h"
 
 OsmAnd::FavoriteLocation::FavoriteLocation(
-	const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
-	const PointI position31_,
-    const QString& elevation_,
-    const QString& time_,
-	const QString& title_,
-    const QString& description_,
-    const QString& address_,
-	const QString& group_,
-    const QString& icon_,
-    const QString& background_,
-    const ColorRGB color_)
-	: _p(new FavoriteLocation_P(this))
-    , locationSource(LocationSource::Point31)
-    , position31(position31_)
-    , latLon(Utilities::convert31ToLatLon(position31_))
-{
-    setElevation(elevation_);
-    setTime(time_);
-	setTitle(title_);
-    setDescription(description_);
-    setAddress(address_);
-    setGroup(group_);
-    setIcon(icon_);
-    setBackground(background_);
-    setColor(color_);
-	attach(containerLink_);
-}
-
-OsmAnd::FavoriteLocation::FavoriteLocation(
     const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
-    const LatLon latLon_,
+    const PointI position31_,
     const QString& elevation_,
     const QString& time_,
+    const QString& creationTime_,
     const QString& title_,
     const QString& description_,
     const QString& address_,
     const QString& group_,
     const QString& icon_,
     const QString& background_,
-    const ColorRGB color_)
+    const ColorRGB color_,
+    const bool calendarEvent_)
     : _p(new FavoriteLocation_P(this))
-    , locationSource(LocationSource::LatLon)
-    , position31(Utilities::convertLatLonTo31(latLon_))
-    , latLon(latLon_)
+    , locationSource(LocationSource::Point31)
+    , position31(position31_)
+    , latLon(Utilities::convert31ToLatLon(position31_))
 {
     setElevation(elevation_);
     setTime(time_);
+    setCreationTime(creationTime_);
     setTitle(title_);
     setDescription(description_);
     setAddress(address_);
@@ -58,13 +32,47 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     setIcon(icon_);
     setBackground(background_);
     setColor(color_);
+    setCalendarEvent(calendarEvent_);
+    attach(containerLink_);
+}
+
+OsmAnd::FavoriteLocation::FavoriteLocation(
+    const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
+    const LatLon latLon_,
+    const QString& elevation_,
+    const QString& time_,
+    const QString& creationTime_,
+    const QString& title_,
+    const QString& description_,
+    const QString& address_,
+    const QString& group_,
+    const QString& icon_,
+    const QString& background_,
+    const ColorRGB color_,
+    const bool calendarEvent_)
+    : _p(new FavoriteLocation_P(this))
+    , locationSource(LocationSource::LatLon)
+    , position31(Utilities::convertLatLonTo31(latLon_))
+    , latLon(latLon_)
+{
+    setElevation(elevation_);
+    setTime(time_);
+    setCreationTime(creationTime_);
+    setTitle(title_);
+    setDescription(description_);
+    setAddress(address_);
+    setGroup(group_);
+    setIcon(icon_);
+    setBackground(background_);
+    setColor(color_);
+    setCalendarEvent(calendarEvent_);
     attach(containerLink_);
 }
 
 OsmAnd::FavoriteLocation::FavoriteLocation(const PointI position31_)
-	: _p(new FavoriteLocation_P(this))
+    : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::Point31)
-	, position31(position31_)
+    , position31(position31_)
     , latLon(Utilities::convert31ToLatLon(position31_))
 {
 }
@@ -125,6 +133,16 @@ QString OsmAnd::FavoriteLocation::getTime() const
 void OsmAnd::FavoriteLocation::setTime(const QString& newTime)
 {
     _p->setTime(newTime);
+}
+
+QString OsmAnd::FavoriteLocation::getCreationTime() const
+{
+    return _p->getCreationTime();
+}
+
+void OsmAnd::FavoriteLocation::setCreationTime(const QString& newTime)
+{
+    _p->setCreationTime(newTime);
 }
 
 void OsmAnd::FavoriteLocation::setCalendarEvent(const bool calendarEvent)
@@ -194,13 +212,19 @@ QString OsmAnd::FavoriteLocation::getBackground() const
 
 void OsmAnd::FavoriteLocation::setBackground(const QString& newBackground)
 {
-    
+
     _p->setBackground(newBackground);
 }
 
 OsmAnd::ColorRGB OsmAnd::FavoriteLocation::getColor() const
 {
-    return _p->getColor();
+    auto undefinedColor = OsmAnd::ColorRGB(0xFF, 0xFF, 0xFF);
+    auto defaultColor = OsmAnd::ColorRGB(0x3F, 0x51, 0xB5);
+
+    OsmAnd::ColorRGB color = _p->getColor();
+    if (color == undefinedColor)
+        return defaultColor;
+    return color;
 }
 
 void OsmAnd::FavoriteLocation::setColor(const ColorRGB newColor)
@@ -210,10 +234,10 @@ void OsmAnd::FavoriteLocation::setColor(const ColorRGB newColor)
 
 void OsmAnd::FavoriteLocation::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
 {
-	_p->attach(containerLink);
+    _p->attach(containerLink);
 }
 
 void OsmAnd::FavoriteLocation::detach()
 {
-	_p->detach();
+    _p->detach();
 }

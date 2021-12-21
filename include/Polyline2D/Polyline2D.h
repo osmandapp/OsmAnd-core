@@ -50,7 +50,11 @@ public:
 		 * When using this EndCapStyle, don't specify the common start/end point twice,
 		 * as Polyline2D connects the first and last input point itself.
 		 */
-		JOINT
+		JOINT,
+        /**
+         * Path end has an arrow head, path start is rounded off.
+         */
+        ARROW
 	};
 
 	/**
@@ -199,7 +203,37 @@ public:
 			// join the last (connecting) segment and the first segment
 			createJoint(vertex, vertices, lastSegment, firstSegment, hasColorMapping ? colorizationMapping.last() : fillColor, jointStyle,
 			            pathEnd1, pathEnd2, pathStart1, pathStart2, allowOverlap);
-		}
+        } else if (endCapStyle == EndCapStyle::ARROW) {
+            createTriangleFan(vertex, vertices, hasColorMapping ? colorizationMapping.first() : fillColor, firstSegment.center.a, firstSegment.center.a,
+                              firstSegment.edge1.a, firstSegment.edge2.a, false);
+            // Generate an arrow cap
+            Vec2 directionPerp(lastSegment.edge1.direction().y, -lastSegment.edge1.direction().x);
+            
+            auto midPoint = Vec2((pathEnd1.x + pathEnd2.x) / 2, (pathEnd1.y + pathEnd2.y) / 2);
+            auto c_pt = Vec2Maths::subtract(midPoint, Vec2Maths::multiply(lastSegment.edge1.direction(), thickness * 4));
+            auto pt1 = Vec2Maths::subtract(c_pt, Vec2Maths::multiply(directionPerp, thickness * 2));
+            auto pt2 = Vec2Maths::add(c_pt, Vec2Maths::multiply(directionPerp, thickness * 2));
+            
+            pathEnd1 = Vec2Maths::subtract(pathEnd1, Vec2Maths::multiply(lastSegment.edge1.direction(), thickness * 4));
+            pathEnd2 = Vec2Maths::subtract(pathEnd2, Vec2Maths::multiply(lastSegment.edge2.direction(), thickness * 4));
+            
+            lastSegment.edge1.b = pathEnd1;
+            lastSegment.edge2.b = pathEnd2;
+
+            pVertex->color = hasColorMapping ? colorizationMapping.last() : fillColor;
+
+            pVertex->positionXY[0] = midPoint.x;
+            pVertex->positionXY[1] = midPoint.y;
+            *vertices++ = vertex;
+            
+            pVertex->positionXY[0] = pt1.x;
+            pVertex->positionXY[1] = pt1.y;
+            *vertices++ = vertex;
+            
+            pVertex->positionXY[0] = pt2.x;
+            pVertex->positionXY[1] = pt2.y;
+            *vertices++ = vertex;
+        }
 
 		// generate mesh data for path segments
 		for (size_t i = 0; i < segments.size(); i++) {

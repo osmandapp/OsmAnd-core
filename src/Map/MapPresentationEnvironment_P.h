@@ -12,6 +12,7 @@
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
+#include <SkImage.h>
 #include <SkPaint.h>
 #include "restore_internal_warnings.h"
 
@@ -21,8 +22,6 @@
 #include "MapStyleConstantValue.h"
 #include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -39,7 +38,8 @@ namespace OsmAnd
         typedef MapPresentationEnvironment::ShadowMode ShadowMode;
 
     private:
-        QHash<IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue> resolveSettings(const QHash<QString, QString> &newSettings) const;
+        QHash<IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue> resolveSettings(
+            const QHash<QString, QString> &newSettings) const;
     protected:
         MapPresentationEnvironment_P(MapPresentationEnvironment* owner);
 
@@ -75,17 +75,17 @@ namespace OsmAnd
 
         MapStubStyle _desiredStubsStyle;
 
-        mutable QMutex _shadersBitmapsMutex;
-        mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
+        mutable QMutex _shadersMutex;
+        mutable QHash< QString, sk_sp<const SkImage> > _shaders;
 
         mutable QMutex _mapIconsMutex;
-        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _mapIcons;
+        mutable QHash< QString, sk_sp<const SkImage> > _mapIcons;
 
         mutable QMutex _textShieldsMutex;
-        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _textShields;
+        mutable QHash< QString, sk_sp<const SkImage> > _textShields;
 
         mutable QMutex _iconShieldsMutex;
-        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _iconShields;
+        mutable QHash< QString, sk_sp<const SkImage> > _iconShields;
 
         QByteArray obtainResourceByName(const QString& name) const;
     public:
@@ -101,10 +101,10 @@ namespace OsmAnd
         void applyTo(MapStyleEvaluator& evaluator) const;
         void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
-        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outBitmap) const;
-        bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
-        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
-        bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
+        bool obtainShader(const QString& name, sk_sp<const SkImage>& outShader) const;
+        bool obtainMapIcon(const QString& name, sk_sp<const SkImage>& outIcon) const;
+        bool obtainTextShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainIconShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;

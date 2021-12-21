@@ -16,6 +16,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _colorizationScheme(0)
+    , _endCapStyle(LineEndCapStyle::ROUND)
     , _outlineWidth(0)
     , _lineWidth(3.0)
     , _direction(0.0f)
@@ -197,32 +198,32 @@ void OsmAnd::VectorLineBuilder_P::setColorizationMapping(const QList<OsmAnd::FCo
     _colorizationMapping = colorizationMapping;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getPathIcon() const
+sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _pathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::VectorLineBuilder_P::setPathIcon(const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pathIcon = bitmap;
+    _pathIcon = image;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
+sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _specialPathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _specialPathIcon = bitmap;
+    _specialPathIcon = image;
 }
 
 float OsmAnd::VectorLineBuilder_P::getPathIconStep() const
@@ -253,6 +254,13 @@ void OsmAnd::VectorLineBuilder_P::setScreenScale(const float screenScale)
     _screenScale = screenScale;
 }
 
+void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const LineEndCapStyle endCapStyle)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _endCapStyle = endCapStyle;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<VectorLinesCollection>& collection)
 {
@@ -279,7 +287,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _pathIcon,
                                                           _specialPathIcon,
                                                           _pathIconStep,
-                                                          _screenScale));
+                                                          _screenScale,
+                                                          _endCapStyle));
     line->setLineWidth(_lineWidth);
     line->setShowArrows(_showArrows);
     line->setFillColor(_fillColor);

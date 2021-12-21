@@ -77,9 +77,9 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
     markerBuilder.setBaseOrder(0);
     markerBuilder.setIsAccuracyCircleSupported(false);
     markerBuilder.setPinIcon(
-        owner->favoriteLocationPinIconBitmap
-        ? owner->favoriteLocationPinIconBitmap
-        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap());
+        owner->favoriteLocationPinIcon
+        ? owner->favoriteLocationPinIcon
+        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIcon());
     markerBuilder.setPinIconVerticalAlignment(
         owner->favoriteLocationPinIconVerticalAlignment.isSet()
         ? *owner->favoriteLocationPinIconVerticalAlignment.getValuePtrOrNullptr()

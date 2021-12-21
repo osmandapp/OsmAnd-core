@@ -14,7 +14,6 @@
 #include "CommonTypes.h"
 #include "VectorLine.h"
 
-
 namespace OsmAnd
 {
     class VectorLinesCollection;
@@ -39,6 +38,8 @@ namespace OsmAnd
         int _baseOrder;
         int _colorizationScheme;
         
+        LineEndCapStyle _endCapStyle;
+        
         double _outlineWidth;
         double _lineWidth;
         FColorARGB _fillColor;
@@ -49,8 +50,8 @@ namespace OsmAnd
 
         float _direction;
 
-        std::shared_ptr<const SkBitmap> _pathIcon;
-        std::shared_ptr<const SkBitmap> _specialPathIcon;
+        sk_sp<const SkImage> _pathIcon;
+        sk_sp<const SkImage> _specialPathIcon;
         float _pathIconStep;
         float _screenScale;
  
@@ -95,17 +96,19 @@ namespace OsmAnd
         QList<OsmAnd::FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
 
-        std::shared_ptr<const SkBitmap> getPathIcon() const;
-        void setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getPathIcon() const;
+        void setPathIcon(const sk_sp<const SkImage>& image);
         
-        std::shared_ptr<const SkBitmap> getSpecialPathIcon() const;
-        void setSpecialPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getSpecialPathIcon() const;
+        void setSpecialPathIcon(const sk_sp<const SkImage>& image);
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);
         
         float getScreenScale() const;
         void setScreenScale(const float screenScale);
+        
+        void setEndCapStyle(const LineEndCapStyle endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

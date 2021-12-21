@@ -134,21 +134,21 @@ double OsmAnd::Utilities::parseWeight(const QString& value, double defValue, boo
 
 OsmAnd::ColorARGB OsmAnd::Utilities::parseColor(const QString& value, const ColorARGB defValue, bool* wasParsed /*= nullptr*/)
 {
-	if (wasParsed)
-		*wasParsed = false;
+    if (wasParsed)
+        *wasParsed = false;
 
-	if (value.size() < 2 || value[0] != '#')
-		return defValue;
+    if (value.size() < 2 || value[0] != '#')
+        return defValue;
 
-	ColorARGB result;
+    ColorARGB result;
     result.argb = value.midRef(1).toUInt(nullptr, 16);
-	if (value.size() <= 7)
-		result.setAlpha(0xFF);
+    if (value.size() <= 7)
+        result.setAlpha(0xFF);
 
-	if (wasParsed)
-		*wasParsed = true;
+    if (wasParsed)
+        *wasParsed = true;
 
-	return result;
+    return result;
 }
 
 int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, bool* wasParsed/* = nullptr*/)

@@ -13,8 +13,6 @@
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/MapMarker.h>
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class MapMarkerBuilder;

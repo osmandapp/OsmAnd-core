@@ -6,10 +6,6 @@
 #include "QtExtensions.h"
 #include "QtCommon.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "MapDataProviderHelpers.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "MapPrimitivesProvider.h"
@@ -104,7 +100,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         bool hasAtLeastOneSimpleBillboard = false;
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
-            assert(static_cast<bool>(rasterizedSymbol->bitmap));
+            assert(static_cast<bool>(rasterizedSymbol->image));
 
             std::shared_ptr<MapSymbol> symbol;
             if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
@@ -116,8 +112,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
                 const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group);
                 billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
-                billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
-                billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->bitmap->width(), rasterizedSpriteSymbol->bitmap->height());
+                billboardRasterSymbol->image = rasterizedSpriteSymbol->image;
+                billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->image->width(), rasterizedSpriteSymbol->image->height());
                 billboardRasterSymbol->content = rasterizedSpriteSymbol->content;
                 billboardRasterSymbol->languageId = rasterizedSpriteSymbol->languageId;
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
@@ -147,8 +143,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
                 const auto onPathSymbol = new OnPathRasterMapSymbol(group);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
-                onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
-                onPathSymbol->size = PointI(rasterizedOnPathSymbol->bitmap->width(), rasterizedOnPathSymbol->bitmap->height());
+                onPathSymbol->image = rasterizedOnPathSymbol->image;
+                onPathSymbol->size = PointI(rasterizedOnPathSymbol->image->width(), rasterizedOnPathSymbol->image->height());
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;

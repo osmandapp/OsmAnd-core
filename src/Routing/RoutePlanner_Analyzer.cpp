@@ -403,7 +403,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
     if (current <= 0) {
         current = 1;
     }
-//		if (ls >= 0 /*&& current + left + right >= ls*/){
+//        if (ls >= 0 /*&& current + left + right >= ls*/){
         lanes.resize(current + left + right);
         ls = current + left + right;
         for(int it=0; it< ls; it++) {
@@ -417,7 +417,7 @@ OsmAnd::TurnInfo attachKeepLeftInfoAndLanes(bool leftSide,
         if ((current <= left + right) && (left > 1 || right > 1)) {
             speak = true;
         }
-//		}
+//        }
 
     double devation = abs(OsmAnd::Utilities::degreesDiff(prevSegm->getBearingEnd(), currentSegm->getBearingBegin()));
     bool makeSlightTurn = devation > 5 && (!isMotorway(prevSegm) || !isMotorway(currentSegm));
@@ -445,7 +445,7 @@ OsmAnd::TurnInfo processRoundaboutTurn(QVector<std::shared_ptr<OsmAnd::RouteSegm
             int k = rnext->startPointIndex;
             if (j == i) {
                 // first exit could be immediately after roundabout enter
-//					k = plus ? k + 1 : k - 1;
+//                    k = plus ? k + 1 : k - 1;
             }
             while (k != rnext->endPointIndex) {
                 int attachedRoads = rnext->attachedRoutes[qAbs(static_cast<int64_t>(k) - rnext->startPointIndex)].size();
@@ -487,9 +487,9 @@ OsmAnd::TurnInfo getTurnInfo(QVector<std::shared_ptr<OsmAnd::RouteSegment> >& re
         double mpi = OsmAnd::Utilities::degreesDiff(prev->getBearingEnd(), rr->getBearingBegin());
         if (noAttachedRoads){
             // TODO VICTOR : look at the comment inside direction route
-//				double begin = rr.getObject().directionRoute(rr.getStartPointIndex(), rr.getStartPointIndex() <
-//						rr.getEndPointIndex(), 25);
-//				mpi = MapUtils.degreesDiff(prev.getBearingEnd(), begin);
+//                double begin = rr.getObject().directionRoute(rr.getStartPointIndex(), rr.getStartPointIndex() <
+//                        rr.getEndPointIndex(), 25);
+//                mpi = MapUtils.degreesDiff(prev.getBearingEnd(), begin);
         }
         if (mpi >= OsmAnd::RoutePlanner::MinTurnAngle) {
             if (mpi < 60) {

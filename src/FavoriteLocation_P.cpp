@@ -7,7 +7,7 @@
 OsmAnd::FavoriteLocation_P::FavoriteLocation_P(FavoriteLocation* const owner_)
     : _isHidden(false)
     , _calendarEvent(false)
-	, owner(owner_)
+    , owner(owner_)
 {
 }
 
@@ -66,6 +66,23 @@ void OsmAnd::FavoriteLocation_P::setTime(const QString& newTime)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QString OsmAnd::FavoriteLocation_P::getCreationTime() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _creationTime;
+}
+
+void OsmAnd::FavoriteLocation_P::setCreationTime(const QString& newTime)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _creationTime = newTime;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
 bool OsmAnd::FavoriteLocation_P::getCalendarEvent() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -85,19 +102,19 @@ void OsmAnd::FavoriteLocation_P::setCalendarEvent(const bool calendarEvent)
 
 QString OsmAnd::FavoriteLocation_P::getTitle() const
 {
-	QReadLocker scopedLocker(&_lock);
+    QReadLocker scopedLocker(&_lock);
 
-	return _title;
+    return _title;
 }
 
 void OsmAnd::FavoriteLocation_P::setTitle(const QString& newTitle)
 {
-	QWriteLocker scopedLocker(&_lock);
+    QWriteLocker scopedLocker(&_lock);
 
-	_title = newTitle;
+    _title = newTitle;
 
-	if (const auto link = _weakLink.lock())
-		link->_p->notifyFavoriteLocationChanged(owner);
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 QString OsmAnd::FavoriteLocation_P::getDescription() const
@@ -136,36 +153,36 @@ void OsmAnd::FavoriteLocation_P::setAddress(const QString& newAddress)
 
 QString OsmAnd::FavoriteLocation_P::getGroup() const
 {
-	QReadLocker scopedLocker(&_lock);
+    QReadLocker scopedLocker(&_lock);
 
-	return _group;
+    return _group;
 }
 
 void OsmAnd::FavoriteLocation_P::setGroup(const QString& newGroup)
 {
-	QWriteLocker scopedLocker(&_lock);
+    QWriteLocker scopedLocker(&_lock);
 
-	_group = newGroup;
+    _group = newGroup;
 
-	if (const auto link = _weakLink.lock())
-		link->_p->notifyFavoriteLocationChanged(owner);
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 OsmAnd::ColorRGB OsmAnd::FavoriteLocation_P::getColor() const
 {
-	QReadLocker scopedLocker(&_lock);
+    QReadLocker scopedLocker(&_lock);
 
-	return _color;
+    return _color;
 }
 
 void OsmAnd::FavoriteLocation_P::setColor(const ColorRGB newColor)
 {
-	QWriteLocker scopedLocker(&_lock);
+    QWriteLocker scopedLocker(&_lock);
 
-	_color = newColor;
+    _color = newColor;
 
-	if (const auto link = _weakLink.lock())
-		link->_p->notifyFavoriteLocationChanged(owner);
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 QString OsmAnd::FavoriteLocation_P::getIcon() const
@@ -204,11 +221,11 @@ void OsmAnd::FavoriteLocation_P::setBackground(const QString& newBackground)
 
 void OsmAnd::FavoriteLocation_P::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
 {
-	assert(!_weakLink);
-	_weakLink = containerLink->getWeak();
+    assert(!_weakLink);
+    _weakLink = containerLink->getWeak();
 }
 
 void OsmAnd::FavoriteLocation_P::detach()
 {
-	_weakLink.reset();
+    _weakLink.reset();
 }
