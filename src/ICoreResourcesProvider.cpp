@@ -2,8 +2,8 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
-#include <SkStream.h>
-#include <SkImageDecoder.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 OsmAnd::ICoreResourcesProvider::ICoreResourcesProvider()
@@ -23,18 +23,24 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(
     if (!ok)
         return nullptr;
 
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+    if (!skData)
+    {
+        return nullptr;
+    }
+    const auto skImage = SkImage::MakeFromEncoded(skData);
+    if (!skImage)
     {
         return nullptr;
     }
 
-    return bitmap;
+    // TODO: replace SkBitmap with SkImage
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (skImage->asLegacyBitmap(bitmap.get()))
+    {
+        return bitmap;
+    }
+    return nullptr;
 }
 
 std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(const QString& name) const
@@ -43,17 +49,23 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(co
     const auto data = getResource(name, &ok);
     if (!ok)
         return nullptr;
-
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    
+    const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+    if (!skData)
+    {
+        return nullptr;
+    }
+    const auto skImage = SkImage::MakeFromEncoded(skData);
+    if (!skImage)
     {
         return nullptr;
     }
 
-    return bitmap;
+    // TODO: replace SkBitmap with SkImage
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (skImage->asLegacyBitmap(bitmap.get()))
+    {
+        return bitmap;
+    }
+    return nullptr;
 }

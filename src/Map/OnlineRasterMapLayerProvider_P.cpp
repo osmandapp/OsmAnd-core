@@ -10,8 +10,8 @@
 #include <QFile>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkStream.h>
-#include <SkImageDecoder.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include <OsmAndCore/SkiaUtilities.h>
@@ -35,13 +35,22 @@ OsmAnd::OnlineRasterMapLayerProvider_P::~OnlineRasterMapLayerProvider_P()
 
 std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTileBitmap(const QFileInfo& fileInfo)
 {
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkFILEStream fileStream(qPrintable(fileInfo.absoluteFilePath()));
-    if (!SkImageDecoder::DecodeStream(
-            &fileStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    const auto skData = SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath()));
+    if (!skData)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to read tile file '%s'",
+            qPrintable(fileInfo.absoluteFilePath()));
+            
+        QFile tileFile(fileInfo.absoluteFilePath());
+        if (tileFile.exists())
+            tileFile.remove();
+          
+        return nullptr;
+    }
+
+    const auto skImage = SkImage::MakeFromEncoded(skData);
+    if (!skData)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode tile file '%s'",
@@ -53,6 +62,14 @@ std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTi
 
         return nullptr;
     }
+
+    // TODO: Replace SkBitmap to SkImage
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (!skImage->asLegacyBitmap(bitmap.get()))
+    {
+        return nullptr;
+    }
+
     return bitmap;
 }
 
@@ -235,17 +252,30 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            downloadResult.constData(), downloadResult.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    const auto skData = SkData::MakeWithoutCopy(downloadResult.constData(), downloadResult.size());
+    if (!skData)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode tile file from '%s'",
             qPrintable(tileUrl));
 
+        return false;
+    }
+
+    const auto skImage = SkImage::MakeFromEncoded(skData);
+    if (!skData)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode tile file from '%s'",
+            qPrintable(tileUrl));
+
+        return false;
+    }
+
+    // TODO: Replace SkBitmap to SkImage
+    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (!skImage->asLegacyBitmap(bitmap.get()))
+    {
         return false;
     }
 

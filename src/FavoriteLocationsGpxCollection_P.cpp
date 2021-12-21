@@ -57,11 +57,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
     writer.writeStartDocument(QLatin1String("1.0"), true);
 
     //<gpx
-    //	  version="1.1"
-    //	  creator="OsmAnd"
-    //	  xmlns="http://www.topografix.com/GPX/1/1"
-    //	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    //	  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+    //      version="1.1"
+    //      creator="OsmAnd"
+    //      xmlns="http://www.topografix.com/GPX/1/1"
+    //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     writer.writeStartElement(QLatin1String("gpx"));
     writer.writeAttribute(QLatin1String("version"), QLatin1String("1.1"));
     writer.writeAttribute(QLatin1String("creator"), QLatin1String("OsmAnd"));

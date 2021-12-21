@@ -858,7 +858,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     auto alphaChannelType = AlphaChannelType::Invalid;
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
-    bool tileUsesPalette = false;
     uint32_t tileSize = 0;
     size_t dataRowLength = 0;
     const void* tileData = nullptr;
@@ -888,10 +887,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             case SkColorType::kARGB_4444_SkColorType:
             case SkColorType::kRGB_565_SkColorType:
                 sourcePixelByteSize = 2;
-                break;
-            case SkColorType::kIndex_8_SkColorType:
-                sourcePixelByteSize = 1;
-                tileUsesPalette = true;
                 break;
             default:
                 assert(false);
@@ -946,83 +941,23 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         glBindTexture(GL_TEXTURE_2D, texture);
         GL_CHECK_RESULT;
 
-        if (!tileUsesPalette)
+        // Allocate square 2D texture
+        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
+
+        // Upload data
+        uploadDataToTexture2D(GL_TEXTURE_2D, 0,
+            0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
+            tileData, dataRowLength / sourcePixelByteSize, sourcePixelByteSize,
+            sourceFormat);
+
+        // Set maximal mipmap level
+        setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
+
+        // Generate mipmap levels
+        if (mipmapLevels > 1)
         {
-            // Allocate square 2D texture
-            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
-
-            // Upload data
-            uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-                0, 0, (GLsizei)tileSize, (GLsizei)tileSize,
-                tileData, dataRowLength / sourcePixelByteSize, sourcePixelByteSize,
-                sourceFormat);
-
-            // Set maximal mipmap level
-            setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
-
-            // Generate mipmap levels
-            if (mipmapLevels > 1)
-            {
-                glGenerateMipmap(GL_TEXTURE_2D);
-                GL_CHECK_RESULT;
-            }
-        }
-        else
-        {
-            assert(false);
-            /*
-            auto bitmapTile = static_cast<IMapBitmapTileProvider::Tile*>(tile.get());
-
-            // Decompress to 32bit color texture
-            SkBitmap decompressedTexture;
-            bitmapTile->bitmap->deepCopyTo(&decompressedTexture, SkColorType::kRGBA_8888_SkColorType);
-
-            // Generate mipmaps
-            decompressedTexture.buildMipMap();
-            auto generatedLevels = decompressedTexture.extractMipLevel(nullptr, SK_FixedMax, SK_FixedMax);
-            if (mipmapLevels > generatedLevels)
-            mipmapLevels = generatedLevels;
-
-            LogPrintf(LogSeverityLevel::Info, "colors = %d", bitmapTile->bitmap->getColorTable()->count());
-
-            // For each mipmap level starting from 0, copy data to packed array
-            // and prepare merged palette
-            for(auto mipmapLevel = 1; mipmapLevel < mipmapLevels; mipmapLevel++)
-            {
-            SkBitmap mipmapLevelData;
-
-            auto test22 = decompressedTexture.extractMipLevel(&mipmapLevelData, SK_Fixed1<<mipmapLevel, SK_Fixed1<<mipmapLevel);
-
-            SkBitmap recomressed;
-            recomressed.setConfig(SkBitmap::kIndex_8_SkColorType, tileSize >> mipmapLevel, tileSize >> mipmapLevel);
-            recomressed.allocPixels();
-
-            LogPrintf(LogSeverityLevel::Info, "\tcolors = %d", recomressed.getColorTable()->count());
-            }
-
-            //TEST:
-            auto datasize = 256*sizeof(uint32_t) + bitmapTile->bitmap->getSize();
-            uint8_t* buf = new uint8_t[datasize];
-            for(auto colorIdx = 0; colorIdx < 256; colorIdx++)
-            {
-            buf[colorIdx*4 + 0] = colorIdx;
-            buf[colorIdx*4 + 1] = colorIdx;
-            buf[colorIdx*4 + 2] = colorIdx;
-            buf[colorIdx*4 + 3] = 0xFF;
-            }
-            for(auto pixelIdx = 0; pixelIdx < tileSize*tileSize; pixelIdx++)
-            buf[256*4 + pixelIdx] = pixelIdx % 256;
-            glCompressedTexImage2D(
-            GL_TEXTURE_2D, 0, GL_PALETTE8_RGBA8_OES,
-            tileSize, tileSize, 0,
-            datasize, buf);
+            glGenerateMipmap(GL_TEXTURE_2D);
             GL_CHECK_RESULT;
-            delete[] buf;
-            */
-            //TODO:
-            // 1. convert to full RGBA8
-            // 2. generate required amount of mipmap levels
-            // 3. glCompressedTexImage2D to load all mipmap levels at once
         }
 
         // Deselect atlas as active texture
@@ -1040,10 +975,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
 
         return true;
     }
-
-    // Otherwise, create an atlas texture with 1 slot only:
-    //NOTE: No support for palette atlas textures
-    assert(!tileUsesPalette);
 
     // Find proper atlas textures pool by format of texture and full size of tile (including padding)
     AtlasTypeId atlasTypeId;
@@ -1169,7 +1100,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     // Determine texture properties:
     auto alphaChannelType = AlphaChannelType::Invalid;
     GLsizei sourcePixelByteSize = 0;
-    bool symbolUsesPalette = false;
     switch (symbol->bitmap->alphaType())
     {
         case SkAlphaType::kPremul_SkAlphaType:
@@ -1193,10 +1123,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
         case SkColorType::kARGB_4444_SkColorType:
         case SkColorType::kRGB_565_SkColorType:
             sourcePixelByteSize = 2;
-            break;
-        case SkColorType::kIndex_8_SkColorType:
-            sourcePixelByteSize = 1;
-            symbolUsesPalette = true;
             break;
         default:
             LogPrintf(LogSeverityLevel::Error,
@@ -1223,25 +1149,17 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     glBindTexture(GL_TEXTURE_2D, texture);
     GL_CHECK_RESULT;
 
-    if (!symbolUsesPalette)
-    {
-        // Allocate square 2D texture
-        allocateTexture2D(GL_TEXTURE_2D, 1, symbol->bitmap->width(), symbol->bitmap->height(), textureFormat);
+    // Allocate square 2D texture
+    allocateTexture2D(GL_TEXTURE_2D, 1, symbol->bitmap->width(), symbol->bitmap->height(), textureFormat);
 
-        // Upload data
-        uploadDataToTexture2D(GL_TEXTURE_2D, 0,
-            0, 0, (GLsizei)symbol->bitmap->width(), (GLsizei)symbol->bitmap->height(),
-            symbol->bitmap->getPixels(), symbol->bitmap->rowBytes() / sourcePixelByteSize, sourcePixelByteSize,
-            getSourceFormat(symbol));
+    // Upload data
+    uploadDataToTexture2D(GL_TEXTURE_2D, 0,
+        0, 0, (GLsizei)symbol->bitmap->width(), (GLsizei)symbol->bitmap->height(),
+        symbol->bitmap->getPixels(), symbol->bitmap->rowBytes() / sourcePixelByteSize, sourcePixelByteSize,
+        getSourceFormat(symbol));
 
-        // Set maximal mipmap level to 0
-        setMipMapLevelsLimit(GL_TEXTURE_2D, 0);
-    }
-    else
-    {
-        //TODO: palettes are not yet supported
-        assert(false);
-    }
+    // Set maximal mipmap level to 0
+    setMipMapLevelsLimit(GL_TEXTURE_2D, 0);
 
     // Deselect atlas as active texture
     glBindTexture(GL_TEXTURE_2D, 0);

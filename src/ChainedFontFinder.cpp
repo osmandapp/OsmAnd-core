@@ -12,7 +12,7 @@ OsmAnd::ChainedFontFinder::~ChainedFontFinder()
 {
 }
 
-SkTypeface* OsmAnd::ChainedFontFinder::findFontForCharacterUCS4(
+sk_sp<SkTypeface> OsmAnd::ChainedFontFinder::findFontForCharacterUCS4(
     const uint32_t character,
     const SkFontStyle style /*= SkFontStyle()*/) const
 {

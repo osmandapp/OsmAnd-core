@@ -59,7 +59,7 @@ namespace OsmAnd
         };
 
         mutable QMutex _lock;
-        mutable QHash< CacheKey, SkTypeface* > _cache;
+        mutable QHash< CacheKey, sk_sp<SkTypeface> > _cache;
     protected:
     public:
         CachingFontFinder(const std::shared_ptr<const IFontFinder>& fontFinder);
@@ -67,7 +67,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const IFontFinder> fontFinder;
 
-        virtual SkTypeface* findFontForCharacterUCS4(
+        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
     };

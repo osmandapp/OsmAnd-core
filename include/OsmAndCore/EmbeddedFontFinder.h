@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QStringList>
+#include <SkRefCnt.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -18,7 +19,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(EmbeddedFontFinder);
 
     private:
-        QList<SkTypeface*> _fonts;
+        QList<sk_sp<SkTypeface>> _fonts;
     protected:
     public:
         EmbeddedFontFinder(
@@ -27,7 +28,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const ICoreResourcesProvider> coreResourcesProvider;
 
-        virtual SkTypeface* findFontForCharacterUCS4(
+        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
 

@@ -204,8 +204,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
-        ok = owner->pinIcon->deepCopyTo(pinIcon.get());
-        assert(ok);
+        pinIcon->allocPixels(owner->pinIcon->info());
+        owner->pinIcon->readPixels(pinIcon->pixmap());
         
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(symbolsGroup));
         pinIconSymbol->order = order++;
@@ -281,8 +281,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
         
         std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-        ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
-        assert(ok);
+        iconClone->allocPixels(onMapSurfaceIcon->info());
+        onMapSurfaceIcon->readPixels(iconClone->pixmap());
         
         // Get direction
         float direction = 0.0f;
@@ -302,10 +302,10 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->bitmap = iconClone;
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
         onMapSurfaceIconSymbol->content = QString().sprintf(
-                                                            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
-                                                            this,
-                                                            symbolsGroup.get(),
-                                                            iconClone->getPixels());
+            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
+            this,
+            symbolsGroup.get(),
+            iconClone->getPixels());
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;

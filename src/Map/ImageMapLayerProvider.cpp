@@ -2,8 +2,8 @@
 #include "Logging.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
-#include <SkStream.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "QtExtensions.h"
@@ -16,10 +16,10 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() :
-_priority(0),
-_lastRequestedZoom(ZoomLevel0),
-_threadPool(new QThreadPool())
+OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
+    : _priority(0)
+    , _lastRequestedZoom(ZoomLevel0)
+    , _threadPool(new QThreadPool())
 {
 }
 
@@ -37,6 +37,7 @@ bool OsmAnd::ImageMapLayerProvider::supportsObtainImageBitmap() const
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()
 {
     SkBitmap bitmap;
+
     // Create a bitmap that will be hold entire symbol (if target is empty)
     const auto tileSize = getTileSize();
     if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
@@ -47,22 +48,28 @@ const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyIma
     return nullptr;
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& image)
+const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& data)
 {
-    // Decode image data
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            image.constData(), image.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+    if (!skData)
+    {
+        return nullptr;
+    }
+    const auto skImage = SkImage::MakeFromEncoded(skData);
+    if (!skImage)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode image tile");
-
         return nullptr;
     }
-    return bitmap;
+
+    // TODO: replace SkBitmap with SkImage
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    if (skImage->asLegacyBitmap(bitmap.get()))
+    {
+        return bitmap;
+    }
+    return nullptr;
 }
 
 const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::obtainImageBitmap(const OsmAnd::IMapTiledDataProvider::Request& request)
@@ -245,18 +252,32 @@ OsmAnd::ImageMapLayerProvider::AsyncImage::~AsyncImage()
 {
 }
 
-void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceeded, const QByteArray& image) const
+void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceeded, const QByteArray& data) const
 {
-    std::shared_ptr<IMapDataProvider::Data> data;
+    std::shared_ptr<IMapDataProvider::Data> outData;
 
-    if (requestSucceeded && !image.isNull())
+    if (requestSucceeded && !data.isNull())
     {
-        // Decode image data
-        std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream imageStream(image.constData(), image.length(), false);
-        if (SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto skData = SkData::MakeWithoutCopy(data.constData(), data.length());
+        if (!skData)
         {
-            data.reset(new IRasterMapLayerProvider::Data(
+            callback(provider, false, outData, nullptr);
+            delete this;
+            return;
+        }
+        const auto skImage = SkImage::MakeFromEncoded(skData);
+        if (!skImage)
+        {
+            callback(provider, false, outData, nullptr);
+            delete this;
+            return;
+        }
+
+        // TODO: replace SkBitmap with SkImage
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        if (skImage->asLegacyBitmap(bitmap.get()))
+        {
+            outData.reset(new IRasterMapLayerProvider::Data(
                 request->tileId,
                 request->zoom,
                 provider->getAlphaChannelPresence(),
@@ -265,12 +286,12 @@ void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceed
         }
         else
         {
-            callback(provider, false, data, nullptr);
+            callback(provider, false, outData, nullptr);
             delete this;
             return;
         }
     }
 
-    callback(provider, requestSucceeded, data, nullptr);
+    callback(provider, requestSucceeded, outData, nullptr);
     delete this;
 }

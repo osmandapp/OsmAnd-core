@@ -25,7 +25,7 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const IFontFinder> > chain;
 
-        virtual SkTypeface* findFontForCharacterUCS4(
+        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
     };

@@ -20,22 +20,22 @@ OsmAnd::MapRendererState::~MapRendererState()
 
 OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 {
-	MapState mapState;
+    MapState mapState;
 
-	mapState.fieldOfView = fieldOfView;
-	mapState.skyColor = skyColor;
-	mapState.azimuth = azimuth;
-	mapState.elevationAngle = elevationAngle;
-	mapState.target31 = target31;
-	mapState.zoomLevel = zoomLevel;
-	mapState.visualZoom = visualZoom;
-	mapState.visualZoomShift = visualZoomShift;
-	mapState.stubsStyle = stubsStyle;
+    mapState.fieldOfView = fieldOfView;
+    mapState.skyColor = skyColor;
+    mapState.azimuth = azimuth;
+    mapState.elevationAngle = elevationAngle;
+    mapState.target31 = target31;
+    mapState.zoomLevel = zoomLevel;
+    mapState.visualZoom = visualZoom;
+    mapState.visualZoomShift = visualZoomShift;
+    mapState.stubsStyle = stubsStyle;
     
     mapState.metersPerPixel = metersPerPixel;
     mapState.visibleBBox31 = visibleBBox31;
 
-	return mapState;
+    return mapState;
 }
 
 OsmAnd::MapState::MapState()

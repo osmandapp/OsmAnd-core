@@ -246,8 +246,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
         glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
         GL_CHECK_RESULT;
     }
-    _isSupported_8bitPaletteRGBA8 = extensions.contains("GL_OES_compressed_paletted_texture") || compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
-    LogPrintf(LogSeverityLevel::Info, "OpenGL 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
     if (isSupported_samplerObjects)
     {

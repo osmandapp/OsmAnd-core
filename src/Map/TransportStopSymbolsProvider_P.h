@@ -1,5 +1,5 @@
 #ifndef _OSMAND_CORE_TRANSPORT_STOP_SYMBOLS_PROVIDER_P_H_
-#define _OSMAND_CORE_TRANSPORT_STOP_PROVIDER_P_H_
+#define _OSMAND_CORE_TRANSPORT_STOP_SYMBOLS_PROVIDER_P_H_ 
 
 #include "stdlib_common.h"
 #include <array>
