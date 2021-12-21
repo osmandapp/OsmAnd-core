@@ -50,30 +50,30 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainShaderBitmap(
+bool OsmAnd::MapPresentationEnvironment::obtainShader(
     const QString& name,
-    std::shared_ptr<const SkBitmap>& outShaderBitmap) const
+    sk_sp<const SkImage>& outShader) const
 {
-    return _p->obtainShaderBitmap(name, outShaderBitmap);
+    return _p->obtainShader(name, outShader);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(
     const QString& name,
-    std::shared_ptr<const SkBitmap>& outIcon) const
+    sk_sp<const SkImage>& outIcon) const
 {
     return _p->obtainMapIcon(name, outIcon);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainTextShield(
     const QString& name,
-    std::shared_ptr<const SkBitmap>& outTextShield) const
+    sk_sp<const SkImage>& outTextShield) const
 {
     return _p->obtainTextShield(name, outTextShield);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainIconShield(
     const QString& name,
-    std::shared_ptr<const SkBitmap>& outIconShield) const
+    sk_sp<const SkImage>& outIconShield) const
 {
     return _p->obtainIconShield(name, outIconShield);
 }

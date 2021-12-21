@@ -82,10 +82,10 @@ OsmAnd::ObfMapObjectsMetricsLayerProvider::Data::Data(
     const ZoomLevel zoom_,
     const AlphaChannelPresence alphaChannelPresence_,
     const float densityFactor_,
-    const std::shared_ptr<const SkBitmap>& bitmap_,
+    const sk_sp<const SkImage>& image_,
     const std::shared_ptr<const ObfMapObjectsProvider::Data>& binaryMapData_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
-    : IRasterMapLayerProvider::Data(tileId_, zoom_, alphaChannelPresence_, densityFactor_, bitmap_, pRetainableCacheMetadata_)
+    : IRasterMapLayerProvider::Data(tileId_, zoom_, alphaChannelPresence_, densityFactor_, image_, pRetainableCacheMetadata_)
     , binaryMapData(binaryMapData_)
 {
 }

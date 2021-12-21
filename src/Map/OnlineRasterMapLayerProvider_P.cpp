@@ -33,46 +33,6 @@ OsmAnd::OnlineRasterMapLayerProvider_P::~OnlineRasterMapLayerProvider_P()
 {
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTileBitmap(const QFileInfo& fileInfo)
-{
-    const auto skData = SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath()));
-    if (!skData)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to read tile file '%s'",
-            qPrintable(fileInfo.absoluteFilePath()));
-            
-        QFile tileFile(fileInfo.absoluteFilePath());
-        if (tileFile.exists())
-            tileFile.remove();
-          
-        return nullptr;
-    }
-
-    const auto skImage = SkImage::MakeFromEncoded(skData);
-    if (!skData)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode tile file '%s'",
-            qPrintable(fileInfo.absoluteFilePath()));
-
-        QFile tileFile(fileInfo.absoluteFilePath());
-        if (tileFile.exists())
-            tileFile.remove();
-
-        return nullptr;
-    }
-
-    // TODO: Replace SkBitmap to SkImage
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!skImage->asLegacyBitmap(bitmap.get()))
-    {
-        return nullptr;
-    }
-
-    return bitmap;
-}
-
 bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData,
@@ -129,18 +89,21 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             return true;
         }
 
-        auto bitmap = decodeTileBitmap(localFile);
-        if (!bitmap)
+        auto image = OsmAnd::SkiaUtilities::createImageFromFile(localFile);
+        if (!image)
+        {
+            QFile(localFile.absoluteFilePath()).remove();
             return false;
+        }
 
-        assert(bitmap->width() == bitmap->height());
+        assert(image->width() == image->height());
 
         bool shouldRequestNextTile = shiftedTile && !outData;
         if (shiftedTile && outData)
         {
             if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
             {
-                bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+                image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
             }
         }
         
@@ -150,7 +113,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             request.zoom,
             owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
-            bitmap));
+            image));
 
         if (shouldRequestNextTile)
             return obtainData(request, outData, pOutMetric);
@@ -252,8 +215,8 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    const auto skData = SkData::MakeWithoutCopy(downloadResult.constData(), downloadResult.size());
-    if (!skData)
+    auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(downloadResult.constData(), downloadResult.size()));
+    if (!image)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode tile file from '%s'",
@@ -262,31 +225,14 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         return false;
     }
 
-    const auto skImage = SkImage::MakeFromEncoded(skData);
-    if (!skData)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode tile file from '%s'",
-            qPrintable(tileUrl));
-
-        return false;
-    }
-
-    // TODO: Replace SkBitmap to SkImage
-    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!skImage->asLegacyBitmap(bitmap.get()))
-    {
-        return false;
-    }
-
-    assert(bitmap->width() == bitmap->height());
+    assert(image->width() == image->height());
 
     bool shouldRequestNextTile = shiftedTile && !outData;
     if (shiftedTile && outData)
     {
         if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
         {
-            bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+            image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
         }
     }
 
@@ -296,7 +242,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         request.zoom,
         owner->alphaChannelPresence,
         owner->getTileDensityFactor(),
-        bitmap));
+        image));
 
     if (shouldRequestNextTile)
         return obtainData(request, outData, pOutMetric);

@@ -28,8 +28,6 @@ namespace OsmAnd
         static const QString buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom);
         static const QString eqtBingQuadKey(ZoomLevel z, int32_t x, int32_t y);
         const QString getUrlToLoad(int32_t x, int32_t y, const ZoomLevel zoom) const;
-        std::shared_ptr<const SkBitmap> decodeTileBitmap(const QFileInfo& fileInfo);
-
     protected:
         OnlineRasterMapLayerProvider_P(
             OnlineRasterMapLayerProvider* owner,

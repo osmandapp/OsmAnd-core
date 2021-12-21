@@ -6,12 +6,12 @@
 
 OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(
     const std::shared_ptr<const IFavoriteLocationsCollection>& collection_,
-    const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap_ /*= nullptr*/,
+    const sk_sp<const SkImage>& favoriteLocationPinIcon_ /*= nullptr*/,
     const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment_ /*= Nullable<MapMarker::PinIconVerticalAlignment>()*/,
     const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment_ /*= Nullable<MapMarker::PinIconHorisontalAlignment>()*/)
     : _p(new FavoriteLocationsPresenter_P(this))
     , collection(collection_)
-    , favoriteLocationPinIconBitmap(favoriteLocationPinIconBitmap_)
+    , favoriteLocationPinIcon(favoriteLocationPinIcon_)
     , favoriteLocationPinIconVerticalAlignment(favoriteLocationPinIconVerticalAlignment_)
     , favoriteLocationPinIconHorisontalAlignment(favoriteLocationPinIconHorisontalAlignment_)
 {
@@ -24,11 +24,11 @@ OsmAnd::FavoriteLocationsPresenter::~FavoriteLocationsPresenter()
     _p->unsubscribeToChanges();
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap()
+sk_sp<const SkImage> OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIcon()
 {
-    static const std::shared_ptr<const SkBitmap> defaultFavoriteLocationPinIconBitmap(
-        getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/favorite_location_pin_icon.png")));
-    return defaultFavoriteLocationPinIconBitmap;
+    static const sk_sp<const SkImage> defaultFavoriteLocationPinIcon(
+        getCoreResourcesProvider()->getResourceAsImage(QLatin1String("map/stubs/favorite_location_pin_icon.png")));
+    return defaultFavoriteLocationPinIcon;
 }
 
 OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconVerticalAlignment()

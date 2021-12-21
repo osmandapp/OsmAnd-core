@@ -139,18 +139,18 @@ void OsmAnd::MapMarkerBuilder_P::setPosition(const PointI position)
     _position = position;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
+sk_sp<const SkImage> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _pinIcon;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::MapMarkerBuilder_P::setPinIcon(const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pinIcon = bitmap;
+    _pinIcon = image;
 }
 
 OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::MapMarkerBuilder_P::getPinIconVerticalAlignment() const
@@ -237,7 +237,7 @@ void OsmAnd::MapMarkerBuilder_P::setCaptionTopSpace(const double captionTopSpace
     _captionTopSpace = captionTopSpace;
 }
 
-QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >
+QHash< OsmAnd::MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> >
 OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -247,11 +247,11 @@ OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 
 void OsmAnd::MapMarkerBuilder_P::addOnMapSurfaceIcon(
     const MapMarker::OnSurfaceIconKey key,
-    const std::shared_ptr<const SkBitmap>& bitmap)
+    const sk_sp<const SkImage>& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _onMapSurfaceIcons.insert(key, bitmap);
+    _onMapSurfaceIcons.insert(key, image);
 }
 
 void OsmAnd::MapMarkerBuilder_P::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)

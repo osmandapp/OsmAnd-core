@@ -5,6 +5,10 @@
 
 #include <OsmAndCore/QtExtensions.h>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Map/IAmenityIconProvider.h>
@@ -28,7 +32,7 @@ namespace OsmAnd
         const float displayDensityFactor;
         const float symbolsScaleFactor;
 
-        virtual std::shared_ptr<SkBitmap> getIcon(
+        virtual sk_sp<SkImage> getIcon(
             const std::shared_ptr<const Amenity>& amenity,
             const ZoomLevel zoomLevel,
             const bool largeIcon = false) const Q_DECL_OVERRIDE;

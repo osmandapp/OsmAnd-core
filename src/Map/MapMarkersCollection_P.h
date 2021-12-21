@@ -16,8 +16,6 @@
 #include "MapMarker.h"
 #include "MapMarkerBuilder.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class MapMarkerBuilder;

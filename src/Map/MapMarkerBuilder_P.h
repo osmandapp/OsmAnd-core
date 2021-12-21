@@ -4,17 +4,21 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QList>
 #include <QHash>
 #include <QReadWriteLock>
+#include "restore_internal_warnings.h"
+
+#include "ignore_warnings_on_external_includes.h"
+#include <SkImage.h>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapMarker.h"
 #include "TextRasterizer.h"
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -46,7 +50,7 @@ namespace OsmAnd
 
         float _direction;
 
-        std::shared_ptr<const SkBitmap> _pinIcon;
+        sk_sp<const SkImage> _pinIcon;
         MapMarker::PinIconVerticalAlignment _pinIconVerticalAlignment;
         MapMarker::PinIconHorisontalAlignment _pinIconHorisontalAlignment;
         ColorARGB _pinIconModulationColor;
@@ -55,7 +59,7 @@ namespace OsmAnd
         TextRasterizer::Style _captionStyle;
         double _captionTopSpace;
 
-        QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > _onMapSurfaceIcons;
+        QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > _onMapSurfaceIcons;
     public:
         virtual ~MapMarkerBuilder_P();
 
@@ -82,8 +86,8 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
-        std::shared_ptr<const SkBitmap> getPinIcon() const;
-        void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getPinIcon() const;
+        void setPinIcon(const sk_sp<const SkImage>& image);
 
         MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
@@ -100,8 +104,8 @@ namespace OsmAnd
         double getCaptionTopSpace() const;
         void setCaptionTopSpace(const double captionTopSpace);
 
-        QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
-        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);
+        QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > getOnMapSurfaceIcons() const;
+        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image);
         void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         void clearOnMapSurfaceIcons();
 

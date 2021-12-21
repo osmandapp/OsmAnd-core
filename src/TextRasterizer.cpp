@@ -18,7 +18,7 @@ OsmAnd::TextRasterizer::~TextRasterizer()
 {
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
+sk_sp<SkImage> OsmAnd::TextRasterizer::rasterize(
     const QString& text,
     const Style& style /*= Style()*/,
     QVector<SkScalar>* const outGlyphWidths /*= nullptr*/,

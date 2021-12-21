@@ -12,15 +12,15 @@
 #include "ICU.h"
 #include "CoreResourcesEmbeddedBundle.h"
 
-//#define OSMAND_LOG_CHARACTERS_WITHOUT_FONT 1
-#ifndef OSMAND_LOG_CHARACTERS_WITHOUT_FONT
-#   define OSMAND_LOG_CHARACTERS_WITHOUT_FONT 0
-#endif // !defined(OSMAND_LOG_CHARACTERS_WITHOUT_FONT)
+//#define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 1
+#ifndef OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
+#   define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 0
+#endif // !defined(OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS)
 
-//#define OSMAND_LOG_CHARACTERS_FONT 1
-#ifndef OSMAND_LOG_CHARACTERS_FONT
-#   define OSMAND_LOG_CHARACTERS_FONT 0
-#endif // !defined(OSMAND_LOG_CHARACTERS_FONT)
+//#define OSMAND_LOG_CHARACTERS_TYPEFACE 1
+#ifndef OSMAND_LOG_CHARACTERS_TYPEFACE
+#   define OSMAND_LOG_CHARACTERS_TYPEFACE 0
+#endif // !defined(OSMAND_LOG_CHARACTERS_TYPEFACE)
 
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
@@ -75,7 +75,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             {
                 if (typeface->unicharToGlyph(characterUCS4))
                     typeface = nullptr;
-#if OSMAND_LOG_CHARACTERS_FONT
+#if OSMAND_LOG_CHARACTERS_TYPEFACE
                 else
                 {
                     SkString typefaceName;
@@ -87,13 +87,13 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                         characterUCS4,
                         typefaceName.c_str());
                 }
-#endif // OSMAND_LOG_CHARACTERS_FONT
+#endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
             if (!typeface)
             {
                 typeface = owner->fontFinder->findFontForCharacterUCS4(characterUCS4, fontStyle);
 
-#if OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+#if OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
                 if (!typeface)
                 {
                     LogPrintf(LogSeverityLevel::Warning,
@@ -101,9 +101,9 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                         characterUCS4,
                         characterUCS4);
                 }
-#endif // OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+#endif // OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS
 
-#if OSMAND_LOG_CHARACTERS_FONT
+#if OSMAND_LOG_CHARACTERS_TYPEFACE
                 if (typeface)
                 {
                     SkString typefaceName;
@@ -115,7 +115,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                         characterUCS4,
                         typefaceName.c_str());
                 }
-#endif // OSMAND_LOG_CHARACTERS_FONT
+#endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
 
             if (pTextPaint == nullptr || pTextPaint->font.refTypeface() != typeface)
@@ -405,7 +405,7 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
     return textArea;
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
+sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     const QString& text,
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
@@ -414,9 +414,9 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
     float* const outLineSpacing,
     float* const outFontAscent) const
 {
-    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    SkBitmap target;
     const bool ok = rasterize(
-        *bitmap,
+        target,
         text,
         style,
         outGlyphWidths,
@@ -426,7 +426,7 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
         outFontAscent);
     if (!ok)
         return nullptr;
-    return bitmap;
+    return target.asImage();
 }
 
 bool OsmAnd::TextRasterizer_P::rasterize(
@@ -509,7 +509,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Calculate bitmap size
     auto bitmapWidth = qCeil(textArea.width());
     auto bitmapHeight = qCeil(textArea.height());
-    if (style.backgroundBitmap)
+    if (style.backgroundImage)
     {
         // Clear extra spacing
         if (outExtraTopSpace)
@@ -518,8 +518,8 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             *outExtraBottomSpace = 0.0f;
 
         // Enlarge bitmap if shield is larger than text
-        bitmapWidth = qMax(bitmapWidth, style.backgroundBitmap->width());
-        bitmapHeight = qMax(bitmapHeight, style.backgroundBitmap->height());
+        bitmapWidth = qMax(bitmapWidth, style.backgroundImage->width());
+        bitmapHeight = qMax(bitmapHeight, style.backgroundImage->height());
 
         // Shift text area to proper position in a larger
         const auto offset = SkPoint::Make(
@@ -561,11 +561,11 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     SkCanvas canvas(targetBitmap);
 
     // If there is background this text, rasterize it also
-    if (style.backgroundBitmap)
+    if (style.backgroundImage)
     {
-        canvas.drawImage(style.backgroundBitmap->asImage(),
-            (bitmapWidth - style.backgroundBitmap->width()) / 2.0f,
-            (bitmapHeight - style.backgroundBitmap->height()) / 2.0f
+        canvas.drawImage(style.backgroundImage.get(),
+            (bitmapWidth - style.backgroundImage->width()) / 2.0f,
+            (bitmapHeight - style.backgroundImage->height()) / 2.0f
         );
     }
 

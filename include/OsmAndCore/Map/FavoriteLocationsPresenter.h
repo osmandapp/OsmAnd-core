@@ -4,7 +4,13 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -12,8 +18,6 @@
 #include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/MapMarker.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -31,17 +35,17 @@ namespace OsmAnd
     public:
         FavoriteLocationsPresenter(
             const std::shared_ptr<const IFavoriteLocationsCollection>& collection,
-            const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap = nullptr,
+            const sk_sp<const SkImage>& favoriteLocationPinIcon = nullptr,
             const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment = Nullable<MapMarker::PinIconVerticalAlignment>(),
             const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment = Nullable<MapMarker::PinIconHorisontalAlignment>());
         virtual ~FavoriteLocationsPresenter();
 
         const std::shared_ptr<const IFavoriteLocationsCollection> collection;
-        const std::shared_ptr<const SkBitmap> favoriteLocationPinIconBitmap;
+        const sk_sp<const SkImage> favoriteLocationPinIcon;
         const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment;
         const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment;
 
-        static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
+        static sk_sp<const SkImage> getDefaultFavoriteLocationPinIcon();
         static MapMarker::PinIconVerticalAlignment getDefaultFavoriteLocationPinIconVerticalAlignment();
         static MapMarker::PinIconHorisontalAlignment getDefaultFavoriteLocationPinIconHorisontalAlignment();
 

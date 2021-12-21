@@ -9,7 +9,9 @@
 #include <QByteArray>
 #include <OsmAndCore/restore_internal_warnings.h>
 
-class SkBitmap;
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -35,10 +37,10 @@ namespace OsmAnd
             const QString& name,
             bool* ok = nullptr) const = 0;
 
-        virtual std::shared_ptr<SkBitmap> getResourceAsBitmap(
+        virtual sk_sp<SkImage> getResourceAsImage(
             const QString& name,
             const float displayDensityFactor) const;
-        virtual std::shared_ptr<SkBitmap> getResourceAsBitmap(
+        virtual sk_sp<SkImage> getResourceAsImage(
             const QString& name) const;
 
         virtual bool containsResource(

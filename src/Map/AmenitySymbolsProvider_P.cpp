@@ -1,10 +1,6 @@
 #include "AmenitySymbolsProvider_P.h"
 #include "AmenitySymbolsProvider.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "ICoreResourcesProvider.h"
 #include "ObfDataInterface.h"
 #include "MapDataProviderHelpers.h"
@@ -141,7 +137,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
 
             const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
             mapSymbol->order = order;
-            mapSymbol->bitmap = icon;
+            mapSymbol->image = icon;
             mapSymbol->size = PointI(icon->width(), icon->height());
             mapSymbol->languageId = LanguageId::Invariant;
             mapSymbol->position31 = pos31;
@@ -153,16 +149,17 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
             if (!intr && !caption.isEmpty())
             {
                 const auto textStyle = owner->amenityIconProvider->getCaptionStyle(amenity, requestedZoom);
-                const auto textBmp = textRasterizer->rasterize(caption, textStyle);
-                if (textBmp)
+                const auto textImage = textRasterizer->rasterize(caption, textStyle);
+                if (textImage)
                 {
                     const auto mapSymbolCaption = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
                     mapSymbolCaption->order = order + 1;
-                    mapSymbolCaption->bitmap = textBmp;
+                    mapSymbolCaption->image = textImage;
                     mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
-                    mapSymbolCaption->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
-                    mapSymbolCaption->setOffset(PointI(0, icon->height() / 2 + textBmp->height() / 2 + 2 * displayDensityFactor));
-                    mapSymbolCaption->size = PointI(textBmp->width(), textBmp->height());
+                    mapSymbolCaption->intersectsWithClasses.insert(
+                        mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
+                    mapSymbolCaption->setOffset(PointI(0, icon->height() / 2 + textImage->height() / 2 + 2 * displayDensityFactor));
+                    mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
                     mapSymbolCaption->languageId = LanguageId::Invariant;
                     mapSymbolCaption->position31 = pos31;
                     mapSymbolsGroup->symbols.push_back(mapSymbolCaption);

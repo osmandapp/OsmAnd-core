@@ -18,8 +18,6 @@
 #include "MapCommonTypes.h"
 #include "IMapTiledDataProvider.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class MapSymbol;

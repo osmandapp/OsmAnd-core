@@ -18,10 +18,22 @@ OsmAnd::SkiaUtilities::~SkiaUtilities()
 {
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::scaleBitmap(
-    const std::shared_ptr<const SkBitmap>& original,
-    const float xScale,
-    const float yScale)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileInfo)
+{
+    const auto image = SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
+    return image->makeRasterImage(SkImage::kDisallow_CachingHint);
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data)
+{
+    const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+    return image->makeRasterImage(SkImage::kDisallow_CachingHint);
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(
+    const sk_sp<const SkImage>& original,
+    float xScale,
+    float yScale)
 {
     if (!original || original->width() <= 0 || original->height() <= 0)
         return nullptr;
@@ -31,24 +43,21 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::scaleBitmap(
 
     if (scaledWidth <= 0 || scaledHeight <= 0)
         return nullptr;
- 
-    const std::shared_ptr<SkBitmap> scaledBitmap(new SkBitmap());
-    if (!scaledBitmap->tryAllocPixels(original->info().makeWH(scaledWidth, scaledHeight)))
+
+    SkBitmap target;
+    if (!target.tryAllocPixels(original->imageInfo().makeWH(scaledWidth, scaledHeight)))
         return nullptr;
-    scaledBitmap->eraseColor(SK_ColorTRANSPARENT);
+    
+    if (!original->scalePixels(target.pixmap(), {}))
+        return nullptr;
 
-    SkCanvas canvas(*scaledBitmap);
-    canvas.scale(xScale, yScale);
-    canvas.drawImage(original->asImage(), 0, 0);
-    canvas.flush();
-
-    return scaledBitmap;
+    return target.asImage();
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::offsetBitmap(
-    const std::shared_ptr<const SkBitmap>& original,
-    const float xOffset,
-    const float yOffset)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::offsetImage(
+    const sk_sp<const SkImage>& original,
+    float xOffset,
+    float yOffset)
 {
     if (!original || original->width() <= 0 || original->height() <= 0)
         return nullptr;
@@ -56,92 +65,83 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::offsetBitmap(
     const auto newWidth = original->width() + qAbs(xOffset);
     const auto newHeight = original->height() + qAbs(yOffset);
 
-    auto imageInfo = original->info().makeWH(newWidth, newHeight);
-
-    const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
-    if (!newBitmap->tryAllocPixels(imageInfo))
+    SkBitmap target;
+    if (!target.tryAllocPixels(original->imageInfo().makeWH(newWidth, newHeight)))
         return nullptr;
-    newBitmap->eraseColor(SK_ColorTRANSPARENT);
+    target.eraseColor(SK_ColorTRANSPARENT);
 
-    SkCanvas canvas(*newBitmap);
-    canvas.drawImage(original->asImage(), xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0);
+    SkCanvas canvas(target);
+    canvas.drawImage(original.get(), xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0);
     canvas.flush();
 
-    return newBitmap;
+    return target.asImage();
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::createTileBitmap(
-    const std::shared_ptr<const SkBitmap>& firstBitmap,
-    const std::shared_ptr<const SkBitmap>& secondBitmap,
-    const float yOffset)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createTileImage(
+    const sk_sp<const SkImage>& first,
+    const sk_sp<const SkImage>& second,
+    float yOffset)
 {
     SkImageInfo imageInfo;
-    if (firstBitmap && firstBitmap->width() > 0 && firstBitmap->height() > 0)
-        imageInfo = firstBitmap->info();
+    if (first && first->width() > 0 && first->height() > 0)
+        imageInfo = first->imageInfo();
 
-    if (secondBitmap && secondBitmap->width() > 0 && secondBitmap->height() > 0)
-        imageInfo = secondBitmap->info();
+    if (second && second->width() > 0 && second->height() > 0)
+        imageInfo = second->imageInfo();
 
     if (imageInfo.isEmpty())
         return nullptr;
 
-    const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
-
-    if (!newBitmap->tryAllocPixels(imageInfo))
+    SkBitmap target;
+    if (!target.tryAllocPixels(imageInfo))
         return nullptr;
-    newBitmap->eraseColor(SK_ColorTRANSPARENT);
+    target.eraseColor(SK_ColorTRANSPARENT);
 
-    SkCanvas canvas(*newBitmap);
-    if (firstBitmap)
-        canvas.drawImage(firstBitmap->asImage(), 0, -yOffset);
-    if (secondBitmap)
-        canvas.drawImage(secondBitmap->asImage(), 0, -yOffset + imageInfo.height());
+    SkCanvas canvas(target);
+    if (first)
+        canvas.drawImage(first.get(), 0, -yOffset);
+    if (second)
+        canvas.drawImage(second.get(), 0, -yOffset + imageInfo.height());
     canvas.flush();
 
-    return newBitmap;
+    return target.asImage();
 }
 
 sk_sp<SkTypeface> OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray& data)
 {
-    const auto skData = SkData::MakeWithCopy(data.constData(), data.length());
-    if (!skData)
-    {
-        return nullptr;
-    }
-
-    return SkTypeface::MakeFromData(skData);
+    return SkTypeface::MakeFromData(SkData::MakeWithCopy(data.constData(), data.length()));
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::mergeBitmaps(const QList< std::shared_ptr<const SkBitmap> >& bitmaps)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList< sk_sp<const SkImage> >& images)
 {
-    if (bitmaps.isEmpty())
+    if (images.isEmpty())
         return nullptr;
 
     int maxWidth = 0;
     int maxHeight = 0;
-    for (const auto& bitmap : constOf(bitmaps))
+    for (const auto& image : constOf(images))
     {
-        maxWidth = qMax(maxWidth, bitmap->width());
-        maxHeight = qMax(maxHeight, bitmap->height());
+        maxWidth = qMax(maxWidth, image->width());
+        maxHeight = qMax(maxHeight, image->height());
     }
 
     if (maxWidth <= 0 || maxHeight <= 0)
         return nullptr;
 
-    const std::shared_ptr<SkBitmap> outputBitmap(new SkBitmap());
-    if (!outputBitmap->tryAllocPixels(SkImageInfo::MakeN32Premul(maxWidth, maxHeight)))
+    SkBitmap target;
+    if (!target.tryAllocPixels(images.first()->imageInfo().makeWH(maxWidth, maxHeight)))
         return nullptr;
-    outputBitmap->eraseColor(SK_ColorTRANSPARENT);
+    target.eraseColor(SK_ColorTRANSPARENT);
 
-    SkCanvas canvas(*outputBitmap);
-    for (const auto& bitmap : constOf(bitmaps))
+    SkCanvas canvas(target);
+    for (const auto& image : constOf(images))
     {
-        canvas.drawImage(bitmap->asImage(),
-            (maxWidth - bitmap->width()) / 2.0f,
-            (maxHeight - bitmap->height()) / 2.0f
+        canvas.drawImage(image.get(),
+            (maxWidth - image->width()) / 2.0f,
+            (maxHeight - image->height()) / 2.0f
         );
     }
     canvas.flush();
 
-    return outputBitmap;
+    return target.asImage();
 }

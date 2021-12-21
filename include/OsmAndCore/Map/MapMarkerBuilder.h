@@ -7,6 +7,10 @@
 #include <QList>
 #include <QHash>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -14,8 +18,6 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/MapMarker.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -54,8 +56,8 @@ namespace OsmAnd
         PointI getPosition() const;
         MapMarkerBuilder& setPosition(const PointI position);
 
-        std::shared_ptr<const SkBitmap> getPinIcon() const;
-        MapMarkerBuilder& setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        sk_sp<const SkImage> getPinIcon() const;
+        MapMarkerBuilder& setPinIcon(const sk_sp<const SkImage>& image);
         MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
         MapMarkerBuilder& setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
@@ -69,8 +71,8 @@ namespace OsmAnd
         double getCaptionTopSpace() const;
         MapMarkerBuilder& setCaptionTopSpace(const double captionTopSpace);
 
-        QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
-        MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);
+        QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > getOnMapSurfaceIcons() const;
+        MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image);
         MapMarkerBuilder& removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         MapMarkerBuilder& clearOnMapSurfaceIcons();
 
