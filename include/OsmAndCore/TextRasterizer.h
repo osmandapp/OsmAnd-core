@@ -19,7 +19,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/IFontFinder.h>
+#include <OsmAndCore/ITypefaceFinder.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -155,10 +155,10 @@ namespace OsmAnd
     protected:
     public:
         TextRasterizer(
-            const std::shared_ptr<const IFontFinder>& fontFinder);
+            const std::shared_ptr<const ITypefaceFinder>& typefaceFinder);
         virtual ~TextRasterizer();
 
-        const std::shared_ptr<const IFontFinder> fontFinder;
+        const std::shared_ptr<const ITypefaceFinder> typefaceFinder;
 
         sk_sp<SkImage> rasterize(
             const QString& text,

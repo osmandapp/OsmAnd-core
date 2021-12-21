@@ -17,11 +17,11 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
-#include <OsmAndCore/IFontFinder.h>
-#include <OsmAndCore/CachingFontFinder.h>
-#include <OsmAndCore/ChainedFontFinder.h>
-#include <OsmAndCore/EmbeddedFontFinder.h>
-#include <OsmAndCore/SystemFontFinder.h>
+#include <OsmAndCore/ITypefaceFinder.h>
+#include <OsmAndCore/CachingTypefaceFinder.h>
+#include <OsmAndCore/ChainedTypefaceFinder.h>
+#include <OsmAndCore/EmbeddedTypefaceFinder.h>
+#include <OsmAndCore/SystemTypefaceFinder.h>
 #include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/ILogSink.h>
@@ -172,11 +172,11 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
-	%shared_ptr(OsmAnd::IFontFinder)
-	%shared_ptr(OsmAnd::CachingFontFinder)
-	%shared_ptr(OsmAnd::ChainedFontFinder)
-	%shared_ptr(OsmAnd::EmbeddedFontFinder)
-	%shared_ptr(OsmAnd::SystemFontFinder)
+	%shared_ptr(OsmAnd::ITypefaceFinder)
+	%shared_ptr(OsmAnd::CachingTypefaceFinder)
+	%shared_ptr(OsmAnd::ChainedTypefaceFinder)
+	%shared_ptr(OsmAnd::EmbeddedTypefaceFinder)
+	%shared_ptr(OsmAnd::SystemTypefaceFinder)
 	%shared_ptr(OsmAnd::TextRasterizer)
 	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
@@ -331,11 +331,11 @@ using namespace OsmAnd;
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
-%include <OsmAndCore/IFontFinder.h>
-%include <OsmAndCore/CachingFontFinder.h>
-%include <OsmAndCore/ChainedFontFinder.h>
-%include <OsmAndCore/EmbeddedFontFinder.h>
-%include <OsmAndCore/SystemFontFinder.h>
+%include <OsmAndCore/ITypefaceFinder.h>
+%include <OsmAndCore/CachingTypefaceFinder.h>
+%include <OsmAndCore/ChainedTypefaceFinder.h>
+%include <OsmAndCore/EmbeddedTypefaceFinder.h>
+%include <OsmAndCore/SystemTypefaceFinder.h>
 %include <OsmAndCore/TextRasterizer.h>
 %include <OsmAndCore/Logging.h>
 %include <OsmAndCore/ILogSink.h>

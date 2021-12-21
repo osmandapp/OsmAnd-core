@@ -10,13 +10,13 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/IFontFinder.h>
+#include <OsmAndCore/ITypefaceFinder.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API CachingFontFinder Q_DECL_FINAL : public IFontFinder
+    class OSMAND_CORE_API CachingTypefaceFinder Q_DECL_FINAL : public ITypefaceFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(CachingFontFinder);
+        Q_DISABLE_COPY_AND_MOVE(CachingTypefaceFinder);
 
     private:
         static_assert(sizeof(SkFontStyle) == 4, "Check size of SkFontStyle");
@@ -59,15 +59,15 @@ namespace OsmAnd
         };
 
         mutable QMutex _lock;
-        mutable QHash< CacheKey, sk_sp<SkTypeface> > _cache;
+        mutable QHash< CacheKey, std::shared_ptr<const Typeface> > _cache;
     protected:
     public:
-        CachingFontFinder(const std::shared_ptr<const IFontFinder>& fontFinder);
-        virtual ~CachingFontFinder();
+        CachingTypefaceFinder(const std::shared_ptr<const ITypefaceFinder>& typefaceFinder);
+        virtual ~CachingTypefaceFinder();
 
-        const std::shared_ptr<const IFontFinder> fontFinder;
+        const std::shared_ptr<const ITypefaceFinder> typefaceFinder;
 
-        virtual sk_sp<SkTypeface> findFontForCharacterUCS4(
+        virtual std::shared_ptr<const Typeface> findTypefaceForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const Q_DECL_OVERRIDE;
     };

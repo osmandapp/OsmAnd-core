@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 156
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 157
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -31,17 +31,16 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(Security_LIBRARY Security)
 	find_library(IOKit_LIBRARY IOKit)
 	find_library(z_LIBRARY z)
-	set(library_suffix_tbd ".tbd")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
-		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
-		"${CoreText_LIBRARY}/CoreText${library_suffix_tbd}"
-		"${CoreGraphics_LIBRARY}/CoreGraphics${library_suffix_tbd}"
-		"${CoreFoundation_LIBRARY}/CoreFoundation${library_suffix_tbd}"
-		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
-		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
-		"${Security_LIBRARY}/Security${library_suffix_tbd}"
-		"${IOKit_LIBRARY}/IOKit${library_suffix_tbd}"
+		"${Cocoa_LIBRARY}/Cocoa.tbd"
+		"${CoreServices_LIBRARY}/CoreServices.tbd"
+		"${CoreText_LIBRARY}/CoreText.tbd"
+		"${CoreGraphics_LIBRARY}/CoreGraphics.tbd"
+		"${CoreFoundation_LIBRARY}/CoreFoundation.tbd"
+		"${SystemConfiguration_LIBRARY}/SystemConfiguration.tbd"
+		"${CFNetwork_LIBRARY}/CFNetwork.tbd"
+		"${Security_LIBRARY}/Security.tbd"
+		"${IOKit_LIBRARY}/IOKit.tbd"
 		${z_LIBRARY}
 		${objc_LIBRARY}
 	)
@@ -298,6 +297,7 @@ set(merged_dependencies
 	protobuf_static
 	gdal_static
 	icu4c_static
+	harfbuzz_static
 	archive_static
 	z_static
 	${target_specific_dependencies}
@@ -334,6 +334,7 @@ set(merged_link_libs_public
 	protobuf_static
 	gdal_static
 	icu4c_static
+	harfbuzz_static
 	archive_static
 	glm_headers_only
 	boost_static_precompiled

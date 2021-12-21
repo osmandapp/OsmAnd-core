@@ -279,12 +279,12 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		-DSK_USE_POSIX_THREADS
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
-		freetype2_static
+		freetype_static
 	)
 	find_library(PTHREAD_LIBRARY pthread)
 	find_library(FONTCONFIG_LIBRARY fontconfig)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		freetype2_static
+		freetype_static
 		${PTHREAD_LIBRARY}
 		${FONTCONFIG_LIBRARY}
 	)
@@ -315,11 +315,11 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		-DSK_USE_POSIX_THREADS
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
-		freetype2_static
+		freetype_static
 		android_cpufeatures
 	)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		freetype2_static
+		freetype_static
 		android_cpufeatures
 		jnigraphics
 	)
