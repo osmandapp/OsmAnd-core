@@ -10,6 +10,11 @@
 #include "SkiaUtilities.h"
 #include "Logging.h"
 
+// #define OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING 1
+#ifndef OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+#   define OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING 0
+#endif // !defined(OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING)
+
 OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
     : coreResourcesProvider(coreResourcesProvider_)
@@ -28,6 +33,9 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
         const auto typeface = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
         if (!typeface)
         {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to load typeface from embedded data for '%s'",
+                qPrintable(embeddedTypefaceResource));
             continue;
         }
 
@@ -62,16 +70,44 @@ std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::EmbeddedTypefac
             difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 
         // If there was previous best match, check if this match is better
-        if (bestMatch && bestMatchDifference < difference)
+        if (bestMatch && bestMatchDifference <= difference)
             continue;
 
         bestMatch = typeface;
         bestMatchDifference = difference;
 
+#if OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+        {
+            SkString typefaceName;
+            typeface->skTypeface->getFamilyName(&typefaceName);
+
+            LogPrintf(LogSeverityLevel::Warning,
+                "UCS4 character 0x%08x (%u) has been resolved with a better match (%f) in '%s' typeface",
+                character,
+                character,
+                difference,
+                typefaceName.c_str());
+        }
+#endif // OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+
         // In case difference is 0, there won't be better match
         if (qFuzzyIsNull(bestMatchDifference))
             break;
     }
+
+#if OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+        {
+            SkString bestMatchName;
+            bestMatch->skTypeface->getFamilyName(&bestMatchName);
+
+            LogPrintf(LogSeverityLevel::Warning,
+                "UCS4 character 0x%08x (%u) has been resolved with best match (%f) in '%s' typeface",
+                character,
+                character,
+                bestMatchDifference,
+                bestMatchName.c_str());
+        }
+#endif // OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
 
     return bestMatch;
 }
