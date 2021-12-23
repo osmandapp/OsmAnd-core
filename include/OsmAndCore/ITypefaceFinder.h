@@ -2,13 +2,16 @@
 #define _OSMAND_CORE_I_TYPEFACE_FINDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <unordered_map>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QString>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkFontStyle.h>
 #include <SkTypeface.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <hb.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
@@ -25,11 +28,15 @@ namespace OsmAnd
     public:
         struct OSMAND_CORE_API Typeface Q_DECL_FINAL
         {
-            Typeface(const sk_sp<SkTypeface>& skTypeface, hb_face_t* hbTypeface);
+            Typeface(const sk_sp<SkTypeface>& skTypeface, const std::shared_ptr<hb_face_t>& hbFace);
             ~Typeface();
 
             sk_sp<SkTypeface> skTypeface;
-            std::shared_ptr<hb_face_t> hbTypeface;
+            std::shared_ptr<hb_face_t> hbFace;
+
+            std::unordered_map<uint32_t, uint32_t> replacementCodepoints;
+
+            static std::shared_ptr<Typeface> fromData(const QByteArray& data);
         };
 
     private:
@@ -41,6 +48,7 @@ namespace OsmAnd
         virtual std::shared_ptr<const SWIG_CLARIFY(ITypefaceFinder, Typeface)> findTypefaceForCharacterUCS4(
             const uint32_t character,
             const SkFontStyle style = SkFontStyle()) const = 0;
+
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ITypefaceFinder);

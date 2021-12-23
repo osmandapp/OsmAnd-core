@@ -16,6 +16,10 @@
 #include <SkFont.h>
 #include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <hb.h>
+#include "restore_internal_warnings.h"
+
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
@@ -32,6 +36,8 @@ namespace OsmAnd
     public:
         typedef TextRasterizer::Style Style;
 
+        static constexpr auto HB_FONT_SCALE_FACTOR = 64.0f;
+
     private:
         SkPaint _defaultPaint;
         SkFont _defaultFont;
@@ -46,7 +52,9 @@ namespace OsmAnd
 
             QStringRef text;
             SkPaint paint;
-            SkFont font;
+            std::shared_ptr<const ITypefaceFinder::Typeface> typeface;
+            SkFont skFont;
+            std::shared_ptr<hb_font_t> hbFont;
             SkScalar height;
             SkScalar width;
             SkRect bounds;
@@ -63,8 +71,8 @@ namespace OsmAnd
                 , minFontTop(std::numeric_limits<SkScalar>::max())
                 , maxFontBottom(0)
                 , minFontBottom(std::numeric_limits<SkScalar>::max())
-                , maxBoundsTop(0)
                 , fontAscent(0)
+                , maxBoundsTop(0)
                 , minBoundsTop(std::numeric_limits<SkScalar>::max())
                 , width(0)
             {
@@ -88,14 +96,15 @@ namespace OsmAnd
         QVector<LinePaint> evaluatePaints(const QVector<QStringRef>& lineRefs, const Style& style) const;
         void measureText(QVector<LinePaint>& paints, SkScalar& outMaxLineWidth) const;
         void measureGlyphs(const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
-        SkPaint getHaloPaint(const SkPaint& paint, const Style& style) const;
-        SkFont getHaloFont(const SkFont& font, const Style& style) const;
+        TextPaint getHaloTextPaint(const TextPaint& textPaint, const Style& style) const;
         void measureHalo(const Style& style, QVector<LinePaint>& paints) const;
         void measureHaloGlyphs(const Style& style, const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
         SkRect positionText(
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
+        bool drawText(SkCanvas& canvas, const TextPaint& textPaint) const;
+
     protected:
         TextRasterizer_P(TextRasterizer* const owner);
     public:

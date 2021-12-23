@@ -10,6 +10,11 @@
 #include "SkiaUtilities.h"
 #include "Logging.h"
 
+// #define OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING 1
+#ifndef OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+#   define OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING 0
+#endif // !defined(OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING)
+
 OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
     const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
     : coreResourcesProvider(coreResourcesProvider_)
@@ -25,39 +30,16 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
             continue;
         }
 
-        const auto skTypeface = SkiaUtilities::createTypefaceFromData(typefaceData);
-        if (!skTypeface)
+        const auto typeface = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
+        if (!typeface)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create SkTypeface from embedded data for '%s'",
+                "Failed to load typeface from embedded data for '%s'",
                 qPrintable(embeddedTypefaceResource));
             continue;
         }
 
-        const auto hbBlob = std::shared_ptr<hb_blob_t>(
-            hb_blob_create_or_fail(
-                typefaceData.constData(),
-                typefaceData.length(),
-                HB_MEMORY_MODE_READONLY,
-                new QByteArray(typefaceData),
-                [](void* pUserData) { delete reinterpret_cast<QByteArray*>(pUserData); }),
-            [](auto p) { hb_blob_destroy(p); });
-        if (!hbBlob) {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to load Harfbuzz blob from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        const auto pHbTypeface = hb_face_create(hbBlob.get(), 0);
-        if (!pHbTypeface || pHbTypeface == hb_face_get_empty()) {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to create Harfbuzz typeface from embedded data for '%s'",
-                qPrintable(embeddedTypefaceResource));
-            continue;
-        }
-
-        _typefaces.push_back(std::make_shared<Typeface>(skTypeface, pHbTypeface));
+        _typefaces.push_back(std::move(typeface));
     }
 }
 
@@ -88,16 +70,44 @@ std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::EmbeddedTypefac
             difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 
         // If there was previous best match, check if this match is better
-        if (bestMatch && bestMatchDifference < difference)
+        if (bestMatch && bestMatchDifference <= difference)
             continue;
 
         bestMatch = typeface;
         bestMatchDifference = difference;
 
+#if OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+        {
+            SkString typefaceName;
+            typeface->skTypeface->getFamilyName(&typefaceName);
+
+            LogPrintf(LogSeverityLevel::Warning,
+                "UCS4 character 0x%08x (%u) has been resolved with a better match (%f) in '%s' typeface",
+                character,
+                character,
+                difference,
+                typefaceName.c_str());
+        }
+#endif // OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+
         // In case difference is 0, there won't be better match
         if (qFuzzyIsNull(bestMatchDifference))
             break;
     }
+
+#if OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
+        {
+            SkString bestMatchName;
+            bestMatch->skTypeface->getFamilyName(&bestMatchName);
+
+            LogPrintf(LogSeverityLevel::Warning,
+                "UCS4 character 0x%08x (%u) has been resolved with best match (%f) in '%s' typeface",
+                character,
+                character,
+                bestMatchDifference,
+                bestMatchName.c_str());
+        }
+#endif // OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
 
     return bestMatch;
 }

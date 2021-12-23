@@ -34,7 +34,7 @@ namespace OsmAnd
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 
-        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
