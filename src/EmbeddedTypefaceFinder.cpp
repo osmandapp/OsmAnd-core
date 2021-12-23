@@ -25,13 +25,13 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
             continue;
         }
 
-        auto newTypefaceItem = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
-        if (nullptr == newTypefaceItem)
+        const auto typeface = OsmAnd::ITypefaceFinder::Typeface::fromData(typefaceData);
+        if (!typeface)
         {
             continue;
         }
 
-        _typefaces.push_back(std::move(newTypefaceItem));
+        _typefaces.push_back(std::move(typeface));
     }
 }
 

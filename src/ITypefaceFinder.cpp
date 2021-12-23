@@ -1,15 +1,8 @@
 #include "ITypefaceFinder.h"
 
-#include <utility>
-
-#include <SkTypeface.h>
-
-#include <OsmAndCore.h>
-
 #include "Logging.h"
 #include "SkiaUtilities.h"
-
-static constexpr char kRepChars[] = "\xE2\x80\x8B\x41\xE2\x80\x8C";//just add code to the end with \x41 divider
+#include "HarfbuzzUtilities.h"
 
 OsmAnd::ITypefaceFinder::ITypefaceFinder()
 {
@@ -19,42 +12,51 @@ OsmAnd::ITypefaceFinder::~ITypefaceFinder()
 {
 }
 
-OsmAnd::ITypefaceFinder::Typeface::Typeface(const sk_sp<SkTypeface>& skTypeface_,
-                                            THbFontPtr hbFont_,
-                                            std::set<uint32_t> delCodePoints_,
-                                            uint32_t repCodePoint_)
+OsmAnd::ITypefaceFinder::Typeface::Typeface(
+    const sk_sp<SkTypeface>& skTypeface_,
+    const std::shared_ptr<hb_face_t>& hbFace_)
     : skTypeface(skTypeface_)
-    , hbFont(std::move(hbFont_))
-    , delCodePoints(delCodePoints_)
-    , repCodePoint(repCodePoint_)
+    , hbFace(hbFace_)
 {
-}
-
-OsmAnd::ITypefaceFinder::Typeface::Typeface(const sk_sp<SkTypeface>& skTypeface_,
-                                            THbFontPtr hbFont_)
-    : skTypeface(skTypeface_)
-    , hbFont(std::move(hbFont_))
-{
-    assert(nullptr != skTypeface);
-    assert(nullptr != hbFont);
-
-    /* Create hb-buffer and populate. */
-    std::shared_ptr<hb_buffer_t> hb_buffer_ptr(hb_buffer_create(), [](auto* p) { hb_buffer_destroy(p); });
-    if (!hb_buffer_allocation_successful(hb_buffer_ptr.get()))
+    const auto pHbBuffer = hb_buffer_create();
+    if (pHbBuffer == hb_buffer_get_empty())
     {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to create hb_buffer_t");
+        return;
+    }
+    std::shared_ptr<hb_buffer_t> hbBuffer(pHbBuffer, hb_buffer_destroy);
+    if (!hb_buffer_allocation_successful(hbBuffer.get()))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to allocate hb_buffer_t");
         return;
     }
 
-    hb_buffer_add_utf8(hb_buffer_ptr.get(), kRepChars, -1, 0, -1);
-    hb_buffer_guess_segment_properties(hb_buffer_ptr.get());
-    hb_shape(hbFont.get(), hb_buffer_ptr.get(), NULL, 0);
-    unsigned int length = hb_buffer_get_length(hb_buffer_ptr.get());
-    hb_glyph_info_t* info = hb_buffer_get_glyph_infos(hb_buffer_ptr.get(), NULL);
+    std::shared_ptr<hb_font_t> hbFont(
+        hb_font_create(hbFace.get()),
+        hb_font_destroy
+    );
 
-    repCodePoint = info[0].codepoint;
-    for (size_t i = 2; i < length; ++i)
+    hb_buffer_add_utf8(
+        hbBuffer.get(),
+        "\xE2\x80\x8B\x41\xE2\x80\x8C", // NOTE: UTF8 characters with \x41 divider
+        -1,
+        0,
+        -1
+    );
+    hb_buffer_guess_segment_properties(hbBuffer.get());
+    hb_shape(hbFont.get(), hbBuffer.get(), nullptr, 0);
+
+    unsigned int glyphsCount = 0;
+    const auto pGlyphInfos = hb_buffer_get_glyph_infos(hbBuffer.get(), &glyphsCount);
+    if (glyphsCount > 0)
     {
-        delCodePoints.insert(info[i].codepoint);
+        const auto replacementCodepoint = pGlyphInfos[0].codepoint;
+        for (auto glyphIdx = 2u; glyphIdx < glyphsCount; glyphIdx++)
+        {
+            replacementCodepoints[pGlyphInfos[glyphIdx].codepoint] = replacementCodepoint;
+        }
     }
 }
 
@@ -62,9 +64,7 @@ OsmAnd::ITypefaceFinder::Typeface::~Typeface()
 {
 }
 
-
-/*static*/
- std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Typeface::fromData(QByteArray data)
+std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Typeface::fromData(const QByteArray& data)
 {
     if (data.isEmpty())
     {
@@ -72,20 +72,20 @@ OsmAnd::ITypefaceFinder::Typeface::~Typeface()
     }
 
     const auto skTypeface = SkiaUtilities::createTypefaceFromData(data);
-    if (nullptr == skTypeface)
+    if (!skTypeface)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to create SkTypeface from data");
         return nullptr;
     }
 
-    auto hbFont = HarfbuzzUtilities::createHbFontFromData(data);
-    if (nullptr == hbFont)
+    const auto hbFace = HarfbuzzUtilities::createFaceFromData(data);
+    if (!hbFace)
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to create HbFont from data");
+            "Failed to create hb_face_t from data");
         return nullptr;
     }
 
-    return std::make_shared<Typeface>(skTypeface, std::move(hbFont));
+    return std::make_shared<Typeface>(skTypeface, hbFace);
 }

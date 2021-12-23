@@ -2,24 +2,22 @@
 #define _OSMAND_CORE_I_TYPEFACE_FINDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <unordered_map>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QString>
-#include <set>
-#include <functional>
-#include <memory>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkFontStyle.h>
 #include <SkTypeface.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <hb.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
-
-#include "HarfbuzzUtilities.h"
 
 namespace OsmAnd
 {
@@ -30,24 +28,15 @@ namespace OsmAnd
     public:
         struct OSMAND_CORE_API Typeface Q_DECL_FINAL
         {
-            Typeface(const sk_sp<SkTypeface>& skTypeface,
-                     THbFontPtr hbFont_,
-                     std::set<uint32_t> delCodePoints,
-                     uint32_t repCodePoint);
-            Typeface(const sk_sp<SkTypeface>& skTypeface_,
-                     const THbFontPtr hbFont_);
-
-            static std::shared_ptr<Typeface> fromData(QByteArray data);
-
+            Typeface(const sk_sp<SkTypeface>& skTypeface, const std::shared_ptr<hb_face_t>& hbFace);
             ~Typeface();
 
-        public:
             sk_sp<SkTypeface> skTypeface;
-            THbFontPtr hbFont;
+            std::shared_ptr<hb_face_t> hbFace;
 
-            std::set<uint32_t> delCodePoints = {};//calculated deleting codepoint for current ttf
-            uint32_t repCodePoint = 0;//calculated replacement codepoint for current ttf
+            std::unordered_map<uint32_t, uint32_t> replacementCodepoints;
 
+            static std::shared_ptr<Typeface> fromData(const QByteArray& data);
         };
 
     private:

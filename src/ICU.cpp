@@ -5,8 +5,6 @@
 #include <cassert>
 #include <cstring>
 
-#include <algorithm>
-
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
@@ -21,8 +19,6 @@
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
 #include <unicode/coll.h>
-#include <unicode/urename.h>
-
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
