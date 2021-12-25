@@ -195,13 +195,19 @@ check_type_size("void*" SIZEOF_VOIDP)
 check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
 
 check_function_exists("fseek64" HAVE_FSEEK64)
+check_function_exists("fseeko64" HAVE_FSEEKO64)
 if (HAVE_FSEEK64)
 	set(VSI_FSEEK64 "fseek64")
+elseif (HAVE_FSEEKO64)
+	set(VSI_FSEEK64 "fseeko64")
 endif()
 
 check_function_exists("ftell64" HAVE_FTELL64)
+check_function_exists("ftello64" HAVE_FTELLO64)
 if (HAVE_FTELL64)
 	set(VSI_FTELL64 "ftell64")
+elseif (HAVE_FTELLO64)
+	set(VSI_FTELL64 "ftello64")
 endif()
 
 check_function_exists("fopen64" HAVE_FOPEN64)
@@ -214,7 +220,7 @@ if (HAVE_FTRUNCATE64)
 	set(VSI_FTRUNCATE64 "ftruncate64")
 endif()
 
-if (HAVE_FSEEK64 AND HAVE_FTELL64)
+if (VSI_FSEEK64 AND VSI_FSEEK64)
 	set(UNIX_STDIO_64 ON)
 endif()
 
