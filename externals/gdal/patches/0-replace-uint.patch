@@ -1,0 +1,11 @@
+--- upstream.original/gdal/frmts/gtiff/generate_quant_table_md5sum.cpp	2021-12-20 21:55:32.000000000 +0100
++++ upstream.patched/gdal/frmts/gtiff/generate_quant_table_md5sum.cpp	2021-12-21 07:12:47.000000000 +0100
+@@ -61,7 +61,7 @@ static const GByte* GTIFFFindNextTable( 
+     return nullptr;
+ }
+ 
+-void generate(int nBands, uint16_t nPhotometric, uint nBitsPerSample)
++void generate(int nBands, uint16_t nPhotometric, unsigned int nBitsPerSample)
+ {
+     char** papszOpts = nullptr;
+     papszOpts = CSLSetNameValue(papszOpts,
