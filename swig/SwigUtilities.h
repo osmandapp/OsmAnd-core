@@ -10,6 +10,7 @@
 #include <QFile>
 
 #include <SkBitmap.h>
+#include <SkImage.h>
 
 namespace OsmAnd
 {
@@ -83,15 +84,15 @@ namespace OsmAnd
 #ifdef SWIG
         %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
-        inline static std::shared_ptr<const SkBitmap> createSkBitmapARGB888With(
+        inline static sk_sp<const SkImage> createSkImageARGB888With(
             const unsigned int width,
             const unsigned int height,
             const char* const pBuffer,
             const size_t bufferSize)
         {
-            const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+            SkBitmap bitmap;
 
-            if (!bitmap->tryAllocPixels(SkImageInfo::Make(
+            if (!bitmap.tryAllocPixels(SkImageInfo::Make(
                 width,
                 height,
                 SkColorType::kRGBA_8888_SkColorType,
@@ -99,11 +100,11 @@ namespace OsmAnd
             {
                 return nullptr;
             }
-            if (bitmap->computeByteSize() < bufferSize)
+            if (bitmap.computeByteSize() < bufferSize)
                 return nullptr;
-            memcpy(bitmap->getPixels(), pBuffer, bufferSize);
+            memcpy(bitmap.getPixels(), pBuffer, bufferSize);
 
-            return bitmap;
+            return bitmap.asImage();
         }
 
     private:
