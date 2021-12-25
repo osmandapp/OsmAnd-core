@@ -194,20 +194,28 @@ check_type_size("void*" SIZEOF_VOIDP)
 
 check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
 
+check_type_size("off_t" SIZEOF_OFF_T)
+
 check_function_exists("fseek64" HAVE_FSEEK64)
 check_function_exists("fseeko64" HAVE_FSEEKO64)
+check_function_exists("fseeko" HAVE_FSEEKO)
 if (HAVE_FSEEK64)
 	set(VSI_FSEEK64 "fseek64")
 elseif (HAVE_FSEEKO64)
 	set(VSI_FSEEK64 "fseeko64")
+elseif (SIZEOF_OFF_T == 8 AND HAVE_FSEEKO)
+	set(VSI_FSEEK64 "fseeko")
 endif()
 
 check_function_exists("ftell64" HAVE_FTELL64)
 check_function_exists("ftello64" HAVE_FTELLO64)
+check_function_exists("ftello" HAVE_FTELLO)
 if (HAVE_FTELL64)
 	set(VSI_FTELL64 "ftell64")
 elseif (HAVE_FTELLO64)
 	set(VSI_FTELL64 "ftello64")
+elseif (SIZEOF_OFF_T == 8 AND HAVE_FTELLO)
+	set(VSI_FSEEK64 "ftello")
 endif()
 
 check_function_exists("fopen64" HAVE_FOPEN64)
