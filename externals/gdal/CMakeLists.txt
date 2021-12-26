@@ -18,6 +18,15 @@ else()
 	set(HOST_FILLORDER "FILLORDER_LSB2MSB")
 endif()
 
+if (CMAKE_TARGET_OS STREQUAL "android")
+	# NOTE: See https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+	if (NOT UNIX_STDIO_64)
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-DBUILD_WITHOUT_64BIT_OFFSET
+		)
+	endif()
+endif()
+
 file(GLOB gdal_alg "upstream.patched/gdal/alg/*.c*")
 
 file(GLOB gdal_apps "upstream.patched/gdal/apps/*_lib.c*")
