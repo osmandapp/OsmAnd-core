@@ -224,8 +224,12 @@ elseif (SIZEOF_FTELL EQUAL 8)
 endif()
 
 check_function_exists("fopen64" HAVE_FOPEN64)
+check_function_exists("fopen" HAVE_FOPEN)
 if (HAVE_FOPEN64)
 	set(VSI_FOPEN64 "fopen64")
+elif (HAVE_FOPEN AND CMAKE_TARGET_OS STREQUAL "android")
+	# NOTE: See https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+	set(VSI_FOPEN64 "fopen")
 endif()
 
 check_function_exists("ftruncate64" HAVE_FTRUNCATE64)
