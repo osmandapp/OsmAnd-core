@@ -117,6 +117,7 @@ namespace OsmAnd
 
         bool calcPathByTrajectory(
             const Context& context,
+            SkCanvas& canvas,
             const QVector<PointI>& points31,
             SkPath& path,
             float offset) const;
