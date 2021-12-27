@@ -223,22 +223,24 @@ elseif (SIZEOF_FTELL EQUAL 8)
 	set(VSI_FTELL64 "ftell")
 endif()
 
+if (VSI_FSEEK64 AND VSI_FTELL64)
+	set(UNIX_STDIO_64 ON)
+endif()
+
 check_function_exists("fopen64" HAVE_FOPEN64)
 check_function_exists("fopen" HAVE_FOPEN)
 if (HAVE_FOPEN64)
 	set(VSI_FOPEN64 "fopen64")
-elseif (HAVE_FOPEN AND CMAKE_TARGET_OS STREQUAL "android")
-	# NOTE: See https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+elseif (HAVE_FOPEN)
 	set(VSI_FOPEN64 "fopen")
 endif()
 
 check_function_exists("ftruncate64" HAVE_FTRUNCATE64)
+check_function_exists("ftruncate" HAVE_FTRUNCATE)
 if (HAVE_FTRUNCATE64)
 	set(VSI_FTRUNCATE64 "ftruncate64")
-endif()
-
-if (VSI_FSEEK64 AND VSI_FTELL64)
-	set(UNIX_STDIO_64 ON)
+elseif (HAVE_FTRUNCATE)
+	set(VSI_FTRUNCATE64 "ftruncate")
 endif()
 
 set(VSI_NEED_LARGEFILE64_SOURCE ON)
