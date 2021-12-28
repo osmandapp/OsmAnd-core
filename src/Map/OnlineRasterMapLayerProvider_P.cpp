@@ -14,9 +14,8 @@
 #include <SkImage.h>
 #include "restore_internal_warnings.h"
 
-#include <OsmAndCore/SkiaUtilities.h>
-
 #include "MapDataProviderHelpers.h"
+#include "SkiaUtilities.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -215,7 +214,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(downloadResult.constData(), downloadResult.size()));
+    auto image = SkiaUtilities::createImageFromData(downloadResult);
     if (!image)
     {
         LogPrintf(LogSeverityLevel::Error,

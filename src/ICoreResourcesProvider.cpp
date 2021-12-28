@@ -5,6 +5,8 @@
 #include <SkImage.h>
 #include "restore_internal_warnings.h"
 
+#include "SkiaUtilities.h"
+
 OsmAnd::ICoreResourcesProvider::ICoreResourcesProvider()
 {
 }
@@ -22,7 +24,7 @@ sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(
     if (!ok)
         return nullptr;
 
-    return SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+    return SkiaUtilities::createImageFromData(data);
 }
 
 sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(const QString& name) const
@@ -32,5 +34,5 @@ sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(const QString&
     if (!ok)
         return nullptr;
     
-    return SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+    return SkiaUtilities::createImageFromData(data);
 }

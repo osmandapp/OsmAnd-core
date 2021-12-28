@@ -14,7 +14,7 @@
 #include "MapDataProviderHelpers.h"
 #include "QRunnableFunctor.h"
 #include "IQueryController.h"
-
+#include "SkiaUtilities.h"
 #include "MapDataProviderHelpers.h"
 
 OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
@@ -133,7 +133,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         
         // Decode image data
-        image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(imageData.constData(), imageData.length()));
+        image = SkiaUtilities::createImageFromData(imageData);
     }
     
     if (!image)
@@ -237,7 +237,7 @@ void OsmAnd::ImageMapLayerProvider::AsyncImageData::submit(const bool requestSuc
 
     if (requestSucceeded && !data.isNull())
     {
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             callback(provider, false, outData, nullptr);
