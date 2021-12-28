@@ -115,6 +115,15 @@ namespace OsmAnd
             const SkPath& path,
             const MapStyleEvaluationResult::Packed& evalResult);
 
+        void drawLayer(
+            SkCanvas& canvas,
+            SkPaint& paint,
+            SkPath& path,
+            const Context& context,
+            const QVector<PointI>& points31,
+            const MapStyleEvaluationResult::Packed& evalResult,
+            const PaintValuesSet valueSetSelector,
+            const IMapStyle::ValueDefinitionId valueDefId);
         bool calcPathByTrajectory(
             const Context& context,
             SkCanvas& canvas,
@@ -127,7 +136,7 @@ namespace OsmAnd
         static bool containsHelper(const QVector< PointI >& points, const PointI& otherPoint);
 
         void initialize();
-        
+
         SkPaint _defaultPaint;
 
         mutable QMutex _pathEffectsMutex;

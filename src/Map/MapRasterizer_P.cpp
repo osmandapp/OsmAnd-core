@@ -2,6 +2,7 @@
 #include "MapRasterizer.h"
 #include "MapRasterizer_Metrics.h"
 
+#include <deque>
 #include "QtCommon.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QReadWriteLock>
@@ -435,52 +436,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
-#include <queue>
-#include <deque>
-
-bool cmpf(float A, float B, float epsilon = 1E-5)
-{
-    return (fabs(A - B) < epsilon);
-}
-
-bool cmpPointF(const OsmAnd::PointF& PtA,
-               const OsmAnd::PointF& PtB)
-{
-    return (cmpf(PtA.x, PtB.x) && cmpf(PtA.y, PtB.y));
-}
-
-bool linesIntersection(const OsmAnd::PointF& A, const OsmAnd::PointF& B,
-                       const OsmAnd::PointF& C, const OsmAnd::PointF& D,
-                       OsmAnd::PointF& intersection)
-{
-    // Line AB represented as a1x + b1y = c1
-    double a1 = B.y - A.y;
-    double b1 = A.x - B.x;
-    double c1 = a1*(A.x) + b1*(A.y);
-
-    // Line CD represented as a2x + b2y = c2
-    double a2 = D.y - C.y;
-    double b2 = C.x - D.x;
-    double c2 = a2*(C.x)+ b2*(C.y);
-
-    double determinant = a1*b2 - a2*b1;
-  
-    if (determinant == 0)
-    {
-        // The lines are parallel. This is simplified
-        // by returning a pair of FLT_MAX
-        // return OsmAnd::PointF(FLT_MAX, FLT_MAX);
-        return false;
-    }
-    else
-    {
-        double x = (b2*c1 - b1*c2)/determinant;
-        double y = (a1*c2 - a2*c1)/determinant;
-        intersection = OsmAnd::PointF(x, y);
-        return true;
-    }
-}
-#if 0
 bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     const Context& context,
     SkCanvas& canvas,
@@ -488,125 +443,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     SkPath& path,
     float offset = 0.0f) const
 {
-    int dir = offset < 0 ? -1: 1;
-    offset = abs(offset);
-    bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
-
-    int pointIdx = 0;
-    bool intersect = false;
-    int prevCross = 0;
-    OsmAnd::PointF vertex;
-    const auto& area31 = context.area31;
-    const auto pointsCount = points31.size();
-    auto pPoint = points31.constData();
-    OsmAnd::PointF pVertex;
-    OsmAnd::PointF tempVertex;
-    for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
-    {
-        const auto& point = *pPoint;
-        calculateVertex(context, point, vertex);
-
-        int cross = 0;
-        cross |= (point.x < area31.left() ? 1 : 0);
-        cross |= (point.x > area31.right() ? 2 : 0);
-        cross |= (point.y < area31.top() ? 4 : 0);
-        cross |= (point.y > area31.bottom() ? 8 : 0);
-        if (pointIdx > 0)
-        {
-            if ((prevCross & cross) == 0)
-            {
-                if (prevCross != 0 || !intersect)
-                {
-                    simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-                    if (shift)
-                    {
-                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-                        tempVertex += normal * offset;
-                    }
-                    path.moveTo(tempVertex.x, tempVertex.y);
-                }
-                simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-                if (shift)
-                {
-                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-                    tempVertex += normal * offset;
-                }
-                path.lineTo(tempVertex.x, tempVertex.y);
-                intersect = true;
-            }
-        }
-        prevCross = cross;
-        pVertex = vertex;
-    }
-    return intersect;
-}
-// bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
-//     const Context& context,
-//     const QVector<PointI>& points31,
-//     SkPath& path,
-//     float offset = 0.0f) const
-// {
-//     int dir = offset < 0 ? -1: 1;
-//     offset = abs(offset);
-//     bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
-
-//     int pointIdx = 0;
-//     bool intersect = false;
-//     int prevCross = 0;
-//     OsmAnd::PointF vertex;
-//     const auto& area31 = context.area31;
-//     const auto pointsCount = points31.size();
-//     auto pPoint = points31.constData();
-//     OsmAnd::PointF pVertex;
-//     OsmAnd::PointF tempVertex;
-//     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
-//     {
-//         const auto& point = *pPoint;
-//         calculateVertex(context, point, vertex);
-
-//         int cross = 0;
-//         cross |= (point.x < area31.left() ? 1 : 0);
-//         cross |= (point.x > area31.right() ? 2 : 0);
-//         cross |= (point.y < area31.top() ? 4 : 0);
-//         cross |= (point.y > area31.bottom() ? 8 : 0);
-//         if (pointIdx > 0)
-//         {
-//             if ((prevCross & cross) == 0)
-//             {
-//                 if (prevCross != 0 || !intersect)
-//                 {
-//                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-//                     if (shift)
-//                     {
-//                         auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-//                         tempVertex += normal * offset;
-//                     }
-//                     path.moveTo(tempVertex.x, tempVertex.y);
-//                 }
-//                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-//                 if (shift)
-//                 {
-//                     auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-//                     tempVertex += normal * offset;
-//                 }
-//                 path.lineTo(tempVertex.x, tempVertex.y);
-//                 intersect = true;
-//             }
-//         }
-//         prevCross = cross;
-//         pVertex = vertex;
-//     }
-//     return intersect;
-// }
-#else
-bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
-    const Context& context,
-    SkCanvas& canvas,
-    const QVector<PointI>& points31,
-    SkPath& path,
-    float offset = 0.0f) const
-{
-    int dir = offset < 0 ? -1: 1;
+    int8_t dir = offset < 0 ? -1: 1;
     offset = abs(offset);
     bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
 
@@ -621,8 +458,10 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     OsmAnd::PointF tempVertex;
     OsmAnd::PointF correctedVertex;
     const uint8_t kLastPointCnt = 3;
-    std::deque<OsmAnd::PointF> lastPoints;
+    std::deque<OsmAnd::PointF> originalPoints;
+    std::deque<OsmAnd::PointF> shiftedPoints;
 
+// debug
     SkPaint skPaintR;
     skPaintR.setStyle(SkPaint::Style::kStroke_Style);
     skPaintR.setAntiAlias(true);
@@ -630,6 +469,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     skPaintR.setStrokeWidth(2);
     SkPaint skPaintGr = skPaintR;
     skPaintGr.setColor(SK_ColorGREEN);
+// debug
 
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
@@ -650,56 +490,61 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
                     if (shift)
                     {
+                        originalPoints.push_front(tempVertex);
                         auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
                         tempVertex += normal * offset;
-                        lastPoints.push_front(tempVertex);
+                        shiftedPoints.push_front(tempVertex);
                     }
                     path.moveTo(tempVertex.x, tempVertex.y);
+// debug
+
                     canvas.drawCircle({tempVertex.x, tempVertex.y}, 8, skPaintR);
+// debug
+
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
                 {
+                    originalPoints.push_front(tempVertex);
                     auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
                     tempVertex += normal * offset;
-                    lastPoints.push_front(tempVertex);
+                    shiftedPoints.push_front(tempVertex);
 
-                    // fix intersections
-                    if (lastPoints.size() >= kLastPointCnt)
+                    // fix corner shifts
+                    if (originalPoints.size() >= kLastPointCnt)
                     {
-                        PointF vecA = lastPoints[0] - lastPoints[1];
-                        PointF vecAa = lastPoints[1] - lastPoints[0];
-                        PointF vecB = lastPoints[2] - lastPoints[1];
+                        PointF vecA = originalPoints[0] - originalPoints[1];
+                        PointF vecB = originalPoints[2] - originalPoints[1];
                         auto vecALength = std::sqrt(vecA.x*vecA.x + vecA.y*vecA.y);
-                        auto vecADir = vecA/vecALength;
-                        auto vecAaDir = vecAa/vecALength;
                         auto vecBLength = std::sqrt(vecB.x*vecB.x + vecB.y*vecB.y);
+                        auto vecADir = vecA/vecALength;
                         auto vecBDir = vecB/vecBLength;
-                        // dot = x1*x2 + y1*y2      # dot product
-                        // det = x1*y2 - y1*x2      # determinant
-                        // angle = atan2(det, dot)  # atan2(y, x) or atan2(sin, cos)
-                        //auto dot = vecA.x*vecB.x + vecA.y*vecB.y;
-                        //auto det = vecA.x*vecB.x - vecA.y*vecB.y;
-                        //auto angle = atan2(det, dot);
-                        //const auto uDotProduct = static_cast<double>(-a.x)*static_cast<double>(vL.x) +
-                        //                         static_cast<double>(-a.y)*static_cast<double>(vL.y);
-
-                        //angle = atan2(vector2.y, vector2.x) - atan2(vector1.y, vector1.x);
+#if 0
+                        auto angle = (vecA.x*vecB.x + vecA.y*vecB.y)/(std::sqrt(vecA.x*vecA.x + vecA.y*vecA.y) *
+                                                                      std::sqrt(vecB.x*vecB.x + vecB.y*vecB.y));
+                        shiftedPoints[1] = shiftedPoints[2] + vecDir * (vecBShiftedLength + offset * angle);
+#else
                         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
-                        // auto angle = atan2(vecADir.y, vecADir.x) - atan2(vecBDir.y, vecBDir.x);
                         if (angle > M_PI) {
                             angle -= 2 * M_PI;
                         } else if (angle <= -M_PI) {
                             angle += 2 * M_PI;
                         }
-                        auto ctang = 1/tan(angle/2);
-                        lastPoints[1] = lastPoints[0] + vecAaDir * (vecALength - offset * ctang * dir);
+                        auto ctang = 1.0f/tan(angle/2.0f);
+
+                        PointF vecBShifted = shiftedPoints[1] - shiftedPoints[2];
+                        auto vecBShiftedLength = std::sqrt(vecBShifted.x*vecBShifted.x + vecBShifted.y*vecBShifted.y);
+                        auto vecDir = vecBShifted/vecBShiftedLength;
+                        shiftedPoints[1] = shiftedPoints[2] + vecDir * (vecBShiftedLength + offset * ctang * dir);
+#endif
                     }
                 }
                 else
                 {
                     path.lineTo(tempVertex.x, tempVertex.y);
+// debug
                     canvas.drawCircle({tempVertex.x, tempVertex.y}, 4, skPaintGr);
+// debug
                 }
                 intersect = true;
             }
@@ -708,106 +553,48 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
         pVertex = vertex;
     }
 
-    if (lastPoints.size() > 0) lastPoints.pop_back();
-    while (lastPoints.size() > 0)
+    if (shiftedPoints.size() > 0)
     {
-        auto pt = lastPoints.back();
-        path.lineTo(pt.x, pt.y);
-        lastPoints.pop_back();
-        canvas.drawCircle({pt.x, pt.y}, 5, skPaintR);
+        // pop very first pushed point that already drawed
+        shiftedPoints.pop_back();
+        while (shiftedPoints.size() > 0)
+        {
+            auto pt = shiftedPoints.back();
+            path.lineTo(pt.x, pt.y);
+            shiftedPoints.pop_back();
+// debug
+            canvas.drawCircle({pt.x, pt.y}, 5, skPaintR);
+// debug
+        }
     }
     return intersect;
 }
-// bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
-//     const Context& context,
-//     const QVector<PointI>& points31,
-//     SkPath& path,
-//     float offset = 0.0f) const
-// {
-//     int dir = offset < 0 ? -1: 1;
-//     offset = abs(offset);
-//     bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
 
-//     int pointIdx = 0;
-//     bool intersect = false;
-//     int prevCross = 0;
-//     OsmAnd::PointF vertex;
-//     const auto& area31 = context.area31;
-//     const auto pointsCount = points31.size();
-//     auto pPoint = points31.constData();
-//     OsmAnd::PointF pVertex;
-//     OsmAnd::PointF tempVertex;
-//     OsmAnd::PointF correctedVertex;
-//     const uint8_t kLastPointCnt = 4;
-//     FixedQueue<OsmAnd::PointF, kLastPointCnt> lastPoints;
-//     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
-//     {
-//         const auto& point = *pPoint;
-//         calculateVertex(context, point, vertex);
-
-//         int cross = 0;
-//         cross |= (point.x < area31.left() ? 1 : 0);
-//         cross |= (point.x > area31.right() ? 2 : 0);
-//         cross |= (point.y < area31.top() ? 4 : 0);
-//         cross |= (point.y > area31.bottom() ? 8 : 0);
-//         if (pointIdx > 0)
-//         {
-//             if ((prevCross & cross) == 0)
-//             {
-//                 if (prevCross != 0 || !intersect)
-//                 {
-//                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-//                     if (shift)
-//                     {
-//                         auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-//                         tempVertex += normal * offset;
-//                         lastPoints.push(tempVertex);
-//                     }
-//                     path.moveTo(tempVertex.x, tempVertex.y);
-//                 }
-//                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-//                 if (shift)
-//                 {
-//                     auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-//                     tempVertex += normal * offset;
-//                     lastPoints.push(tempVertex);
-//                     // fix intersections
-//                     // first points - p4 - p3 - p2 - p1 -> new points
-//                     // check if p2 and p3 has not same coordinates,
-//                     // then we have to find ther intersection point and replace tese two points by single point
-//                     if (lastPoints.size() == kLastPointCnt && !cmpPointF(lastPoints[1], lastPoints[2]))
-//                     {
-//                         // need to correct
-//                         OsmAnd::PointF tmpPt;
-//                         if (linesIntersection(lastPoints[0], lastPoints[1], lastPoints[2], lastPoints[3], tmpPt))
-//                         {
-//                             lastPoints[1] = tmpPt;
-//                             lastPoints[2] = tmpPt;
-//                         }
-//                     }
-//                     auto pt = lastPoints.back();
-//                     path.lineTo(pt.x, pt.y);
-//                     lastPoints.pop_back();
-//                 }
-//                 else
-//                 {
-//                     path.lineTo(tempVertex.x, tempVertex.y);
-//                 }
-//                 intersect = true;
-//             }
-//         }
-//         while (lastPoints.size() > 0)
-//         {
-//             auto pt = lastPoints.back();
-//             path.lineTo(pt.x, pt.y);
-//             lastPoints.pop_back();
-//         }
-//         prevCross = cross;
-//         pVertex = vertex;
-//     }
-//     return intersect;
-// }
-#endif
+void OsmAnd::MapRasterizer_P::drawLayer(
+    SkCanvas& canvas,
+    SkPaint& paint,
+    SkPath& path,
+    const Context& context,
+    const QVector<PointI>& points31,
+    const MapStyleEvaluationResult::Packed& evalResult,
+    const PaintValuesSet valueSetSelector,
+    const IMapStyle::ValueDefinitionId valueDefId)
+{
+    if (updatePaint(context, paint, evalResult, valueSetSelector, false))
+    {
+        float hmargin = 0.0f;
+        if (evalResult.getFloatValue(valueDefId, hmargin))
+        {
+            SkPath pathHmargin;
+            if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                canvas.drawPath(pathHmargin, paint);
+        }
+        else
+        {
+            canvas.drawPath(path, paint);
+        }
+    }
+}
 
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const Context& context,
@@ -853,78 +640,135 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        float hmargin = 0.0f;
-        auto drawShifted = [&, this](float hmargin)
+        std::pair<PaintValuesSet, IMapStyle::ValueDefinitionId> layerRelatedIds[] =
         {
-            SkPath pathHmargin;
-            if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                canvas.drawPath(pathHmargin, paint);
+            { PaintValuesSet::Layer_minus2, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2 },
+            { PaintValuesSet::Layer_minus1, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1 },
+            { PaintValuesSet::Layer_0, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0 },
+            { PaintValuesSet::Layer_1, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN },
+            { PaintValuesSet::Layer_2, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2 },
+            { PaintValuesSet::Layer_3, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3 },
+            { PaintValuesSet::Layer_4, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4 },
+            { PaintValuesSet::Layer_5, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5 },
         };
+        for (const auto& item : layerRelatedIds)
+        {
+            drawLayer(canvas, paint, path, context, points31, primitive->evaluationResult, item.first, item.second);
+        }
+/*
+        float hmargin = 0.0f;
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus2, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus1, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
-
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_3, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_4, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
         {
             if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5, hmargin))
-                drawShifted(hmargin);
+            {
+                SkPath pathHmargin;
+                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+                    canvas.drawPath(pathHmargin, paint);
+            }
             else
+            {
                 canvas.drawPath(path, paint);
+            }
         }
-
+*/
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
 }
