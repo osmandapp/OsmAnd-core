@@ -469,6 +469,8 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     skPaintR.setStrokeWidth(2);
     SkPaint skPaintGr = skPaintR;
     skPaintGr.setColor(SK_ColorGREEN);
+    SkPaint skPaintMg = skPaintR;
+    skPaintGr.setColor(SK_ColorMAGENTA);
 // debug
 
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
@@ -497,8 +499,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     }
                     path.moveTo(tempVertex.x, tempVertex.y);
 // debug
-
-                    canvas.drawCircle({tempVertex.x, tempVertex.y}, 8, skPaintR);
+                    //canvas.drawCircle({tempVertex.x, tempVertex.y}, 8, skPaintR);
 // debug
 
                 }
@@ -519,11 +520,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                         auto vecBLength = std::sqrt(vecB.x*vecB.x + vecB.y*vecB.y);
                         auto vecADir = vecA/vecALength;
                         auto vecBDir = vecB/vecBLength;
-#if 0
-                        auto angle = (vecA.x*vecB.x + vecA.y*vecB.y)/(std::sqrt(vecA.x*vecA.x + vecA.y*vecA.y) *
-                                                                      std::sqrt(vecB.x*vecB.x + vecB.y*vecB.y));
-                        shiftedPoints[1] = shiftedPoints[2] + vecDir * (vecBShiftedLength + offset * angle);
-#else
+
                         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
                         if (angle > M_PI) {
                             angle -= 2 * M_PI;
@@ -531,11 +528,30 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                             angle += 2 * M_PI;
                         }
                         auto ctang = 1.0f/tan(angle/2.0f);
-
                         PointF vecBShifted = shiftedPoints[1] - shiftedPoints[2];
                         auto vecBShiftedLength = std::sqrt(vecBShifted.x*vecBShifted.x + vecBShifted.y*vecBShifted.y);
-                        auto vecDir = vecBShifted/vecBShiftedLength;
-                        shiftedPoints[1] = shiftedPoints[2] + vecDir * (vecBShiftedLength + offset * ctang * dir);
+                        auto vecBDirShifted = vecBShifted/vecBShiftedLength;
+#if 0
+                        shiftedPoints[1] = shiftedPoints[2] + vecBDirShifted * (vecBShiftedLength + offset * ctang * dir);
+#else
+                        if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
+                        {
+                            shiftedPoints[1] = shiftedPoints[2] + vecBDirShifted * (vecBShiftedLength + offset * ctang * dir);
+                        }
+                        else
+                        {
+                            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
+                            auto additionalPt = originalPoints[1] + additionalNormal * offset;
+                            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+                            // auto angleDeg = angle * (180.0f/M_PI);
+                            // auto rect = SkRect::MakeLTRB(
+                            //     shiftedPoints[1].x,
+                            //     shiftedPoints[1].y,
+                            //     shiftedPoints[2].x,
+                            //     shiftedPoints[2].y
+                            // );
+                            // canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);
+                        }
 #endif
                     }
                 }
@@ -543,7 +559,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                 {
                     path.lineTo(tempVertex.x, tempVertex.y);
 // debug
-                    canvas.drawCircle({tempVertex.x, tempVertex.y}, 4, skPaintGr);
+                    //canvas.drawCircle({tempVertex.x, tempVertex.y}, 4, skPaintGr);
 // debug
                 }
                 intersect = true;
@@ -563,7 +579,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
             path.lineTo(pt.x, pt.y);
             shiftedPoints.pop_back();
 // debug
-            canvas.drawCircle({pt.x, pt.y}, 5, skPaintR);
+            //canvas.drawCircle({pt.x, pt.y}, 5, skPaintR);
 // debug
         }
     }
@@ -640,7 +656,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        std::pair<PaintValuesSet, IMapStyle::ValueDefinitionId> layerRelatedIds[] =
+        static const std::pair<PaintValuesSet, IMapStyle::ValueDefinitionId> layerRelatedIds[] =
         {
             { PaintValuesSet::Layer_minus2, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2 },
             { PaintValuesSet::Layer_minus1, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1 },
@@ -655,120 +671,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         {
             drawLayer(canvas, paint, path, context, points31, primitive->evaluationResult, item.first, item.second);
         }
-/*
-        float hmargin = 0.0f;
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus2, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus1, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_3, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_4, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
-        {
-            if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5, hmargin))
-            {
-                SkPath pathHmargin;
-                if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
-                    canvas.drawPath(pathHmargin, paint);
-            }
-            else
-            {
-                canvas.drawPath(path, paint);
-            }
-        }
-*/
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
 }
