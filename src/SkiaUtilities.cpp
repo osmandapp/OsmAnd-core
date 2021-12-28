@@ -26,7 +26,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileI
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data)
 {
-    const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+    const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
     return image->makeRasterImage(SkImage::kDisallow_CachingHint);
 }
 

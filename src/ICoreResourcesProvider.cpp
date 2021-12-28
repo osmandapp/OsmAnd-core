@@ -22,7 +22,7 @@ sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(
     if (!ok)
         return nullptr;
 
-    return SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+    return SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
 }
 
 sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(const QString& name) const
@@ -32,5 +32,5 @@ sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(const QString&
     if (!ok)
         return nullptr;
     
-    return SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+    return SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
 }
