@@ -450,16 +450,17 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     int pointIdx = 0;
     bool intersect = false;
     int prevCross = 0;
-    OsmAnd::PointF vertex;
+    PointF vertex;
     const auto& area31 = context.area31;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
-    OsmAnd::PointF pVertex;
-    OsmAnd::PointF tempVertex;
-    OsmAnd::PointF correctedVertex;
+    PointF pVertex;
+    PointF tempVertex;
+    PointF correctedVertex;
     const uint8_t kLastPointCnt = 3;
-    std::deque<OsmAnd::PointF> originalPoints;
-    std::deque<OsmAnd::PointF> shiftedPoints;
+    // Could be implemented/extended custom simple deque to store only last 3 point for the originalPoints
+    std::deque<PointF> originalPoints;
+    std::deque<PointF> shiftedPoints;
 
 // debug
     SkPaint skPaintR;
@@ -516,10 +517,8 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     {
                         PointF vecA = originalPoints[0] - originalPoints[1];
                         PointF vecB = originalPoints[2] - originalPoints[1];
-                        auto vecALength = std::sqrt(vecA.x*vecA.x + vecA.y*vecA.y);
-                        auto vecBLength = std::sqrt(vecB.x*vecB.x + vecB.y*vecB.y);
-                        auto vecADir = vecA/vecALength;
-                        auto vecBDir = vecB/vecBLength;
+                        auto vecADir = vecA/vecA.norm();
+                        auto vecBDir = vecB/vecB.norm();
 
                         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
                         if (angle > M_PI) {
@@ -529,11 +528,9 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                         }
                         auto ctang = 1.0f/tan(angle/2.0f);
                         PointF vecBShifted = shiftedPoints[1] - shiftedPoints[2];
-                        auto vecBShiftedLength = std::sqrt(vecBShifted.x*vecBShifted.x + vecBShifted.y*vecBShifted.y);
+                        auto vecBShiftedLength = vecBShifted.norm();
                         auto vecBDirShifted = vecBShifted/vecBShiftedLength;
-#if 0
-                        shiftedPoints[1] = shiftedPoints[2] + vecBDirShifted * (vecBShiftedLength + offset * ctang * dir);
-#else
+
                         if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
                         {
                             shiftedPoints[1] = shiftedPoints[2] + vecBDirShifted * (vecBShiftedLength + offset * ctang * dir);
@@ -550,9 +547,8 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                             //     shiftedPoints[2].x,
                             //     shiftedPoints[2].y
                             // );
-                            // canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);
+                            // canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);  // test angles
                         }
-#endif
                     }
                 }
                 else
