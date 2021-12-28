@@ -133,7 +133,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         
         // Decode image data
-        image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(imageData.constData(), imageData.length()));
+        image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(imageData.constData(), imageData.length()));
     }
     
     if (!image)
@@ -237,7 +237,7 @@ void OsmAnd::ImageMapLayerProvider::AsyncImageData::submit(const bool requestSuc
 
     if (requestSucceeded && !data.isNull())
     {
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
         if (!image)
         {
             callback(provider, false, outData, nullptr);

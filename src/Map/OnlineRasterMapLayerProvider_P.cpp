@@ -215,7 +215,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(downloadResult.constData(), downloadResult.size()));
+    auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(downloadResult.constData(), downloadResult.size()));
     if (!image)
     {
         LogPrintf(LogSeverityLevel::Error,

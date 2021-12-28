@@ -185,7 +185,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
         const auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
         if (!image)
         {
             return false;
@@ -214,7 +214,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
         auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
         if (!image)
         {
             return false;
@@ -242,7 +242,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
         if (!image)
         {
             return false;
@@ -270,7 +270,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithCopy(data.constData(), data.length()));
+        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
         if (!image)
         {
             return false;
