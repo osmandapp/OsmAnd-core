@@ -463,18 +463,6 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     std::deque<PointF> originalPoints;
     std::deque<PointF> shiftedPoints;
 
-// debug
-    SkPaint skPaintR;
-    skPaintR.setStyle(SkPaint::Style::kStroke_Style);
-    skPaintR.setAntiAlias(true);
-    skPaintR.setColor(SK_ColorRED);
-    skPaintR.setStrokeWidth(2);
-    SkPaint skPaintGr = skPaintR;
-    skPaintGr.setColor(SK_ColorGREEN);
-    SkPaint skPaintMg = skPaintR;
-    skPaintGr.setColor(SK_ColorMAGENTA);
-// debug
-
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
@@ -500,9 +488,6 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                         shiftedPoints.push_front(tempVertex);
                     }
                     path.moveTo(tempVertex.x, tempVertex.y);
-// debug
-                    //canvas.drawCircle({tempVertex.x, tempVertex.y}, 8, skPaintR);
-// debug
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
@@ -515,62 +500,39 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     // fix corner shifts
                     if (originalPoints.size() >= kLastPointCnt)
                     {
-                        // PointF vecA = originalPoints[0] - originalPoints[1];
-                        // PointF vecB = originalPoints[2] - originalPoints[1];
-                        // auto vecADir = vecA/vecA.norm();
-                        // auto vecBDir = vecB/vecB.norm();
+                        // calculation of the angle between two outermost segments of the path.
                         auto vecADir = (originalPoints[0] - originalPoints[1]).normalized();
                         auto vecBDir = (originalPoints[2] - originalPoints[1]).normalized();
-
                         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
                         if (angle > M_PI) {
                             angle -= 2 * M_PI;
                         } else if (angle <= -M_PI) {
                             angle += 2 * M_PI;
                         }
-                        auto ctang = 1.0f/tan(angle/2.0f);
-                        PointF vecBShifted = shiftedPoints[1] - shiftedPoints[2];
-                        auto vecBShiftedLength = vecBShifted.norm();
-                        auto vecBDirShifted = vecBShifted/vecBShiftedLength;
+                        // calculation of the angle between two outermost segments of the path.
 
+                        auto ctang = 1.0f/tan(angle/2.0f);
                         if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
                         {
-                            shiftedPoints[1] = shiftedPoints[2] + vecBDirShifted * (vecBShiftedLength + offset * ctang * dir);
+                            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
                         }
                         else
                         {
+                            // calculate additional point for corner
                             auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
                             auto additionalPt = originalPoints[1] + additionalNormal * offset;
                             shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
 
-                            PointF vecA = shiftedPoints[1] - shiftedPoints[0];
-                            PointF vecB = shiftedPoints[2] - shiftedPoints[3];
-                            auto vecALength = vecA.norm();
-                            auto vecBLength = vecB.norm();
-                            auto vecADir = vecA/vecALength;
-                            auto vecBDir = vecB/vecBLength;
-                            shiftedPoints[1] = shiftedPoints[0] + vecADir * (vecALength + offset / 1.4);
-                            shiftedPoints[2] = shiftedPoints[3] + vecBDir * (vecBLength + offset / 1.4);
-
-                            auto LT = shiftedPoints[0] + vecADir * (vecALength - offset);
-                            auto RB = shiftedPoints[3] + vecBDir * (vecBLength - offset);
-                            auto angleDeg = angle * (180.0f/M_PI);
-                            auto rect = SkRect::MakeLTRB(
-                                LT.x, LT.y,
-                                RB.x, RB.y
-                            );
-                            canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);  // test angles
-                            canvas.drawRect(rect, skPaintGr);
-
+                            // add additional offset for corner shifted points.
+                            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset/2.0f);
+                            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset/2.0f);
+                            // add additional ofset for corner shifted points.
                         }
                     }
                 }
                 else
                 {
                     path.lineTo(tempVertex.x, tempVertex.y);
-// debug
-                    //canvas.drawCircle({tempVertex.x, tempVertex.y}, 4, skPaintGr);
-// debug
                 }
                 intersect = true;
             }
@@ -579,7 +541,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
         pVertex = vertex;
     }
 
-    if (shiftedPoints.size() > 0)
+    if (shiftedPoints.size() > 1)
     {
         // pop very first pushed point that already drawed
         shiftedPoints.pop_back();
@@ -588,11 +550,9 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
             auto pt = shiftedPoints.back();
             path.lineTo(pt.x, pt.y);
             shiftedPoints.pop_back();
-// debug
-            //canvas.drawCircle({pt.x, pt.y}, 5, skPaintR);
-// debug
         }
     }
+
     return intersect;
 }
 

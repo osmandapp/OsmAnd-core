@@ -890,11 +890,21 @@ namespace OsmAnd
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
 
+        inline static void resizeVector(
+            const PointF& start,
+            PointF& end,
+            float sizeIncrement)
+        {
+            auto vec = end - start;
+            auto vecLength = vec.norm();
+            auto vecDir = vec/vecLength;
+            end = start + vecDir * (vecLength + sizeIncrement);
+        }
+
         inline static PointF computeNormalToLine(
             const PointF& start,
             const PointF& end,
-            int8_t dir
-        )
+            int8_t dir)
         {
             auto normal = (end - start).normalized();
             PointF res;
