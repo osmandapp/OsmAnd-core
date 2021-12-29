@@ -160,6 +160,11 @@ namespace OsmAnd
         {
             return static_cast<T>(qSqrt(squareNorm()));
         }
+
+        inline PointT normalized() const
+        {
+            return (*this/norm());
+        }
 #endif // !defined(SWIG)
     private:
         static inline bool equal(const double a, const double b)
