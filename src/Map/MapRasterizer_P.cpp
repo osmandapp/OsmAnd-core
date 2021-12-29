@@ -2,6 +2,7 @@
 #include "MapRasterizer.h"
 #include "MapRasterizer_Metrics.h"
 
+#include <algorithm>
 #include <deque>
 #include "QtCommon.h"
 #include "ignore_warnings_on_external_includes.h"
@@ -457,7 +458,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
     PointF pVertex;
     PointF tempVertex;
     PointF correctedVertex;
-    const uint8_t kLastPointCnt = 3;
+    const static uint8_t kLastPointCnt = 3;
     // Could be implemented/extended custom simple deque to store only last 3 point for the originalPoints
     std::deque<PointF> originalPoints;
     std::deque<PointF> shiftedPoints;
@@ -502,7 +503,6 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
 // debug
                     //canvas.drawCircle({tempVertex.x, tempVertex.y}, 8, skPaintR);
 // debug
-
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
@@ -515,10 +515,12 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     // fix corner shifts
                     if (originalPoints.size() >= kLastPointCnt)
                     {
-                        PointF vecA = originalPoints[0] - originalPoints[1];
-                        PointF vecB = originalPoints[2] - originalPoints[1];
-                        auto vecADir = vecA/vecA.norm();
-                        auto vecBDir = vecB/vecB.norm();
+                        // PointF vecA = originalPoints[0] - originalPoints[1];
+                        // PointF vecB = originalPoints[2] - originalPoints[1];
+                        // auto vecADir = vecA/vecA.norm();
+                        // auto vecBDir = vecB/vecB.norm();
+                        auto vecADir = (originalPoints[0] - originalPoints[1]).normalized();
+                        auto vecBDir = (originalPoints[2] - originalPoints[1]).normalized();
 
                         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
                         if (angle > M_PI) {
@@ -540,14 +542,26 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                             auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
                             auto additionalPt = originalPoints[1] + additionalNormal * offset;
                             shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
-                            // auto angleDeg = angle * (180.0f/M_PI);
-                            // auto rect = SkRect::MakeLTRB(
-                            //     shiftedPoints[1].x,
-                            //     shiftedPoints[1].y,
-                            //     shiftedPoints[2].x,
-                            //     shiftedPoints[2].y
-                            // );
-                            // canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);  // test angles
+
+                            PointF vecA = shiftedPoints[1] - shiftedPoints[0];
+                            PointF vecB = shiftedPoints[2] - shiftedPoints[3];
+                            auto vecALength = vecA.norm();
+                            auto vecBLength = vecB.norm();
+                            auto vecADir = vecA/vecALength;
+                            auto vecBDir = vecB/vecBLength;
+                            shiftedPoints[1] = shiftedPoints[0] + vecADir * (vecALength + offset / 1.4);
+                            shiftedPoints[2] = shiftedPoints[3] + vecBDir * (vecBLength + offset / 1.4);
+
+                            auto LT = shiftedPoints[0] + vecADir * (vecALength - offset);
+                            auto RB = shiftedPoints[3] + vecBDir * (vecBLength - offset);
+                            auto angleDeg = angle * (180.0f/M_PI);
+                            auto rect = SkRect::MakeLTRB(
+                                LT.x, LT.y,
+                                RB.x, RB.y
+                            );
+                            canvas.drawArc(rect, 0, angleDeg, false, skPaintMg);  // test angles
+                            canvas.drawRect(rect, skPaintGr);
+
                         }
                     }
                 }
