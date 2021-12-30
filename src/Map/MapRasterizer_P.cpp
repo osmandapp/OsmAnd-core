@@ -487,7 +487,10 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                         tempVertex += normal * offset;
                         shiftedPoints.push_front(tempVertex);
                     }
-                    path.moveTo(tempVertex.x, tempVertex.y);
+                    else
+                    {
+                        path.moveTo(tempVertex.x, tempVertex.y);
+                    }
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
@@ -543,7 +546,11 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
 
     if (shiftedPoints.size() > 1)
     {
+        Utilities::resizeVector(*(shiftedPoints.begin() + 1), *shiftedPoints.begin(), -1.4*offset);
+        Utilities::resizeVector(*(shiftedPoints.rbegin() + 1), *shiftedPoints.rbegin(), -1.4*offset);
         // pop very first pushed point that already drawed
+        auto pt = shiftedPoints.back();
+        path.moveTo(pt.x, pt.y);
         shiftedPoints.pop_back();
         while (shiftedPoints.size() > 0)
         {
