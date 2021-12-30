@@ -3,6 +3,7 @@
 
 #include "QtCommon.h"
 #include <QReadWriteLock>
+#include <QTextStream>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkColorFilter.h>
@@ -21,14 +22,10 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-//#define OSMAND_DUMP_SYMBOLS 1
+// #define OSMAND_DUMP_SYMBOLS 1
 #if !defined(OSMAND_DUMP_SYMBOLS)
 #   define OSMAND_DUMP_SYMBOLS 0
 #endif // !defined(OSMAND_DUMP_SYMBOLS)
-
-#if OSMAND_DUMP_SYMBOLS
-#   include <SkImageEncoder.h>
-#endif // OSMAND_DUMP_SYMBOLS
 
 OsmAnd::SymbolRasterizer_P::SymbolRasterizer_P(SymbolRasterizer* const owner_)
     : owner(owner_)
@@ -144,10 +141,21 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 #if OSMAND_DUMP_SYMBOLS
                 {
                     QDir::current().mkpath("text_symbols");
-                    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                    QString filename;
-                    filename.sprintf("%s\\text_symbols\\%p.png", qPrintable(QDir::currentPath()), rasterizedText.get());
-                    encoder->encodeFile(qPrintable(filename), *rasterizedText.get(), 100);
+
+                    QFile imageFile(QString::asprintf("text_symbols/%p.png", rasterizedText.get()));
+                    if (imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                    {
+                        const auto imageData = rasterizedText->encodeToData(SkEncodedImageFormat::kPNG, 100);
+                        imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size());
+                        imageFile.close();
+                    }
+
+                    QFile textFile(QString::asprintf("text_symbols/%p.txt", qPrintable(QDir::currentPath())));
+                    if (textFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                    {
+                        QTextStream(&textFile) << textSymbol->value;
+                        textFile.close();
+                    }
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 
@@ -295,10 +303,14 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 #if OSMAND_DUMP_SYMBOLS
                 {
                     QDir::current().mkpath("icon_symbols");
-                    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-                    QString filename;
-                    filename.sprintf("%s\\icon_symbols\\%p.png", qPrintable(QDir::currentPath()), rasterizedIcon.get());
-                    encoder->encodeFile(qPrintable(filename), *rasterizedIcon, 100);
+
+                    QFile imageFile(QString::asprintf("icon_symbols/%p.png", rasterizedIcon.get()));
+                    if (imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                    {
+                        const auto imageData = rasterizedIcon->encodeToData(SkEncodedImageFormat::kPNG, 100);
+                        imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size());
+                        imageFile.close();
+                    }
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 

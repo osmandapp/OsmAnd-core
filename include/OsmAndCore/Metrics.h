@@ -111,7 +111,7 @@ namespace OsmAnd
             return addSubmetricOfType<T>();
         }
 
-        virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
+        virtual QString toString(const bool shortFormat = false, const QString& prefix = {}) const;
     };
 }
 

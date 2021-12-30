@@ -19,6 +19,7 @@
 #include "CoreResourcesEmbeddedBundle.h"
 #include "ICoreResourcesProvider.h"
 #include "QKeyValueIterator.h"
+#include "SkiaUtilities.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -185,7 +186,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
         const auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
@@ -214,7 +215,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
         auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
@@ -242,7 +243,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
@@ -270,7 +271,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;

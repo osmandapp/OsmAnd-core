@@ -231,12 +231,12 @@ namespace OsmAnd
     public:
         ResourcesManager(
             const QString& localStoragePath,
-            const QString& userStoragePath = QString::null,
+            const QString& userStoragePath = {},
             const QList<QString>& readonlyExternalStoragePaths = QList<QString>(),
-            const QString& miniBasemapFilename = QString::null,
-            const QString& localTemporaryPath = QString::null,
-            const QString& localCachePath = QString::null,
-            const QString& appVersion = QString::null,
+            const QString& miniBasemapFilename = {},
+            const QString& localTemporaryPath = {},
+            const QString& localCachePath = {},
+            const QString& appVersion = {},
             const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~ResourcesManager();

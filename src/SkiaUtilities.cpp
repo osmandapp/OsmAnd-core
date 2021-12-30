@@ -20,14 +20,17 @@ OsmAnd::SkiaUtilities::~SkiaUtilities()
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileInfo)
 {
-    const auto image = SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
-    return image->makeRasterImage(SkImage::kDisallow_CachingHint);
+    return SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data)
 {
-    const auto image = SkImage::MakeFromEncoded(SkData::MakeWithoutCopy(data.constData(), data.length()));
-    return image->makeRasterImage(SkImage::kDisallow_CachingHint);
+    return SkImage::MakeFromEncoded(SkData::MakeWithProc(
+        data.constData(),
+        data.length(),
+        [](const void* ptr, void* context) { delete reinterpret_cast<QByteArray*>(context); },
+        new QByteArray(data)
+    ));
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(

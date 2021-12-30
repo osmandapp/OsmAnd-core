@@ -5,6 +5,7 @@
 #include <SkBitmap.h>
 #include <SkImage.h>
 #include <SkTypeface.h>
+#include <SkTextBlob.h>
 #include <SkUtils.h>
 #include <SkFontMetrics.h>
 #include "restore_internal_warnings.h"
@@ -17,7 +18,7 @@
 #   define OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS 0
 #endif // !defined(OSMAND_LOG_CHARACTERS_WITHOUT_GLYPHS)
 
-//#define OSMAND_LOG_CHARACTERS_TYPEFACE 1
+// #define OSMAND_LOG_CHARACTERS_TYPEFACE 1
 #ifndef OSMAND_LOG_CHARACTERS_TYPEFACE
 #   define OSMAND_LOG_CHARACTERS_TYPEFACE 0
 #endif // !defined(OSMAND_LOG_CHARACTERS_TYPEFACE)
@@ -41,8 +42,12 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
     paint.setColor(style.color.toSkColor());
 
     // Prepare default font
-    SkFont font = _defaultFont;
-    font.setSize(style.size);
+    SkFont skFont = _defaultFont;
+    skFont.setSize(style.size);
+
+    // NOTE: It's not optimal to create a shared HB font w/o typeface in order to hold only scale
+    // NOTE: See hb_ot_font_set_funcs() implementation
+    const auto hbFontScale = qRound(style.size * HB_FONT_SCALE_FACTOR);
 
     // Transform text style to font style
     const SkFontStyle fontStyle(
@@ -66,7 +71,6 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         auto pNextCharacter = pLine;
         while (pNextCharacter != pEnd)
         {
-            const auto pCharacter = pNextCharacter;
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
             
@@ -117,18 +121,24 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 #endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
 
-            if (pTextPaint == nullptr || pTextPaint->font.refTypeface() != typeface->skTypeface)
+            if (pTextPaint == nullptr || pTextPaint->typeface != typeface)
             {
-                linePaint.textPaints.push_back(qMove(TextPaint()));
+                linePaint.textPaints.push_back(TextPaint());
                 pTextPaint = &linePaint.textPaints.last();
 
                 pTextPaint->text = QStringRef(lineRef.string(), position, 1);
                 pTextPaint->paint = paint;
-                pTextPaint->font = font;
-                pTextPaint->font.setTypeface(typeface->skTypeface);
+                pTextPaint->typeface = typeface;
+                pTextPaint->skFont = skFont;
+                pTextPaint->skFont.setTypeface(typeface->skTypeface);
+                pTextPaint->hbFont = std::shared_ptr<hb_font_t>(
+                    hb_font_create(typeface->hbFace.get()),
+                    hb_font_destroy
+                );
+                hb_font_set_scale(pTextPaint->hbFont.get(), hbFontScale, hbFontScale);
 
                 SkFontMetrics metrics;
-                pTextPaint->height = pTextPaint->font.getMetrics(&metrics) + 2.0f;
+                pTextPaint->height = pTextPaint->skFont.getMetrics(&metrics) + 2.0f;
                 linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, pTextPaint->height);
                 linePaint.minFontHeight = qMin(linePaint.minFontHeight, pTextPaint->height);
                 linePaint.maxFontLineSpacing = qMax(linePaint.maxFontLineSpacing, metrics.fLeading);
@@ -140,7 +150,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.fontAscent = metrics.fAscent;
 
                 if (style.bold && (!typeface || (typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
-                    pTextPaint->font.setEmbolden(true);
+                    pTextPaint->skFont.setEmbolden(true);
             }
             else
             {
@@ -166,7 +176,7 @@ void OsmAnd::TextRasterizer_P::measureText(QVector<LinePaint>& paints, SkScalar&
 
         for (auto& textPaint : linePaint.textPaints)
         {
-            textPaint.font.measureText(
+            textPaint.skFont.measureText(
                 textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 &textPaint.bounds);
 
@@ -187,12 +197,12 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
     {
         for (const auto& textPaint : constOf(linePaint.textPaints))
         {
-            const auto glyphsCount = textPaint.font.countText(
+            const auto glyphsCount = textPaint.skFont.countText(
                 textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
             );
 
             QVector<SkGlyphID> glyphs(glyphsCount);
-            textPaint.font.textToGlyphs(
+            textPaint.skFont.textToGlyphs(
                 textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 glyphs.data(), glyphsCount
             );
@@ -200,7 +210,7 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
             const auto previousSize = outGlyphWidths.size();
             outGlyphWidths.resize(previousSize + glyphsCount);
             const auto pWidth = outGlyphWidths.data() + previousSize;
-            textPaint.font.getWidths(
+            textPaint.skFont.getWidths(
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
@@ -227,21 +237,17 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
     }
 }
 
-SkPaint OsmAnd::TextRasterizer_P::getHaloPaint(const SkPaint& paint, const Style& style) const
+OsmAnd::TextRasterizer_P::TextPaint OsmAnd::TextRasterizer_P::getHaloTextPaint(
+    const TextPaint& textPaint,
+    const Style& style) const
 {
-    auto haloPaint = paint;
-    haloPaint.setStyle(SkPaint::kStroke_Style);
-    haloPaint.setColor(style.haloColor.toSkColor());
-    haloPaint.setStrokeWidth(style.haloRadius);
+    auto haloTextPaint = textPaint;
 
-    return haloPaint;
-}
+    haloTextPaint.paint.setStyle(SkPaint::kStroke_Style);
+    haloTextPaint.paint.setColor(style.haloColor.toSkColor());
+    haloTextPaint.paint.setStrokeWidth(style.haloRadius);
 
-SkFont OsmAnd::TextRasterizer_P::getHaloFont(const SkFont& font, const Style& style) const
-{
-    auto haloFont = font;
-
-    return haloFont;
+    return haloTextPaint;
 }
 
 void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint>& paints) const
@@ -253,7 +259,7 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
 
         for (auto& textPaint : linePaint.textPaints)
         {
-            const auto haloFont = getHaloFont(textPaint.font, style);
+            const auto haloTextPaint = getHaloTextPaint(textPaint, style);
             /*
             SkPaint::FontMetrics metrics;
             textPaint.height = haloPaint.getFontMetrics(&metrics);
@@ -267,8 +273,8 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
             linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
             */
             SkRect haloBounds;
-            haloFont.measureText(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
+            haloTextPaint.skFont.measureText(
+                haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 &haloBounds);
             textPaint.bounds.join(haloBounds);
 
@@ -287,26 +293,26 @@ void OsmAnd::TextRasterizer_P::measureHaloGlyphs(
     {
         for (const auto& textPaint : constOf(linePaint.textPaints))
         {
-            const auto haloFont = getHaloFont(textPaint.font, style);
+            const auto haloTextPaint = getHaloTextPaint(textPaint, style);
 
-            const auto glyphsCount = haloFont.countText(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
+            const auto glyphsCount = haloTextPaint.skFont.countText(
+                haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
             );
 
             QVector<SkGlyphID> glyphs(glyphsCount);
-            haloFont.textToGlyphs(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
+            haloTextPaint.skFont.textToGlyphs(
+                haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 glyphs.data(), glyphsCount
             );
 
             const auto previousSize = outGlyphWidths.size();
             outGlyphWidths.resize(previousSize + glyphsCount);
             const auto pWidth = outGlyphWidths.data() + previousSize;
-            haloFont.getWidths(
+            haloTextPaint.skFont.getWidths(
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
-            *pWidth += -textPaint.bounds.left();
+            *pWidth += -haloTextPaint.bounds.left();
         }
     }
 }
@@ -428,9 +434,78 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     return target.asImage();
 }
 
+bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
+{
+    const auto text = ICU::convertToVisualOrder(textPaint.text.toString());
+    if (text.isEmpty())
+    {
+        return true;
+    }
+
+    const auto pHbBuffer = hb_buffer_create();
+    if (pHbBuffer == hb_buffer_get_empty())
+    {
+        return false;
+    }
+    std::shared_ptr<hb_buffer_t> hbBuffer(pHbBuffer, hb_buffer_destroy);
+    if (!hb_buffer_allocation_successful(hbBuffer.get()))
+    {
+        return false;
+    }
+
+    hb_buffer_add_utf16(hbBuffer.get(), reinterpret_cast<const uint16_t*>(text.constData()), text.size(), 0, -1);
+    hb_buffer_set_direction(hbBuffer.get(), HB_DIRECTION_LTR);
+    hb_buffer_guess_segment_properties(hbBuffer.get());
+
+    hb_shape(textPaint.hbFont.get(), hbBuffer.get(), nullptr, 0);
+
+    const auto glyphsCount = hb_buffer_get_length(hbBuffer.get());
+    if (!glyphsCount)
+    {
+        return false;
+    }
+    const auto pGlyphInfos = hb_buffer_get_glyph_infos(hbBuffer.get(), nullptr);
+    const auto pGlyphPositions = hb_buffer_get_glyph_positions(hbBuffer.get(), nullptr);
+
+    SkTextBlobBuilder textBlobBuilder;
+    auto origin = SkPoint::Make(0.0f, 0.0f);
+    const auto textBlobRunBuffer = textBlobBuilder.allocRunPos(textPaint.skFont, glyphsCount);
+    for (auto glyphIdx = 0u; glyphIdx < glyphsCount; glyphIdx++)
+    {
+        auto codepoint = pGlyphInfos[glyphIdx].codepoint;
+
+        const auto citReplacementCodepoint = textPaint.typeface->replacementCodepoints.find(codepoint);
+        if (citReplacementCodepoint != textPaint.typeface->replacementCodepoints.cend())
+        {
+            codepoint = citReplacementCodepoint->second;
+        }
+
+        textBlobRunBuffer.glyphs[glyphIdx] = codepoint;
+
+        const auto advance = SkPoint::Make(
+            static_cast<float>(pGlyphPositions[glyphIdx].x_advance) / HB_FONT_SCALE_FACTOR,
+            static_cast<float>(pGlyphPositions[glyphIdx].y_advance) / HB_FONT_SCALE_FACTOR
+        );
+        const auto offset = SkPoint::Make(
+            static_cast<float>(pGlyphPositions[glyphIdx].x_offset) / HB_FONT_SCALE_FACTOR,
+            -static_cast<float>(pGlyphPositions[glyphIdx].y_offset) / HB_FONT_SCALE_FACTOR
+        );
+        textBlobRunBuffer.points()[glyphIdx] = origin + offset;
+        origin += advance;
+    }
+    canvas.drawTextBlob(
+        textBlobBuilder.make(),
+        textPaint.positionedBounds.left(),
+        textPaint.positionedBounds.top(),
+        textPaint.paint
+    );
+
+    return true;
+}
+
 bool OsmAnd::TextRasterizer_P::rasterize(
     SkBitmap& targetBitmap,
-    const QString& text_,
+    const QString& text,
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
@@ -439,7 +514,6 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     float* const outFontAscent) const
 {
     // Prepare text and break by lines
-    const auto text = ICU::convertToVisualOrder(text_);
     const auto lineRefs = style.wrapWidth > 0
         ? ICU::getTextWrappingRefs(text, style.wrapWidth, style.maxLines)
         : (QVector<QStringRef>() << QStringRef(&text));
@@ -453,7 +527,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
     // Measure glyphs (if requested and there's no halo)
     if (outGlyphWidths && style.haloRadius == 0)
+    {
         measureGlyphs(paints, *outGlyphWidths);
+    }
 
     // Process halo if exists
     if (style.haloRadius > 0)
@@ -461,7 +537,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         measureHalo(style, paints);
 
         if (outGlyphWidths)
+        {
             measureHaloGlyphs(style, paints, *outGlyphWidths);
+        }
     }
 
     // Set output font ascent
@@ -469,7 +547,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         float fontAscent = 0.0f;
         for (const auto& linePaint : constOf(paints))
+        {
             fontAscent = qMin(fontAscent, linePaint.fontAscent);
+        }
 
         *outFontAscent = fontAscent;
     }
@@ -479,7 +559,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         float lineSpacing = 0.0f;
         for (const auto& linePaint : constOf(paints))
+        {
             lineSpacing = qMax(lineSpacing, linePaint.maxFontLineSpacing);
+        }
 
         *outLineSpacing = lineSpacing;
     }
@@ -489,7 +571,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         SkScalar maxTop = 0;
         for (const auto& linePaint : constOf(paints))
+        {
             maxTop = qMax(maxTop, linePaint.maxFontTop);
+        }
 
         *outExtraTopSpace = qMax(0.0f, maxTop - paints.first().maxFontTop);
     }
@@ -497,7 +581,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         SkScalar maxBottom = 0;
         for (const auto& linePaint : constOf(paints))
+        {
             maxBottom = qMax(maxBottom, linePaint.maxFontBottom);
+        }
 
         *outExtraBottomSpace = qMax(0.0f, maxBottom - paints.last().maxFontBottom);
     }
@@ -527,7 +613,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         for (auto& linePaint : paints)
         {
             for (auto& textPaint : linePaint.textPaints)
+            {
                 textPaint.positionedBounds.offset(offset);
+            }
         }
     }
 
@@ -568,6 +656,8 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         );
     }
 
+    bool success = true;
+
     // Rasterize text halo first (if enabled)
     if (style.haloRadius > 0)
     {
@@ -575,13 +665,12 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         {
             for (const auto& textPaint : linePaint.textPaints)
             {
-                const auto haloPaint = getHaloPaint(textPaint.paint, style);
-                const auto haloFont = getHaloFont(textPaint.font, style);
+                const auto haloTextPaint = getHaloTextPaint(textPaint, style);
 
-                canvas.drawSimpleText(
-                    textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
-                    textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                    haloFont, haloPaint);
+                if (!drawText(canvas, haloTextPaint))
+                {
+                    success = false;
+                }
             }
         }
     }
@@ -591,14 +680,14 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         for (const auto& textPaint : linePaint.textPaints)
         {
-            canvas.drawSimpleText(
-                textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
-                textPaint.positionedBounds.left(), textPaint.positionedBounds.top(),
-                textPaint.font, textPaint.paint);
+            if (!drawText(canvas, textPaint))
+            {
+                success = false;
+            }
         }
     }
 
     canvas.flush();
 
-    return true;
+    return success;
 }

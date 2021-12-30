@@ -100,5 +100,5 @@ bool OsmAnd::AmenitySymbolsProvider::AmenitySymbolsGroup::obtainSortingKey(Sorti
 
 QString OsmAnd::AmenitySymbolsProvider::AmenitySymbolsGroup::toString() const
 {
-    return QString::null;
+    return {};
 }

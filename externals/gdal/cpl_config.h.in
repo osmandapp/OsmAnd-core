@@ -1,8 +1,23 @@
+/* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
+/* $Id$ */
+
+#ifndef CPL_CONFIG_H
+#define CPL_CONFIG_H
+
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD
 
 /* Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant. */
 #cmakedefine HAVE_PTHREAD_MUTEX_RECURSIVE 1
+
+/* Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant. */
+#cmakedefine HAVE_PTHREAD_MUTEX_ADAPTIVE_NP 1
+
+/* Define to 1 if you have the `pthread_spinlock_t' type. */
+#cmakedefine HAVE_PTHREAD_SPINLOCK 1
+
+/* Define to 1 if you have the 5 args `mremap' function. */
+#cmakedefine HAVE_5ARGS_MREMAP 1
 
 /* --prefix directory for GDAL install */
 #cmakedefine GDAL_PREFIX @GDAL_PREFIX@
@@ -13,6 +28,18 @@
 /* Define to 1 if you have the `atoll' function. */
 #cmakedefine HAVE_ATOLL 1
 
+/* Define to 1 if you have the `strtoll' function. */
+#cmakedefine HAVE_STRTOLL 1
+
+/* Define to 1 if you have the `strtoull' function. */
+#cmakedefine HAVE_STRTOULL 1
+
+/* Define to 1 if you have the `getrlimit' function. */
+#cmakedefine HAVE_GETRLIMIT 1
+
+/* Define to 1 if you have the `RLIMIT_AS' constant. */
+#cmakedefine HAVE_RLIMIT_AS 1
+
 /* Define to 1 if you have the <csf.h> header file. */
 #cmakedefine HAVE_CSF_H 1
 
@@ -21,7 +48,7 @@
 
 /* Define to 1 if you have the declaration of `strtof', and to 0 if you don't.
    */
-#cmakedefine HAVE_DECL_STRTOF 1
+#cmakedefine01 HAVE_DECL_STRTOF
 
 /* Define to 1 if you have the <direct.h> header file. */
 #cmakedefine HAVE_DIRECT_H 1
@@ -45,9 +72,9 @@
 #cmakedefine HAVE_GETCWD 1
 
 /* Define if you have the iconv() function and it works. */
-#cmakedefine HAVE_ICONV
+#cmakedefine HAVE_ICONV 1
 
-/* Define as 0 or 1 according to the floating point format suported by the
+/* Define as 0 or 1 according to the floating point format supported by the
    machine */
 #cmakedefine01 HAVE_IEEEFP
 
@@ -60,11 +87,11 @@
 /* Define to 1 if the system has the type `int8'. */
 #cmakedefine HAVE_INT8 1
 
+/* Define to 1 if the system has the type `__uint128_t'. */
+#cmakedefine HAVE_UINT128_T 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the <jpeglib.h> header file. */
-#cmakedefine HAVE_JPEGLIB_H 1
 
 /* Define to 1 if you have the `dl' library (-ldl). */
 #cmakedefine HAVE_LIBDL 1
@@ -87,11 +114,11 @@
 /* Define to 1, if your compiler supports long long data type */
 #cmakedefine HAVE_LONG_LONG 1
 
+/* Define to 1, if your compiler supports uintptr_t data type */
+#cmakedefine HAVE_UINTPTR_T 1
+
 /* Define to 1 if you have the <memory.h> header file. */
 #cmakedefine HAVE_MEMORY_H 1
-
-/* Define to 1 if you have the <png.h> header file. */
-#cmakedefine HAVE_PNG_H 1
 
 /* Define to 1 if you have the `snprintf' function. */
 #cmakedefine HAVE_SNPRINTF 1
@@ -135,26 +162,41 @@
 /* Define to 1 if you have the `posix_spawnp' function. */
 #cmakedefine HAVE_POSIX_SPAWNP 1
 
+/* Define to 1 if you have the `posix_memalign' function. */
+#cmakedefine HAVE_POSIX_MEMALIGN 1
+
 /* Define to 1 if you have the `vfork' function. */
 #cmakedefine HAVE_VFORK 1
+
+/* Define to 1 if you have the `mmap' function. */
+#cmakedefine HAVE_MMAP 1
+
+/* Define to 1 if you have the `sigaction' function. */
+#cmakedefine HAVE_SIGACTION 1
+
+/* Define to 1 if you have the statvfs' function. */
+#cmakedefine HAVE_STATVFS 1
+
+/* Define to 1 if you have the `statvfs64' function. */
+#cmakedefine HAVE_STATVFS64 1
 
 /* Define to 1 if you have the `lstat' function. */
 #cmakedefine HAVE_LSTAT 1
 
-/* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
-#cmakedefine HOST_FILLORDER @HOST_FILLORDER@
-
 /* Define as const if the declaration of iconv() needs const. */
 #cmakedefine ICONV_CONST @ICONV_CONST@
-#ifndef ICONV_CONST
-#   define ICONV_CONST
+#if !defined(ICONV_CONST)
+#  define ICONV_CONST
 #endif // !defined(ICONV_CONST)
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
 #cmakedefine ICONV_CPP_CONST @ICONV_CPP_CONST@
-#ifndef ICONV_CPP_CONST
-#   define ICONV_CPP_CONST
+#if !defined(ICONV_CPP_CONST)
+#  define ICONV_CPP_CONST
 #endif // !defined(ICONV_CPP_CONST)
+
+/* Define to 1 if libjvm.so should be dlopen'd */
+#cmakedefine JVM_LIB_DLOPEN 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -187,6 +229,9 @@
 /* Define to 1 if GCC atomic builtins are available */
 #cmakedefine HAVE_GCC_ATOMIC_BUILTINS 1
 
+/* Define to 1 if GCC bswap builtins are available */
+#cmakedefine HAVE_GCC_BSWAP 1
+
 /* Define to name of 64bit fopen function */
 #cmakedefine VSI_FOPEN64 @VSI_FOPEN64@
 
@@ -198,9 +243,6 @@
 
 /* Define to name of 64bit ftell func */
 #cmakedefine VSI_FTELL64 @VSI_FTELL64@
-
-/* Define to 1, if you have 64 bit STDIO API */
-#cmakedefine VSI_LARGE_API_SUPPORTED 1
 
 /* Define to 1, if you have LARGEFILE64_SOURCE */
 #cmakedefine VSI_NEED_LARGEFILE64_SOURCE 1
@@ -218,7 +260,21 @@
 /* Define to 1 if you have the `getaddrinfo' function. */
 #cmakedefine HAVE_GETADDRINFO 1
 
+/* Define to 1 if you have the _SC_PHYS_PAGES' constant. */
+#cmakedefine HAVE_SC_PHYS_PAGES 1
+
 /* Use this file to override settings in instances where you're doing FAT compiles
-   on Apple.  It is currently off by default because it doesn't seem to work with 
-   newish ( XCode >= 3/28/11) XCodes */
+   on Apple.  It is currently off by default because it doesn't seem to work with
+   XCode >= 3/28/11 */
 /* #include "cpl_config_extras.h" */
+
+/* Define to 1 if you have the `uselocale' function. */
+#cmakedefine HAVE_USELOCALE 1
+
+/* Define to 1 if you have the `std::isnan' function. */
+#cmakedefine HAVE_STD_IS_NAN 1
+
+/* Define to 1 if the compiler supports -Wzero-as-null-pointer-constant */
+#cmakedefine HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT 1
+
+#endif
