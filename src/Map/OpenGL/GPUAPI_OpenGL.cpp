@@ -860,9 +860,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     uint32_t tileSize = 0;
     size_t dataRowLength = 0;
     const void* tileData = nullptr;
+    sk_sp<const SkImage> image = nullptr;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        auto image = rasterMapLayerData->image;
+        image = rasterMapLayerData->image;
 
         switch (image->alphaType())
         {
