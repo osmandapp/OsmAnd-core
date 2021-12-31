@@ -862,7 +862,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const void* tileData = nullptr;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        const auto image = rasterMapLayerData->image;
+        auto image = rasterMapLayerData->image;
 
         switch (image->alphaType())
         {
@@ -883,12 +883,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         sourcePixelByteSize = SkColorTypeBytesPerPixel(image->colorType());
 
         SkPixmap imagePixmap;
-        if (image->peekPixels(&imagePixmap)) {
-            // Cool, a raster image
-        } else if (image->makeRasterImage(SkImage::kDisallow_CachingHint)->peekPixels(&imagePixmap)) {
-            // Cool, an image convertable to raster
-        } else {
-            return false;
+        if (!image->peekPixels(&imagePixmap))
+        {
+            const auto rasterImage = image->makeRasterImage(SkImage::kDisallow_CachingHint);
+            if (!rasterImage->peekPixels(&imagePixmap))
+            {
+                return false;
+            }
+            image = rasterImage;
         }
 
         tileSize = imagePixmap.width();
@@ -1096,7 +1098,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     GL_CHECK_PRESENT(glGenerateMipmap);
     GL_CHECK_PRESENT(glTexParameteri);
 
-    const auto image = symbol->image;
+    auto image = symbol->image;
 
     // Determine texture properties:
     auto alphaChannelType = AlphaChannelType::Invalid;
@@ -1119,17 +1121,15 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     const auto textureFormat = getTextureFormat(symbol);
 
     SkPixmap imagePixmap;
-    if (image->peekPixels(&imagePixmap)) {
-        // Cool, a raster image
-    } else if (image->makeRasterImage(SkImage::kDisallow_CachingHint)->peekPixels(&imagePixmap)) {
-        // Cool, an image convertable to raster
-    } else {
-        return false;
+    if (!image->peekPixels(&imagePixmap))
+    {
+        const auto rasterImage = image->makeRasterImage(SkImage::kDisallow_CachingHint);
+        if (!rasterImage->peekPixels(&imagePixmap))
+        {
+            return false;
+        }
+        image = rasterImage;
     }
-
-    // tileSize = imagePixmap.width();
-    // dataRowLength = imagePixmap.rowBytes();
-    // tileData = imagePixmap.addr();
 
     // Symbols don't use mipmapping, so there is no difference between POT vs NPOT size of texture.
     // In OpenGLES 2.0 and OpenGL 2.0+, NPOT textures are supported in general.
