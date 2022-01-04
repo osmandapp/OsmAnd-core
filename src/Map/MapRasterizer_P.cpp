@@ -29,6 +29,79 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+namespace
+{
+    void drawShiftedLine(std::deque<PointF>& shiftedPoints, SkPath& path)
+    {
+        if (shiftedPoints.size() > 1)
+        {
+            Utilities::resizeVector(*(shiftedPoints.begin() + 1), *shiftedPoints.begin(), -M_SQRT2 * offset);
+            Utilities::resizeVector(*(shiftedPoints.rbegin() + 1), *shiftedPoints.rbegin(), -M_SQRT2 * offset);
+            // pop very first pushed point that already drawed
+            auto pt = shiftedPoints.back();
+            path.moveTo(pt.x, pt.y);
+            shiftedPoints.pop_back();
+            while (shiftedPoints.size() > 0)
+            {
+                auto pt = shiftedPoints.back();
+                path.lineTo(pt.x, pt.y);
+                shiftedPoints.pop_back();
+            }
+        }
+    }
+
+    float calc3PointsAngleInRad(const PointF& ptA, const PointF& ptB, const PointF& ptC) {
+        // calculation of the angle between two outermost segments of the path.
+        auto vecADir = (ptA - ptB).normalized();
+        auto vecBDir = (ptC - ptB).normalized();
+        auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
+        if (angle > M_PI) {
+            angle -= 2 * M_PI;
+        } else if (angle <= -M_PI) {
+            angle += 2 * M_PI;
+        }
+
+        return angle;
+    }
+
+    void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints)
+    {
+        const static uint8_t kLastPointCheckForCurvingCnt = 3;
+
+        if (originalPoints.size() >= kLastPointCheckForCurvingCnt)
+        {
+            auto anlge = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
+
+            auto ctang = 1.0f / tan(angle / 2.0f);
+            if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
+            {
+                Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
+            }
+            else
+            {
+                // calculate additional point for corner
+                auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
+                auto additionalPt = originalPoints[1] + additionalNormal * offset;
+                shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+
+                // add additional offset for corner shifted points.
+                Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset / 2.0f);
+                Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset / 2.0f);
+                // add additional ofset for corner shifted points.
+            }
+        }
+    }
+
+    void shiftAndAddPoinToCurves(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
+                                 PointF& newPoint)
+    {
+        originalPoints.push_front(newPoint);
+        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+        newPoint += normal * offset;
+        shiftedPoints.push_front(newPoint);
+    }
+}
+
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
 {
@@ -101,7 +174,8 @@ void OsmAnd::MapRasterizer_P::rasterize(
     // Rasterize layers of map:
     rasterizeMapPrimitives(context, canvas, primitivisedObjects->polygons, PrimitivesType::Polygons, queryController);
     if (context.shadowMode != MapPresentationEnvironment::ShadowMode::NoShadow)
-        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly, queryController);
+        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly,
+                               queryController);
     rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines, queryController);
 
     if (metric)
@@ -437,28 +511,23 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
-bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
-    const Context& context,
-    SkCanvas& canvas,
-    const QVector<PointI>& points31,
-    SkPath& path,
-    float offset = 0.0f) const
+bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const QVector<PointI>& points31,
+                                                   SkPath& path, float offset = 0.0f) const
 {
     int8_t dir = offset < 0 ? -1: 1;
     offset = abs(offset);
-    bool shift = offset > std::numeric_limits<float>::epsilon() ? true : false;
+    bool shift = offset > 0 ? true : false;
 
-    int pointIdx = 0;
     bool intersect = false;
+    int pointIdx = 0;
     int prevCross = 0;
-    PointF vertex;
     const auto& area31 = context.area31;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
+    PointF vertex;
     PointF pVertex;
     PointF tempVertex;
     PointF correctedVertex;
-    const static uint8_t kLastPointCnt = 3;
     // Could be implemented/extended custom simple deque to store only last 3 point for the originalPoints
     std::deque<PointF> originalPoints;
     std::deque<PointF> shiftedPoints;
@@ -482,10 +551,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
                     if (shift)
                     {
-                        originalPoints.push_front(tempVertex);
-                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-                        tempVertex += normal * offset;
-                        shiftedPoints.push_front(tempVertex);
+                        shiftAndAddPoinToCurves(originalPoints, shiftedPoints, tempVertex);
                     }
                     else
                     {
@@ -495,43 +561,8 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
                 {
-                    originalPoints.push_front(tempVertex);
-                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-                    tempVertex += normal * offset;
-                    shiftedPoints.push_front(tempVertex);
-
-                    // fix corner shifts
-                    if (originalPoints.size() >= kLastPointCnt)
-                    {
-                        // calculation of the angle between two outermost segments of the path.
-                        auto vecADir = (originalPoints[0] - originalPoints[1]).normalized();
-                        auto vecBDir = (originalPoints[2] - originalPoints[1]).normalized();
-                        auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
-                        if (angle > M_PI) {
-                            angle -= 2 * M_PI;
-                        } else if (angle <= -M_PI) {
-                            angle += 2 * M_PI;
-                        }
-                        // calculation of the angle between two outermost segments of the path.
-
-                        auto ctang = 1.0f/tan(angle/2.0f);
-                        if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
-                        {
-                            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
-                        }
-                        else
-                        {
-                            // calculate additional point for corner
-                            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
-                            auto additionalPt = originalPoints[1] + additionalNormal * offset;
-                            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
-
-                            // add additional offset for corner shifted points.
-                            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset/2.0f);
-                            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset/2.0f);
-                            // add additional ofset for corner shifted points.
-                        }
-                    }
+                    shiftAndAddPoinToCurves(originalPoints, shiftedPoints, tempVertex);
+                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints);
                 }
                 else
                 {
@@ -544,26 +575,12 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(
         pVertex = vertex;
     }
 
-    if (shiftedPoints.size() > 1)
-    {
-        Utilities::resizeVector(*(shiftedPoints.begin() + 1), *shiftedPoints.begin(), -1.4*offset);
-        Utilities::resizeVector(*(shiftedPoints.rbegin() + 1), *shiftedPoints.rbegin(), -1.4*offset);
-        // pop very first pushed point that already drawed
-        auto pt = shiftedPoints.back();
-        path.moveTo(pt.x, pt.y);
-        shiftedPoints.pop_back();
-        while (shiftedPoints.size() > 0)
-        {
-            auto pt = shiftedPoints.back();
-            path.lineTo(pt.x, pt.y);
-            shiftedPoints.pop_back();
-        }
-    }
+    drawShiftedLine(shiftedPoints, path);
 
     return intersect;
 }
 
-void OsmAnd::MapRasterizer_P::drawLayer(
+void OsmAnd::MapRasterizer_P::drawLineLayer(
     SkCanvas& canvas,
     SkPaint& paint,
     SkPath& path,
@@ -579,7 +596,7 @@ void OsmAnd::MapRasterizer_P::drawLayer(
         if (evalResult.getFloatValue(valueDefId, hmargin))
         {
             SkPath pathHmargin;
-            if (calcPathByTrajectory(context, canvas, points31, pathHmargin, hmargin))
+            if (calcPathByTrajectory(context, points31, pathHmargin, hmargin))
                 canvas.drawPath(pathHmargin, paint);
         }
         else
@@ -607,7 +624,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     bool ok;
 
     ColorARGB shadowColor;
-    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
+    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR,
+                                                     shadowColor.argb);
     if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
         shadowColor = context.shadowColor;
 
@@ -617,7 +635,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         return;
 
     SkPath path;
-    bool intersect = calcPathByTrajectory(context, canvas, points31, path);
+    bool intersect = calcPathByTrajectory(context, points31, path);
     if (!intersect)
         return;
 
@@ -646,7 +664,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         };
         for (const auto& item : layerRelatedIds)
         {
-            drawLayer(canvas, paint, path, context, points31, primitive->evaluationResult, item.first, item.second);
+            drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, item.first, item.second);
         }
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);

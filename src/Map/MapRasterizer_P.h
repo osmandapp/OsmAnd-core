@@ -115,7 +115,7 @@ namespace OsmAnd
             const SkPath& path,
             const MapStyleEvaluationResult::Packed& evalResult);
 
-        void drawLayer(
+        void drawLineLayer(
             SkCanvas& canvas,
             SkPaint& paint,
             SkPath& path,
@@ -124,12 +124,8 @@ namespace OsmAnd
             const MapStyleEvaluationResult::Packed& evalResult,
             const PaintValuesSet valueSetSelector,
             const IMapStyle::ValueDefinitionId valueDefId);
-        bool calcPathByTrajectory(
-            const Context& context,
-            SkCanvas& canvas,
-            const QVector<PointI>& points31,
-            SkPath& path,
-            float offset) const;
+        bool calcPathByTrajectory(const Context& context, const QVector<PointI>& points31, SkPath& path,
+                                  float offset) const;
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const;
         inline float lineEquation(float x1, float y1, float x2, float y2, float x) const;
         inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&) const;
