@@ -92,7 +92,7 @@ namespace
         }
     }
 
-    void shiftAndAddPoinToCurves(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
+    void shiftAndAddPointToCurves(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
                                  PointF& newPoint)
     {
         originalPoints.push_front(newPoint);
@@ -551,7 +551,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
                     if (shift)
                     {
-                        shiftAndAddPoinToCurves(originalPoints, shiftedPoints, tempVertex);
+                        shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex);
                     }
                     else
                     {
@@ -561,7 +561,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
                 {
-                    shiftAndAddPoinToCurves(originalPoints, shiftedPoints, tempVertex);
+                    shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex);
                     fixCornerShiftsOnCurve(originalPoints, shiftedPoints);
                 }
                 else
