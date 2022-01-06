@@ -31,7 +31,9 @@
 
 namespace
 {
-    void drawShiftedLine(std::deque<PointF>& shiftedPoints, SkPath& path)
+    using namespace OsmAnd;
+
+    void drawShiftedLine(std::deque<PointF>& shiftedPoints, SkPath& path, float offset)
     {
         if (shiftedPoints.size() > 1)
         {
@@ -55,49 +57,54 @@ namespace
         auto vecADir = (ptA - ptB).normalized();
         auto vecBDir = (ptC - ptB).normalized();
         auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
-        if (angle > M_PI) {
+        if (angle > M_PI)
+        {
             angle -= 2 * M_PI;
-        } else if (angle <= -M_PI) {
+        }
+        else if (angle <= -M_PI)
+        {
             angle += 2 * M_PI;
         }
 
         return angle;
     }
 
-    void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints)
+    void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
+                                float offset, uint8_t dir)
     {
         const static uint8_t kLastPointCheckForCurvingCnt = 3;
 
-        if (originalPoints.size() >= kLastPointCheckForCurvingCnt)
+        if (originalPoints.size() < kLastPointCheckForCurvingCnt)
         {
-            auto anlge = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
+            return;
+        }
 
-            auto ctang = 1.0f / tan(angle / 2.0f);
-            if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
-            {
-                Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
-            }
-            else
-            {
-                // calculate additional point for corner
-                auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
-                auto additionalPt = originalPoints[1] + additionalNormal * offset;
-                shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+        auto angle = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
 
-                // add additional offset for corner shifted points.
-                Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset / 2.0f);
-                Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset / 2.0f);
-                // add additional ofset for corner shifted points.
-            }
+        auto ctang = 1.0f / tan(angle / 2.0f);
+        if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
+        {
+            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
+        }
+        else
+        {
+            // calculate additional point for corner
+            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
+            auto additionalPt = originalPoints[1] + additionalNormal * offset;
+            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+
+            // add additional offset for corner shifted points.
+            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset / 2.0f);
+            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset / 2.0f);
+            // add additional ofset for corner shifted points.
         }
     }
 
     void shiftAndAddPointToCurves(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
-                                 PointF& newPoint)
+                                  PointF& newPoint, const PointF& vecAddon)
     {
         originalPoints.push_front(newPoint);
-        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
-        newPoint += normal * offset;
+        newPoint += vecAddon;
         shiftedPoints.push_front(newPoint);
     }
 }
@@ -551,7 +558,8 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
                     if (shift)
                     {
-                        shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex);
+                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                        shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
                     }
                     else
                     {
@@ -561,8 +569,34 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 if (shift)
                 {
-                    shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex);
-                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints);
+                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                    shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
+
+                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints, offset, dir);
+                    //Will check and remove 06.01.2022
+                    // // fix corner shifts
+                    // if (originalPoints.size() >= kLastPointCnt)
+                    // {
+                    //     auto angle = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
+
+                    //     auto ctang = 1.0f/tan(angle/2.0f);
+                    //     if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
+                    //     {
+                    //         Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
+                    //     }
+                    //     else
+                    //     {
+                    //         // calculate additional point for corner
+                    //         auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
+                    //         auto additionalPt = originalPoints[1] + additionalNormal * offset;
+                    //         shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+
+                    //         // add additional offset for corner shifted points.
+                    //         Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset/2.0f);
+                    //         Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset/2.0f);
+                    //         // add additional ofset for corner shifted points.
+                    //     }
+                    // }
                 }
                 else
                 {
@@ -575,7 +609,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
         pVertex = vertex;
     }
 
-    drawShiftedLine(shiftedPoints, path);
+    drawShiftedLine(shiftedPoints, path, offset);
 
     return intersect;
 }
