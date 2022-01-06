@@ -70,7 +70,7 @@ namespace
     }
 
     void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
-                                float offset, uint8_t dir)
+                                float offset, int8_t dir)
     {
         const static uint8_t kLastPointCheckForCurvingCnt = 3;
 
@@ -572,35 +572,7 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                     auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
                     shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
 
-#if 0
-                    //Will check and remove 06.01.2022
                     fixCornerShiftsOnCurve(originalPoints, shiftedPoints, offset, dir);
-#else
-                    // fix corner shifts
-                    const static uint8_t kLastPointCheckForCurvingCnt = 3;
-                    if (originalPoints.size() >= kLastPointCheckForCurvingCnt)
-                    {
-                        auto angle = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
-
-                        auto ctang = 1.0f/tan(angle/2.0f);
-                        if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
-                        {
-                            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
-                        }
-                        else
-                        {
-                            // calculate additional point for corner
-                            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
-                            auto additionalPt = originalPoints[1] + additionalNormal * offset;
-                            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
-
-                            // add additional offset for corner shifted points.
-                            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset/2.0f);
-                            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset/2.0f);
-                            // add additional ofset for corner shifted points.
-                        }
-                    }
-#endif
                 }
                 else
                 {
