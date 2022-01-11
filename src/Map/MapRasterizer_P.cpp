@@ -70,7 +70,7 @@ namespace
     }
 
     void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
-                                float offset, int8_t dir)
+                                float offset, bool rightShift)
     {
         const static uint8_t kLastPointCheckForCurvingCnt = 3;
 
@@ -82,14 +82,14 @@ namespace
         auto angle = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
 
         auto ctang = 1.0f / tan(angle / 2.0f);
-        if (!(ctang > 0.0f && dir > 0) && !(ctang < 0.0f && dir < 0))
+        if (!(ctang > 0.0f && rightShift) && !(ctang < 0.0f && !rightShift))
         {
-            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * dir);
+            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * (rightShift ? 1 : -1));
         }
         else
         {
             // calculate additional point for corner
-            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], dir);
+            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], rightShift);
             auto additionalPt = originalPoints[1] + additionalNormal * offset;
             shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
 
@@ -521,9 +521,9 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
 bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const QVector<PointI>& points31,
                                                    SkPath& path, float offset = 0.0f) const
 {
-    int8_t dir = offset < 0 ? -1: 1;
+    bool rightShift = offset > 0;
     offset = abs(offset);
-    bool shift = offset > 0 ? true : false;
+    bool hasShift = offset > 0;
 
     bool intersect = false;
     int pointIdx = 0;
@@ -556,9 +556,9 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                 if (prevCross != 0 || !intersect)
                 {
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-                    if (shift)
+                    if (hasShift)
                     {
-                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
                         shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
                     }
                     else
@@ -567,12 +567,12 @@ bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const
                     }
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-                if (shift)
+                if (hasShift)
                 {
-                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, dir);
+                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
                     shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
 
-                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints, offset, dir);
+                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints, offset, rightShift);
                 }
                 else
                 {
@@ -661,21 +661,29 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        static const std::pair<PaintValuesSet, IMapStyle::ValueDefinitionId> layerRelatedIds[] =
-        {
-            { PaintValuesSet::Layer_minus2, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2 },
-            { PaintValuesSet::Layer_minus1, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1 },
-            { PaintValuesSet::Layer_0, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0 },
-            { PaintValuesSet::Layer_1, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN },
-            { PaintValuesSet::Layer_2, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2 },
-            { PaintValuesSet::Layer_3, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3 },
-            { PaintValuesSet::Layer_4, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4 },
-            { PaintValuesSet::Layer_5, env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5 },
-        };
-        for (const auto& item : layerRelatedIds)
-        {
-            drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, item.first, item.second);
-        }
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus2,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus1,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_0,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_1,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_2,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_3,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_4,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4);
+
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_5,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5);
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
