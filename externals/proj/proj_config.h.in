@@ -1,0 +1,20 @@
+/* Define if you want to use win32 based multiprocessing support */
+#cmakedefine MUTEX_win32
+
+/* Define if you want to use pthread based multiprocessing support */
+#cmakedefine MUTEX_pthread
+
+/* Define if you want to use multiprocessing stub */
+#cmakedefine MUTEX_stub
+
+/* Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant. */
+#cmakedefine HAVE_PTHREAD_MUTEX_RECURSIVE 1
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#cmakedefine HAVE_LIBDL 1
+
+/* Define to 1 if you have localeconv */
+#cmakedefine HAVE_LOCALECONV 1
+
+/* Define to 1 if you have the `strerror' function. */
+#cmakedefine HAVE_STRERROR 1

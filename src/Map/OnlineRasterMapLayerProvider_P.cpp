@@ -10,13 +10,12 @@
 #include <QFile>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkStream.h>
-#include <SkImageDecoder.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
-#include <OsmAndCore/SkiaUtilities.h>
-
 #include "MapDataProviderHelpers.h"
+#include "SkiaUtilities.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -31,29 +30,6 @@ OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(
 
 OsmAnd::OnlineRasterMapLayerProvider_P::~OnlineRasterMapLayerProvider_P()
 {
-}
-
-std::shared_ptr<const SkBitmap> OsmAnd::OnlineRasterMapLayerProvider_P::decodeTileBitmap(const QFileInfo& fileInfo)
-{
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkFILEStream fileStream(qPrintable(fileInfo.absoluteFilePath()));
-    if (!SkImageDecoder::DecodeStream(
-            &fileStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode tile file '%s'",
-            qPrintable(fileInfo.absoluteFilePath()));
-
-        QFile tileFile(fileInfo.absoluteFilePath());
-        if (tileFile.exists())
-            tileFile.remove();
-
-        return nullptr;
-    }
-    return bitmap;
 }
 
 bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
@@ -112,18 +88,21 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             return true;
         }
 
-        auto bitmap = decodeTileBitmap(localFile);
-        if (!bitmap)
+        auto image = OsmAnd::SkiaUtilities::createImageFromFile(localFile);
+        if (!image)
+        {
+            QFile(localFile.absoluteFilePath()).remove();
             return false;
+        }
 
-        assert(bitmap->width() == bitmap->height());
+        assert(image->width() == image->height());
 
         bool shouldRequestNextTile = shiftedTile && !outData;
         if (shiftedTile && outData)
         {
             if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
             {
-                bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+                image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
             }
         }
         
@@ -133,7 +112,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             request.zoom,
             owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
-            bitmap));
+            image));
 
         if (shouldRequestNextTile)
             return obtainData(request, outData, pOutMetric);
@@ -235,12 +214,8 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     unlockTile(tileId, zoom);
 
     // Decode in-memory
-    std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            downloadResult.constData(), downloadResult.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
+    auto image = SkiaUtilities::createImageFromData(downloadResult);
+    if (!image)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to decode tile file from '%s'",
@@ -249,14 +224,14 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         return false;
     }
 
-    assert(bitmap->width() == bitmap->height());
+    assert(image->width() == image->height());
 
     bool shouldRequestNextTile = shiftedTile && !outData;
     if (shiftedTile && outData)
     {
         if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
         {
-            bitmap = OsmAnd::SkiaUtilities::createTileBitmap(data->bitmap, bitmap, offsetY);
+            image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
         }
     }
 
@@ -266,7 +241,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         request.zoom,
         owner->alphaChannelPresence,
         owner->getTileDensityFactor(),
-        bitmap));
+        image));
 
     if (shouldRequestNextTile)
         return obtainData(request, outData, pOutMetric);

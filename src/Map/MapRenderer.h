@@ -134,7 +134,6 @@ namespace OsmAnd
         {
             ColorDepthForcing,
             TexturesFilteringMode,
-            PaletteTexturesUsage,
 
             __LAST
         };
@@ -164,12 +163,12 @@ namespace OsmAnd
         MapRendererResourcesManager& getResources();
         virtual void onValidateResourcesOfType(const MapRendererResourceType type);
         void requestResourcesUploadOrUnload();
-        bool adjustBitmapToConfiguration(
-            const std::shared_ptr<const SkBitmap>& input,
-            std::shared_ptr<const SkBitmap>& output,
+        bool adjustImageToConfiguration(
+            const sk_sp<const SkImage>& input,
+            sk_sp<SkImage>& output,
             const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown) const;
-        std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
-            const std::shared_ptr<const SkBitmap>& input,
+        sk_sp<const SkImage> adjustImageToConfiguration(
+            const sk_sp<const SkImage>& input,
             const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown) const;
 
         // Symbols-related:

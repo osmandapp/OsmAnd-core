@@ -384,7 +384,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
         bool ok = true;
         _builtIn.reset(new OnlineTileSources());
         _builtIn->loadFrom(getCoreResourcesProvider()->getResource(
-            QLatin1String("misc/tile_sources.xml"),
+            QLatin1String("misc/default.online_tile_sources.xml"),
             &ok));
         assert(ok);
     }

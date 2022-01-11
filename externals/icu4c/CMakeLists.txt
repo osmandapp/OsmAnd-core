@@ -47,6 +47,7 @@ target_compile_definitions(icu4c_static
 
 target_include_directories(icu4c_static
 	PUBLIC
+		"upstream.patched/icu4c/source"
 		"upstream.patched/icu4c/source/common"
 		"upstream.patched/icu4c/source/i18n"
 )

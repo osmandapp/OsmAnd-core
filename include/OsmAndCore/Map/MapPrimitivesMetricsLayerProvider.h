@@ -6,8 +6,14 @@
 #include <array>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QMutex>
 #include <QSet>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -33,7 +39,7 @@ namespace OsmAnd
                 const ZoomLevel zoom,
                 const AlphaChannelPresence alphaChannelPresence,
                 const float densityFactor,
-                const std::shared_ptr<const SkBitmap>& bitmap,
+                const sk_sp<const SkImage>& image,
                 const std::shared_ptr<const MapPrimitivesProvider::Data>& binaryMapPrimitives,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
@@ -55,10 +61,10 @@ namespace OsmAnd
         const uint32_t tileSize;
         const float densityFactor;
 
-        virtual MapStubStyle getDesiredStubsStyle() const;
+        virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 
-        virtual float getTileDensityFactor() const;
-        virtual uint32_t getTileSize() const;
+        virtual float getTileDensityFactor() const Q_DECL_OVERRIDE;
+        virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
@@ -77,8 +83,8 @@ namespace OsmAnd
             std::shared_ptr<Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr);
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
     };
 }
 

@@ -24,7 +24,7 @@
 #include "QMainThreadTaskEvent.h"
 #include "SKIA_private.h"
 #include "ICU_private.h"
-#include "EmbeddedFontFinder_internal.h"
+#include "EmbeddedTypefaceFinder_internal.h"
 #include "TextRasterizer_internal.h"
 #include "MapSymbolIntersectionClassesRegistry_private.h"
 
@@ -129,7 +129,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     if (!ICU::initialize())
         return false;
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
-    EmbeddedFontFinder_initialize();
+    EmbeddedTypefaceFinder_initialize();
     TextRasterizer_initialize();
     MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
 
@@ -155,8 +155,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
     }
 
     MapSymbolIntersectionClassesRegistry_releaseGlobalInstance();
-    EmbeddedFontFinder_release();
     TextRasterizer_release();
+    EmbeddedTypefaceFinder_release();
     ICU::release();
     SKIA::release();
 

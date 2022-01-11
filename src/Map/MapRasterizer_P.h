@@ -13,7 +13,8 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkCanvas.h>
 #include <SkPaint.h>
-#include <SkBitmapProcShader.h>
+#include <SkShader.h>
+#include <SkPathEffect.h>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -124,9 +125,11 @@ namespace OsmAnd
         SkPaint _defaultPaint;
 
         mutable QMutex _pathEffectsMutex;
-        mutable QHash< QString, SkPathEffect* > _pathEffects;
-        bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
-        bool obtainBitmapShader(const std::shared_ptr<const MapPresentationEnvironment>& env, const QString& name, SkBitmapProcShader* &outShader);
+        mutable QHash< QString, sk_sp<SkPathEffect> > _pathEffects;
+        bool obtainPathEffect(const QString& encodedPathEffect, sk_sp<SkPathEffect> &outPathEffect) const;
+        bool obtainImageShader(
+            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const QString& name, sk_sp<SkShader> &outShader);
     public:
         ~MapRasterizer_P();
 

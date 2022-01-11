@@ -1,10 +1,6 @@
 #include "TransportStopSymbolsProvider_P.h"
 #include "TransportStopSymbolsProvider.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "ICoreResourcesProvider.h"
 #include "ObfDataInterface.h"
 #include "MapDataProviderHelpers.h"
@@ -74,7 +70,7 @@ bool OsmAnd::TransportStopSymbolsProvider_P::obtainData(
             
             const auto mapSymbol = std::make_shared<BillboardRasterMapSymbol>(mapSymbolsGroup);
             mapSymbol->order = owner->symbolsOrder;
-            mapSymbol->bitmap = icon;
+            mapSymbol->image = icon;
             mapSymbol->size = PointI(icon->width(), icon->height());
             mapSymbol->languageId = LanguageId::Invariant;
             mapSymbol->position31 = position31;

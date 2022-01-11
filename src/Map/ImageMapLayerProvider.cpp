@@ -2,8 +2,9 @@
 #include "Logging.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
-#include <SkStream.h>
+#include <SkData.h>
+#include <SkImage.h>
+#include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
 #include "QtExtensions.h"
@@ -13,13 +14,13 @@
 #include "MapDataProviderHelpers.h"
 #include "QRunnableFunctor.h"
 #include "IQueryController.h"
-
+#include "SkiaUtilities.h"
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider() :
-_priority(0),
-_lastRequestedZoom(ZoomLevel0),
-_threadPool(new QThreadPool())
+OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
+    : _priority(0)
+    , _lastRequestedZoom(ZoomLevel0)
+    , _threadPool(new QThreadPool())
 {
 }
 
@@ -29,43 +30,26 @@ OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
     delete _threadPool;
 }
 
-bool OsmAnd::ImageMapLayerProvider::supportsObtainImageBitmap() const
+bool OsmAnd::ImageMapLayerProvider::supportsObtainImage() const
 {
     return false;
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::getEmptyImage()
+sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getEmptyImage() const
 {
     SkBitmap bitmap;
-    // Create a bitmap that will be hold entire symbol (if target is empty)
     const auto tileSize = getTileSize();
     if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
     {
         bitmap.eraseColor(SK_ColorTRANSPARENT);
-        return std::make_shared<SkBitmap>(bitmap);
+        return bitmap.asImage();
     }
     return nullptr;
 }
 
-const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::decodeBitmap(const QByteArray& image)
-{
-    // Decode image data
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(
-            image.constData(), image.size(),
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to decode image tile");
-
-        return nullptr;
-    }
-    return bitmap;
-}
-
-const std::shared_ptr<const SkBitmap> OsmAnd::ImageMapLayerProvider::obtainImageBitmap(const OsmAnd::IMapTiledDataProvider::Request& request)
+sk_sp<SkImage> OsmAnd::ImageMapLayerProvider::obtainImage(
+    const OsmAnd::IMapTiledDataProvider::Request& request
+)
 {
     return nullptr;
 }
@@ -92,15 +76,15 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (request.queryController != nullptr && request.queryController->isAborted())
         return false;
     
-    std::shared_ptr<const SkBitmap> bitmap;
-    if (supportsObtainImageBitmap())
+    sk_sp<SkImage> image;
+    if (supportsObtainImage())
     {
-        bitmap = obtainImageBitmap(request);
+        image = obtainImage(request);
 
         if (request.queryController != nullptr && request.queryController->isAborted())
             return false;
 
-        if (!bitmap)
+        if (!image)
         {
             const auto emptyImage = getEmptyImage();
             if (emptyImage)
@@ -123,12 +107,12 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     else
     {
         // Obtain image data
-        const auto image = obtainImage(request);
-        
+        const auto imageData = obtainImageData(request);
+
         if (request.queryController != nullptr && request.queryController->isAborted())
             return false;
 
-        if (image.isNull())
+        if (imageData.isNull())
         {
             const auto emptyImage = getEmptyImage();
             if (emptyImage)
@@ -149,13 +133,14 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         
         // Decode image data
-        bitmap = decodeBitmap(image);
+        image = SkiaUtilities::createImageFromData(imageData);
     }
     
-    if (!bitmap)
+    if (!image)
         return false;
 
-    performAdditionalChecks(bitmap);
+    if (!performAdditionalChecks(image))
+        return false;
 
     // Return tile
     outData.reset(new IRasterMapLayerProvider::Data(
@@ -163,7 +148,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         request.zoom,
         getAlphaChannelPresence(),
         getTileDensityFactor(),
-        bitmap));
+        image));
     return true;
 }
 
@@ -227,11 +212,12 @@ int OsmAnd::ImageMapLayerProvider::getAndDecreasePriority()
     return _priority;
 }
 
-void OsmAnd::ImageMapLayerProvider::performAdditionalChecks(std::shared_ptr<const SkBitmap> bitmap)
+bool OsmAnd::ImageMapLayerProvider::performAdditionalChecks(const sk_sp<const SkImage>& image)
 {
+    return true;
 }
 
-OsmAnd::ImageMapLayerProvider::AsyncImage::AsyncImage(
+OsmAnd::ImageMapLayerProvider::AsyncImageData::AsyncImageData(
     const ImageMapLayerProvider* const provider_,
     const ImageMapLayerProvider::Request& request_,
     const IMapDataProvider::ObtainDataAsyncCallback callback_)
@@ -241,36 +227,32 @@ OsmAnd::ImageMapLayerProvider::AsyncImage::AsyncImage(
 {
 }
 
-OsmAnd::ImageMapLayerProvider::AsyncImage::~AsyncImage()
+OsmAnd::ImageMapLayerProvider::AsyncImageData::~AsyncImageData()
 {
 }
 
-void OsmAnd::ImageMapLayerProvider::AsyncImage::submit(const bool requestSucceeded, const QByteArray& image) const
+void OsmAnd::ImageMapLayerProvider::AsyncImageData::submit(const bool requestSucceeded, const QByteArray& data) const
 {
-    std::shared_ptr<IMapDataProvider::Data> data;
+    std::shared_ptr<IMapDataProvider::Data> outData;
 
-    if (requestSucceeded && !image.isNull())
+    if (requestSucceeded && !data.isNull())
     {
-        // Decode image data
-        std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        SkMemoryStream imageStream(image.constData(), image.length(), false);
-        if (SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        const auto image = SkiaUtilities::createImageFromData(data);
+        if (!image)
         {
-            data.reset(new IRasterMapLayerProvider::Data(
-                request->tileId,
-                request->zoom,
-                provider->getAlphaChannelPresence(),
-                provider->getTileDensityFactor(),
-                bitmap));
-        }
-        else
-        {
-            callback(provider, false, data, nullptr);
+            callback(provider, false, outData, nullptr);
             delete this;
             return;
         }
+
+        outData.reset(new IRasterMapLayerProvider::Data(
+            request->tileId,
+            request->zoom,
+            provider->getAlphaChannelPresence(),
+            provider->getTileDensityFactor(),
+            image));
     }
 
-    callback(provider, requestSucceeded, data, nullptr);
+    callback(provider, requestSucceeded, outData, nullptr);
     delete this;
 }

@@ -6,13 +6,15 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkImage.h>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IMapLayerProvider.h>
-
-class SkBitmap;
 
 namespace OsmAnd
 {
@@ -27,17 +29,17 @@ namespace OsmAnd
         protected:
         public:
             Data(
-                const TileId tileId,
-                const ZoomLevel zoom,
-                const AlphaChannelPresence alphaChannelPresence,
-                const float densityFactor,
-                const std::shared_ptr<const SkBitmap>& bitmap,
-                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+                TileId tileId,
+                ZoomLevel zoom,
+                AlphaChannelPresence alphaChannelPresence,
+                float densityFactor,
+                sk_sp<const SkImage> image,
+                const RetainableCacheMetadata* pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
-            std::shared_ptr<const SkBitmap> bitmap;
+            sk_sp<const SkImage> image;
         };
 
     private:

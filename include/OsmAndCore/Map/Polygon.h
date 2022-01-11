@@ -15,8 +15,6 @@
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class PolygonBuilder;

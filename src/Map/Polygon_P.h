@@ -16,8 +16,6 @@
 #include "OnSurfaceVectorMapSymbol.h"
 #include "Polygon.h"
 
-class SkBitmap;
-
 namespace OsmAnd
 {
     class PolygonsCollection;

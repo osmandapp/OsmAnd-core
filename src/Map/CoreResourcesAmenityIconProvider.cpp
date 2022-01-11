@@ -18,7 +18,7 @@ OsmAnd::CoreResourcesAmenityIconProvider::~CoreResourcesAmenityIconProvider()
 {
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
+sk_sp<SkImage> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
     const std::shared_ptr<const Amenity>& amenity,
     const ZoomLevel zoomLevel,
     const bool largeIcon /*= false*/) const
@@ -32,19 +32,19 @@ std::shared_ptr<SkBitmap> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
 
     for (const auto& decodedCategory : constOf(decodedCategories))
     {
-        auto icon = coreResourcesProvider->getResourceAsBitmap(
+        auto icon = coreResourcesProvider->getResourceAsImage(
             iconPath + decodedCategory.subcategory + iconExtension,
             displayDensityFactor);
         if (!icon)
         {
-            icon = coreResourcesProvider->getResourceAsBitmap(
+            icon = coreResourcesProvider->getResourceAsImage(
                 iconPath + "" + iconExtension, //TODO: resolve poi_type in category by it's subcat and get tag/name
                 displayDensityFactor);
         }
         if (!icon)
             continue;
 
-        return SkiaUtilities::scaleBitmap(icon, symbolsScaleFactor, symbolsScaleFactor);
+        return SkiaUtilities::scaleImage(icon, symbolsScaleFactor, symbolsScaleFactor);
     }
 
     return nullptr;
@@ -61,5 +61,5 @@ QString OsmAnd::CoreResourcesAmenityIconProvider::getCaption(
     const std::shared_ptr<const Amenity>& amenity,
     const ZoomLevel zoomLevel) const
 {
-    return QString::null;
+    return {};
 }

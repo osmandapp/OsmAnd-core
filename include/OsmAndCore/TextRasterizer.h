@@ -5,19 +5,23 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkBitmap.h>
+#include <SkImage.h>
+#include <SkTypeface.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/IFontFinder.h>
+#include <OsmAndCore/ITypefaceFinder.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
-
-class SkCanvas;
-class SkBitmap;
-class SkTypeface;
 
 namespace OsmAnd
 {
@@ -119,11 +123,11 @@ namespace OsmAnd
             }
 #endif // !defined(SWIG)
 
-            std::shared_ptr<const SkBitmap> backgroundBitmap;
+            sk_sp<const SkImage> backgroundImage;
 #if !defined(SWIG)
-            inline Style& setBackgroundBitmap(const std::shared_ptr<const SkBitmap>& newBackgroundBitmap)
+            inline Style& setBackgroundImage(const sk_sp<const SkImage>& newBackgroundImage)
             {
-                backgroundBitmap = newBackgroundBitmap;
+                backgroundImage = newBackgroundImage;
 
                 return *this;
             }
@@ -151,12 +155,12 @@ namespace OsmAnd
     protected:
     public:
         TextRasterizer(
-            const std::shared_ptr<const IFontFinder>& fontFinder);
+            const std::shared_ptr<const ITypefaceFinder>& typefaceFinder);
         virtual ~TextRasterizer();
 
-        const std::shared_ptr<const IFontFinder> fontFinder;
+        const std::shared_ptr<const ITypefaceFinder> typefaceFinder;
 
-        std::shared_ptr<SkBitmap> rasterize(
+        sk_sp<SkImage> rasterize(
             const QString& text,
             const Style& style = Style(),
             QVector<SkScalar>* const outGlyphWidths = nullptr,

@@ -7,7 +7,7 @@
 #include <QMutableHashIterator>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
 
 #include "IMapRenderer_Metrics.h"
@@ -128,15 +128,12 @@ uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
 {
     const bool colorDepthForcingChanged = (current->limitTextureColorDepthBy16bits != updated->limitTextureColorDepthBy16bits);
     const bool texturesFilteringChanged = (current->texturesFilteringQuality != updated->texturesFilteringQuality);
-    const bool paletteTexturesUsageChanged = (current->paletteTexturesAllowed != updated->paletteTexturesAllowed);
 
     uint32_t mask = 0;
     if (colorDepthForcingChanged)
         mask |= enumToBit(ConfigurationChange::ColorDepthForcing);
     if (texturesFilteringChanged)
         mask |= enumToBit(ConfigurationChange::TexturesFilteringMode);
-    if (paletteTexturesUsageChanged)
-        mask |= enumToBit(ConfigurationChange::PaletteTexturesUsage);
 
     return mask;
 }
@@ -182,7 +179,6 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
 {
     bool invalidateMapLayers = false;
     invalidateMapLayers = invalidateMapLayers || (change == ConfigurationChange::ColorDepthForcing);
-    invalidateMapLayers = invalidateMapLayers || (change == ConfigurationChange::PaletteTexturesUsage);
     if (invalidateMapLayers)
         getResources().invalidateResourcesOfType(MapRendererResourceType::MapLayer);
 
@@ -779,87 +775,90 @@ void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
         invalidateFrame();
 }
 
-bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
-    const std::shared_ptr<const SkBitmap>& input,
-    std::shared_ptr<const SkBitmap>& output,
+bool OsmAnd::MapRenderer::adjustImageToConfiguration(
+    const sk_sp<const SkImage>& input,
+    sk_sp<SkImage>& output,
     const AlphaChannelPresence alphaChannelPresence /*= AlphaChannelPresence::Undefined*/) const
 {
+    // There's no way to convert empty input
+    if (!input)
+    {
+        return false;
+    }
+
     // Check if we're going to convert
     bool doConvert = false;
     const bool force16bit =
         (currentConfiguration->limitTextureColorDepthBy16bits && input->colorType() == SkColorType::kRGBA_8888_SkColorType);
-    const bool canUsePaletteTextures = currentConfiguration->paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
-    const bool paletteTexture = (input->colorType() == SkColorType::kIndex_8_SkColorType);
     const bool unsupportedFormat =
-        (canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
-        (input->colorType() != SkColorType::kRGBA_8888_SkColorType) ||
-        (input->colorType() != SkColorType::kARGB_4444_SkColorType) ||
+        (input->colorType() != SkColorType::kRGBA_8888_SkColorType) &&
+        (input->colorType() != SkColorType::kARGB_4444_SkColorType) &&
         (input->colorType() != SkColorType::kRGB_565_SkColorType);
     doConvert = doConvert || force16bit;
     doConvert = doConvert || unsupportedFormat;
-
-    // Pass palette texture as-is
-    if (paletteTexture && canUsePaletteTextures)
-        return false;
 
     // Check if we need alpha
     auto convertedAlphaChannelPresence = alphaChannelPresence;
     if (doConvert && (convertedAlphaChannelPresence == AlphaChannelPresence::Unknown))
     {
-        convertedAlphaChannelPresence = SkBitmap::ComputeIsOpaque(*input)
-            ? AlphaChannelPresence::NotPresent
-            : AlphaChannelPresence::Present;
+        SkPixmap pixmap;
+        if (input->peekPixels(&pixmap))
+        {
+            convertedAlphaChannelPresence = pixmap.computeIsOpaque()
+                ? AlphaChannelPresence::NotPresent
+                : AlphaChannelPresence::Present;
+        }
     }
 
     // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
     if (force16bit)
     {
-        auto convertedBitmap = new SkBitmap();
-
-        const bool ok = input->copyTo(convertedBitmap,
+        const auto colorSpace = input->refColorSpace();
+        const auto convertedImage = input->makeColorTypeAndColorSpace(
             convertedAlphaChannelPresence == AlphaChannelPresence::Present
-            ? SkColorType::kARGB_4444_SkColorType
-            : SkColorType::kRGB_565_SkColorType);
-        if (!ok)
+                ? SkColorType::kARGB_4444_SkColorType
+                : SkColorType::kRGB_565_SkColorType,
+            colorSpace ? colorSpace : SkColorSpace::MakeSRGB()
+        );
+        if (!convertedImage)
         {
-            assert(false);
             return false;
         }
 
-        output.reset(convertedBitmap);
+        output = convertedImage;
         return true;
     }
 
     // If we have any other unsupported format, convert to proper 16bit or 32bit
     if (unsupportedFormat)
     {
-        auto convertedBitmap = new SkBitmap();
-
-        const bool ok = input->copyTo(convertedBitmap,
+        const auto colorSpace = input->refColorSpace();
+        const auto convertedImage = input->makeColorTypeAndColorSpace(
             currentConfiguration->limitTextureColorDepthBy16bits
-            ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present
-                ? SkColorType::kARGB_4444_SkColorType
-                : SkColorType::kRGB_565_SkColorType)
-            : SkColorType::kRGBA_8888_SkColorType);
-        if (!ok)
+                ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present
+                    ? SkColorType::kARGB_4444_SkColorType
+                    : SkColorType::kRGB_565_SkColorType)
+                : SkColorType::kRGBA_8888_SkColorType,
+            colorSpace ? colorSpace : SkColorSpace::MakeSRGB()
+        );
+        if (!convertedImage)
         {
-            assert(false);
             return false;
         }
 
-        output.reset(convertedBitmap);
+        output = convertedImage;
         return true;
     }
 
     return false;
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapRenderer::adjustBitmapToConfiguration(
-    const std::shared_ptr<const SkBitmap>& input,
+sk_sp<const SkImage> OsmAnd::MapRenderer::adjustImageToConfiguration(
+    const sk_sp<const SkImage>& input,
     const AlphaChannelPresence alphaChannelPresence /*= AlphaChannelPresence::Undefined*/) const
 {
-    std::shared_ptr<const SkBitmap> output;
-    if (adjustBitmapToConfiguration(input, output, alphaChannelPresence))
+    sk_sp<SkImage> output;
+    if (adjustImageToConfiguration(input, output, alphaChannelPresence))
         return output;
     return input;
 }

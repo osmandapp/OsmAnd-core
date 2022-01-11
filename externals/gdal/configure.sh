@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/gdal-1.11.1.tar.gz"
+prepareUpstreamFromGit "$SRCLOC" "https://github.com/OSGeo/gdal.git" "v3.4.0"
 patchUpstream "$SRCLOC"

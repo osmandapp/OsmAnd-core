@@ -1,0 +1,24 @@
+diff -rupN upstream.original/include/config/SkUserConfig.h upstream.patched/include/config/SkUserConfig.h
+--- upstream.original/include/config/SkUserConfig.h	2021-11-22 08:24:47.328750214 +0100
++++ upstream.patched/include/config/SkUserConfig.h	2021-11-22 08:26:33.138774367 +0100
+@@ -86,4 +86,20 @@
+ //#define SK_HISTOGRAM_EXACT_LINEAR(name, sample, value_max)
+ //#define SK_HISTOGRAM_MEMORY_KB(name, sample)
+ 
++/*
++ *  Default to OpenGL/DirectX order
++ *  order (in memory: r,g,b,a)
++ */
++#ifdef SK_CPU_BENDIAN
++    #define SK_R32_SHIFT    24
++    #define SK_G32_SHIFT    16
++    #define SK_B32_SHIFT    8
++    #define SK_A32_SHIFT    0
++#else
++    #define SK_R32_SHIFT    0
++    #define SK_G32_SHIFT    8
++    #define SK_B32_SHIFT    16
++    #define SK_A32_SHIFT    24
++#endif
++
+ #endif

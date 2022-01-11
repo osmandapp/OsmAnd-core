@@ -8,10 +8,6 @@
 #include <QStringList>
 #include "restore_internal_warnings.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include "restore_internal_warnings.h"
-
 #include "MapCommonTypes.h"
 #include "IRasterMapLayerProvider.h"
 #include "MapSymbol.h"
@@ -385,8 +381,6 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, _compressedFormats.data());
         GL_CHECK_RESULT;
     }
-    _isSupported_8bitPaletteRGBA8 = extensions.contains("GL_OES_compressed_paletted_texture") || compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
     _isSupported_texture_float = _isSupported_OES_texture_float;
     _isSupported_textureLod = _isSupported_EXT_shader_texture_lod;

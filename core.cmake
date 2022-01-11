@@ -1,4 +1,3 @@
-
 # External : geographiclib
 add_subdirectory("${OSMAND_ROOT}/core/externals/geographiclib" "core/externals/geographiclib")
 
@@ -13,7 +12,7 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/expat" "core/externals/expat")
 
 if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "android")
-	# External : freetype2
+	# External : freetype
 	add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freetype")
 endif()
 
@@ -28,6 +27,12 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/protobuf" "core/externals/protob
 
 # External : skia
 add_subdirectory("${OSMAND_ROOT}/core/externals/skia" "core/externals/skia")
+
+# External : sqlite
+add_subdirectory("${OSMAND_ROOT}/core/externals/sqlite" "core/externals/sqlite")
+
+# External : proj
+add_subdirectory("${OSMAND_ROOT}/core/externals/proj" "core/externals/proj")
 
 # External : GDAL
 add_subdirectory("${OSMAND_ROOT}/core/externals/gdal" "core/externals/gdal")
@@ -50,6 +55,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/glm" "core/externals/glm")
 
 # External: boost
 add_subdirectory("${OSMAND_ROOT}/core/externals/boost" "core/externals/boost")
+
+# External: harfbuzz
+add_subdirectory("${OSMAND_ROOT}/core/externals/harfbuzz" "core/externals/harfbuzz")
 
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core")

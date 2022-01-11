@@ -71,7 +71,7 @@ QString OsmAnd::Road::getRefInNativeLanguage() const
 {
     const auto citName = captions.constFind(section->getAttributeMapping()->refAttributeId);
     if (citName == captions.cend())
-        return QString::null;
+        return {};
     return *citName;
 }
 
@@ -79,11 +79,11 @@ QString OsmAnd::Road::getRefInLanguage(const QString& lang) const
 {
     const auto citNameAttributeId = section->getAttributeMapping()->localizedRefAttributes.constFind(&lang);
     if (citNameAttributeId == section->getAttributeMapping()->localizedRefAttributes.cend())
-        return QString::null;
+        return {};
     
     const auto citCaption = captions.constFind(*citNameAttributeId);
     if (citCaption == captions.cend())
-        return QString::null;
+        return {};
     return *citCaption;
 }
 
@@ -213,8 +213,8 @@ float OsmAnd::Road::getMaximumSpeed(bool direction) const
 bool OsmAnd::Road::isDeleted() const
 {
     const auto& decodeMap = section->getAttributeMapping()->routingDecodeMap;
-    float maxSpeed = 0;
-    for (int i = 0; i < attributeIds.size(); i++) {
+    for (int i = 0; i < attributeIds.size(); i++)
+    {
         const auto r = decodeMap.getRef(attributeIds[i]);
         if (r)
         {

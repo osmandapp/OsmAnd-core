@@ -804,14 +804,14 @@ void OsmAnd::RoutePlanner::calculateRouteSegment(
             int st = ctx.searchBorderLineIndex(y);
             int tt = ctx.searchBorderLineIndex(prevy);
             if (st != tt){
-                //					System.out.print(" " + st + " != " + tt + " " + road.id + " ? ");
+                //                    System.out.print(" " + st + " != " + tt + " " + road.id + " ? ");
                 for(int i = Math.min(st, tt); i < Math.max(st, tt) & i < ctx.borderLines.length ; i++) {
                     Iterator<RouteDataBorderLinePoint> pnts = ctx.borderLines[i].borderPoints.iterator();
                     boolean changed = false;
                     while(pnts.hasNext()) {
                         RouteDataBorderLinePoint o = pnts.next();
                         if (o.id == road.id) {
-                            //								System.out.println("Point removed !");
+                            //                                System.out.println("Point removed !");
                             pnts.remove();
                             changed = true;
                         }
@@ -1256,7 +1256,7 @@ void OsmAnd::RoutePlanner::processIntersections(
 
                 /*
                 if (ctx.visitor != null) {
-                    //						ctx.visitor.visitSegment(next, false);
+                    //                        ctx.visitor.visitSegment(next, false);
                 }
                 */
             }
@@ -1458,14 +1458,14 @@ double OsmAnd::RoutePlanner::h(
                 if (res < distToFinalPoint - 0.01) {
                     throw new IllegalStateException("Estimated distance " + res + " > " + distToFinalPoint);
                 }
-                //					if (endEqStart && res - distToFinalPoint > 13000) {
-                //						System.out.println(" Res="+res + " dist=" +distToFinalPoint);
-                //					}
+                //                    if (endEqStart && res - distToFinalPoint > 13000) {
+                //                        System.out.println(" Res="+res + " dist=" +distToFinalPoint);
+                //                    }
                 distToFinalPoint = res;
 
             } else {
                 // FIXME put penalty
-                //					distToFinalPoint = distToFinalPoint;
+                //                    distToFinalPoint = distToFinalPoint;
             }
         }
     }

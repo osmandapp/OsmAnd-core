@@ -71,8 +71,8 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     // Convert data if such is present
     if (_sourceData)
     {
-        _sourceData->bitmap = resourcesManager->adjustBitmapToConfiguration(
-            _sourceData->bitmap,
+        _sourceData->image = resourcesManager->adjustImageToConfiguration(
+            _sourceData->image,
             _sourceData->alphaChannelPresence);
     }
 
@@ -120,8 +120,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
             // Convert data if such is present
             if (_sourceData)
             {
-                _sourceData->bitmap = resourcesManager->adjustBitmapToConfiguration(
-                    _sourceData->bitmap,
+                _sourceData->image = resourcesManager->adjustImageToConfiguration(
+                    _sourceData->image,
                     _sourceData->alphaChannelPresence);
             }
 

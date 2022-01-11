@@ -1,8 +1,6 @@
 #include "ExplicitReferences.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkImageDecoder.h>
-#include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
 void OsmAnd::InflateExplicitReferences()
@@ -11,12 +9,6 @@ void OsmAnd::InflateExplicitReferences()
     {
         ExplicitReferences()
         {
-            // SKIA
-            delete CreateGIFImageDecoder();
-            delete CreateJPEGImageDecoder();
-            delete CreateJPEGImageEncoder();
-            delete CreatePNGImageDecoder();
-            delete CreatePNGImageEncoder();
         }
     };
 

@@ -1,10 +1,11 @@
 #include "ICoreResourcesProvider.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkBitmap.h>
-#include <SkStream.h>
-#include <SkImageDecoder.h>
+#include <SkData.h>
+#include <SkImage.h>
 #include "restore_internal_warnings.h"
+
+#include "SkiaUtilities.h"
 
 OsmAnd::ICoreResourcesProvider::ICoreResourcesProvider()
 {
@@ -14,7 +15,7 @@ OsmAnd::ICoreResourcesProvider::~ICoreResourcesProvider()
 {
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(
+sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(
     const QString& name,
     const float displayDensityFactor) const
 {
@@ -23,37 +24,15 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(
     if (!ok)
         return nullptr;
 
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
-    {
-        return nullptr;
-    }
-
-    return bitmap;
+    return SkiaUtilities::createImageFromData(data);
 }
 
-std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(const QString& name) const
+sk_sp<SkImage> OsmAnd::ICoreResourcesProvider::getResourceAsImage(const QString& name) const
 {
     bool ok = false;
     const auto data = getResource(name, &ok);
     if (!ok)
         return nullptr;
-
-    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(
-            &dataStream,
-            bitmap.get(),
-            SkColorType::kUnknown_SkColorType,
-            SkImageDecoder::kDecodePixels_Mode))
-    {
-        return nullptr;
-    }
-
-    return bitmap;
+    
+    return SkiaUtilities::createImageFromData(data);
 }
