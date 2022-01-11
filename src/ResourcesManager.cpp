@@ -151,9 +151,9 @@ bool OsmAnd::ResourcesManager::installTilesResource(const std::shared_ptr<const 
     return _p->installTilesResource(source);
 }
 
-void OsmAnd::ResourcesManager::installOsmAndOnlineTileSource()
+void OsmAnd::ResourcesManager::installBuiltInTileSources()
 {
-    _p->installOsmAndOnlineTileSource();
+    _p->installBuiltInTileSources();
 }
 
 bool OsmAnd::ResourcesManager::uninstallResource(const std::shared_ptr<const InstalledResource> &installedResource, const std::shared_ptr<const LocalResource> &resource)
