@@ -3,10 +3,12 @@
 #include <cassert>
 #include <algorithm>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkColor.h>
@@ -136,8 +138,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     //  - maxTextureUnitsInFragmentShader
     //  - setupOptions.maxNumberOfRasterMapLayersInBatch
     const auto vsUniformsPerLayer =
-        1 /*texCoordsOffset*/ +
-        1 /*texCoordsScale*/;
+        1 /*texCoordsOffsetAndScale*/ +
+        1 /*texelSize*/;
     const auto fsUniformsPerLayer =
         1 /*opacity*/ +
         1 /*isPremultipliedAlpha*/ +
@@ -222,7 +224,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
         "#if !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                ""\n"
-        "    INPUT float in_vs_vertexElevation;                                                                             ""\n"
+        "    INPUT vec4 in_vs_vertexNormalAndElevation;                                                                     ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
@@ -253,8 +255,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         // Parameters: per-layer-in-tile data
         "struct VsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    mediump vec2 texCoordsOffset;                                                                                  ""\n"
-        "    mediump vec2 texCoordsScale;                                                                                   ""\n"
+        "    mediump vec4 texCoordsOffsetAndScale;                                                                          ""\n"
+        "    highp vec4 texelSize;                                                                                          ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
@@ -264,7 +266,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
         "{                                                                                                                  ""\n"
         "    mediump vec2 texCoords = in_vs_vertexTexCoords;                                                                ""\n"
-        "    texCoords = texCoords * tileLayer.texCoordsScale + tileLayer.texCoordsOffset;                                  ""\n"
+        "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
         "    outTexCoords = texCoords;                                                                                      ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
@@ -284,16 +286,39 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
         "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
         "                                                                                                                   ""\n"
-        //       Calculate texcoords for elevation data (pixel-is-area)
         "        float heightInMeters;                                                                                      ""\n"
+        "        vec3 normal;                                                                                               ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "        vec2 elevationDataTexCoords;                                                                               ""\n"
+        "        vec2 elevationDataTexCoordsO;                                                                              ""\n"
         "        calculateTextureCoordinates(                                                                               ""\n"
         "            param_vs_elevationDataLayer,                                                                           ""\n"
-        "            elevationDataTexCoords);                                                                               ""\n"
-        "        heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoords).r;              ""\n"
+        "            elevationDataTexCoordsO);                                                                              ""\n"
+        "        heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoordsO).r;             ""\n"
+        "                                                                                                                   ""\n"
+        "        vec2 elevationDataTexCoordsT = elevationDataTexCoordsO;                                                    ""\n"
+        "        elevationDataTexCoordsT.t -= param_vs_elevationDataLayer.texelSize.y;                                      ""\n"
+        "        float heightInMetersT = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoordsT).r;      ""\n"
+        "                                                                                                                   ""\n"
+        "        vec2 elevationDataTexCoordsL = elevationDataTexCoordsO;                                                    ""\n"
+        "        elevationDataTexCoordsL.s -= param_vs_elevationDataLayer.texelSize.x;                                      ""\n"
+        "        float heightInMetersL = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoordsL).r;      ""\n"
+        "                                                                                                                   ""\n"
+        "        vec2 elevationDataTexCoordsB = elevationDataTexCoordsO;                                                    ""\n"
+        "        elevationDataTexCoordsB.t += param_vs_elevationDataLayer.texelSize.y;                                      ""\n"
+        "        float heightInMetersB = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoordsB).r;      ""\n"
+        "                                                                                                                   ""\n"
+        "        vec2 elevationDataTexCoordsR = elevationDataTexCoordsO;                                                    ""\n"
+        "        elevationDataTexCoordsR.s += param_vs_elevationDataLayer.texelSize.x;                                      ""\n"
+        "        float heightInMetersR = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoordsR).r;      ""\n"
+        "                                                                                                                   ""\n"
+        "        normal = normalize(vec3(                                                                                   ""\n"
+        "            2.0 * (heightInMetersR - heightInMetersL) / metersToUnits,                                             ""\n"
+        "            2.0 * (heightInMetersB - heightInMetersT) / metersToUnits,                                             ""\n"
+        "            -4.0                                                                                                   ""\n"
+        "        ));                                                                                                        ""\n"
         "#else // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
-        "        heightInMeters = in_vs_vertexElevation;                                                                    ""\n"
+        "        heightInMeters = in_vs_vertexNormalAndElevation.w;                                                         ""\n"
+        "        normal = normalize(in_vs_vertexNormalAndElevation.xyz / vec3(metersToUnits, metersToUnits, 1.0));          ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
@@ -518,8 +543,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     if (!gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.in.vertexElevation,
-            "in_vs_vertexElevation",
+            outRasterLayerTileProgram.vs.in.vertexNormalAndElevation,
+            "in_vs_vertexNormalAndElevation",
             GlslVariableType::In);
     }
     ok = ok && lookup->lookupLocation(
@@ -572,12 +597,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_elevationData_sampler",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.param.elevationDataLayer.texCoordsOffset,
-            "param_vs_elevationDataLayer.texCoordsOffset",
+            outRasterLayerTileProgram.vs.param.elevationDataLayer.texCoordsOffsetAndScale,
+            "param_vs_elevationDataLayer.texCoordsOffsetAndScale",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.param.elevationDataLayer.texCoordsScale,
-            "param_vs_elevationDataLayer.texCoordsScale",
+            outRasterLayerTileProgram.vs.param.elevationDataLayer.texelSize,
+            "param_vs_elevationDataLayer.texelSize",
             GlslVariableType::Uniform);
     }
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
@@ -591,12 +616,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             auto& layerStruct = outRasterLayerTileProgram.vs.param.rasterTileLayers[layerIndex];
 
             ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsOffset,
-                layerStructName + ".texCoordsOffset",
+                layerStruct.texCoordsOffsetAndScale,
+                layerStructName + ".texCoordsOffsetAndScale",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsScale,
-                layerStructName + ".texCoordsScale",
+                layerStruct.texelSize,
+                layerStructName + ".texelSize",
                 GlslVariableType::Uniform);
         }
 
@@ -627,7 +652,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const Ref<PerTileBatchedLayers>& batch,
     AlphaChannelType& currentAlphaChannelType,
-    GLlocation& activeElevationVertexAttribArray,
+    GLlocation& activeNormalAndElevationVertexAttribArray,
     GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -637,6 +662,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
@@ -655,7 +681,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         batchedLayersCount,
         elevationDataSamplerIndex,
         lastUsedProgram,
-        activeElevationVertexAttribArray);
+        activeNormalAndElevationVertexAttribArray);
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
     const auto& vao = _rasterTileVAOs[batchedLayersCount];
 
@@ -672,7 +698,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             program,
             batch->tileId,
             elevationDataSamplerIndex,
-            activeElevationVertexAttribArray);
+            activeNormalAndElevationVertexAttribArray);
     }
 
     // Shader expects blending to be premultiplied, since output color of fragment shader is premultiplied by alpha
@@ -751,20 +777,34 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 texCoordsOffset += batchedResourceInGPU->texCoordsOffset * nSizeInAtlas;
                 const auto texCoordsScale = batchedResourceInGPU->texCoordsScale * nSizeInAtlas;
 
-                glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
+                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                    texCoordsOffset.x,
+                    texCoordsOffset.y,
+                    texCoordsScale.x,
+                    texCoordsScale.y);
                 GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale, texCoordsScale.x, texCoordsScale.y);
+                glUniform4f(perTile_vs.texelSize,
+                    tileOnAtlasTexture->atlasTexture->uTexelSizeN,
+                    tileOnAtlasTexture->atlasTexture->vTexelSizeN,
+                    tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN,
+                    tileOnAtlasTexture->atlasTexture->vHalfTexelSizeN);
                 GL_CHECK_RESULT;
             }
-            else // if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
+            else // if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
             {
-                glUniform2f(perTile_vs.texCoordsOffset,
+                const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(batchedResourceInGPU->resourceInGPU);
+
+                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                     batchedResourceInGPU->texCoordsOffset.x,
-                    batchedResourceInGPU->texCoordsOffset.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale,
+                    batchedResourceInGPU->texCoordsOffset.y,
                     batchedResourceInGPU->texCoordsScale.x,
                     batchedResourceInGPU->texCoordsScale.y);
+                GL_CHECK_RESULT;
+                glUniform4f(perTile_vs.texelSize,
+                    texture->uTexelSizeN,
+                    texture->vTexelSizeN,
+                    texture->uHalfTexelSizeN,
+                    texture->vHalfTexelSizeN);
                 GL_CHECK_RESULT;
             }
 
@@ -802,7 +842,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const unsigned int numberOfLayersInBatch,
     const int elevationDataSamplerIndex,
     GLname& lastUsedProgram,
-    GLlocation& activeElevationVertexAttribArray)
+    GLlocation& activeNormalAndElevationVertexAttribArray)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -824,13 +864,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
 
     GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(numberOfLayersInBatch));
 
-    // Elevation vertex attrib is bound to program
-    if (lastUsedProgram.isValid() && activeElevationVertexAttribArray.isValid())
+    if (lastUsedProgram.isValid())
     {
-        glDisableVertexAttribArray(*activeElevationVertexAttribArray);
-        GL_CHECK_RESULT;
+        if (activeNormalAndElevationVertexAttribArray.isValid())
+        {
+            glDisableVertexAttribArray(*activeNormalAndElevationVertexAttribArray);
+            GL_CHECK_RESULT;
 
-        activeElevationVertexAttribArray.reset();
+            activeNormalAndElevationVertexAttribArray.reset();
+        }
     }
 
     // Set symbol VAO
@@ -1187,9 +1229,17 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     const RasterLayerTileProgram& program,
     const TileId tileId,
     const int elevationDataSamplerIndex,
-    GLlocation& activeElevationVertexAttribArray)
+    GLlocation& activeNormalAndElevationVertexAttribArray)
 {
     const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
 
     const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
@@ -1209,12 +1259,15 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             glBindTexture(GL_TEXTURE_2D, 0);
             GL_CHECK_RESULT;
         }
-        else if (activeElevationVertexAttribArray.isValid())
+        else
         {
-            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
-            GL_CHECK_RESULT;
+            if (activeNormalAndElevationVertexAttribArray.isValid())
+            {
+                glDisableVertexAttribArray(*activeNormalAndElevationVertexAttribArray);
+                GL_CHECK_RESULT;
 
-            activeElevationVertexAttribArray.reset();
+                activeNormalAndElevationVertexAttribArray.reset();
+            }
         }
 
         return;
@@ -1251,29 +1304,56 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         {
             const auto tileOnAtlasTexture =
                 std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+            const auto& texture = tileOnAtlasTexture->atlasTexture;
 
-            const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
-            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
-            const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
-            const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
-            const auto texCoordsScale = tileSizeN - 2.0f * tilePaddingN;
-            const PointF texCoordsOffset(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
+            const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
+            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
+            const PointF texCoordsScale(
+                texture->tileSizeN - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                texture->tileSizeN - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                colIndex * texture->tileSizeN + texture->uHalfTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN
+            );
 
-            glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
+            glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
             GL_CHECK_RESULT;
-            glUniform2f(perTile_vs.texCoordsScale, texCoordsScale, texCoordsScale);
+            glUniform4f(perTile_vs.texelSize,
+                texture->uTexelSizeN,
+                texture->vTexelSizeN,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
         else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
         {
             const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
 
-            const auto texCoordsScale = 1.0f - 2.0f * texture->uHalfTexelSizeN;
-            const PointF texCoordsOffset(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
+            const PointF texCoordsScale(
+                1.0f - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                1.0f - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                texture->vHalfTexelSizeN + texture->vTexelSizeN
+            );
 
-            glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
+            glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
             GL_CHECK_RESULT;
-            glUniform2f(perTile_vs.texCoordsScale, texCoordsScale, texCoordsScale);
+            glUniform4f(perTile_vs.texelSize,
+                texture->uTexelSizeN,
+                texture->vTexelSizeN,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
     }
@@ -1284,18 +1364,18 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
         assert(arrayBuffer->itemsCount == AtlasMapRenderer::HeixelsPerTileSide * AtlasMapRenderer::HeixelsPerTileSide);
 
-        if (!activeElevationVertexAttribArray.isValid())
+        if (!activeNormalAndElevationVertexAttribArray.isValid())
         {
-            glEnableVertexAttribArray(*program.vs.in.vertexElevation);
+            glEnableVertexAttribArray(*program.vs.in.vertexNormalAndElevation);
             GL_CHECK_RESULT;
 
-            activeElevationVertexAttribArray = program.vs.in.vertexElevation;
+            activeNormalAndElevationVertexAttribArray = program.vs.in.vertexNormalAndElevation;
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
         GL_CHECK_RESULT;
 
-        glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+        glVertexAttribPointer(*program.vs.in.vertexNormalAndElevation, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 4, nullptr);
         GL_CHECK_RESULT;
     }
 }

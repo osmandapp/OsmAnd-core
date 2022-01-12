@@ -48,6 +48,7 @@ namespace OsmAnd
             MaxMissingDataZoomShift = 5,
             MaxMissingDataUnderZoomShift = 2,
             HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
+            ElevationDataTileSize = HeixelsPerTileSide + 2,
         };
 
     private:
@@ -290,6 +291,7 @@ namespace OsmAnd
         virtual int getMaxMissingDataZoomShift() const Q_DECL_OVERRIDE;
         virtual int getMaxMissingDataUnderZoomShift() const Q_DECL_OVERRIDE;
         virtual int getHeixelsPerTileSide() const Q_DECL_OVERRIDE;
+        virtual int getElevationDataTileSize() const Q_DECL_OVERRIDE;
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;

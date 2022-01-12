@@ -160,6 +160,7 @@ namespace OsmAnd
         virtual int getMaxMissingDataZoomShift() const = 0;
         virtual int getMaxMissingDataUnderZoomShift() const = 0;
         virtual int getHeixelsPerTileSide() const = 0;
+        virtual int getElevationDataTileSize() const = 0;
 
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) = 0;
         virtual void resetResourceWorkerThreadsLimit() = 0;

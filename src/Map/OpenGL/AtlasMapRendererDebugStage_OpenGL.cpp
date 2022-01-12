@@ -238,6 +238,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_vaoRect2D);
@@ -477,6 +478,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_vaoLine2D);
@@ -719,6 +721,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_vaoLine3D);
@@ -975,6 +978,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_vaoQuad3D);

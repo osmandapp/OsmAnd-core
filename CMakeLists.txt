@@ -303,7 +303,7 @@ set(merged_dependencies
 	${target_specific_dependencies}
 )
 set(merged_compile_definitions_public
-	-DGLM_SWIZZLE
+	-DGLM_FORCE_SWIZZLE
 	${target_specific_public_definitions}
 )
 set(merged_compile_definitions_private

@@ -1474,10 +1474,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
                 const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
                 const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
                 const auto toCenter = glm::translate(-pC);
-                const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(glyph.angle + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
+                const auto rotate = glm::rotate(
+                    (float)Utilities::normalizedAngleRadians(glyph.angle + M_PI),
+                    glm::vec3(0.0f, -1.0f, 0.0f));
                 const auto fromCenter = glm::translate(pC);
                 const auto M = fromCenter*rotate*toCenter;
-                getRenderer()->debugStage->addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 128));
+                getRenderer()->debugStage->addQuad3D(
+                    (M*p0).xyz(),
+                    (M*p1).xyz(),
+                    (M*p2).xyz(),
+                    (M*p3).xyz(),
+                    SkColorSetA(SK_ColorGREEN, 128));
 
                 QVector<glm::vec3> lineN;
                 const auto ln0 = glyph.anchorPoint;
@@ -1745,7 +1752,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScree
         *(pPointOnScreen++) = glm_extensions::fastProject(
             glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
             internalState.mPerspectiveProjectionView,
-            internalState.glmViewport).xy;
+            internalState.glmViewport).xy();
         pPointInWorld++;
     }
 
@@ -2337,10 +2344,17 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
         const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
         const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
         const auto toCenter = glm::translate(-pC);
-        const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(directionAngleInWorld + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
+        const auto rotate = glm::rotate(
+            (float)Utilities::normalizedAngleRadians(directionAngleInWorld + M_PI),
+            glm::vec3(0.0f, -1.0f, 0.0f));
         const auto fromCenter = glm::translate(pC);
         const auto M = fromCenter*rotate*toCenter;
-        getRenderer()->debugStage->addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 50));
+        getRenderer()->debugStage->addQuad3D(
+            (M*p0).xyz(),
+            (M*p1).xyz(),
+            (M*p2).xyz(),
+            (M*p3).xyz(),
+            SkColorSetA(SK_ColorGREEN, 50));
     }
 #endif // OSMAND_DEBUG
 #if OSMAND_DEBUG && 0
@@ -2362,19 +2376,19 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
     const PointF projectedRotatedBBoxInWorldP0(static_cast<glm::vec2>(
         glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
         internalState.mPerspectiveProjectionView,
-        internalState.glmViewport).xy));
+        internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP1(static_cast<glm::vec2>(
         glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
         internalState.mPerspectiveProjectionView,
-        internalState.glmViewport).xy));
+        internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP2(static_cast<glm::vec2>(
         glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
         internalState.mPerspectiveProjectionView,
-        internalState.glmViewport).xy));
+        internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP3(static_cast<glm::vec2>(
         glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
         internalState.mPerspectiveProjectionView,
-        internalState.glmViewport).xy));
+        internalState.glmViewport).xy()));
 #if OSMAND_DEBUG && 0
     {
         QVector<glm::vec2> line;

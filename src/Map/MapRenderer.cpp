@@ -1212,6 +1212,9 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
     if (!provider)
         return false;
 
+    if (provider->getTileSize() != getElevationDataTileSize())
+        return false;
+
     bool update = forcedUpdate || (_requestedState.elevationDataProvider != provider);
     if (!update)
         return false;
@@ -1681,6 +1684,11 @@ int OsmAnd::MapRenderer::getMaxMissingDataUnderZoomShift() const
 int OsmAnd::MapRenderer::getHeixelsPerTileSide() const
 {
     return HeixelsPerTileSide;
+}
+
+int OsmAnd::MapRenderer::getElevationDataTileSize() const
+{
+    return ElevationDataTileSize;
 }
 
 bool OsmAnd::MapRenderer::updateCurrentDebugSettings()

@@ -278,20 +278,20 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Setup camera
     internalState->mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -internalState->distanceFromCameraToTarget));
-    internalState->mElevation = glm::rotate(state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    internalState->mAzimuth = glm::rotate(state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    internalState->mElevation = glm::rotate(glm::radians(state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+    internalState->mAzimuth = glm::rotate(glm::radians(state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mCameraView = internalState->mDistance * internalState->mElevation * internalState->mAzimuth;
 
     // Get inverse camera
     internalState->mDistanceInv = glm::translate(glm::vec3(0.0f, 0.0f, internalState->distanceFromCameraToTarget));
-    internalState->mElevationInv = glm::rotate(-state.elevationAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    internalState->mAzimuthInv = glm::rotate(-state.azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+    internalState->mElevationInv = glm::rotate(glm::radians(-state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+    internalState->mAzimuthInv = glm::rotate(glm::radians(-state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
     internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera positions
     internalState->groundCameraPosition =
-        (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
-    internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+        (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz();
+    internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
 
     // Convenience precalculations
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
@@ -369,51 +369,51 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     glm::vec2 intersectionPoints[4];
 
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz(), fBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz(), fBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), fTR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), fTL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz(), fBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz(), fBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
+        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
         intersectionPointsCounter++;
     }
     assert(intersectionPointsCounter == 4);

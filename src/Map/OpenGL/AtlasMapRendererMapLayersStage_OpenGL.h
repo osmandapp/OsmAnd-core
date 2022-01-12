@@ -98,7 +98,7 @@ namespace OsmAnd
                 struct {
                     GLlocation vertexPosition;
                     GLlocation vertexTexCoords;
-                    GLlocation vertexElevation;
+                    GLlocation vertexNormalAndElevation;
                 } in;
 
                 // Parameters
@@ -122,8 +122,8 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
                     {
-                        GLlocation texCoordsOffset;
-                        GLlocation texCoordsScale;
+                        GLlocation texCoordsOffsetAndScale;
+                        GLlocation texelSize;
                     };
                     VsPerTilePerLayerParameters elevationDataLayer;
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
@@ -152,18 +152,18 @@ namespace OsmAnd
         bool renderRasterLayersBatch(
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
-            GLlocation& activeElevationVertexAttribArray,
+            GLlocation& activeNormalAndElevationVertexAttribArray,
             GLname& lastUsedProgram);
         void configureElevationData(
             const RasterLayerTileProgram& program,
             const TileId tileId,
             const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray);
+            GLlocation& activeNormalAndElevationVertexAttribArray);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
-            GLlocation& activeElevationVertexAttribArray);
+            GLlocation& activeNormalAndElevationVertexAttribArray);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel);

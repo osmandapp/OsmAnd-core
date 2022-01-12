@@ -75,7 +75,7 @@ namespace OsmAnd
             return false;
         }
 
-        bool test(const QVector< glm::detail::tvec2<T, glm::precision::defaultp> >& path) const
+        bool test(const QVector< glm::tvec2<T, glm::precision::defaultp> >& path) const
         {
             if (path.isEmpty())
                 return false;

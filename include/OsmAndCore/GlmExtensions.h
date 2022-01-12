@@ -9,12 +9,12 @@
 namespace glm_extensions
 {
     template <typename T, typename U, glm::precision P>
-    GLM_FUNC_QUALIFIER glm::detail::tvec3<T, P> fastProject(
-        glm::detail::tvec3<T, P> const & obj,
-        glm::detail::tmat4x4<T, P> const & modelProjection,
-        glm::detail::tvec4<U, P> const & viewport)
+    GLM_FUNC_QUALIFIER glm::tvec3<T, P> fastProject(
+        glm::tvec3<T, P> const & obj,
+        glm::tmat4x4<T, P> const & modelProjection,
+        glm::tvec4<U, P> const & viewport)
     {
-        glm::detail::tvec4<T, P> tmp = glm::detail::tvec4<T, P>(obj, T(1));
+        glm::tvec4<T, P> tmp = glm::tvec4<T, P>(obj, T(1));
         tmp = modelProjection * tmp;
 
         tmp /= tmp.w * T(2.0);
@@ -22,7 +22,7 @@ namespace glm_extensions
         tmp[0] = tmp[0] * T(viewport[2]) + T(viewport[0]);
         tmp[1] = tmp[1] * T(viewport[3]) + T(viewport[1]);
 
-        return glm::detail::tvec3<T, P>(tmp);
+        return glm::tvec3<T, P>(tmp);
     }
 }
 

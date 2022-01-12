@@ -1067,6 +1067,42 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         return false;
     }
 
+    const auto pHeixels = reinterpret_cast<const uint8_t*>(elevationData->pRawData);
+    const auto pHeixelsRowLength = elevationData->rowLength;
+    const auto heixelsPerTileSide = elevationData->size;
+    const auto itemsPerTileSide = elevationData->size - 2;
+    const auto itemsCount = itemsPerTileSide * itemsPerTileSide;
+    const auto pItems = new float[itemsCount * 4];
+
+    auto pItem = reinterpret_cast<glm::vec4*>(pItems);
+    for (int row = 0; row < itemsPerTileSide; row++)
+    {
+        const auto pPrevHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 0) * pHeixelsRowLength);
+        const auto pCurrHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 1) * pHeixelsRowLength);
+        const auto pNextHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 2) * pHeixelsRowLength);
+
+        auto pHeixelO = pCurrHeixelsRow + 1;
+        auto pHeixelT = pPrevHeixelsRow + 1;
+        auto pHeixelL = pCurrHeixelsRow + 0;
+        auto pHeixelB = pNextHeixelsRow + 1;
+        auto pHeixelR = pCurrHeixelsRow + 2;
+        for (int col = 0; col < itemsPerTileSide; col++, pItem++, pHeixelO++, pHeixelT++, pHeixelL++, pHeixelB++, pHeixelR++)
+        {
+            auto& item = *pItem;
+
+            const auto normal = glm::vec3(
+                2.0f * (*pHeixelR - *pHeixelL),
+                2.0f * (*pHeixelB - *pHeixelT),
+                -4.0f
+            );
+            item.x = normal.x;
+            item.y = normal.y;
+            item.z = normal.z;
+
+            item.w = *pHeixelO;
+        }
+    }
+
     // Create array buffer
     GLuint buffer;
     glGenBuffers(1, &buffer);
@@ -1077,9 +1113,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     GL_CHECK_RESULT;
 
     // Upload data
-    const auto itemsCount = elevationData->size*elevationData->size;
-    assert(elevationData->size*sizeof(float) == elevationData->rowLength);
-    glBufferData(GL_ARRAY_BUFFER, itemsCount*sizeof(float), elevationData->pRawData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(float) * 4, pItems, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1088,6 +1122,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
 
     auto arrayBufferInGPU = new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(buffer), itemsCount);
     resourceInGPU.reset(static_cast<ResourceInGPU*>(arrayBufferInGPU));
+
+    delete[] pItems;
 
     return true;
 }
