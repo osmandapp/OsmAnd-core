@@ -2172,7 +2172,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D));
 
     // Calculate direction
-    const auto mDirection = glm::rotate(renderable->direction, glm::vec3(0.0f, -1.0f, 0.0f));
+    const auto mDirection = glm::rotate(glm::radians(renderable->direction), glm::vec3(0.0f, -1.0f, 0.0f));
 
     // Calculate and set model-view-projection matrix (scale -> direction -> position -> camera -> projection)
     const auto mModelViewProjection = internalState.mPerspectiveProjectionView * mPosition * mDirection * mScale;

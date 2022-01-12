@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 159
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 160
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -303,7 +303,7 @@ set(merged_dependencies
 	${target_specific_dependencies}
 )
 set(merged_compile_definitions_public
-	-DGLM_SWIZZLE
+	-DGLM_FORCE_SWIZZLE
 	${target_specific_public_definitions}
 )
 set(merged_compile_definitions_private

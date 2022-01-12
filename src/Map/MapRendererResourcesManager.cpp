@@ -209,7 +209,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindings(
 
     bool wasLocked = false;
 
-    if (updatedMask.isSet(MapRendererStateChange::ElevationData_Provider))
+    if (updatedMask.isSet(MapRendererStateChange::Elevation_DataProvider))
     {
         if (!wasLocked)
         {

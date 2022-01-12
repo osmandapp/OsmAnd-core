@@ -103,7 +103,7 @@ namespace OsmAnd
 
         virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetElevationDataProvider(bool forcedUpdate = false) = 0;
-        virtual bool setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate = false) = 0;
+        virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
@@ -160,6 +160,7 @@ namespace OsmAnd
         virtual int getMaxMissingDataZoomShift() const = 0;
         virtual int getMaxMissingDataUnderZoomShift() const = 0;
         virtual int getHeixelsPerTileSide() const = 0;
+        virtual int getElevationDataTileSize() const = 0;
 
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) = 0;
         virtual void resetResourceWorkerThreadsLimit() = 0;

@@ -58,7 +58,7 @@ namespace OsmAnd
         }
 
 #if !defined(SWIG)
-        inline Point(const glm::detail::tvec2<T, glm::precision::defaultp>& that)
+        inline Point(const glm::tvec2<T, glm::precision::defaultp>& that)
         {
             this->x = that.x;
             this->y = that.y;
@@ -132,7 +132,7 @@ namespace OsmAnd
             return *this;
         }
 
-        inline PointT& operator=(const glm::detail::tvec2<T, glm::precision::defaultp>& r)
+        inline PointT& operator=(const glm::tvec2<T, glm::precision::defaultp>& r)
         {
             this->x = r.x;
             this->y = r.y;
@@ -144,9 +144,9 @@ namespace OsmAnd
             return Point<MorePreciseCoordType>(x, y);
         }
 
-        inline operator glm::detail::tvec2<T, glm::precision::defaultp>() const
+        inline operator glm::tvec2<T, glm::precision::defaultp>() const
         {
-            return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
+            return glm::tvec2<T, glm::precision::defaultp>(x, y);
         }
 
         inline MorePreciseUnsignedCoordType squareNorm() const

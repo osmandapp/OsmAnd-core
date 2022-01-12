@@ -7,9 +7,16 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , frameUpdateRequestCallback(nullptr)
     , maxNumberOfRasterMapLayersInBatch(0)
     , displayDensityFactor(1.0f)
+    , elevationVisualizationEnabled(true)
 {
 }
 
 OsmAnd::MapRendererSetupOptions::~MapRendererSetupOptions()
 {
+}
+
+bool OsmAnd::MapRendererSetupOptions::isValid() const
+{
+    return
+        (displayDensityFactor > 0.0f);
 }

@@ -164,11 +164,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units combined %d", _maxTextureUnitsCombined);
 
-    GLint maxTextureUnitsCombined;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d", maxTextureUnitsCombined);
-
     if (extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
     {
         // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
@@ -193,6 +188,29 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
+
+    glGetIntegerv(GL_MAX_VARYING_FLOATS, &_maxVaryingFloats);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
+
+    if (glVersion >= 40 || extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
+    {
+        glGetIntegerv(GL_MAX_VARYING_VECTORS, &_maxVaryingVectors);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying vectors %d", _maxVaryingVectors);
+    }
+    else if (glVersion >= 30)
+    {
+        GLint maxVaryingComponents;
+        glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &maxVaryingComponents);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying components %d", maxVaryingComponents);
+        _maxVaryingVectors = maxVaryingComponents / 4;
+    }
+    else
+    {
+        _maxVaryingVectors = _maxVaryingFloats / 4;
+    }
 
     if (glVersion >= 43)
     {
@@ -619,8 +637,10 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
     }
 
     auto shaderSourcePreprocessed = shaderHeader;
-    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
-    shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
+    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%",
+        QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderSourcePreprocessed.replace("%TextureLodSupported%",
+        QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderSourcePreprocessed);
 }

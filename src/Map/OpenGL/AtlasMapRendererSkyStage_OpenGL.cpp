@@ -173,6 +173,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_skyplaneVAO);

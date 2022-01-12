@@ -48,6 +48,7 @@ namespace OsmAnd
             MaxMissingDataZoomShift = 5,
             MaxMissingDataUnderZoomShift = 2,
             HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
+            ElevationDataTileSize = HeixelsPerTileSide + 2,
         };
 
     private:
@@ -122,7 +123,6 @@ namespace OsmAnd
             const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // General:
-        virtual bool isRenderingInitialized() const;
         const std::unique_ptr<GPUAPI> gpuAPI;
         const MapRendererSetupOptions& setupOptions;
         bool hasGpuWorkerThread() const;
@@ -216,94 +216,98 @@ namespace OsmAnd
     public:
         virtual ~MapRenderer();
 
-        virtual MapRendererSetupOptions getSetupOptions() const;
-        virtual bool setup(const MapRendererSetupOptions& setupOptions);
+        virtual MapRendererSetupOptions getSetupOptions() const Q_DECL_OVERRIDE;
+        virtual bool setup(const MapRendererSetupOptions& setupOptions) Q_DECL_OVERRIDE;
 
         // General:
+        virtual bool isRenderingInitialized() const Q_DECL_OVERRIDE;
 
         // Configuration-related:
-        virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const;
-        virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false);
+        virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const Q_DECL_OVERRIDE;
+        virtual void setConfiguration(
+            const std::shared_ptr<const MapRendererConfiguration>& configuration,
+            bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool initializeRendering();
+        virtual bool initializeRendering() Q_DECL_OVERRIDE;
         virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) Q_DECL_FINAL;
         virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) Q_DECL_FINAL;
         virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) Q_DECL_FINAL;
-        virtual bool releaseRendering(const bool gpuContextLost = false);
+        virtual bool releaseRendering(const bool gpuContextLost = false) Q_DECL_OVERRIDE;
 
-        virtual bool isIdle() const;
-        virtual QString getNotIdleReason() const;
+        virtual bool isIdle() const Q_DECL_OVERRIDE;
+        virtual QString getNotIdleReason() const Q_DECL_OVERRIDE;
 
-        virtual bool isGpuWorkerPaused() const;
-        virtual bool suspendGpuWorker();
-        virtual bool resumeGpuWorker();
+        virtual bool isGpuWorkerPaused() const Q_DECL_OVERRIDE;
+        virtual bool suspendGpuWorker() Q_DECL_OVERRIDE;
+        virtual bool resumeGpuWorker() Q_DECL_OVERRIDE;
 
-        virtual void reloadEverything();
+        virtual void reloadEverything() Q_DECL_OVERRIDE;
 
-        virtual MapRendererState getState() const;
-        virtual MapState getMapState() const;
-        virtual bool isFrameInvalidated() const;
-        virtual void forcedFrameInvalidate();
-        virtual void forcedGpuProcessingCycle();
+        virtual MapRendererState getState() const Q_DECL_OVERRIDE;
+        virtual MapState getMapState() const Q_DECL_OVERRIDE;
+        virtual bool isFrameInvalidated() const Q_DECL_OVERRIDE;
+        virtual void forcedFrameInvalidate() Q_DECL_OVERRIDE;
+        virtual void forcedGpuProcessingCycle() Q_DECL_OVERRIDE;
 
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
-        virtual bool setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false);
-        virtual bool resetMapLayerProvider(const int layerIndex, bool forcedUpdate = false);
-        virtual bool setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false);
+        virtual bool setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool resetMapLayerProvider(const int layerIndex, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false);
-        virtual bool resetElevationDataProvider(bool forcedUpdate = false);
-        virtual bool setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate = false);
+        virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool resetElevationDataProvider(bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false);
-        virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false);
-        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false);
-        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false);
-        virtual bool removeAllSymbolsProviders(bool forcedUpdate = false);
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool removeAllSymbolsProviders(bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
-        virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false);
-        virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false);
-        virtual bool setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate = false);
-        virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false);
-        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false);
-        virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false);
-        virtual bool setZoom(const float zoom, bool forcedUpdate = false);
-        virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false);
-        virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false);
-        virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false);
-        virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false);
+        virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false);
+        virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual ZoomLevel getMinZoomLevel() const;
-        virtual ZoomLevel getMaxZoomLevel() const;
+        virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;
 
-        virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const;
-        virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const;
-        virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const;
-        virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const;
+        virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const Q_DECL_OVERRIDE;
 
         virtual int getMaxMissingDataZoomShift() const Q_DECL_OVERRIDE;
         virtual int getMaxMissingDataUnderZoomShift() const Q_DECL_OVERRIDE;
         virtual int getHeixelsPerTileSide() const Q_DECL_OVERRIDE;
+        virtual int getElevationDataTileSize() const Q_DECL_OVERRIDE;
 
         // Symbols-related:
-        virtual unsigned int getSymbolsCount() const;
-        virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const;
-        virtual bool suspendSymbolsUpdate();
-        virtual bool resumeSymbolsUpdate();
+        virtual unsigned int getSymbolsCount() const Q_DECL_OVERRIDE;
+        virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const Q_DECL_OVERRIDE;
+        virtual bool suspendSymbolsUpdate() Q_DECL_OVERRIDE;
+        virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
 
         // Debug-related:
-        virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;
-        virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings);
-        virtual void setResourceWorkerThreadsLimit(const unsigned int limit);
-        virtual void resetResourceWorkerThreadsLimit();
-        virtual unsigned int getActiveResourceRequestsCount() const;
-        virtual void dumpResourcesInfo() const;
+        virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;
+        virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) Q_DECL_OVERRIDE;
+        virtual void setResourceWorkerThreadsLimit(const unsigned int limit) Q_DECL_OVERRIDE;
+        virtual void resetResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
+        virtual unsigned int getActiveResourceRequestsCount() const Q_DECL_OVERRIDE;
+        virtual void dumpResourcesInfo() const Q_DECL_OVERRIDE;
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;

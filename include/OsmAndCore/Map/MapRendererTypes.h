@@ -13,12 +13,9 @@
 
 namespace OsmAnd
 {
-    struct MapLayerConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API MapLayerConfiguration Q_DECL_FINAL
     {
-        MapLayerConfiguration()
-            : opacityFactor(1.0f)
-        {
-        }
+        MapLayerConfiguration();
 
         float opacityFactor;
 #if !defined(SWIG)
@@ -49,51 +46,156 @@ namespace OsmAnd
         }
     };
 
-    struct ElevationDataConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API ElevationConfiguration Q_DECL_FINAL
     {
-        ElevationDataConfiguration()
-            : scaleFactor(1.0f)
-        {
-        }
+        enum class SlopeAlgorithm {
+            None = 0,
+            ZevenbergenThorne = 4,
+            Horn = 8,
+        };
 
-        float scaleFactor;
+        enum class VisualizationStyle {
+            None = 0,
+            SlopeDegrees = 10,
+            SlopePercents = 11,
+            HillshadeTraditional = 20,
+            HillshadeIgor = 21,
+            HillshadeCombined = 22,
+            HillshadeMultidirectional = 23,
+        };
+
+        enum class ColorMapPreset {
+            GrayscaleHillshade,
+            GrayscaleSlopeDegrees,
+            TerrainSlopeDegrees,
+        };
+
+        enum {
+            MaxColorMapEntries = 8,
+        };
+
+        ElevationConfiguration();
+
+        float dataScaleFactor;
 #if !defined(SWIG)
-        inline ElevationDataConfiguration& setScaleFactor(const float newScaleFactor)
+        inline ElevationConfiguration& setDataScaleFactor(const float newDataScaleFactor)
         {
-            scaleFactor = newScaleFactor;
+            dataScaleFactor = newDataScaleFactor;
 
             return *this;
         }
 #endif // !defined(SWIG)
 
-        inline bool isValid() const
+        SlopeAlgorithm slopeAlgorithm;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setSlopeAlgorithm(const SlopeAlgorithm newSlopeAlgorithm)
         {
-            return true;
-        }
+            slopeAlgorithm = newSlopeAlgorithm;
 
-        inline bool operator==(const ElevationDataConfiguration& r) const
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        VisualizationStyle visualizationStyle;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setVisualizationStyle(const VisualizationStyle newVisualizationStyle)
+        {
+            visualizationStyle = newVisualizationStyle;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float visualizationAlpha;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setVisualizationAlpha(const float newVisualizationAlpha)
+        {
+            visualizationAlpha = newVisualizationAlpha;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float visualizationZ;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setVisualizationZ(const float newVisualizationZ)
+        {
+            visualizationZ = newVisualizationZ;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float hillshadeSunAngle;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setHillshadeSunAngle(const float newHillshadeSunAngle)
+        {
+            hillshadeSunAngle = newHillshadeSunAngle;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float hillshadeSunAzimuth;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setHillshadeSunAzimuth(const float newHillshadeSunAzimuth)
+        {
+            hillshadeSunAzimuth = newHillshadeSunAzimuth;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        std::array<std::pair<float, FColorRGBA>, MaxColorMapEntries> visualizationColorMap;
+#if !defined(SWIG)
+        ElevationConfiguration& resetVisualizationColorMap();
+        ElevationConfiguration& setVisualizationColorMapPreset(ColorMapPreset colorMapPreset);
+#endif // !defined(SWIG)
+
+        float zScaleFactor;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setZScaleFactor(const float newZScaleFactor)
+        {
+            zScaleFactor = newZScaleFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        bool isValid() const;
+
+        inline bool operator==(const ElevationConfiguration& r) const
         {
             return
-                qFuzzyCompare(scaleFactor, r.scaleFactor);
+                qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) &&
+                slopeAlgorithm == r.slopeAlgorithm &&
+                visualizationStyle == r.visualizationStyle &&
+                qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) &&
+                qFuzzyCompare(visualizationZ, r.visualizationZ) &&
+                visualizationColorMap == r.visualizationColorMap &&
+                qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) &&
+                qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) &&
+                qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
 
-        inline bool operator!=(const ElevationDataConfiguration& r) const
+        inline bool operator!=(const ElevationConfiguration& r) const
         {
             return
-                !qFuzzyCompare(scaleFactor, r.scaleFactor);
+                !qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) ||
+                slopeAlgorithm != r.slopeAlgorithm ||
+                visualizationStyle != r.visualizationStyle ||
+                !qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) ||
+                !qFuzzyCompare(visualizationZ, r.visualizationZ) ||
+                visualizationColorMap != r.visualizationColorMap ||
+                !qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) ||
+                !qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) ||
+                !qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
     };
 
-    struct FogConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API FogConfiguration Q_DECL_FINAL
     {
-        FogConfiguration()
-            : distanceToFog(400.0f) //700
-            , originFactor(0.36f)
-            , heightOriginFactor(0.05f)
-            , density(1.9f)
-            , color(1.0f, 0.0f, 0.0f)
-        {
-        }
+        FogConfiguration();
 
         float distanceToFog;
 #if !defined(SWIG)

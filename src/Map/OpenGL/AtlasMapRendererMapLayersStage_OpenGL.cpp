@@ -3,10 +3,12 @@
 #include <cassert>
 #include <algorithm>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkColor.h>
@@ -131,18 +133,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
 {
     const auto gpuAPI = getGPUAPI();
 
-    // Determine maximum number of raster layers in one batch. It's determined by minimal of following numbers:
-    //  - (maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer)
-    //  - maxTextureUnitsInFragmentShader
-    //  - setupOptions.maxNumberOfRasterMapLayersInBatch
+    // Determine maximum number of raster layers in one batch...
+
+    // ... by uniforms
     const auto vsUniformsPerLayer =
-        1 /*texCoordsOffset*/ +
-        1 /*texCoordsScale*/;
+        1 /*texCoordsOffsetAndScale*/;
     const auto fsUniformsPerLayer =
         1 /*opacity*/ +
         1 /*isPremultipliedAlpha*/ +
         1 /*sampler*/;
-    const auto alreadyOccupiedUniforms =
+    const auto vsOtherUniforms =
         4 /*param_vs_mProjectionView*/ +
         1 /*param_vs_targetInTilePosN*/ +
         (!gpuAPI->isSupported_textureLod
@@ -151,25 +151,63 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
               1 /*param_vs_cameraElevationAngleN*/ +
               1 /*param_vs_groundCameraPosition*/ +
               1 /*param_vs_scaleToRetainProjectedSize*/) +
+        1 /*param_vs_elevation_configuration*/ +
+        1 /*param_vs_elevation_hillshadeConfiguration*/ +
+        8 /*param_vs_elevation_colorMapKeys*/ +
+        8 /*param_vs_elevation_colorMapValues*/ +
         1 /*param_vs_tileCoordsOffset*/ +
-        1 /*param_vs_elevationData_scaleFactor*/ +
-        1 /*param_vs_elevationData_upperMetersPerUnit*/ +
-        1 /*param_vs_elevationData_lowerMetersPerUnit*/ +
-        (gpuAPI->isSupported_vertexShaderTextureLookup ? vsUniformsPerLayer : 0) /*param_vs_elevationDataLayer*/;
-    _maxNumberOfRasterMapLayersInBatch =
-        (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
-    if (_maxNumberOfRasterMapLayersInBatch > gpuAPI->maxTextureUnitsInFragmentShader)
-        _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsInFragmentShader;
-    if (gpuAPI->isSupported_vertexShaderTextureLookup &&
-        _maxNumberOfRasterMapLayersInBatch + 1 > gpuAPI->maxTextureUnitsCombined)
-    {
-        _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsCombined - 1;
-    }
+        1 /*param_vs_elevation_scale*/ +
+        (!gpuAPI->isSupported_vertexShaderTextureLookup
+            ? 0
+            : vsUniformsPerLayer /*param_vs_elevationLayer*/ +
+              1 /*param_vs_elevationLayerTexelSize*/);
+    const auto maxBatchSizeByUniforms =
+        (gpuAPI->maxVertexUniformVectors - vsOtherUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
+
+    // ... by varying floats
+    const auto varyingFloatsPerLayer =
+        2 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
+    const auto otherVaryingFloats =
+        (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
+        (setupOptions.elevationVisualizationEnabled ? 4 : 0) /*v2f_elevationColor*/;
+    const auto maxBatchSizeByVaryingFloats =
+        (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
+
+    // ... by varying vectors
+    const auto varyingVectorsPerLayer =
+        1 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
+    const auto otherVaryingVectors =
+        (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
+        (setupOptions.elevationVisualizationEnabled ? 1 : 0) /*v2f_elevationColor*/;
+    const auto maxBatchSizeByVaryingVectors =
+        (gpuAPI->maxVaryingVectors - otherVaryingVectors) / varyingVectorsPerLayer;
+
+    // ... by texture units
+    const auto maxBatchSizeByTextureUnits = std::min({
+        gpuAPI->maxTextureUnitsCombined - (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0),
+        gpuAPI->maxTextureUnitsInFragmentShader
+    });
+
+    // Get minimal and limit further with override if set
+    _maxNumberOfRasterMapLayersInBatch = std::min({
+        maxBatchSizeByUniforms,
+        maxBatchSizeByVaryingFloats,
+        maxBatchSizeByVaryingVectors,
+        maxBatchSizeByTextureUnits
+    });
     if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 &&
         _maxNumberOfRasterMapLayersInBatch > setupOptions.maxNumberOfRasterMapLayersInBatch)
     {
         _maxNumberOfRasterMapLayersInBatch = setupOptions.maxNumberOfRasterMapLayersInBatch;
     }
+    LogPrintf(LogSeverityLevel::Info,
+        "Maximal number of raster map layers in a batch is %d (%d by uniforms, %d by varying floats, %d by varying vectors, %d by texture units)",
+        _maxNumberOfRasterMapLayersInBatch,
+        maxBatchSizeByUniforms,
+        maxBatchSizeByVaryingFloats,
+        maxBatchSizeByVaryingVectors,
+        maxBatchSizeByTextureUnits
+    );
 
     // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
     auto supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
@@ -200,8 +238,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             "Maximal number of raster map layers in a batch must be not less than 1");
         return false;
     }
-    LogPrintf(LogSeverityLevel::Info,
-        "Maximal number of raster map layers in a batch is %d", _maxNumberOfRasterMapLayersInBatch);
 
     initializeRasterTile();
 
@@ -218,11 +254,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     GL_CHECK_PRESENT(glDeleteProgram);
 
     const auto& vertexShader = QString::fromLatin1(
+        // Definitions
+        "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
+        "                                                                                                                   ""\n"
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
         "#if !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                ""\n"
-        "    INPUT float in_vs_vertexElevation;                                                                             ""\n"
+        "    INPUT mat3 in_vs_vertexElevation;                                                                              ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
@@ -230,6 +269,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
@@ -240,31 +282,35 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    uniform vec2 param_vs_groundCameraPosition;                                                                    ""\n"
         "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "uniform vec4 param_vs_elevation_configuration;                                                                     ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "    uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                        ""\n"
+        "    uniform vec4 param_vs_elevation_colorMapKeys[%MaxElevationColorMapEntriesCount%];                              ""\n"
+        "    uniform vec4 param_vs_elevation_colorMapValues[%MaxElevationColorMapEntriesCount%];                            ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
         "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
-        "uniform float param_vs_elevationData_scaleFactor;                                                                  ""\n"
-        "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
-        "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
+        "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform highp sampler2D param_vs_elevationData_sampler;                                                        ""\n"
+        "    uniform highp sampler2D param_vs_elevation_dataSampler;                                                        ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
         "struct VsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    mediump vec2 texCoordsOffset;                                                                                  ""\n"
-        "    mediump vec2 texCoordsScale;                                                                                   ""\n"
+        "    mediump vec4 texCoordsOffsetAndScale;                                                                          ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform VsRasterLayerTile param_vs_elevationDataLayer;                                                         ""\n"
+        "    uniform VsRasterLayerTile param_vs_elevationLayer;                                                             ""\n"
+        "    uniform highp vec4 param_vs_elevationLayerTexelSize;                                                           ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
         "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
         "{                                                                                                                  ""\n"
         "    mediump vec2 texCoords = in_vs_vertexTexCoords;                                                                ""\n"
-        "    texCoords = texCoords * tileLayer.texCoordsScale + tileLayer.texCoordsOffset;                                  ""\n"
+        "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
         "    outTexCoords = texCoords;                                                                                      ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
@@ -279,25 +325,235 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
         "                                                                                                                   ""\n"
         //   If elevation data is active, use it
-        "    if (abs(param_vs_elevationData_scaleFactor) > 0.0)                                                             ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "    v2f_elevationColor = vec4(0.0, 0.0, 0.0, 0.0);                                                                 ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
         "    {                                                                                                              ""\n"
-        "        float metersToUnits = mix(param_vs_elevationData_upperMetersPerUnit,                                       ""\n"
-        "            param_vs_elevationData_lowerMetersPerUnit, in_vs_vertexTexCoords.t);                                   ""\n"
+        "        float slopeAlgorithm = param_vs_elevation_configuration.x;                                                 ""\n"
         "                                                                                                                   ""\n"
-        //       Calculate texcoords for elevation data (pixel-is-area)
-        "        float heightInMeters;                                                                                      ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);""\n"
+        "                                                                                                                   ""\n"
+        // [0][0] - TL (0); [1][0] - T (1); [2][0] - TR (2)
+        // [0][1] -  L (3); [1][1] - O (4); [2][1] -  R (5)
+        // [0][2] - BL (6); [1][2] - B (7); [2][2] - BR (8)
+        "        mat3 heightInMeters = mat3(0.0);                                                                           ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "        vec2 elevationDataTexCoords;                                                                               ""\n"
+        "        vec2 elevationTexCoordsO;                                                                                  ""\n"
         "        calculateTextureCoordinates(                                                                               ""\n"
-        "            param_vs_elevationDataLayer,                                                                           ""\n"
-        "            elevationDataTexCoords);                                                                               ""\n"
-        "        heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevationData_sampler, elevationDataTexCoords).r;              ""\n"
+        "            param_vs_elevationLayer,                                                                               ""\n"
+        "            elevationTexCoordsO);                                                                                  ""\n"
+        "        heightInMeters[1][1] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsO).r;           ""\n"
+        "                                                                                                                   ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "        if (slopeAlgorithm > %SlopeAlgorithm_None%.0)                                                              ""\n"
+        "        {                                                                                                          ""\n"
+        "            vec2 elevationTexCoordsT = elevationTexCoordsO;                                                        ""\n"
+        "            elevationTexCoordsT.t -= param_vs_elevationLayerTexelSize.y;                                           ""\n"
+        "            heightInMeters[1][0] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsT).r;       ""\n"
+        "                                                                                                                   ""\n"
+        "            vec2 elevationTexCoordsL = elevationTexCoordsO;                                                        ""\n"
+        "            elevationTexCoordsL.s -= param_vs_elevationLayerTexelSize.x;                                           ""\n"
+        "            heightInMeters[0][1] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsL).r;       ""\n"
+        "                                                                                                                   ""\n"
+        "            vec2 elevationTexCoordsB = elevationTexCoordsO;                                                        ""\n"
+        "            elevationTexCoordsB.t += param_vs_elevationLayerTexelSize.y;                                           ""\n"
+        "            heightInMeters[1][2] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsB).r;       ""\n"
+        "                                                                                                                   ""\n"
+        "            vec2 elevationTexCoordsR = elevationTexCoordsO;                                                        ""\n"
+        "            elevationTexCoordsR.s += param_vs_elevationLayerTexelSize.x;                                           ""\n"
+        "            heightInMeters[2][1] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsR).r;       ""\n"
+        "                                                                                                                   ""\n"
+        "            if (slopeAlgorithm > %SlopeAlgorithm_ZevenbergenThorne%.0)                                             ""\n"
+        "            {                                                                                                      ""\n"
+        "                vec2 elevationTexCoordsTL = elevationTexCoordsO;                                                   ""\n"
+        "                elevationTexCoordsTL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
+        "                elevationTexCoordsTL.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
+        "                heightInMeters[0][0] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsTL).r;  ""\n"
+        "                                                                                                                   ""\n"
+        "                vec2 elevationTexCoordsTR = elevationTexCoordsO;                                                   ""\n"
+        "                elevationTexCoordsTR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
+        "                elevationTexCoordsTR.t -= param_vs_elevationLayerTexelSize.y;                                      ""\n"
+        "                heightInMeters[2][0] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsTR).r;  ""\n"
+        "                                                                                                                   ""\n"
+        "                vec2 elevationTexCoordsBL = elevationTexCoordsO;                                                   ""\n"
+        "                elevationTexCoordsBL.s -= param_vs_elevationLayerTexelSize.x;                                      ""\n"
+        "                elevationTexCoordsBL.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
+        "                heightInMeters[0][2] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsBL).r;  ""\n"
+        "                                                                                                                   ""\n"
+        "                vec2 elevationTexCoordsBR = elevationTexCoordsO;                                                   ""\n"
+        "                elevationTexCoordsBR.s += param_vs_elevationLayerTexelSize.x;                                      ""\n"
+        "                elevationTexCoordsBR.t += param_vs_elevationLayerTexelSize.y;                                      ""\n"
+        "                heightInMeters[2][2] = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoordsBR).r;  ""\n"
+        "            }                                                                                                      ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "        }                                                                                                          ""\n"
         "#else // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "        heightInMeters = in_vs_vertexElevation;                                                                    ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
+        "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "                                                                                                                   ""\n"
-        "        v.y = heightInMeters / metersToUnits;                                                                      ""\n"
-        "        v.y *= param_vs_elevationData_scaleFactor;                                                                 ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
+        "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
+        "        {                                                                                                          ""\n"
+        "            const float M_PI = 3.1415926535897932384626433832795;                                                  ""\n"
+        "            const float M_PI_2 = M_PI / 2.0;                                                                       ""\n"
+        "            const float M_2PI = 2.0 * M_PI;                                                                        ""\n"
+        "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
+        "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
+        "                                                                                                                   ""\n"
+        "            float heixelInMeters = metersPerUnit * (%TileSize3D%.0 / %HeixelsPerTileSide%.0);                      ""\n"
+        "                                                                                                                   ""\n"
+        "            vec2 slopeInMeters = vec2(0.0);                                                                        ""\n"
+        "            float slopeAlgorithmScale = 1.0;                                                                       ""\n"
+        "            if (abs(slopeAlgorithm - %SlopeAlgorithm_ZevenbergenThorne%.0) < 0.00001)                              ""\n"
+        "            {                                                                                                      ""\n"
+        "                slopeInMeters.x = heightInMeters[0][1] - heightInMeters[2][1];                                     ""\n"
+        "                slopeInMeters.y = heightInMeters[1][2] - heightInMeters[1][0];                                     ""\n"
+        "                                                                                                                   ""\n"
+        "                slopeAlgorithmScale = 2.0;                                                                         ""\n"
+        "            }                                                                                                      ""\n"
+        "            else if (abs(slopeAlgorithm - %SlopeAlgorithm_Horn%.0) < 0.00001)                                      ""\n"
+        "            {                                                                                                      ""\n"
+        "                slopeInMeters.x = (                                                                                ""\n"
+        "                    heightInMeters[0][0] + heightInMeters[0][1] + heightInMeters[0][1] + heightInMeters[0][2]      ""\n"
+        "                );                                                                                                 ""\n"
+        "                slopeInMeters.x -= (                                                                               ""\n"
+        "                    heightInMeters[2][0] + heightInMeters[2][1] + heightInMeters[2][1] + heightInMeters[2][2]      ""\n"
+        "                );                                                                                                 ""\n"
+        "                                                                                                                   ""\n"
+        "                slopeInMeters.y = (                                                                                ""\n"
+        "                    heightInMeters[0][2] + heightInMeters[1][2] + heightInMeters[1][2] + heightInMeters[2][2]      ""\n"
+        "                );                                                                                                 ""\n"
+        "                slopeInMeters.y -= (                                                                               ""\n"
+        "                    heightInMeters[0][0] + heightInMeters[1][0] + heightInMeters[1][0] + heightInMeters[2][0]      ""\n"
+        "                );                                                                                                 ""\n"
+        "                                                                                                                   ""\n"
+        "                slopeAlgorithmScale = 8.0;                                                                         ""\n"
+        "            }                                                                                                      ""\n"
+        "            highp float slope_XX = slopeInMeters.x*slopeInMeters.x;                                                ""\n"
+        "            highp float slope_YY = slopeInMeters.y*slopeInMeters.y;                                                ""\n"
+        "            highp float slope_XXpYY = slope_XX + slope_YY;                                                         ""\n"
+        "                                                                                                                   ""\n"
+        "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
+        "            float zFactorN = zFactor / (slopeAlgorithmScale * heixelInMeters);                                     ""\n"
+        "            float zFactorNSq = zFactorN * zFactorN;                                                                ""\n"
+        "            float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                         ""\n"
+        "            float zNCosZenith = zFactorN * cos(sunZenith);                                                         ""\n"
+        "                                                                                                                   ""\n"
+        "            float colorMapKey_0 = param_vs_elevation_colorMapKeys[0].w;                                            ""\n"
+        "            float colorMapKey = colorMapKey_0 - 1.0;                                                               ""\n"
+        "            if (abs(visualizationStyle - %VisualizationStyle_SlopeDegrees%.0) < 0.00001)                           ""\n"
+        "            {                                                                                                      ""\n"
+        "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
+        "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
+        "                colorMapKey = degrees(atan(zFactor * sqrt(slopeN_XXpYY)));                                         ""\n"
+        "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
+        "            }                                                                                                      ""\n"
+        "            else if (abs(visualizationStyle - %VisualizationStyle_SlopePercents%.0) < 0.00001)                     ""\n"
+        "            {                                                                                                      ""\n"
+        "                vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                              ""\n"
+        "                float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                        ""\n"
+        "                colorMapKey = 100.0 * zFactor * sqrt(slopeN_XXpYY);                                                ""\n"
+        "                colorMapKey = max(colorMapKey, colorMapKey_0);                                                     ""\n"
+        "            }                                                                                                      ""\n"
+        "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)         ""\n"
+        "            {                                                                                                      ""\n"
+        // NOTE: See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+        "                float sinZenith = sin(sunZenith);                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "                if (slope_XXpYY < 0.00001)                                                                         ""\n"
+        "                {                                                                                                  ""\n"
+        "                    float value = 1.0 + 254.0 * sinZenith;                                                         ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "                else                                                                                               ""\n"
+        "                {                                                                                                  ""\n"
+        "                    highp float weight_225 = 0.5 * slope_XXpYY - slopeInMeters.x * slopeInMeters.y;                ""\n"
+        "                    highp float weight_270 = slope_XX;                                                             ""\n"
+        "                    highp float weight_315 = slope_XXpYY - weight_225;                                             ""\n"
+        "                    highp float weight_360 = slope_YY;                                                             ""\n"
+        "                                                                                                                   ""\n"
+        "                    float value_225 = sinZenith - (slopeInMeters.x - slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+        "                    float value_270 = sinZenith - slopeInMeters.x * zNCosZenith;                                   ""\n"
+        "                    float value_315 = sinZenith + (slopeInMeters.x + slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+        "                    float value_360 = sinZenith - slopeInMeters.y * zNCosZenith;                                   ""\n"
+        "                                                                                                                   ""\n"
+        "                    float value = weight_225 * max(value_225, 0.0);                                                ""\n"
+        "                    value += weight_270 * max(value_270, 0.0);                                                     ""\n"
+        "                    value += weight_315 * max(value_315, 0.0);                                                     ""\n"
+        "                    value += weight_360 * max(value_360, 0.0);                                                     ""\n"
+        "                    value *= 127.0;                                                                                ""\n"
+        "                    value /= slope_XXpYY;                                                                          ""\n"
+        "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
+        "                    value = 1.0 + value;                                                                           ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "            }                                                                                                      ""\n"
+        "            else                                                                                                   ""\n"
+        "            {                                                                                                      ""\n"
+        "                float sunAzimuth = param_vs_elevation_hillshadeConfiguration.y;                                    ""\n"
+        "                                                                                                                   ""\n"
+        "                float zNCosZenithCosAzimuth = zNCosZenith * cos(sunAzimuth);                                       ""\n"
+        "                float zNCosZenithSinAzimuth = zNCosZenith * sin(sunAzimuth);                                       ""\n"
+        "                                                                                                                   ""\n"
+        "                if (abs(visualizationStyle - %VisualizationStyle_HillshadeTraditional%.0) < 0.00001)               ""\n"
+        "                {                                                                                                  ""\n"
+        "                    float value = sin(sunZenith);                                                                  ""\n"
+        "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
+        "                    value = 254.0 * value / sqrt(1.0 + zFactorNSq * slope_XXpYY);                                  ""\n"
+        "                    value = 1.0 + max(value, 0.0);                                                                 ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                 ""\n"
+        "                {                                                                                                  ""\n"
+        "                    float slopeAngle = atan(sqrt(slope_XXpYY) * zFactorN);                                         ""\n"
+        "                    float aspect = atan(slopeInMeters.y, slopeInMeters.x);                                         ""\n"
+        "                    float slopeStrength = slopeAngle / M_PI_2;                                                     ""\n"
+        "                    float aspectN = mod(M_2PI + aspect, M_2PI);                                                    ""\n"
+        "                    float wAzimuthN = mod(M_2PI + mod(M_3PI_2 - sunAzimuth, M_2PI), M_2PI);                        ""\n"
+        "                    float aspectDiffWAzimuth = mod(abs(aspectN - wAzimuthN), M_PI);                                ""\n"
+        "                    float value = 255.0 * (1.0 - slopeStrength * (1.0 - aspectDiffWAzimuth / M_PI));               ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
+        "                {                                                                                                  ""\n"
+        // NOTE: First part produces same result as HillshadeTraditional except for mapping to 1..255 scale (oblique shading)
+        "                    float value = sin(sunZenith);                                                                  ""\n"
+        "                    value -= slopeInMeters.y*zNCosZenithCosAzimuth - slopeInMeters.x*zNCosZenithSinAzimuth;        ""\n"
+        "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
+        "                                                                                                                   ""\n"
+        // NOTE: Combine with slope shading
+        // NOTE: Implemented differently that in GDAL, see source that https://trac.osgeo.org/gdal/ticket/4753 references
+        "                    vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                          ""\n"
+        "                    float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                    ""\n"
+        "                    value = 1.0 - value * abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI_2);                        ""\n"
+        "                                                                                                                   ""\n"
+        "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "            }                                                                                                      ""\n"
+        "                                                                                                                   ""\n"
+        "            if (colorMapKey >= colorMapKey_0)                                                                      ""\n"
+        "            {                                                                                                      ""\n"
+        "                float colorMapEntryKeyA = colorMapKey_0;                                                           ""\n"
+        "                float colorMapEntryKeyB = colorMapKey;                                                             ""\n"
+        "                vec4 colorMapEntryValueA = vec4(0.0);                                                              ""\n"
+        "                vec4 colorMapEntryValueB = vec4(0.0);                                                              ""\n"
+        "                                                                                                                   ""\n"
+        "%UnrolledPerElevationColorMapEntryCode%                                                                            ""\n"
+        "                                                                                                                   ""\n"
+        "                float interpolation = (colorMapKey - colorMapEntryKeyA) / (colorMapEntryKeyB - colorMapEntryKeyA); ""\n"
+        "                v2f_elevationColor = mix(                                                                          ""\n"
+        "                    colorMapEntryValueA,                                                                           ""\n"
+        "                    colorMapEntryValueB,                                                                           ""\n"
+        "                    clamp(interpolation, 0.0, 1.0));                                                               ""\n"
+        "            }                                                                                                      ""\n"
+        "            v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                            ""\n"
+        "        }                                                                                                          ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "        v.y = (heightInMeters[1][1] / metersPerUnit) * param_vs_elevation_scale.z;                                 ""\n"
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -322,13 +578,32 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
         "        v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                                 ""\n"
         "                                                                                                                   ""\n");
+    const auto& vertexShader_perElevationColorMapEntryCode = QString::fromLatin1(
+        "                float colorMapKey_%entryIndex% = param_vs_elevation_colorMapKeys[%entryIndex%].w;                  ""\n"
+        "                if (colorMapKey_%entryIndex% > colorMapKey_%prevEntryIndex%)                                       ""\n"
+        "                {                                                                                                  ""\n"
+        "                    if (colorMapKey >= colorMapKey_%prevEntryIndex%)                                               ""\n"
+        "                    {                                                                                              ""\n"
+        "                        colorMapEntryKeyA = colorMapKey_%prevEntryIndex%;                                          ""\n"
+        "                        colorMapEntryValueA = param_vs_elevation_colorMapValues[%prevEntryIndex%];                 ""\n"
+        "                        colorMapEntryKeyB = colorMapKey_%entryIndex%;                                              ""\n"
+        "                        colorMapEntryValueB = param_vs_elevation_colorMapValues[%entryIndex%];                     ""\n"
+        "                    }                                                                                              ""\n"
+        "                }                                                                                                  ""\n"
+        "                                                                                                                   ""\n");
 
     const auto& fragmentShader = QString::fromLatin1(
+        // Definitions
+        "#define ELEVATION_VISUALIZATION_ENABLED %ElevationVisualizationEnabled%                                            ""\n"
+        "                                                                                                                   ""\n"
         // Input data
         "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct FsRasterLayerTile                                                                                           ""\n"
@@ -343,6 +618,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    lowp float colorAlpha = 1.0 - isPremultipliedAlpha + isPremultipliedAlpha * alpha;                             ""\n"
         "    color *= vec4(colorAlpha, colorAlpha, colorAlpha, alpha);                                                      ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor)                                                   ""\n"
+        "{                                                                                                                  ""\n"
+        "    destColor = destColor * (1.0 - srcColor.a) + srcColor * srcColor.a;                                            ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor, in lowp float isPremultipliedAlpha)               ""\n"
@@ -375,6 +655,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
+        "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
+        "    mixColors(finalColor, v2f_elevationColor);                                                                     ""\n"
+        "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "                                                                                                                   ""\n"
 #if 0
         //   NOTE: Useful for debugging mipmap levels
         "    {                                                                                                              ""\n"
@@ -390,6 +674,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
+        "                                                                                                                   ""\n"
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
@@ -438,7 +723,44 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode);
     preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
         preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
-    preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+    QString preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode;
+    for (auto colorMapEntryIndex = 1u; colorMapEntryIndex < ElevationConfiguration::MaxColorMapEntries; colorMapEntryIndex++)
+    {
+        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode +=
+            detachedOf(vertexShader_perElevationColorMapEntryCode)
+            .replace("%entryIndex%", QString::number(colorMapEntryIndex))
+            .replace("%prevEntryIndex%", QString::number(colorMapEntryIndex - 1));
+    }
+    preprocessedVertexShader.replace("%UnrolledPerElevationColorMapEntryCode%",
+        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode);
+    preprocessedVertexShader.replace("%TileSize3D%",
+        QString::number(AtlasMapRenderer::TileSize3D));
+    preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+        QString::number(AtlasMapRenderer::HeixelsPerTileSide));
+    preprocessedVertexShader.replace("%MaxElevationColorMapEntriesCount%",
+        QString::number(ElevationConfiguration::MaxColorMapEntries));
+    preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
+        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::None)));
+    preprocessedVertexShader.replace("%SlopeAlgorithm_ZevenbergenThorne%",
+        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::ZevenbergenThorne)));
+    preprocessedVertexShader.replace("%SlopeAlgorithm_Horn%",
+        QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::Horn)));
+    preprocessedVertexShader.replace("%VisualizationStyle_None%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::None)));
+    preprocessedVertexShader.replace("%VisualizationStyle_SlopeDegrees%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopeDegrees)));
+    preprocessedVertexShader.replace("%VisualizationStyle_SlopePercents%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::SlopePercents)));
+    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeTraditional%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeTraditional)));
+    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeIgor%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeIgor)));
+    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeCombined%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeCombined)));
+    preprocessedVertexShader.replace("%VisualizationStyle_HillshadeMultidirectional%",
+        QString::number(static_cast<int>(ElevationConfiguration::VisualizationStyle::HillshadeMultidirectional)));
+    preprocessedVertexShader.replace("%ElevationVisualizationEnabled%",
+        QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -480,6 +802,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     preprocessedFragmentShader.replace(
         "%UnrolledPerRasterLayerProcessingCode%",
         preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode);
+    preprocessedFragmentShader.replace("%ElevationVisualizationEnabled%",
+        QString::number(setupOptions.elevationVisualizationEnabled ? 1 : 0));
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -550,34 +874,42 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             GlslVariableType::Uniform);
     }
     ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.elevation_configuration,
+        "param_vs_elevation_configuration",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.elevation_hillshadeConfiguration,
+        "param_vs_elevation_hillshadeConfiguration",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.elevation_colorMapKeys,
+        "param_vs_elevation_colorMapKeys",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.elevation_colorMapValues,
+        "param_vs_elevation_colorMapValues",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.tileCoordsOffset,
         "param_vs_tileCoordsOffset",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevationData_scaleFactor,
-        "param_vs_elevationData_scaleFactor",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevationData_upperMetersPerUnit,
-        "param_vs_elevationData_upperMetersPerUnit",
-        GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.elevationData_lowerMetersPerUnit,
-        "param_vs_elevationData_lowerMetersPerUnit",
+        outRasterLayerTileProgram.vs.param.elevation_scale,
+        "param_vs_elevation_scale",
         GlslVariableType::Uniform);
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.param.elevationData_sampler,
-            "param_vs_elevationData_sampler",
+            outRasterLayerTileProgram.vs.param.elevation_dataSampler,
+            "param_vs_elevation_dataSampler",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.param.elevationDataLayer.texCoordsOffset,
-            "param_vs_elevationDataLayer.texCoordsOffset",
+            outRasterLayerTileProgram.vs.param.elevationLayer.texCoordsOffsetAndScale,
+            "param_vs_elevationLayer.texCoordsOffsetAndScale",
             GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(
-            outRasterLayerTileProgram.vs.param.elevationDataLayer.texCoordsScale,
-            "param_vs_elevationDataLayer.texCoordsScale",
+            outRasterLayerTileProgram.vs.param.elevationLayerTexelSize,
+            "param_vs_elevationLayerTexelSize",
             GlslVariableType::Uniform);
     }
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
@@ -591,12 +923,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             auto& layerStruct = outRasterLayerTileProgram.vs.param.rasterTileLayers[layerIndex];
 
             ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsOffset,
-                layerStructName + ".texCoordsOffset",
-                GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(
-                layerStruct.texCoordsScale,
-                layerStructName + ".texCoordsScale",
+                layerStruct.texCoordsOffsetAndScale,
+                layerStructName + ".texCoordsOffsetAndScale",
                 GlslVariableType::Uniform);
         }
 
@@ -637,6 +965,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
+    GL_CHECK_PRESENT(glUniform4f);
     GL_CHECK_PRESENT(glActiveTexture);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
@@ -751,18 +1080,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 texCoordsOffset += batchedResourceInGPU->texCoordsOffset * nSizeInAtlas;
                 const auto texCoordsScale = batchedResourceInGPU->texCoordsScale * nSizeInAtlas;
 
-                glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale, texCoordsScale.x, texCoordsScale.y);
+                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                    texCoordsOffset.x,
+                    texCoordsOffset.y,
+                    texCoordsScale.x,
+                    texCoordsScale.y);
                 GL_CHECK_RESULT;
             }
-            else // if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
+            else // if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
             {
-                glUniform2f(perTile_vs.texCoordsOffset,
+                const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(batchedResourceInGPU->resourceInGPU);
+
+                glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                     batchedResourceInGPU->texCoordsOffset.x,
-                    batchedResourceInGPU->texCoordsOffset.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale,
+                    batchedResourceInGPU->texCoordsOffset.y,
                     batchedResourceInGPU->texCoordsScale.x,
                     batchedResourceInGPU->texCoordsScale.y);
                 GL_CHECK_RESULT;
@@ -812,6 +1143,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2f);
     GL_CHECK_PRESENT(glUniform2fv);
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glUniform4fv);
 
     const auto& currentConfiguration = getCurrentConfiguration();
     const auto& internalState = getInternalState();
@@ -824,13 +1157,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
 
     GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(numberOfLayersInBatch));
 
-    // Elevation vertex attrib is bound to program
-    if (lastUsedProgram.isValid() && activeElevationVertexAttribArray.isValid())
+    if (lastUsedProgram.isValid())
     {
-        glDisableVertexAttribArray(*activeElevationVertexAttribArray);
-        GL_CHECK_RESULT;
+        if (activeElevationVertexAttribArray.isValid())
+        {
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 0);
+            GL_CHECK_RESULT;
 
-        activeElevationVertexAttribArray.reset();
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 1);
+            GL_CHECK_RESULT;
+
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 2);
+            GL_CHECK_RESULT;
+
+            activeElevationVertexAttribArray.reset();
+        }
     }
 
     // Set symbol VAO
@@ -867,6 +1208,40 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         GL_CHECK_RESULT;
     }
 
+    // Configure elevation data
+    if (currentState.elevationDataProvider)
+    {
+        glUniform4f(program.vs.param.elevation_configuration,
+            static_cast<float>(currentState.elevationConfiguration.slopeAlgorithm),
+            static_cast<float>(currentState.elevationConfiguration.visualizationStyle),
+            currentState.elevationConfiguration.visualizationAlpha,
+            currentState.elevationConfiguration.visualizationZ);
+        GL_CHECK_RESULT;
+
+        glUniform4f(program.vs.param.elevation_hillshadeConfiguration,
+            glm::radians(currentState.elevationConfiguration.hillshadeSunAngle),
+            glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth),
+            0.0f,
+            0.0f);
+        GL_CHECK_RESULT;
+
+        auto pColorMapEntry = currentState.elevationConfiguration.visualizationColorMap.data();
+        for (auto colorMapEntryIndex = 0u; colorMapEntryIndex < ElevationConfiguration::MaxColorMapEntries; colorMapEntryIndex++, pColorMapEntry++)
+        {
+            glUniform4f(program.vs.param.elevation_colorMapKeys + colorMapEntryIndex,
+                0.0f,
+                0.0f,
+                0.0f,
+                pColorMapEntry->first);
+            GL_CHECK_RESULT;
+
+            glUniform4fv(program.vs.param.elevation_colorMapValues + colorMapEntryIndex,
+                1,
+                reinterpret_cast<const GLfloat*>(&pColorMapEntry->second));
+            GL_CHECK_RESULT;
+        }
+    }
+
     // Configure samplers
     auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
     if (gpuAPI->isSupported_textureLod)
@@ -898,7 +1273,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
         GL_CHECK_RESULT;
 
-        glUniform1i(program.vs.param.elevationData_sampler, elevationDataSamplerIndex);
+        glUniform1i(program.vs.param.elevation_dataSampler, elevationDataSamplerIndex);
         GL_CHECK_RESULT;
 
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + elevationDataSamplerIndex, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
@@ -1191,6 +1566,13 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
 {
     const auto gpuAPI = getGPUAPI();
 
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
     const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
     // In case there's no elevation data provider or if there's no data for this tile,
@@ -1198,7 +1580,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomLevel);
     if (!elevationDataResource)
     {
-        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+        glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
         GL_CHECK_RESULT;
 
         if (gpuAPI->isSupported_vertexShaderTextureLookup)
@@ -1209,33 +1591,44 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             glBindTexture(GL_TEXTURE_2D, 0);
             GL_CHECK_RESULT;
         }
-        else if (activeElevationVertexAttribArray.isValid())
+        else
         {
-            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
-            GL_CHECK_RESULT;
+            if (activeElevationVertexAttribArray.isValid())
+            {
+                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 0);
+                GL_CHECK_RESULT;
 
-            activeElevationVertexAttribArray.reset();
+                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 1);
+                GL_CHECK_RESULT;
+
+                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 2);
+                GL_CHECK_RESULT;
+
+                activeElevationVertexAttribArray.reset();
+            }
         }
 
         return;
     }
 
     // Per-tile elevation data configuration
-    glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
-    GL_CHECK_RESULT;
-
     const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
         currentState.zoomLevel,
         tileIdN.y,
         AtlasMapRenderer::TileSize3D);
-    glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
     const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
         currentState.zoomLevel,
         tileIdN.y + 1,
         AtlasMapRenderer::TileSize3D);
-    glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+    glUniform4f(program.vs.param.elevation_scale,
+        upperMetersPerUnit,
+        lowerMetersPerUnit,
+        currentState.elevationConfiguration.zScaleFactor,
+        currentState.elevationConfiguration.dataScaleFactor
+    );
+    GL_CHECK_RESULT;
 
-    const auto& perTile_vs = program.vs.param.elevationDataLayer;
+    const auto& perTile_vs = program.vs.param.elevationLayer;
 
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
@@ -1251,29 +1644,56 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         {
             const auto tileOnAtlasTexture =
                 std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+            const auto& texture = tileOnAtlasTexture->atlasTexture;
 
-            const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
-            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
-            const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
-            const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
-            const auto texCoordsScale = tileSizeN - 2.0f * tilePaddingN;
-            const PointF texCoordsOffset(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
+            const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
+            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
+            const PointF texCoordsScale(
+                texture->tileSizeN - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                texture->tileSizeN - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                colIndex * texture->tileSizeN + texture->uHalfTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN
+            );
 
-            glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
+            glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
             GL_CHECK_RESULT;
-            glUniform2f(perTile_vs.texCoordsScale, texCoordsScale, texCoordsScale);
+            glUniform4f(program.vs.param.elevationLayerTexelSize,
+                texture->uTexelSizeN,
+                texture->vTexelSizeN,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
         else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
         {
             const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
 
-            const auto texCoordsScale = 1.0f - 2.0f * texture->uHalfTexelSizeN;
-            const PointF texCoordsOffset(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
+            const PointF texCoordsScale(
+                1.0f - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                1.0f - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                texture->vHalfTexelSizeN + texture->vTexelSizeN
+            );
 
-            glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x, texCoordsOffset.y);
+            glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
             GL_CHECK_RESULT;
-            glUniform2f(perTile_vs.texCoordsScale, texCoordsScale, texCoordsScale);
+            glUniform4f(program.vs.param.elevationLayerTexelSize,
+                texture->uTexelSizeN,
+                texture->vTexelSizeN,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
     }
@@ -1286,7 +1706,13 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
 
         if (!activeElevationVertexAttribArray.isValid())
         {
-            glEnableVertexAttribArray(*program.vs.in.vertexElevation);
+            glEnableVertexAttribArray(*program.vs.in.vertexElevation + 0);
+            GL_CHECK_RESULT;
+
+            glEnableVertexAttribArray(*program.vs.in.vertexElevation + 1);
+            GL_CHECK_RESULT;
+
+            glEnableVertexAttribArray(*program.vs.in.vertexElevation + 2);
             GL_CHECK_RESULT;
 
             activeElevationVertexAttribArray = program.vs.in.vertexElevation;
@@ -1295,7 +1721,28 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
         GL_CHECK_RESULT;
 
-        glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+        glVertexAttribPointer(*program.vs.in.vertexElevation + 0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(float) * 3 * 3,
+            reinterpret_cast<void*>(sizeof(float) * 3 * 0));
+        GL_CHECK_RESULT;
+
+        glVertexAttribPointer(*program.vs.in.vertexElevation + 1,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(float) * 3 * 3,
+            reinterpret_cast<void*>(sizeof(float) * 3 * 1));
+        GL_CHECK_RESULT;
+
+        glVertexAttribPointer(*program.vs.in.vertexElevation + 2,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(float) * 3 * 3,
+            reinterpret_cast<void*>(sizeof(float) * 3 * 2));
         GL_CHECK_RESULT;
     }
 }
@@ -1567,7 +2014,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayerResource::canBeB
         texCoordsScale == that.texCoordsScale;
 }
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(const BatchedLayerType type_, const int layerIndex_)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(
+    const BatchedLayerType type_,
+    const int layerIndex_)
     : type(type_)
     , layerIndex(layerIndex_)
 {
@@ -1581,7 +2030,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers::PerTileBatc
 {
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers::operator<(const PerTileBatchedLayers& that) const
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers::operator<(
+    const PerTileBatchedLayers& that) const
 {
     if (this == &that)
         return false;

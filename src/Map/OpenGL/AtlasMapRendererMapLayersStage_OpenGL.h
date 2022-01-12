@@ -111,22 +111,24 @@ namespace OsmAnd
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
+                    GLlocation elevation_configuration;
+                    GLlocation elevation_hillshadeConfiguration;
+                    GLlocation elevation_colorMapKeys;
+                    GLlocation elevation_colorMapValues;
 
                     // Per-tile data
                     GLlocation tileCoordsOffset;
-                    GLlocation elevationData_scaleFactor;
-                    GLlocation elevationData_sampler;
-                    GLlocation elevationData_upperMetersPerUnit;
-                    GLlocation elevationData_lowerMetersPerUnit;
+                    GLlocation elevation_scale;
+                    GLlocation elevation_dataSampler;
 
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
                     {
-                        GLlocation texCoordsOffset;
-                        GLlocation texCoordsScale;
+                        GLlocation texCoordsOffsetAndScale;
                     };
-                    VsPerTilePerLayerParameters elevationDataLayer;
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
+                    VsPerTilePerLayerParameters elevationLayer;
+                    GLlocation elevationLayerTexelSize;
                 } param;
             } vs;
 

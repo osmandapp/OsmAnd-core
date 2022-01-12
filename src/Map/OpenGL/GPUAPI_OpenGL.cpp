@@ -53,6 +53,8 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_vertex_array_object(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
+    , _maxVaryingFloats(-1)
+    , _maxVaryingVectors(-1)
     , _maxVertexAttribs(-1)
     , glVersion(_glVersion)
     , glslVersion(_glslVersion)
@@ -73,6 +75,8 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_vertex_array_object(_isSupported_vertex_array_object)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
     , maxFragmentUniformVectors(_maxFragmentUniformVectors)
+    , maxVaryingFloats(_maxVaryingFloats)
+    , maxVaryingVectors(_maxVaryingVectors)
     , maxVertexAttribs(_maxVertexAttribs)
 {
 }
@@ -1067,6 +1071,62 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         return false;
     }
 
+#pragma pack(push, 1)
+    struct Item
+    {
+        float tl;
+        float t;
+        float tr;
+        
+        float l;
+        float o;
+        float r;
+        
+        float bl;
+        float b;
+        float br;
+    };
+#pragma pack(pop)
+
+    const auto pHeixels = reinterpret_cast<const uint8_t*>(elevationData->pRawData);
+    const auto pHeixelsRowLength = elevationData->rowLength;
+    const auto heixelsPerTileSide = elevationData->size;
+    const auto itemsPerTileSide = elevationData->size - 2;
+    const auto itemsCount = itemsPerTileSide * itemsPerTileSide;
+    const auto pItems = new Item[itemsCount];
+
+    auto pItem = pItems;
+    for (int row = 0; row < itemsPerTileSide; row++)
+    {
+        const auto pPrevHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 0) * pHeixelsRowLength);
+        const auto pCurrHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 1) * pHeixelsRowLength);
+        const auto pNextHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 2) * pHeixelsRowLength);
+
+        auto pHeixelO = pCurrHeixelsRow + 1;
+        auto pHeixelT = pPrevHeixelsRow + 1;
+        auto pHeixelL = pCurrHeixelsRow + 0;
+        auto pHeixelB = pNextHeixelsRow + 1;
+        auto pHeixelR = pCurrHeixelsRow + 2;
+        auto pHeixelTL = pPrevHeixelsRow + 0;
+        auto pHeixelTR = pPrevHeixelsRow + 2;
+        auto pHeixelBL = pNextHeixelsRow + 0;
+        auto pHeixelBR = pNextHeixelsRow + 2;
+        for (int col = 0; col < itemsPerTileSide; col++)
+        {
+            auto& item = *(pItem++);
+
+            item.o = *(pHeixelO++);
+            item.t = *(pHeixelT++);
+            item.l = *(pHeixelL++);
+            item.b = *(pHeixelB++);
+            item.r = *(pHeixelR++);
+            item.tl = *(pHeixelTL++);
+            item.tr = *(pHeixelTR++);
+            item.bl = *(pHeixelBL++);
+            item.br = *(pHeixelBR++);
+        }
+    }
+
     // Create array buffer
     GLuint buffer;
     glGenBuffers(1, &buffer);
@@ -1077,9 +1137,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     GL_CHECK_RESULT;
 
     // Upload data
-    const auto itemsCount = elevationData->size*elevationData->size;
-    assert(elevationData->size*sizeof(float) == elevationData->rowLength);
-    glBufferData(GL_ARRAY_BUFFER, itemsCount*sizeof(float), elevationData->pRawData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(Item), pItems, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1088,6 +1146,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
 
     auto arrayBufferInGPU = new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(buffer), itemsCount);
     resourceInGPU.reset(static_cast<ResourceInGPU*>(arrayBufferInGPU));
+
+    delete[] pItems;
 
     return true;
 }
