@@ -13,12 +13,9 @@
 
 namespace OsmAnd
 {
-    struct MapLayerConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API MapLayerConfiguration Q_DECL_FINAL
     {
-        MapLayerConfiguration()
-            : opacityFactor(1.0f)
-        {
-        }
+        MapLayerConfiguration();
 
         float opacityFactor;
 #if !defined(SWIG)
@@ -49,7 +46,7 @@ namespace OsmAnd
         }
     };
 
-    struct ElevationConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API ElevationConfiguration Q_DECL_FINAL
     {
         enum class SlopeAlgorithm {
             None = 0,
@@ -65,15 +62,11 @@ namespace OsmAnd
             HillshadeMultidirectional = 14,
         };
 
-        ElevationConfiguration()
-            : dataScaleFactor(1.0f)
-            , slopeAlgorithm(SlopeAlgorithm::ZevenbergenThorne)
-            , visualizationStyle(VisualizationStyle::HillshadeMultidirectional)
-            , visualizationAlpha(1.0f)
-            , zScaleFactor(1.0f)
-        {
-            setGrayscaleSlopeColorMap();
-        }
+        enum {
+            MaxColorMapEntries = 8,
+        };
+
+        ElevationConfiguration();
 
         float dataScaleFactor;
 #if !defined(SWIG)
@@ -115,30 +108,40 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        std::array<std::pair<float, FColorRGB>, 8> colorMap;
+        float visualizationZ;
 #if !defined(SWIG)
-        inline ElevationConfiguration& setGrayscaleSlopeColorMap()
+        inline ElevationConfiguration& setVisualizationZ(const float newVisualizationZ)
         {
-            colorMap[0] = {  0.0f, FColorRGB(1.0f, 1.0f, 1.0f) };
-            colorMap[1] = { 90.0f, FColorRGB(0.0f, 0.0f, 0.0f) };
-            colorMap[2] = {  0.0f, FColorRGB() };
+            visualizationZ = newVisualizationZ;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
-        inline ElevationConfiguration& setTerrainSlopeColorMap()
+        float hillshadeSunAngle;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setHillshadeSunAngle(const float newHillshadeSunAngle)
         {
-            colorMap[0] = {  0.00f, FColorRGB( 74.0f / 255.0f, 165.0f / 255.0f,  61.0f / 255.0f) };
-            colorMap[1] = {  7.00f, FColorRGB(117.0f / 255.0f, 190.0f / 255.0f, 100.0f / 255.0f) };
-            colorMap[2] = { 15.07f, FColorRGB(167.0f / 255.0f, 220.0f / 255.0f, 145.0f / 255.0f) };
-            colorMap[3] = { 35.33f, FColorRGB(245.0f / 255.0f, 211.0f / 255.0f, 163.0f / 255.0f) };
-            colorMap[4] = { 43.85f, FColorRGB(229.0f / 255.0f, 149.0f / 255.0f, 111.0f / 255.0f) };
-            colorMap[5] = { 50.33f, FColorRGB(235.0f / 255.0f, 178.0f / 255.0f, 152.0f / 255.0f) };
-            colorMap[6] = { 55.66f, FColorRGB(244.0f / 255.0f, 216.0f / 255.0f, 201.0f / 255.0f) };
-            colorMap[7] = { 69.00f, FColorRGB(251.0f / 255.0f, 247.0f / 255.0f, 240.0f / 255.0f) };
+            hillshadeSunAngle = newHillshadeSunAngle;
 
             return *this;
         }
+#endif // !defined(SWIG)
+
+        float hillshadeSunAzimuth;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setHillshadeSunAzimuth(const float newHillshadeSunAzimuth)
+        {
+            hillshadeSunAzimuth = newHillshadeSunAzimuth;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        std::array<std::pair<float, FColorRGB>, MaxColorMapEntries> visualizationColorMap;
+#if !defined(SWIG)
+        ElevationConfiguration& setVisualizationGrayscaleSlopeColorMap();
+        ElevationConfiguration& setVisualizationTerrainSlopeColorMap();
 #endif // !defined(SWIG)
 
         float zScaleFactor;
@@ -166,7 +169,10 @@ namespace OsmAnd
                 slopeAlgorithm == r.slopeAlgorithm &&
                 visualizationStyle == r.visualizationStyle &&
                 qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) &&
-                colorMap == r.colorMap &&
+                qFuzzyCompare(visualizationZ, r.visualizationZ) &&
+                visualizationColorMap == r.visualizationColorMap &&
+                qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) &&
+                qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) &&
                 qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
 
@@ -177,21 +183,17 @@ namespace OsmAnd
                 slopeAlgorithm != r.slopeAlgorithm ||
                 visualizationStyle != r.visualizationStyle ||
                 !qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) ||
-                colorMap != r.colorMap ||
+                !qFuzzyCompare(visualizationZ, r.visualizationZ) ||
+                visualizationColorMap != r.visualizationColorMap ||
+                !qFuzzyCompare(hillshadeSunAngle, r.hillshadeSunAngle) ||
+                !qFuzzyCompare(hillshadeSunAzimuth, r.hillshadeSunAzimuth) ||
                 !qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
     };
 
-    struct FogConfiguration Q_DECL_FINAL
+    struct OSMAND_CORE_API FogConfiguration Q_DECL_FINAL
     {
-        FogConfiguration()
-            : distanceToFog(400.0f) //700
-            , originFactor(0.36f)
-            , heightOriginFactor(0.05f)
-            , density(1.9f)
-            , color(1.0f, 0.0f, 0.0f)
-        {
-        }
+        FogConfiguration();
 
         float distanceToFog;
 #if !defined(SWIG)

@@ -112,6 +112,7 @@ namespace OsmAnd
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
                     GLlocation elevation_configuration;
+                    GLlocation elevation_hillshadeConfiguration;
                     GLlocation elevation_colorMap;
 
                     // Per-tile data

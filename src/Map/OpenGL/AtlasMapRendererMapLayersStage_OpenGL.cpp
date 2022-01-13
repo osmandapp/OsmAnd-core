@@ -154,6 +154,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
               1 /*param_vs_groundCameraPosition*/ +
               1 /*param_vs_scaleToRetainProjectedSize*/) +
         1 /*param_vs_elevation_configuration*/ +
+        1 /*param_vs_elevation_hillshadeConfiguration*/ +
         8 /*param_vs_elevation_colorMap*/ +
         1 /*param_vs_tileCoordsOffset*/ +
         1 /*param_vs_elevation_scale*/ +
@@ -244,6 +245,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    uniform float param_vs_scaleToRetainProjectedSize;                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "uniform vec4 param_vs_elevation_configuration;                                                                     ""\n"
+        "uniform vec4 param_vs_elevation_hillshadeConfiguration;                                                            ""\n"
         "uniform vec4 param_vs_elevation_colorMap[8];                                                                       ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
@@ -365,41 +367,155 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
         "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
         "        {                                                                                                          ""\n"
-        "            vec2 slope;                                                                                            ""\n"
+        "            vec2 slopeInMeters;                                                                                    ""\n"
+        "            float slopeAlgorithmScale;                                                                             ""\n"
         "            if (abs(slopeAlgorithm - %SlopeAlgorithm_ZevenbergenThorne%.0) < 0.00001)                              ""\n"
         "            {                                                                                                      ""\n"
-        "                slope.x = (heightInMeters[3] - heightInMeters[5]) / metersToUnits;                                 ""\n"
-        "                slope.y = (heightInMeters[7] - heightInMeters[1]) / metersToUnits;                                 ""\n"
+        "                slopeInMeters.x = heightInMeters[3] - heightInMeters[5];                                           ""\n"
+        "                slopeInMeters.y = heightInMeters[7] - heightInMeters[1];                                           ""\n"
+        "                                                                                                                   ""\n"
+        "                slopeAlgorithmScale = 2.0;                                                                         ""\n"
         "            }                                                                                                      ""\n"
         "            else if (abs(slopeAlgorithm - %SlopeAlgorithm_Horn%.0) < 0.00001)                                      ""\n"
         "            {                                                                                                      ""\n"
-        "                slope.x = heightInMeters[0] + heightInMeters[3] + heightInMeters[3] + heightInMeters[6];           ""\n"
-        "                slope.x -= heightInMeters[2] + heightInMeters[5] + heightInMeters[5] + heightInMeters[8];          ""\n"
-        "                slope.x /= metersToUnits;                                                                          ""\n"
+        "                slopeInMeters.x = heightInMeters[0] + heightInMeters[3] + heightInMeters[3] + heightInMeters[6];   ""\n"
+        "                slopeInMeters.x -= heightInMeters[2] + heightInMeters[5] + heightInMeters[5] + heightInMeters[8];  ""\n"
         "                                                                                                                   ""\n"
-        "                slope.y = heightInMeters[6] + heightInMeters[7] + heightInMeters[7] + heightInMeters[8];           ""\n"
-        "                slope.y -= heightInMeters[0] + heightInMeters[1] + heightInMeters[1] + heightInMeters[2];          ""\n"
-        "                slope.y /= metersToUnits;                                                                          ""\n"
+        "                slopeInMeters.y = heightInMeters[6] + heightInMeters[7] + heightInMeters[7] + heightInMeters[8];   ""\n"
+        "                slopeInMeters.y -= heightInMeters[0] + heightInMeters[1] + heightInMeters[1] + heightInMeters[2];  ""\n"
+        "                                                                                                                   ""\n"
+        "                slopeAlgorithmScale = 8.0;                                                                         ""\n"
         "            }                                                                                                      ""\n"
+        "            vec2 slope = slopeInMeters / (metersToUnits * slopeAlgorithmScale);                                    ""\n"
+        "            float slopeXXpYY = slope.x*slope.x + slope.y*slope.y;                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
+        "            float zFactorSq = zFactor * zFactor;                                                                   ""\n"
+        "            float sunZenith = param_vs_elevation_hillshadeConfiguration.x;                                         ""\n"
+        // "            highp float zFactorScaled = zFactor / (slopeAlgorithmScale * metersLatLonScale);                       ""\n"
+        // "            highp float zFactorScaledSq = zFactorScaled * zFactorScaled;                                           ""\n"
+        "            float zCosZenith = zFactor * cos(sunZenith);                                                           ""\n"
         "                                                                                                                   ""\n"
         "            float colorMapKey;                                                                                     ""\n"
-        "            if (abs(visualizationStyle - %VisualizationStyle_HillshadeTraditional%.0) < 0.00001)                   ""\n"
+        "            if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)              ""\n"
         "            {                                                                                                      ""\n"
+
+    // // See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+    // // W225 = sin^2(aspect - 225) = 0.5 * (1 - 2 * sin(aspect) * cos(aspect))
+    // // W270 = sin^2(aspect - 270) = cos^2(aspect)
+    // // W315 = sin^2(aspect - 315) = 0.5 * (1 + 2 * sin(aspect) * cos(aspect))
+    // // W360 = sin^2(aspect - 360) = sin^2(aspect)
+    // // hillshade=  0.5 * (W225 * hillshade(az=225) +
+    // //                    W270 * hillshade(az=270) +
+    // //                    W315 * hillshade(az=315) +
+    // //                    W360 * hillshade(az=360))
+
+    // const double xx = x * x;
+    // const double yy = y * y;
+    // const double xx_plus_yy = xx + yy;
+    // if( xx_plus_yy == 0.0 )
+    //     return static_cast<float>(1.0 + psData->sin_altRadians_mul_254);
+
+    // // ... then the shade value from different azimuth
+    // double val225_mul_127 = psData->sin_altRadians_mul_127 +
+    //                         (x-y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    // val225_mul_127 = ( val225_mul_127 <= 0.0) ? 0.0 : val225_mul_127;
+    // double val270_mul_127 = psData->sin_altRadians_mul_127 -
+    //                         x * psData->cos_alt_mul_z_mul_127;
+    // val270_mul_127 = ( val270_mul_127 <= 0.0) ? 0.0 : val270_mul_127;
+    // double val315_mul_127 = psData->sin_altRadians_mul_127 +
+    //                         (x+y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
+    // val315_mul_127 = ( val315_mul_127 <= 0.0) ? 0.0 : val315_mul_127;
+    // double val360_mul_127 = psData->sin_altRadians_mul_127 -
+    //                         y * psData->cos_alt_mul_z_mul_127;
+    // val360_mul_127 = ( val360_mul_127 <= 0.0) ? 0.0 : val360_mul_127;
+
+    // // ... then the weighted shading
+    // const double weight_225 = 0.5 * xx_plus_yy - x * y;
+    // const double weight_270 = xx;
+    // const double weight_315 = xx_plus_yy - weight_225;
+    // const double weight_360 = yy;
+    // const double cang_mul_127 = ApproxADivByInvSqrtB(
+    //               (weight_225 * val225_mul_127 +
+    //                weight_270 * val270_mul_127 +
+    //                weight_315 * val315_mul_127 +
+    //                weight_360 * val360_mul_127) / xx_plus_yy,
+    //         1 + psData->square_z * xx_plus_yy);
+
+    // const double cang = 1.0 + cang_mul_127;
+
+    // return static_cast<float>(cang);
         "            }                                                                                                      ""\n"
-        "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                     ""\n"
+        "            else                                                                                                   ""\n"
         "            {                                                                                                      ""\n"
-        "            }                                                                                                      ""\n"
-        "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)                 ""\n"
-        "            {                                                                                                      ""\n"
-        "            }                                                                                                      ""\n"
-        "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)         ""\n"
-        "            {                                                                                                      ""\n"
+        "                float sunAzimuth = param_vs_elevation_hillshadeConfiguration.y;                                    ""\n"
+        "                                                                                                                   ""\n"
+        "                float zCosZenithCosAzimuth = zCosZenith * cos(sunAzimuth);                                         ""\n"
+        "                float zCosZenithSinAzimuth = zCosZenith * sin(sunAzimuth);                                         ""\n"
+        "                                                                                                                   ""\n"
+        "                if (abs(visualizationStyle - %VisualizationStyle_HillshadeTraditional%.0) < 0.00001)               ""\n"
+        "                {                                                                                                  ""\n"
+        "                    float value = 254.0 * sin(sunZenith);                                                          ""\n"
+        "                    value -= slope.y * (254.0 * zCosZenithCosAzimuth) - slope.x * (254.0 * zCosZenithSinAzimuth);  ""\n"
+        "                    value /= sqrt(1.0 + zFactorSq * slopeXXpYY);                                                   ""\n"
+        "                    colorMapKey = value;                                                                           ""\n"
+        "                }                                                                                                  ""\n"
+        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                 ""\n"
+        "                {                                                                                                  ""\n"
+        // "                    highp float aspect = atan(slopeInMeters.y, slopeInMeters.x);                                   ""\n"
+        // "                    highp float slopeAngle = atan(sqrt(slopeXXpYY) * zFactorScaled);                               ""\n"
+    // double slopeStrength = slopeDegrees / 90;
+    // double aspectDiff = DifferenceBetweenAngles(aspect, M_PI * 3 / 2 - psData->azRadians, M_PI * 2);
+    // double aspectStrength = 1 - aspectDiff / M_PI;
+    // double shadowness = 1.0 - slopeStrength * aspectStrength;
+    // return static_cast<float>(255.0 * shadowness);
+        "                }                                                                                                  ""\n"
+        "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
+        "                {                                                                                                  ""\n"        
+    // const double slope = slopeXXpYY * psData->square_z;
+
+    // // ... then the shade value
+    // double cang =
+    //     acos(
+    //         ApproxADivByInvSqrtB(
+    //             sin(alt) -
+    //             (y * zScaledCosAltCosAz -
+    //              x * zScaledCosAltSinAz),
+    //             1 + slope));
+
+    // // combined shading
+    // cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
+
+    // const float fcang =
+    //     cang <= 0.0
+    //     ? 1.0f
+    //     : static_cast<float>(1.0 + (254.0 * cang));
+
+        "                }                                                                                                  ""\n"
         "            }                                                                                                      ""\n"
         "                                                                                                                   ""\n"
-        "            lowp vec4 colorMapEntryA = param_vs_elevation_colorMap[0];                                             ""\n"
-        "            lowp vec4 colorMapEntryB = colorMapEntryA;                                                             ""\n"
-        "            v2f_elevationColor.rgb = mix(colorMapEntryA.yzw, colorMapEntryB.yzw, colorMapKey - colorMapEntryA.x);  ""\n"
-        "            v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                            ""\n"
+        "            vec4 colorMapEntryA = vec4(0.0, 0.0, 0.0, 0.0);                                                        ""\n"
+        "            vec4 colorMapEntryB = vec4(0.0, 0.0, 0.0, 0.0);                                                        ""\n"
+        "            vec4 colorMapEntryMin = param_vs_elevation_colorMap[0];                                                ""\n"
+        "            vec4 colorMapEntryMax = colorMapEntryMin;                                                              ""\n"
+        "                                                                                                                   ""\n"
+        "            if (colorMapKey >= colorMapEntryMin.x)                                                                 ""\n"
+        "            {                                                                                                      ""\n"
+        "%UnrolledPerElevationColorMapEntryCode%                                                                            ""\n"
+        "                                                                                                                   ""\n"
+        // TODO: such alha computation won't work with colorization, only with grayscale hillshade :| 
+        "                v2f_elevationColor.a = colorMapKey - colorMapEntryMin.x;                                           ""\n"
+        "                v2f_elevationColor.a /= colorMapEntryMax.x - colorMapEntryMin.x;                                   ""\n"
+        "                v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                        ""\n"
+        "                                                                                                                   ""\n"
+        "                v2f_elevationColor.rgb = mix(                                                                      ""\n"
+        "                    colorMapEntryA.yzw,                                                                            ""\n"
+        "                    colorMapEntryB.yzw,                                                                            ""\n"
+        "                    colorMapKey - colorMapEntryA.x);                                                               ""\n"
+        "            }                                                                                                      ""\n"
+        ///
+        // "           v2f_elevationColor = v2f_elevationColor * 0.00001 + vec4(colorMapKey / 255.0, 0.0, 0.0, 0.5);                                                                                                        ""\n"
+        ///
         "        }                                                                                                          ""\n"
         "        v.y = (heightInMeters[4] / metersToUnits) * param_vs_elevation_scale.z;                                    ""\n"
         "    }                                                                                                              ""\n"
@@ -425,6 +541,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    calculateTextureCoordinates(                                                                                   ""\n"
         "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
         "        v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                                 ""\n"
+        "                                                                                                                   ""\n");
+    const auto& vertexShader_perElevationColorMapEntryCode = QString::fromLatin1(
+        "                if (param_vs_elevation_colorMap[%entryIndex%].x > param_vs_elevation_colorMap[%prevEntryIndex%].x) ""\n"
+        "                {                                                                                                  ""\n"
+        "                    colorMapEntryMax = param_vs_elevation_colorMap[%entryIndex%];                                  ""\n"
+        "                                                                                                                   ""\n"
+        "                    if (colorMapKey <= colorMapEntryMax.x)                                                         ""\n"
+        "                    {                                                                                              ""\n"
+        "                        colorMapEntryA = param_vs_elevation_colorMap[%prevEntryIndex%];                            ""\n"
+        "                        colorMapEntryB = param_vs_elevation_colorMap[%entryIndex%];                                ""\n"
+        "                    }                                                                                              ""\n"
+        "                }                                                                                                  ""\n"
         "                                                                                                                   ""\n");
 
     const auto& fragmentShader = QString::fromLatin1(
@@ -551,6 +679,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         preprocessedVertexShader_UnrolledPerRasterLayerParamsDeclarationCode);
     preprocessedVertexShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%",
         preprocessedVertexShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
+    QString preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode;
+    for (auto colorMapEntryIndex = 1u; colorMapEntryIndex < ElevationConfiguration::MaxColorMapEntries; colorMapEntryIndex++)
+    {
+        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode +=
+            detachedOf(vertexShader_perElevationColorMapEntryCode)
+            .replace("%entryIndex%", QString::number(colorMapEntryIndex))
+            .replace("%prevEntryIndex%", QString::number(colorMapEntryIndex - 1));
+    }
+    preprocessedVertexShader.replace("%UnrolledPerElevationColorMapEntryCode%",
+        preprocessedVertexShader_UnrolledPerElevationColorMapEntryCode);
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
     preprocessedVertexShader.replace("%SlopeAlgorithm_None%",
         QString::number(static_cast<int>(ElevationConfiguration::SlopeAlgorithm::None)));
@@ -681,6 +819,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.elevation_configuration,
         "param_vs_elevation_configuration",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.vs.param.elevation_hillshadeConfiguration,
+        "param_vs_elevation_hillshadeConfiguration",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.elevation_colorMap,
@@ -1028,12 +1170,19 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
             static_cast<float>(currentState.elevationConfiguration.slopeAlgorithm),
             static_cast<float>(currentState.elevationConfiguration.visualizationStyle),
             currentState.elevationConfiguration.visualizationAlpha,
+            currentState.elevationConfiguration.visualizationZ);
+        GL_CHECK_RESULT;
+
+        glUniform4f(program.vs.param.elevation_hillshadeConfiguration,
+            glm::radians(currentState.elevationConfiguration.hillshadeSunAngle),
+            glm::radians(currentState.elevationConfiguration.hillshadeSunAzimuth),
+            0.0f,
             0.0f);
         GL_CHECK_RESULT;
 
         glUniform4fv(program.vs.param.elevation_colorMap,
             8,
-            reinterpret_cast<const GLfloat*>(&currentState.elevationConfiguration.colorMap));
+            reinterpret_cast<const GLfloat*>(&currentState.elevationConfiguration.visualizationColorMap));
         GL_CHECK_RESULT;
     }
 
