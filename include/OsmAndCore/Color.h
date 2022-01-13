@@ -80,6 +80,75 @@ namespace OsmAnd
         }
     };
 
+    union FColorRGBA
+    {
+        inline FColorRGBA()
+            : r(1.0f)
+            , g(1.0f)
+            , b(1.0f)
+            , a(1.0f)
+        {
+        }
+
+        inline FColorRGBA(const float r_, const float g_, const float b_, const float a_)
+            : r(r_)
+            , g(g_)
+            , b(b_)
+            , a(a_)
+        {
+        }
+
+#if !defined(SWIG)
+        float value[4];
+        struct
+        {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+#else
+        // Fake unwrap for SWIG
+        float r, g, b, a;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const FColorRGBA& other) const
+        {
+            return
+                qFuzzyCompare(r, other.r) &&
+                qFuzzyCompare(g, other.g) &&
+                qFuzzyCompare(b, other.b) &&
+                qFuzzyCompare(a, other.a);
+        }
+
+        inline bool operator!=(const FColorRGBA& other) const
+        {
+            return
+                !qFuzzyCompare(a, other.a) ||
+                !qFuzzyCompare(r, other.r) ||
+                !qFuzzyCompare(g, other.g) ||
+                !qFuzzyCompare(b, other.b);
+        }
+#endif // !defined(SWIG)
+
+        inline FColorRGBA withAlpha(const float newAlpha) const
+        {
+            return FColorRGBA(r, g, b, newAlpha);
+        }
+
+        inline FColorRGBA& setAlpha(const float newAlpha)
+        {
+            a = newAlpha;
+            return *this;
+        }
+
+        inline bool isTransparent() const
+        {
+            return qFuzzyIsNull(a);
+        }
+    };
+
     union FColorRGB
     {
         inline FColorRGB()
@@ -136,6 +205,11 @@ namespace OsmAnd
         inline operator FColorARGB() const
         {
             return FColorARGB(1.0f, r, g, b);
+        }
+
+        inline operator FColorRGBA() const
+        {
+            return FColorRGBA(r, g, b, 1.0f);
         }
 #endif // !defined(SWIG)
 

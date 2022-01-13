@@ -16,14 +16,21 @@ OsmAnd::ElevationConfiguration::ElevationConfiguration()
     , hillshadeSunAzimuth(315.0f)
     , zScaleFactor(1.0f)
 {
-    setVisualizationGrayscaleSlopeColorMap();
+	resetVisualizationColorMap
+}
+
+OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::resetVisualizationColorMap()
+{
+	visualizationColorMap[0] = {  0.0f, FColorRGBA() };
+
+    return *this;
 }
 
 OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::setVisualizationGrayscaleSlopeColorMap()
 {
-    visualizationColorMap[0] = {  0.0f, FColorRGB(1.0f, 1.0f, 1.0f) };
-    visualizationColorMap[1] = { 90.0f, FColorRGB(0.0f, 0.0f, 0.0f) };
-    visualizationColorMap[2] = {  0.0f, FColorRGB() };
+    visualizationColorMap[0] = {  0.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+    visualizationColorMap[1] = { 90.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 1.0f) };
+    visualizationColorMap[2] = {  0.0f, FColorRGBA() };
 
     return *this;
 }

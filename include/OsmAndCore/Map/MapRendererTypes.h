@@ -56,10 +56,11 @@ namespace OsmAnd
 
         enum class VisualizationStyle {
             None = 0,
-            HillshadeTraditional = 11,
-            HillshadeIgor = 12,
-            HillshadeCombined = 13,
-            HillshadeMultidirectional = 14,
+            Slope = 10,
+            HillshadeTraditional = 20,
+            HillshadeIgor = 21,
+            HillshadeCombined = 22,
+            HillshadeMultidirectional = 23,
         };
 
         enum {
@@ -138,8 +139,9 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        std::array<std::pair<float, FColorRGB>, MaxColorMapEntries> visualizationColorMap;
+        std::array<std::pair<float, FColorRGBA>, MaxColorMapEntries> visualizationColorMap;
 #if !defined(SWIG)
+        ElevationConfiguration& resetVisualizationColorMap();
         ElevationConfiguration& setVisualizationGrayscaleSlopeColorMap();
         ElevationConfiguration& setVisualizationTerrainSlopeColorMap();
 #endif // !defined(SWIG)
@@ -156,10 +158,12 @@ namespace OsmAnd
 
         inline bool isValid() const
         {
-            return (visualizationStyle == VisualizationStyle::None) ||
-                ((visualizationStyle == VisualizationStyle::HillshadeTraditional ||
-                    visualizationStyle == VisualizationStyle::HillshadeMultidirectional) && (
-                        slopeAlgorithm != SlopeAlgorithm::None));
+            return (visualizationStyle == VisualizationStyle::None)
+                || (visualizationStyle == VisualizationStyle::Slope
+                    && slopeAlgorithm != SlopeAlgorithm::None)
+                || ((visualizationStyle == VisualizationStyle::HillshadeTraditional
+                        || visualizationStyle == VisualizationStyle::HillshadeMultidirectional)
+                    && slopeAlgorithm != SlopeAlgorithm::None);
         }
 
         inline bool operator==(const ElevationConfiguration& r) const

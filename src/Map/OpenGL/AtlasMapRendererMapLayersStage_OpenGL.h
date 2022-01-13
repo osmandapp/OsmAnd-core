@@ -113,7 +113,8 @@ namespace OsmAnd
                     GLlocation scaleToRetainProjectedSize;
                     GLlocation elevation_configuration;
                     GLlocation elevation_hillshadeConfiguration;
-                    GLlocation elevation_colorMap;
+                    GLlocation elevation_colorMapKeys;
+                    GLlocation elevation_colorMapValues;
 
                     // Per-tile data
                     GLlocation tileCoordsOffset;
