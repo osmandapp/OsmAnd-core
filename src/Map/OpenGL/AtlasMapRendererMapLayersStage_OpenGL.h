@@ -98,7 +98,7 @@ namespace OsmAnd
                 struct {
                     GLlocation vertexPosition;
                     GLlocation vertexTexCoords;
-                    GLlocation vertexNormalAndElevation;
+                    GLlocation vertexElevation;
                 } in;
 
                 // Parameters
@@ -111,13 +111,13 @@ namespace OsmAnd
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
                     GLlocation scaleToRetainProjectedSize;
+                    GLlocation elevation_configuration;
+                    GLlocation elevation_colorMap;
 
                     // Per-tile data
                     GLlocation tileCoordsOffset;
-                    GLlocation elevationData_scaleFactor;
-                    GLlocation elevationData_sampler;
-                    GLlocation elevationData_upperMetersPerUnit;
-                    GLlocation elevationData_lowerMetersPerUnit;
+                    GLlocation elevation_scale;
+                    GLlocation elevation_dataSampler;
 
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
@@ -152,18 +152,18 @@ namespace OsmAnd
         bool renderRasterLayersBatch(
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
-            GLlocation& activeNormalAndElevationVertexAttribArray,
+            GLlocation& activeElevationVertexAttribArray,
             GLname& lastUsedProgram);
         void configureElevationData(
             const RasterLayerTileProgram& program,
             const TileId tileId,
             const int elevationDataSamplerIndex,
-            GLlocation& activeNormalAndElevationVertexAttribArray);
+            GLlocation& activeElevationVertexAttribArray);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
-            GLlocation& activeNormalAndElevationVertexAttribArray);
+            GLlocation& activeElevationVertexAttribArray);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel);

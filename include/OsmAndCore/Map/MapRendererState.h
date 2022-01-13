@@ -34,8 +34,8 @@ namespace OsmAnd
     {
         MapLayers_Providers = 0,
         MapLayers_Configuration,
-        ElevationData_Provider,
-        ElevationData_Configuration,
+        Elevation_DataProvider,
+        Elevation_Configuration,
         Symbols_Providers,
         WindowSize,
         Viewport,
@@ -83,7 +83,7 @@ namespace OsmAnd
         QMap<int, MapLayerConfiguration > mapLayersConfigurations;
 
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
-        ElevationDataConfiguration elevationDataConfiguration;
+        ElevationConfiguration elevationConfiguration;
 
         QSet< std::shared_ptr<IMapTiledSymbolsProvider> > tiledSymbolsProviders;
         QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > keyedSymbolsProviders;

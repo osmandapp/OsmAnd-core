@@ -49,18 +49,103 @@ namespace OsmAnd
         }
     };
 
-    struct ElevationDataConfiguration Q_DECL_FINAL
+    struct ElevationConfiguration Q_DECL_FINAL
     {
-        ElevationDataConfiguration()
-            : scaleFactor(1.0f)
+        enum class SlopeAlgorithm {
+            None = 0,
+            ZevenbergenThorne = 4,
+            Horn = 8,
+        };
+
+        enum class VisualizationStyle {
+            None = 0,
+            HillshadeTraditional = 11,
+            HillshadeIgor = 12,
+            HillshadeCombined = 13,
+            HillshadeMultidirectional = 14,
+        };
+
+        ElevationConfiguration()
+            : dataScaleFactor(1.0f)
+            , slopeAlgorithm(SlopeAlgorithm::ZevenbergenThorne)
+            , visualizationStyle(VisualizationStyle::HillshadeMultidirectional)
+            , visualizationAlpha(1.0f)
+            , zScaleFactor(1.0f)
         {
+            setGrayscaleSlopeColorMap();
         }
 
-        float scaleFactor;
+        float dataScaleFactor;
 #if !defined(SWIG)
-        inline ElevationDataConfiguration& setScaleFactor(const float newScaleFactor)
+        inline ElevationConfiguration& setDataScaleFactor(const float newDataScaleFactor)
         {
-            scaleFactor = newScaleFactor;
+            dataScaleFactor = newDataScaleFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        SlopeAlgorithm slopeAlgorithm;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setSlopeAlgorithm(const SlopeAlgorithm newSlopeAlgorithm)
+        {
+            slopeAlgorithm = newSlopeAlgorithm;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        VisualizationStyle visualizationStyle;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setVisualizationStyle(const VisualizationStyle newVisualizationStyle)
+        {
+            visualizationStyle = newVisualizationStyle;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float visualizationAlpha;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setVisualizationAlpha(const float newVisualizationAlpha)
+        {
+            visualizationAlpha = newVisualizationAlpha;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        std::array<std::pair<float, FColorRGB>, 8> colorMap;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setGrayscaleSlopeColorMap()
+        {
+            colorMap[0] = {  0.0f, FColorRGB(1.0f, 1.0f, 1.0f) };
+            colorMap[1] = { 90.0f, FColorRGB(0.0f, 0.0f, 0.0f) };
+            colorMap[2] = {  0.0f, FColorRGB() };
+
+            return *this;
+        }
+
+        inline ElevationConfiguration& setTerrainSlopeColorMap()
+        {
+            colorMap[0] = {  0.00f, FColorRGB( 74.0f / 255.0f, 165.0f / 255.0f,  61.0f / 255.0f) };
+            colorMap[1] = {  7.00f, FColorRGB(117.0f / 255.0f, 190.0f / 255.0f, 100.0f / 255.0f) };
+            colorMap[2] = { 15.07f, FColorRGB(167.0f / 255.0f, 220.0f / 255.0f, 145.0f / 255.0f) };
+            colorMap[3] = { 35.33f, FColorRGB(245.0f / 255.0f, 211.0f / 255.0f, 163.0f / 255.0f) };
+            colorMap[4] = { 43.85f, FColorRGB(229.0f / 255.0f, 149.0f / 255.0f, 111.0f / 255.0f) };
+            colorMap[5] = { 50.33f, FColorRGB(235.0f / 255.0f, 178.0f / 255.0f, 152.0f / 255.0f) };
+            colorMap[6] = { 55.66f, FColorRGB(244.0f / 255.0f, 216.0f / 255.0f, 201.0f / 255.0f) };
+            colorMap[7] = { 69.00f, FColorRGB(251.0f / 255.0f, 247.0f / 255.0f, 240.0f / 255.0f) };
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        float zScaleFactor;
+#if !defined(SWIG)
+        inline ElevationConfiguration& setZScaleFactor(const float newZScaleFactor)
+        {
+            zScaleFactor = newZScaleFactor;
 
             return *this;
         }
@@ -68,19 +153,32 @@ namespace OsmAnd
 
         inline bool isValid() const
         {
-            return true;
+            return (visualizationStyle == VisualizationStyle::None) ||
+                ((visualizationStyle == VisualizationStyle::HillshadeTraditional ||
+                    visualizationStyle == VisualizationStyle::HillshadeMultidirectional) && (
+                        slopeAlgorithm != SlopeAlgorithm::None));
         }
 
-        inline bool operator==(const ElevationDataConfiguration& r) const
+        inline bool operator==(const ElevationConfiguration& r) const
         {
             return
-                qFuzzyCompare(scaleFactor, r.scaleFactor);
+                qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) &&
+                slopeAlgorithm == r.slopeAlgorithm &&
+                visualizationStyle == r.visualizationStyle &&
+                qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) &&
+                colorMap == r.colorMap &&
+                qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
 
-        inline bool operator!=(const ElevationDataConfiguration& r) const
+        inline bool operator!=(const ElevationConfiguration& r) const
         {
             return
-                !qFuzzyCompare(scaleFactor, r.scaleFactor);
+                !qFuzzyCompare(dataScaleFactor, r.dataScaleFactor) ||
+                slopeAlgorithm != r.slopeAlgorithm ||
+                visualizationStyle != r.visualizationStyle ||
+                !qFuzzyCompare(visualizationAlpha, r.visualizationAlpha) ||
+                colorMap != r.colorMap ||
+                !qFuzzyCompare(zScaleFactor, r.zScaleFactor);
         }
     };
 

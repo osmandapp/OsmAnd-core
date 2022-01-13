@@ -1221,7 +1221,7 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
 
     _requestedState.elevationDataProvider = provider;
 
-    notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
     return true;
 }
@@ -1236,13 +1236,13 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
 
     _requestedState.elevationDataProvider.reset();
 
-    notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Provider);
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::setElevationDataConfiguration(
-    const ElevationDataConfiguration& configuration,
+bool OsmAnd::MapRenderer::setElevationConfiguration(
+    const ElevationConfiguration& configuration,
     bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -1250,13 +1250,13 @@ bool OsmAnd::MapRenderer::setElevationDataConfiguration(
     if (!configuration.isValid())
         return false;
 
-    bool update = forcedUpdate || (_requestedState.elevationDataConfiguration != configuration);
+    bool update = forcedUpdate || (_requestedState.elevationConfiguration != configuration);
     if (!update)
         return false;
 
-    _requestedState.elevationDataConfiguration = configuration;
+    _requestedState.elevationConfiguration = configuration;
 
-    notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationData_Configuration);
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_Configuration);
 
     return true;
 }

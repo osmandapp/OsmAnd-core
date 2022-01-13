@@ -1067,14 +1067,31 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         return false;
     }
 
+#pragma pack(push, 1)
+    struct Item
+    {
+        float tl;
+        float t;
+        float tr;
+        
+        float l;
+        float o;
+        float r;
+        
+        float bl;
+        float b;
+        float br;
+    };
+#pragma pack(pop)
+
     const auto pHeixels = reinterpret_cast<const uint8_t*>(elevationData->pRawData);
     const auto pHeixelsRowLength = elevationData->rowLength;
     const auto heixelsPerTileSide = elevationData->size;
     const auto itemsPerTileSide = elevationData->size - 2;
     const auto itemsCount = itemsPerTileSide * itemsPerTileSide;
-    const auto pItems = new float[itemsCount * 4];
+    const auto pItems = new Item[itemsCount];
 
-    auto pItem = reinterpret_cast<glm::vec4*>(pItems);
+    auto pItem = pItems;
     for (int row = 0; row < itemsPerTileSide; row++)
     {
         const auto pPrevHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 0) * pHeixelsRowLength);
@@ -1086,20 +1103,23 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         auto pHeixelL = pCurrHeixelsRow + 0;
         auto pHeixelB = pNextHeixelsRow + 1;
         auto pHeixelR = pCurrHeixelsRow + 2;
-        for (int col = 0; col < itemsPerTileSide; col++, pItem++, pHeixelO++, pHeixelT++, pHeixelL++, pHeixelB++, pHeixelR++)
+        auto pHeixelTL = pPrevHeixelsRow + 0;
+        auto pHeixelTR = pPrevHeixelsRow + 2;
+        auto pHeixelBL = pNextHeixelsRow + 0;
+        auto pHeixelBR = pNextHeixelsRow + 2;
+        for (int col = 0; col < itemsPerTileSide; col++)
         {
-            auto& item = *pItem;
+            auto& item = *(pItem++);
 
-            const auto normal = glm::vec3(
-                2.0f * (*pHeixelR - *pHeixelL),
-                2.0f * (*pHeixelB - *pHeixelT),
-                -4.0f
-            );
-            item.x = normal.x;
-            item.y = normal.y;
-            item.z = normal.z;
-
-            item.w = *pHeixelO;
+            item.o = *(pHeixelO++);
+            item.t = *(pHeixelT++);
+            item.l = *(pHeixelL++);
+            item.b = *(pHeixelB++);
+            item.r = *(pHeixelR++);
+            item.tl = *(pHeixelTL++);
+            item.tr = *(pHeixelTR++);
+            item.bl = *(pHeixelBL++);
+            item.br = *(pHeixelBR++);
         }
     }
 
@@ -1113,7 +1133,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     GL_CHECK_RESULT;
 
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(float) * 4, pItems, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(Item), pItems, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
