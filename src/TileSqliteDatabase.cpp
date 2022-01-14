@@ -172,6 +172,90 @@ OsmAnd::TileSqliteDatabase::Meta::~Meta()
 {
 }
 
+const QString OsmAnd::TileSqliteDatabase::Meta::TITLE(QStringLiteral("title"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getTitle(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itTitle = values.constFind(TITLE);
+    if (itTitle == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itTitle->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setTitle(QString title)
+{
+    values.insert(TITLE, QVariant(qMove(title)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::RULE(QStringLiteral("rule"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getRule(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itRule = values.constFind(RULE);
+    if (itRule == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itRule->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setRule(QString rule)
+{
+    values.insert(RULE, QVariant(qMove(rule)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::REFERER(QStringLiteral("referer"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getReferer(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itReferer = values.constFind(REFERER);
+    if (itReferer == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itReferer->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setReferer(QString referer)
+{
+    values.insert(REFERER, QVariant(qMove(referer)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::RANDOMS(QStringLiteral("randoms"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getRandoms(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itRandoms = values.constFind(RANDOMS);
+    if (itRandoms == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itRandoms->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setRandoms(QString randoms)
+{
+    values.insert(RANDOMS, QVariant(qMove(randoms)));
+}
+
 const QString OsmAnd::TileSqliteDatabase::Meta::URL(QStringLiteral("url"));
 
 QString OsmAnd::TileSqliteDatabase::Meta::getUrl(bool* outOk /* = nullptr*/) const
@@ -247,6 +331,33 @@ void OsmAnd::TileSqliteDatabase::Meta::setMaxZoom(int64_t maxZoom)
     values.insert(MAX_ZOOM, QVariant(static_cast<qint64>(maxZoom)));
 }
 
+const QString OsmAnd::TileSqliteDatabase::Meta::ELLIPSOID(QStringLiteral("ellipsoid"));
+
+int64_t OsmAnd::TileSqliteDatabase::Meta::getEllipsoid(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itEllipsoid = values.constFind(ELLIPSOID);
+    if (itEllipsoid == values.cend())
+        return std::numeric_limits<int64_t>::min();
+
+    bool ok = false;
+    const auto ellipsoid = itEllipsoid->toLongLong(&ok);
+
+    if (!ok)
+        return std::numeric_limits<int64_t>::min();
+
+    if (outOk)
+        *outOk = true;
+    return ellipsoid;
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setEllipsoid(int64_t ellipsoid)
+{
+    values.insert(ELLIPSOID, QVariant(static_cast<qint64>(ellipsoid)));
+}
+
 const QString OsmAnd::TileSqliteDatabase::Meta::INVERTED_Y(QStringLiteral("inverted_y"));
 
 int64_t OsmAnd::TileSqliteDatabase::Meta::getInvertedY(bool* outOk /* = nullptr*/) const
@@ -295,14 +406,41 @@ void OsmAnd::TileSqliteDatabase::Meta::setTimeColumn(QString timeColumn)
     values.insert(TIME_COLUMN, QVariant(qMove(timeColumn)));
 }
 
-const QString OsmAnd::TileSqliteDatabase::Meta::TIME_NUMBERING(QStringLiteral("tilenumbering"));
+const QString OsmAnd::TileSqliteDatabase::Meta::EXPIRE_MINUTES(QStringLiteral("expireminutes"));
+
+int64_t OsmAnd::TileSqliteDatabase::Meta::getExpireMinutes(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto iteExpireMinutes = values.constFind(EXPIRE_MINUTES);
+    if (iteExpireMinutes == values.cend())
+        return std::numeric_limits<int64_t>::min();
+
+    bool ok = false;
+    const auto expireMinutes = iteExpireMinutes->toLongLong(&ok);
+
+    if (!ok)
+        return std::numeric_limits<int64_t>::min();
+
+    if (outOk)
+        *outOk = true;
+    return expireMinutes;
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setExpireMinutes(int64_t expireMinutes)
+{
+    values.insert(EXPIRE_MINUTES, QVariant(static_cast<qint64>(expireMinutes)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::TILE_NUMBERING(QStringLiteral("tilenumbering"));
 
 QString OsmAnd::TileSqliteDatabase::Meta::getTileNumbering(bool* outOk /* = nullptr*/) const
 {
     if (outOk)
         *outOk = false;
 
-    const auto itTileNumbering = values.constFind(TIME_NUMBERING);
+    const auto itTileNumbering = values.constFind(TILE_NUMBERING);
     if (itTileNumbering == values.cend())
         return QString();
 
@@ -313,7 +451,7 @@ QString OsmAnd::TileSqliteDatabase::Meta::getTileNumbering(bool* outOk /* = null
 
 void OsmAnd::TileSqliteDatabase::Meta::setTileNumbering(QString tileNumbering)
 {
-    values.insert(TIME_NUMBERING, QVariant(qMove(tileNumbering)));
+    values.insert(TILE_NUMBERING, QVariant(qMove(tileNumbering)));
 }
 
 const QString OsmAnd::TileSqliteDatabase::Meta::TILE_SIZE(QStringLiteral("tilesize"));

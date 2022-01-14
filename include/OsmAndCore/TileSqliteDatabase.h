@@ -28,14 +28,25 @@ namespace OsmAnd
 
             QHash<QString, QVariant> values;
 
+            static const QString TITLE;
+            QString getTitle(bool* outOk = nullptr) const;
+            void setTitle(QString title);
+
+            static const QString RULE;
+            QString getRule(bool* outOk = nullptr) const;
+            void setRule(QString rule);
+
+            static const QString REFERER;
+            QString getReferer(bool* outOk = nullptr) const;
+            void setReferer(QString referer);
+
+            static const QString RANDOMS;
+            QString getRandoms(bool* outOk = nullptr) const;
+            void setRandoms(QString randoms);
+
             static const QString URL;
             QString getUrl(bool* outOk = nullptr) const;
             void setUrl(QString url);
-
-//            "randoms"	String. The names of the mirrors of server. Comma-separated. One of these values will randomly replace the placeholder {rdn} in "url" field.
-//            "referer"	String. HTTP Referer. As used for downloading.
-//            "rule"	String. Supported template:1 (same as empty), wms_tile, yandex_traffic. Adds specific algorithms how tiles will be downloaded. wms_tile is using proxy server such as whoots.mapwarper.net to deal with WMS sources
-//            "userAgent"	String. HTTP User Agent. As used for downloading.
 
             static const QString MIN_ZOOM;
             int64_t getMinZoom(bool* outOk = nullptr) const;
@@ -45,8 +56,10 @@ namespace OsmAnd
             int64_t getMaxZoom(bool* outOk = nullptr) const;
             void setMaxZoom(int64_t maxZoom);
 
-//            "ellipsoid"	Integer 0 or 1. 1 for Elliptic Mercator (Yandex tiles). 0 for regular Spheric Web Mercator (OSM, Google maps)
-
+            static const QString ELLIPSOID;
+            int64_t getEllipsoid(bool* outOk = nullptr) const;
+            void setEllipsoid(int64_t ellipsoid);
+            
             static const QString INVERTED_Y;
             int64_t getInvertedY(bool* outOk = nullptr) const;
             void setInvertedY(int64_t invertedY);
@@ -55,9 +68,11 @@ namespace OsmAnd
             QString getTimeColumn(bool* outOk = nullptr) const;
             void setTimeColumn(QString timeColumn);
 
-//            "expireminutes"	Integer. Specifies if tiles shall expire after the given number of minutes. They would still be displayed, but also re-downloaded.
+            static const QString EXPIRE_MINUTES;
+            int64_t getExpireMinutes(bool* outOk = nullptr) const;
+            void setExpireMinutes(int64_t expireMinutes);
 
-            static const QString TIME_NUMBERING;
+            static const QString TILE_NUMBERING;
             QString getTileNumbering(bool* outOk = nullptr) const;
             void setTileNumbering(QString tileNumbering);
 
