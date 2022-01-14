@@ -486,6 +486,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                    float value = 254.0 * sin(sunZenith);                                                          ""\n"
         "                    value -= slope.y * (254.0 * zCosZenithCosAzimuth) - slope.x * (254.0 * zCosZenithSinAzimuth);  ""\n"
         "                    value /= sqrt(1.0 + zFactorSq * slopeXXpYY);                                                   ""\n"
+        "                    value = 1.0 + max(value, 0.0);                                                                 ""\n"
         "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
         "                }                                                                                                  ""\n"
         "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeIgor%.0) < 0.00001)                 ""\n"
@@ -499,25 +500,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     // return static_cast<float>(255.0 * shadowness);
         "                }                                                                                                  ""\n"
         "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
-        "                {                                                                                                  ""\n"        
-    // const double slope = slopeXXpYY * psData->square_z;
-
-    // // ... then the shade value
-    // double cang =
-    //     acos(
-    //         ApproxADivByInvSqrtB(
-    //             sin(alt) -
-    //             (y * zScaledCosAltCosAz -
-    //              x * zScaledCosAltSinAz),
-    //             1 + slope));
-
-    // // combined shading
-    // cang = 1 - cang * atan(sqrt(slope)) * INV_SQUARE_OF_HALF_PI;
-
-    // const float fcang =
-    //     cang <= 0.0
-    //     ? 1.0f
-    //     : static_cast<float>(1.0 + (254.0 * cang));
+        "                {                                                                                                  ""\n"
+        "                    const float PI = 3.1415926535897932384626433832795;                                            ""\n"
+        "                    const float INV_SQUARE_OF_HALF_PI = 1.0 / ((PI * PI) / 4.0);                                   ""\n"
+        "                                                                                                                   ""\n"
+        "                    float zSqSlopeXXpYY = zFactorSq * slopeXXpYY;                                                  ""\n"
+        "                    float value = sin(sunZenith);                                                                  ""\n"
+        "                    value -= slope.y * zCosZenithCosAzimuth - slope.x * zCosZenithSinAzimuth;                      ""\n"
+        "                    value /= sqrt(1.0 + zSqSlopeXXpYY);                                                            ""\n"
+        "                    value = 1.0 - value * atan(sqrt(zSqSlopeXXpYY)) * INV_SQUARE_OF_HALF_PI;                       ""\n"
+        "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
         "                }                                                                                                  ""\n"
         "            }                                                                                                      ""\n"
         "                                                                                                                   ""\n"
