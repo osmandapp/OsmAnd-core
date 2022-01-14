@@ -670,8 +670,10 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code)
         "                                                                                                                   ""\n");
 
     auto shaderAdditionalProloguePreprocessed = shaderAdditionalPrologue;
-    shaderAdditionalProloguePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
-    shaderAdditionalProloguePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
+    shaderAdditionalProloguePreprocessed.replace("%VertexTextureFetchSupported%",
+        QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderAdditionalProloguePreprocessed.replace("%TextureLodSupported%",
+        QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderAdditionalProloguePreprocessed);
     code.prepend(shaderHeader);

@@ -619,8 +619,10 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
     }
 
     auto shaderSourcePreprocessed = shaderHeader;
-    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
-    shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
+    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%",
+        QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderSourcePreprocessed.replace("%TextureLodSupported%",
+        QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderSourcePreprocessed);
 }

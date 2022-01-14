@@ -16,12 +16,15 @@ OsmAnd::ElevationConfiguration::ElevationConfiguration()
     , hillshadeSunAzimuth(315.0f)
     , zScaleFactor(1.0f)
 {
-    resetVisualizationColorMap();
+    setVisualizationColorMapPreset(ColorMapPreset::GrayscaleHillshade);
 }
 
 OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::resetVisualizationColorMap()
 {
-    visualizationColorMap[0] = {  0.0f, FColorRGBA() };
+    for (auto& colorMapEntry : visualizationColorMap)
+    {
+        colorMapEntry = { 0.0f, FColorRGBA() };
+    }
 
     return *this;
 }
@@ -29,22 +32,27 @@ OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::resetVisualizati
 OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::setVisualizationColorMapPreset(
     ColorMapPreset colorMapPreset)
 {
+    resetVisualizationColorMap();
+
     switch (colorMapPreset)
     {
+        case ColorMapPreset::GrayscaleHillshade:
+            visualizationColorMap[0] = {   0.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 1.0f) };
+            visualizationColorMap[1] = { 255.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+            break;
         case ColorMapPreset::GrayscaleSlopeDegrees:
-            visualizationColorMap[0] = {  0.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
-            visualizationColorMap[1] = { 90.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 1.0f) };
-            visualizationColorMap[2] = {  0.0f, FColorRGBA() };
+            visualizationColorMap[0] = {   0.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+            visualizationColorMap[1] = {  90.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 1.0f) };
             break;
         case ColorMapPreset::TerrainSlopeDegrees:
-            visualizationColorMap[0] = {  0.00f, FColorRGB( 74.0f / 255.0f, 165.0f / 255.0f,  61.0f / 255.0f) };
-            visualizationColorMap[1] = {  7.00f, FColorRGB(117.0f / 255.0f, 190.0f / 255.0f, 100.0f / 255.0f) };
-            visualizationColorMap[2] = { 15.07f, FColorRGB(167.0f / 255.0f, 220.0f / 255.0f, 145.0f / 255.0f) };
-            visualizationColorMap[3] = { 35.33f, FColorRGB(245.0f / 255.0f, 211.0f / 255.0f, 163.0f / 255.0f) };
-            visualizationColorMap[4] = { 43.85f, FColorRGB(229.0f / 255.0f, 149.0f / 255.0f, 111.0f / 255.0f) };
-            visualizationColorMap[5] = { 50.33f, FColorRGB(235.0f / 255.0f, 178.0f / 255.0f, 152.0f / 255.0f) };
-            visualizationColorMap[6] = { 55.66f, FColorRGB(244.0f / 255.0f, 216.0f / 255.0f, 201.0f / 255.0f) };
-            visualizationColorMap[7] = { 69.00f, FColorRGB(251.0f / 255.0f, 247.0f / 255.0f, 240.0f / 255.0f) };
+            visualizationColorMap[0] = {   0.00f, FColorRGB( 74.0f / 255.0f, 165.0f / 255.0f,  61.0f / 255.0f) };
+            visualizationColorMap[1] = {   7.00f, FColorRGB(117.0f / 255.0f, 190.0f / 255.0f, 100.0f / 255.0f) };
+            visualizationColorMap[2] = {  15.07f, FColorRGB(167.0f / 255.0f, 220.0f / 255.0f, 145.0f / 255.0f) };
+            visualizationColorMap[3] = {  35.33f, FColorRGB(245.0f / 255.0f, 211.0f / 255.0f, 163.0f / 255.0f) };
+            visualizationColorMap[4] = {  43.85f, FColorRGB(229.0f / 255.0f, 149.0f / 255.0f, 111.0f / 255.0f) };
+            visualizationColorMap[5] = {  50.33f, FColorRGB(235.0f / 255.0f, 178.0f / 255.0f, 152.0f / 255.0f) };
+            visualizationColorMap[6] = {  55.66f, FColorRGB(244.0f / 255.0f, 216.0f / 255.0f, 201.0f / 255.0f) };
+            visualizationColorMap[7] = {  69.00f, FColorRGB(251.0f / 255.0f, 247.0f / 255.0f, 240.0f / 255.0f) };
             break;
     }
 
@@ -53,7 +61,8 @@ OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::setVisualization
 
 bool OsmAnd::ElevationConfiguration::isValid() const
 {
-    return (visualizationStyle == VisualizationStyle::None)
+    return (visualizationStyle == VisualizationStyle::None
+            && slopeAlgorithm == SlopeAlgorithm::None)
         || ((visualizationStyle == VisualizationStyle::SlopeDegrees
                 || visualizationStyle == VisualizationStyle::SlopePercents)
             && slopeAlgorithm != SlopeAlgorithm::None)

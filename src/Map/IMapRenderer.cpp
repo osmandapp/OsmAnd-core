@@ -18,7 +18,8 @@ OsmAnd::IMapRenderer::~IMapRenderer()
 #   endif // defined(OSMAND_OPENGLES2_RENDERER_SUPPORTED)
 #endif // defined(OSMAND_OPENGL_RENDERERS_SUPPORTED)
 
-OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL OsmAnd::createMapRenderer(const MapRendererClass mapRendererClass)
+OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL OsmAnd::createMapRenderer(
+    const MapRendererClass mapRendererClass)
 {
     switch (mapRendererClass)
     {

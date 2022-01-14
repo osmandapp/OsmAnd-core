@@ -136,6 +136,7 @@ namespace OsmAnd
         {
             ColorDepthForcing,
             TexturesFilteringMode,
+            ElevationVisualization,
 
             __LAST
         };

@@ -128,12 +128,15 @@ uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
 {
     const bool colorDepthForcingChanged = (current->limitTextureColorDepthBy16bits != updated->limitTextureColorDepthBy16bits);
     const bool texturesFilteringChanged = (current->texturesFilteringQuality != updated->texturesFilteringQuality);
+    const bool elevationVisualizationChanged = (current->elevationVisualizationAllowed != updated->elevationVisualizationAllowed);
 
     uint32_t mask = 0;
     if (colorDepthForcingChanged)
         mask |= enumToBit(ConfigurationChange::ColorDepthForcing);
     if (texturesFilteringChanged)
         mask |= enumToBit(ConfigurationChange::TexturesFilteringMode);
+    if (elevationVisualizationChanged)
+        mask |= enumToBit(ConfigurationChange::ElevationVisualization);
 
     return mask;
 }
@@ -177,6 +180,8 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
 
 void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange& change)
 {
+    // TODO: on ElevationVisualization and everything re-initializeRendering
+
     bool invalidateMapLayers = false;
     invalidateMapLayers = invalidateMapLayers || (change == ConfigurationChange::ColorDepthForcing);
     if (invalidateMapLayers)

@@ -65,6 +65,7 @@ namespace OsmAnd
         };
 
         enum class ColorMapPreset {
+            GrayscaleHillshade,
             GrayscaleSlopeDegrees,
             TerrainSlopeDegrees,
         };
