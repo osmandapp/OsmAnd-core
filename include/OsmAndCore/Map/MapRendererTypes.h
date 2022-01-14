@@ -56,11 +56,17 @@ namespace OsmAnd
 
         enum class VisualizationStyle {
             None = 0,
-            Slope = 10,
+            SlopeDegrees = 10,
+            SlopePercents = 11,
             HillshadeTraditional = 20,
             HillshadeIgor = 21,
             HillshadeCombined = 22,
             HillshadeMultidirectional = 23,
+        };
+
+        enum class ColorMapPreset {
+            GrayscaleSlopeDegrees,
+            TerrainSlopeDegrees,
         };
 
         enum {
@@ -142,8 +148,7 @@ namespace OsmAnd
         std::array<std::pair<float, FColorRGBA>, MaxColorMapEntries> visualizationColorMap;
 #if !defined(SWIG)
         ElevationConfiguration& resetVisualizationColorMap();
-        ElevationConfiguration& setVisualizationGrayscaleSlopeColorMap();
-        ElevationConfiguration& setVisualizationTerrainSlopeColorMap();
+        ElevationConfiguration& setVisualizationColorMapPreset(ColorMapPreset colorMapPreset);
 #endif // !defined(SWIG)
 
         float zScaleFactor;
@@ -156,15 +161,7 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        inline bool isValid() const
-        {
-            return (visualizationStyle == VisualizationStyle::None)
-                || (visualizationStyle == VisualizationStyle::Slope
-                    && slopeAlgorithm != SlopeAlgorithm::None)
-                || ((visualizationStyle == VisualizationStyle::HillshadeTraditional
-                        || visualizationStyle == VisualizationStyle::HillshadeMultidirectional)
-                    && slopeAlgorithm != SlopeAlgorithm::None);
-        }
+        bool isValid() const;
 
         inline bool operator==(const ElevationConfiguration& r) const
         {
