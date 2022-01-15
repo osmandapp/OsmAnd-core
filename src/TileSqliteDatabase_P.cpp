@@ -256,10 +256,20 @@ bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
     }
 
     isSupported = QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
+    
     _cachedIsTileTimeSupported.storeRelease(isSupported);
     return isSupported > 0;
 }
+
+bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+    return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
+ }
 
 bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false */)
 {
@@ -329,11 +339,17 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMinZoom() const
         _cachedMinZoom.storeRelease(ZoomLevel::MinZoomLevel);
         return ZoomLevel::MinZoomLevel;
     }
+    auto maxZoomValue = meta.getMaxZoom(&ok);
+    if (!ok)
+    {
+        _cachedMinZoom.storeRelease(ZoomLevel::MinZoomLevel);
+        return ZoomLevel::MinZoomLevel;
+    }
 
     int invertedZoomValue;
     if ((invertedZoomValue = getInvertedZoomValue()) > 0)
     {
-        minZoomValue = invertedZoomValue - minZoomValue;
+        minZoomValue = invertedZoomValue - maxZoomValue;
     }
 
     if (minZoomValue < ZoomLevel::MinZoomLevel || minZoomValue > ZoomLevel::MaxZoomLevel)
@@ -368,11 +384,17 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMaxZoom() const
         _cachedMaxZoom.storeRelease(ZoomLevel::MaxZoomLevel);
         return ZoomLevel::MaxZoomLevel;
     }
+    auto minZoomValue = meta.getMinZoom(&ok);
+    if (!ok)
+    {
+        _cachedMaxZoom.storeRelease(ZoomLevel::MaxZoomLevel);
+        return ZoomLevel::MaxZoomLevel;
+    }
 
     int invertedZoomValue;
     if ((invertedZoomValue = getInvertedZoomValue()) > 0)
     {
-        maxZoomValue = invertedZoomValue - maxZoomValue;
+        maxZoomValue = invertedZoomValue - minZoomValue;
     }
 
     if (maxZoomValue < ZoomLevel::MinZoomLevel || maxZoomValue > ZoomLevel::MaxZoomLevel)
@@ -692,6 +714,10 @@ bool OsmAnd::TileSqliteDatabase_P::obtainMeta(OsmAnd::TileSqliteDatabase_P::Meta
         {
             _meta = readMeta(_database);
         }
+        if (!_meta)
+        {
+            return false;
+        }
 
         outMeta = *_meta;
     }
@@ -814,14 +840,20 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileTime(
 
         if (res > 0)
         {
-            bool ok = false;
-            const auto value = readStatementValue(statement, 0).toLongLong(&ok);
-            if (!ok)
+            int64_t time = 0;
+            const auto timeValue = readStatementValue(statement, 0);
+            if (!timeValue.isNull())
             {
-                return false;
+                bool ok = false;
+                const auto timeLL = timeValue.toLongLong(&ok);
+                if (!ok)
+                {
+                    return false;
+                }
+                time = static_cast<int64_t>(timeLL);
             }
-
-            outTime = static_cast<int64_t>(value);
+            
+            outTime = time;
             return true;
         }
     }
@@ -884,14 +916,20 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
 
             if (timeSupported && pOutTime)
             {
-                bool ok = false;
-                const auto timeValue = readStatementValue(statement, 1).toLongLong(&ok);
-                if (!ok)
+                int64_t time = 0;
+                const auto timeValue = readStatementValue(statement, 1);
+                if (!timeValue.isNull())
                 {
-                    return false;
+                    bool ok = false;
+                    const auto timeLL = timeValue.toLongLong(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    time = static_cast<int64_t>(timeLL);
                 }
 
-                *pOutTime = static_cast<int64_t>(timeValue);
+                *pOutTime = time;
             }
 
             return true;
