@@ -44,6 +44,10 @@ namespace OsmAnd
         {
         }
 
+        inline Ref(std::nullptr_t)
+        {
+        }
+
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
             inline Ref(OtherType* const pObject)
             : _objectRef(pObject)
@@ -100,6 +104,11 @@ namespace OsmAnd
             return (_objectRef.get() == pObject);
         }
 
+        inline bool operator==(std::nullptr_t) const
+        {
+            return static_cast<bool>(_objectRef);
+        }
+
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
         inline bool operator!=(const Ref< OtherType >& r) const
         {
@@ -116,6 +125,11 @@ namespace OsmAnd
         inline bool operator!=(const OtherType* const pObject) const
         {
             return (_objectRef.get() == pObject);
+        }
+
+        inline bool operator!=(std::nullptr_t) const
+        {
+            return !static_cast<bool>(_objectRef);
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
@@ -136,6 +150,12 @@ namespace OsmAnd
         inline RefT& operator=(const Ref< OtherType >& that)
         {
             _objectRef = that._objectRef;
+            return *this;
+        }
+
+        inline RefT& operator=(std::nullptr_t)
+        {
+            _objectRef.reset();
             return *this;
         }
 

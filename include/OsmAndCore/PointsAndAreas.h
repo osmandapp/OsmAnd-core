@@ -584,6 +584,11 @@ namespace OsmAnd
             return PointT(left(), bottom());
         }
 
+        inline bool isNegative() const
+        {
+            return left() > right() || top() > bottom();
+        }
+
 #if !defined(SWIG)
         bool isOnEdge(const PointT& p, Edge* edge = nullptr) const
         {
@@ -741,6 +746,14 @@ namespace OsmAnd
                 left() - dl,
                 bottom() + db,
                 right() + dr);
+        }
+
+        static AreaT negative()
+        {
+            AreaT res;
+            res.top() = res.left() = std::numeric_limits<T>::max();
+            res.bottom() = res.right() = std::numeric_limits<T>::min();
+            return res;   
         }
 
         static AreaT largest()

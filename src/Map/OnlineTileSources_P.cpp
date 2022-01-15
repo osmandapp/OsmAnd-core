@@ -19,25 +19,23 @@ OsmAnd::OnlineTileSources_P::~OnlineTileSources_P()
 {
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QXmlStreamAttributes &attributes)
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createTileSourceTemplate(
+    const QXmlStreamAttributes &attributes)
 {
-    std::shared_ptr<Source> tileSource = nullptr;
     if (attributes.hasAttribute("rule"))
     {
         const QString rule = attributes.value(QStringLiteral("rule")).toString();
         if (rule.isEmpty() || rule == QStringLiteral("template:1"))
-            tileSource = createSimpleTileSourceTemplate(attributes, rule);
+            return createSimpleTileSourceTemplate(attributes, rule);
         else if (rule == QStringLiteral("wms_tile"))
-            tileSource = createWmsTileSourceTemplate(attributes);
+            return createWmsTileSourceTemplate(attributes);
     }
-    else
-    {
-        tileSource = createSimpleTileSourceTemplate(attributes, QStringLiteral(""));
-    }
-    return tileSource;
+
+    return createSimpleTileSourceTemplate(attributes, QStringLiteral(""));
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(const QXmlStreamAttributes &attributes)
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createWmsTileSourceTemplate(
+    const QXmlStreamAttributes &attributes)
 {
     const QString name = attributes.value(QStringLiteral("name")).toString();
     const QString layer = attributes.value(QStringLiteral("layer")).toString();
@@ -65,7 +63,8 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     return source;
 }
 
-std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(const QXmlStreamAttributes &attributes, const QString &rule)
+std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::createSimpleTileSourceTemplate(
+    const QXmlStreamAttributes &attributes, const QString &rule)
 {
     QString urlTemplate = attributes.value(QStringLiteral("url_template")).toString();
     QString name = attributes.value(QStringLiteral("name")).toString();
@@ -212,11 +211,16 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
             }
 
             auto source = createTileSourceTemplate(xmlReader.attributes());
-            if (source != nullptr)
+            if (!source)
             {
-                source->priority = priority++;
-                collection.insert(name, source);
+                LogPrintf(LogSeverityLevel::Warning,
+                    "Failed to parse tile source '%s'",
+                    qPrintable(name));
+                continue;
             }
+
+            source->priority = priority++;
+            collection.insert(name, source);
         }
     }
     if (xmlReader.hasError())
@@ -381,12 +385,19 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
     QMutexLocker scopedLocker(&mutex);
     if (!_builtIn)
     {
-        bool ok = true;
-        _builtIn.reset(new OnlineTileSources());
-        _builtIn->loadFrom(getCoreResourcesProvider()->getResource(
-            QLatin1String("misc/default.online_tile_sources.xml"),
-            &ok));
-        assert(ok);
+        auto source = std::make_shared<OnlineTileSources::Source>(OnlineTileSources::BuiltInOsmAndHD);
+        source->ext = QStringLiteral(".png");
+        source->urlToLoad = QStringLiteral("https://tile.osmand.net/hd/{0}/{1}/{2}.png");
+        source->maxZoom = ZoomLevel19;
+        source->minZoom = ZoomLevel1;
+        source->tileSize = 512;
+        source->bitDensity = 8;
+        source->avgSize = 18000;
+
+        auto builtIn = std::make_shared<OnlineTileSources>();
+        builtIn->addSource(source);
+
+        _builtIn = builtIn;
     }
     return _builtIn;
 }

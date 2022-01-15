@@ -606,7 +606,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_VoicePack(
         }
         else
         {
-            timestamp = QFileInfo(voiceConfig).lastModified().toMSecsSinceEpoch();
+            timestamp = QFileInfo(voiceConfig).lastModified().toUTC().toMSecsSinceEpoch();
         }
 
         // Read special size file
@@ -722,18 +722,13 @@ const std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::ResourcesManager_
     return std::const_pointer_cast<const OnlineTileSources>(sources);
 }
 
-void OsmAnd::ResourcesManager_P::installOsmAndOnlineTileSource()
+void OsmAnd::ResourcesManager_P::installBuiltInTileSources()
 {
-    const auto& mapnikSource = std::shared_ptr<OnlineTileSources::Source>(new OnlineTileSources::Source(QStringLiteral("OsmAnd (online tiles)")));
-    mapnikSource->ext = QStringLiteral(".png");
-    mapnikSource->urlToLoad = QStringLiteral("https://tile.osmand.net/hd/{0}/{1}/{2}.png");
-    mapnikSource->maxZoom = ZoomLevel19;
-    mapnikSource->minZoom = ZoomLevel1;
-    mapnikSource->tileSize = 512;
-    mapnikSource->bitDensity = 8;
-    mapnikSource->avgSize = 18000;
-    OnlineTileSources::installTileSource(mapnikSource, owner->localCachePath);
-    installTilesResource(mapnikSource);
+     for (const auto& tileSource : OnlineTileSources::getBuiltIn()->getCollection())
+     {
+        OnlineTileSources::installTileSource(tileSource, owner->localCachePath);
+        installTilesResource(tileSource);
+     }
 }
 
 bool OsmAnd::ResourcesManager_P::FILENAME_COMPARATOR(const QString& fileName1, const QString& fileName2)
@@ -751,11 +746,11 @@ QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd
 
     auto resources = detachedOf(_localResources).values();
     std::sort(resources.begin(), resources.end(), [](const std::shared_ptr<const LocalResource> first, std::shared_ptr<const LocalResource> second) -> bool
-              {
-                  QFileInfo firstInfo(first->localPath);
-                  QFileInfo secondInfo(second->localPath);
-                  return FILENAME_COMPARATOR(firstInfo.fileName(), secondInfo.fileName());
-              });
+    {
+        QFileInfo firstInfo(first->localPath);
+        QFileInfo secondInfo(second->localPath);
+        return FILENAME_COMPARATOR(firstInfo.fileName(), secondInfo.fileName());
+    });
     
     return resources;
 }

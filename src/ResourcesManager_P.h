@@ -111,7 +111,7 @@ namespace OsmAnd
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallTilesResource(const QString& name);
 
-        void installOsmAndOnlineTileSource();
+        void installBuiltInTileSources();
         bool installTilesResource(const std::shared_ptr<const IOnlineTileSources::Source>& source);
         
         bool installObfFile(const QString &filePath,

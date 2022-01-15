@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 158
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 159
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -334,6 +334,7 @@ set(merged_link_libs_public
 	skia_static
 	protobuf_static
 	gdal_static
+	sqlite_static
 	icu4c_static
 	harfbuzz_static
 	archive_static
@@ -352,7 +353,6 @@ else()
 	# If not using embedded QT, find packages it as usual
 	find_package(Qt5Core REQUIRED)
 	find_package(Qt5Network REQUIRED)
-	find_package(Qt5Sql REQUIRED)
 endif()
 
 if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
@@ -381,11 +381,9 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include"
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtCore"
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtNetwork"
-				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtSql"
 		)
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
-				${Qt5Sql_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 				${qtpcre_SHARED_LIBRARIES}
@@ -393,7 +391,6 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	else()
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
-				Qt5::Sql
 				Qt5::Network
 				Qt5::Core
 		)
@@ -431,11 +428,9 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include"
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtCore"
 				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtNetwork"
-				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtSql"
 		)
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
-				${Qt5Sql_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 				${qtpcre_SHARED_LIBRARIES}
@@ -443,7 +438,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 	else()
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
-				Qt5::Sql
 				Qt5::Network
 				Qt5::Core
 		)
@@ -482,11 +476,9 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include"
 				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtCore"
 				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtNetwork"
-				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtSql"
 		)
 		target_link_libraries(OsmAndCore_shared_standalone
 			LINK_PUBLIC
-				${Qt5Sql_STATIC_LIBRARIES}
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
 				${qtpcre_STATIC_LIBRARIES}
@@ -518,11 +510,9 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			"${OSMAND_OWN_SHIPPED_QT_STATIC}/include"
 			"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtCore"
 			"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtNetwork"
-			"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtSql"
 	)
 	target_link_libraries(OsmAndCore_static_standalone
 		LINK_PUBLIC
-			${Qt5Sql_STATIC_LIBRARIES}
 			${Qt5Network_STATIC_LIBRARIES}
 			${Qt5Core_STATIC_LIBRARIES}
 			${qtpcre_STATIC_LIBRARIES}

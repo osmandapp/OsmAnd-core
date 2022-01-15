@@ -1668,6 +1668,21 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeUpperBound() con
     return zoomLevel;
 }
 
+int OsmAnd::MapRenderer::getMaxMissingDataZoomShift() const
+{
+    return MaxMissingDataZoomShift;
+}
+
+int OsmAnd::MapRenderer::getMaxMissingDataUnderZoomShift() const
+{
+    return MaxMissingDataUnderZoomShift;
+}
+
+int OsmAnd::MapRenderer::getHeixelsPerTileSide() const
+{
+    return HeixelsPerTileSide;
+}
+
 bool OsmAnd::MapRenderer::updateCurrentDebugSettings()
 {
     QReadLocker scopedLocker(&_debugSettingsLock);

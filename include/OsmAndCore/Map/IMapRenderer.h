@@ -157,6 +157,10 @@ namespace OsmAnd
         virtual double getCurrentTileSizeInMeters() const = 0;
         virtual double getCurrentPixelsToMetersScaleFactor() const = 0;
 
+        virtual int getMaxMissingDataZoomShift() const = 0;
+        virtual int getMaxMissingDataUnderZoomShift() const = 0;
+        virtual int getHeixelsPerTileSide() const = 0;
+
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) = 0;
         virtual void resetResourceWorkerThreadsLimit() = 0;
         virtual unsigned int getActiveResourceRequestsCount() const = 0;

@@ -90,7 +90,7 @@ export ANDROID_NDK_PLATFORM=android-21
 
 # Prepare configuration
 QTBASE_CONFIGURATION=$(echo "
-	-release -opensource -confirm-license -c++std c++11 -no-accessibility -sql-sqlite -qt-sqlite
+	-release -opensource -confirm-license -c++std c++11 -no-accessibility -no-sql-sqlite
 	-qt-zlib -no-zstd -no-gif -no-libpng -no-libjpeg -no-openssl -no-feature-gssapi -no-feature-sspi -qt-pcre
 	-nomake tests -nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib

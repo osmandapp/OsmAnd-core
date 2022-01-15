@@ -15,6 +15,10 @@ namespace OsmAnd
 {
     struct OSMAND_CORE_API AtlasMapRendererConfiguration : public MapRendererConfiguration
     {
+        enum {
+            DefaultReferenceTileSizeOnScreenInPixels = 256,
+        };
+
         AtlasMapRendererConfiguration();
         virtual ~AtlasMapRendererConfiguration();
 

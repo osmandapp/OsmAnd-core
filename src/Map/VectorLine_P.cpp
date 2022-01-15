@@ -15,7 +15,7 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
-#include "IAtlasMapRenderer.h"
+#include "AtlasMapRenderer.h"
 #include "SkiaUtilities.h"
 
 #include <Polyline2D/Polyline2D.h>
@@ -655,7 +655,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 {
     int order = owner->baseOrder;
     float zoom = this->zoom();
-    double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+    double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
     double radius = _lineWidth * scale;
     double simplificationRadius = (_lineWidth - _outlineWidth) * scale;

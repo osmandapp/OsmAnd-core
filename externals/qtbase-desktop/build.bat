@@ -46,7 +46,7 @@ if "%compiler%"=="msvc" (
 	set QTBASE_CONFIGURATION=^
 		-xplatform win32-msvc2013 ^
 		-debug-and-release -opensource -confirm-license -c++std c++11 -no-gui -no-widgets -no-accessibility ^
-		-qt-sql-sqlite -no-opengl -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
+		-no-sql-sqlite -no-opengl -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
 		-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 		-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
 		-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^

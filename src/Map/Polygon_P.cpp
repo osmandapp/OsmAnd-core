@@ -6,6 +6,10 @@
 #include <SkPathMeasure.h>
 #include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <mapbox/earcut.hpp>
+#include "restore_internal_warnings.h"
+
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "VectorMapSymbol.h"
@@ -13,9 +17,7 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
-#include "IAtlasMapRenderer.h"
-
-#include <mapbox/earcut.hpp>
+#include "AtlasMapRenderer.h"
 
 OsmAnd::Polygon_P::Polygon_P(Polygon* const owner_)
 : _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
@@ -246,7 +248,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     
     float zoom = this->zoom();
     double radius = Utilities::getPowZoom( 31 - _mapZoomLevel) * qSqrt(zoom) /
-                        (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
+                        (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
     // generate array of points
     std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)

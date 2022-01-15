@@ -19,12 +19,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(IAtlasMapRenderer);
 
-    public:
-        enum {
-            TileSize3D = 100u,
-            DefaultReferenceTileSizeOnScreenInPixels = 256u,
-        };
-
     private:
     protected:
         IAtlasMapRenderer();
@@ -35,6 +29,8 @@ namespace OsmAnd
         virtual unsigned int getVisibleTilesCount() const = 0;
 
         virtual float getCurrentTileSizeOnScreenInPixels() const = 0;
+
+        virtual int getTileSize3D() const = 0;
     };
 }
 

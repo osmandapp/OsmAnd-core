@@ -204,6 +204,11 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering(const bool gpuContextLost)
     return ok;
 }
 
+int OsmAnd::AtlasMapRenderer::getTileSize3D() const
+{
+    return TileSize3D;
+}
+
 QList<OsmAnd::IMapRenderer::MapSymbolInformation> OsmAnd::AtlasMapRenderer::getSymbolsAt(const PointI& screenPoint) const
 {
     QList<MapSymbolInformation> result;

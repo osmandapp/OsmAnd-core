@@ -1,9 +1,7 @@
 #include "AtlasMapRendererConfiguration.h"
 
-#include "IAtlasMapRenderer.h"
-
 OsmAnd::AtlasMapRendererConfiguration::AtlasMapRendererConfiguration()
-    : referenceTileSizeOnScreenInPixels(IAtlasMapRenderer::DefaultReferenceTileSizeOnScreenInPixels)
+    : referenceTileSizeOnScreenInPixels(DefaultReferenceTileSizeOnScreenInPixels)
 {
 }
 

@@ -82,7 +82,7 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources::cr
     return OnlineTileSources_P::createTileSourceTemplate(attributes);
 }
 
-const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_hd"));
+const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QStringLiteral("OsmAnd (online tiles)"));
 
 const QString OsmAnd::OnlineTileSources::normalizeUrl(QString &url)
 {
