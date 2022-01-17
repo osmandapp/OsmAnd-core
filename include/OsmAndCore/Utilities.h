@@ -898,11 +898,11 @@ namespace OsmAnd
             end = start + vecDir * (vecLength + sizeIncrement);
         }
 
-        inline static PointF computeNormalToLine(const PointF& start, const PointF& end, bool rightDir)
+        inline static PointF computeNormalToLine(const PointF& start, const PointF& end, bool clockwise)
         {
             auto normal = (end - start).normalized();
             PointF res;
-            if (rightDir)
+            if (clockwise)
             {
                 res.x = normal.y;
                 res.y = -normal.x;

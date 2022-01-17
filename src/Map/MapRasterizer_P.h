@@ -123,9 +123,9 @@ namespace OsmAnd
             const QVector<PointI>& points31,
             const MapStyleEvaluationResult::Packed& evalResult,
             const PaintValuesSet valueSetSelector,
-            const IMapStyle::ValueDefinitionId valueDefId);
-        bool calcPathByTrajectory(const Context& context, const QVector<PointI>& points31, SkPath& path,
-                                  float offset) const;
+            const IMapStyle::ValueDefinitionId hMarginId);
+        bool calculateLinePath(const Context& context, const QVector<PointI>& points31,
+                               SkPath& outPath, float offset) const;
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const;
         inline float lineEquation(float x1, float y1, float x2, float y2, float x) const;
         inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&) const;
