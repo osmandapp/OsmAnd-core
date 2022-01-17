@@ -889,6 +889,32 @@ namespace OsmAnd
         static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
+
+        inline static void resizeVector(const PointF& start, PointF& end, float sizeIncrement)
+        {
+            auto vec = end - start;
+            auto vecLength = vec.norm();
+            auto vecDir = vec/vecLength;
+            end = start + vecDir * (vecLength + sizeIncrement);
+        }
+
+        inline static PointF computeNormalToLine(const PointF& start, const PointF& end, bool rightDir)
+        {
+            auto normal = (end - start).normalized();
+            PointF res;
+            if (rightDir)
+            {
+                res.x = normal.y;
+                res.y = -normal.x;
+            }
+            else
+            {
+                res.x = -normal.y;
+                res.y = normal.x;
+            }
+            return res;
+        }
+
     private:
         Utilities();
         ~Utilities();

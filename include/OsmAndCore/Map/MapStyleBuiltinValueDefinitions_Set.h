@@ -77,6 +77,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH__2, Output, Float, "strokeWidth__2"
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT__2, Output, String, "pathEffect__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP__2, Output, String, "cap__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN__2, Output, String, "join__2", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN__2, Output, Float, "hmargin__2", true)
 
 // - Layer_minus1
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR__1, Output, Color, "color__1", false)
@@ -84,6 +85,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH__1, Output, Float, "strokeWidth__1"
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT__1, Output, String, "pathEffect__1", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP__1, Output, String, "cap__1", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN__1, Output, String, "join__1", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN__1, Output, Float, "hmargin__1", true)
 
 // - Layer_0
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_0, Output, Color, "color_0", false)
@@ -91,6 +93,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_0, Output, Float, "strokeWidth_0", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_0, Output, String, "pathEffect_0", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_0, Output, String, "cap_0", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_0, Output, String, "join_0", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN_0, Output, Float, "hmargin_0", true)
 
 // - Layer_1
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR, Output, Color, "color", false)
@@ -98,6 +101,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH, Output, Float, "strokeWidth", true
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT, Output, String, "pathEffect", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP, Output, String, "cap", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN, Output, String, "join", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN, Output, Float, "hmargin", true)
 
 // - Layer_2
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_2, Output, Color, "color_2", false)
@@ -105,6 +109,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_2, Output, Float, "strokeWidth_2", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_2, Output, String, "pathEffect_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_2, Output, String, "cap_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_2, Output, String, "join_2", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN_2, Output, Float, "hmargin_2", true)
 
 // - Layer_3
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_3, Output, Color, "color_3", false)
@@ -112,6 +117,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_3, Output, Float, "strokeWidth_3", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_3, Output, String, "pathEffect_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_3, Output, String, "cap_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_3, Output, String, "join_3", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN_3, Output, Float, "hmargin_3", true)
 
 // - Layer_4
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_4, Output, Color, "color_4", false)
@@ -119,6 +125,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_4, Output, Float, "strokeWidth_4", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_4, Output, String, "pathEffect_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_4, Output, String, "cap_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_4, Output, String, "join_4", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN_4, Output, Float, "hmargin_4", true)
 
 // - Layer_5
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_5, Output, Color, "color_5", false)
@@ -126,6 +133,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_5, Output, Float, "strokeWidth_5", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_5, Output, String, "pathEffect_5", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_5, Output, String, "cap_5", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_5, Output, String, "join_5", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_HMARGIN_5, Output, Float, "hmargin_5", true)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADER, Output, String, "shader", false)
 

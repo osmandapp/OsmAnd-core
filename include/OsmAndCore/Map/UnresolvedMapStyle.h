@@ -113,7 +113,7 @@ namespace OsmAnd
     protected:
     public:
         UnresolvedMapStyle(const std::shared_ptr<QIODevice>& source, const QString& name);
-        UnresolvedMapStyle(const QString& fileName, const QString& name = {});
+        UnresolvedMapStyle(const QString& fileName, const QString& name = QString());
         virtual ~UnresolvedMapStyle();
 
         bool isMetadataLoaded() const;

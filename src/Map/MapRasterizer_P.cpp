@@ -2,6 +2,8 @@
 #include "MapRasterizer.h"
 #include "MapRasterizer_Metrics.h"
 
+#include <algorithm>
+#include <deque>
 #include "QtCommon.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QReadWriteLock>
@@ -13,6 +15,7 @@
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
 #include <SkShader.h>
+#include <SkPoint.h>
 #include <SkPathMeasure.h>
 #include "restore_internal_warnings.h"
 
@@ -25,6 +28,86 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
+
+namespace
+{
+    using namespace OsmAnd;
+
+    void drawShiftedLine(std::deque<PointF>& shiftedPoints, SkPath& path, float offset)
+    {
+        if (shiftedPoints.size() > 1)
+        {
+            Utilities::resizeVector(*(shiftedPoints.begin() + 1), *shiftedPoints.begin(), -M_SQRT2 * offset);
+            Utilities::resizeVector(*(shiftedPoints.rbegin() + 1), *shiftedPoints.rbegin(), -M_SQRT2 * offset);
+            // pop very first pushed point that already drawed
+            auto pt = shiftedPoints.back();
+            path.moveTo(pt.x, pt.y);
+            shiftedPoints.pop_back();
+            while (shiftedPoints.size() > 0)
+            {
+                auto pt = shiftedPoints.back();
+                path.lineTo(pt.x, pt.y);
+                shiftedPoints.pop_back();
+            }
+        }
+    }
+
+    float calc3PointsAngleInRad(const PointF& ptA, const PointF& ptB, const PointF& ptC) {
+        // calculation of the angle between two outermost segments of the path.
+        auto vecADir = (ptA - ptB).normalized();
+        auto vecBDir = (ptC - ptB).normalized();
+        auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
+        if (angle > M_PI)
+        {
+            angle -= 2 * M_PI;
+        }
+        else if (angle <= -M_PI)
+        {
+            angle += 2 * M_PI;
+        }
+
+        return angle;
+    }
+
+    void fixCornerShiftsOnCurve(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
+                                float offset, bool rightShift)
+    {
+        const static uint8_t kLastPointCheckForCurvingCnt = 3;
+
+        if (originalPoints.size() < kLastPointCheckForCurvingCnt)
+        {
+            return;
+        }
+
+        auto angle = calc3PointsAngleInRad(originalPoints[0], originalPoints[1], originalPoints[2]);
+
+        auto ctang = 1.0f / tan(angle / 2.0f);
+        if (!(ctang > 0.0f && rightShift) && !(ctang < 0.0f && !rightShift))
+        {
+            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * (rightShift ? 1 : -1));
+        }
+        else
+        {
+            // calculate additional point for corner
+            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], rightShift);
+            auto additionalPt = originalPoints[1] + additionalNormal * offset;
+            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
+
+            // add additional offset for corner shifted points.
+            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset / 2.0f);
+            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset / 2.0f);
+            // add additional ofset for corner shifted points.
+        }
+    }
+
+    void shiftAndAddPointToCurves(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
+                                  PointF& newPoint, const PointF& vecAddon)
+    {
+        originalPoints.push_front(newPoint);
+        newPoint += vecAddon;
+        shiftedPoints.push_front(newPoint);
+    }
+}
 
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
@@ -98,7 +181,8 @@ void OsmAnd::MapRasterizer_P::rasterize(
     // Rasterize layers of map:
     rasterizeMapPrimitives(context, canvas, primitivisedObjects->polygons, PrimitivesType::Polygons, queryController);
     if (context.shadowMode != MapPresentationEnvironment::ShadowMode::NoShadow)
-        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly, queryController);
+        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly,
+                               queryController);
     rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines, queryController);
 
     if (metric)
@@ -434,43 +518,27 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
-void OsmAnd::MapRasterizer_P::rasterizePolyline(
-    const Context& context,
-    SkCanvas& canvas,
-    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
-    bool drawOnlyShadow)
+bool OsmAnd::MapRasterizer_P::calcPathByTrajectory(const Context& context, const QVector<PointI>& points31,
+                                                   SkPath& path, float offset = 0.0f) const
 {
-    const auto& points31 = primitive->sourceObject->points31;
-    const auto& area31 = context.area31;
-    const auto& env = context.env;
+    bool rightShift = offset > 0;
+    offset = abs(offset);
+    bool hasShift = offset > 0;
 
-    assert(points31.size() >= 2);
-
-    SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
-        return;
-
-    bool ok;
-
-    ColorARGB shadowColor;
-    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
-    if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
-        shadowColor = context.shadowColor;
-
-    float shadowRadius;
-    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
-    if (drawOnlyShadow && (!ok || shadowRadius <= 0.0f))
-        return;
-
-    SkPath path;
-    int pointIdx = 0;
     bool intersect = false;
+    int pointIdx = 0;
     int prevCross = 0;
-    PointF vertex;
+    const auto& area31 = context.area31;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
+    PointF vertex;
     PointF pVertex;
     PointF tempVertex;
+    PointF correctedVertex;
+    // Could be implemented/extended custom simple deque to store only last 3 point for the originalPoints
+    std::deque<PointF> originalPoints;
+    std::deque<PointF> shiftedPoints;
+
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
@@ -488,10 +556,28 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
                 if (prevCross != 0 || !intersect)
                 {
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-                    path.moveTo(tempVertex.x, tempVertex.y);
+                    if (hasShift)
+                    {
+                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
+                        shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
+                    }
+                    else
+                    {
+                        path.moveTo(tempVertex.x, tempVertex.y);
+                    }
                 }
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
-                path.lineTo(tempVertex.x, tempVertex.y);
+                if (hasShift)
+                {
+                    auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
+                    shiftAndAddPointToCurves(originalPoints, shiftedPoints, tempVertex, normal * offset);
+
+                    fixCornerShiftsOnCurve(originalPoints, shiftedPoints, offset, rightShift);
+                }
+                else
+                {
+                    path.lineTo(tempVertex.x, tempVertex.y);
+                }
                 intersect = true;
             }
         }
@@ -499,6 +585,67 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         pVertex = vertex;
     }
 
+    drawShiftedLine(shiftedPoints, path, offset);
+
+    return intersect;
+}
+
+void OsmAnd::MapRasterizer_P::drawLineLayer(
+    SkCanvas& canvas,
+    SkPaint& paint,
+    SkPath& path,
+    const Context& context,
+    const QVector<PointI>& points31,
+    const MapStyleEvaluationResult::Packed& evalResult,
+    const PaintValuesSet valueSetSelector,
+    const IMapStyle::ValueDefinitionId valueDefId)
+{
+    if (updatePaint(context, paint, evalResult, valueSetSelector, false))
+    {
+        float hmargin = 0.0f;
+        if (evalResult.getFloatValue(valueDefId, hmargin))
+        {
+            SkPath pathHmargin;
+            if (calcPathByTrajectory(context, points31, pathHmargin, hmargin))
+                canvas.drawPath(pathHmargin, paint);
+        }
+        else
+        {
+            canvas.drawPath(path, paint);
+        }
+    }
+}
+
+void OsmAnd::MapRasterizer_P::rasterizePolyline(
+    const Context& context,
+    SkCanvas& canvas,
+    const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
+    bool drawOnlyShadow)
+{
+    const auto& points31 = primitive->sourceObject->points31;
+    const auto& env = context.env;
+
+    assert(points31.size() >= 2);
+
+    SkPaint paint = _defaultPaint;
+    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
+        return;
+
+    bool ok;
+
+    ColorARGB shadowColor;
+    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR,
+                                                     shadowColor.argb);
+    if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
+        shadowColor = context.shadowColor;
+
+    float shadowRadius;
+    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+    if (drawOnlyShadow && (!ok || shadowRadius <= 0.0f))
+        return;
+
+    SkPath path;
+    bool intersect = calcPathByTrajectory(context, points31, path);
     if (!intersect)
         return;
 
@@ -514,32 +661,30 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus2, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus2,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus1, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus1,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_0,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_1,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN);
 
-        canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_2,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_3,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_3, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_4,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_4, false))
-            canvas.drawPath(path, paint);
+        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_5,
+                      env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
-            canvas.drawPath(path, paint);
-            
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
 }
@@ -628,7 +773,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     }
 }
 
-float OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x)
+float OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x) const
 {
     if(x2 == x1)
         return y1;
@@ -639,7 +784,7 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     const Context& context,
     const PointF& vertex,
     const PointF& vertexTo,
-    PointF& res)
+    PointF& res) const
 {
     const auto xShiftForSpacing = context.pixelArea.width() / 4;
     const auto yShiftForSpacing = context.pixelArea.height() / 4;
@@ -671,7 +816,7 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     }
 }
 
-void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const PointI& point31, PointF& vertex)
+void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const PointI& point31, PointF& vertex) const
 {
     vertex.x = static_cast<float>(point31.x - context.area31.left()) / context.primitivisedObjects->scaleDivisor31ToPixel.x;
     vertex.y = static_cast<float>(point31.y - context.area31.top()) / context.primitivisedObjects->scaleDivisor31ToPixel.y;
