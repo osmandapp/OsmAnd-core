@@ -385,8 +385,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        float visualizationStyle = param_vs_elevation_configuration.y;                                             ""\n"
         "        if (visualizationStyle > %VisualizationStyle_None%.0)                                                      ""\n"
         "        {                                                                                                          ""\n"
-        "            const float PI = 3.1415926535897932384626433832795;                                                    ""\n"
-        "            const float PI_2 = PI / 2.0;                                                                           ""\n"
+        "            const float M_PI = 3.1415926535897932384626433832795;                                                  ""\n"
+        "            const float M_PI_2 = M_PI / 2.0;                                                                       ""\n"
+        "            const float M_2PI = 2.0 * M_PI;                                                                        ""\n"
+        "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
         "                                                                                                                   ""\n"
         "            float heixelInMeters = metersPerUnit * (%TileSize3D%.0 / %HeixelsPerTileSide%.0);                      ""\n"
         "                                                                                                                   ""\n"
@@ -500,30 +502,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                {                                                                                                  ""\n"
         "                    float slopeAngle = atan(sqrt(slope_XXpYY) * zFactorN);                                         ""\n"
         "                    float aspect = atan(slopeInMeters.y, slopeInMeters.x);                                         ""\n"
-        "                    float slopeStrength = slopeAngle / PI_2;                                                       ""\n"
-        "                    float aspectStrength = 0.0;                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-//         static double NormalizeAngle (double angle, double normalizer)
-// {
-//     angle = std::fmod(angle, normalizer);
-//     if (angle < 0)
-//         angle = normalizer + angle;
-
-//     return angle;
-// }
-
-// static double DifferenceBetweenAngles (double angle1, double angle2, double normalizer)
-// {
-//     double diff = NormalizeAngle (angle1, normalizer) - NormalizeAngle (angle2, normalizer);
-//     diff = std::abs(diff);
-//     if (diff > normalizer / 2)
-//         diff = normalizer - diff;
-//     return diff;
-// }
-    // double aspectDiff = DifferenceBetweenAngles(aspect, M_PI * 3 / 2 - psData->azRadians, M_PI * 2);
-    // double aspectStrength = 1 - aspectDiff / M_PI;
-        "                    float value = 255.0 * (1.0 - slopeStrength * aspectStrength);                                  ""\n"
+        "                    float slopeStrength = slopeAngle / M_PI_2;                                                     ""\n"
+        "                    float aspectN = mod(M_2PI + aspect, M_2PI);                                                    ""\n"
+        "                    float wAzimuthN = mod(M_2PI + mod(M_3PI_2 - sunAzimuth, M_2PI), M_2PI);                        ""\n"
+        "                    float aspectDiffWAzimuth = mod(abs(aspectN - wAzimuthN), M_PI);                                ""\n"
+        "                    float value = 255.0 * (1.0 - slopeStrength * (1.0 - aspectDiffWAzimuth / M_PI));               ""\n"
         "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
         "                }                                                                                                  ""\n"
         "                else if (abs(visualizationStyle - %VisualizationStyle_HillshadeCombined%.0) < 0.00001)             ""\n"
@@ -537,7 +520,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         // NOTE: Implemented differently that in GDAL, see source that https://trac.osgeo.org/gdal/ticket/4753 references
         "                    vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                          ""\n"
         "                    float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                    ""\n"
-        "                    value = 1.0 - value * abs(atan(zFactor * sqrt(slopeN_XXpYY)) / PI_2);                          ""\n"
+        "                    value = 1.0 - value * abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI_2);                        ""\n"
         "                                                                                                                   ""\n"
         "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
         "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
