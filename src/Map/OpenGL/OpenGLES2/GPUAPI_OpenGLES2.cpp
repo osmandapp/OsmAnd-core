@@ -238,6 +238,10 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
 
+    glGetIntegerv(GL_MAX_VARYING_FLOATS, &_maxVaryingFloats);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
+
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_maxVertexAttribs);
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal vertex attributes %d", _maxVertexAttribs);

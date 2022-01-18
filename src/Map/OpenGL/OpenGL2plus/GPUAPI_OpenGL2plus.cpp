@@ -194,6 +194,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
+    glGetIntegerv(GL_MAX_VARYING_FLOATS, &_maxVaryingFloats);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
+
     if (glVersion >= 43)
     {
         GLint maxUniformLocations;

@@ -275,6 +275,7 @@ namespace OsmAnd
         bool _isSupported_vertex_array_object;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
+        GLint _maxVaryingFloats;
         GLint _maxVertexAttribs;
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
@@ -319,6 +320,7 @@ namespace OsmAnd
         const bool& isSupported_vertex_array_object;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
+        const GLint& maxVaryingFloats;
         const GLint& maxVertexAttribs;
         
         virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
