@@ -193,7 +193,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
 
-    if (glVersion >= 40)
+    if (glVersion >= 40 || extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
     {
         glGetIntegerv(GL_MAX_VARYING_VECTORS, &_maxVaryingVectors);
         GL_CHECK_RESULT;
