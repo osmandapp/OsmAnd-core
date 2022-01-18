@@ -106,7 +106,7 @@ namespace OsmAnd
 
         inline bool operator==(std::nullptr_t) const
         {
-            return static_cast<bool>(_objectRef);
+            return !static_cast<bool>(_objectRef);
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
@@ -129,7 +129,7 @@ namespace OsmAnd
 
         inline bool operator!=(std::nullptr_t) const
         {
-            return !static_cast<bool>(_objectRef);
+            return static_cast<bool>(_objectRef);
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
