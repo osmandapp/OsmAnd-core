@@ -193,6 +193,25 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying floats %d", _maxVaryingFloats);
 
+    if (glVersion >= 40)
+    {
+        glGetIntegerv(GL_MAX_VARYING_VECTORS, &_maxVaryingVectors);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying vectors %d", _maxVaryingVectors);
+    }
+    else if (glVersion >= 30)
+    {
+        GLint maxVaryingComponents;
+        glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &maxVaryingComponents);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal varying components %d", maxVaryingComponents);
+        _maxVaryingVectors = maxVaryingComponents / 4;
+    }
+    else
+    {
+        _maxVaryingVectors = _maxVaryingFloats / 4;
+    }
+
     if (glVersion >= 43)
     {
         GLint maxUniformLocations;

@@ -173,6 +173,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     const auto maxBatchSizeByVaryingFloats =
         (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
 
+    // ... by varying vectors
+    const auto varyingVectorsPerLayer =
+        1 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
+    const auto otherVaryingVectors =
+        (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
+        (currentConfiguration->elevationVisualizationAllowed ? 1 : 0) /*v2f_elevationColor*/;
+    const auto maxBatchSizeByVaryingVectors =
+        (gpuAPI->maxVaryingVectors - otherVaryingVectors) / varyingVectorsPerLayer;
+
     // ... by texture units
     const auto maxBatchSizeByTextureUnits = std::min({
         gpuAPI->maxTextureUnitsCombined - (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0),
@@ -183,6 +192,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     _maxNumberOfRasterMapLayersInBatch = std::min({
         maxBatchSizeByUniforms,
         maxBatchSizeByVaryingFloats,
+        maxBatchSizeByVaryingVectors,
         maxBatchSizeByTextureUnits
     });
     if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 &&
@@ -191,10 +201,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         _maxNumberOfRasterMapLayersInBatch = setupOptions.maxNumberOfRasterMapLayersInBatch;
     }
     LogPrintf(LogSeverityLevel::Info,
-        "Maximal number of raster map layers in a batch is %d (%d by uniforms, %d by varying floats, %d by texture units)",
+        "Maximal number of raster map layers in a batch is %d (%d by uniforms, %d by varying floats, %d by varying vectors, %d by texture units)",
         _maxNumberOfRasterMapLayersInBatch,
         maxBatchSizeByUniforms,
         maxBatchSizeByVaryingFloats,
+        maxBatchSizeByVaryingVectors,
         maxBatchSizeByTextureUnits
     );
 
