@@ -238,7 +238,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "#if ELEVATION_VISUALIZATION_ALLOWED                                                                                ""\n"
-        "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
+        //"    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
+        "    PARAM_OUTPUT vec4 v2f_elevationColor;                                                                     ""\n"
         "#endif // ELEVATION_VISUALIZATION_ALLOWED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
@@ -582,7 +583,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "#if ELEVATION_VISUALIZATION_ALLOWED                                                                                ""\n"
-        "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
+        //"    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
+        "    PARAM_INPUT vec4 v2f_elevationColor;                                                                      ""\n"
         "#endif // ELEVATION_VISUALIZATION_ALLOWED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
