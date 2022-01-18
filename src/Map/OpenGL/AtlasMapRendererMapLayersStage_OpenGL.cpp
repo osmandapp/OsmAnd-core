@@ -401,6 +401,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            const float M_PI_2 = M_PI / 2.0;                                                                       ""\n"
         "            const float M_2PI = 2.0 * M_PI;                                                                        ""\n"
         "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
+        "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
         "                                                                                                                   ""\n"
         "            float heixelInMeters = metersPerUnit * (%TileSize3D%.0 / %HeixelsPerTileSide%.0);                      ""\n"
         "                                                                                                                   ""\n"
@@ -431,7 +432,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         "                slopeAlgorithmScale = 8.0;                                                                         ""\n"
         "            }                                                                                                      ""\n"
-        "            highp float slope_XXpYY = slopeInMeters.x*slopeInMeters.x + slopeInMeters.y*slopeInMeters.y;           ""\n"
+        "            highp float slope_XX = slopeInMeters.x*slopeInMeters.x;                                                ""\n"
+        "            highp float slope_YY = slopeInMeters.y*slopeInMeters.y;                                                ""\n"
+        "            highp float slope_XXpYY = slope_XX + slope_YY;                                                         ""\n"
         "                                                                                                                   ""\n"
         "            float zFactor = param_vs_elevation_configuration.w;                                                    ""\n"
         "            float zFactorN = zFactor / (slopeAlgorithmScale * heixelInMeters);                                     ""\n"
@@ -457,51 +460,36 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            }                                                                                                      ""\n"
         "            else if (abs(visualizationStyle - %VisualizationStyle_HillshadeMultidirectional%.0) < 0.00001)         ""\n"
         "            {                                                                                                      ""\n"
-    // // See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
-    // // W225 = sin^2(aspect - 225) = 0.5 * (1 - 2 * sin(aspect) * cos(aspect))
-    // // W270 = sin^2(aspect - 270) = cos^2(aspect)
-    // // W315 = sin^2(aspect - 315) = 0.5 * (1 + 2 * sin(aspect) * cos(aspect))
-    // // W360 = sin^2(aspect - 360) = sin^2(aspect)
-    // // hillshade=  0.5 * (W225 * hillshade(az=225) +
-    // //                    W270 * hillshade(az=270) +
-    // //                    W315 * hillshade(az=315) +
-    // //                    W360 * hillshade(az=360))
-
-    // const double xx = x * x;
-    // const double yy = y * y;
-    // const double xx_plus_yy = xx + yy;
-    // if( xx_plus_yy == 0.0 )
-    //     return static_cast<float>(1.0 + psData->sin_altRadians_mul_254);
-
-    // // ... then the shade value from different azimuth
-    // double val225_mul_127 = psData->sin_altRadians_mul_127 +
-    //                         (x-y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
-    // val225_mul_127 = ( val225_mul_127 <= 0.0) ? 0.0 : val225_mul_127;
-    // double val270_mul_127 = psData->sin_altRadians_mul_127 -
-    //                         x * psData->cos_alt_mul_z_mul_127;
-    // val270_mul_127 = ( val270_mul_127 <= 0.0) ? 0.0 : val270_mul_127;
-    // double val315_mul_127 = psData->sin_altRadians_mul_127 +
-    //                         (x+y) * psData->cos225_az_mul_cos_alt_mul_z_mul_127;
-    // val315_mul_127 = ( val315_mul_127 <= 0.0) ? 0.0 : val315_mul_127;
-    // double val360_mul_127 = psData->sin_altRadians_mul_127 -
-    //                         y * psData->cos_alt_mul_z_mul_127;
-    // val360_mul_127 = ( val360_mul_127 <= 0.0) ? 0.0 : val360_mul_127;
-
-    // // ... then the weighted shading
-    // const double weight_225 = 0.5 * xx_plus_yy - x * y;
-    // const double weight_270 = xx;
-    // const double weight_315 = xx_plus_yy - weight_225;
-    // const double weight_360 = yy;
-    // const double cang_mul_127 = ApproxADivByInvSqrtB(
-    //               (weight_225 * val225_mul_127 +
-    //                weight_270 * val270_mul_127 +
-    //                weight_315 * val315_mul_127 +
-    //                weight_360 * val360_mul_127) / xx_plus_yy,
-    //         1 + psData->square_z * xx_plus_yy);
-
-    // const double cang = 1.0 + cang_mul_127;
-
-    // return static_cast<float>(cang);
+        // NOTE: See http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf
+        "                float sinZenith = sin(sunZenith);                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "                if (slope_XXpYY < 0.00001)                                                                         ""\n"
+        "                {                                                                                                  ""\n"
+        "                    float value = 1.0 + 254.0 * sinZenith;                                                         ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
+        "                else                                                                                               ""\n"
+        "                {                                                                                                  ""\n"
+        "                    highp float weight_225 = 0.5 * slope_XXpYY - slopeInMeters.x * slopeInMeters.y;                ""\n"
+        "                    highp float weight_270 = slope_XX;                                                             ""\n"
+        "                    highp float weight_315 = slope_XXpYY - weight_225;                                             ""\n"
+        "                    highp float weight_360 = slope_YY;                                                             ""\n"
+        "                                                                                                                   ""\n"
+        "                    float value_225 = sinZenith - (slopeInMeters.x - slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+        "                    float value_270 = sinZenith - slopeInMeters.x * zNCosZenith;                                   ""\n"
+        "                    float value_315 = sinZenith + (slopeInMeters.x + slopeInMeters.y) * M_COS_225_D * zNCosZenith; ""\n"
+        "                    float value_360 = sinZenith - slopeInMeters.y * zNCosZenith;                                   ""\n"
+        "                                                                                                                   ""\n"
+        "                    float value = weight_225 * max(value_225, 0.0);                                                ""\n"
+        "                    value += weight_270 * max(value_270, 0.0);                                                     ""\n"
+        "                    value += weight_315 * max(value_315, 0.0);                                                     ""\n"
+        "                    value += weight_360 * max(value_360, 0.0);                                                     ""\n"
+        "                    value *= 127.0;                                                                                ""\n"
+        "                    value /= slope_XXpYY;                                                                          ""\n"
+        "                    value /= sqrt(1.0 + zFactorNSq * slope_XXpYY);                                                 ""\n"
+        "                    value = 1.0 + value;                                                                           ""\n"
+        "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"
+        "                }                                                                                                  ""\n"
         "            }                                                                                                      ""\n"
         "            else                                                                                                   ""\n"
         "            {                                                                                                      ""\n"
