@@ -125,10 +125,10 @@ namespace OsmAnd
                     struct VsPerTilePerLayerParameters
                     {
                         GLlocation texCoordsOffsetAndScale;
-                        GLlocation texelSize;
                     };
-                    VsPerTilePerLayerParameters elevationDataLayer;
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
+                    VsPerTilePerLayerParameters elevationLayer;
+                    GLlocation elevationLayerTexelSize;
                 } param;
             } vs;
 

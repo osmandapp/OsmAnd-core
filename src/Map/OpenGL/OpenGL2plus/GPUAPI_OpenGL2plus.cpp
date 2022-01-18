@@ -164,11 +164,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units combined %d", _maxTextureUnitsCombined);
 
-    GLint maxTextureUnitsCombined;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d", maxTextureUnitsCombined);
-
     if (extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
     {
         // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
