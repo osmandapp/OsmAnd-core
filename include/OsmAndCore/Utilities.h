@@ -894,7 +894,7 @@ namespace OsmAnd
         {
             auto vec = end - start;
             auto vecLength = vec.norm();
-            auto vecDir = vec/vecLength;
+            auto vecDir = vec / vecLength;
             end = start + vecDir * (vecLength + sizeIncrement);
         }
 

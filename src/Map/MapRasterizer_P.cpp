@@ -29,86 +29,6 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-namespace
-{
-    using namespace OsmAnd;
-
-    // Fill outPath with calculated shifted points
-    void applyShiftedPoints(std::deque<PointF>& shiftedPoints, SkPath& outPath, float offset)
-    {
-        if (shiftedPoints.size() > 1)
-        {
-            Utilities::resizeVector(*(shiftedPoints.begin() + 1), *shiftedPoints.begin(), -M_SQRT2 * offset);
-            Utilities::resizeVector(*(shiftedPoints.rbegin() + 1), *shiftedPoints.rbegin(), -M_SQRT2 * offset);
-            // pop very first pushed point that already drawed
-            auto pt = shiftedPoints.back();
-            outPath.moveTo(pt.x, pt.y);
-            shiftedPoints.pop_back();
-            while (shiftedPoints.size() > 0)
-            {
-                auto pt = shiftedPoints.back();
-                outPath.lineTo(pt.x, pt.y);
-                shiftedPoints.pop_back();
-            }
-        }
-    }
-
-    // Calculate angle between three points in radians
-    float calculateAngle(const PointF& ptA, const PointF& ptB, const PointF& ptC) {
-        auto vecADir = (ptA - ptB).normalized();
-        auto vecBDir = (ptC - ptB).normalized();
-        auto angle = atan2(vecBDir.y, vecBDir.x) - atan2(vecADir.y, vecADir.x);
-        if (angle > M_PI)
-        {
-            angle -= 2 * M_PI;
-        }
-        else if (angle <= -M_PI)
-        {
-            angle += 2 * M_PI;
-        }
-
-        return angle;
-    }
-
-    // Fix outer and inner corner case for shifted points path
-    void fixShiftedPointsCorners(const std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
-                                 float offset, bool rightShift)
-    {
-        if (originalPoints.size() < 3)
-        {
-            return;
-        }
-
-        auto angle = calculateAngle(originalPoints[0], originalPoints[1], originalPoints[2]);
-
-        auto ctang = 1.0f / tan(angle / 2.0f);
-        if (!(ctang > 0.0f && rightShift) && !(ctang < 0.0f && !rightShift))
-        {
-            Utilities::resizeVector(shiftedPoints[2], shiftedPoints[1], offset * ctang * (rightShift ? 1 : -1));
-        }
-        else
-        {
-            // calculate additional point for corner
-            auto additionalNormal = Utilities::computeNormalToLine(originalPoints[1], originalPoints[0], rightShift);
-            auto additionalPt = originalPoints[1] + additionalNormal * offset;
-            shiftedPoints.insert(shiftedPoints.begin() + 1, additionalPt);
-
-            // add additional offset for corner shifted points.
-            Utilities::resizeVector(shiftedPoints[0], shiftedPoints[1], offset / 2.0f);
-            Utilities::resizeVector(shiftedPoints[3], shiftedPoints[2], offset / 2.0f);
-            // add additional ofset for corner shifted points.
-        }
-    }
-
-    // Add original and shifted point to collections
-    void addShiftedPoint(std::deque<PointF>& originalPoints, std::deque<PointF>& shiftedPoints,
-                         PointF& newPoint, const PointF& vecAddon)
-    {
-        originalPoints.push_front(newPoint);
-        newPoint += vecAddon;
-        shiftedPoints.push_front(newPoint);
-    }
-}
 
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
@@ -557,12 +477,7 @@ bool OsmAnd::MapRasterizer_P::calculateLinePath(const Context& context, const QV
                 if (prevCross != 0 || !intersect)
                 {
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
-                    if (hasShift)
-                    {
-                        auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
-                        addShiftedPoint(originalPoints, shiftedPoints, tempVertex, normal * offset);
-                    }
-                    else
+                    if (!hasShift)
                     {
                         outPath.moveTo(tempVertex.x, tempVertex.y);
                     }
@@ -571,8 +486,11 @@ bool OsmAnd::MapRasterizer_P::calculateLinePath(const Context& context, const QV
                 if (hasShift)
                 {
                     auto normal = Utilities::computeNormalToLine(pVertex, vertex, rightShift);
-                    addShiftedPoint(originalPoints, shiftedPoints, tempVertex, normal * offset);
-                    fixShiftedPointsCorners(originalPoints, shiftedPoints, offset, rightShift);
+                    auto addition = normal * offset;
+                    auto p1 = pVertex + addition;
+                    outPath.moveTo(p1.x, p1.y);
+                    auto p2 = tempVertex + addition;
+                    outPath.lineTo(p2.x, p2.y);
                 }
                 else
                 {
@@ -584,8 +502,6 @@ bool OsmAnd::MapRasterizer_P::calculateLinePath(const Context& context, const QV
         prevCross = cross;
         pVertex = vertex;
     }
-
-    applyShiftedPoints(shiftedPoints, outPath, offset);
 
     return intersect;
 }
