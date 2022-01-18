@@ -172,8 +172,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
 
     // ... by texture units
-    const auto maxBatchSizeByTextureUnits =
-        gpuAPI->maxTextureUnitsCombined - (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0);
+    const auto maxBatchSizeByTextureUnits = std::min({
+        gpuAPI->maxTextureUnitsCombined - (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0),
+        gpuAPI->maxTextureUnitsInFragmentShader
+    });
 
     // Get minimal and limit further with override if set
     _maxNumberOfRasterMapLayersInBatch = std::min({
@@ -186,6 +188,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     {
         _maxNumberOfRasterMapLayersInBatch = setupOptions.maxNumberOfRasterMapLayersInBatch;
     }
+    LogPrintf(LogSeverityLevel::Info,
+        "Maximal number of raster map layers in a batch is %d (%d by uniforms, %d by varying floats, %d by texture units)",
+        _maxNumberOfRasterMapLayersInBatch,
+        maxBatchSizeByUniforms,
+        maxBatchSizeByVaryingFloats,
+        maxBatchSizeByTextureUnits
+    );
 
     // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
     auto supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
@@ -216,13 +225,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             "Maximal number of raster map layers in a batch must be not less than 1");
         return false;
     }
-    LogPrintf(LogSeverityLevel::Info,
-        "Maximal number of raster map layers in a batch is %d (%d by uniforms, %d by varying floats, %d by texture units)",
-        _maxNumberOfRasterMapLayersInBatch,
-        maxBatchSizeByUniforms,
-        maxBatchSizeByVaryingFloats,
-        maxBatchSizeByTextureUnits
-    );
 
     initializeRasterTile();
 
