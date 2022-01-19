@@ -88,11 +88,18 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
-        inline bool isValid() const
+        bool elevationVisualizationEnabled;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setElevationVisualizationEnabled(
+            const float newElevationVisualizationEnabled)
         {
-            return
-                (displayDensityFactor > 0.0f);
+            elevationVisualizationEnabled = newElevationVisualizationEnabled;
+
+            return *this;
         }
+#endif // !defined(SWIG)
+
+        bool isValid() const;
     };
 }
 

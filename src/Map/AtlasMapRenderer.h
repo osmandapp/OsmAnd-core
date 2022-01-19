@@ -50,25 +50,25 @@ namespace OsmAnd
         };
         virtual uint32_t getConfigurationChangeMask(
             const std::shared_ptr<const MapRendererConfiguration>& current,
-            const std::shared_ptr<const MapRendererConfiguration>& updated) const;
-        virtual void validateConfigurationChange(const MapRenderer::ConfigurationChange& change);
+            const std::shared_ptr<const MapRendererConfiguration>& updated) const Q_DECL_OVERRIDE;
+        virtual void validateConfigurationChange(const MapRenderer::ConfigurationChange& change) Q_DECL_OVERRIDE;
 
         // State-related:
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration) const;
+            const MapRendererConfiguration& configuration) const Q_DECL_OVERRIDE;
 
         // Debug-related:
 
         // Customization points:
-        virtual bool preInitializeRendering();
-        virtual bool doInitializeRendering();
+        virtual bool preInitializeRendering() Q_DECL_OVERRIDE;
+        virtual bool doInitializeRendering() Q_DECL_OVERRIDE;
 
-        virtual bool prePrepareFrame();
-        virtual bool postPrepareFrame();
+        virtual bool prePrepareFrame() Q_DECL_OVERRIDE;
+        virtual bool postPrepareFrame() Q_DECL_OVERRIDE;
 
-        virtual bool doReleaseRendering(const bool gpuContextLost);
+        virtual bool doReleaseRendering(const bool gpuContextLost) Q_DECL_OVERRIDE;
 
         // Stages:
         std::shared_ptr<AtlasMapRendererSkyStage> _skyStage;
@@ -88,14 +88,17 @@ namespace OsmAnd
         const std::shared_ptr<AtlasMapRendererSymbolsStage>& symbolsStage;
         const std::shared_ptr<AtlasMapRendererDebugStage>& debugStage;
 
-        virtual QVector<TileId> getVisibleTiles() const;
-        virtual unsigned int getVisibleTilesCount() const;
+        virtual QVector<TileId> getVisibleTiles() const Q_DECL_OVERRIDE;
+        virtual unsigned int getVisibleTilesCount() const Q_DECL_OVERRIDE;
 
         virtual int getTileSize3D() const Q_DECL_OVERRIDE;
 
         // Symbols-related
-        virtual QList<MapSymbolInformation> getSymbolsAt(const PointI& screenPoint) const;
-        virtual QList<MapSymbolInformation> getSymbolsIn(const AreaI& screenPoint, const bool strict = false) const;
+        virtual QList<MapSymbolInformation> getSymbolsAt(
+            const PointI& screenPoint) const Q_DECL_OVERRIDE;
+        virtual QList<MapSymbolInformation> getSymbolsIn(
+            const AreaI& screenPoint,
+            const bool strict = false) const Q_DECL_OVERRIDE;
     };
 }
 
