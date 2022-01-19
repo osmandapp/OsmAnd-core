@@ -3,6 +3,7 @@
 
 #include "stdlib_common.h"
 #include <type_traits>
+#include <tuple>
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
@@ -331,6 +332,12 @@ namespace OsmAnd
         virtual GLuint linkProgram(
             GLuint shadersCount,
             const GLuint* shaders,
+            const bool autoReleaseShaders = true,
+            QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
+        virtual GLuint linkProgram(
+            GLuint shadersCount,
+            const GLuint* shaders,
+            const QList< std::tuple<GlslVariableType, QString, GLint> >& variableLocations,
             const bool autoReleaseShaders = true,
             QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
 

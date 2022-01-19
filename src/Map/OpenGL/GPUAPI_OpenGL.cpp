@@ -189,6 +189,16 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     const bool autoReleaseShaders /*= true*/,
     QHash<QString, GlslProgramVariable>* outVariablesMap /*= nullptr*/)
 {
+    return linkProgram(shadersCount, shaders, {}, autoReleaseShaders, outVariablesMap);
+}
+
+GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
+    GLuint shadersCount,
+    const GLuint* shaders,
+    const QList< std::tuple<GlslVariableType, QString, GLint> >& variableLocations,
+    const bool autoReleaseShaders /*= true*/,
+    QHash<QString, GlslProgramVariable>* outVariablesMap /*= nullptr*/)
+{
     GL_CHECK_PRESENT(glCreateProgram);
     GL_CHECK_PRESENT(glAttachShader);
     GL_CHECK_PRESENT(glDetachShader);
@@ -198,6 +208,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     GL_CHECK_PRESENT(glDeleteProgram);
     GL_CHECK_PRESENT(glGetActiveAttrib);
     GL_CHECK_PRESENT(glGetActiveUniform);
+    GL_CHECK_PRESENT(glBindAttribLocation);
 
     GLuint program = 0;
 
@@ -214,6 +225,19 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     {
         glAttachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
+    }
+
+    for (const auto& variableLocationsEntry : variableLocations)
+    {
+        const auto variableType = std::get<0>(variableLocationsEntry);
+        const auto variableName = std::get<1>(variableLocationsEntry);
+        const auto variableLocation = std::get<2>(variableLocationsEntry);
+
+        if (variableType == GlslVariableType::In)
+        {
+            glBindAttribLocation(program, variableLocation, qPrintable(variableName));
+            GL_CHECK_RESULT;
+        }
     }
 
     glLinkProgram(program);

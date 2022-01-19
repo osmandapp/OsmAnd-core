@@ -102,7 +102,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
         // Elevation vertex attrib is bound to program
         if (elevationDataVertexAttribArray.isValid())
         {
-            glDisableVertexAttribArray(*elevationDataVertexAttribArray);
+            glDisableVertexAttribArray(*elevationDataVertexAttribArray + 0);
+            GL_CHECK_RESULT;
+
+            glDisableVertexAttribArray(*elevationDataVertexAttribArray + 1);
+            GL_CHECK_RESULT;
+
+            glDisableVertexAttribArray(*elevationDataVertexAttribArray + 2);
             GL_CHECK_RESULT;
 
             elevationDataVertexAttribArray.reset();
@@ -820,8 +826,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
+    auto variableLocations = QList< std::tuple<GlslVariableType, QString, GLint> >({
+        { GlslVariableType::In, QStringLiteral("in_vs_vertexPosition"), 0 },
+        { GlslVariableType::In, QStringLiteral("in_vs_vertexTexCoords"), 1 },
+    });
+    if (!gpuAPI->isSupported_vertexShaderTextureLookup)
+    {
+        // NOTE: See https://community.khronos.org/t/behavior-of-a-non-enabled-vertex-attribute/69746
+        variableLocations.append({ GlslVariableType::In, QStringLiteral("in_vs_vertexElevation"), 2 });
+    }
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, true, &variablesMap);
+    outRasterLayerTileProgram.id = getGPUAPI()->linkProgram(2, shaders, variableLocations, true, &variablesMap);
     if (!outRasterLayerTileProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1240,6 +1255,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
                 reinterpret_cast<const GLfloat*>(&pColorMapEntry->second));
             GL_CHECK_RESULT;
         }
+    }
+    else
+    {
+        glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+        GL_CHECK_RESULT;
     }
 
     // Configure samplers
@@ -1743,6 +1763,9 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             GL_FALSE,
             sizeof(float) * 3 * 3,
             reinterpret_cast<void*>(sizeof(float) * 3 * 2));
+        GL_CHECK_RESULT;
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
     }
 }
