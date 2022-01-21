@@ -651,7 +651,8 @@ float OsmAnd::VectorLine_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
+std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(
+    const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
 {
     int order = owner->baseOrder;
     float zoom = this->zoom();
@@ -681,8 +682,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     _arrowsOnPath.clear();
     generateArrowsOnPath(_arrowsOnPath, segments);
     
-    PointI startPos;
-    bool startPosDefined = false;
+    PointI origin;
+    bool originDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
         auto& points = segments[segmentIndex];
@@ -690,12 +691,11 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (points.size() < 2)
             continue;
         
-        if (!startPosDefined)
+        if (!originDefined)
         {
-            startPosDefined = true;
-            startPos = points[0];
-            vectorLine->position31 = startPos;
-            verticesAndIndexes->position31 = new PointI(startPos);
+            originDefined = true;
+            origin = points[0];
+            vectorLine->position31 = origin;
         }
         int pointsCount = (int) points.size();
         // generate array of points
@@ -704,7 +704,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         uint prevPointIdx = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
-            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
+            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - origin.x), (points[pointIdx].y - origin.y));
             if (hasColorizationMapping() && _colorizationSceme == COLORIZATION_SOLID)
             {
                 FColorARGB prevColor = colorsForSegment[prevPointIdx];
@@ -919,12 +919,13 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 for (int i = 0; i < idx - prevIdx; i++)
                     colors.push_back(fillColor);
                 
-                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
-                                                                                                               vertices,
-                                                                                                               subvector, radius * 2,
-                                                                                                               _fillColor, colors,
-                                                                                                               crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                               owner->endCapStyle);
+                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                    vertex,
+                    vertices,
+                    subvector, radius * 2,
+                    _fillColor, colors,
+                    crushedpixel::Polyline2D::JointStyle::ROUND,
+                    owner->endCapStyle);
                 prevIdx = idx - 1;
             }
             const auto begin = original.begin() + prevIdx;
@@ -934,21 +935,23 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             QList<FColorARGB> colors;
             for (int i = 0; i < original.size() - prevIdx; i++)
                 colors.push_back(fillColor);
-            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
-                                                                                                           vertices,
-                                                                                                           subvector, radius * 2,
-                                                                                                           _fillColor, colors,
-                                                                                                           crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           owner->endCapStyle);
+            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                vertex,
+                vertices,
+                subvector, radius * 2,
+                _fillColor, colors,
+                crushedpixel::Polyline2D::JointStyle::ROUND,
+                owner->endCapStyle);
         }
         else
         {
-            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(vertex,
-                                                                                                           vertices,
-                                                                                                           original, radius * 2,
-                                                                                                           _fillColor, filteredColorsMap,
-                                                                                                           crushedpixel::Polyline2D::JointStyle::ROUND,
-                                                                                                           owner->endCapStyle);
+            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                vertex,
+                vertices,
+                original, radius * 2,
+                _fillColor, filteredColorsMap,
+                crushedpixel::Polyline2D::JointStyle::ROUND,
+                owner->endCapStyle);
         }
     }
     if (vertices.size() == 0)
@@ -956,7 +959,6 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         vertex.positionXY[0] = 0;
         vertex.positionXY[1] = 0;
         vertices.push_back(vertex);
-        verticesAndIndexes->position31 = new PointI(0, 0);
     }
     //verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndexes->verticesCount = (unsigned int) vertices.size();

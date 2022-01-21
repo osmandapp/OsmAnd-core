@@ -228,7 +228,8 @@ float OsmAnd::Polygon_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> polygon) const
+std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePrimitive(
+    const std::shared_ptr<OnSurfaceVectorMapSymbol> polygon) const
 {
     int order = owner->baseOrder;
     int pointsCount = _points.size();
@@ -276,8 +277,6 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         if (include[pointIdx])
             original[insertIdx++] = { pointsToPlot[pointIdx].x, pointsToPlot[pointIdx].y };
-    
-    verticesAndIndexes->position31 = new PointI(polygon->position31.x, polygon->position31.y);
     
     std::vector<std::vector<EPoint>> polygons;
 
