@@ -247,14 +247,12 @@ namespace OsmAnd
             MeshInGPU(
                 GPUAPI* api,
                 const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer,
-                const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer,
-                const PointI* position31 = nullptr);
+                const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer);
             
             virtual ~MeshInGPU();
 
             const std::shared_ptr<ArrayBufferInGPU> vertexBuffer;
             const std::shared_ptr<ElementArrayBufferInGPU> indexBuffer;
-            const PointI* position31;
         };
 
     private:

@@ -947,7 +947,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(onSurfaceMapSymbol);
 
-    auto position31 =
+    const auto& position31 =
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : onSurfaceMapSymbol->getPosition31();
@@ -997,12 +997,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     if (!gpuResource)
         return;
 
-    if (const auto& gpuMeshResource = std::dynamic_pointer_cast<const GPUAPI::MeshInGPU>(gpuResource))
-    {
-        if (gpuMeshResource->position31 != nullptr)
-            position31 = PointI(gpuMeshResource->position31->x, gpuMeshResource->position31->y);
-    }
-    
     std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
     renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = mapSymbol;
