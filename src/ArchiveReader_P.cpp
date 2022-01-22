@@ -27,7 +27,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
         (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
             Item item;
-            item.name = QString::fromWCharArray(archive_entry_pathname_w(entry));
+            item.name = QString::fromUtf8(archive_entry_pathname_utf8(entry));
             item.size = archive_entry_size(entry);
             if (archive_entry_ctime_is_set(entry) != 0)
                 item.creationTime = QDateTime::fromTime_t(archive_entry_ctime(entry));
@@ -58,7 +58,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
         [itemName, fileName, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
         {
-            const auto currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
+            const auto currentItemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
             match = currentItemName == itemName;
             if (!match)
                 return true;
@@ -82,7 +82,7 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
         [destinationPath, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
-            const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
+            const auto& currentItemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
             const auto destinationFileName = QDir(destinationPath).absoluteFilePath(currentItemName);
 
             uint64_t itemExtractedBytes = 0;
