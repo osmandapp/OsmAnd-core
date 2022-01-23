@@ -3,6 +3,7 @@
 #include "stdlib_common.h"
 #include <memory>
 #include <cstdio>
+#include <clocale>
 
 #include "QtExtensions.h"
 #include <QCoreApplication>
@@ -95,6 +96,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     }
     
     gCoreResourcesProvider = coreResourcesProvider;
+
+    std::setlocale(LC_CTYPE, "C.UTF-8");
 
     Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
 
