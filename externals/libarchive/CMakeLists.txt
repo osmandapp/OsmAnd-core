@@ -28,6 +28,13 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "android")
 	)
 endif()
 
+set(target_specific_include_dirs_private "")
+if (CMAKE_TARGET_OS STREQUAL "android")
+	set(target_specific_include_dirs_private ${target_specific_include_dirs_private}
+		"upstream.patched/contrib/android/include"
+	)
+endif()
+
 add_library(archive_static STATIC
 	"upstream.patched/libarchive/archive_acl.c"
 	"upstream.patched/libarchive/archive_acl_private.h"
@@ -204,6 +211,7 @@ endif()
 target_compile_definitions(archive_static
 	PRIVATE
 		-DPLATFORM_CONFIG_H="config.h"
+		-D__LIBARCHIVE_BUILD
 		${target_specific_private_definitions}
 	PUBLIC
 		-DLIBARCHIVE_STATIC
@@ -211,6 +219,7 @@ target_compile_definitions(archive_static
 target_include_directories(archive_static
 	PRIVATE
 		"${CMAKE_CURRENT_BINARY_DIR}"
+		${target_specific_include_dirs_private}
 	PUBLIC
 		"upstream.patched"
 		"upstream.patched/libarchive"
