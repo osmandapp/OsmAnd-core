@@ -3,6 +3,7 @@
 #include "stdlib_common.h"
 #include <memory>
 #include <cstdio>
+#include <clocale>
 
 #include "QtExtensions.h"
 #include <QCoreApplication>
@@ -122,6 +123,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
         gMainThread = QThread::currentThread();
         initializeInAppThread();
     }
+
+    std::setlocale(LC_CTYPE, "UTF-8");
 
     GDALAllRegister();
     if (!SKIA::initialize())
