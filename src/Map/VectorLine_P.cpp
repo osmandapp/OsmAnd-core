@@ -1138,15 +1138,16 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(const std::vector<std::v
     QVector<SkPath> paths;
     if (!visibleSegments.empty())
     {
+        PointI origin(visibleSegments.back().back());
         for (const auto& segment : visibleSegments)
         {
             SkPath path;
             const auto& start = segment.back();
-            path.moveTo(start.x, start.y);
+            path.moveTo(start.x - origin.x, start.y - origin.y);
             for (int i = (int) segment.size() - 2; i >= 0; i--)
             {
                 const auto& p = segment[i];
-                path.lineTo(p.x, p.y);
+                path.lineTo(p.x - origin.x, p.y - origin.y);
             }
             paths.push_back(path);
         }
@@ -1166,6 +1167,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
         const auto paths = calculateLinePath(visibleSegments);
         for (const auto& path : paths)
         {
+            PointI origin(visibleSegments.back().back());
             SkPathMeasure pathMeasure(path, false);
             bool ok = false;
             const auto length = pathMeasure.getLength();
@@ -1185,7 +1187,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
                     if (!ok)
                         break;
 
-                    const auto position = PointI(p.x(), p.y());
+                    const auto position = PointI((double)p.x() + origin.x, (double)p.y() + origin.y);
                     // Get mirrored direction
                     float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
                     const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
