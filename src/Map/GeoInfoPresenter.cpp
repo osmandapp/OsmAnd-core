@@ -146,17 +146,17 @@ void OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping::registerMapping(
 
 OsmAnd::GeoInfoPresenter::MapObject::MapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
-    const std::shared_ptr<const GeoInfoDocument::ExtraData>& extraData /*= nullptr*/)
+    const std::shared_ptr<const Extensions>& extensions /*= nullptr*/)
     : geoInfoDocument(geoInfoDocument_)
 {
     const auto mapping = std::make_shared<AttributeMapping>();
     attributeMapping = mapping;
     
-    if (extraData)
+    if (extensions)
     {
         auto lastUsedRuleId = 0;
 
-        const auto values = extraData->getValues();
+        const auto values = extensions->getValues();
         for (const auto valueEntry : rangeOf(constOf(values)))
         {
             const auto& tag = valueEntry.key();
@@ -178,7 +178,7 @@ OsmAnd::GeoInfoPresenter::MapObject::MapObject(
 
     mapping->verifyRequiredMappingRegistered();
 
-    additionalAttributeIds.append(geoInfoDocument->locationMarks.isEmpty()
+    additionalAttributeIds.append(geoInfoDocument->points.isEmpty()
         ? mapping->waypointsNotPresentAttributeId
         : mapping->waypointsPresentAttributeId);
 
@@ -197,8 +197,8 @@ OsmAnd::GeoInfoPresenter::MapObject::~MapObject()
 
 OsmAnd::GeoInfoPresenter::WaypointMapObject::WaypointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
-    const std::shared_ptr<const GeoInfoDocument::LocationMark>& waypoint_)
-    : MapObject(geoInfoDocument_, waypoint_->extraData)
+    const std::shared_ptr<const GeoInfoDocument::WptPt>& waypoint_)
+    : MapObject(geoInfoDocument_, waypoint_)
     , waypoint(waypoint_)
 {
     const auto position31 = Utilities::convertLatLonTo31(waypoint->position);
@@ -222,8 +222,8 @@ OsmAnd::GeoInfoPresenter::TrackpointMapObject::TrackpointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Track>& track_,
     const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment_,
-    const std::shared_ptr<const GeoInfoDocument::LocationMark>& trackpoint_)
-    : MapObject(geoInfoDocument_, trackpoint_->extraData)
+    const std::shared_ptr<const GeoInfoDocument::WptPt>& trackpoint_)
+    : MapObject(geoInfoDocument_, trackpoint_)
     , track(track_)
     , trackSegment(trackSegment_)
     , trackpoint(trackpoint_)
@@ -249,7 +249,7 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::TracklineMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Track>& track_,
     const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment_)
-    : MapObject(geoInfoDocument_, trackSegment_->extraData)
+    : MapObject(geoInfoDocument_, trackSegment_)
     , track(track_)
     , trackSegment(trackSegment_)
 {
@@ -275,8 +275,8 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::~TracklineMapObject()
 OsmAnd::GeoInfoPresenter::RoutepointMapObject::RoutepointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_,
-    const std::shared_ptr<const GeoInfoDocument::LocationMark>& routepoint_)
-    : MapObject(geoInfoDocument_, routepoint_->extraData)
+    const std::shared_ptr<const GeoInfoDocument::WptPt>& routepoint_)
+    : MapObject(geoInfoDocument_, routepoint_)
     , route(route_)
     , routepoint(routepoint_)
 {
@@ -300,7 +300,7 @@ OsmAnd::GeoInfoPresenter::RoutepointMapObject::~RoutepointMapObject()
 OsmAnd::GeoInfoPresenter::RoutelineMapObject::RoutelineMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_)
-    : MapObject(geoInfoDocument_, route_->extraData)
+    : MapObject(geoInfoDocument_, route_)
     , route(route_)
 {
     points31.resize(route->points.size());

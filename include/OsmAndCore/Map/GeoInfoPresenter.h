@@ -59,7 +59,7 @@ namespace OsmAnd
         protected:
             MapObject(
                 const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument,
-                const std::shared_ptr<const GeoInfoDocument::ExtraData>& extraData = nullptr);
+                const std::shared_ptr<const Extensions>& extensions = nullptr);
         public:
             virtual ~MapObject();
 
@@ -73,10 +73,10 @@ namespace OsmAnd
         public:
             WaypointMapObject(
                 const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument,
-                const std::shared_ptr<const GeoInfoDocument::LocationMark>& waypoint);
+                const std::shared_ptr<const GeoInfoDocument::WptPt>& waypoint);
             virtual ~WaypointMapObject();
 
-            const std::shared_ptr<const GeoInfoDocument::LocationMark> waypoint;
+            const std::shared_ptr<const GeoInfoDocument::WptPt> waypoint;
         };
 
         class OSMAND_CORE_API TrackpointMapObject : public MapObject
@@ -88,12 +88,12 @@ namespace OsmAnd
                 const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument,
                 const std::shared_ptr<const GeoInfoDocument::Track>& track,
                 const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment,
-                const std::shared_ptr<const GeoInfoDocument::LocationMark>& trackpoint);
+                const std::shared_ptr<const GeoInfoDocument::WptPt>& trackpoint);
             virtual ~TrackpointMapObject();
 
             const std::shared_ptr<const GeoInfoDocument::Track> track;
             const std::shared_ptr<const GeoInfoDocument::TrackSegment> trackSegment;
-            const std::shared_ptr<const GeoInfoDocument::LocationMark> trackpoint;
+            const std::shared_ptr<const GeoInfoDocument::WptPt> trackpoint;
         };
 
         class OSMAND_CORE_API TracklineMapObject : public MapObject
@@ -119,11 +119,11 @@ namespace OsmAnd
             RoutepointMapObject(
                 const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument,
                 const std::shared_ptr<const GeoInfoDocument::Route>& route,
-                const std::shared_ptr<const GeoInfoDocument::LocationMark>& routepoint);
+                const std::shared_ptr<const GeoInfoDocument::WptPt>& routepoint);
             virtual ~RoutepointMapObject();
 
             const std::shared_ptr<const GeoInfoDocument::Route> route;
-            const std::shared_ptr<const GeoInfoDocument::LocationMark> routepoint;
+            const std::shared_ptr<const GeoInfoDocument::WptPt> routepoint;
         };
 
         class OSMAND_CORE_API RoutelineMapObject : public MapObject

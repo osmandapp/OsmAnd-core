@@ -20,7 +20,7 @@ QList< std::shared_ptr<const OsmAnd::GeoInfoPresenter_P::MapObject> > OsmAnd::Ge
 
     for (const auto& geoInfoDocument : constOf(geoInfoDocuments))
     {
-        for (const auto& waypoint : constOf(geoInfoDocument->locationMarks))
+        for (const auto& waypoint : constOf(geoInfoDocument->points))
         {
             const std::shared_ptr<WaypointMapObject> newMapObject(new WaypointMapObject(
                 geoInfoDocument,

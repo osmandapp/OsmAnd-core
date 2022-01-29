@@ -22,37 +22,11 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(GpxDocument);
     public:
-        struct OSMAND_CORE_API GpxExtension : public ExtraData
-        {
-            GpxExtension();
-            virtual ~GpxExtension();
-
-            QString name;
-            QString value;
-            QHash<QString, QString> attributes;
-            QList< Ref<GpxExtension> > subextensions;
-
-            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const Q_DECL_OVERRIDE;
-        };
-
-        struct OSMAND_CORE_API GpxExtensions : public ExtraData
-        {
-            GpxExtensions();
-            virtual ~GpxExtensions();
-
-            QHash<QString, QString> attributes;
-            QString value;
-            QList< Ref<GpxExtension> > extensions;
-
-            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const Q_DECL_OVERRIDE;
-        };
 
         struct OSMAND_CORE_API GpxLink : public Link
         {
             GpxLink();
             virtual ~GpxLink();
-
-            QString type;
         };
 
         struct OSMAND_CORE_API GpxMetadata : public Metadata
@@ -61,51 +35,10 @@ namespace OsmAnd
             virtual ~GpxMetadata();
         };
 
-        enum class GpxFixType
+        struct OSMAND_CORE_API GpxWptPt : public WptPt
         {
-            // Fix type unknown
-            Unknown = -1,
-
-            // No fix
-            None,
-
-            // Position only, or 2D
-            PositionOnly,
-
-            // Position and Elevation, or 3D
-            PositionAndElevation,
-
-            // DGPS
-            DGPS,
-
-            // Military signal used
-            PPS
-        };
-
-        struct OSMAND_CORE_API GpxWpt : public LocationMark
-        {
-            GpxWpt();
-            virtual ~GpxWpt();
-
-            double magneticVariation;
-            double geoidHeight;
-            QString source;
-            QString category;
-            QString symbol;
-            GpxFixType fixType;
-            int satellitesUsedForFixCalculation;
-            double horizontalDilutionOfPrecision;
-            double verticalDilutionOfPrecision;
-            double positionDilutionOfPrecision;
-            double ageOfGpsData;
-            int dgpsStationId;
-        };
-
-        struct OSMAND_CORE_API GpxTrkPt : public GpxWpt
-        {
-            GpxTrkPt();
-            virtual ~GpxTrkPt();
-
+            GpxWptPt();
+            virtual ~GpxWptPt();
         };
 
         struct OSMAND_CORE_API GpxTrkSeg : public TrackSegment
@@ -118,29 +51,16 @@ namespace OsmAnd
         {
             GpxTrk();
             virtual ~GpxTrk();
-
-            QString source;
-            int slotNumber;
-        };
-
-        struct OSMAND_CORE_API GpxRtePt : public GpxWpt
-        {
-            GpxRtePt();
-            virtual ~GpxRtePt();
         };
 
         struct OSMAND_CORE_API GpxRte : public Route
         {
             GpxRte();
             virtual ~GpxRte();
-
-            QString source;
-            int slotNumber;
         };
 
     private:
-        static std::shared_ptr<GpxWpt> parseWpt(QXmlStreamReader& xmlReader);
-        static std::shared_ptr<GpxTrkPt> parseTrkPt(QXmlStreamReader& xmlReader);
+        static std::shared_ptr<GpxWptPt> parseWptAttributes(QXmlStreamReader& xmlReader);
         static std::shared_ptr<Bounds> parseBoundsAttributes(QXmlStreamReader& xmlReader);
         static QString getFilename(const QString& path);
         static void writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWriter, const QString& tag, const QString &attribute, const QString& value);
@@ -148,10 +68,14 @@ namespace OsmAnd
         static void writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Author>& author);
         static void writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright);
         static void writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bounds>& bounds);
+        static std::shared_ptr<RouteSegment> parseRouteSegmentAttributes(QXmlStreamReader& parser);
+        static std::shared_ptr<RouteType> parseRouteTypeAttributes(QXmlStreamReader& parser);
+        static QMap<QString, QString> readTextMap(QXmlStreamReader &xmlReader, QString key);
+        static QString readText(QXmlStreamReader& xmlReader, QString key);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
-        static void writeExtensions(const std::shared_ptr<const GpxExtensions>& extensions, QXmlStreamWriter& xmlWriter);
-        static void writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter);
+        static void writeExtensions(const QList< Ref<Extension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);
+        static void writeExtension(const std::shared_ptr<const Extension>& extension, QXmlStreamWriter& xmlWriter);
     public:
         GpxDocument();
         virtual ~GpxDocument();
@@ -164,7 +88,7 @@ namespace OsmAnd
         bool saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const;
         bool saveTo(QIODevice& ioDevice, const QString& filename) const;
         bool saveTo(const QString& filename) const;
-        static std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& xmlReader);
+        static std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& parser);
         static std::shared_ptr<GpxDocument> loadFrom(QIODevice& ioDevice);
         static std::shared_ptr<GpxDocument> loadFrom(const QString& filename);
     };

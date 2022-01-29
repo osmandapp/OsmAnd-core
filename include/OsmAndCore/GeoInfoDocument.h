@@ -21,17 +21,43 @@
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API GeoInfoDocument
+    class OSMAND_CORE_API Extensions {
+        Q_DISABLE_COPY_AND_MOVE(Extensions);
+    public:
+
+        struct OSMAND_CORE_API Extension {
+            Extension();
+
+            virtual ~Extension();
+
+            QString name;
+            QString value;
+            QHash<QString, QString> attributes;
+            QList< Ref<Extension> > subextensions;
+
+            QHash<QString, QVariant> getValues(const bool recursive = true) const;
+        };
+
+    private:
+    protected:
+    public:
+        Extensions();
+        virtual ~Extensions();
+
+        QString value;
+        QHash<QString, QString> attributes;
+        QList< Ref<Extension> > extensions;
+
+        QHash<QString, QVariant> getValues(const bool recursive = true) const;
+    };
+}
+
+namespace OsmAnd
+{
+    class OSMAND_CORE_API GeoInfoDocument : public Extensions
     {
         Q_DISABLE_COPY_AND_MOVE(GeoInfoDocument);
     public:
-        struct OSMAND_CORE_API ExtraData
-        {
-            ExtraData();
-            virtual ~ExtraData();
-
-            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const = 0;
-        };
 
         struct OSMAND_CORE_API Link
         {
@@ -42,7 +68,7 @@ namespace OsmAnd
             QString text;
         };
         
-        struct OSMAND_CORE_API Author
+        struct OSMAND_CORE_API Author : public Extensions
         {
             Author();
             virtual ~Author();
@@ -52,7 +78,7 @@ namespace OsmAnd
             QString link;
         };
         
-        struct OSMAND_CORE_API Copyright
+        struct OSMAND_CORE_API Copyright : public Extensions
         {
             Copyright();
             virtual ~Copyright();
@@ -62,7 +88,7 @@ namespace OsmAnd
             QString license;
         };
         
-        struct OSMAND_CORE_API Bounds
+        struct OSMAND_CORE_API Bounds : public Extensions
         {
             Bounds();
             virtual ~Bounds();
@@ -73,7 +99,7 @@ namespace OsmAnd
             double maxlon;
         };
 
-        struct OSMAND_CORE_API Metadata
+        struct OSMAND_CORE_API Metadata : public Extensions
         {
             Metadata();
             virtual ~Metadata();
@@ -83,16 +109,15 @@ namespace OsmAnd
             QList< Ref<Link> > links;
             QString keywords;
             QDateTime timestamp;
-            Ref<ExtraData> extraData;
             Ref<Author> author;
             Ref<Copyright> copyright;
             Ref<Bounds> bounds;
         };
 
-        struct OSMAND_CORE_API LocationMark
+        struct OSMAND_CORE_API WptPt : public Extensions
         {
-            LocationMark();
-            virtual ~LocationMark();
+            WptPt();
+            virtual ~WptPt();
 
             LatLon position;
             QString name;
@@ -102,44 +127,65 @@ namespace OsmAnd
             QString comment;
             QString type;
             QList< Ref<Link> > links;
-            Ref<ExtraData> extraData;
+            double horizontalDilutionOfPrecision;
+            double verticalDilutionOfPrecision;
+            double speed;
         };
 
-        struct OSMAND_CORE_API TrackSegment
+        struct OSMAND_CORE_API RouteSegment
+        {
+            RouteSegment();
+            virtual ~RouteSegment();
+
+            QString id;
+            QString length;
+            QString segmentTime;
+            QString speed;
+            QString turnType;
+            QString turnAngle;
+            QString types;
+            QString pointTypes;
+            QString names;
+        };
+
+        struct OSMAND_CORE_API RouteType
+        {
+            RouteType();
+            virtual ~RouteType();
+
+            QString tag;
+            QString value;
+        };
+
+        struct OSMAND_CORE_API TrackSegment : public Extensions
         {
             TrackSegment();
             virtual ~TrackSegment();
 
-            QList< Ref<LocationMark> > points;
-            Ref<ExtraData> extraData;
+            QString name;
+            QList< Ref<WptPt> > points;
+            QList< Ref<RouteSegment> > routeSegments;
+            QList< Ref<RouteType> > routeTypes;
         };
 
-        struct OSMAND_CORE_API Track
+        struct OSMAND_CORE_API Track : public Extensions
         {
             Track();
             virtual ~Track();
 
             QString name;
             QString description;
-            QString comment;
-            QString type;
-            QList< Ref<Link> > links;
             QList< Ref<TrackSegment> > segments;
-            Ref<ExtraData> extraData;
         };
 
-        struct OSMAND_CORE_API Route
+        struct OSMAND_CORE_API Route : public Extensions
         {
             Route();
             virtual ~Route();
 
             QString name;
             QString description;
-            QString comment;
-            QString type;
-            QList< Ref<Link> > links;
-            QList< Ref<LocationMark> > points;
-            Ref<ExtraData> extraData;
+            QList< Ref<WptPt> > points;
         };
 
     private:
@@ -149,11 +195,10 @@ namespace OsmAnd
         virtual ~GeoInfoDocument();
 
         Ref<Metadata> metadata;
-        QList< Ref<LocationMark> > locationMarks;
+        QList< Ref<WptPt> > points;
         QList< Ref<Track> > tracks;
         QList< Ref<Route> > routes;
-        Ref<ExtraData> extraData;
-        
+
         bool hasRtePt() const;
         bool hasWptPt() const;
         bool hasTrkPt() const;
