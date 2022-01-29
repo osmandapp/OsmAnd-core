@@ -1,16 +1,6 @@
 #include "GeoInfoDocument.h"
 
-#include "QtExtensions.h"
-#include "ignore_warnings_on_external_includes.h"
-#include <QFile>
-#include <QStack>
-#include "restore_internal_warnings.h"
-
-#include "OsmAndCore.h"
-#include "Common.h"
 #include "QKeyValueIterator.h"
-#include "Utilities.h"
-#include "Logging.h"
 
 OsmAnd::Extensions::Extension::Extension()
 {

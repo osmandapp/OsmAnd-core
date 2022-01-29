@@ -11,7 +11,6 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
-#include <iostream>
 
 OsmAnd::GpxDocument::GpxDocument()
 {
