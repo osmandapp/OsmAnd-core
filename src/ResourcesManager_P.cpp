@@ -780,6 +780,15 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
+bool OsmAnd::ResourcesManager_P::checkIfObjectDownloaded(const QString& downloadName) const
+{
+    QString regionName = downloadName.toLower().append("map.obf");
+    QString roadsRegionName = downloadName.toLower().append("road.obf");
+    
+    QReadLocker scopedLocker(&_localResourcesLock);
+    return _localResources.contains(regionName) || _localResources.contains(roadsRegionName);
+}
+
 OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(const QStringRef &resourceTypeValue)
 {
     auto resourceType = ResourceType::Unknown;

@@ -99,6 +99,11 @@ bool OsmAnd::ResourcesManager::isLocalResource(const QString& id) const
     return _p->isLocalResource(id);
 }
 
+bool OsmAnd::ResourcesManager::checkIfObjectDownloaded(const QString& downloadName) const
+{
+    return _p->checkIfObjectDownloaded(downloadName);
+}
+
 bool OsmAnd::ResourcesManager::isRepositoryAvailable() const
 {
     return _p->isRepositoryAvailable();
