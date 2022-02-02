@@ -19,7 +19,6 @@
 #include "SkiaUtilities.h"
 #include "GlobalMercator.h"
 #include "ArchiveReader.h"
-#include "ElapsedTimer.h"
 
 static QMutex _geoDataMutex;
 
@@ -222,13 +221,8 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
 
                 auto filePathGz = filePath + QStringLiteral(".gz");
 
-                OsmAnd::ElapsedTimer downloadTimer;
-                downloadTimer.Start();
                 if (_webClient->downloadFile(tileUrl, filePathGz))
                 {
-                    downloadTimer.Pause();
-                    LogPrintf(LogSeverityLevel::Error, "%f Downloading %s", (double)downloadTimer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-
                     ArchiveReader archive(filePathGz);
                     bool ok = false;
                     const auto archiveItems = archive.getItems(&ok, true);
@@ -286,12 +280,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
                                         request.tileId.y,
                                         request.zoom);
     
-    OsmAnd::ElapsedTimer allTimer;
-    allTimer.Start();
-
-    OsmAnd::ElapsedTimer timer;
-    timer.Start();
-
     // Map data to VSI memory
     const auto filename = QString::asprintf("/vsimem/weatherTile@%p", geoTileData.data());
     const auto file = VSIFileFromMemBuffer(
@@ -311,11 +299,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
     }
     VSIFCloseL(file);
     
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f Load geo tile to mem %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     auto projSearchPath = owner->projSearchPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
     OSRSetPROJSearchPaths(projPaths);
@@ -340,11 +323,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
         return false;
     }
         
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f GDALOpen %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     auto bandIndexStr = QString::number(bandIndex).toLatin1();
 
     auto tlExtLonStr = doubleToStr(tlExtLatLon.longitude).toLatin1();
@@ -404,11 +382,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
         return false;
     }
     
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f GDALTranslate %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     auto interBoundsMin = mercator.latLonToMeters(tlExtLatLon);
     auto interBoundsMax = mercator.latLonToMeters(brExtLatLon);
 
@@ -484,11 +457,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
         return false;
     }
 
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f GDALWarp %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     const auto colorizeFilename = QString::asprintf("/vsimem/weatherTile@%s_%d_%dx%d@%d_colorize",
                                                     qPrintable(dateTimeStr), bandIndex,
                                                     request.tileId.x, request.tileId.y, request.zoom);
@@ -536,11 +504,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
         return false;
     }
     
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f GDALDem %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     auto interBoundsMinOrig = mercator.latLonToMeters(tlLatLon);
     auto tileMinPix = mercator.metersToPixels(interBoundsMinOrig.x, interBoundsMinOrig.y, zoom);
     auto tileMinExtPix = mercator.metersToPixels(interBoundsMin.x, interBoundsMin.y, zoom);
@@ -595,11 +558,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
         return false;
     }
     
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f GDALTranslate raster %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-    timer.Start();
-
     VSIStatBufL sStatBuf;
     auto stat = VSIStatL(qPrintable(tileFilename), &sStatBuf);
     auto nBufLength = sStatBuf.st_size;
@@ -609,18 +567,10 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
     {
         QWriteLocker scopedLocker(&_dataLock);
         
-        OsmAnd::ElapsedTimer t;
-        t.Start();
-
         if (_rasterDb->isOpened())
         {
             _rasterDb->storeTileData(request.tileId, request.zoom, QByteArray::fromRawData(pszDBData, (int) nBufLength));
         }
-
-        t.Pause();
-        LogPrintf(LogSeverityLevel::Error, "%f Store raster %s", (double)t.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-        t.Reset();
-        t.Start();
 
         auto image = SkImage::MakeFromEncoded(SkData::MakeWithProc(
             pszDBData,
@@ -630,11 +580,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
             },
             pszDBData
         ));
-
-        t.Pause();
-        LogPrintf(LogSeverityLevel::Error, "%f Decode raster %s", (double)t.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-        t.Reset();
-
         if (image)
         {
             outData.reset(new IRasterMapLayerProvider::Data(
@@ -650,14 +595,6 @@ bool OsmAnd::WeatherRasterLayerProvider_P::obtainData(
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpDB));
 
     hColorizedDS = nullptr;
-
-    timer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f Create png %s", (double)timer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    timer.Reset();
-
-    allTimer.Pause();
-    LogPrintf(LogSeverityLevel::Error, "%f All %s", (double)allTimer.GetElapsedMs() / 1000.0, qPrintable(tileUrl));
-    allTimer.Reset();
 
     return success;
 }
