@@ -48,7 +48,7 @@ QHash<QString, QVariant> OsmAnd::Extensions::getValues(const bool recursive /*= 
     QHash<QString, QVariant> values;
 
     if (!value.isEmpty())
-        values.insert(QString::null, value);
+        values.insert(QString(), value);
 
     for (const auto attributeEntry : rangeOf(constOf(attributes)))
         values.insert(attributeEntry.key(), attributeEntry.value());

@@ -539,7 +539,7 @@ QString OsmAnd::GpxDocument::readText(QXmlStreamReader& xmlReader, QString key)
         }
         else if (tok == QXmlStreamReader::TokenType::Characters)
         {
-            if (text == nullptr)
+            if (text.isNull())
                 text = xmlReader.text().toString();
             else
                 text.append(xmlReader.text().toString());
@@ -558,15 +558,15 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
         if (tok == QXmlStreamReader::TokenType::EndElement)
         {
             QString tag = xmlReader.name().toString();
-            if (text != nullptr && text.trimmed().length() > 0)
+            if (!text.isNull() && !text.trimmed().isEmpty())
                 result.insert(tag, text);
-            if (tag.compare(key))
+            if (tag == key)
                 break;
-            text = "";
+            text = QStringLiteral("");
         }
         else if (tok == QXmlStreamReader::TokenType::StartElement)
         {
-            text = "";
+            text = QStringLiteral("");
         }
         else if (tok == QXmlStreamReader::TokenType::Characters)
         {
@@ -585,11 +585,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     auto routeTrackSegment = std::make_shared<GpxTrkSeg>();
     routeTrack->segments.append(routeTrackSegment);
     QStack<std::shared_ptr<Extensions>> parserState;
-    std::shared_ptr<GpxTrkSeg> firstSegment = nullptr;
+    std::shared_ptr<GpxTrkSeg> firstSegment;
     bool extensionReadMode = false;
     bool routePointExtension = false;
-    QList< Ref<RouteSegment> > routeSegments = QList< Ref<RouteSegment> >();
-    QList< Ref<RouteType> > routeTypes = QList< Ref<RouteType> >();
+    QList< Ref<RouteSegment> > routeSegments;
+    QList< Ref<RouteType> > routeTypes;
     bool routeExtension = false;
     bool typesExtension = false;
     auto document = std::make_shared<GpxDocument>();
@@ -785,7 +785,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     {
                         QString id = parser.attributes().value(QStringLiteral(""), QStringLiteral("id")).toString();
                         QString domain = parser.attributes().value(QStringLiteral(""), QStringLiteral("domain")).toString();
-                        if (id != nullptr && id.length() > 0 && domain != nullptr && domain.length() > 0)
+                        if (!id.isNull() && !id.isEmpty() && !domain.isNull() && !domain.isEmpty())
                         {
                             author->email = id.append(QStringLiteral("@")).append(domain);
                         }
@@ -908,7 +908,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     else if (tag == QStringLiteral("speed"))
                     {
                         QString value = GpxDocument::readText(parser, QStringLiteral("speed"));
-                        if (value != nullptr && value.length() > 0)
+                        if (!value.isNull() && !value.isEmpty())
                         {
                             bool ok = true;
                             auto speed{ value.toDouble(&ok) };
@@ -939,7 +939,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     else if (tag == QStringLiteral("ele"))
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("ele"));
-                        if (text != nullptr && text.length() > 0)
+                        if (!text.isNull() && !text.isEmpty())
                         {
                             bool ok = true;
                             auto elevation{ text.toDouble(&ok) };
@@ -950,7 +950,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     else if (tag == QStringLiteral("hdop"))
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("hdop"));
-                        if (text != nullptr && text.length() > 0)
+                        if (!text.isNull() && !text.isEmpty())
                         {
                             bool ok = true;
                             auto hdop{ text.toDouble(&ok) };

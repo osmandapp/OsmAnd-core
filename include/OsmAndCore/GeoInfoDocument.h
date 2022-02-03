@@ -50,10 +50,7 @@ namespace OsmAnd
 
         QHash<QString, QVariant> getValues(const bool recursive = true) const;
     };
-}
 
-namespace OsmAnd
-{
     class OSMAND_CORE_API GeoInfoDocument : public Extensions
     {
         Q_DISABLE_COPY_AND_MOVE(GeoInfoDocument);
