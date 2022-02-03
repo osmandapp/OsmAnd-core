@@ -136,7 +136,7 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
         if (!isOpened())
             return true;
 
-        if (!writeMeta(_database, *_meta))
+        if (_meta && !writeMeta(_database, *_meta))
         {
             return false;
         }

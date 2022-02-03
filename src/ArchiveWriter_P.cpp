@@ -32,7 +32,7 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
     archive_write_set_format_zip(a);
     archive_write_add_filter_none(a);
     archive_write_zip_set_compression_deflate(a);
-    res = archive_write_open_filename(a, filePath.toLocal8Bit().data());
+    res = archive_write_open_filename(a, filePath.toUtf8().data());
     if (res != ARCHIVE_OK)
     {
         *ok_ = false;
@@ -45,10 +45,10 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
             continue;
         
         QFileInfo fi(fileName);
-        const char* filename = fileName.toLocal8Bit().data();
+        const char* filename = fileName.toUtf8().data();
         stat(filename, &st);
         entry = archive_entry_new();
-        archive_entry_set_pathname(entry, fileName.replace(basePath + QStringLiteral("/"), QStringLiteral("")).toLocal8Bit().data());
+        archive_entry_set_pathname_utf8(entry, fileName.replace(basePath + QStringLiteral("/"), QStringLiteral("")).toUtf8().data());
         archive_entry_set_size(entry, st.st_size);
         archive_entry_set_filetype(entry, AE_IFREG);
         archive_entry_set_perm(entry, 0664);
