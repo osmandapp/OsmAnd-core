@@ -533,7 +533,7 @@ QString OsmAnd::GpxDocument::readText(QXmlStreamReader& xmlReader, QString key)
     QString text;
     while ((tok = xmlReader.readNext()) != QXmlStreamReader::TokenType::EndDocument)
     {
-        if (tok == QXmlStreamReader::TokenType::EndElement && xmlReader.name().toString() == key)
+        if (tok == QXmlStreamReader::TokenType::EndElement && xmlReader.name().toString().compare(key) == 0)
         {
             break;
         }
@@ -560,7 +560,7 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
             QString tag = xmlReader.name().toString();
             if (!text.isNull() && !text.trimmed().isEmpty())
                 result.insert(tag, text);
-            if (tag == key)
+            if (tag.compare(key) == 0)
                 break;
             text = QStringLiteral("");
         }
@@ -570,7 +570,7 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
         }
         else if (tok == QXmlStreamReader::TokenType::Characters)
         {
-            if (text.length() == 0)
+            if (text.isEmpty())
                 text = xmlReader.text().toString();
             else
                 text.append(xmlReader.text().toString());
@@ -625,7 +625,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 QString tagName = tag.toLower();
                 if (routeExtension)
                 {
-                    if (tagName == QStringLiteral("segment"))
+                    if (tagName.compare(QStringLiteral("segment")) == 0)
                     {
                         std::shared_ptr<RouteSegment> segment = GpxDocument::parseRouteSegmentAttributes(parser);
                         routeSegments.append(segment);
@@ -633,13 +633,13 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (typesExtension)
                 {
-                    if (tagName == QStringLiteral("type"))
+                    if (tagName.compare(QStringLiteral("type")) == 0)
                     {
                         std::shared_ptr<RouteType> type = GpxDocument::parseRouteTypeAttributes(parser);
                         routeTypes.append(type);
                     }
                 }
-                if (tagName == QStringLiteral("routepointextension"))
+                if (tagName.compare(QStringLiteral("routepointextension")) == 0)
                 {
                     routePointExtension = true;
                     if (auto wptPt = std::dynamic_pointer_cast<GpxWptPt>(parse))
@@ -650,11 +650,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         wptPt->extensions.append(extension);
                     }
                 }
-                else if (tagName == QStringLiteral("route"))
+                else if (tagName.compare(QStringLiteral("route")) == 0)
                 {
                     routeExtension = true;
                 }
-                else if (tagName == QStringLiteral("types"))
+                else if (tagName.compare(QStringLiteral("types")) == 0)
                 {
                     typesExtension = true;
                 }
@@ -673,7 +673,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             extension->value = value;
                             parse->extensions.append(extension);
 
-                            if (tag == QStringLiteral("speed"))
+                            if (tag.compare(QStringLiteral("speed")) == 0)
                             {
                                 if (auto wptPt = std::dynamic_pointer_cast<GpxWptPt>(parse))
                                 {
@@ -687,13 +687,13 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     }
                 }
             }
-            else if (parse != nullptr && tag == QStringLiteral("extensions"))
+            else if (parse != nullptr && tag.compare(QStringLiteral("extensions")) == 0)
             {
                 extensionReadMode = true;
             }
             else if (routePointExtension)
             {
-                if (tag == QStringLiteral("rpt"))
+                if (tag.compare(QStringLiteral("rpt")) == 0)
                 {
                     std::shared_ptr<GpxWptPt> wptPt = GpxDocument::parseWptAttributes(parser);
                     routeTrackSegment->points.append(wptPt);
@@ -704,30 +704,30 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 if (auto gpxDocument = std::dynamic_pointer_cast<GpxDocument>(parse))
                 {
-                    if (tag == QStringLiteral("gpx"))
+                    if (tag.compare(QStringLiteral("gpx")) == 0)
                     {
                         gpxDocument->creator = parser.attributes().value(QStringLiteral("creator")).toString();
                         gpxDocument->version = parser.attributes().value(QStringLiteral("version")).toString();
                     }
-                    if (tag == QStringLiteral("metadata"))
+                    if (tag.compare(QStringLiteral("metadata")) == 0)
                     {
                         const auto metadata = std::make_shared<GpxMetadata>();
                         gpxDocument->metadata = metadata;
                         parserState.push(metadata);
                     }
-                    if (tag == QStringLiteral("trk"))
+                    if (tag.compare(QStringLiteral("trk")) == 0)
                     {
                         const auto track = std::make_shared<GpxTrk>();
                         gpxDocument->tracks.append(track);
                         parserState.push(track);
                     }
-                    if (tag == QStringLiteral("rte"))
+                    if (tag.compare(QStringLiteral("rte")) == 0)
                     {
                         const auto route = std::make_shared<GpxRte>();
                         gpxDocument->routes.append(route);
                         parserState.push(route);
                     }
-                    if (tag == QStringLiteral("wpt"))
+                    if (tag.compare(QStringLiteral("wpt")) == 0)
                     {
                         std::shared_ptr<GpxWptPt> wptPt = GpxDocument::parseWptAttributes(parser);
                         gpxDocument->points.append(wptPt);
@@ -736,18 +736,18 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (auto metadata = std::dynamic_pointer_cast<GpxMetadata>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                         metadata->name = GpxDocument::readText(parser, QStringLiteral("name"));
-                    if (tag == QStringLiteral("desc"))
+                    if (tag.compare(QStringLiteral("desc")) == 0)
                         metadata->description = GpxDocument::readText(parser, QStringLiteral("desc"));
-                    if (tag == QStringLiteral("author"))
+                    if (tag.compare(QStringLiteral("author")) == 0)
                     {
                         const auto author = std::make_shared<Author>();
                         author->name = parser.text().toString();
                         metadata->author = author;
                         parserState.push(author);
                     }
-                    if (tag == QStringLiteral("copyright"))
+                    if (tag.compare(QStringLiteral("copyright")) == 0)
                     {
                         const auto copyright = std::make_shared<Copyright>();
                         copyright->license = parser.text().toString();
@@ -755,22 +755,22 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         metadata->copyright = copyright;
                         parserState.push(copyright);
                     }
-                    if (tag == QStringLiteral("link"))
+                    if (tag.compare(QStringLiteral("link")) == 0)
                     {
                         const auto link = std::make_shared<GpxLink>();
                         link->url = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
                         metadata->links.append(link);
                     }
-                    if (tag == QStringLiteral("time"))
+                    if (tag.compare(QStringLiteral("time")) == 0)
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("time"));
                         const auto timestamp = QDateTime::fromString(text, Qt::DateFormat::ISODate);
                         if (timestamp.isValid() && !timestamp.isNull())
                             metadata->timestamp = timestamp;
                     }
-                    if (tag == QStringLiteral("keywords"))
+                    if (tag.compare(QStringLiteral("keywords")) == 0)
                         metadata->keywords = GpxDocument::readText(parser, QStringLiteral("keywords"));
-                    if (tag == QStringLiteral("bounds"))
+                    if (tag.compare(QStringLiteral("bounds")) == 0)
                     {
                         std::shared_ptr<Bounds> bounds = GpxDocument::parseBoundsAttributes(parser);
                         metadata->bounds = bounds;
@@ -779,9 +779,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (auto author = std::dynamic_pointer_cast<Author>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                         author->name = GpxDocument::readText(parser, QStringLiteral("name"));
-                    if (tag == QStringLiteral("email"))
+                    if (tag.compare(QStringLiteral("email")) == 0)
                     {
                         QString id = parser.attributes().value(QStringLiteral(""), QStringLiteral("id")).toString();
                         QString domain = parser.attributes().value(QStringLiteral(""), QStringLiteral("domain")).toString();
@@ -790,27 +790,27 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             author->email = id.append(QStringLiteral("@")).append(domain);
                         }
                     }
-                    if (tag == QStringLiteral("link"))
+                    if (tag.compare(QStringLiteral("link")) == 0)
                         author->link = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
                 }
                 else if (auto copyright = std::dynamic_pointer_cast<Copyright>(parse))
                 {
-                    if (tag == QStringLiteral("year"))
+                    if (tag.compare(QStringLiteral("year")) == 0)
                         copyright->year = GpxDocument::readText(parser, QStringLiteral("year"));
-                    if (tag == QStringLiteral("license"))
+                    if (tag.compare(QStringLiteral("license")) == 0)
                         copyright->license = GpxDocument::readText(parser, QStringLiteral("license"));
                 }
                 else if (auto route = std::dynamic_pointer_cast<GpxRte>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                     {
                         route->name = GpxDocument::readText(parser, QStringLiteral("name"));
                     }
-                    if (tag == QStringLiteral("desc"))
+                    if (tag.compare(QStringLiteral("desc")) == 0)
                     {
                         route->description = GpxDocument::readText(parser, QStringLiteral("desc"));
                     }
-                    if (tag == QStringLiteral("rtept"))
+                    if (tag.compare(QStringLiteral("rtept")) == 0)
                     {
                         std::shared_ptr<GpxWptPt> wptPt = GpxDocument::parseWptAttributes(parser);
                         route->points.append(wptPt);
@@ -819,21 +819,21 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (auto track = std::dynamic_pointer_cast<GpxTrk>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                     {
                         track->name = GpxDocument::readText(parser, "name");
                     }
-                    else if (tag == QStringLiteral("desc"))
+                    else if (tag.compare(QStringLiteral("desc")) == 0)
                     {
                         track->description = GpxDocument::readText(parser, "desc");
                     }
-                    else if (tag == QStringLiteral("trkseg"))
+                    else if (tag.compare(QStringLiteral("trkseg")) == 0)
                     {
                         const auto trkSeg = std::make_shared<GpxTrkSeg>();
                         track->segments.append(trkSeg);
                         parserState.push(trkSeg);
                     }
-                    else if (tag == QStringLiteral("trkpt") || tag == QStringLiteral("rpt"))
+                    else if (tag.compare(QStringLiteral("trkpt")) == 0 || tag.compare(QStringLiteral("rpt")) == 0)
                     {
                         std::shared_ptr<GpxWptPt> wptPt = GpxDocument::parseWptAttributes(parser);
                         int size = track->segments.size();
@@ -849,17 +849,17 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (auto segment = std::dynamic_pointer_cast<GpxTrkSeg>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                     {
                         segment->name = GpxDocument::readText(parser, QStringLiteral("name"));
                     }
-                    else if (tag == QStringLiteral("trkpt") || tag == QStringLiteral("rpt"))
+                    else if (tag.compare(QStringLiteral("trkpt")) == 0 || tag.compare(QStringLiteral("rpt")) == 0)
                     {
                         std::shared_ptr<GpxWptPt> wptPt = GpxDocument::parseWptAttributes(parser);
                         segment->points.append(wptPt);
                         parserState.push(wptPt);
                     }
-                    if (tag == QStringLiteral("csvattributes"))
+                    if (tag.compare(QStringLiteral("csvattributes")) == 0)
                     {
                         QString segmentPoints = readText(parser, QStringLiteral("csvattributes"));
                         QStringList pointsArr = segmentPoints.split("\n");
@@ -893,19 +893,19 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 else if (auto wptPt = std::dynamic_pointer_cast<GpxWptPt>(parse))
                 {
-                    if (tag == QStringLiteral("name"))
+                    if (tag.compare(QStringLiteral("name")) == 0)
                     {
                         wptPt->name = GpxDocument::readText(parser, QStringLiteral("name"));
                     }
-                    else if (tag == QStringLiteral("desc"))
+                    else if (tag.compare(QStringLiteral("desc")) == 0)
                     {
                         wptPt->description = GpxDocument::readText(parser, QStringLiteral("desc"));
                     }
-                    else if (tag == QStringLiteral("cmt"))
+                    else if (tag.compare(QStringLiteral("cmt")) == 0)
                     {
                         wptPt->comment = GpxDocument::readText(parser, QStringLiteral("cmt"));
                     }
-                    else if (tag == QStringLiteral("speed"))
+                    else if (tag.compare(QStringLiteral("speed")) == 0)
                     {
                         QString value = GpxDocument::readText(parser, QStringLiteral("speed"));
                         if (!value.isNull() && !value.isEmpty())
@@ -921,22 +921,22 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             wptPt->extensions.append(extension);
                         }
                     }
-                    else if (tag == QStringLiteral("link"))
+                    else if (tag.compare(QStringLiteral("link")) == 0)
                     {
                         const auto link = std::make_shared<GpxLink>();
                         link->url = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
                         wptPt->links.append(link);
                     }
-                    else if (tag == QStringLiteral("category"))
+                    else if (tag.compare(QStringLiteral("category")) == 0)
                     {
                         wptPt->type = GpxDocument::readText(parser, QStringLiteral("category"));
                     }
-                    else if (tag == QStringLiteral("type"))
+                    else if (tag.compare(QStringLiteral("type")) == 0)
                     {
-                        if (wptPt->type == nullptr || wptPt->type.length() == 0)
+                        if (wptPt->type.isEmpty())
                             wptPt->type = GpxDocument::readText(parser, QStringLiteral("type"));
                     }
-                    else if (tag == QStringLiteral("ele"))
+                    else if (tag.compare(QStringLiteral("ele")) == 0)
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("ele"));
                         if (!text.isNull() && !text.isEmpty())
@@ -947,7 +947,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                                 wptPt->elevation = elevation;
                         }
                     }
-                    else if (tag == QStringLiteral("hdop"))
+                    else if (tag.compare(QStringLiteral("hdop")) == 0)
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("hdop"));
                         if (!text.isNull() && !text.isEmpty())
@@ -958,7 +958,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                                 wptPt->horizontalDilutionOfPrecision = hdop;
                         }
                     }
-                    else if (tag == QStringLiteral("time"))
+                    else if (tag.compare(QStringLiteral("time")) == 0)
                     {
                         QString text = GpxDocument::readText(parser, QStringLiteral("time"));
                         const auto timestamp = QDateTime::fromString(text, Qt::DateFormat::ISODate);
@@ -973,70 +973,70 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             std::shared_ptr<Extensions> parse = parserState.top();
             QString tag = parser.name().toString();
 
-            if (tag.toLower() == QStringLiteral("routepointextension"))
+            if (tag.compare(QStringLiteral("routepointextension"), Qt::CaseInsensitive) == 0)
                 routePointExtension = false;
-            if (parse != nullptr && tag == QStringLiteral("extensions"))
+            if (parse != nullptr && tag.compare(QStringLiteral("extensions")) == 0)
             {
                 extensionReadMode = false;
                 continue;
             }
-            if (extensionReadMode && tag == QStringLiteral("route"))
+            if (extensionReadMode && tag.compare(QStringLiteral("route")) == 0)
             {
                 routeExtension = false;
                 continue;
             }
-            if (extensionReadMode && tag == QStringLiteral("types"))
+            if (extensionReadMode && tag.compare(QStringLiteral("types")) == 0)
             {
                 typesExtension = false;
                 continue;
             }
 
-            if (tag == QStringLiteral("metadata"))
+            if (tag.compare(QStringLiteral("metadata")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxMetadata>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("author"))
+            else if (tag.compare(QStringLiteral("author")) == 0)
             {
                 if (auto author = std::dynamic_pointer_cast<Author>(parse))
                     parserState.pop();
             }
-            else if (tag == QStringLiteral("copyright"))
+            else if (tag.compare(QStringLiteral("copyright")) == 0)
             {
                 if (auto copyright = std::dynamic_pointer_cast<Copyright>(parse))
                     parserState.pop();
             }
-            else if (tag == QStringLiteral("bounds"))
+            else if (tag.compare(QStringLiteral("bounds")) == 0)
             {
                 if (auto bounds = std::dynamic_pointer_cast<Bounds>(parse))
                     parserState.pop();
             }
-            else if (tag == QStringLiteral("trkpt"))
+            else if (tag.compare(QStringLiteral("trkpt")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxWptPt>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("wpt"))
+            else if (tag.compare(QStringLiteral("wpt")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxWptPt>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("rtept"))
+            else if (tag.compare(QStringLiteral("rtept")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxWptPt>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("trk"))
+            else if (tag.compare(QStringLiteral("trk")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxTrk>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("rte"))
+            else if (tag.compare(QStringLiteral("rte")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxRte>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("trkseg"))
+            else if (tag.compare(QStringLiteral("trkseg")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 if (auto segment = std::dynamic_pointer_cast<GpxTrkSeg>(pop))
@@ -1050,7 +1050,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
                 assert(std::dynamic_pointer_cast<GpxTrkSeg>(pop) != nullptr);
             }
-            else if (tag == QStringLiteral("rpt"))
+            else if (tag.compare(QStringLiteral("rpt")) == 0)
             {
                 std::shared_ptr<Extensions> pop = parserState.pop();
                 assert(std::dynamic_pointer_cast<GpxWptPt>(pop) != nullptr);
