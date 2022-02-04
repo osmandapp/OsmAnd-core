@@ -6,7 +6,11 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
+#include <QList>
+#include <QDateTime>
+#include <QUrl>
 #include <QHash>
+#include <QVariant>
 #include <QIODevice>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -14,53 +18,177 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
-#include <OsmAndCore/GeoInfoDocument.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/LatLon.h>
+#include <OsmAndCore/Ref.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API GpxDocument : public GeoInfoDocument
+    class OSMAND_CORE_API GpxExtensions {
+        Q_DISABLE_COPY_AND_MOVE(GpxExtensions);
+    public:
+
+        struct OSMAND_CORE_API GpxExtension {
+            GpxExtension();
+            virtual ~GpxExtension();
+
+            QString name;
+            QString value;
+            QHash<QString, QString> attributes;
+            QList< Ref<GpxExtension> > subextensions;
+
+            QHash<QString, QVariant> getValues(const bool recursive = true) const;
+        };
+
+    private:
+    protected:
+    public:
+        GpxExtensions();
+        virtual ~GpxExtensions();
+
+        QString value;
+        QHash<QString, QString> attributes;
+        QList< Ref<GpxExtension> > extensions;
+
+        QHash<QString, QVariant> getValues(const bool recursive = true) const;
+    };
+
+    class OSMAND_CORE_API GpxDocument : public GpxExtensions
     {
         Q_DISABLE_COPY_AND_MOVE(GpxDocument);
     public:
 
-        struct OSMAND_CORE_API GpxLink : public Link
+        struct OSMAND_CORE_API Link
         {
-            GpxLink();
-            virtual ~GpxLink();
+            Link();
+            virtual ~Link();
+
+            QUrl url;
+            QString text;
         };
 
-        struct OSMAND_CORE_API GpxMetadata : public Metadata
+        struct OSMAND_CORE_API Author : public GpxExtensions
         {
-            GpxMetadata();
-            virtual ~GpxMetadata();
+            Author();
+            virtual ~Author();
+
+            QString name;
+            QString email;
+            QString link;
         };
 
-        struct OSMAND_CORE_API GpxWptPt : public WptPt
+        struct OSMAND_CORE_API Copyright : public GpxExtensions
         {
-            GpxWptPt();
-            virtual ~GpxWptPt();
+            Copyright();
+            virtual ~Copyright();
+
+            QString author;
+            QString year;
+            QString license;
         };
 
-        struct OSMAND_CORE_API GpxTrkSeg : public TrackSegment
+        struct OSMAND_CORE_API Bounds : public GpxExtensions
         {
-            GpxTrkSeg();
-            virtual ~GpxTrkSeg();
+            Bounds();
+            virtual ~Bounds();
+
+            double minlat;
+            double minlon;
+            double maxlat;
+            double maxlon;
         };
 
-        struct OSMAND_CORE_API GpxTrk : public Track
+        struct OSMAND_CORE_API Metadata : public GpxExtensions
         {
-            GpxTrk();
-            virtual ~GpxTrk();
+            Metadata();
+            virtual ~Metadata();
+
+            QString name;
+            QString description;
+            QList< Ref<Link> > links;
+            QString keywords;
+            QDateTime timestamp;
+            Ref<Author> author;
+            Ref<Copyright> copyright;
+            Ref<Bounds> bounds;
         };
 
-        struct OSMAND_CORE_API GpxRte : public Route
+        struct OSMAND_CORE_API WptPt : public GpxExtensions
         {
-            GpxRte();
-            virtual ~GpxRte();
+            WptPt();
+            virtual ~WptPt();
+
+            LatLon position;
+            QString name;
+            QString description;
+            double elevation;
+            QDateTime timestamp;
+            QString comment;
+            QString type;
+            QList< Ref<Link> > links;
+            double horizontalDilutionOfPrecision;
+            double verticalDilutionOfPrecision;
+            double speed;
+        };
+
+        struct OSMAND_CORE_API RouteSegment
+        {
+            RouteSegment();
+            virtual ~RouteSegment();
+
+            QString id;
+            QString length;
+            QString segmentTime;
+            QString speed;
+            QString turnType;
+            QString turnAngle;
+            QString types;
+            QString pointTypes;
+            QString names;
+        };
+
+        struct OSMAND_CORE_API RouteType
+        {
+            RouteType();
+            virtual ~RouteType();
+
+            QString tag;
+            QString value;
+        };
+
+        struct OSMAND_CORE_API TrkSegment : public GpxExtensions
+        {
+            TrkSegment();
+            virtual ~TrkSegment();
+
+            QString name;
+            QList< Ref<WptPt> > points;
+            QList< Ref<RouteSegment> > routeSegments;
+            QList< Ref<RouteType> > routeTypes;
+        };
+
+        struct OSMAND_CORE_API Track : public GpxExtensions
+        {
+            Track();
+            virtual ~Track();
+
+            QString name;
+            QString description;
+            QList< Ref<TrkSegment> > segments;
+        };
+
+        struct OSMAND_CORE_API Route : public GpxExtensions
+        {
+            Route();
+            virtual ~Route();
+
+            QString name;
+            QString description;
+            QList< Ref<WptPt> > points;
         };
 
     private:
-        static std::shared_ptr<GpxWptPt> parseWptAttributes(QXmlStreamReader& xmlReader);
+        static std::shared_ptr<WptPt> parseWptAttributes(QXmlStreamReader& xmlReader);
         static std::shared_ptr<Bounds> parseBoundsAttributes(QXmlStreamReader& xmlReader);
         static QString getFilename(const QString& path);
         static void writeNotNullTextWithAttribute(QXmlStreamWriter& xmlWriter, const QString& tag, const QString &attribute, const QString& value);
@@ -74,16 +202,24 @@ namespace OsmAnd
         static QString readText(QXmlStreamReader& xmlReader, QString key);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
-        static void writeExtensions(const QList< Ref<Extension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);
-        static void writeExtension(const std::shared_ptr<const Extension>& extension, QXmlStreamWriter& xmlWriter);
+        static void writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);
+        static void writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter);
     public:
         GpxDocument();
         virtual ~GpxDocument();
 
         QString version;
         QString creator;
+        Ref<Metadata> metadata;
+        QList< Ref<Track> > tracks;
+        QList< Ref<WptPt> > points;
+        QList< Ref<Route> > routes;
 
-        static std::shared_ptr<GpxDocument> createFrom(const std::shared_ptr<const GeoInfoDocument>& document);
+        bool hasRtePt() const;
+        bool hasWptPt() const;
+        bool hasTrkPt() const;
+
+        static std::shared_ptr<GpxDocument> createFrom(const std::shared_ptr<const GpxDocument>& document);
 
         bool saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const;
         bool saveTo(QIODevice& ioDevice, const QString& filename) const;
