@@ -42,7 +42,7 @@ makeFlavor()
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-desktop' for '$name', aborting..."
-			rm -rf "$path"
+			# rm -rf "$path"
 			exit $retcode
 		fi
 	fi
@@ -52,7 +52,7 @@ makeFlavor()
 	retcode=$?
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to build 'qtbase-desktop' for '$name', aborting..."
-		rm -rf "$path"
+		# rm -rf "$path"
 		exit $retcode
 	fi
 }
@@ -80,10 +80,10 @@ if [[ "$targetOS" == "linux" ]]; then
 	if [[ "$compiler" == "gcc" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "linux.gcc-i686" "linux-g++-32" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "linux.gcc-i686" "linux-g++-i686" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "linux.gcc-amd64" "linux-g++-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "linux.gcc-amd64" "linux-g++-amd64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
@@ -91,10 +91,10 @@ if [[ "$targetOS" == "linux" ]]; then
 	elif [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "linux.clang-i686" "linux-clang-32" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "linux.clang-i686" "linux-clang-i686" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "linux.clang-amd64" "linux-clang-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "linux.clang-amd64" "linux-clang-amd64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
@@ -115,12 +115,15 @@ elif [[ "$targetOS" == "macosx" ]]; then
 	if [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i386" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "macosx.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "macosx.clang-i386" "macx-clang-libc++-i386" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "x86_64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "macosx.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "macosx.clang-x86_64" "macx-clang-libc++-x86_64" "$QTBASE_CONFIGURATION"
+		elif [[ "$targetArch" == "arm64" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
+			makeStaticAndSharedFlavor "macosx.clang-arm64" "macx-clang-libc++-arm64" "$QTBASE_CONFIGURATION"
 		else
-			echo "Only 'i386' and 'x86_64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			echo "Only 'i386', 'x86_64', and 'arm64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
 		fi
 	else
@@ -161,10 +164,10 @@ elif [[ "$targetOS" == "windows" ]]; then
 	if [[ "$compiler" == "gcc" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "windows.gcc-i686" "win32-g++-32" "-device-option CROSS_COMPILE=i686-w64-mingw32- $QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "windows.gcc-i686" "win32-g++-i686" "-device-option CROSS_COMPILE=i686-w64-mingw32- $QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "windows.gcc-amd64" "win32-g++-64" "-device-option CROSS_COMPILE=x86_64-w64-mingw32- $QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "windows.gcc-amd64" "win32-g++-amd64" "-device-option CROSS_COMPILE=x86_64-w64-mingw32- $QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1

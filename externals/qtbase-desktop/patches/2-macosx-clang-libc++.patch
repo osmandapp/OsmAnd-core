@@ -1,24 +1,48 @@
---- upstream.original/mkspecs/macx-clang-libc++-32/qmake.conf	2016-07-21 20:17:26.000000000 +0300
-+++ upstream.patched/mkspecs/macx-clang-libc++-32/qmake.conf	2016-07-21 20:20:38.000000000 +0300
-@@ -13,4 +13,9 @@ include(../common/clang-mac.conf)
+diff -rupN upstream.original/mkspecs/macx-clang-libc++-arm64/qmake.conf upstream.patched/mkspecs/macx-clang-libc++-arm64/qmake.conf
+--- upstream.original/mkspecs/macx-clang-libc++-arm64/qmake.conf    2022-02-06 11:00:23.000000000 +0100
++++ upstream.patched/mkspecs/macx-clang-libc++-arm64/qmake.conf 2022-02-06 14:22:08.000000000 +0100
+@@ -29,4 +29,12 @@ include(../common/gcc-base-mac.conf)
+ include(../common/clang.conf)
+ include(../common/clang-mac.conf)
  
- QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
++QMAKE_CFLAGS           += -arch arm64
++QMAKE_OBJECTIVE_CFLAGS += -arch arm64 -stdlib=libc++
++QMAKE_CXXFLAGS         += -arch arm64 -stdlib=libc++
++QMAKE_LFLAGS           += -arch arm64 -stdlib=libc++
++
++QMAKE_MACOSX_DEPLOYMENT_TARGET = 12.1
++QMAKE_APPLE_DEVICE_ARCHS = arm64
++
+ load(qt_config)
+diff -rupN upstream.original/mkspecs/macx-clang-libc++-i386/qmake.conf upstream.patched/mkspecs/macx-clang-libc++-i386/qmake.conf
+--- upstream.original/mkspecs/macx-clang-libc++-i386/qmake.conf 2022-02-06 11:00:23.000000000 +0100
++++ upstream.patched/mkspecs/macx-clang-libc++-i386/qmake.conf  2022-02-06 14:22:22.000000000 +0100
+@@ -29,4 +29,12 @@ include(../common/gcc-base-mac.conf)
+ include(../common/clang.conf)
+ include(../common/clang-mac.conf)
  
 +QMAKE_CFLAGS           += -arch i386
 +QMAKE_OBJECTIVE_CFLAGS += -arch i386 -stdlib=libc++
 +QMAKE_CXXFLAGS         += -arch i386 -stdlib=libc++
 +QMAKE_LFLAGS           += -arch i386 -stdlib=libc++
 +
++QMAKE_MACOSX_DEPLOYMENT_TARGET = 12.1
++QMAKE_APPLE_DEVICE_ARCHS = i386
++
  load(qt_config)
---- upstream.original/mkspecs/macx-clang-libc++-64/qmake.conf	2016-07-21 20:17:26.000000000 +0300
-+++ upstream.patched/mkspecs/macx-clang-libc++-64/qmake.conf	2016-07-21 20:20:38.000000000 +0300
-@@ -13,4 +13,9 @@ include(../common/clang-mac.conf)
- 
- QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
+diff -rupN upstream.original/mkspecs/macx-clang-libc++-x86_64/qmake.conf upstream.patched/mkspecs/macx-clang-libc++-x86_64/qmake.conf
+--- upstream.original/mkspecs/macx-clang-libc++-x86_64/qmake.conf   2022-02-06 11:00:23.000000000 +0100
++++ upstream.patched/mkspecs/macx-clang-libc++-x86_64/qmake.conf    2022-02-06 14:22:33.000000000 +0100
+@@ -29,4 +29,12 @@ include(../common/gcc-base-mac.conf)
+ include(../common/clang.conf)
+ include(../common/clang-mac.conf)
  
 +QMAKE_CFLAGS           += -arch x86_64
 +QMAKE_OBJECTIVE_CFLAGS += -arch x86_64 -stdlib=libc++
 +QMAKE_CXXFLAGS         += -arch x86_64 -stdlib=libc++
 +QMAKE_LFLAGS           += -arch x86_64 -stdlib=libc++
++
++QMAKE_MACOSX_DEPLOYMENT_TARGET = 12.1
++QMAKE_APPLE_DEVICE_ARCHS = x86_64
 +
  load(qt_config)
