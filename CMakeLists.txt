@@ -44,6 +44,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 		${z_LIBRARY}
 		${objc_LIBRARY}
 	)
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DGL_SILENCE_DEPRECATION
+	)
 elseif (CMAKE_TARGET_OS STREQUAL "android")
 	find_library(dl_LIBRARY dl)
 	find_library(log_LIBRARY log)
