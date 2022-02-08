@@ -53,9 +53,9 @@ export ANDROID_NDK_ROOT=$ANDROID_NDK
 echo "Using ANDROID_NDK '${ANDROID_NDK}'"
 
 if [[ "$(uname -a)" =~ Linux ]]; then
-	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64" ]; then
 		export ANDROID_NDK_HOST=linux-x86_64
-	elif [ -d "$ANDROID_NDK/prebuilt/linux-x86" ]; then
+	elif [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86" ]; then
 		export ANDROID_NDK_HOST=linux-x86
 	else
 		export ANDROID_NDK_HOST=linux
@@ -65,9 +65,9 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 elif [[ "$(uname -a)" =~ Darwin ]]; then
-	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/darwin-x86_64" ]; then
+	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/darwin-x86_64" ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64
-	elif [ -d "$ANDROID_NDK/prebuilt/darwin-x86" ]; then
+	elif [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/darwin-x86" ]; then
 		export ANDROID_NDK_HOST=darwin-x86
 	else
 		export ANDROID_NDK_HOST=darwin
