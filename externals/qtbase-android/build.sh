@@ -80,12 +80,8 @@ else
 	echo "'$(uname -a)' host is not supported"
 	exit 1
 fi
-if [[ -z "$ANDROID_SDK" ]]; then
-	echo "ANDROID_NDK '${ANDROID_NDK}' contains no valid host prebuilt tools"
-	exit 1
-fi
 if [[ ! -d "$ANDROID_NDK/toolchains/llvm/prebuilt/$ANDROID_NDK_HOST" ]]; then
-	echo "ANDROID_NDK_HOST '${ANDROID_NDK_HOST}' has been detected incorrectly"
+	echo "ANDROID_NDK_HOST '${ANDROID_NDK_HOST}' has been detected incorrectly or is unsupported"
 	exit 1
 fi
 echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
