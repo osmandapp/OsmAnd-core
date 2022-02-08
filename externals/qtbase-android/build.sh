@@ -65,7 +65,7 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 elif [[ "$(uname -a)" =~ Darwin ]]; then
-	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/darwin-x86_64" ]; then
+	if [[ "$(uname -m)" == x86_64 || "$(uname -m)" == arm64 ]] && [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/darwin-x86_64" ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64
 	elif [ -d "$ANDROID_NDK/toolchains/llvm/prebuilt/darwin-x86" ]; then
 		export ANDROID_NDK_HOST=darwin-x86
