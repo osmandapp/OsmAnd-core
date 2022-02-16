@@ -13,12 +13,12 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Observable.h>
-#include <OsmAndCore/IWebClient.h>
 #include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/AccessLockCounter.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
+#include <OsmAndCore/Map/GeoCommonTypes.h>
 
 namespace OsmAnd
 {
@@ -29,6 +29,7 @@ namespace OsmAnd
     class OnlineTileSources;
     class IncrementalChangesManager;
     class OnlineTileSources;
+    class WeatherTileResourcesManager;
 
     class ResourcesManager_P;
     class OSMAND_CORE_API ResourcesManager
@@ -227,6 +228,8 @@ namespace OsmAnd
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;
+        
+        std::shared_ptr<WeatherTileResourcesManager> _weatherResourcesManager;
     protected:
     public:
         ResourcesManager(
@@ -318,7 +321,20 @@ namespace OsmAnd
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
         const std::shared_ptr<IncrementalChangesManager>& changesManager;
+
+        const std::shared_ptr<WeatherTileResourcesManager> getWeatherResourcesManager() const;
+
+        void instantiateWeatherResourcesManager(
+            const QHash<BandIndex, float>& bandOpacityMap,
+            const QHash<BandIndex, QString>& bandColorProfilePaths,
+            const QString& localCachePath,
+            const QString& projResourcesPath,
+            const uint32_t tileSize = 256,
+            const float densityFactor = 1.0f,
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
+        );
         
+
         static OsmAnd::ResourcesManager::ResourceType getIndexType(const QStringRef &resourceTypeValue);
     };
 }

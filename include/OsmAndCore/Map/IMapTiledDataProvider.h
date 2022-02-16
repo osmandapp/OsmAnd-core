@@ -61,6 +61,9 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinVisibleZoom() const;
         virtual ZoomLevel getMaxVisibleZoom() const;
+        
+        virtual int getMaxMissingDataZoomShift() const;
+        virtual int getMaxMissingDataUnderZoomShift() const;
 
         virtual bool obtainTiledData(
             const Request& request,

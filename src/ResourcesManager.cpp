@@ -5,6 +5,7 @@
 #include <QDir>
 
 #include "ObfInfo.h"
+#include "WeatherTileResourcesManager.h"
 
 OsmAnd::ResourcesManager::ResourcesManager(
     const QString& localStoragePath_,
@@ -235,6 +236,32 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager::getIndexType(co
 {
     return ResourcesManager_P::getIndexType(resourceTypeValue);
 }
+
+const std::shared_ptr<OsmAnd::WeatherTileResourcesManager> OsmAnd::ResourcesManager::getWeatherResourcesManager() const
+{
+    return _weatherResourcesManager;
+}
+
+void OsmAnd::ResourcesManager::instantiateWeatherResourcesManager(
+    const QHash<BandIndex, float>& bandOpacityMap,
+    const QHash<BandIndex, QString>& bandColorProfilePaths,
+    const QString& localCachePath,
+    const QString& projResourcesPath,
+    const uint32_t tileSize /*= 256*/,
+    const float densityFactor /*= 1.0f*/,
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+{
+    _weatherResourcesManager = std::make_shared<WeatherTileResourcesManager>(
+        bandOpacityMap,
+        bandColorProfilePaths,
+        localCachePath,
+        projResourcesPath,
+        tileSize,
+        densityFactor,
+        webClient
+    );
+}
+
 
 OsmAnd::ResourcesManager::Resource::Metadata::Metadata()
 {

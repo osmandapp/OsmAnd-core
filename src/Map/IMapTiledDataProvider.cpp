@@ -1,6 +1,7 @@
 #include "IMapTiledDataProvider.h"
 
 #include "MapDataProviderHelpers.h"
+#include "MapRenderer.h"
 
 OsmAnd::IMapTiledDataProvider::IMapTiledDataProvider()
 {
@@ -18,6 +19,16 @@ OsmAnd::ZoomLevel OsmAnd::IMapTiledDataProvider::getMinVisibleZoom() const
 OsmAnd::ZoomLevel OsmAnd::IMapTiledDataProvider::getMaxVisibleZoom() const
 {
     return getMaxZoom();
+}
+
+int OsmAnd::IMapTiledDataProvider::getMaxMissingDataZoomShift() const
+{
+    return MapRenderer::MaxMissingDataZoomShift;
+}
+
+int OsmAnd::IMapTiledDataProvider::getMaxMissingDataUnderZoomShift() const
+{
+    return MapRenderer::MaxMissingDataUnderZoomShift;
 }
 
 bool OsmAnd::IMapTiledDataProvider::obtainTiledData(

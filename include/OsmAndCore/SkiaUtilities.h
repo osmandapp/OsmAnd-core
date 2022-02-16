@@ -45,7 +45,11 @@ namespace OsmAnd
             const QByteArray& data);
 
         static sk_sp<SkImage> mergeImages(
-            const QList< sk_sp<const SkImage> >& images);
+            const QList<sk_sp<const SkImage>>& images);
+
+        static sk_sp<SkImage> mergeImages(
+            const QList<sk_sp<const SkImage>>& images,
+            const QList<float>& alphas);
 
     private:
         SkiaUtilities();

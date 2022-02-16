@@ -1,34 +1,49 @@
 #include "WeatherRasterLayerProvider.h"
-#include "WeatherRasterLayerProvider_P.h"
 
 #include "MapDataProviderHelpers.h"
-#include "QRunnableFunctor.h"
 
 OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
-    const QDateTime& dateTime_,
-    const int bandIndex_,
-    const QString& colorProfilePath_,
-    const uint32_t tileSize_ /*= 256*/,
-    const float densityFactor_ /*= 1.0f*/,
-    const QString& dataCachePath_ /*= QString()*/,
-    const QString& projSearchPath_ /*= QString()*/,
-    const std::shared_ptr<const IWebClient> webClient_ /*= nullptr*/)
-    : _p(new WeatherRasterLayerProvider_P(this, dateTime_, bandIndex_, colorProfilePath_, tileSize_, densityFactor_, dataCachePath_, projSearchPath_, webClient_))
-    , _threadPool(new QThreadPool())
-    , dateTime(dateTime_)
-    , bandIndex(bandIndex_)
-    , colorProfilePath(colorProfilePath_)
-    , tileSize(tileSize_)
-    , densityFactor(densityFactor_)
-    , dataCachePath(dataCachePath_)
-    , projSearchPath(projSearchPath_)
+    const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
+    const WeatherLayer weatherLayer_,
+    const QDateTime& dateTime,
+    const QList<BandIndex> bands)
+    : _resourcesManager(resourcesManager)
+    , _dateTime(dateTime)
+    , _bands(bands)
+    , weatherLayer(weatherLayer_)
 {
 }
 
 OsmAnd::WeatherRasterLayerProvider::~WeatherRasterLayerProvider()
 {
-    _threadPool->clear();
-    delete _threadPool;
+}
+
+const QDateTime OsmAnd::WeatherRasterLayerProvider::getDateTime() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _dateTime;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setDateTime(const QDateTime& dateTime)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _dateTime = dateTime;
+}
+
+const QList<OsmAnd::BandIndex> OsmAnd::WeatherRasterLayerProvider::getBands() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _bands;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setBands(const QList<BandIndex>& bands)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _bands = bands;
 }
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const
@@ -38,17 +53,17 @@ OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() 
 
 float OsmAnd::WeatherRasterLayerProvider::getTileDensityFactor() const
 {
-    return densityFactor;
+    return _resourcesManager->getDensityFactor();
 }
 
 uint32_t OsmAnd::WeatherRasterLayerProvider::getTileSize() const
 {
-    return tileSize;
+    return _resourcesManager->getTileSize();
 }
 
 bool OsmAnd::WeatherRasterLayerProvider::supportsNaturalObtainData() const
 {
-    return true;
+    return false;
 }
 
 bool OsmAnd::WeatherRasterLayerProvider::obtainData(
@@ -56,7 +71,7 @@ bool OsmAnd::WeatherRasterLayerProvider::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    return _p->obtainData(request, outData, pOutMetric);
+    return false;
 }
 
 bool OsmAnd::WeatherRasterLayerProvider::supportsNaturalObtainDataAsync() const
@@ -65,81 +80,72 @@ bool OsmAnd::WeatherRasterLayerProvider::supportsNaturalObtainDataAsync() const
 }
 
 void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
-    const IMapDataProvider::Request& request,
+    const IMapDataProvider::Request& request_,
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    const auto& r = MapDataProviderHelpers::castRequest<WeatherRasterLayerProvider::Request>(request);
-    setLastRequestedZoom(r.zoom);
+    const auto& request = MapDataProviderHelpers::castRequest<IRasterMapLayerProvider::Request>(request_);
+     
+    WeatherTileResourcesManager::TileRequest _request;
+    _request.weatherLayer = weatherLayer;
+    _request.dataTime = getDateTime();
+    _request.tileId = request.tileId;
+    _request.zoom = request.zoom;
+    _request.bands = getBands();
+    _request.queryController = request.queryController;
 
-    const auto selfWeak = std::weak_ptr<WeatherRasterLayerProvider>(shared_from_this());
-    const auto requestClone = request.clone();
-    const QRunnableFunctor::Callback task =
-    [selfWeak, requestClone, callback, collectMetric]
-    (const QRunnableFunctor* const runnable)
-    {
-        const auto self = selfWeak.lock();
-        if (self)
+    WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
+        [this, callback]
+        (const bool requestSucceeded,
+            const std::shared_ptr<WeatherTileResourcesManager::Data>& data,
+            const std::shared_ptr<Metric>& metric)
         {
-            std::shared_ptr<IMapDataProvider::Data> data;
-            std::shared_ptr<Metric> metric;
-            const auto& r = MapDataProviderHelpers::castRequest<WeatherRasterLayerProvider::Request>(*requestClone);
-            bool requestSucceeded = false;
-            if (r.zoom == self->getLastRequestedZoom())
-                requestSucceeded = self->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
-            
-            callback(self.get(), requestSucceeded, data, metric);
-        }
-    };
-    
-    const auto taskRunnable = new QRunnableFunctor(task);
-    taskRunnable->setAutoDelete(true);
-    int priority = getAndDecreasePriority();
-    _threadPool->start(taskRunnable, priority);
-}
-
-OsmAnd::ZoomLevel OsmAnd::WeatherRasterLayerProvider::getLastRequestedZoom() const
-{
-    QReadLocker scopedLocker(&_lock);
-    
-    return _lastRequestedZoom;
-}
-
-void OsmAnd::WeatherRasterLayerProvider::setLastRequestedZoom(const ZoomLevel zoomLevel)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    if (_lastRequestedZoom != zoomLevel)
-        _priority = 0;
-    
-    _lastRequestedZoom = zoomLevel;
-}
-
-int OsmAnd::WeatherRasterLayerProvider::getAndDecreasePriority()
-{
-    QWriteLocker scopedLocker(&_lock);
-    
-    _priority--;
-    
-    return _priority;
+            if (data)
+            {
+                const auto d = std::make_shared<IRasterMapLayerProvider::Data>(
+                    data->tileId,
+                    data->zoom,
+                    data->alphaChannelPresence,
+                    data->densityFactor,
+                    data->image
+                );
+                callback(this, requestSucceeded, d, metric);
+            }
+            else
+            {
+                callback(this, false, nullptr, nullptr);
+            }
+        };
+        
+    _resourcesManager->obtainDataAsync(_request, _callback);
 }
 
 OsmAnd::ZoomLevel OsmAnd::WeatherRasterLayerProvider::getMinZoom() const
 {
-    return _p->getMinZoom();
+    return _resourcesManager->getTileZoom(weatherLayer);
 }
 
 OsmAnd::ZoomLevel OsmAnd::WeatherRasterLayerProvider::getMaxZoom() const
 {
-    return _p->getMaxZoom();
+    return _resourcesManager->getTileZoom(weatherLayer);
 }
 
 OsmAnd::ZoomLevel OsmAnd::WeatherRasterLayerProvider::getMinVisibleZoom() const
 {
-    return _p->getMinZoom();
+    return _resourcesManager->getTileZoom(weatherLayer);
 }
 
 OsmAnd::ZoomLevel OsmAnd::WeatherRasterLayerProvider::getMaxVisibleZoom() const
 {
-    return _p->getMaxZoom();
+    return _resourcesManager->getTileZoom(weatherLayer);
+}
+
+int OsmAnd::WeatherRasterLayerProvider::getMaxMissingDataZoomShift() const
+{
+    return _resourcesManager->getMaxMissingDataZoomShift(weatherLayer);
+}
+
+int OsmAnd::WeatherRasterLayerProvider::getMaxMissingDataUnderZoomShift() const
+{
+    return _resourcesManager->getMaxMissingDataUnderZoomShift(weatherLayer);
 }

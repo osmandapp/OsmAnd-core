@@ -115,7 +115,7 @@ sk_sp<SkTypeface> OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray
     return SkTypeface::MakeFromData(SkData::MakeWithCopy(data.constData(), data.length()));
 }
 
-sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList< sk_sp<const SkImage> >& images)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList<sk_sp<const SkImage>>& images)
 {
     if (images.isEmpty())
         return nullptr;
@@ -142,6 +142,49 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList< sk_sp<const SkIma
         canvas.drawImage(image.get(),
             (maxWidth - image->width()) / 2.0f,
             (maxHeight - image->height()) / 2.0f
+        );
+    }
+    canvas.flush();
+
+    return target.asImage();
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::mergeImages(const QList<sk_sp<const SkImage>>& images, const QList<float>& alphas)
+{
+    if (images.isEmpty() || images.size() != alphas.size())
+        return nullptr;
+
+    int maxWidth = 0;
+    int maxHeight = 0;
+    for (const auto& image : constOf(images))
+    {
+        maxWidth = qMax(maxWidth, image->width());
+        maxHeight = qMax(maxHeight, image->height());
+    }
+
+    if (maxWidth <= 0 || maxHeight <= 0)
+        return nullptr;
+
+    SkBitmap target;
+    if (!target.tryAllocPixels(images.first()->imageInfo().makeWH(maxWidth, maxHeight)))
+        return nullptr;
+    target.eraseColor(SK_ColorTRANSPARENT);
+
+    SkCanvas canvas(target);
+    int i = 0;
+    SkPaint paint1;
+    SkPaint paint2;
+    for (const auto& image : constOf(images))
+    {
+        SkSamplingOptions so;
+        SkPaint paint;
+        paint.setAlphaf(alphas[i++]);
+        canvas.drawImage(
+            image.get(),
+            (maxWidth - image->width()) / 2.0f,
+            (maxHeight - image->height()) / 2.0f,
+            so,
+            &paint
         );
     }
     canvas.flush();
