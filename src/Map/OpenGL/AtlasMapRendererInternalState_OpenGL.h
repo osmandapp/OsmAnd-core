@@ -14,6 +14,8 @@ namespace OsmAnd
     struct AtlasMapRendererInternalState_OpenGL : public AtlasMapRendererInternalState
     {
         virtual ~AtlasMapRendererInternalState_OpenGL();
+
+
     };
 }
 

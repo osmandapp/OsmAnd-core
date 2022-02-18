@@ -213,7 +213,7 @@ public class Sample1 implements GLEventListener {
     _mapRenderer.setWindowSize(new PointI(width, height));
 
     if (!_mapRenderer.isRenderingInitialized()) {
-      if (!_mapRenderer.initializeRendering())
+      if (!_mapRenderer.initializeRendering(true))
         System.err.println("Failed to initialize rendering");
     }
   }

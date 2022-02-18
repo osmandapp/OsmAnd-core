@@ -27,9 +27,7 @@ namespace OsmAnd
     private:
         bool _isJunk;
     protected:
-        MapRendererBaseResource(
-            MapRendererResourcesManager* const owner,
-            const MapRendererResourceType type);
+        MapRendererBaseResource(MapRendererResourcesManager* owner, MapRendererResourceType type);
 
         CancelResourceRequestSignature _cancelRequestCallback;
 
@@ -40,14 +38,10 @@ namespace OsmAnd
         virtual bool updatesPresent();
         virtual bool checkForUpdatesAndApply(const MapState& mapState);
 
-        typedef std::function < void(const bool requestSucceeded, const bool dataAvailable) > ObtainDataAsyncCallback;
+        typedef std::function<void(const bool requestSucceeded, const bool dataAvailable)> ObtainDataAsyncCallback;
         virtual bool supportsObtainDataAsync() const = 0;
-        virtual bool obtainData(
-            bool& dataAvailable,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr) = 0;
-        virtual void obtainDataAsync(
-            const ObtainDataAsyncCallback callback,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr) = 0;
+        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) = 0;
+        virtual void obtainDataAsync(ObtainDataAsyncCallback callback, const std::shared_ptr<const IQueryController>& queryController) = 0;
 
         virtual bool uploadToGPU() = 0;
         virtual void unloadFromGPU() = 0;
@@ -71,8 +65,8 @@ namespace OsmAnd
         virtual bool isRenewing();
 
         virtual MapRendererResourceState getState() const = 0;
-        virtual void setState(const MapRendererResourceState newState) = 0;
-        virtual bool setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState) = 0;
+        virtual void setState(MapRendererResourceState newState) = 0;
+        virtual bool setStateIf(MapRendererResourceState testState, MapRendererResourceState newState) = 0;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

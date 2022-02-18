@@ -28,55 +28,60 @@ namespace OsmAnd
     private:
     protected:
         const static float _zNear;
+        std::vector<std::byte> _terrainDepthBuffer;
+        PointI _terrainDepthBufferSize;
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const;
-        
+
         // State-related:
         InternalState _internalState;
-        virtual const MapRendererInternalState* getInternalStateRef() const;
-        virtual MapRendererInternalState* getInternalStateRef();
-        virtual const MapRendererInternalState& getInternalState() const;
-        virtual MapRendererInternalState& getInternalState();
-        virtual bool updateInternalState(
-            MapRendererInternalState& outInternalState,
-            const MapRendererState& state,
-            const MapRendererConfiguration& configuration) const;
+        const MapRendererInternalState* getInternalStateRef() const override;
+        MapRendererInternalState* getInternalStateRef() override;
+        const MapRendererInternalState& getInternalState() const override;
+        MapRendererInternalState& getInternalState() override;
+        bool updateInternalState(
+            MapRendererInternalState& outInternalState, const MapRendererState& state, const MapRendererConfiguration& configuration) const override;
 
         // Resources:
-        virtual void onValidateResourcesOfType(const MapRendererResourceType type);
+        void onValidateResourcesOfType(MapRendererResourceType type) override;
 
         // Customization points:
-        virtual bool doInitializeRendering();
-        virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        bool doInitializeRendering() override;
+        bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        bool doReleaseRendering(bool gpuContextLost) override;
+        bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask) override;
 
         GPUAPI_OpenGL* getGPUAPI() const;
 
         // Stages:
-        virtual AtlasMapRendererSkyStage* createSkyStage();
-        virtual AtlasMapRendererMapLayersStage* createMapLayersStage();
-        virtual AtlasMapRendererSymbolsStage* createSymbolsStage();
-        virtual AtlasMapRendererDebugStage* createDebugStage();
-        
-        virtual AreaI getVisibleBBox31(MapRendererInternalState* _internalState) const;
-        virtual double getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const;
+        AtlasMapRendererSkyStage* createSkyStage() override;
+        AtlasMapRendererMapLayersStage* createMapLayersStage() override;
+        AtlasMapRendererSymbolsStage* createSymbolsStage() override;
+        AtlasMapRendererDebugStage* createDebugStage() override;
+
+        AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
+        double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
     public:
-        AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI);
+        AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
-        virtual float getCurrentTileSizeOnScreenInPixels() const;
+        const std::vector<std::byte>& terrainDepthBuffer;
+        const PointI& terrainDepthBufferSize;
 
-        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const;
-        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const;
+        float getTileSizeOnScreenInPixels() const override;
 
-        virtual AreaI getVisibleBBox31() const;
-        virtual bool isPositionVisible(const PointI64& position) const;
-        virtual bool isPositionVisible(const PointI& position31) const;
-        virtual bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const;
-        virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const;
+        bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
+        bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
 
-        virtual double getCurrentTileSizeInMeters() const;
-        virtual double getCurrentPixelsToMetersScaleFactor() const;
+        AreaI getVisibleBBox31() const override;
+        bool isPositionVisible(const PointI64& position) const override;
+        bool isPositionVisible(const PointI& position31) const override;
+        bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
+        bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
+
+        double getTileSizeInMeters() const override;
+        double getPixelsToMetersScaleFactor() const override;
     };
 }
 

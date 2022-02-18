@@ -8,21 +8,20 @@
 
 namespace glm_extensions
 {
-    template <typename T, typename U, glm::precision P>
-    GLM_FUNC_QUALIFIER glm::tvec3<T, P> fastProject(
-        glm::tvec3<T, P> const & obj,
-        glm::tmat4x4<T, P> const & modelProjection,
-        glm::tvec4<U, P> const & viewport)
+    using namespace glm;
+
+    template<typename T, typename U, precision P>
+    GLM_FUNC_QUALIFIER tvec3<T, P> project(const tvec3<T, P>& obj, const tmat4x4<T, P>& modelProjection, const tvec4<U, P>& viewport)
     {
-        glm::tvec4<T, P> tmp = glm::tvec4<T, P>(obj, T(1));
+        tvec4<T, P> tmp = tvec4<T, P>(obj, T(1));
         tmp = modelProjection * tmp;
 
-        tmp /= tmp.w * T(2.0);
-        tmp += T(0.5);
+        tmp /= tmp.w;
+        tmp = tmp * static_cast<T>(0.5) + static_cast<T>(0.5);
         tmp[0] = tmp[0] * T(viewport[2]) + T(viewport[0]);
         tmp[1] = tmp[1] * T(viewport[3]) + T(viewport[1]);
 
-        return glm::tvec3<T, P>(tmp);
+        return tvec3<T, P>(tmp);
     }
 }
 

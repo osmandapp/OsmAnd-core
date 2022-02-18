@@ -249,7 +249,7 @@ namespace OsmAnd
                 const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer,
                 const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer,
                 const PointI* position31 = nullptr);
-            
+
             virtual ~MeshInGPU();
 
             const std::shared_ptr<ArrayBufferInGPU> vertexBuffer;
@@ -265,6 +265,7 @@ namespace OsmAnd
         QAtomicInt _allocatedResourcesCounter;
 #endif
 
+        bool _isAttachedToRenderTarget;
         QHash< AtlasTypeId, std::shared_ptr<AtlasTexturesPool> > _atlasTexturesPools;
     protected:
         GPUAPI();
@@ -279,8 +280,12 @@ namespace OsmAnd
     public:
         virtual ~GPUAPI();
 
+        virtual bool isAttachedToRenderTarget();
+
         virtual bool initialize() = 0;
-        virtual bool release(const bool gpuContextLost) = 0;
+        virtual bool attachToRenderTarget() = 0;
+        virtual bool detachFromRenderTarget(bool gpuContextLost) = 0;
+        virtual bool release(bool gpuContextLost) = 0;
 
         virtual bool uploadTiledDataToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,

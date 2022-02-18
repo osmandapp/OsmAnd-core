@@ -25,27 +25,11 @@ OsmAnd::AtlasMapRenderer::~AtlasMapRenderer()
 }
 
 bool OsmAnd::AtlasMapRenderer::updateInternalState(
-    MapRendererInternalState& outInternalState_,
-    const MapRendererState& state,
-    const MapRendererConfiguration& configuration) const
+    MapRendererInternalState& outInternalState_, const MapRendererState& state, const MapRendererConfiguration& configuration) const
 {
-    const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_);
+    const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
-    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
-
-    // Get target tile id
-    internalState->targetTileId.x = state.target31.x >> zoomLevelDiff;
-    internalState->targetTileId.y = state.target31.y >> zoomLevelDiff;
-
-    // Compute in-tile offset
-    PointI targetTile31;
-    targetTile31.x = internalState->targetTileId.x << zoomLevelDiff;
-    targetTile31.y = internalState->targetTileId.y << zoomLevelDiff;
-
-    const auto tileSize31 = 1u << zoomLevelDiff;
-    const auto inTileOffset = state.target31 - targetTile31;
-    internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileSize31;
-    internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileSize31;
+    internalState->targetTileId = Utilities::getTileId(state.target31, state.zoomLevel, &internalState->targetInTileOffsetN);
 
     return true;
 }
@@ -77,7 +61,7 @@ QVector<OsmAnd::TileId> OsmAnd::AtlasMapRenderer::getVisibleTiles() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
-    
+
     return detachedOf(internalState->visibleTiles);
 }
 
@@ -166,7 +150,7 @@ bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRenderer::doReleaseRendering(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRenderer::doReleaseRendering(bool gpuContextLost)
 {
     bool ok = true;
 

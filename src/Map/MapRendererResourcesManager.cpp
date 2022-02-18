@@ -144,7 +144,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
         image));
     if (!uploadTiledDataToGPU(tile, resource))
         return false;
-    
+
     outResource = resource;
     return true;
 }
@@ -201,9 +201,7 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-bool OsmAnd::MapRendererResourcesManager::updateBindings(
-    const MapRendererState& state,
-    const MapRendererStateChanges updatedMask)
+bool OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask)
 {
     assert(renderer->isInRenderThread());
 
@@ -707,10 +705,10 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             else
                 return nullptr;
         };
-    
+
     auto minZoom = MinZoomLevel;
     auto maxZoom = MaxZoomLevel;
-    
+
     auto minVisibleZoom = MinZoomLevel;
     auto maxVisibleZoom = MaxZoomLevel;
 
@@ -718,7 +716,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
     bool isMapLayer = resourcesCollection->getType() == MapRendererResourceType::MapLayer;
-    
+
     if (isMapLayer)
     {
         std::shared_ptr<IMapDataProvider> provider_;
@@ -728,16 +726,16 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         {
             minZoom = tiledProvider->getMinZoom();
             maxZoom = tiledProvider->getMaxZoom();
-            
+
             minVisibleZoom = tiledProvider->getMinVisibleZoom();
             maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
 
             maxMissingDataZoomShift = tiledProvider->getMaxMissingDataZoomShift();
             maxMissingDataUnderZoomShift = tiledProvider->getMaxMissingDataUnderZoomShift();
         }
-        
+
         bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
-        
+
         if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
             return;
     }
@@ -792,7 +790,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             {
                 continue;
             }
-            
+
             if (activeZoom < minZoom)
             {
                 ZoomLevel underscaledZoom = minZoom;
@@ -1264,20 +1262,20 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
         // Since state change is allowed (it's not changed to "Unloading" during query), check state here
         if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading))
             continue;
-        
+
         LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading);
-        
+
         // Unload from GPU
         resource->unloadFromGPU();
-        
+
         // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
-        
+
         assert(resource->getState() == MapRendererResourceState::Unloading);
-        
+
         // Mark as unloaded
         resource->setState(MapRendererResourceState::Unloaded);
         LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloading, MapRendererResourceState::Unloaded);
-        
+
         // Count uploaded resources
         totalUnloaded++;
     }
@@ -1354,6 +1352,7 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         {
             continue;
         }
+
         // Actually upload resource to GPU
         const auto didUpload = resource->uploadToGPU();
         if (!atLeastOneUploadFailed && !didUpload)
@@ -1385,7 +1384,7 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         assert(resource->getState() == MapRendererResourceState::Uploading || resource->getState() == MapRendererResourceState::Renewing);
 
         resource->setState(MapRendererResourceState::Uploaded);
-        
+
         // Count uploaded resources
         totalUploaded++;
     }
@@ -1519,25 +1518,25 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
             auto minZoom = MinZoomLevel;
             auto maxZoom = MaxZoomLevel;
-            
+
             auto minVisibleZoom = MinZoomLevel;
             auto maxVisibleZoom = MaxZoomLevel;
-            
+
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
-            
+
             if (tiledProvider)
             {
                 minZoom = tiledProvider->getMinZoom();
                 maxZoom = tiledProvider->getMaxZoom();
-                
+
                 minVisibleZoom = tiledProvider->getMinVisibleZoom();
                 maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
 
                 maxMissingDataUnderZoomShift = tiledProvider->getMaxMissingDataUnderZoomShift();
             }
-            
+
             bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
-            
+
             resourcesCollection->removeResources(
                 [this, activeZoom, activeTiles, maxMissingDataUnderZoomShift, &needsResourcesUploadOrUnload]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
@@ -1550,7 +1549,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
                     // Determine if resource is junk:
                     bool isJunk = false;
-                        
+
                     // If this tiled entry is part of active zoom, it's treated as junk only if it's not a part
                     // of active tiles set
                     if (tiledEntry->zoom == activeZoom)
@@ -1596,7 +1595,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 {
                     continue;
                 }
-                
+
                 if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                     continue;
 
@@ -1631,7 +1630,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                             zoomShift);
                         neededTilesMap[static_cast<ZoomLevel>(overscaledZoom)].insert(overscaledTileId);
                     }
-                    
+
                     // Exact match was not found, so now try to look for overscaled/underscaled resources.
                     // It's better to show Z-"nearest" resource available, giving preference to underscaled resource.
                     for (int absZoomShift = 1; absZoomShift <= MaxZoomLevel; absZoomShift++)
@@ -1705,7 +1704,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         return false;
 
                     const auto tiledEntry = std::static_pointer_cast<MapRendererBaseTiledResource>(entry);
-                        
+
                     // Any tiled resource that is not contained in neededTilesMap is junk
                     const auto citNeededTilesAtZoom = neededTilesMap.constFind(tiledEntry->zoom);
                     if (citNeededTilesAtZoom != neededTilesMap.cend() &&
@@ -1814,8 +1813,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 }
 
 void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
-    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
-    const bool gpuContextLost)
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here.
     // So wait here until all resources will be unloaded from GPU
@@ -2022,7 +2020,7 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseAllResources(const bool gpuContextLost)
+void OsmAnd::MapRendererResourcesManager::releaseAllResources(bool gpuContextLost)
 {
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 

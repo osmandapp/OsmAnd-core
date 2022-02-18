@@ -30,9 +30,9 @@ namespace OsmAnd
     class IMapTiledSymbolsProvider;
     class IMapKeyedSymbolsProvider;
     class MapSymbol;
-    
+
     struct MapRendererInternalState;
-    
+
     namespace IMapRenderer_Metrics
     {
         struct Metric_update;
@@ -52,9 +52,6 @@ namespace OsmAnd
     private:
     protected:
         IMapRenderer();
-        
-        virtual AreaI getVisibleBBox31(MapRendererInternalState* _internalState) const = 0;
-        virtual double getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const = 0;
     public:
         virtual ~IMapRenderer();
 
@@ -65,11 +62,15 @@ namespace OsmAnd
         virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool isRenderingInitialized() const = 0;
-        virtual bool initializeRendering() = 0;
+        virtual bool initializeRendering(bool renderTargetAvailable) = 0;
         virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) = 0;
         virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) = 0;
         virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) = 0;
-        virtual bool releaseRendering(const bool gpuContextLost = false) = 0;
+        virtual bool releaseRendering(bool gpuContextLost = false) = 0;
+
+        virtual bool attachToRenderTarget() = 0;
+        virtual bool isAttachedToRenderTarget() = 0;
+        virtual bool detachFromRenderTarget() = 0;
 
         virtual bool isIdle() const = 0;
         virtual QString getNotIdleReason() const = 0;
@@ -153,15 +154,15 @@ namespace OsmAnd
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
-        
+
         virtual AreaI getVisibleBBox31() const = 0;
         virtual bool isPositionVisible(const PointI64& position) const = 0;
         virtual bool isPositionVisible(const PointI& position31) const = 0;
         virtual bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const = 0;
         virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const = 0;
 
-        virtual double getCurrentTileSizeInMeters() const = 0;
-        virtual double getCurrentPixelsToMetersScaleFactor() const = 0;
+        virtual double getTileSizeInMeters() const = 0;
+        virtual double getPixelsToMetersScaleFactor() const = 0;
 
         virtual int getMaxMissingDataZoomShift() const = 0;
         virtual int getMaxMissingDataUnderZoomShift() const = 0;
@@ -177,7 +178,7 @@ namespace OsmAnd
     enum class MapRendererClass
     {
         AtlasMapRenderer_OpenGL2plus,
-        AtlasMapRenderer_OpenGLES2,
+        AtlasMapRenderer_OpenGLES2plus,
     };
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createMapRenderer(const MapRendererClass mapRendererClass);
 }

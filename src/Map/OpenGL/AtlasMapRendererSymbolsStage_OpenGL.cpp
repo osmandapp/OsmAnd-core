@@ -2,7 +2,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
 #include "AtlasMapRenderer_OpenGL.h"
@@ -17,7 +16,7 @@
 #include "MapSymbolsGroup.h"
 #include "Stopwatch.h"
 
-OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
     , _onPathSymbol2dMaxGlyphsPerDrawCall(0)
@@ -25,9 +24,7 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL
 {
 }
 
-OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenGL()
-{
-}
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenGL() = default;
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
@@ -39,7 +36,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
@@ -48,11 +45,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
 
     GL_CHECK_PRESENT(glUseProgram);
-    GL_CHECK_PRESENT(glUniformMatrix4fv);
-    GL_CHECK_PRESENT(glUniform1f);
-    GL_CHECK_PRESENT(glUniform2f);
-    GL_CHECK_PRESENT(glUniform3f);
-    GL_CHECK_PRESENT(glDrawElements);
+    GL_CHECK_PRESENT(glActiveTexture);
 
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -65,41 +58,32 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     GL_CHECK_RESULT;
 
     GLname lastUsedProgram;
-    for (const auto& renderable_ : constOf(renderableSymbols))
+    for (const auto& renderableSymbol : constOf(renderableSymbols))
     {
-        if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderable_))
+        if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
-            ok = ok && renderBillboardSymbol(
-                renderable,
-                currentAlphaChannelType,
-                lastUsedProgram);
+            ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType, lastUsedProgram);
             if (metric)
             {
                 metric->elapsedTimeForBillboardSymbolsRendering += renderBillboardSymbolStopwatch.elapsed();
                 metric->billboardSymbolsRendered += 1;
             }
         }
-        else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderable_))
-        {
-            Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnPathSymbol(
-                renderable,
-                currentAlphaChannelType,
-                lastUsedProgram);
-            if (metric)
-            {
-                metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
-                metric->onPathSymbolsRendered += 1;
-            }
-        }
-        else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderable_))
+//        else if (const auto& renderableOnPathSymbol = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
+//        {
+//            Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
+//            ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType, lastUsedProgram);
+//            if (metric)
+//            {
+//                metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
+//                metric->onPathSymbolsRendered += 1;
+//            }
+//        }
+        else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(
-                renderable,
-                currentAlphaChannelType,
-                lastUsedProgram);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, lastUsedProgram);
             if (metric)
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
@@ -195,7 +179,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     return false;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
 {
     bool ok = true;
     ok = ok && releaseBillboardRaster(gpuContextLost);
@@ -230,65 +214,94 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
         "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
+        "uniform vec3 param_vs_cameraInWorld;                                                                               ""\n"
+        "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-tile data
+        "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
-        "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
+        "uniform highp ivec2 param_vs_position31;                                                                           ""\n"
+        "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
         "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
         "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
+        "uniform float param_vs_elevationInMeters;                                                                          ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        // Calculate location of symbol in world coordinate system.
-        "    vec4 symbolLocation;                                                                                           ""\n"
-        "    symbolLocation.xz = param_vs_symbolOffsetFromTarget.xy * %TileSize3D%.0;                                       ""\n"
-        "    symbolLocation.y = 0.0; //TODO: A height from heightmap should be used here                                    ""\n"
-        "    symbolLocation.w = 1.0;                                                                                        ""\n"
+        // Calculate position of symbol in world coordinate system.
+        "    highp ivec2 offsetFromTarget31 = param_vs_position31 - param_vs_target31.xy;                                   ""\n"
+        "    highp vec2 offsetFromTarget = vec2(0.0);                                                                       ""\n"
+        "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
+        "    {                                                                                                              ""\n"
+        "        highp ivec2 offsetFromTargetT = offsetFromTarget31 / param_vs_target31.w;                                  ""\n"
+        "        highp vec2 offsetFromTargetF = vec2(offsetFromTarget31 - offsetFromTargetT * param_vs_target31.w);         ""\n"
+        "        offsetFromTarget = vec2(offsetFromTargetT) + offsetFromTargetF / float(param_vs_target31.w);               ""\n"
+        "    }                                                                                                              ""\n"
+        "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+        "    offsetFromTarget = vec2(offsetFromTarget31);                                                                   ""\n"
+        "    offsetFromTarget /= float(param_vs_target31.w);                                                                ""\n"
+        "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+        "    vec4 symbolInWorld;                                                                                            ""\n"
+        "    symbolInWorld.xz = offsetFromTarget * %TileSize3D%.0;                                                          ""\n"
+        "    symbolInWorld.y = 0.0;                                                                                         ""\n"
+        "    symbolInWorld.w = 1.0;                                                                                         ""\n"
         "                                                                                                                   ""\n"
-        // Project location of symbol from world coordinate system to screen
-        "    vec4 projectedSymbolLocation = param_vs_mPerspectiveProjectionView * symbolLocation;                           ""\n"
+        // Retrieve symbol position elevation
+        "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
+        "    {                                                                                                              ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, param_vs_offsetInTile.y);""\n"
+        "        float heightInMeters = param_vs_elevationInMeters * param_vs_elevation_scale.w;                            ""\n"
+        "        symbolInWorld.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                           ""\n"
+        "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
-        // "Normalize" location in screen coordinates to get [-1 .. 1] range
-        "    vec3 symbolLocationOnScreen = projectedSymbolLocation.xyz / projectedSymbolLocation.w;                         ""\n"
+        // Project position of symbol from world coordinate system to clipping space and to normalized device coordinates ([-1 .. 1])
+        "    vec4 symbolInClipping = param_vs_mPerspectiveProjectionView * symbolInWorld;                                   ""\n"
+        "    vec3 symbolInNDC = symbolInClipping.xyz / symbolInClipping.w;                                                  ""\n"
         "                                                                                                                   ""\n"
         // Using viewport size, get real screen coordinates and correct depth to be [0 .. 1]
-        "    symbolLocationOnScreen.xy = symbolLocationOnScreen.xy * 0.5 + 0.5;                                             ""\n"
-        "    symbolLocationOnScreen.x = symbolLocationOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;               ""\n"
-        "    symbolLocationOnScreen.y = symbolLocationOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;               ""\n"
-        "    symbolLocationOnScreen.z = (1.0 + symbolLocationOnScreen.z) * 0.5;                                             ""\n"
+        "    vec3 symbolOnScreen;                                                                                           ""\n"
+        "    symbolOnScreen.xy = symbolInNDC.xy * 0.5 + 0.5;                                                                ""\n"
+        "    symbolOnScreen.x = symbolOnScreen.x * param_vs_viewport.z + param_vs_viewport.x;                               ""\n"
+        "    symbolOnScreen.y = symbolOnScreen.y * param_vs_viewport.w + param_vs_viewport.y;                               ""\n"
+        "    symbolOnScreen.z = (1.0 + symbolOnScreen.z) * 0.5;                                                             ""\n"
         "                                                                                                                   ""\n"
         // Add on-screen offset
-        "    symbolLocationOnScreen.xy += vec2(param_vs_onScreenOffset);                                                    ""\n"
+        "    symbolOnScreen.xy += vec2(param_vs_onScreenOffset);                                                            ""\n"
         "                                                                                                                   ""\n"
-        // symbolLocationOnScreen.xy now contains correct coordinates in viewport,
+        // symbolOnScreen.xy now contains correct coordinates in viewport,
         // which can be used in orthographic projection (if it was configured to match viewport).
         //
         // To provide pixel-perfect rendering of billboard raster symbols:
-        // symbolLocationOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
-        // symbolLocationOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
-        "    symbolLocationOnScreen.x = floor(symbolLocationOnScreen.x) + mod(float(param_vs_symbolSize.x), 2.0) * 0.5;     ""\n"
-        "    symbolLocationOnScreen.y = floor(symbolLocationOnScreen.y) + mod(float(param_vs_symbolSize.y), 2.0) * 0.5;     ""\n"
+        // symbolOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
+        // symbolOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
+        "    symbolOnScreen = floor(symbolOnScreen);                                                                        ""\n"
+        "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
+        "    symbolOnScreen.x += float(1 - param_vs_symbolSize.x & 1) * 0.5;                                                ""\n"
+        "    symbolOnScreen.y += float(1 - param_vs_symbolSize.y & 1) * 0.5;                                                ""\n"
+        "#else // !INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
+        "    symbolOnScreen.xy += (vec2(1.0) - mod(vec2(param_vs_symbolSize), vec2(2.0))) * 0.5;                            ""\n"
+        "#endif // INTEGER_OPERATIONS_SUPPORTED                                                                             ""\n"
         "                                                                                                                   ""\n"
         // So it's possible to calculate current vertex location:
         // Initially, get location of current vertex in screen coordinates
-        "    vec2 vertexOnScreen;                                                                                           ""\n"
-        "    vertexOnScreen.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                      ""\n"
-        "    vertexOnScreen.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                      ""\n"
-        "    vertexOnScreen = vertexOnScreen + symbolLocationOnScreen.xy;                                                   ""\n"
+        "    vec2 vertexOnScreen = in_vs_vertexPosition * vec2(param_vs_symbolSize) + symbolOnScreen.xy;                    ""\n"
         "                                                                                                                   ""\n"
         // To provide pixel-perfect result, vertexOnScreen needs to be rounded
         "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
         "                                                                                                                   ""\n"
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
-        // orthographic projection matrix (View and Model being identity)
-        "  vec4 vertex;                                                                                                     ""\n"
-        "  vertex.xy = vertexOnScreen.xy;                                                                                   ""\n"
-        "  vertex.z = -param_vs_distanceFromCamera;                                                                         ""\n"
-        "  vertex.w = 1.0;                                                                                                  ""\n"
-        "  gl_Position = param_vs_mOrthographicProjection * vertex;                                                         ""\n"
+        // orthographic projection matrix (View and Model being identity), yet use Z from perspective NDC
+        "    vec4 vertex;                                                                                                   ""\n"
+        "    vertex.xy = vertexOnScreen.xy;                                                                                 ""\n"
+        "    vertex.z = 0.0;                                                                                                ""\n"
+        "    vertex.w = 1.0;                                                                                                ""\n"
+        "    gl_Position = param_vs_mOrthographicProjection * vertex;                                                       ""\n"
+        "    gl_Position.z = symbolInNDC.z * gl_Position.w;                                                                 ""\n"
         "                                                                                                                   ""\n"
         // Texture coordinates are simply forwarded from input
-        "   v2f_texCoords = in_vs_vertexTexCoords;                                                                          ""\n"
+        "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
@@ -348,13 +361,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok
+         && lookup->lookupLocation(
+             _billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.target31, "param_vs_target31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.position31, "param_vs_position31", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.offsetInTile, "param_vs_offsetInTile", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.elevationInMeters, "param_vs_elevationInMeters", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
@@ -468,6 +486,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glUniform4fv(_billboardRasterProgram.vs.param.viewport, 1, glm::value_ptr(internalState.glmViewport));
         GL_CHECK_RESULT;
 
+        // Set target31
+        glUniform4i(
+            _billboardRasterProgram.vs.param.target31,
+            currentState.target31.x,
+            currentState.target31.y,
+            currentState.zoomLevel,
+            static_cast<GLint>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel))
+        );
+        GL_CHECK_RESULT;
+
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
@@ -479,13 +507,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glUniform1i(_billboardRasterProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
+        // Change depth test function to accept everything to avoid issues with terrain (regardless of elevation presence)
+        glDepthFunc(GL_ALWAYS);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _billboardRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) billboard raster \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -496,18 +528,42 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     //}
     //////////////////////////////////////////////////////////////////////////
 
-    // Set symbol offset from target
-    glUniform2f(_billboardRasterProgram.vs.param.symbolOffsetFromTarget,
-        renderable->offsetFromTarget.x,
-        renderable->offsetFromTarget.y);
+    // Parameters: per-tile data
+    if (captureElevationDataResource(renderable->tileId, currentState.zoomLevel))
+    {
+        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomLevel,
+            renderable->tileId.y,
+            AtlasMapRenderer::TileSize3D);
+        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomLevel,
+            renderable->tileId.y + 1,
+            AtlasMapRenderer::TileSize3D);
+        glUniform4f(
+            _billboardRasterProgram.vs.param.elevation_scale,
+            (float)upperMetersPerUnit,
+            (float)lowerMetersPerUnit,
+            currentState.elevationConfiguration.zScaleFactor,
+            currentState.elevationConfiguration.dataScaleFactor);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        glUniform4f(_billboardRasterProgram.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+        GL_CHECK_RESULT;
+    }
+
+    // Per-symbol data
+    const auto& position31 = (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
+                                 ? renderable->instanceParameters->position31
+                                 : symbol->getPosition31();
+    glUniform2i(_billboardRasterProgram.vs.param.position31, position31.x, position31.y);
+
+    glUniform2f(_billboardRasterProgram.vs.param.offsetInTile, renderable->offsetInTileN.x, renderable->offsetInTileN.y);
     GL_CHECK_RESULT;
 
     // Set symbol size
     glUniform2i(_billboardRasterProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
-    GL_CHECK_RESULT;
-
-    // Set distance from camera to symbol
-    glUniform1f(_billboardRasterProgram.vs.param.distanceFromCamera, renderable->distanceToCamera);
     GL_CHECK_RESULT;
 
     // Set on-screen offset
@@ -516,6 +572,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         ? renderable->instanceParameters->offset
         : symbol->offset;
     glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, offsetOnScreen.x, -offsetOnScreen.y);
+    GL_CHECK_RESULT;
+
+    // Set elevation
+    glUniform1f(_billboardRasterProgram.vs.param.elevationInMeters, renderable->elevationInMeters);
     GL_CHECK_RESULT;
 
     if (currentAlphaChannelType != gpuResource->alphaChannelType)
@@ -536,6 +596,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
 
         currentAlphaChannelType = gpuResource->alphaChannelType;
     }
+
+    glActiveTexture(GL_TEXTURE0 + 0);
+    GL_CHECK_RESULT;
 
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -561,7 +624,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -592,7 +655,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const b
         }
         _billboardRasterSymbolVBO.reset();
     }
-    
+
     if (_billboardRasterProgram.id.isValid())
     {
         if (!gpuContextLost)
@@ -654,7 +717,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
                 break;
             }
         }
-        
+
         if (!initializedProgram)
         {
             LogPrintf(LogSeverityLevel::Error,
@@ -1012,19 +1075,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     {
         auto& p0 = *(pVertex++);
         p0 = templateVertices[0];
-        p0.glyphIndex = glyphIdx;
+        p0.glyphIndex = (float)glyphIdx;
 
         auto& p1 = *(pVertex++);
         p1 = templateVertices[1];
-        p1.glyphIndex = glyphIdx;
+        p1.glyphIndex = (float)glyphIdx;
 
         auto& p2 = *(pVertex++);
         p2 = templateVertices[2];
-        p2.glyphIndex = glyphIdx;
+        p2.glyphIndex = (float)glyphIdx;
 
         auto& p3 = *(pVertex++);
         p3 = templateVertices[3];
-        p3.glyphIndex = glyphIdx;
+        p3.glyphIndex = (float)glyphIdx;
     }
 
     // Index data
@@ -1267,13 +1330,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         glUniform1i(_onPath2dProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
+        // Change depth test function to accept everything to avoid issues with terrain (regardless of elevation presence)
+        glDepthFunc(GL_ALWAYS);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onPath2dProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-2D \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1410,13 +1477,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         glUniform1i(_onPath3dProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
+        // Change depth test function to perform <= depth test (regardless of elevation presence)
+        glDepthFunc(GL_LEQUAL);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onPath3dProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) SOP-3D \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1488,7 +1559,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
             GL_CHECK_RESULT;
 
             // Set angle
-            glUniform1f(vsGlyph.angle, Utilities::normalizedAngleRadians(glyph.angle + M_PI));
+            glUniform1f(vsGlyph.angle, (GLfloat)Utilities::normalizedAngleRadians(glyph.angle + M_PI));
             GL_CHECK_RESULT;
 
             // Set normalized width of all previous glyphs
@@ -1515,7 +1586,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(bool gpuContextLost)
 {
     bool ok = true;
     ok = ok && releaseOnPath3D(gpuContextLost);
@@ -1523,7 +1594,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool gpuCo
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1554,7 +1625,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool gpu
         }
         _onPathSymbol2dVBO.reset();
     }
-    
+
     if (_onPath2dProgram.id.isValid())
     {
         if (!gpuContextLost)
@@ -1568,7 +1639,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool gpu
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1691,7 +1762,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1778,11 +1848,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_RESULT;
     glEnableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onSurfaceRasterProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(
+        *_onSurfaceRasterProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
     glEnableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onSurfaceRasterProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(
+        *_onSurfaceRasterProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -1821,7 +1893,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
         // Set symbol VAO
         gpuAPI->useVAO(_onSurfaceRasterSymbolVAO);
-        
+
         // Activate program
         glUseProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
@@ -1841,13 +1913,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
+        // Change depth test function to accept everything to avoid issues with terrain (regardless of elevation presence)
+        glDepthFunc(GL_ALWAYS);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onSurfaceRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface raster \"%3\"]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
@@ -1856,7 +1932,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     GL_CHECK_RESULT;
 
     // Set symbol size
-    glUniform2i(_onSurfaceRasterProgram.vs.param.symbolSize, gpuResource->width*internalState.pixelInWorldProjectionScale, gpuResource->height*internalState.pixelInWorldProjectionScale);
+    glUniform2i(
+        _onSurfaceRasterProgram.vs.param.symbolSize,
+        gpuResource->width * internalState.pixelInWorldProjectionScale,
+        gpuResource->height * internalState.pixelInWorldProjectionScale);
     GL_CHECK_RESULT;
 
     // Set direction
@@ -1911,7 +1990,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1923,7 +2002,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const b
         gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO, gpuContextLost);
         _onSurfaceRasterSymbolVAO.reset();
     }
-    
+
     if (_onSurfaceRasterSymbolIBO.isValid())
     {
         if (!gpuContextLost)
@@ -1942,7 +2021,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const b
         }
         _onSurfaceRasterSymbolVBO.reset();
     }
-    
+
     if (_onSurfaceRasterProgram.id.isValid())
     {
         if (!gpuContextLost)
@@ -2086,13 +2165,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         // Just in case un-use any possibly used VAO
         gpuAPI->unuseVAO();
 
+        // Change depth test function to perform <= depth test (regardless of elevation presence)
+        glDepthFunc(GL_LEQUAL);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onSurfaceVectorProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
 
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface vector]")
-        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString()));
 
     if (currentAlphaChannelType != AlphaChannelType::Straight)
@@ -2217,6 +2300,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             primitivesType = GL_LINE_LOOP;
             count = gpuResource->vertexBuffer->itemsCount;
             break;
+        default:
+            assert(false);
     }
     if (gpuResource->indexBuffer)
     {
@@ -2241,7 +2326,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -2258,4 +2343,27 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const b
     }
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFiltering(
+    const glm::vec3& positionOnScreen,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto renderer = getRenderer();
+
+    auto depthValue = 0.0f;
+    if (!gpuAPI->pickFramebufferDepthValue(
+            renderer->terrainDepthBuffer,
+            positionOnScreen.x,
+            positionOnScreen.y,
+            renderer->terrainDepthBufferSize.x,
+            renderer->terrainDepthBufferSize.y,
+            depthValue))
+    {
+        return true;
+    }
+
+    // NOTE: To reduce Z-fight, reduce precision of comparison
+    return positionOnScreen.z - depthValue <= 0.00001f;
 }

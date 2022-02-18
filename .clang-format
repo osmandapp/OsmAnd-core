@@ -1,0 +1,147 @@
+---
+Language: Cpp
+Standard: c++17
+AccessModifierOffset: -4
+AlignAfterOpenBracket: AlwaysBreak
+#AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Right
+#AlignConsecutiveAssignments: None
+#AlignConsecutiveBitFields: ACS_Consecutive
+AlignConsecutiveDeclarations: None
+#AlignConsecutiveMacros: None
+AlignEscapedNewlines: Right
+AlignOperands: Align
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+# AttributeMacros
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: Both
+BraceWrapping:
+    AfterCaseLabel: true
+    AfterClass: true
+    AfterControlStatement: Always # Maybe MultiLine?
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterExternBlock: true
+    BeforeCatch: true
+    BeforeElse: true
+    BeforeLambdaBody: true
+    BeforeWhile: false
+    IndentBraces: false
+    SplitEmptyFunction: true
+    SplitEmptyRecord: true
+    SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakBeforeConceptDeclarations: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
+ColumnLimit: 160
+# CommentPragmas
+CompactNamespaces: false
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: false
+DeriveLineEnding: false
+DerivePointerAlignment: false
+DisableFormat: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: true
+# ForEachMacros
+# IfMacros
+IncludeBlocks: Preserve
+# IncludeCategories
+# IncludeIsMainRegex
+# IncludeIsMainSourceRegex
+IndentAccessModifiers: false
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentExternBlock: Indent
+IndentGotoLabels: false
+IndentPPDirectives: AfterHash
+IndentRequires: true
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: Wrapped
+# JavaImportGroups
+# JavaScriptQuotes
+# JavaScriptWrapImports
+KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+# MacroBlockBegin
+# MacroBlockEnd
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: All
+# NamespaceMacros
+#PPIndentWidth: 3
+PackConstructorInitializers: NextLine
+#PenaltyBreakAssignment: 45
+#PenaltyBreakBeforeFirstCallParameter: 0
+#PenaltyBreakComment
+#PenaltyBreakFirstLessLess
+#PenaltyBreakOpenParenthesis: 0
+#PenaltyBreakString
+#PenaltyBreakTemplateDeclaration
+#PenaltyExcessCharacter: 100
+#PenaltyIndentedWhitespace
+#PenaltyReturnTypeOnItsOwnLine
+PointerAlignment: Left
+QualifierAlignment: Left
+#    QualifierOrder
+# RawStringFormats
+ReferenceAlignment: Left
+ReflowComments: true
+#RemoveBracesLLVM: false
+#SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
+SortIncludes: CaseSensitive
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+    Minimum: 1
+    Maximum: -1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+# StatementAttributeLikeMacros
+# StatementMacros
+# TabWidth
+# TypenameMacros
+# UseCRLF: false
+UseTab: Never
+# WhitespaceSensitiveMacros

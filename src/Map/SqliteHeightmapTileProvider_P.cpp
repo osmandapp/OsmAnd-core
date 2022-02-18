@@ -2,6 +2,7 @@
 #include "SqliteHeightmapTileProvider.h"
 
 #include <cassert>
+#include <memory>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <gdal.h>
@@ -144,11 +145,12 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
         return false;
     }
 
-    outData.reset(new IMapElevationDataProvider::Data(
+    outData = std::make_shared<IMapElevationDataProvider::Data>(
         request.tileId,
         request.zoom,
         sizeof(float)*owner->outputTileSize,
         owner->outputTileSize,
-        pBuffer));
+        pBuffer);
+
     return true;
 }

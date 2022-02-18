@@ -23,6 +23,9 @@ namespace OsmAnd
         /* Time elapsed for map layers stage */                                                                 \
         FIELD_ACTION(float, elapsedTimeForMapLayersStage, "s");                                                 \
                                                                                                                 \
+        /* Time elapsed for capturing terrain depth buffer */                                                   \
+        FIELD_ACTION(float, elapsedTimeForTerrainDepthBufferCapture, "s");                                      \
+                                                                                                                \
         /* Time elapsed for symbols stage */                                                                    \
         FIELD_ACTION(float, elapsedTimeForSymbolsStage, "s");                                                   \
         FIELD_ACTION(float, elapsedTimeForPreparingSymbols, "s");                                               \

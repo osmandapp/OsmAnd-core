@@ -194,12 +194,10 @@ namespace OsmAnd
             unsigned int& totalUploaded,
             bool& moreThanLimitAvailable,
             bool& atLeastOneUploadFailed);
-        void blockingReleaseResourcesFrom(
-            const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
-            const bool gpuContextLost);
+        void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost);
         void requestResourcesUploadOrUnload();
         void notifyNewResourceAvailableForDrawing();
-        void releaseAllResources(const bool gpuContextLost);
+        void releaseAllResources(bool gpuContextLost);
 
         // Worker thread:
         volatile bool _workerThreadIsAlive;

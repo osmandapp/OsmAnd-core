@@ -60,7 +60,7 @@ OsmAnd::ZoomLevel OsmAnd::MapObject::getMaxZoomLevel() const
 
 QString OsmAnd::MapObject::toString() const
 {
-    return QString().sprintf("(@%p)", this);
+    return QString::asprintf("(@%p)", this);
 }
 
 bool OsmAnd::MapObject::isClosedFigure(bool checkInner /*= false*/) const
@@ -253,10 +253,10 @@ QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
     QString name = QString();
     if (!lang.isEmpty())
         name = getCaptionInLanguage(lang);
-    
+
     if (name.isNull())
         name = getCaptionInNativeLanguage();
-    
+
     if (transliterate && !name.isNull())
         return OsmAnd::ICU::transliterateToLatin(name);
     else

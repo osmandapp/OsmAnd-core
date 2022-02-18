@@ -5,6 +5,7 @@
 #include "Logging.h"
 
 OsmAnd::GPUAPI::GPUAPI()
+    : _isAttachedToRenderTarget(false)
 {
 }
 
@@ -25,13 +26,45 @@ OsmAnd::GPUAPI::~GPUAPI()
     assert(resourcesRemaining == 0);
 }
 
+bool OsmAnd::GPUAPI::isAttachedToRenderTarget()
+{
+    return _isAttachedToRenderTarget;
+}
+
 bool OsmAnd::GPUAPI::initialize()
 {
     return true;
 }
 
-bool OsmAnd::GPUAPI::release(const bool gpuContextLost)
+bool OsmAnd::GPUAPI::attachToRenderTarget()
 {
+    _isAttachedToRenderTarget = true;
+    return true;
+}
+
+bool OsmAnd::GPUAPI::detachFromRenderTarget(bool gpuContextLost)
+{
+    if (!isAttachedToRenderTarget())
+    {
+        return false;
+    }
+
+    _isAttachedToRenderTarget = false;
+
+    return true;
+}
+
+bool OsmAnd::GPUAPI::release(bool gpuContextLost)
+{
+    bool ok;
+
+    if (isAttachedToRenderTarget())
+    {
+        ok = detachFromRenderTarget(gpuContextLost);
+        if (!ok)
+            return false;
+    }
+
     return true;
 }
 
@@ -82,7 +115,7 @@ OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, con
 
 OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
 {
-    // If we have reference to 
+    // If we have reference to
     if (_refInGPU)
         api->releaseResourceInGPU(type, _refInGPU);
 

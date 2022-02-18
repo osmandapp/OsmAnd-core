@@ -33,7 +33,7 @@ namespace OsmAnd
     class MapSymbol;
     class MapRendererStage;
     struct MapRendererInternalState;
-    
+
     class MapRenderer : public IMapRenderer
     {
         Q_DISABLE_COPY_AND_MOVE(MapRenderer);
@@ -92,7 +92,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
-        
+
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
         std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
@@ -116,6 +116,9 @@ namespace OsmAnd
         std::shared_ptr<const MapRendererDebugSettings> _currentDebugSettingsAsConst;
         std::shared_ptr<MapRendererDebugSettings> _requestedDebugSettings;
         bool updateCurrentDebugSettings();
+
+        virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
+        virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
@@ -198,21 +201,23 @@ namespace OsmAnd
         virtual bool doInitializeRendering();
         virtual bool postInitializeRendering();
 
-        virtual bool preUpdate(IMapRenderer_Metrics::Metric_update* const metric);
-        virtual bool doUpdate(IMapRenderer_Metrics::Metric_update* const metric);
-        virtual bool postUpdate(IMapRenderer_Metrics::Metric_update* const metric);
+        virtual bool preUpdate(IMapRenderer_Metrics::Metric_update* metric);
+        virtual bool doUpdate(IMapRenderer_Metrics::Metric_update* metric);
+        virtual bool postUpdate(IMapRenderer_Metrics::Metric_update* metric);
 
         virtual bool prePrepareFrame();
         virtual bool doPrepareFrame();
         virtual bool postPrepareFrame();
 
-        virtual bool preRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
-        virtual bool postRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual bool preRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric);
+        virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
+        virtual bool postRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric);
 
-        virtual bool preReleaseRendering(const bool gpuContextLost);
-        virtual bool doReleaseRendering(const bool gpuContextLost);
-        virtual bool postReleaseRendering(const bool gpuContextLost);
+        virtual bool preReleaseRendering(bool gpuContextLost);
+        virtual bool doReleaseRendering(bool gpuContextLost);
+        virtual bool postReleaseRendering(bool gpuContextLost);
+
+        virtual bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask);
     public:
         virtual ~MapRenderer();
 
@@ -228,11 +233,15 @@ namespace OsmAnd
             const std::shared_ptr<const MapRendererConfiguration>& configuration,
             bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
-        virtual bool initializeRendering() Q_DECL_OVERRIDE;
-        virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) Q_DECL_FINAL;
-        virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) Q_DECL_FINAL;
-        virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) Q_DECL_FINAL;
-        virtual bool releaseRendering(const bool gpuContextLost = false) Q_DECL_OVERRIDE;
+        bool initializeRendering(bool renderTargetAvailable) override;
+        bool update(IMapRenderer_Metrics::Metric_update* metric = nullptr) final;
+        bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* metric = nullptr) final;
+        bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) final;
+        bool releaseRendering(bool gpuContextLost) override;
+
+        bool attachToRenderTarget() override;
+        bool isAttachedToRenderTarget() override;
+        bool detachFromRenderTarget() override;
 
         virtual bool isIdle() const Q_DECL_OVERRIDE;
         virtual QString getNotIdleReason() const Q_DECL_OVERRIDE;

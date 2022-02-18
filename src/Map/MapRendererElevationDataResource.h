@@ -24,27 +24,24 @@ namespace OsmAnd
         MapRendererElevationDataResource(
             MapRendererResourcesManager* owner,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-            const TileId tileId,
-            const ZoomLevel zoom);
+            TileId tileId,
+            ZoomLevel zoom);
 
         std::shared_ptr<IMapElevationDataProvider::Data> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
-        virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
-        virtual bool obtainData(
-            bool& dataAvailable,
-            const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
-        virtual void obtainDataAsync(
-            const ObtainDataAsyncCallback callback,
-            const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
+        bool supportsObtainDataAsync() const override;
+        bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;
+        void obtainDataAsync(ObtainDataAsyncCallback callback, const std::shared_ptr<const IQueryController>& queryController) override;
 
-        virtual bool uploadToGPU() Q_DECL_OVERRIDE;
-        virtual void unloadFromGPU() Q_DECL_OVERRIDE;
-        virtual void lostDataInGPU() Q_DECL_OVERRIDE;
-        virtual void releaseData() Q_DECL_OVERRIDE;
+        bool uploadToGPU() override;
+        void unloadFromGPU() override;
+        void lostDataInGPU() override;
+        void releaseData() override;
     public:
-        virtual ~MapRendererElevationDataResource();
+        ~MapRendererElevationDataResource() override;
 
+        const std::shared_ptr<IMapElevationDataProvider::Data>& sourceData;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
     friend class OsmAnd::MapRendererResourcesManager;

@@ -117,7 +117,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         return false;
     if (!requestSucceeded)
         return false;
-    
+
     // Store data
     _sourceData = tile;
     dataAvailable = static_cast<bool>(tile);
@@ -436,7 +436,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(const bool gpuContextLost)
+void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
@@ -620,7 +620,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
             static_cast<uint64_t>(refsRemaining),
             wasRemoved ? "removed" : "not removed");
 #endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
-        
+
         // GPU resources of a shared group resources should be unloaded only in case this was the last
         // reference to shared group resources
         if (!wasRemoved)

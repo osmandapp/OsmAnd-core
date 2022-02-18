@@ -62,13 +62,13 @@ namespace OsmAnd
         // Debug-related:
 
         // Customization points:
-        virtual bool preInitializeRendering() Q_DECL_OVERRIDE;
-        virtual bool doInitializeRendering() Q_DECL_OVERRIDE;
+        bool preInitializeRendering() override;
+        bool doInitializeRendering() override;
 
-        virtual bool prePrepareFrame() Q_DECL_OVERRIDE;
-        virtual bool postPrepareFrame() Q_DECL_OVERRIDE;
+        bool prePrepareFrame() override;
+        bool postPrepareFrame() override;
 
-        virtual bool doReleaseRendering(const bool gpuContextLost) Q_DECL_OVERRIDE;
+        bool doReleaseRendering(bool gpuContextLost) override;
 
         // Stages:
         std::shared_ptr<AtlasMapRendererSkyStage> _skyStage;

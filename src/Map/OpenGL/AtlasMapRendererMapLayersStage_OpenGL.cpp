@@ -6,8 +6,6 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -22,7 +20,7 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererMapLayersStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
     , _maxNumberOfRasterMapLayersInBatch(0)
@@ -30,9 +28,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_Op
 {
 }
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::~AtlasMapRendererMapLayersStage_OpenGL()
-{
-}
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::~AtlasMapRendererMapLayersStage_OpenGL() = default;
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 {
@@ -41,7 +37,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
     bool ok = true;
@@ -128,7 +124,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(bool gpuContextLost)
 {
     bool ok = true;
     ok = ok && releaseRasterLayers(gpuContextLost);
@@ -149,7 +145,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*isPremultipliedAlpha*/ +
         1 /*sampler*/;
     const auto vsOtherUniforms =
-        4 /*param_vs_mProjectionView*/ +
+        4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_targetInTilePosN*/ +
         (!gpuAPI->isSupported_textureLod
             ? 0
@@ -280,7 +276,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform mat4 param_vs_mProjectionView;                                                                             ""\n"
+        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "uniform vec2 param_vs_targetInTilePosN;                                                                            ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    uniform float param_vs_distanceFromCameraToTarget;                                                             ""\n"
@@ -573,7 +569,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
-        "    gl_Position = param_vs_mProjectionView * v;                                                                    ""\n"
+        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "}                                                                                                                  ""\n");
     const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
@@ -862,8 +858,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             GlslVariableType::In);
     }
     ok = ok && lookup->lookupLocation(
-        outRasterLayerTileProgram.vs.param.mProjectionView,
-        "param_vs_mProjectionView",
+        outRasterLayerTileProgram.vs.param.mPerspectiveProjectionView,
+        "param_vs_mPerspectiveProjectionView",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.vs.param.targetInTilePosN,
@@ -1197,7 +1193,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     GL_CHECK_RESULT;
 
     // Set matrices
-    glUniformMatrix4fv(program.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+    glUniformMatrix4fv(program.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
     // Set center offset
@@ -1306,41 +1302,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     return true;
 }
 
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::captureElevationDataResource(
-    const TileId normalizedTileId,
-    const ZoomLevel zoomLevel)
-{
-    if (!currentState.elevationDataProvider)
-        return nullptr;
-
-    const auto& resourcesCollection_ = getResources().getCollectionSnapshot(
-        MapRendererResourceType::ElevationData,
-        currentState.elevationDataProvider);
-    const auto& resourcesCollection =
-        std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
-
-    // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-    std::shared_ptr<MapRendererBaseTiledResource> resource_;
-    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
-    {
-        const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
-
-        // Check state and obtain GPU resource
-        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-        {
-            // Capture GPU resource
-            const auto gpuResource = resource->resourceInGPU;
-
-            resource->setState(MapRendererResourceState::Uploaded);
-
-            return gpuResource;
-        }
-    }
-
-    return nullptr;
-}
-
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::captureLayerResource(
     const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection_,
     const TileId normalizedTileId,
@@ -1357,13 +1318,13 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
     std::shared_ptr<MapRendererBaseTiledResource> resource_;
     if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
     {
-        const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
+        const auto resource = std::static_pointer_cast<MapRendererRasterMapLayerResource>(resource_);
 
         // Check state and obtain GPU resource
         if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
         {
             // Capture GPU resource
-            const auto gpuResource = resource->resourceInGPU;
+            auto gpuResource = resource->resourceInGPU;
 
             resource->setState(MapRendererResourceState::Uploaded);
 
@@ -1379,7 +1340,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
     return nullptr;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(bool gpuContextLost)
 {
     GL_CHECK_PRESENT(glDeleteProgram);
 
@@ -1542,7 +1503,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     delete[] pIndices;
 }
 
-void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool gpuContextLost)
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1640,12 +1601,12 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         currentState.zoomLevel,
         tileIdN.y + 1,
         AtlasMapRenderer::TileSize3D);
-    glUniform4f(program.vs.param.elevation_scale,
-        upperMetersPerUnit,
-        lowerMetersPerUnit,
+    glUniform4f(
+        program.vs.param.elevation_scale,
+        (float)upperMetersPerUnit,
+        (float)lowerMetersPerUnit,
         currentState.elevationConfiguration.zScaleFactor,
-        currentState.elevationConfiguration.dataScaleFactor
-    );
+        currentState.elevationConfiguration.dataScaleFactor);
     GL_CHECK_RESULT;
 
     const auto& perTile_vs = program.vs.param.elevationLayer;
@@ -1668,14 +1629,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
 
             const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
             const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
-            const PointF texCoordsScale(
-                texture->tileSizeN - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
-                texture->tileSizeN - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
-            );
-            const PointF texCoordsOffset(
-                colIndex * texture->tileSizeN + texture->uHalfTexelSizeN,
-                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN
-            );
+
+            // NOTE: Must be in sync with IMapElevationDataProvider::Data::getValue
+            const PointF texCoordsScale(texture->tileSizeN - 3.0f * texture->uTexelSizeN, texture->tileSizeN - 3.0f * texture->vTexelSizeN);
+            const PointF texCoordsOffset(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN, rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN);
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -1805,7 +1762,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 MapRendererResourceType::MapLayer,
                 std::dynamic_pointer_cast<IMapDataProvider>(provider));
 
-            // In case there's no resources collection for this provider, there's nothing to do here, move on
+            // In case there's no resources' collection for this provider, there's nothing to do here, move on
             if (!resourcesCollection)
                 continue;
 
@@ -1816,7 +1773,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 layerIndex));
 
             auto maxMissingDataZoomShift = provider->getMaxMissingDataZoomShift();
-            
+
             // Try to obtain exact match resource
             const auto exactMatchGpuResource = captureLayerResource(
                 resourcesCollection,
@@ -1904,7 +1861,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                             }
                         }
                     }
-                    
+
                     // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
                     if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden))
                     {

@@ -62,7 +62,7 @@ namespace OsmAnd
             const BatchedLayerType type;
             const int layerIndex;
             QList< Ref<BatchedLayerResource> > resourcesInGPU;
-        
+
         private:
             Q_DISABLE_COPY(BatchedLayer);
         };
@@ -88,7 +88,7 @@ namespace OsmAnd
         GLname _rasterTileIBO;
         QHash<unsigned int, GLname> _rasterTileVAOs;
         void initializeRasterTile();
-        void releaseRasterTile(const bool gpuContextLost);
+        void releaseRasterTile(bool gpuContextLost);
         struct RasterLayerTileProgram
         {
             GLname id;
@@ -104,7 +104,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLlocation mProjectionView;
+                    GLlocation mPerspectiveProjectionView;
                     GLlocation mapScale;
                     GLlocation targetInTilePosN;
                     GLlocation distanceFromCameraToTarget;
@@ -166,22 +166,19 @@ namespace OsmAnd
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
             GLlocation& activeElevationVertexAttribArray);
-        std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
-            const TileId normalizedTileId,
-            const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel,
             MapRendererResourceState* const outState = nullptr);
-        bool releaseRasterLayers(const bool gpuContextLost);
+        bool releaseRasterLayers(bool gpuContextLost);
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererMapLayersStage_OpenGL();
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release(const bool gpuContextLost);
+        virtual bool release(bool gpuContextLost);
     };
 }
 

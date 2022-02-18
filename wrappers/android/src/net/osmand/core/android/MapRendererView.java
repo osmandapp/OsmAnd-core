@@ -773,7 +773,7 @@ public abstract class MapRendererView extends FrameLayout {
             if (!_mapRenderer.isRenderingInitialized()) {
                 Log.v(TAG, "Initializing rendering due to surface size change");
 
-                if (!_mapRenderer.initializeRendering())
+                if (!_mapRenderer.initializeRendering(true))
                     Log.e(TAG, "Failed to initialize rendering");
             }
         }

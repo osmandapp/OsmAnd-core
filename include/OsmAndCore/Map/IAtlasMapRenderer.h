@@ -28,7 +28,7 @@ namespace OsmAnd
         virtual QVector<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
 
-        virtual float getCurrentTileSizeOnScreenInPixels() const = 0;
+        virtual float getTileSizeOnScreenInPixels() const = 0;
 
         virtual int getTileSize3D() const = 0;
     };
