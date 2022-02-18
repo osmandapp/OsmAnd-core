@@ -53,6 +53,28 @@ namespace OsmAnd
             virtual void run() Q_DECL_OVERRIDE;
         };
                 
+        class OSMAND_CORE_API DownloadGeoTileTask : public QRunnable
+        {
+            Q_DISABLE_COPY_AND_MOVE(DownloadGeoTileTask);
+        private:
+            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
+            
+        protected:
+        public:
+            DownloadGeoTileTask(
+                 const std::shared_ptr<WeatherTileResourceProvider_P> provider,
+                 const std::shared_ptr<WeatherTileResourceProvider::DownloadGeoTileRequest> request,
+                 const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
+                 const bool collectMetric = false);
+            virtual ~DownloadGeoTileTask();
+            
+            const std::shared_ptr<WeatherTileResourceProvider::DownloadGeoTileRequest> request;
+            const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback;
+            const bool collectMetric;
+
+            virtual void run() Q_DECL_OVERRIDE;
+        };
+        
     private:
         QThreadPool *_threadPool;
 
@@ -110,11 +132,16 @@ namespace OsmAnd
         const uint32_t tileSize;
         const float densityFactor;
 
-        virtual void obtainDataAsync(
+        void obtainDataAsync(
             const WeatherTileResourceProvider::TileRequest& request,
             const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
 
+        void downloadGeoTilesAsync(
+            const WeatherTileResourceProvider::DownloadGeoTileRequest& request,
+            const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
+            const bool collectMetric = false);
+        
         const QHash<BandIndex, float> getBandOpacityMap() const;
         void setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap);
 
@@ -122,6 +149,11 @@ namespace OsmAnd
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
 
+        bool downloadGeoTile(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            QByteArray& outData,
+            bool forceDownload = false);
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
 

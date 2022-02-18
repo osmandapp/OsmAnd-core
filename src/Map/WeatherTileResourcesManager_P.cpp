@@ -147,6 +147,38 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     }
 }
 
+void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
+    const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
+    const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    auto resourceProvider = getResourceProvider(request.dataTime);
+    if (resourceProvider)
+    {
+        WeatherTileResourceProvider::DownloadGeoTileRequest rr;
+        rr.topLeft = request.topLeft;
+        rr.bottomRight = request.bottomRight;
+        rr.forceDownload = request.forceDownload;
+        rr.queryController = request.queryController;
+        
+        const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback rc =
+            [callback]
+            (const bool succeeded,
+                const uint64_t downloadedTiles,
+                const uint64_t totalTiles,
+                const std::shared_ptr<Metric>& metric)
+            {
+                callback(succeeded, downloadedTiles, totalTiles, metric);
+            };
+        
+        resourceProvider->downloadGeoTilesAsync(rr, rc);
+    }
+    else
+    {
+        callback(false, 0, 0, nullptr);
+    }
+}
+
 bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const bool clearGeoCache, const bool clearRasterCache)
 {
     QWriteLocker scopedLocker(&_resourceProvidersLock);

@@ -38,6 +38,14 @@ void OsmAnd::WeatherTileResourceProvider::obtainDataAsync(
     _p->obtainDataAsync(request, callback, collectMetric);
 }
 
+void OsmAnd::WeatherTileResourceProvider::downloadGeoTilesAsync(
+    const DownloadGeoTileRequest& request,
+    const DownloadGeoTilesAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->downloadGeoTilesAsync(request, callback, collectMetric);
+}
+
 OsmAnd::ZoomLevel OsmAnd::WeatherTileResourceProvider::getGeoTileZoom()
 {
     return ZoomLevel4;
@@ -139,31 +147,31 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::Weathe
     return std::shared_ptr<TileRequest>(new TileRequest(*this));
 }
 
-OsmAnd::WeatherTileResourceProvider::GeoTileRequest::GeoTileRequest()
-    : zoom(InvalidZoomLevel)
+OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest()
+    : forceDownload(false)
 {
 }
 
-OsmAnd::WeatherTileResourceProvider::GeoTileRequest::GeoTileRequest(const GeoTileRequest& that)
+OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest(const DownloadGeoTileRequest& that)
 {
     copy(*this, that);
 }
 
-OsmAnd::WeatherTileResourceProvider::GeoTileRequest::~GeoTileRequest()
+OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::~DownloadGeoTileRequest()
 {
 }
 
-void OsmAnd::WeatherTileResourceProvider::GeoTileRequest::copy(GeoTileRequest& dst, const GeoTileRequest& src)
+void OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src)
 {
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
-    dst.zoom = src.zoom;
+    dst.forceDownload = src.forceDownload;
     dst.queryController = src.queryController;
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider::GeoTileRequest> OsmAnd::WeatherTileResourceProvider::GeoTileRequest::clone() const
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest> OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::clone() const
 {
-    return std::shared_ptr<GeoTileRequest>(new GeoTileRequest(*this));
+    return std::shared_ptr<DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourceProvider::Data::Data(

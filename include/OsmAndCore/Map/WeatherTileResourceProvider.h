@@ -52,20 +52,20 @@ namespace OsmAnd
             virtual std::shared_ptr<TileRequest> clone() const;
         };
         
-        struct OSMAND_CORE_API GeoTileRequest
+        struct OSMAND_CORE_API DownloadGeoTileRequest
         {
-            GeoTileRequest();
-            GeoTileRequest(const GeoTileRequest& that);
-            virtual ~GeoTileRequest();
+            DownloadGeoTileRequest();
+            DownloadGeoTileRequest(const DownloadGeoTileRequest& that);
+            virtual ~DownloadGeoTileRequest();
 
             LatLon topLeft;
             LatLon bottomRight;
-            ZoomLevel zoom;
+            bool forceDownload;
 
             std::shared_ptr<const IQueryController> queryController;
 
-            static void copy(GeoTileRequest& dst, const GeoTileRequest& src);
-            virtual std::shared_ptr<GeoTileRequest> clone() const;
+            static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
+            virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
         };
         
         class OSMAND_CORE_API Data
@@ -95,6 +95,13 @@ namespace OsmAnd
             const std::shared_ptr<Data>& data,
             const std::shared_ptr<Metric>& metric);
         
+        OSMAND_CALLABLE(DownloadGeoTilesAsyncCallback,
+            void,
+            const bool succeeded,
+            const uint64_t downloadedTiles,
+            const uint64_t totalTiles,
+            const std::shared_ptr<Metric>& metric);
+        
     protected:
     public:
         WeatherTileResourceProvider(
@@ -113,6 +120,11 @@ namespace OsmAnd
         virtual void obtainDataAsync(
             const TileRequest& request,
             const ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
+        virtual void downloadGeoTilesAsync(
+            const DownloadGeoTileRequest& request,
+            const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
         void setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap);

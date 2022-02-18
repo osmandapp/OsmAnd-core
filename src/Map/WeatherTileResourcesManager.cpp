@@ -89,6 +89,14 @@ void OsmAnd::WeatherTileResourcesManager::obtainDataAsync(
     _p->obtainDataAsync(request, callback, collectMetric);
 }
 
+void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
+    const DownloadGeoTileRequest& request,
+    const DownloadGeoTilesAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->downloadGeoTilesAsync(request, callback, collectMetric);
+}
+
 bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const bool clearGeoCache, const bool clearRasterCache)
 {
     return _p->clearDbCache(clearGeoCache, clearRasterCache);
@@ -125,32 +133,32 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::Weathe
     return std::shared_ptr<TileRequest>(new TileRequest(*this));
 }
 
-OsmAnd::WeatherTileResourcesManager::GeoTileRequest::GeoTileRequest()
-    : zoom(InvalidZoomLevel)
+OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
+    : forceDownload(false)
 {
 }
 
-OsmAnd::WeatherTileResourcesManager::GeoTileRequest::GeoTileRequest(const GeoTileRequest& that)
+OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest(const DownloadGeoTileRequest& that)
 {
     copy(*this, that);
 }
 
-OsmAnd::WeatherTileResourcesManager::GeoTileRequest::~GeoTileRequest()
+OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::~DownloadGeoTileRequest()
 {
 }
 
-void OsmAnd::WeatherTileResourcesManager::GeoTileRequest::copy(GeoTileRequest& dst, const GeoTileRequest& src)
+void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src)
 {
     dst.dataTime = src.dataTime;
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
-    dst.zoom = src.zoom;
+    dst.forceDownload = src.forceDownload;
     dst.queryController = src.queryController;
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourcesManager::GeoTileRequest> OsmAnd::WeatherTileResourcesManager::GeoTileRequest::clone() const
+std::shared_ptr<OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest> OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::clone() const
 {
-    return std::shared_ptr<GeoTileRequest>(new GeoTileRequest(*this));
+    return std::shared_ptr<DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::Data::Data(

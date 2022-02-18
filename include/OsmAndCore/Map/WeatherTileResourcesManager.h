@@ -52,21 +52,21 @@ namespace OsmAnd
             virtual std::shared_ptr<TileRequest> clone() const;
         };
         
-        struct OSMAND_CORE_API GeoTileRequest
+        struct OSMAND_CORE_API DownloadGeoTileRequest
         {
-            GeoTileRequest();
-            GeoTileRequest(const GeoTileRequest& that);
-            virtual ~GeoTileRequest();
+            DownloadGeoTileRequest();
+            DownloadGeoTileRequest(const DownloadGeoTileRequest& that);
+            virtual ~DownloadGeoTileRequest();
 
             QDateTime dataTime;
             LatLon topLeft;
             LatLon bottomRight;
-            ZoomLevel zoom;
+            bool forceDownload;
 
             std::shared_ptr<const IQueryController> queryController;
 
-            static void copy(GeoTileRequest& dst, const GeoTileRequest& src);
-            virtual std::shared_ptr<GeoTileRequest> clone() const;
+            static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
+            virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
         };
         
         class OSMAND_CORE_API Data
@@ -94,6 +94,13 @@ namespace OsmAnd
             void,
             const bool requestSucceeded,
             const std::shared_ptr<Data>& data,
+            const std::shared_ptr<Metric>& metric);
+
+        OSMAND_CALLABLE(DownloadGeoTilesAsyncCallback,
+            void,
+            const bool succeeded,
+            const uint64_t downloadedTiles,
+            const uint64_t totalTiles,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -128,7 +135,12 @@ namespace OsmAnd
             const TileRequest& request,
             const ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
-        
+
+        virtual void downloadGeoTilesAsync(
+            const DownloadGeoTileRequest& request,
+            const DownloadGeoTilesAsyncCallback callback,
+            const bool collectMetric = false);
+
         virtual bool clearDbCache(const bool clearGeoCache, const bool clearRasterCache);
     };
 }

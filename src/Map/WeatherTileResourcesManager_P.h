@@ -75,6 +75,11 @@ namespace OsmAnd
             const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
         
+        void downloadGeoTilesAsync(
+            const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
+            const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
+            const bool collectMetric = false);
+
         bool clearDbCache(const bool clearGeoCache, const bool clearRasterCache);
         
     friend class OsmAnd::WeatherTileResourcesManager;
