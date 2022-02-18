@@ -230,6 +230,7 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/routeDataBundle.cpp"
 		"${LEGACY_SRC}/routeDataResources.h"
 		"${LEGACY_SRC}/routeDataResources.cpp"
+		"${LEGACY_SRC}/routeCalculationProgress.cpp"
 
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
