@@ -204,12 +204,13 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             // <hdop>
             if (!qIsNaN(wpt->horizontalDilutionOfPrecision))
-                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 12));
+                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 7));
 
             // <vdop>
             if (!qIsNaN(wpt->verticalDilutionOfPrecision))
                 xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(wpt->verticalDilutionOfPrecision, 'f', 12));
         }
+        
 
         // Write extensions
         writeExtensions(wptPt->extensions, wptPt->attributes, xmlWriter);
@@ -274,15 +275,40 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                 if (!trackPoint->links.isEmpty())
                     writeLinks(trackPoint->links, xmlWriter);
 
-                if (const auto trkpt = std::dynamic_pointer_cast<const WptPt>(trackPoint.shared_ptr()))
+                if (auto trkpt = std::const_pointer_cast<WptPt>(trackPoint.shared_ptr()))
                 {
                     // <hdop>
                     if (!qIsNaN(trkpt->horizontalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 7));
 
                     // <vdop>
                     if (!qIsNaN(trkpt->verticalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(trkpt->verticalDilutionOfPrecision, 'f', 12));
+                        xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(trkpt->verticalDilutionOfPrecision, 'f', 7));
+                    
+                    // TODO: refactor extensions to be Map<String, String> as in android and get rid of this code
+                    auto it = trkpt->extensions.begin();
+                    while (it != trkpt->extensions.end())
+                    {
+                        if ((*it)->name == QStringLiteral("speed") || (*it)->name == QStringLiteral("heading"))
+                            it = trkpt->extensions.erase(it);
+                        else
+                            ++it;
+                    }
+                    
+                    if (trkpt->speed > 0)
+                    {
+                        const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+                        extension->name = QStringLiteral("speed");
+                        extension->value = QString::number(trkpt->speed, 'f', 3);
+                        trkpt->extensions.append(extension);
+                    }
+                    if (!isnan(trkpt->heading))
+                    {
+                        const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+                        extension->name = QStringLiteral("heading");
+                        extension->value = QString::number(round(trkpt->heading), 'f', 1);
+                        trkpt->extensions.append(extension);
+                    }
                 }
 
                 // Write extensions
@@ -767,6 +793,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                                         wptPt->speed = speed;
                                 }
                             }
+                            else if (tag == QStringLiteral("heading"))
+                            {
+                                if (auto wptPt = std::dynamic_pointer_cast<WptPt>(parse))
+                                {
+                                    bool ok = true;
+                                    auto heading{ value.toDouble(&ok) };
+                                    if (ok)
+                                        wptPt->heading = heading;
+                                }
+                            }
                         }
                     }
                 }
@@ -998,11 +1034,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             auto speed{ value.toDouble(&ok) };
                             if (ok)
                                 wptPt->speed = speed;
-
-                            const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
-                            extension->name = QStringLiteral("speed");
-                            extension->value = value;
-                            wptPt->extensions.append(extension);
                         }
                     }
                     else if (tag == QStringLiteral("link"))
@@ -1229,6 +1260,7 @@ OsmAnd::GpxDocument::WptPt::WptPt()
         , elevation(std::numeric_limits<double>::quiet_NaN())
         , horizontalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
         , verticalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
+        , heading(std::numeric_limits<double>::quiet_NaN())
 {
 }
 

@@ -129,6 +129,7 @@ namespace OsmAnd
             double horizontalDilutionOfPrecision;
             double verticalDilutionOfPrecision;
             double speed;
+            double heading;
         };
 
         struct OSMAND_CORE_API RouteSegment
