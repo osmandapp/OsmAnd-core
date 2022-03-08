@@ -1539,7 +1539,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
             
             resourcesCollection->removeResources(
-                [this, activeZoom, activeTiles, &maxMissingDataUnderZoomShift, &needsResourcesUploadOrUnload]
+                [this, activeZoom, activeTiles, maxMissingDataUnderZoomShift, &needsResourcesUploadOrUnload]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
                 {
                     // If it was previously marked as junk, just leave it

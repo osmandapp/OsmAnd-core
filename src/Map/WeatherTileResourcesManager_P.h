@@ -70,6 +70,11 @@ namespace OsmAnd
         
         std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(const QDateTime& dateTime);
 
+        void obtainValueAsync(
+            const WeatherTileResourcesManager::ValueRequest& request,
+            const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
+        
         void obtainDataAsync(
             const WeatherTileResourcesManager::TileRequest& request,
             const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,

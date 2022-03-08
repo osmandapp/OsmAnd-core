@@ -8,6 +8,7 @@
 #include "GlobalMercator.h"
 #include "ArchiveReader.h"
 #include "FunctorQueryController.h"
+#include "GeoTileEvaluator.h"
 
 static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://test.osmand.net/weather/gfs/tiff/");
 
@@ -139,7 +140,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
     return nullptr;
 }
 
-bool OsmAnd::WeatherTileResourceProvider_P::downloadGeoTile(
+bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     const TileId tileId,
     const ZoomLevel zoom,
     QByteArray& outData,
@@ -157,13 +158,13 @@ bool OsmAnd::WeatherTileResourceProvider_P::downloadGeoTile(
             auto geoTileUrl = WEATHER_TILES_URL_PREFIX + dateTimeStr + "/"
                 + QString::number(zoom) + QStringLiteral("_")
                 + QString::number(tileId.x) + QStringLiteral("_")
-                + QString::number(tileId.y) + QStringLiteral(".tiff.gz");
+                + QString::number(15 - tileId.y) + QStringLiteral(".tiff.gz");
             
             auto filePath = localCachePath + QDir::separator()
                 + dateTimeStr + QStringLiteral("_")
                 + QString::number(zoom) + QStringLiteral("_")
                 + QString::number(tileId.x) + QStringLiteral("_")
-                + QString::number(tileId.y) + QStringLiteral(".tiff");
+                + QString::number(15 - tileId.y) + QStringLiteral(".tiff");
 
             auto filePathGz = filePath + QStringLiteral(".gz");
 
@@ -249,6 +250,17 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockTile(const TileId tileId, cons
     _waitUntilAnyTileIsProcessed.wakeAll();
 }
 
+void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
+    const WeatherTileResourceProvider::ValueRequest& request,
+    const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    const auto requestClone = request.clone();
+    ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
+    task->setAutoDelete(true);
+    _threadPool->start(task, getAndDecreasePriority());
+}
+
 void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
     const WeatherTileResourceProvider::TileRequest& request,
     const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
@@ -312,6 +324,58 @@ bool OsmAnd::WeatherTileResourceProvider_P::closeProvider()
     return true;
 }
 
+OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::ObtainValueTask(
+    std::shared_ptr<WeatherTileResourceProvider_P> provider,
+    const std::shared_ptr<WeatherTileResourceProvider::ValueRequest> request_,
+    const WeatherTileResourceProvider::ObtainValueAsyncCallback callback_,
+    const bool collectMetric_ /*= false*/)
+    : _provider(provider)
+    , request(request_)
+    , callback(callback_)
+    , collectMetric(collectMetric_)
+{
+}
+
+OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::~ObtainValueTask()
+{
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
+{
+    PointI point31 = request->point31;
+    ZoomLevel zoom = request->zoom;
+    auto band = request->band;
+    
+    const auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
+    const auto latLon = Utilities::convert31ToLatLon(point31);
+    const auto geoTileId = TileId::fromXY(
+        Utilities::getTileNumberX(geoTileZoom, latLon.longitude),
+        Utilities::getTileNumberY(geoTileZoom, latLon.latitude)
+    );
+    
+    QByteArray geoTileData;
+    if (_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData))
+    {
+        GeoTileEvaluator *evaluator = new GeoTileEvaluator(
+            geoTileId,
+            geoTileData,
+            zoom,
+            _provider->projResourcesPath
+        );
+        QHash<BandIndex, double> values;
+        if (evaluator->evaluate(latLon, values) && values.contains(band))
+            callback(true, values[band], nullptr);
+        else
+            callback(false, 0.0, nullptr);
+
+        delete evaluator;
+    }
+    else
+    {
+        callback(false, 0.0, nullptr);
+    }
+}
+
 OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::ObtainTileTask(
     std::shared_ptr<WeatherTileResourceProvider_P> provider,
     const std::shared_ptr<WeatherTileResourceProvider::TileRequest> request_,
@@ -362,7 +426,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
 
-    if (request->version != _provider->getCurrentRequestVersion())
+    if (request->version != _provider->getCurrentRequestVersion() && !request->ignoreVersion)
     {
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d. Version changed %d:%d", tileId.x, tileId.y, zoom, request->version, _provider->getCurrentRequestVersion());
@@ -429,29 +493,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
             return;
         }
     }
-    
-    auto dt = _provider->dateTime;
-    auto dateTimeStr = dt.toString(QStringLiteral("yyyyMMdd_hh00"));
-    
-    GlobalMercator mercator;
-        
-    double latExtent = 1.0;
-    double lonExtent = 1.0;
-    auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-    auto tlLatLon = Utilities::convert31ToLatLon(tileBBox31.topLeft);
-    auto brLatLon = Utilities::convert31ToLatLon(tileBBox31.bottomRight);
-    /*
-    auto tlExtLatLon = LatLon(Utilities::normalizeLatitude(tlLatLon.latitude + latExtent),
-                              Utilities::normalizeLongitude(tlLatLon.longitude - lonExtent));
-    auto brExtLatLon = LatLon(Utilities::normalizeLatitude(brLatLon.latitude - latExtent),
-                              Utilities::normalizeLongitude(brLatLon.longitude + lonExtent));
-     */
-    auto tlExtLatLon = LatLon(tlLatLon.latitude + latExtent, tlLatLon.longitude - lonExtent);
-    auto brExtLatLon = LatLon(brLatLon.latitude - latExtent, brLatLon.longitude + lonExtent);
-
-    //tlExtLatLon = LatLon(tlExtLatLon.latitude - fmod(tlExtLatLon.latitude, 0.25) + 0.125, tlExtLatLon.longitude - fmod(tlExtLatLon.longitude, 0.25) - 0.125);
-    //brExtLatLon = LatLon(brExtLatLon.latitude - fmod(brExtLatLon.latitude, 0.25) + 0.125, brExtLatLon.longitude - fmod(brExtLatLon.longitude, 0.25) + 0.125);
-    
+            
     ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     QByteArray geoTileData;
     TileId geoTileId;
@@ -467,15 +509,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     }
     else if (zoom > geoTileZoom)
     {
-        auto t = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
-        geoTileId = TileId::fromXY(t.x, 15 - t.y);
+        geoTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
     }
     else
     {
-        geoTileId = TileId::fromXY(tileId.x, 15 - tileId.y);
+        geoTileId = tileId;
     }
     
-    if (!_provider->downloadGeoTile(geoTileId, geoTileZoom, geoTileData) || geoTileData.isEmpty())
+    if (!_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData) || geoTileData.isEmpty())
     {
         _provider->unlockTile(tileId, zoom);
 
@@ -671,7 +712,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
     for (const auto& tileId : constOf(geoTileIds))
     {
         QByteArray data;
-        bool res = _provider->downloadGeoTile(tileId, geoTileZoom, data);
+        bool res = _provider->obtainGeoTile(tileId, geoTileZoom, data);
         callback(res, ++downloadedTiles, tilesCount, nullptr);
         
         if (request->queryController && request->queryController->isAborted())

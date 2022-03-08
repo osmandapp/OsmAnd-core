@@ -9,6 +9,7 @@
 #include <QMutex>
 #include <QQueue>
 #include <QSet>
+#include <QPair>
 #include <QReadWriteLock>
 #include <QThreadPool>
 #include <QWaitCondition>
@@ -27,6 +28,28 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(WeatherTileResourceProvider_P);
     private:
+        class OSMAND_CORE_API ObtainValueTask : public QRunnable
+        {
+            Q_DISABLE_COPY_AND_MOVE(ObtainValueTask);
+        private:
+            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
+            
+        protected:
+        public:
+            ObtainValueTask(
+                 const std::shared_ptr<WeatherTileResourceProvider_P> provider,
+                 const std::shared_ptr<WeatherTileResourceProvider::ValueRequest> request,
+                 const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
+                 const bool collectMetric = false);
+            virtual ~ObtainValueTask();
+            
+            const std::shared_ptr<WeatherTileResourceProvider::ValueRequest> request;
+            const WeatherTileResourceProvider::ObtainValueAsyncCallback callback;
+            const bool collectMetric;
+
+            virtual void run() Q_DECL_OVERRIDE;
+        };
+        
         class OSMAND_CORE_API ObtainTileTask : public QRunnable
         {
             Q_DISABLE_COPY_AND_MOVE(ObtainTileTask);
@@ -132,6 +155,11 @@ namespace OsmAnd
         const uint32_t tileSize;
         const float densityFactor;
 
+        void obtainValueAsync(
+            const WeatherTileResourceProvider::ValueRequest& request,
+            const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
+        
         void obtainDataAsync(
             const WeatherTileResourceProvider::TileRequest& request,
             const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
@@ -149,7 +177,7 @@ namespace OsmAnd
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
 
-        bool downloadGeoTile(
+        bool obtainGeoTile(
             const TileId tileId,
             const ZoomLevel zoom,
             QByteArray& outData,

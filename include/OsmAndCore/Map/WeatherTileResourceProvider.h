@@ -18,6 +18,7 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/LatLon.h>
+#include <OsmAndCore/Color.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/GeoCommonTypes.h>
 #include <OsmAndCore/Map/WeatherCommonTypes.h>
@@ -34,6 +35,22 @@ namespace OsmAnd
         PrivateImplementation<WeatherTileResourceProvider_P> _p;
         
     public:
+        struct OSMAND_CORE_API ValueRequest
+        {
+            ValueRequest();
+            ValueRequest(const ValueRequest& that);
+            virtual ~ValueRequest();
+
+            PointI point31;
+            ZoomLevel zoom;
+            BandIndex band;
+            
+            std::shared_ptr<const IQueryController> queryController;
+
+            static void copy(ValueRequest& dst, const ValueRequest& src);
+            virtual std::shared_ptr<ValueRequest> clone() const;
+        };
+        
         struct OSMAND_CORE_API TileRequest
         {
             TileRequest();
@@ -45,6 +62,7 @@ namespace OsmAnd
             QList<BandIndex> bands;
 
             int version;
+            bool ignoreVersion;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -89,6 +107,12 @@ namespace OsmAnd
             sk_sp<const SkImage> image;
         };
 
+        OSMAND_CALLABLE(ObtainValueAsyncCallback,
+            void,
+            const bool succeeded,
+            const double value,
+            const std::shared_ptr<Metric>& metric);
+        
         OSMAND_CALLABLE(ObtainTileDataAsyncCallback,
             void,
             const bool requestSucceeded,
@@ -117,6 +141,11 @@ namespace OsmAnd
 
         bool networkAccessAllowed;
 
+        virtual void obtainValueAsync(
+            const ValueRequest& request,
+            const ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
+        
         virtual void obtainDataAsync(
             const TileRequest& request,
             const ObtainTileDataAsyncCallback callback,

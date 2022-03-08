@@ -30,6 +30,14 @@ OsmAnd::WeatherTileResourceProvider::~WeatherTileResourceProvider()
 {
 }
 
+void OsmAnd::WeatherTileResourceProvider::obtainValueAsync(
+    const ValueRequest& request,
+    const ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainValueAsync(request, callback, collectMetric);
+}
+
 void OsmAnd::WeatherTileResourceProvider::obtainDataAsync(
     const TileRequest& request,
     const ObtainTileDataAsyncCallback callback,
@@ -117,10 +125,40 @@ bool OsmAnd::WeatherTileResourceProvider::closeProvider()
     return _p->closeProvider();
 }
 
+OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()
+    : point31(0, 0)
+    , zoom(ZoomLevel::InvalidZoomLevel)
+    , band(0)
+{
+}
+
+OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest(const ValueRequest& that)
+{
+    copy(*this, that);
+}
+
+OsmAnd::WeatherTileResourceProvider::ValueRequest::~ValueRequest()
+{
+}
+
+void OsmAnd::WeatherTileResourceProvider::ValueRequest::copy(ValueRequest& dst, const ValueRequest& src)
+{
+    dst.point31 = src.point31;
+    dst.zoom = src.zoom;
+    dst.band = src.band;
+    dst.queryController = src.queryController;
+}
+
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider::ValueRequest> OsmAnd::WeatherTileResourceProvider::ValueRequest::clone() const
+{
+    return std::shared_ptr<ValueRequest>(new ValueRequest(*this));
+}
+
 OsmAnd::WeatherTileResourceProvider::TileRequest::TileRequest()
     : tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
     , version(0)
+    , ignoreVersion(false)
 {
 }
 
@@ -140,6 +178,7 @@ void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, co
     dst.bands = src.bands;
     dst.queryController = src.queryController;
     dst.version = src.version;
+    dst.ignoreVersion = src.ignoreVersion;
 }
 
 std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::WeatherTileResourceProvider::TileRequest::clone() const

@@ -51,7 +51,7 @@ namespace OsmAnd
         const TileId tileId;
         const ZoomLevel zoom;
         const QList<BandIndex> bands;
-        const QHash<BandIndex, QString>& colorProfiles;
+        const QHash<BandIndex, QString> colorProfiles;
 
         const uint32_t tileSize;
         const float densityFactor;

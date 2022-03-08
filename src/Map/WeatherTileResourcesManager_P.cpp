@@ -101,6 +101,36 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const
     return WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(layer);
 }
 
+void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
+    const WeatherTileResourcesManager::ValueRequest& request,
+    const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    auto resourceProvider = getResourceProvider(request.dataTime);
+    if (resourceProvider)
+    {
+        WeatherTileResourceProvider::ValueRequest rr;
+        rr.point31 = request.point31;
+        rr.zoom = request.zoom;
+        rr.band = request.band;
+        rr.queryController = request.queryController;
+        
+        const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
+            [callback]
+            (const bool requestSucceeded,
+                const double value,
+                const std::shared_ptr<Metric>& metric)
+            {
+                callback(requestSucceeded, value, nullptr);
+            };
+        
+        resourceProvider->obtainValueAsync(rr, rc);
+    }
+    else
+    {
+        callback(false, 0, nullptr);
+    }
+}
 
 void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     const WeatherTileResourcesManager::TileRequest& request,

@@ -75,6 +75,14 @@ int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataUnderZoomShift(const W
     return _p->getMaxMissingDataUnderZoomShift(layer);
 }
 
+void OsmAnd::WeatherTileResourcesManager::obtainValueAsync(
+    const ValueRequest& request,
+    const ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainValueAsync(request, callback, collectMetric);
+}
+
 void OsmAnd::WeatherTileResourcesManager::obtainDataAsync(
     const TileRequest& request,
     const ObtainTileDataAsyncCallback callback,
@@ -100,6 +108,36 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
 bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const bool clearGeoCache, const bool clearRasterCache)
 {
     return _p->clearDbCache(clearGeoCache, clearRasterCache);
+}
+
+OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
+    : point31(0, 0)
+    , zoom(ZoomLevel::InvalidZoomLevel)
+    , band(0)
+{
+}
+
+OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest(const ValueRequest& that)
+{
+    copy(*this, that);
+}
+
+OsmAnd::WeatherTileResourcesManager::ValueRequest::~ValueRequest()
+{
+}
+
+void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, const ValueRequest& src)
+{
+    dst.dataTime = src.dataTime;
+    dst.point31 = src.point31;
+    dst.zoom = src.zoom;
+    dst.band = src.band;
+    dst.queryController = src.queryController;
+}
+
+std::shared_ptr<OsmAnd::WeatherTileResourcesManager::ValueRequest> OsmAnd::WeatherTileResourcesManager::ValueRequest::clone() const
+{
+    return std::shared_ptr<ValueRequest>(new ValueRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::TileRequest::TileRequest()
