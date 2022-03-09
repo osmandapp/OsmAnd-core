@@ -1167,7 +1167,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
             blockId.offset = treeNode->dataOffset;
 
-            if (cache && cache->shouldCacheBlock(blockId, treeNode->area31, bbox31))
+            bool isCoastlineObjects = isExpandedBBox && levelSkip;
+
+            if (cache && cache->shouldCacheBlock(blockId, treeNode->area31, bbox31) && !isCoastlineObjects)
             {
                 // In case cache is provided, read and cache
                 const auto levelZooms = Utilities::enumerateZoomLevels(treeNode->level->minZoom, treeNode->level->maxZoom);
@@ -1222,23 +1224,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     // Update metric
                     if (metric)
                         metric->mapObjectsBlocksRead++;
-                    
-                    bool isCoastlineObjects = isExpandedBBox && levelSkip;
-                    if (isCoastlineObjects)
-                    {
-                        // select only coastlines if they aren't entering in mapLevel area
-                        mapObjects = filterCoastline(mapObjects);
-                        if (mapObjects.size() == 0)
-                            continue;
-                    }
-
+                   
                     // Create a data block and share it
                     dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
-                    if (!isCoastlineObjects)
-                    {
-                        // avoid put to cache the coastline objects because this occur crash when read ussual data from cache
-                        cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
-                    }
+                    cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);                    
                 }
 
                 if (outReferencedCacheEntries)
