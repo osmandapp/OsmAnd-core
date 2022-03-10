@@ -204,7 +204,7 @@ namespace OsmAnd
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
         static void writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);
-        static void writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter);
+        static void writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp);
     public:
         GpxDocument();
         virtual ~GpxDocument();
