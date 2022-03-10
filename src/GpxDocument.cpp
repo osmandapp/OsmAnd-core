@@ -117,12 +117,14 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     //      version="1.1"
     //      creator="OsmAnd"
     //      xmlns="http://www.topografix.com/GPX/1/1"
+    //      xmlns:osmand="https://osmand.net"
     //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
     xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? QStringLiteral("OsmAnd Core") : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
+    xmlWriter.writeAttribute(QStringLiteral("xmlns:osmand"), QStringLiteral("https://osmand.net"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
     xmlWriter.writeAttribute(QStringLiteral("xsi:schemaLocation"), QStringLiteral("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
@@ -503,16 +505,16 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
     for (const auto& subextension : constOf(extensions))
-        writeExtension(subextension, xmlWriter);
+        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
 
     // </extensions>
     xmlWriter.writeEndElement();
 }
 
-void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter)
+void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp)
 {
     // <*>
-    xmlWriter.writeStartElement(extension->name);
+    xmlWriter.writeStartElement(namesp + extension->name);
     for (const auto attributeEntry : rangeOf(constOf(extension->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
@@ -520,7 +522,7 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
         xmlWriter.writeCharacters(extension->value);
 
     for (const auto& subextension : constOf(extension->subextensions))
-        writeExtension(subextension, xmlWriter);
+        writeExtension(subextension, xmlWriter, QStringLiteral(""));
 
     // assignRouteExtensionWriter(segment);
     // </*>
