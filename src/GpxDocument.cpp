@@ -505,7 +505,7 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
     for (const auto& subextension : constOf(extensions))
-        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
+        writeExtension(subextension, xmlWriter, QStringLiteral("osmand"));
 
     // </extensions>
     xmlWriter.writeEndElement();
@@ -514,7 +514,7 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
 void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp)
 {
     // <*>
-    xmlWriter.writeStartElement(namesp + extension->name);
+    xmlWriter.writeStartElement(namesp, extension->name);
     for (const auto attributeEntry : rangeOf(constOf(extension->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
@@ -533,6 +533,7 @@ bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename) c
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
+    xmlWriter.writeNamespace(QStringLiteral("osmand"), QStringLiteral("osmand"));
     return saveTo(xmlWriter, filename);
 }
 
