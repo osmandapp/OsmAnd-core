@@ -57,6 +57,7 @@ namespace OsmAnd
             TileRequest(const TileRequest& that);
             virtual ~TileRequest();
 
+            WeatherType weatherType;
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;

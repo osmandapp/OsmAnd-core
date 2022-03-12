@@ -59,6 +59,7 @@ namespace OsmAnd
             virtual ~TileRequest();
 
             WeatherLayer weatherLayer;
+            WeatherType weatherType;
             QDateTime dataTime;
             TileId tileId;
             ZoomLevel zoom;
@@ -151,9 +152,10 @@ namespace OsmAnd
         float getDensityFactor() const;
         
         ZoomLevel getGeoTileZoom() const;
-        ZoomLevel getTileZoom(const WeatherLayer layer) const;
-        int getMaxMissingDataZoomShift(const WeatherLayer layer) const;
-        int getMaxMissingDataUnderZoomShift(const WeatherLayer layer) const;
+        ZoomLevel getMinTileZoom(const WeatherType type, const WeatherLayer layer) const;
+        ZoomLevel getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const;
+        int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
+        int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
         
         virtual void obtainValueAsync(
             const ValueRequest& request,

@@ -231,23 +231,42 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockGeoTile(const TileId tileId, c
     _waitUntilAnyGeoTileIsProcessed.wakeAll();
 }
 
-void OsmAnd::WeatherTileResourceProvider_P::lockTile(const TileId tileId, const ZoomLevel zoom)
+void OsmAnd::WeatherTileResourceProvider_P::lockRasterTile(const TileId tileId, const ZoomLevel zoom)
 {
-    QMutexLocker scopedLocker(&_tilesInProcessMutex);
+    QMutexLocker scopedLocker(&_rasterTilesInProcessMutex);
 
-    while(_tilesInProcess[zoom].contains(tileId))
-        _waitUntilAnyTileIsProcessed.wait(&_tilesInProcessMutex);
+    while(_rasterTilesInProcess[zoom].contains(tileId))
+        _waitUntilAnyRasterTileIsProcessed.wait(&_rasterTilesInProcessMutex);
 
-    _tilesInProcess[zoom].insert(tileId);
+    _rasterTilesInProcess[zoom].insert(tileId);
 }
 
-void OsmAnd::WeatherTileResourceProvider_P::unlockTile(const TileId tileId, const ZoomLevel zoom)
+void OsmAnd::WeatherTileResourceProvider_P::unlockRasterTile(const TileId tileId, const ZoomLevel zoom)
 {
-    QMutexLocker scopedLocker(&_tilesInProcessMutex);
+    QMutexLocker scopedLocker(&_rasterTilesInProcessMutex);
 
-    _tilesInProcess[zoom].remove(tileId);
+    _rasterTilesInProcess[zoom].remove(tileId);
 
-    _waitUntilAnyTileIsProcessed.wakeAll();
+    _waitUntilAnyRasterTileIsProcessed.wakeAll();
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::lockContourTile(const TileId tileId, const ZoomLevel zoom)
+{
+    QMutexLocker scopedLocker(&_contourTilesInProcessMutex);
+
+    while(_contourTilesInProcess[zoom].contains(tileId))
+        _waitUntilAnyContourTileIsProcessed.wait(&_contourTilesInProcessMutex);
+
+    _contourTilesInProcess[zoom].insert(tileId);
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::unlockContourTile(const TileId tileId, const ZoomLevel zoom)
+{
+    QMutexLocker scopedLocker(&_contourTilesInProcessMutex);
+
+    _contourTilesInProcess[zoom].remove(tileId);
+
+    _waitUntilAnyContourTileIsProcessed.wakeAll();
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
@@ -267,7 +286,9 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
     const bool collectMetric /*= false*/)
 {
     const auto requestClone = request.clone();
-    requestClone->version = getAndUpdateRequestVersion(requestClone);
+    if (requestClone->weatherType == WeatherType::Raster)
+        requestClone->version = getAndUpdateRequestVersion(requestClone);
+
     ObtainTileTask *task = new ObtainTileTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
     _threadPool->start(task, getAndDecreasePriority());
@@ -422,6 +443,21 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::crea
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
 {
+    switch (request->weatherType)
+    {
+        case WeatherType::Raster:
+            obtainRasterTile();
+            break;
+        case WeatherType::Contour:
+            obtainContourTile();
+            break;
+        default:
+            break;
+    }
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
+{
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
@@ -443,7 +479,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
         return;
     }
     
-    _provider->lockTile(tileId, zoom);
+    _provider->lockRasterTile(tileId, zoom);
 
     QList<BandIndex> missingBands;
     QHash<BandIndex, sk_sp<const SkImage>> images;
@@ -470,7 +506,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     }
     if (missingBands.empty())
     {
-        _provider->unlockTile(tileId, zoom);
+        _provider->unlockRasterTile(tileId, zoom);
 
         auto image = createTileImage(images, bands);
         if (image)
@@ -499,7 +535,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     TileId geoTileId;
     if (zoom < geoTileZoom)
     {
-        _provider->unlockTile(tileId, zoom);
+        _provider->unlockRasterTile(tileId, zoom);
 
         // Underzoom for geo tiles currently not supported
         LogPrintf(LogSeverityLevel::Error,
@@ -518,7 +554,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     
     if (!_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData) || geoTileData.isEmpty())
     {
-        _provider->unlockTile(tileId, zoom);
+        _provider->unlockRasterTile(tileId, zoom);
 
         LogPrintf(LogSeverityLevel::Error,
             "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
@@ -527,7 +563,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     }
     if (request->queryController && request->queryController->isAborted())
     {
-        _provider->unlockTile(tileId, zoom);
+        _provider->unlockRasterTile(tileId, zoom);
 
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
@@ -560,7 +596,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
 
     if (request->queryController && request->queryController->isAborted())
     {
-        _provider->unlockTile(tileId, zoom);
+        _provider->unlockRasterTile(tileId, zoom);
 
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
@@ -587,7 +623,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
         }
     }
     
-    _provider->unlockTile(tileId, zoom);
+    _provider->unlockRasterTile(tileId, zoom);
     
     if (request->version != _provider->getCurrentRequestVersion())
     {
@@ -630,6 +666,139 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to create tile image of non rasterized weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
+        callback(false, nullptr, nullptr);
+        return;
+    }
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
+{
+    TileId tileId = request->tileId;
+    ZoomLevel zoom = request->zoom;
+    auto bands = request->bands;
+
+    if (request->queryController && request->queryController->isAborted())
+    {
+        LogPrintf(LogSeverityLevel::Debug,
+            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    
+    _provider->lockContourTile(tileId, zoom);
+
+    QHash<BandIndex, sk_sp<const SkImage>> images;
+                
+    ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
+    QByteArray geoTileData;
+    TileId geoTileId;
+    if (zoom < geoTileZoom)
+    {
+        _provider->unlockContourTile(tileId, zoom);
+
+        // Underzoom for geo tiles currently not supported
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to resolve geoTileId for weather contour tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).", tileId.x, tileId.y, zoom, geoTileZoom, zoom);
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    else if (zoom > geoTileZoom)
+    {
+        geoTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
+    }
+    else
+    {
+        geoTileId = tileId;
+    }
+    
+    if (!_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData) || geoTileData.isEmpty())
+    {
+        _provider->unlockContourTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Error,
+            "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    if (request->queryController && request->queryController->isAborted())
+    {
+        _provider->unlockContourTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Debug,
+            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    
+    GeoTileRasterizer *rasterizer = new GeoTileRasterizer(
+        geoTileData,
+        request->tileId,
+        request->zoom,
+        bands,
+        _provider->bandColorProfilePaths,
+        _provider->tileSize,
+        _provider->densityFactor,
+        _provider->projResourcesPath
+    );
+    
+    const auto rasterizeQueryController = std::make_shared<FunctorQueryController>(
+        [this]
+        (const FunctorQueryController* const queryController) -> bool
+        {
+            return request->queryController && request->queryController->isAborted();
+        });
+    const auto rasterizedContours = rasterizer->rasterizeContours(nullptr, rasterizeQueryController);
+    delete rasterizer;
+
+    if (request->queryController && request->queryController->isAborted())
+    {
+        _provider->unlockContourTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Debug,
+            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    
+    _provider->unlockContourTile(tileId, zoom);
+    
+    if (rasterizedContours.empty())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed rasterize weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+    }
+    images.insert(rasterizedContours);
+    if (!images.empty())
+    {
+        //auto image = createTileImage(images, bands);
+        auto image = images.values().first();
+        if (image)
+        {
+            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
+                tileId,
+                zoom,
+                AlphaChannelPresence::Present,
+                _provider->densityFactor,
+                image
+            );
+            callback(true, data, nullptr);
+            return;
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to create tile image of rasterized weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+            callback(false, nullptr, nullptr);
+            return;
+        }
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to create tile image of non rasterized weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
         callback(false, nullptr, nullptr);
         return;
     }

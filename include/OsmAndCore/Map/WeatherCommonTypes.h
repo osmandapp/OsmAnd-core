@@ -14,6 +14,14 @@ namespace OsmAnd
         Low = 0,
         High = 1,
     };
+
+    enum class WeatherType
+    {
+        Undefined = -1,
+        
+        Raster = 0,
+        Contour = 1,
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_WEATHER_COMMON_TYPES_H_)

@@ -47,7 +47,8 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
 
     // Map data to VSI memory
     auto geoTileData(owner->geoTileData);
-    const auto filename = QString::asprintf("/vsimem/geoTile@%p_%dx%dx%d_eval_source", this, (int) zoom, geoTileId.x, geoTileId.y);
+    const auto filename = QString::asprintf("/vsimem/geoTile@%p_%dx%dx%d_%s_eval_source",
+        this, (int) zoom, geoTileId.x, geoTileId.y, qPrintable(latLon.toQString()));
     const auto file = VSIFileFromMemBuffer(
         qPrintable(filename),
         reinterpret_cast<GByte*>(geoTileData.data()),
@@ -135,7 +136,8 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
         return false;
     }
         
-    const auto zoomCoef = Utilities::getPowZoom(zoom - geoTileZoom);
+    auto zoomCoef = Utilities::getPowZoom(zoom - geoTileZoom);
+    zoomCoef = zoomCoef > 64.0 ? 64.0 : zoomCoef;
     
     int originMatrixSize = 4;
     int matrixSize = (int)(originMatrixSize * zoomCoef);
@@ -206,12 +208,12 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
 
             outData.insert(band, value);
 
-            LogPrintf(LogSeverityLevel::Debug,
-                      "Evaluated geotiff at %s@%d = %f",
-                      qPrintable(latLon.toQString()), band, value);
+//            LogPrintf(LogSeverityLevel::Debug,
+//                      "Evaluated geotiff at %s@%d = %f",
+//                      qPrintable(latLon.toQString()), band, value);
         }
     }
     
-    //CPLFree(pBuffer);
+    CPLFree(pBuffer);
     return true;
 }

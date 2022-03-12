@@ -66,6 +66,7 @@ file(GLOB gdal_ogr_ogrfs_frmts_kml "upstream.patched/gdal/ogr/ogrsf_frmts/kml/*.
 file(GLOB gdal_ogr_ogrfs_frmts_mem "upstream.patched/gdal/ogr/ogrsf_frmts/mem/*.c*")
 file(GLOB gdal_ogr_ogrfs_frmts_mitab "upstream.patched/gdal/ogr/ogrsf_frmts/mitab/*.c*")
 file(GLOB gdal_ogr_ogrfs_frmts_vrt "upstream.patched/gdal/ogr/ogrsf_frmts/vrt/*.c*")
+file(GLOB gdal_ogr_ogrfs_frmts_shape "upstream.patched/gdal/ogr/ogrsf_frmts/shape/*.c*")
 
 set(gdal_port
 	"upstream.patched/gdal/port/cpl_alibaba_oss.cpp"
@@ -171,6 +172,7 @@ add_library(gdal_static STATIC
 	${gdal_ogr_ogrfs_frmts_mem}
 	${gdal_ogr_ogrfs_frmts_mitab}
 	${gdal_ogr_ogrfs_frmts_vrt}
+	${gdal_ogr_ogrfs_frmts_shape}
 	${gdal_port}
 	${target_specific_sources}
 )
@@ -188,6 +190,7 @@ target_compile_definitions(gdal_static
 		-DFRMT_mem
 		-DFRMT_png
 		-DFRMT_vrt
+		-DSHAPE_ENABLED=1
 		${target_specific_private_definitions}
 	PUBLIC
 		-DCPL_DLL=
@@ -217,6 +220,7 @@ target_include_directories(gdal_static
 		"upstream.patched/gdal/ogr/ogrsf_frmts/geojson/libjson"
 		"upstream.patched/gdal/ogr/ogrsf_frmts/mem"
 		"upstream.patched/gdal/ogr/ogrsf_frmts/vrt"
+		"upstream.patched/gdal/ogr/ogrsf_frmts/shape"
 		"upstream.patched/gdal/port"
 )
 target_link_libraries(gdal_static

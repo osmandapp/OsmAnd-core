@@ -60,19 +60,24 @@ OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager::getGeoTileZoom() const
     return _p->getGeoTileZoom();
 }
 
-OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager::getTileZoom(const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager::getMinTileZoom(const WeatherType type, const WeatherLayer layer) const
 {
-    return _p->getTileZoom(layer);
+    return _p->getMinTileZoom(type, layer);
 }
 
-int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataZoomShift(const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager::getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const
 {
-    return _p->getMaxMissingDataZoomShift(layer);
+    return _p->getMaxTileZoom(type, layer);
 }
 
-int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataUnderZoomShift(const WeatherLayer layer) const
+int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const
 {
-    return _p->getMaxMissingDataUnderZoomShift(layer);
+    return _p->getMaxMissingDataZoomShift(type, layer);
+}
+
+int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const
+{
+    return _p->getMaxMissingDataUnderZoomShift(type, layer);
 }
 
 void OsmAnd::WeatherTileResourcesManager::obtainValueAsync(
@@ -88,12 +93,27 @@ void OsmAnd::WeatherTileResourcesManager::obtainDataAsync(
     const ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    if (request.zoom != getTileZoom(request.weatherLayer))
+    bool accept = false;
+    switch (request.weatherType)
+    {
+        case WeatherType::Raster:
+            accept = request.zoom == getMinTileZoom(WeatherType::Raster, request.weatherLayer)
+                || request.zoom == getMaxTileZoom(WeatherType::Raster, request.weatherLayer);
+            break;
+        case WeatherType::Contour:
+            accept = request.zoom >= getMinTileZoom(WeatherType::Contour, request.weatherLayer)
+                && request.zoom <= getMaxTileZoom(WeatherType::Contour, request.weatherLayer);
+            break;
+        default:
+            accept = false;
+            break;
+    }
+    
+    if (!accept)
     {
         callback(false, nullptr, nullptr);
         return;
     }
-
     _p->obtainDataAsync(request, callback, collectMetric);
 }
 
@@ -142,6 +162,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::ValueRequest> OsmAnd::Weath
 
 OsmAnd::WeatherTileResourcesManager::TileRequest::TileRequest()
     : weatherLayer(WeatherLayer::Undefined)
+    , weatherType(WeatherType::Raster)
     , tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
 {
@@ -159,6 +180,7 @@ OsmAnd::WeatherTileResourcesManager::TileRequest::~TileRequest()
 void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, const TileRequest& src)
 {
     dst.weatherLayer = src.weatherLayer;
+    dst.weatherType = src.weatherType;
     dst.dataTime = src.dataTime;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;

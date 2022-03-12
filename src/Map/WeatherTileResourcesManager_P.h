@@ -64,10 +64,11 @@ namespace OsmAnd
         const float densityFactor;
 
         ZoomLevel getGeoTileZoom() const;
-        ZoomLevel getTileZoom(const WeatherLayer layer) const;
-        int getMaxMissingDataZoomShift(const WeatherLayer layer) const;
-        int getMaxMissingDataUnderZoomShift(const WeatherLayer layer) const;
-        
+        ZoomLevel getMinTileZoom(const WeatherType type, const WeatherLayer layer) const;
+        ZoomLevel getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const;
+        int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
+        int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
+
         std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(const QDateTime& dateTime);
 
         void obtainValueAsync(

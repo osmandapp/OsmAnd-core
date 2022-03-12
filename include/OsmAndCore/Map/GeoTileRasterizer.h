@@ -65,6 +65,15 @@ namespace OsmAnd
             QHash<BandIndex, QByteArray>& outEncImgData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        virtual QHash<BandIndex, sk_sp<const SkImage>> rasterizeContours(
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        virtual QHash<BandIndex, sk_sp<const SkImage>> rasterizeContours(
+            QHash<BandIndex, QByteArray>& outEncImgData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };
 }
 

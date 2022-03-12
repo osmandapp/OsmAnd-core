@@ -9,6 +9,8 @@
 #include <QQueue>
 #include <QSet>
 
+#include <gdal.h>
+
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
@@ -30,6 +32,30 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
+        sk_sp<SkImage> rasterizeContours(
+            GDALDatasetH hDataset,
+            const OsmAnd::BandIndex band,
+            double levelInterval,
+            sk_sp<const SkImage> image,
+            const AreaI tileBBox31,
+            const ZoomLevel zoom);
+
+        QHash<BandIndex, sk_sp<const SkImage>> rasterizeContours(
+            QHash<BandIndex, QByteArray>& outEncImgData,
+            bool fillEncImgData = false,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        sk_sp<SkImage> rasterizeContours(
+            GDALDatasetH hDataset,
+            const OsmAnd::BandIndex band,
+            double levelInterval,
+            const AreaI tileBBox31,
+            const ZoomLevel zoom,
+            const int width,
+            const int height);
+
+
     protected:
         GeoTileRasterizer_P(GeoTileRasterizer* const owner);
         
@@ -43,6 +69,15 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         QHash<BandIndex, sk_sp<const SkImage>> rasterize(
+            QHash<BandIndex, QByteArray>& outEncImgData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        QHash<BandIndex, sk_sp<const SkImage>> rasterizeContours(
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        QHash<BandIndex, sk_sp<const SkImage>> rasterizeContours(
             QHash<BandIndex, QByteArray>& outEncImgData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);

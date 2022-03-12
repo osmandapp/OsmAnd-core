@@ -155,7 +155,8 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::ValueRequest> OsmAnd::Weath
 }
 
 OsmAnd::WeatherTileResourceProvider::TileRequest::TileRequest()
-    : tileId(TileId::zero())
+    : weatherType(WeatherType::Raster)
+    , tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
     , version(0)
     , ignoreVersion(false)
@@ -173,6 +174,7 @@ OsmAnd::WeatherTileResourceProvider::TileRequest::~TileRequest()
 
 void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, const TileRequest& src)
 {
+    dst.weatherType = src.weatherType;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;

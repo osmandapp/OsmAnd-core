@@ -59,7 +59,10 @@ namespace OsmAnd
             sk_sp<const SkImage> createTileImage(
                 const QHash<BandIndex, sk_sp<const SkImage>>& bandImages,
                 const QList<BandIndex>& bands);
-            
+
+            void obtainRasterTile();
+            void obtainContourTile();
+
         protected:
         public:
             ObtainTileTask(
@@ -115,17 +118,21 @@ namespace OsmAnd
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;
         QWaitCondition _waitUntilAnyGeoTileIsProcessed;
-
-        mutable QMutex _tilesInProcessMutex;
-        std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
-        QWaitCondition _waitUntilAnyTileIsProcessed;
         
         mutable QReadWriteLock _geoDbLock;
         std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
 
+        mutable QMutex _rasterTilesInProcessMutex;
+        std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
+        QWaitCondition _waitUntilAnyRasterTileIsProcessed;
+
         mutable QReadWriteLock _rasterDbLock;
         QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
         std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
+
+        mutable QMutex _contourTilesInProcessMutex;
+        std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
+        QWaitCondition _waitUntilAnyContourTileIsProcessed;
 
     protected:
         WeatherTileResourceProvider_P(
@@ -182,12 +189,14 @@ namespace OsmAnd
             const ZoomLevel zoom,
             QByteArray& outData,
             bool forceDownload = false);
+
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
+        void lockRasterTile(const TileId tileId, const ZoomLevel zoom);
+        void unlockRasterTile(const TileId tileId, const ZoomLevel zoom);
+        void lockContourTile(const TileId tileId, const ZoomLevel zoom);
+        void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
-        void lockTile(const TileId tileId, const ZoomLevel zoom);
-        void unlockTile(const TileId tileId, const ZoomLevel zoom);
-        
         std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
 

@@ -86,19 +86,57 @@ OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getGeoTileZoom() const
     return WeatherTileResourceProvider::getGeoTileZoom();
 }
 
-OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getTileZoom(const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMinTileZoom(const WeatherType type, const WeatherLayer layer) const
 {
-    return WeatherTileResourceProvider::getTileZoom(layer);
+    switch (type)
+    {
+        case WeatherType::Raster:
+            return WeatherTileResourceProvider::getTileZoom(layer);
+        case WeatherType::Contour:
+            return WeatherTileResourceProvider::getTileZoom(WeatherLayer::Low);
+        default:
+            return ZoomLevel::MinZoomLevel;
+    }
 }
 
-int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataZoomShift(const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const
 {
-    return WeatherTileResourceProvider::getMaxMissingDataZoomShift(layer);
+    switch (type)
+    {
+        case WeatherType::Raster:
+            return WeatherTileResourceProvider::getTileZoom(layer);
+        case WeatherType::Contour:
+            return (OsmAnd::ZoomLevel)(WeatherTileResourceProvider::getTileZoom(WeatherLayer::High)
+                + WeatherTileResourceProvider::getMaxMissingDataZoomShift(WeatherLayer::High));
+        default:
+            return ZoomLevel::MaxZoomLevel;
+    }
 }
 
-int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const WeatherLayer layer) const
+int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const
 {
-    return WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(layer);
+    switch (type)
+    {
+        case WeatherType::Raster:
+            return WeatherTileResourceProvider::getMaxMissingDataZoomShift(layer);
+        case WeatherType::Contour:
+            return 0;
+        default:
+            return 0;
+    }
+}
+
+int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const
+{
+    switch (type)
+    {
+        case WeatherType::Raster:
+            return WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(layer);
+        case WeatherType::Contour:
+            return 0;
+        default:
+            return 0;
+    }
 }
 
 void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
@@ -141,6 +179,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
+        rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
         rr.bands = request.bands;
