@@ -301,14 +301,14 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                     {
                         const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
                         extension->name = QStringLiteral("speed");
-                        extension->value = QString::number(trkpt->speed, 'f', 3);
+                        extension->value = QString::number(trkpt->speed, 'f', 1);
                         trkpt->extensions.append(extension);
                     }
                     if (!isnan(trkpt->heading))
                     {
                         const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
                         extension->name = QStringLiteral("heading");
-                        extension->value = QString::number(round(trkpt->heading), 'f', 1);
+                        extension->value = QString::number(round(trkpt->heading), 'f', 0);
                         trkpt->extensions.append(extension);
                     }
                 }
