@@ -31,15 +31,14 @@ namespace OsmAnd
 
     class VectorLine_P;
 
-    typedef crushedpixel::Polyline2D::EndCapStyle LineEndCapStyle;
-    typedef enum
-    {
-        kRoundJoinType = 0,
-        kBezelJoinType,
-        kMiterJoinType
-        
-    } kVectorLineJoinType;
-    
+    enum LineEndCapStyle {
+		BUTT,
+		SQUARE,		
+		ROUND,		
+		JOINT,        
+        ARROW
+	};
+   
     class OSMAND_CORE_API VectorLine
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLine);

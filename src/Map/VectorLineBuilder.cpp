@@ -185,6 +185,13 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const LineE
     return *this;
 }
 
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const int endCapStyle)
+{
+    _p->setEndCapStyle(static_cast<LineEndCapStyle>(endCapStyle));
+    
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getColorizationScheme() const
 {
     return _p->getColorizationScheme();

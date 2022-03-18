@@ -524,3 +524,9 @@ int32_t OsmAnd::MapObject::getLabelCoordinateY() const
         int32_t label31Y = (average + labelY) << LABEL_SHIFT;
         return label31Y;
 }
+
+QString OsmAnd::MapObject::debugInfo(long id, bool all) const
+{
+    QString s;
+    return s;
+}

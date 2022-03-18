@@ -14,6 +14,7 @@
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/VectorLine.h>
 
+typedef QList<std::shared_ptr<OsmAnd::VectorLine>> QListVectorLine;
 namespace OsmAnd
 {
     class VectorLineBuilder;
@@ -31,7 +32,7 @@ namespace OsmAnd
         VectorLinesCollection();
         virtual ~VectorLinesCollection();
 
-        QList< std::shared_ptr<VectorLine> > getLines() const;
+        QListVectorLine getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
 

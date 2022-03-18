@@ -925,7 +925,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     subvector, radius * 2,
                     _fillColor, colors,
                     crushedpixel::Polyline2D::JointStyle::ROUND,
-                    owner->endCapStyle);
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
                 prevIdx = idx - 1;
             }
             const auto begin = original.begin() + prevIdx;
@@ -941,7 +941,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 subvector, radius * 2,
                 _fillColor, colors,
                 crushedpixel::Polyline2D::JointStyle::ROUND,
-                owner->endCapStyle);
+                static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
         }
         else
         {
@@ -951,7 +951,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 original, radius * 2,
                 _fillColor, filteredColorsMap,
                 crushedpixel::Polyline2D::JointStyle::ROUND,
-                owner->endCapStyle);
+                static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
         }
     }
     if (vertices.size() == 0)

@@ -13,7 +13,7 @@ OsmAnd::VectorLinesCollection_P::~VectorLinesCollection_P()
 {
 }
 
-QList< std::shared_ptr<OsmAnd::VectorLine> > OsmAnd::VectorLinesCollection_P::getLines() const
+QListVectorLine OsmAnd::VectorLinesCollection_P::getLines() const
 {
     QReadLocker scopedLocker(&_linesLock);
 

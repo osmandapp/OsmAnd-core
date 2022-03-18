@@ -12,7 +12,7 @@ OsmAnd::VectorLinesCollection::~VectorLinesCollection()
 {
 }
 
-QList< std::shared_ptr<OsmAnd::VectorLine> > OsmAnd::VectorLinesCollection::getLines() const
+QListVectorLine OsmAnd::VectorLinesCollection::getLines() const
 {
     return _p->getLines();
 }

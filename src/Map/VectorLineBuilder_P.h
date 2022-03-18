@@ -109,6 +109,7 @@ namespace OsmAnd
         void setScreenScale(const float screenScale);
         
         void setEndCapStyle(const LineEndCapStyle endCapStyle);
+        void setEndCapStyle(const int endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();
