@@ -84,7 +84,8 @@ namespace OsmAnd
         float getScreenScale() const;
         VectorLineBuilder& setScreenScale(const float step);
         
-        VectorLineBuilder& setEndCapStyle(const LineEndCapStyle endCapStyle);
+        VectorLineBuilder& setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);
+        VectorLineBuilder& setEndCapStyle(const int endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

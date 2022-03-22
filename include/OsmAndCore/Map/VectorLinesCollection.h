@@ -31,7 +31,7 @@ namespace OsmAnd
         VectorLinesCollection();
         virtual ~VectorLinesCollection();
 
-        QList< std::shared_ptr<VectorLine> > getLines() const;
+        QList<std::shared_ptr<OsmAnd::VectorLine>> getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
 
