@@ -54,7 +54,8 @@ namespace OsmAnd
         sk_sp<const SkImage> _specialPathIcon;
         float _pathIconStep;
         float _screenScale;
- 
+        float _iconScale;
+
     public:
         virtual ~VectorLineBuilder_P();
 
@@ -107,7 +108,8 @@ namespace OsmAnd
         
         float getScreenScale() const;
         void setScreenScale(const float screenScale);
-        
+        void setIconScale(const float iconScale);
+
         void setEndCapStyle(const LineEndCapStyle endCapStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);

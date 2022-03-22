@@ -254,6 +254,13 @@ void OsmAnd::VectorLineBuilder_P::setScreenScale(const float screenScale)
     _screenScale = screenScale;
 }
 
+void OsmAnd::VectorLineBuilder_P::setIconScale(const float iconScale)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _iconScale = iconScale;
+}
+
 void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const LineEndCapStyle endCapStyle)
 {
     QWriteLocker scopedLocker(&_lock);
@@ -288,6 +295,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _specialPathIcon,
                                                           _pathIconStep,
                                                           _screenScale,
+                                                          _iconScale,
                                                           _endCapStyle));
     line->setLineWidth(_lineWidth);
     line->setShowArrows(_showArrows);

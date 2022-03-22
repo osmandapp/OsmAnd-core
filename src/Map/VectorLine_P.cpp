@@ -21,9 +21,9 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define TRACK_WIDTH_THRESHOLD 15.0f
+#define TRACK_WIDTH_THRESHOLD 12.0f
 #define ARROW_DISTANCE_MULTIPLIER 1.5f
-#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 3.0f
 
 // Colorization shemes
 #define COLORIZATION_NONE 0
@@ -170,7 +170,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         {
             double newWidth = _lineWidth / 3;
             double scale = newWidth / owner->pathIcon->width();
-            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
+            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale / owner->iconScale, 1);
         }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -1200,7 +1200,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
+    return _lineWidth / 3 <= TRACK_WIDTH_THRESHOLD * owner->iconScale && owner->specialPathIcon != nullptr;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
@@ -1209,7 +1209,7 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
     {
         return owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
     }
-    return _scaledPathIcon->height() * ARROW_DISTANCE_MULTIPLIER;
+    return _scaledPathIcon->height() + ((_lineWidth / 3) * ARROW_DISTANCE_MULTIPLIER);
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
