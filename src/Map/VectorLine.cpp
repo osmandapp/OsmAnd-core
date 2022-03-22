@@ -9,7 +9,7 @@ OsmAnd::VectorLine::VectorLine(
     const float pathIconStep_/* = -1*/,
     const float screenScale_/* = 2*/,
     const float iconScale_/* = 1*/,
-    const LineEndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
+    const VectorLine::EndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)

@@ -185,9 +185,16 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setIconScale(const float i
     return *this;
 }
 
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const LineEndCapStyle endCapStyle)
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const VectorLine::EndCapStyle endCapStyle)
 {
     _p->setEndCapStyle(endCapStyle);
+    
+    return *this;
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const int endCapStyle)
+{
+    _p->setEndCapStyle(static_cast<VectorLine::EndCapStyle>(endCapStyle));
     
     return *this;
 }
