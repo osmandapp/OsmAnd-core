@@ -527,6 +527,5 @@ int32_t OsmAnd::MapObject::getLabelCoordinateY() const
 
 QString OsmAnd::MapObject::debugInfo(long id, bool all) const
 {
-    QString s;
-    return s;
+    return QString();
 }

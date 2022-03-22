@@ -327,6 +327,7 @@ using namespace OsmAnd;
 #ifdef SWIG_JAVA
 	%template(QVectorPointI) QVector<OsmAnd::Point<int32_t>>;
 	%template(QListVectorLine) QList<std::shared_ptr<OsmAnd::VectorLine>>;
+	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
