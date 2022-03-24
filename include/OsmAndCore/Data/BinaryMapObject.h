@@ -40,6 +40,7 @@ namespace OsmAnd
 
         // Layers
         virtual LayerType getLayerType() const;
+        QString debugInfo(long id, bool all) const;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     };

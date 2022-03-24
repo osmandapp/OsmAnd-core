@@ -142,6 +142,7 @@ namespace OsmAnd
         virtual QString getCaptionInLanguage(const QString& lang) const;
         virtual QHash<QString, QString> getCaptionsInAllLanguages() const;
         virtual QString getName(const QString lang, bool transliterate) const;
+        virtual QString debugInfo(long id, bool all) const;
 
         // Default encoding-decoding rules
         static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;

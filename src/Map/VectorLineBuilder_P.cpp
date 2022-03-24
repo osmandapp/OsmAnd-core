@@ -16,7 +16,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _lineId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _colorizationScheme(0)
-    , _endCapStyle(LineEndCapStyle::ROUND)
+    , _endCapStyle(VectorLine::EndCapStyle::ROUND)
     , _outlineWidth(0)
     , _lineWidth(3.0)
     , _direction(0.0f)
@@ -254,7 +254,7 @@ void OsmAnd::VectorLineBuilder_P::setScreenScale(const float screenScale)
     _screenScale = screenScale;
 }
 
-void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const LineEndCapStyle endCapStyle)
+void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const VectorLine::EndCapStyle endCapStyle)
 {
     QWriteLocker scopedLocker(&_lock);
 

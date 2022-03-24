@@ -60,3 +60,27 @@ OsmAnd::MapObject::LayerType OsmAnd::BinaryMapObject::getLayerType() const
 
     return LayerType::Zero;
 }
+
+QString OsmAnd::BinaryMapObject::debugInfo(long i, bool all) const
+{
+    QString s = "";
+    if (all || i == id.id)
+    {
+        s = id.toString();
+        for (const auto& caption : captions.values())
+        {
+            s.append(" \"" + caption + "\"");
+        }
+        for (int i = 0; i < attributeIds.size(); i++)
+        {
+            const AttributeMapping::TagValue* tagVal = resolveAttributeByIndex(i, false);
+            s.append(" " + tagVal->tag + "=" + tagVal->value);
+        }
+        for (int i = 0; i < additionalAttributeIds.size(); i++)
+        {
+            const AttributeMapping::TagValue* tagVal = resolveAttributeByIndex(i, true);
+            s.append(" " + tagVal->tag + "=" + tagVal->value);
+        }
+    }
+    return s;    
+}

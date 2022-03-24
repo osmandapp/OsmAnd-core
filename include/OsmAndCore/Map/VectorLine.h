@@ -20,7 +20,6 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
-#include <Polyline2D/Polyline2D.h>
 
 namespace OsmAnd
 {
@@ -31,15 +30,6 @@ namespace OsmAnd
 
     class VectorLine_P;
 
-    typedef crushedpixel::Polyline2D::EndCapStyle LineEndCapStyle;
-    typedef enum
-    {
-        kRoundJoinType = 0,
-        kBezelJoinType,
-        kMiterJoinType
-        
-    } kVectorLineJoinType;
-    
     class OSMAND_CORE_API VectorLine
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLine);
@@ -76,6 +66,14 @@ namespace OsmAnd
             float direction;
         };
 
+        enum EndCapStyle {
+            BUTT,
+            SQUARE,
+            ROUND,
+            JOINT,
+            ARROW
+        };
+
     private:
         PrivateImplementation<VectorLine_P> _p;
     protected:
@@ -86,7 +84,7 @@ namespace OsmAnd
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
             const float screenScale = 2,
-            const LineEndCapStyle endCapStyle = LineEndCapStyle::ROUND
+            const EndCapStyle endCapStyle = EndCapStyle::ROUND
         );
 
         bool applyChanges();
@@ -99,7 +97,7 @@ namespace OsmAnd
         const sk_sp<const SkImage> specialPathIcon;
         const float pathIconStep;
         const float screenScale;
-        LineEndCapStyle endCapStyle;
+        EndCapStyle endCapStyle;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);

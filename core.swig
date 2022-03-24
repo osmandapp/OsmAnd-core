@@ -95,6 +95,9 @@
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapMarker.h>
 #include <OsmAndCore/Map/MapMarkersCollection.h>
+#include <OsmAndCore/Map/VectorLinesCollection.h>
+#include <OsmAndCore/Map/VectorLineBuilder.h>
+#include <OsmAndCore/Map/VectorLine.h>
 #include <OsmAndCore/Map/MapMarkerBuilder.h>
 #include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/RoadLocator.h>
@@ -263,6 +266,11 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapMarker)
 	%shared_ptr(OsmAnd::MapMarker::SymbolsGroup)
 	%shared_ptr(OsmAnd::MapMarkersCollection)
+	%shared_ptr(OsmAnd::VectorLinesCollection)
+	%shared_ptr(OsmAnd::VectorLineBuilder)
+	%shared_ptr(OsmAnd::VectorLine)
+	%shared_ptr(OsmAnd::VectorLine::SymbolsGroup)
+	%shared_ptr(OsmAnd::VectorLine::OnPathSymbolData)
 %include <std_pair.i>
 %include <std_string.i>
 #ifdef SWIG_JAVA
@@ -316,6 +324,11 @@ using namespace OsmAnd;
 //	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
+#ifdef SWIG_JAVA
+	%template(QVectorPointI) QVector<OsmAnd::Point<int32_t>>;
+	%template(QListVectorLine) QList<std::shared_ptr<OsmAnd::VectorLine>>;
+	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
+#endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
 	%template(NullableAreaI) OsmAnd::Nullable<OsmAnd::Area<int32_t>>;
@@ -408,6 +421,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 %include <OsmAndCore/Map/MapMarker.h>
 %include <OsmAndCore/Map/MapMarkersCollection.h>
+%include <OsmAndCore/Map/VectorLinesCollection.h>
+%include <OsmAndCore/Map/VectorLineBuilder.h>
+%include <OsmAndCore/Map/VectorLine.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
 	%template(MapSymbolInformationList) QList<OsmAnd::IMapRenderer::MapSymbolInformation>;
 %include <OsmAndCore/IRoadLocator.h>
