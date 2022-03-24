@@ -8,7 +8,7 @@
 #include <QMutex>
 #include <QQueue>
 #include <QSet>
-
+#include <QRandomGenerator>
 #include <gdal.h>
 
 #include "OsmAndCore.h"
@@ -46,15 +46,14 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
-        sk_sp<SkImage> rasterizeContours(
+        QList<Ref<GeoContour>> evaluateBandContours(
             GDALDatasetH hDataset,
             const OsmAnd::BandIndex band,
-            double levelInterval,
+            QList<double>& levels,
             const AreaI tileBBox31,
-            const ZoomLevel zoom,
-            const int width,
-            const int height);
+            const ZoomLevel zoom);
 
+        QVector<QVector<PointI>> calculateVisibleSegments(const QVector<PointI>& points, const AreaI bbox31) const;
 
     protected:
         GeoTileRasterizer_P(GeoTileRasterizer* const owner);
@@ -81,6 +80,17 @@ namespace OsmAnd
             QHash<BandIndex, QByteArray>& outEncImgData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        QHash<BandIndex, QList<Ref<GeoContour>>> evaluateContours(
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        static sk_sp<SkImage> rasterizeBandContours(
+            const QList<Ref<GeoContour>>& contours,
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const int width,
+            const int height);
 
     friend class OsmAnd::GeoTileRasterizer;
     };

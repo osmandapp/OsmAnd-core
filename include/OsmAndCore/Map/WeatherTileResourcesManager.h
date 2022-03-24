@@ -21,6 +21,8 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/GeoCommonTypes.h>
+#include <OsmAndCore/Map/GeoContour.h>
+#include <OsmAndCore/Map/GeoBandSettings.h>
 #include <OsmAndCore/Map/WeatherCommonTypes.h>
 
 namespace OsmAnd
@@ -99,7 +101,8 @@ namespace OsmAnd
                 ZoomLevel zoom,
                 AlphaChannelPresence alphaChannelPresence,
                 float densityFactor,
-                sk_sp<const SkImage> image);
+                sk_sp<const SkImage> image,
+                QHash<BandIndex, QList<Ref<GeoContour>>> contourMap = QHash<BandIndex, QList<Ref<GeoContour>>>());
             virtual ~Data();
 
             TileId tileId;
@@ -107,6 +110,7 @@ namespace OsmAnd
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
             sk_sp<const SkImage> image;
+            QHash<BandIndex, QList<Ref<GeoContour>>> contourMap;
         };
 
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
@@ -131,8 +135,7 @@ namespace OsmAnd
     protected:
     public:
         WeatherTileResourcesManager(
-            const QHash<BandIndex, float>& bandOpacityMap,
-            const QHash<BandIndex, QString>& bandColorProfilePaths,
+            const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -142,10 +145,12 @@ namespace OsmAnd
 
         bool networkAccessAllowed;
 
-        QHash<BandIndex, float> getBandOpacityMap() const;
-        void setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap);
+        const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
+        void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
 
-        QHash<BandIndex, QString> getBandColorProfilePaths() const;
+        double getConvertedBandValue(const BandIndex band, const double value) const;
+        QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
+
         QString getLocalCachePath() const;
         QString getProjResourcesPath() const;
         uint32_t getTileSize() const;
@@ -157,14 +162,29 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
         
+        virtual void obtainValue(
+            const ValueRequest& request,
+            const ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
+
         virtual void obtainValueAsync(
             const ValueRequest& request,
             const ObtainValueAsyncCallback callback,
             const bool collectMetric = false);
 
+        virtual void obtainData(
+            const TileRequest& request,
+            const ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
         virtual void obtainDataAsync(
             const TileRequest& request,
             const ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
+        virtual void downloadGeoTiles(
+            const DownloadGeoTileRequest& request,
+            const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
         virtual void downloadGeoTilesAsync(

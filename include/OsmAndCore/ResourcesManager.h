@@ -19,6 +19,7 @@
 #include <OsmAndCore/Data/ObfInfo.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/GeoCommonTypes.h>
+#include <OsmAndCore/Map/GeoBandSettings.h>
 
 namespace OsmAnd
 {
@@ -325,8 +326,7 @@ namespace OsmAnd
         const std::shared_ptr<WeatherTileResourcesManager> getWeatherResourcesManager() const;
 
         void instantiateWeatherResourcesManager(
-            const QHash<BandIndex, float>& bandOpacityMap,
-            const QHash<BandIndex, QString>& bandColorProfilePaths,
+            const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,

@@ -324,7 +324,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bgMapObject->additionalAttributeIds.push_back(MapObject::defaultAttributeMapping->layerLowestAttributeId);
 
         assert(bgMapObject->isClosedFigure());
-        polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
+        if (bgMapObject->isArea)
+            polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
     }
 
     // Obtain primitives

@@ -14,20 +14,27 @@
 
 OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
     const QDateTime& dateTime,
-    const QHash<BandIndex, float>& bandOpacityMap,
-    const QHash<BandIndex, QString>& bandColorProfilePaths,
+    const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
-    : _p(new WeatherTileResourceProvider_P(this, dateTime, bandOpacityMap, bandColorProfilePaths, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+    : _p(new WeatherTileResourceProvider_P(this, dateTime, bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }
 
 OsmAnd::WeatherTileResourceProvider::~WeatherTileResourceProvider()
 {
+}
+
+void OsmAnd::WeatherTileResourceProvider::obtainValue(
+    const ValueRequest& request,
+    const ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainValue(request, callback, collectMetric);
 }
 
 void OsmAnd::WeatherTileResourceProvider::obtainValueAsync(
@@ -38,12 +45,28 @@ void OsmAnd::WeatherTileResourceProvider::obtainValueAsync(
     _p->obtainValueAsync(request, callback, collectMetric);
 }
 
+void OsmAnd::WeatherTileResourceProvider::obtainData(
+    const TileRequest& request,
+    const ObtainTileDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainData(request, callback, collectMetric);
+}
+
 void OsmAnd::WeatherTileResourceProvider::obtainDataAsync(
     const TileRequest& request,
     const ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
     _p->obtainDataAsync(request, callback, collectMetric);
+}
+
+void OsmAnd::WeatherTileResourceProvider::downloadGeoTiles(
+    const DownloadGeoTileRequest& request,
+    const DownloadGeoTilesAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->downloadGeoTiles(request, callback, collectMetric);
 }
 
 void OsmAnd::WeatherTileResourceProvider::downloadGeoTilesAsync(
@@ -110,9 +133,9 @@ int OsmAnd::WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(const W
         return 0;
 }
 
-void OsmAnd::WeatherTileResourceProvider::setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap)
+void OsmAnd::WeatherTileResourceProvider::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
-    return _p->setBandOpacityMap(bandOpacityMap);
+    return _p->setBandSettings(bandSettings);
 }
 
 int OsmAnd::WeatherTileResourceProvider::getCurrentRequestVersion() const
@@ -220,12 +243,14 @@ OsmAnd::WeatherTileResourceProvider::Data::Data(
     ZoomLevel zoom_,
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
-    sk_sp<const SkImage> image_)
+    sk_sp<const SkImage> image_,
+    QHash<BandIndex, QList<Ref<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<Ref<GeoContour>>>()*/)
     : tileId(tileId_)
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
     , image(image_)
+    , contourMap(contourMap_)
 {
 }
 

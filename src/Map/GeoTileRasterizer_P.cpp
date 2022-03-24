@@ -142,7 +142,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     QHash<BandIndex, sk_sp<const SkImage>> bandImages;
     for (auto band : owner->bands)
     {
-        if (!owner->colorProfiles.contains(band))
+        if (!owner->bandSettings.contains(band))
             continue;
 
         auto bandIndexStr = QString::number(band).toLatin1();
@@ -276,7 +276,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (queryController && queryController->isAborted())
             return QHash<BandIndex, sk_sp<const SkImage>>();
 
-        auto colorProfilePath = owner->colorProfiles[band];
+        auto colorProfilePath = owner->bandSettings[band]->colorProfilePath;
         const auto colorizeFilename = QString::asprintf("/vsimem/geoTile@%p_%d_%dx%d@%d_raster_colorize",
                                                         this, band, tileId.x, tileId.y, zoom);
         const char* colorizeArgs[] = {
@@ -424,12 +424,44 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
+    auto contourMap = evaluateContours(pOutMetric, queryController);
+    if (contourMap.empty() || (queryController && queryController->isAborted()))
+        return QHash<BandIndex, sk_sp<const SkImage>>();
+        
+    QHash<BandIndex, sk_sp<const SkImage>> bandImages;
+    for (auto band : owner->bands)
+    {
+        if (!contourMap.contains(band) || (queryController && queryController->isAborted()))
+            return QHash<BandIndex, sk_sp<const SkImage>>();
+
+        auto contours = contourMap[band];
+        auto imageSize = owner->tileSize * owner->densityFactor;
+        auto image = rasterizeBandContours(contours, owner->tileId, owner->zoom, imageSize, imageSize);
+        if (image)
+        {
+            if (fillEncImgData)
+            {
+                const auto data = image->encodeToData(SkEncodedImageFormat::kPNG, 100);
+                if (data)
+                    outEncImgData.insert(band, QByteArray(reinterpret_cast<const char *>(data->bytes()), (int) data->size()));
+            }
+            bandImages.insert(band, image);
+        }
+    }
+
+    return bandImages;
+}
+
+QHash<OsmAnd::BandIndex, QList<OsmAnd::Ref<OsmAnd::GeoContour>>> OsmAnd::GeoTileRasterizer_P::evaluateContours(
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
     if (pOutMetric)
         pOutMetric->reset();
     
     if (owner->geoTileData.length() == 0)
-        return QHash<BandIndex, sk_sp<const SkImage>>();
-    
+        return QHash<BandIndex, QList<Ref<GeoContour>>>();
+
     TileId tileId = owner->tileId;
     ZoomLevel zoom = owner->zoom;
 
@@ -441,13 +473,13 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     auto tlLatLon = Utilities::convert31ToLatLon(tileBBox31.topLeft);
     auto brLatLon = Utilities::convert31ToLatLon(tileBBox31.bottomRight);
 
-    auto tlExtLatLon = LatLon(tlLatLon.latitude + latExtent, tlLatLon.longitude - lonExtent);
-    auto brExtLatLon = LatLon(brLatLon.latitude - latExtent, brLatLon.longitude + lonExtent);
+    auto tlExtLatLon = LatLon(tlLatLon.latitude + latExtent, qMax(tlLatLon.longitude - lonExtent, -179.5));
+    auto brExtLatLon = LatLon(brLatLon.latitude - latExtent, qMin(brLatLon.longitude + lonExtent, 179.5));
 
     auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     
     int scaleCoef = (int) (100.0 * Utilities::getPowZoom(zoom - geoTileZoom));
-    scaleCoef = scaleCoef > 6400 ? 6400 : scaleCoef; 
+    scaleCoef = scaleCoef > 6400 ? 6400 : scaleCoef;
     
     // Map data to VSI memory
     auto geoTileData(owner->geoTileData);
@@ -465,12 +497,12 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
                   tileId.x,
                   tileId.y,
                   zoom);
-        return QHash<BandIndex, sk_sp<const SkImage>>();
+        return QHash<BandIndex, QList<Ref<GeoContour>>>();
     }
     VSIFCloseL(file);
     
     if (queryController && queryController->isAborted())
-        return QHash<BandIndex, sk_sp<const SkImage>>();
+        return QHash<BandIndex, QList<Ref<GeoContour>>>();
 
     auto projSearchPath = owner->projSearchPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
@@ -493,16 +525,16 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
                   tileId.x,
                   tileId.y,
                   zoom);
-        return QHash<BandIndex, sk_sp<const SkImage>>();
+        return QHash<BandIndex, QList<Ref<GeoContour>>>();
     }
         
     if (queryController && queryController->isAborted())
-        return QHash<BandIndex, sk_sp<const SkImage>>();
+        return QHash<BandIndex, QList<Ref<GeoContour>>>();
 
-    QHash<BandIndex, sk_sp<const SkImage>> bandImages;
+    QHash<BandIndex, QList<Ref<GeoContour>>> bandContours;
     for (auto band : owner->bands)
     {
-        if (!owner->colorProfiles.contains(band))
+        if (!owner->bandSettings.contains(band))
             continue;
 
         auto bandIndexStr = QString::number(band).toLatin1();
@@ -539,7 +571,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
                 zoom,
                 qPrintable(tlExtLatLon.toQString()),
                 qPrintable(brExtLatLon.toQString()));
-            return QHash<BandIndex, sk_sp<const SkImage>>();
+            return QHash<BandIndex, QList<Ref<GeoContour>>>();
         }
         int bCropError = FALSE;
         std::shared_ptr<void> hCroppedDS(
@@ -566,48 +598,44 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
                 qPrintable(tlExtLatLon.toQString()),
                 qPrintable(brExtLatLon.toQString()),
                 bCropError);
-            return QHash<BandIndex, sk_sp<const SkImage>>();
+            return QHash<BandIndex, QList<Ref<GeoContour>>>();
         }
         
         if (queryController && queryController->isAborted())
-            return QHash<BandIndex, sk_sp<const SkImage>>();
+            return QHash<BandIndex, QList<Ref<GeoContour>>>();
 
-        auto imageSize = owner->tileSize * owner->densityFactor;
-        auto image = rasterizeContours(hCroppedDS.get(), 1, 2.0, tileBBox31, zoom, imageSize, imageSize);
-        if (image)
+        if (owner->bandSettings.contains(band))
         {
-            if (fillEncImgData)
+            auto levels = owner->bandSettings[band]->contourLevels;
+            if (levels.contains(zoom))
             {
-                const auto data = image->encodeToData(SkEncodedImageFormat::kPNG, 100);
-                if (data)
-                    outEncImgData.insert(band, QByteArray(reinterpret_cast<const char *>(data->bytes()), (int) data->size()));
+                auto contours = evaluateBandContours(hCroppedDS.get(), 1, levels[zoom], tileBBox31, zoom);
+                if (!contours.empty())
+                    bandContours.insert(band, contours);
             }
-            bandImages.insert(band, image);
         }
     }
 
-    return bandImages;
+    return bandContours;
 }
 
-sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
+QList<OsmAnd::Ref<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluateBandContours(
     GDALDatasetH hDataset,
     const OsmAnd::BandIndex band,
-    double levelInterval,
+    QList<double>& levels,
     const AreaI tileBBox31,
-    const ZoomLevel zoom,
-    const int width,
-    const int height)
+    const ZoomLevel zoom)
 {
     const char *pszDriverName = "ESRI Shapefile";
     GDALDriver *driver = GetGDALDriverManager()->GetDriverByName(pszDriverName);
     if (!driver)
     {
         LogPrintf(LogSeverityLevel::Error, "%s driver not available", pszDriverName);
-        return nullptr;
+        return QList<Ref<GeoContour>>();
     }
 
-    const auto fileName = QString::asprintf("/vsimem/shapeFile%p_%d_%.2f_%dx%d@%d_contour", this, band, levelInterval, tileBBox31.left(), tileBBox31.top(), zoom);
-    //GDALDataset *dataset = driver->Create(qPrintable(fileName), 0, 0, 0, GDT_Float64, NULL);
+    auto rand = QRandomGenerator::global()->generate() % 1000;
+    const auto fileName = QString::asprintf("/vsimem/shapeFile%p_%d_%d_%dx%d@%d_contour_%d", this, band, levels.length(), tileBBox31.left(), tileBBox31.top(), zoom, rand);
     std::shared_ptr<GDALDataset> spDataset(
         driver->Create(qPrintable(fileName), 0, 0, 0, GDT_Float64, NULL),
         [fileName]
@@ -620,39 +648,52 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
     if (!spDataset)
     {
         LogPrintf(LogSeverityLevel::Error, "Creation of Gdal shape output file failed");
-        return nullptr;
+        return QList<Ref<GeoContour>>();
     }
 
     OGRLayer *layer = spDataset->CreateLayer("ContoursLayer", NULL, wkbMultiLineString, NULL );
     if (!layer)
     {
         LogPrintf(LogSeverityLevel::Error, "Gdal layer creation failed %s", qPrintable(fileName));
-        return nullptr;
+        return QList<Ref<GeoContour>>();
+    }
+    
+    OGRFieldDefn valueField("Value", OFTReal);
+    if (layer->CreateField(&valueField) != OGRERR_NONE)
+    {
+        LogPrintf(LogSeverityLevel::Error, "Gdal layer creation value field failed");
+        return QList<Ref<GeoContour>>();
     }
     
     auto hBand = GDALGetRasterBand(hDataset, band);
 
+    QStringList levelsList;
+    for (auto level : levels)
+        levelsList << QString::number(level);
+    
     char** options = nullptr;
-    options = CSLAppendPrintf(options, "LEVEL_INTERVAL=%f", levelInterval);
+//    options = CSLAppendPrintf(options, "LEVEL_INTERVAL=%f", 2.0);
+    options = CSLAppendPrintf(options, "FIXED_LEVELS=%s", qPrintable(levelsList.join(QStringLiteral(","))));
 //    options = CSLAppendPrintf(options, "ID_FIELD=%d", 0);
-//    options = CSLAppendPrintf(options, "ELEV_FIELD=%d", 1);
+    options = CSLAppendPrintf(options, "ELEV_FIELD=%d", 0);
 //    options = CSLAppendPrintf(options, "ELEV_FIELD_MIN=%d", 2);
 //    options = CSLAppendPrintf(options, "ELEV_FIELD_MAX=%d", 3);
     options = CSLAppendPrintf(options, "POLYGONIZE=NO");
 
-    auto err = GDALContourGenerateEx(hBand, OGRLayer::ToHandle(layer), options, nullptr, NULL);
+    auto err = GDALContourGenerateEx(hBand, layer, options, nullptr, NULL);
     CSLDestroy(options);
     
     if (err != CE_None)
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to generate gdal layer contour lines");
-        return nullptr;
+        return QList<Ref<GeoContour>>();
     }
     
     OGRFeature *feature;
     OGRMultiLineString *multiLine = static_cast<OGRMultiLineString *>(
         OGRGeometryFactory::createGeometry(wkbMultiLineString));
+    QList<double> values;
     layer->ResetReading();
     
     while ((feature = layer->GetNextFeature()) != nullptr)
@@ -668,13 +709,17 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
         OGRwkbGeometryType eType = wkbFlatten(geometry->getGeometryType());
         if (eType == wkbLineString)
         {
-            multiLine->addGeometry(geometry);
+            if (multiLine->addGeometry(geometry) == OGRERR_NONE)
+                values << feature->GetFieldAsDouble(0);
         }
         else if (eType == wkbMultiLineString)
         {
             auto mls = geometry->toMultiLineString();
             for (int iGeom = 0; iGeom < mls->getNumGeometries(); iGeom++)
-                multiLine->addGeometry(mls->getGeometryRef(iGeom));
+            {
+                if (multiLine->addGeometry(mls->getGeometryRef(iGeom)) == OGRERR_NONE)
+                    values << feature->GetFieldAsDouble(0);
+            }
         }
         OGRFeature::DestroyFeature(feature);
     }
@@ -682,15 +727,57 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
     if (multiLine->getNumGeometries() == 0)
     {
         OGRGeometryFactory::destroyGeometry(multiLine);
-
         LogPrintf(LogSeverityLevel::Error,
             "Did not get any LineString features");
+        return QList<Ref<GeoContour>>();
+    }
+
+    QList<Ref<GeoContour>> contours;
+    for (int iGeom = 0; iGeom < multiLine->getNumGeometries(); iGeom++)
+    {
+        auto geom = multiLine->getGeometryRef(iGeom);
+        auto count = geom->getNumPoints();
+        if (count > 1)
+        {
+            QVector<PointI> points;
+            for (int i = 0; i < count; i++)
+            {
+                double x = geom->getX(i);
+                double y = geom->getY(i);
+                points << Utilities::convertLatLonTo31(LatLon(y, x));
+            }
+            auto segments = calculateVisibleSegments(points, tileBBox31);
+            for (auto& segment : constOf(segments))
+                if (segment.length() > 1)
+                    contours << std::make_shared<GeoContour>(values[iGeom], segment);
+        }
+    }
+    
+    OGRGeometryFactory::destroyGeometry(multiLine);
+    
+    return contours;
+}
+
+sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeBandContours(
+    const QList<Ref<GeoContour>>& contourMap,
+    const TileId tileId,
+    const ZoomLevel zoom,
+    const int width,
+    const int height)
+{
+    if (contourMap.empty())
+    {
+        LogPrintf(LogSeverityLevel::Error, "No contours for rasterization");
         return nullptr;
     }
     
     SkBitmap target;
     if (!target.tryAllocPixels(SkImageInfo::MakeN32Premul(width, height)))
+    {
+        LogPrintf(LogSeverityLevel::Error,
+                  "Failed to allocate SkBitmap %dx%d for contours rasterization", width, height);
         return nullptr;
+    }
 
     target.eraseColor(SK_ColorTRANSPARENT);
 
@@ -706,17 +793,13 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
     
     SkPath linePath;
     
+    auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     auto scaleDiv = Utilities::getScaleDivisor31ToPixel(PointI(width, height), zoom);
-    for (int iGeom = 0; iGeom < multiLine->getNumGeometries(); iGeom++)
+    for (auto& contours : constOf(contourMap))
     {
-        auto geom = multiLine->getGeometryRef(iGeom);
-        auto count = geom->getNumPoints();
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < contours->points.length(); i++)
         {
-            double x1 = geom->getX(i);
-            double y1 = geom->getY(i);
-
-            auto point31 = Utilities::convertLatLonTo31(LatLon(y1, x1));
+            auto point31 = contours->points[i];
             auto x = (point31.x - tileBBox31.left()) / scaleDiv.x;
             auto y = (point31.y - tileBBox31.top()) / scaleDiv.y;
             
@@ -730,8 +813,87 @@ sk_sp<SkImage> OsmAnd::GeoTileRasterizer_P::rasterizeContours(
         canvas.drawPath(linePath, linePaint);
     
     canvas.flush();
-
-    OGRGeometryFactory::destroyGeometry(multiLine);
-    
     return target.asImage();
 }
+
+QVector<QVector<OsmAnd::PointI>> OsmAnd::GeoTileRasterizer_P::calculateVisibleSegments(const QVector<PointI>& points, const AreaI bbox31) const
+{
+    QVector<QVector<PointI>> segments;
+    bool segmentStarted = false;
+    auto visibleArea = bbox31;
+    PointI curr, drawFrom, drawTo, inter1, inter2;
+    auto prev = drawFrom = points[0];
+    int drawFromIdx = 0, drawToIdx = 0;
+    QVector<PointI> segment;
+    bool prevIn = bbox31.contains(prev);
+    for (int i = 1; i < points.size(); i++)
+    {
+        curr = drawTo = points[i];
+        drawToIdx = i;
+        bool currIn = visibleArea.contains(curr);
+        bool draw = false;
+        if (prevIn && currIn)
+        {
+            draw = true;
+        }
+        else
+        {
+            if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+            {
+                draw = true;
+                if (prevIn)
+                {
+                    drawTo = inter1;
+                    drawToIdx = i;
+                }
+                else if (currIn)
+                {
+                    drawFrom = inter1;
+                    drawFromIdx = i;
+                    segmentStarted = false;
+                }
+                else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
+                {
+                    drawFrom = inter1;
+                    drawTo = inter2;
+                    drawFromIdx = drawToIdx;
+                    drawToIdx = i;
+                    segmentStarted = false;
+                }
+                else
+                {
+                    draw = false;
+                }
+            }
+        }
+        if (draw)
+        {
+            if (!segmentStarted)
+            {
+                if (!segment.empty())
+                {
+                    segments.push_back(segment);
+                    segment = QVector<PointI>();
+                }
+                segment.push_back(drawFrom);
+                segmentStarted = currIn;
+            }
+            if (segment.empty() || segment.back() != drawTo)
+            {
+                segment.push_back(drawTo);
+            }
+        }
+        else
+        {
+            segmentStarted = false;
+        }
+        prevIn = currIn;
+        prev = drawFrom = curr;
+        drawFromIdx = i;
+    }
+    if (!segment.empty())
+        segments.push_back(segment);
+
+    return segments;
+}
+

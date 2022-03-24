@@ -73,6 +73,9 @@ namespace OsmAnd
         std::shared_ptr<const IMapStyle::IAttribute> _globalPathPaddingAttribute;
         float _globalPathPadding;
 
+        std::shared_ptr<const IMapStyle::IAttribute> _weatherContourLevelsAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _weatherContourTypesAttribute;
+
         MapStubStyle _desiredStubsStyle;
 
         mutable QMutex _shadersMutex;
@@ -115,6 +118,8 @@ namespace OsmAnd
         float getDefaultBlockPathSpacing() const;
         float getGlobalPathPadding() const;
         MapStubStyle getDesiredStubsStyle() const;
+        QString getWeatherContourLevels(const QString& weatherType, const ZoomLevel zoom) const;
+        QString getWeatherContourTypes(const QString& weatherType, const ZoomLevel zoom) const;
         ColorARGB getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const;
         QHash<QString, int> getLineRenderingAttributes(const QString& renderAttrName) const;
         QHash<QString, int> getGpxColors() const;

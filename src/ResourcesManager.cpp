@@ -243,8 +243,7 @@ const std::shared_ptr<OsmAnd::WeatherTileResourcesManager> OsmAnd::ResourcesMana
 }
 
 void OsmAnd::ResourcesManager::instantiateWeatherResourcesManager(
-    const QHash<BandIndex, float>& bandOpacityMap,
-    const QHash<BandIndex, QString>& bandColorProfilePaths,
+    const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
@@ -252,8 +251,7 @@ void OsmAnd::ResourcesManager::instantiateWeatherResourcesManager(
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
 {
     _weatherResourcesManager = std::make_shared<WeatherTileResourcesManager>(
-        bandOpacityMap,
-        bandColorProfilePaths,
+        bandSettings,
         localCachePath,
         projResourcesPath,
         tileSize,

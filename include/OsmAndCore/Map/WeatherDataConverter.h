@@ -40,6 +40,7 @@ namespace OsmAnd
             const double value;
 
             double toUnit(const Unit& unit) const;
+            static Unit unitFromString(const QString& unitString);
         };
         
         class Speed {
@@ -65,11 +66,13 @@ namespace OsmAnd
             const double value;
 
             double toUnit(const Unit& unit) const;
+            static Unit unitFromString(const QString& unitString);
         };
         
         class Pressure {
         public:
             enum class Unit {
+                PASCAL,
                 HECTOPASCAL,
                 INCHES_HG,
                 MM_HG,
@@ -83,6 +86,7 @@ namespace OsmAnd
             const double value;
 
             double toUnit(const Unit& unit) const;
+            static Unit unitFromString(const QString& unitString);
         };
         
         class Precipitation {
@@ -90,6 +94,7 @@ namespace OsmAnd
             enum class Unit {
                 MM,
                 INCHES,
+                KG_M2_S,
             };
             
         public:
@@ -100,6 +105,7 @@ namespace OsmAnd
             const double value;
 
             double toUnit(const Unit& unit) const;
+            static Unit unitFromString(const QString& unitString);
         };
         
     private:

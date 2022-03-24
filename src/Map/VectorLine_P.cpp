@@ -445,116 +445,6 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
     }
 }
 
-bool OsmAnd::VectorLine_P::calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX)
-{
-    // Calculates intersection between line and bbox in clockwise manner.
-    const auto& px = p0.x;
-    const auto& py = p0.y;
-    const auto& x = p1.x;
-    const auto& y = p1.y;
-    const auto& leftX = bbox.left();
-    const auto& rightX = bbox.right();
-    const auto& topY = bbox.top();
-    const auto& bottomY = bbox.bottom();
-
-    // firstly try to search if the line goes in
-    if (py < topY && y >= topY) {
-        int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;
-            pX.y = topY;
-            return true;
-        }
-    }
-    if (py > bottomY && y <= bottomY) {
-        int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;
-            pX.y = bottomY;
-            return true;
-        }
-    }
-    if (px < leftX && x >= leftX) {
-        int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = leftX;
-            pX.y = ty;
-            return true;
-        }
-
-    }
-    if (px > rightX && x <= rightX) {
-        int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = rightX;
-            pX.y = ty;
-            return true;
-        }
-
-    }
-
-    // try to search if point goes out
-    if (py > topY && y <= topY) {
-        int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;
-            pX.y = topY;
-            return true;
-        }
-    }
-    if (py < bottomY && y >= bottomY) {
-        int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;
-            pX.y = bottomY;
-            return true;
-        }
-    }
-    if (px > leftX && x <= leftX) {
-        int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = leftX;
-            pX.y = ty;
-            return true;
-        }
-
-    }
-    if (px < rightX && x >= rightX) {
-        int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = rightX;
-            pX.y = ty;
-            return true;
-        }
-
-    }
-
-    if (px == rightX || px == leftX) {
-        if (py >= topY && py <= bottomY) {
-            pX.x = px;
-            pX.y = py;
-            return true;
-        }
-    }
-
-    if (py == topY || py == bottomY) {
-        if (leftX <= px && px <= rightX) {
-            pX.x = px;
-            pX.y = py;
-            return true;
-        }
-    }
-    
-    /*
-    if (px == rightX || px == leftX || py == topY || py == bottomY) {
-        pX = p0;//b.first = px; b.second = py;
-        //        return true;
-        // Is it right? to not return anything?
-    }
-     */
-    return false;
-}
-
 void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
 {
     bool segmentStarted = false;
@@ -577,7 +467,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
         }
         else
         {
-            if (calculateIntersection(curr, prev, visibleArea, inter1))
+            if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
             {
                 draw = true;
                 if (prevIn)
@@ -591,7 +481,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                     drawFromIdx = i;
                     segmentStarted = false;
                 }
-                else if (calculateIntersection(prev, curr, visibleArea, inter2))
+                else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
                 {
                     drawFrom = inter1;
                     drawTo = inter2;
