@@ -8,7 +8,6 @@ OsmAnd::VectorLine::VectorLine(
     const sk_sp<const SkImage>& specialPathIcon_/* = nullptr*/,
     const float pathIconStep_/* = -1*/,
     const float screenScale_/* = 2*/,
-    const float iconScale_/* = 1*/,
     const VectorLine::EndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
@@ -17,7 +16,6 @@ OsmAnd::VectorLine::VectorLine(
     , specialPathIcon(specialPathIcon_)
     , pathIconStep(pathIconStep_)
     , screenScale(screenScale_)
-    , iconScale(iconScale_)
     , endCapStyle(endCapStlye_)
 {
 }

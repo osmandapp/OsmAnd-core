@@ -170,7 +170,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         {
             double newWidth = _lineWidth / 3;
             double scale = newWidth / owner->pathIcon->width();
-            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale / owner->iconScale, 1);
+            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
         }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -658,8 +658,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
-    double radius = _lineWidth * scale;
-    double simplificationRadius = (_lineWidth - _outlineWidth) * scale;
+    double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
+    double radius = _lineWidth * scale * visualShiftCoef;
+    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = _dashPattern.size() > 0 ? VectorMapSymbol::PrimitiveType::TriangleStrip : VectorMapSymbol::PrimitiveType::Triangles;
@@ -1200,7 +1201,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth / 3 <= TRACK_WIDTH_THRESHOLD * owner->iconScale && owner->specialPathIcon != nullptr;
+    return _lineWidth / 3 <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

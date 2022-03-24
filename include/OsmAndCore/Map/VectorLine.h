@@ -84,7 +84,6 @@ namespace OsmAnd
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
             const float screenScale = 2,
-            const float iconScale = 1,
             const EndCapStyle endCapStyle = EndCapStyle::ROUND
         );
 
@@ -98,7 +97,6 @@ namespace OsmAnd
         const sk_sp<const SkImage> specialPathIcon;
         const float pathIconStep;
         const float screenScale;
-        const float iconScale;
         EndCapStyle endCapStyle;
 
         bool isHidden() const;
