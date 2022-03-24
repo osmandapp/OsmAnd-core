@@ -200,6 +200,8 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                 QList<std::shared_ptr<const MapObject>> mapObjects;
                 auto mapObj = std::make_shared<OsmAnd::MapObject>();
                 mapObj->bbox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
+                mapObj->points31.push_back(mapObj->bbox31.topLeft);
+                mapObj->points31.push_back(mapObj->bbox31.topLeft);
                 auto attributeMapping = std::make_shared<OsmAnd::MapObject::AttributeMapping>();
                 mapObj->attributeIds.push_back(1);
                 attributeMapping->registerMapping(1, QStringLiteral("contour"), contourStyleName);
