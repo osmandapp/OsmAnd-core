@@ -103,17 +103,20 @@ namespace OsmAnd
         
     private:
         QThreadPool *_threadPool;
+        QThreadPool *_obtainValueThreadPool;
 
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
 
         mutable QReadWriteLock _lock;
         int _priority;
+        int _obtainValuePriority;
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
         int _requestVersion;
 
         int getAndDecreasePriority();
+        int getAndDecreaseObtainValuePriority();
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;
@@ -133,6 +136,14 @@ namespace OsmAnd
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
         QWaitCondition _waitUntilAnyContourTileIsProcessed;
+
+        mutable QReadWriteLock _cachedValuesLock;
+        PointI _cachedValuesPoint31;
+        ZoomLevel _cachedValuesZoom;
+        QList<double> _cachedValues;
+        
+        bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
+        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
 
     protected:
         WeatherTileResourceProvider_P(

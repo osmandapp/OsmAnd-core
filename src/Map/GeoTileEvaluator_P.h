@@ -31,7 +31,7 @@ namespace OsmAnd
         
         bool evaluate(
             const LatLon& latLon,
-            QHash<BandIndex, double>& outData,
+            QList<double>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 

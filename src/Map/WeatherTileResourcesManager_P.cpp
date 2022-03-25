@@ -232,13 +232,14 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
         rr.band = request.band;
         rr.queryController = request.queryController;
         
+        auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback]
+            [callback, band]
             (const bool requestSucceeded,
-                const double value,
+                const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, value, nullptr);
+                callback(requestSucceeded, values[band], nullptr);
             };
         
         resourceProvider->obtainValue(rr, rc);
@@ -262,14 +263,15 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
         rr.zoom = request.zoom;
         rr.band = request.band;
         rr.queryController = request.queryController;
-        
+     
+        auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback]
+            [callback, band]
             (const bool requestSucceeded,
-                const double value,
+                const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, value, nullptr);
+                callback(requestSucceeded, values[band], nullptr);
             };
         
         resourceProvider->obtainValueAsync(rr, rc);

@@ -31,7 +31,7 @@ OsmAnd::GeoTileEvaluator_P::~GeoTileEvaluator_P()
 
 bool OsmAnd::GeoTileEvaluator_P::evaluate(
     const LatLon& latLon,
-    QHash<BandIndex, double>& outData,
+    QList<double>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -177,6 +177,7 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
         return false;
     }
         
+    outData.append(0);
     for (int band = 1; band <= bandsCount; band++)
     {
         int bandShift = matrixSize * matrixSize * (band - 1);
@@ -206,7 +207,7 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
             if (ok && value > maxValue)
                 value = maxValue;
 
-            outData.insert(band, value);
+            outData.append(value);
 
 //            LogPrintf(LogSeverityLevel::Debug,
 //                      "Evaluated geotiff at %s@%d = %f",

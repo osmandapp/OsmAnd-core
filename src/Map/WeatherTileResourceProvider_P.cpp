@@ -23,8 +23,10 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : owner(owner_)
     , _threadPool(new QThreadPool())
+    , _obtainValueThreadPool(new QThreadPool())
     , _bandSettings(bandSettings_)
     , _priority(0)
+    , _obtainValuePriority(0)
     , _lastRequestedZoom(ZoomLevel::InvalidZoomLevel)
     , _requestVersion(0)
     , webClient(webClient_)
@@ -34,6 +36,8 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    _obtainValueThreadPool->setMaxThreadCount(1);
+        
     auto dateTimeStr = dateTime_.toString(QStringLiteral("yyyyMMdd_hh00"));
     auto geoDbCachePath = localCachePath_
         + QDir::separator()
@@ -55,6 +59,9 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
 
 OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
 {
+    _obtainValueThreadPool->clear();
+    delete _obtainValueThreadPool;
+    
     _threadPool->clear();
     delete _threadPool;
 }
@@ -64,6 +71,13 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndDecreasePriority()
     QWriteLocker scopedLocker(&_lock);
     
     return --_priority;
+}
+
+int OsmAnd::WeatherTileResourceProvider_P::getAndDecreaseObtainValuePriority()
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    return --_obtainValuePriority;
 }
 
 const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> OsmAnd::WeatherTileResourceProvider_P::getBandSettings() const
@@ -267,6 +281,27 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockContourTile(const TileId tileI
     _waitUntilAnyContourTileIsProcessed.wakeAll();
 }
 
+bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values)
+{
+    QReadLocker scopedLocker(&_cachedValuesLock);
+        
+    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom)
+    {
+        values = _cachedValues;
+        return true;
+    }
+    return false;
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values)
+{
+    QWriteLocker scopedLocker(&_cachedValuesLock);
+    
+    _cachedValuesPoint31 = point31;
+    _cachedValuesZoom = zoom;
+    _cachedValues = values;
+}
+
 void OsmAnd::WeatherTileResourceProvider_P::obtainValue(
     const WeatherTileResourceProvider::ValueRequest& request,
     const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
@@ -286,7 +321,7 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const auto requestClone = request.clone();
     ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
-    _threadPool->start(task, getAndDecreasePriority());
+    _obtainValueThreadPool->start(task, getAndDecreaseObtainValuePriority());
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::obtainData(
@@ -399,7 +434,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
 {
     PointI point31 = request->point31;
     ZoomLevel zoom = request->zoom;
-    auto band = request->band;
+    
+    QList<double> values;
+    if (_provider->getCachedValues(point31, zoom, values))
+    {
+        callback(true, values, nullptr);
+        return;
+    }
     
     const auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     const auto latLon = Utilities::convert31ToLatLon(point31);
@@ -417,17 +458,20 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
             zoom,
             _provider->projResourcesPath
         );
-        QHash<BandIndex, double> values;
-        if (evaluator->evaluate(latLon, values) && values.contains(band))
-            callback(true, values[band], nullptr);
+        if (evaluator->evaluate(latLon, values))
+        {
+            _provider->setCachedValues(point31, zoom, values);
+            callback(true, values, nullptr);
+        }
         else
-            callback(false, 0.0, nullptr);
-
+        {
+            callback(false, QList<double>(), nullptr);
+        }
         delete evaluator;
     }
     else
     {
-        callback(false, 0.0, nullptr);
+        callback(false, QList<double>(), nullptr);
     }
 }
 

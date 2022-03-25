@@ -115,7 +115,7 @@ namespace OsmAnd
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
             void,
             const bool succeeded,
-            const double value,
+            const QList<double>& values,
             const std::shared_ptr<Metric>& metric);
         
         OSMAND_CALLABLE(ObtainTileDataAsyncCallback,

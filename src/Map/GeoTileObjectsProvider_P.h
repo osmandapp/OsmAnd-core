@@ -26,7 +26,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(GeoTileObjectsProvider_P);
 
     private:
-        QReadWriteLock _dataCacheLock;
+        mutable QReadWriteLock _dataCacheLock;
 
         QList<std::shared_ptr<GeoTileObjectsProvider::Data>> _dataCache;
         
