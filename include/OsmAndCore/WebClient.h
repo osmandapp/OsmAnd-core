@@ -15,6 +15,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/IWebClient.h>
+#include "globalConstants.h"
 
 namespace OsmAnd
 {
@@ -62,7 +63,7 @@ namespace OsmAnd
     protected:
     public:
         WebClient(
-            const QString& userAgent = QLatin1String("OsmAnd Core"),
+            const QString& userAgent = globalConstants::APP_VERSION,
             const unsigned int concurrentRequestsLimit = 1,
             const unsigned int retriesLimit = 1,
             const bool followRedirects = true);

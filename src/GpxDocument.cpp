@@ -11,6 +11,7 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "globalConstants.h"
 
 OsmAnd::GpxExtensions::GpxExtension::GpxExtension()
 {
@@ -115,14 +116,14 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
 
     //<gpx
     //      version="1.1"
-    //      creator="OsmAnd"
+    //      creator="OsmAnd Maps 4.2.0 (4.2.0.7)"
     //      xmlns="http://www.topografix.com/GPX/1/1"
     //      xmlns:osmand="https://osmand.net"
     //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
-    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? QStringLiteral("OsmAnd Core") : creator);
+    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? globalConstants::APP_VERSION : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:osmand"), QStringLiteral("https://osmand.net"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
@@ -206,7 +207,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             // <hdop>
             if (!qIsNaN(wpt->horizontalDilutionOfPrecision))
-                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 7));
+                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 1));
 
             // <vdop>
             if (!qIsNaN(wpt->verticalDilutionOfPrecision))
@@ -281,7 +282,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                 {
                     // <hdop>
                     if (!qIsNaN(trkpt->horizontalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 7));
+                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 1));
 
                     // <vdop>
                     if (!qIsNaN(trkpt->verticalDilutionOfPrecision))
@@ -382,7 +383,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
             {
                 // <hdop>
                 if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 1));
 
                 // <vdop>
                 if (!qIsNaN(rtept->verticalDilutionOfPrecision))

@@ -2,7 +2,7 @@
 #include "WebClient_P.h"
 
 OsmAnd::WebClient::WebClient(
-    const QString& userAgent /*= QLatin1String("OsmAnd Core")*/,
+    const QString& userAgent /*= globalConstans::APP_VERSION*/,
     const unsigned int concurrentRequestsLimit /*= 1*/,
     const unsigned int retriesLimit /*= 1*/,
     const bool followRedirects /*= true*/)
