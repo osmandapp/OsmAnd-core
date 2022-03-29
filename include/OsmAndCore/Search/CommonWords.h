@@ -1264,7 +1264,7 @@ namespace OsmAnd
             return i;
         }
         
-        static int letters(QString s)
+        static int letters(const QString &s)
         {
                 int count = 0;
                 for (int i = 0; i < s.length(); i++)
