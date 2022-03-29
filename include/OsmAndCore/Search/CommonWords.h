@@ -1264,10 +1264,13 @@ namespace OsmAnd
             return i;
         }
         
-        static int letters(QString s) {
+        static int letters(QString s)
+        {
                 int count = 0;
-                for (int i = 0; i < s.length(); i++) {
-                    if (!isdigit(s.toStdString().at(i))) {
+                for (int i = 0; i < s.length(); i++)
+                {
+                    if (!s[i].isDigit())
+                    {
                         count++;
                     }
                 }
