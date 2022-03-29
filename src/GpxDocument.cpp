@@ -115,7 +115,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
 
     //<gpx
     //      version="1.1"
-    //      creator="OsmAnd Maps 4.2.0 (4.2.0.7)"
+    //      creator="OsmAnd"
     //      xmlns="http://www.topografix.com/GPX/1/1"
     //      xmlns:osmand="https://osmand.net"
     //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
