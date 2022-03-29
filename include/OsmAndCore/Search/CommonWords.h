@@ -17,6 +17,8 @@
 
 namespace OsmAnd
 {
+    // for ex: 100 bridge, ленина 30, but not potenitally name of street (31st road)
+    const QString NUMBER_WITH_LESS_THAN_2_LETTERS = QStringLiteral("NUMBER_WITH_LESS_THAN_2_LETTERS");
     const static QStringList FREQUENTLY_USED_WORDS
     {
            QStringLiteral("santa"),
@@ -871,6 +873,8 @@ namespace OsmAnd
         QStringLiteral("viale"),
         QStringLiteral("loop"),
         
+        NUMBER_WITH_LESS_THAN_2_LETTERS,
+        
         QStringLiteral("bridge"),
         QStringLiteral("embankment"),
         QStringLiteral("township"),
@@ -1242,8 +1246,12 @@ namespace OsmAnd
             return FREQUENTLY_USED_WORDS.indexOf(name);
         }
         
-        static inline int getCommonSearch(const QString name)
+        static inline int getCommonSearch(QString name)
         {
+            if (isdigit(name.toStdString().at(0)) && letters(name) < 2) {
+                name = NUMBER_WITH_LESS_THAN_2_LETTERS;
+            }
+            
             int i = COMMON_WORDS.indexOf(name);
             // higher means better for search
             if (i == -1) {
@@ -1254,6 +1262,19 @@ namespace OsmAnd
                 return -1;
             }
             return i;
+        }
+        
+        static int letters(const QString &s)
+        {
+                int count = 0;
+                for (int i = 0; i < s.length(); i++)
+                {
+                    if (!s[i].isDigit())
+                    {
+                        count++;
+                    }
+                }
+                return count;
         }
 
         static inline int getCommonGeocoding(const QString name)

@@ -15,8 +15,7 @@ static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://test.osm
 OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     WeatherTileResourceProvider* const owner_,
     const QDateTime& dateTime_,
-    const QHash<BandIndex, float>& bandOpacityMap_,
-    const QHash<BandIndex, QString>& bandColorProfilePaths_,
+    const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
     const QString& localCachePath_,
     const QString& projResourcesPath_,
     const uint32_t tileSize_ /*= 256*/,
@@ -24,18 +23,21 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : owner(owner_)
     , _threadPool(new QThreadPool())
-    , _bandOpacityMap(bandOpacityMap_)
+    , _obtainValueThreadPool(new QThreadPool())
+    , _bandSettings(bandSettings_)
     , _priority(0)
+    , _obtainValuePriority(0)
     , _lastRequestedZoom(ZoomLevel::InvalidZoomLevel)
     , _requestVersion(0)
     , webClient(webClient_)
     , dateTime(dateTime_)
-    , bandColorProfilePaths(bandColorProfilePaths_)
     , localCachePath(localCachePath_)
     , projResourcesPath(projResourcesPath_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    _obtainValueThreadPool->setMaxThreadCount(1);
+        
     auto dateTimeStr = dateTime_.toString(QStringLiteral("yyyyMMdd_hh00"));
     auto geoDbCachePath = localCachePath_
         + QDir::separator()
@@ -57,6 +59,9 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
 
 OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
 {
+    _obtainValueThreadPool->clear();
+    delete _obtainValueThreadPool;
+    
     _threadPool->clear();
     delete _threadPool;
 }
@@ -68,19 +73,26 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndDecreasePriority()
     return --_priority;
 }
 
-const QHash<OsmAnd::BandIndex, float> OsmAnd::WeatherTileResourceProvider_P::getBandOpacityMap() const
+int OsmAnd::WeatherTileResourceProvider_P::getAndDecreaseObtainValuePriority()
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    return --_obtainValuePriority;
+}
+
+const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> OsmAnd::WeatherTileResourceProvider_P::getBandSettings() const
 {
     QReadLocker scopedLocker(&_lock);
     
-    return _bandOpacityMap;
+    return _bandSettings;
 }
 
-void OsmAnd::WeatherTileResourceProvider_P::setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap)
+void OsmAnd::WeatherTileResourceProvider_P::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     {
         QWriteLocker scopedLocker(&_lock);
 
-        _bandOpacityMap = bandOpacityMap;
+        _bandSettings = bandSettings;
     }
     getAndUpdateRequestVersion();
 }
@@ -269,6 +281,38 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockContourTile(const TileId tileI
     _waitUntilAnyContourTileIsProcessed.wakeAll();
 }
 
+bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values)
+{
+    QReadLocker scopedLocker(&_cachedValuesLock);
+        
+    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom)
+    {
+        values = _cachedValues;
+        return true;
+    }
+    return false;
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values)
+{
+    QWriteLocker scopedLocker(&_cachedValuesLock);
+    
+    _cachedValuesPoint31 = point31;
+    _cachedValuesZoom = zoom;
+    _cachedValues = values;
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::obtainValue(
+    const WeatherTileResourceProvider::ValueRequest& request,
+    const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    const auto requestClone = request.clone();
+    ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
+    task->run();
+    delete task;
+}
+
 void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const WeatherTileResourceProvider::ValueRequest& request,
     const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
@@ -277,7 +321,21 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const auto requestClone = request.clone();
     ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
-    _threadPool->start(task, getAndDecreasePriority());
+    _obtainValueThreadPool->start(task, getAndDecreaseObtainValuePriority());
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::obtainData(
+    const WeatherTileResourceProvider::TileRequest& request,
+    const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    const auto requestClone = request.clone();
+    if (requestClone->weatherType == WeatherType::Raster)
+        requestClone->version = getAndUpdateRequestVersion(requestClone);
+
+    ObtainTileTask *task = new ObtainTileTask(shared_from_this(), requestClone, callback, collectMetric);
+    task->run();
+    delete task;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
@@ -292,6 +350,17 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
     ObtainTileTask *task = new ObtainTileTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
     _threadPool->start(task, getAndDecreasePriority());
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::downloadGeoTiles(
+    const WeatherTileResourceProvider::DownloadGeoTileRequest& request,
+    const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    const auto requestClone = request.clone();
+    DownloadGeoTileTask *task = new DownloadGeoTileTask(shared_from_this(), requestClone, callback, collectMetric);
+    task->run();
+    delete task;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::downloadGeoTilesAsync(
@@ -365,7 +434,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
 {
     PointI point31 = request->point31;
     ZoomLevel zoom = request->zoom;
-    auto band = request->band;
+    
+    QList<double> values;
+    if (_provider->getCachedValues(point31, zoom, values))
+    {
+        callback(true, values, nullptr);
+        return;
+    }
     
     const auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     const auto latLon = Utilities::convert31ToLatLon(point31);
@@ -383,17 +458,20 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
             zoom,
             _provider->projResourcesPath
         );
-        QHash<BandIndex, double> values;
-        if (evaluator->evaluate(latLon, values) && values.contains(band))
-            callback(true, values[band], nullptr);
+        if (evaluator->evaluate(latLon, values))
+        {
+            _provider->setCachedValues(point31, zoom, values);
+            callback(true, values, nullptr);
+        }
         else
-            callback(false, 0.0, nullptr);
-
+        {
+            callback(false, QList<double>(), nullptr);
+        }
         delete evaluator;
     }
     else
     {
-        callback(false, 0.0, nullptr);
+        callback(false, QList<double>(), nullptr);
     }
 }
 
@@ -422,14 +500,14 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::crea
     
     QList<sk_sp<const SkImage>> images;
     QList<float> alphas;
-    const auto& opacityMap = _provider->getBandOpacityMap();
+    const auto& bandSettings = _provider->getBandSettings();
     for (auto band : bands)
     {
         const auto citImage = bandImages.constFind(band);
         if (citImage != bandImages.cend())
         {
             images << *citImage;
-            alphas << opacityMap[band];
+            alphas << bandSettings[band]->opacity;
         }
         else
         {
@@ -577,7 +655,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         request->tileId,
         request->zoom,
         missingBands,
-        _provider->bandColorProfilePaths,
+        _provider->getBandSettings(),
         _provider->tileSize,
         _provider->densityFactor,
         _provider->projResourcesPath
@@ -680,7 +758,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     if (request->queryController && request->queryController->isAborted())
     {
         LogPrintf(LogSeverityLevel::Debug,
-            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+            "Stop creating weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
         callback(false, nullptr, nullptr);
         return;
@@ -688,7 +766,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     
     _provider->lockContourTile(tileId, zoom);
 
-    QHash<BandIndex, sk_sp<const SkImage>> images;
+    QHash<BandIndex, QList<Ref<GeoContour>>> contourMap;
                 
     ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     QByteArray geoTileData;
@@ -726,7 +804,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         _provider->unlockContourTile(tileId, zoom);
 
         LogPrintf(LogSeverityLevel::Debug,
-            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+            "Stop creating weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
         callback(false, nullptr, nullptr);
         return;
@@ -737,7 +815,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         request->tileId,
         request->zoom,
         bands,
-        _provider->bandColorProfilePaths,
+        _provider->getBandSettings(),
         _provider->tileSize,
         _provider->densityFactor,
         _provider->projResourcesPath
@@ -749,7 +827,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         {
             return request->queryController && request->queryController->isAborted();
         });
-    const auto rasterizedContours = rasterizer->rasterizeContours(nullptr, rasterizeQueryController);
+    const auto evaluatedContours = rasterizer->evaluateContours(nullptr, rasterizeQueryController);
     delete rasterizer;
 
     if (request->queryController && request->queryController->isAborted())
@@ -757,7 +835,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
         _provider->unlockContourTile(tileId, zoom);
 
         LogPrintf(LogSeverityLevel::Debug,
-            "Stop creating tile image of weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+            "Stop creating weather contour tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
         callback(false, nullptr, nullptr);
         return;
@@ -765,43 +843,29 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     
     _provider->unlockContourTile(tileId, zoom);
     
-    if (rasterizedContours.empty())
+    if (evaluatedContours.empty())
     {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed rasterize weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+        LogPrintf(LogSeverityLevel::Debug,
+            "Failed to evaluate weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
     }
-    images.insert(rasterizedContours);
-    if (!images.empty())
+    contourMap.insert(evaluatedContours);
+    if (contourMap.empty())
     {
-        //auto image = createTileImage(images, bands);
-        auto image = images.values().first();
-        if (image)
-        {
-            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
-                tileId,
-                zoom,
-                AlphaChannelPresence::Present,
-                _provider->densityFactor,
-                image
-            );
-            callback(true, data, nullptr);
-            return;
-        }
-        else
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to create tile image of rasterized weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
-            callback(false, nullptr, nullptr);
-            return;
-        }
-    }
-    else
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to create tile image of non rasterized weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
+        LogPrintf(LogSeverityLevel::Debug,
+            "Failed to evaluate weather contour tile %dx%dx%d", tileId.x, tileId.y, zoom);
         callback(false, nullptr, nullptr);
         return;
     }
+
+    auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
+        tileId,
+        zoom,
+        AlphaChannelPresence::Present,
+        _provider->densityFactor,
+        nullptr,
+        contourMap
+    );
+    callback(true, data, nullptr);
 }
 
 OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::DownloadGeoTileTask(

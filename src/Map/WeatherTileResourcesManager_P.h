@@ -31,15 +31,14 @@ namespace OsmAnd
         
         std::shared_ptr<WeatherTileResourceProvider> createResourceProvider(const QDateTime& dateTime);
 
-        QHash<BandIndex, float> _bandOpacityMap;
-        
-        void updateProvidersBandOpacityMap();
+        mutable QReadWriteLock _bandSettingsLock;
+        QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
+        void updateProvidersBandSettings();
         
     protected:
         WeatherTileResourcesManager_P(
             WeatherTileResourcesManager* const owner,
-            const QHash<BandIndex, float>& bandOpacityMap,
-            const QHash<BandIndex, QString>& bandColorProfilePaths,
+            const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -54,10 +53,12 @@ namespace OsmAnd
 
         const std::shared_ptr<const IWebClient> webClient;
 
-        const QHash<BandIndex, float> getBandOpacityMap() const;
-        void setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap);
+        const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
+        void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
 
-        const QHash<BandIndex, QString> bandColorProfilePaths;
+        double getConvertedBandValue(const BandIndex band, const double value) const;
+        QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
+
         const QString localCachePath;
         const QString projResourcesPath;
         const uint32_t tileSize;
@@ -71,16 +72,31 @@ namespace OsmAnd
 
         std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(const QDateTime& dateTime);
 
+        void obtainValue(
+            const WeatherTileResourcesManager::ValueRequest& request,
+            const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
+
         void obtainValueAsync(
             const WeatherTileResourcesManager::ValueRequest& request,
             const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
             const bool collectMetric = false);
         
+        void obtainData(
+            const WeatherTileResourcesManager::TileRequest& request,
+            const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
         void obtainDataAsync(
             const WeatherTileResourcesManager::TileRequest& request,
             const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
         
+        void downloadGeoTiles(
+            const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
+            const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
+            const bool collectMetric = false);
+
         void downloadGeoTilesAsync(
             const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,

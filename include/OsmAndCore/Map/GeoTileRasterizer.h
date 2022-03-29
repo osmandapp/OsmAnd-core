@@ -20,6 +20,8 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/Map/GeoCommonTypes.h>
+#include <OsmAndCore/Map/GeoContour.h>
+#include <OsmAndCore/Map/GeoBandSettings.h>
 
 namespace OsmAnd
 {
@@ -39,7 +41,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             const QList<BandIndex>& bands,
-            const QHash<BandIndex, QString>& colorProfiles,
+            const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
             const QString& projSearchPath = QString());
@@ -51,7 +53,7 @@ namespace OsmAnd
         const TileId tileId;
         const ZoomLevel zoom;
         const QList<BandIndex> bands;
-        const QHash<BandIndex, QString> colorProfiles;
+        const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> bandSettings;
 
         const uint32_t tileSize;
         const float densityFactor;
@@ -74,6 +76,17 @@ namespace OsmAnd
             QHash<BandIndex, QByteArray>& outEncImgData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        virtual QHash<BandIndex, QList<Ref<GeoContour>>> evaluateContours(
+            std::shared_ptr<Metric>* const pOutMetric = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        static sk_sp<SkImage> rasterizeBandContours(
+            const QList<Ref<GeoContour>>& contours,
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const int width,
+            const int height);
     };
 }
 

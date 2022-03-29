@@ -24,6 +24,16 @@ double OsmAnd::WeatherDataConverter::Temperature::toUnit(const Unit& unit_) cons
     return 0.0;
 }
 
+OsmAnd::WeatherDataConverter::Temperature::Unit OsmAnd::WeatherDataConverter::Temperature::unitFromString(const QString& unitString)
+{
+    if (unitString.toLower() == QStringLiteral("c"))
+        return Unit::C;
+    else if (unitString.toLower() == QStringLiteral("f"))
+        return Unit::F;
+
+    return Unit::C;
+}
+
 OsmAnd::WeatherDataConverter::Speed::Speed(
     const Unit& unit_,
     const double value_)
@@ -51,6 +61,20 @@ double OsmAnd::WeatherDataConverter::Speed::toUnit(const Unit& unit_) const
         default:
             return 0.0;
     }
+}
+
+OsmAnd::WeatherDataConverter::Speed::Unit OsmAnd::WeatherDataConverter::Speed::unitFromString(const QString& unitString)
+{
+    if (unitString.toLower() == QStringLiteral("kt"))
+        return Unit::KNOTS;
+    else if (unitString.toLower() == QStringLiteral("m/s"))
+        return Unit::METERS_PER_SECOND;
+    else if (unitString.toLower() == QStringLiteral("km/h"))
+        return Unit::KILOMETERS_PER_HOUR;
+    else if (unitString.toLower() == QStringLiteral("mph"))
+        return Unit::MILES_PER_HOUR;
+
+    return Unit::METERS_PER_SECOND;
 }
 
 double OsmAnd::WeatherDataConverter::Speed::knotsToUnit(const double valueKnots, const Unit& otherUnit) const
@@ -135,14 +159,26 @@ OsmAnd::WeatherDataConverter::Pressure::~Pressure()
 
 double OsmAnd::WeatherDataConverter::Pressure::toUnit(const Unit& unit_) const
 {
+    static const auto hpaPerPa = 0.01;
     static const auto hpaPerInHg = 33.8639;
     static const auto hpaPerMmHg = 1.3332;
     static const auto mmPerInch = 25.4;
     switch (unit)
     {
+        case Unit::PASCAL:
+            switch (unit_)
+            {
+                case Unit::PASCAL: return value;
+                case Unit::HECTOPASCAL: return value * hpaPerPa;
+                case Unit::INCHES_HG: return value * hpaPerPa / hpaPerInHg;
+                case Unit::MM_HG: return value * hpaPerPa / hpaPerMmHg;
+            }
+            break;
+
         case Unit::HECTOPASCAL:
             switch (unit_)
             {
+                case Unit::PASCAL: return value / hpaPerPa;
                 case Unit::HECTOPASCAL: return value;
                 case Unit::INCHES_HG: return value / hpaPerInHg;
                 case Unit::MM_HG: return value / hpaPerMmHg;
@@ -152,6 +188,7 @@ double OsmAnd::WeatherDataConverter::Pressure::toUnit(const Unit& unit_) const
         case Unit::INCHES_HG:
             switch (unit_)
             {
+                case Unit::PASCAL: return value * hpaPerInHg / hpaPerPa;
                 case Unit::HECTOPASCAL: return value * hpaPerInHg;
                 case Unit::INCHES_HG: return value;
                 case Unit::MM_HG: return value * mmPerInch;
@@ -161,6 +198,7 @@ double OsmAnd::WeatherDataConverter::Pressure::toUnit(const Unit& unit_) const
         case Unit::MM_HG:
             switch (unit_)
             {
+                case Unit::PASCAL: return value * hpaPerMmHg / hpaPerPa;
                 case Unit::HECTOPASCAL: return value * hpaPerMmHg;
                 case Unit::INCHES_HG: return value / mmPerInch;
                 case Unit::MM_HG: return value;
@@ -168,6 +206,20 @@ double OsmAnd::WeatherDataConverter::Pressure::toUnit(const Unit& unit_) const
             break;
     }
     return 0.0;
+}
+
+OsmAnd::WeatherDataConverter::Pressure::Unit OsmAnd::WeatherDataConverter::Pressure::unitFromString(const QString& unitString)
+{
+    if (unitString.toLower() == QStringLiteral("pa"))
+        return Unit::PASCAL;
+    else if (unitString.toLower() == QStringLiteral("hpa"))
+        return Unit::HECTOPASCAL;
+    else if (unitString.toLower() == QStringLiteral("inhg"))
+        return Unit::INCHES_HG;
+    else if (unitString.toLower() == QStringLiteral("mmhg"))
+        return Unit::MM_HG;
+
+    return Unit::PASCAL;
 }
 
 OsmAnd::WeatherDataConverter::Precipitation::Precipitation(
@@ -184,17 +236,50 @@ OsmAnd::WeatherDataConverter::Precipitation::~Precipitation()
 
 double OsmAnd::WeatherDataConverter::Precipitation::toUnit(const Unit& unit_) const
 {
-    if (unit == unit_)
-        return value;
-    
     static const auto mmPerInch = 25.4;
-    if (unit == Unit::MM && unit_ == Unit::INCHES)
-        return value / mmPerInch;
-    
-    if (unit == Unit::INCHES && unit_ == Unit::MM)
-        return value * mmPerInch;
-    
+    static const auto secPerHour = 3600.0;
+    switch (unit)
+    {
+        case Unit::MM:
+            switch (unit_)
+            {
+                case Unit::MM: return value;
+                case Unit::INCHES: return value / mmPerInch;
+                case Unit::KG_M2_S: return value / secPerHour;
+            }
+            break;
+
+        case Unit::INCHES:
+            switch (unit_)
+            {
+                case Unit::MM: return value * mmPerInch;
+                case Unit::INCHES: return value;
+                case Unit::KG_M2_S: return value * mmPerInch / secPerHour;
+            }
+            break;
+            
+        case Unit::KG_M2_S:
+            switch (unit_)
+            {
+                case Unit::MM: return value * secPerHour;
+                case Unit::INCHES: return value * secPerHour / mmPerInch;
+                case Unit::KG_M2_S: return value;
+            }
+            break;
+    }
     return 0.0;
+}
+
+OsmAnd::WeatherDataConverter::Precipitation::Unit OsmAnd::WeatherDataConverter::Precipitation::unitFromString(const QString& unitString)
+{
+    if (unitString.toLower() == QStringLiteral("in"))
+        return Unit::INCHES;
+    else if (unitString.toLower() == QStringLiteral("mm"))
+        return Unit::MM;
+    else if (unitString.toLower() == QStringLiteral("kg/(m^2 s)"))
+        return Unit::KG_M2_S;
+
+    return Unit::MM;
 }
 
 OsmAnd::WeatherDataConverter::WeatherDataConverter()

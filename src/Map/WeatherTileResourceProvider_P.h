@@ -103,17 +103,20 @@ namespace OsmAnd
         
     private:
         QThreadPool *_threadPool;
+        QThreadPool *_obtainValueThreadPool;
 
-        QHash<BandIndex, float> _bandOpacityMap;
+        QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
 
         mutable QReadWriteLock _lock;
         int _priority;
+        int _obtainValuePriority;
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
         int _requestVersion;
 
         int getAndDecreasePriority();
+        int getAndDecreaseObtainValuePriority();
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;
@@ -134,12 +137,19 @@ namespace OsmAnd
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
         QWaitCondition _waitUntilAnyContourTileIsProcessed;
 
+        mutable QReadWriteLock _cachedValuesLock;
+        PointI _cachedValuesPoint31;
+        ZoomLevel _cachedValuesZoom;
+        QList<double> _cachedValues;
+        
+        bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
+        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
+
     protected:
         WeatherTileResourceProvider_P(
             WeatherTileResourceProvider* const owner,
             const QDateTime& dateTime,
-            const QHash<BandIndex, float>& bandOpacityMap,
-            const QHash<BandIndex, QString>& bandColorProfilePaths,
+            const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -153,23 +163,36 @@ namespace OsmAnd
         ImplementationInterface<WeatherTileResourceProvider> owner;
 
         const std::shared_ptr<const IWebClient> webClient;
-        
-        const QDateTime dateTime;
-        const QHash<BandIndex, QString> bandColorProfilePaths;
 
+        const QDateTime dateTime;
         const QString localCachePath;
         const QString projResourcesPath;
         const uint32_t tileSize;
         const float densityFactor;
+
+        void obtainValue(
+            const WeatherTileResourceProvider::ValueRequest& request,
+            const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
+            const bool collectMetric = false);
 
         void obtainValueAsync(
             const WeatherTileResourceProvider::ValueRequest& request,
             const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
             const bool collectMetric = false);
         
+        void obtainData(
+            const WeatherTileResourceProvider::TileRequest& request,
+            const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
         void obtainDataAsync(
             const WeatherTileResourceProvider::TileRequest& request,
             const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
+            const bool collectMetric = false);
+
+        void downloadGeoTiles(
+            const WeatherTileResourceProvider::DownloadGeoTileRequest& request,
+            const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
         void downloadGeoTilesAsync(
@@ -177,8 +200,8 @@ namespace OsmAnd
             const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
         
-        const QHash<BandIndex, float> getBandOpacityMap() const;
-        void setBandOpacityMap(const QHash<BandIndex, float>& bandOpacityMap);
+        const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
+        void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
 
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(

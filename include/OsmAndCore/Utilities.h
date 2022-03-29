@@ -914,6 +914,8 @@ namespace OsmAnd
             }
             return res;
         }
+        
+        static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     private:
         Utilities();
