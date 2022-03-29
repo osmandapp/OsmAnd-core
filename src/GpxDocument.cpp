@@ -11,7 +11,6 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
-#include "globalConstants.h"
 
 OsmAnd::GpxExtensions::GpxExtension::GpxExtension()
 {
@@ -110,7 +109,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::createFrom(const std::
     return nullptr;
 }
 
-bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName) const
 {
     xmlWriter.writeStartDocument(QStringLiteral("1.0"), true);
 
@@ -123,7 +122,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
-    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? globalConstants::APP_VERSION : creator);
+    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? creatorName : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:osmand"), QStringLiteral("https://osmand.net"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
@@ -530,20 +529,20 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     xmlWriter.writeEndElement();
 }
 
-bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName) const
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
     xmlWriter.writeNamespace(QStringLiteral("osmand"), QStringLiteral("osmand"));
-    return saveTo(xmlWriter, filename);
+    return saveTo(xmlWriter, filename, creatorName);
 }
 
-bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(const QString& filename, const QString& creatorName) const
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
         return false;
-    const bool ok = saveTo(file, filename);
+    const bool ok = saveTo(file, filename, creatorName);
     file.close();
 
     return ok;
