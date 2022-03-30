@@ -222,9 +222,9 @@ namespace OsmAnd
 
         static std::shared_ptr<GpxDocument> createFrom(const std::shared_ptr<const GpxDocument>& document);
 
-        bool saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName) const;
-        bool saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName) const;
-        bool saveTo(const QString& filename, const QString& creatorName) const;
+        bool saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName = QStringLiteral("OsmAnd Core")) const;
+        bool saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName = QStringLiteral("OsmAnd Core")) const;
+        bool saveTo(const QString& filename, const QString& creatorName = QStringLiteral("OsmAnd Core")) const;
         static std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& parser);
         static std::shared_ptr<GpxDocument> loadFrom(QIODevice& ioDevice);
         static std::shared_ptr<GpxDocument> loadFrom(const QString& filename);
