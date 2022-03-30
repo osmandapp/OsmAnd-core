@@ -328,6 +328,7 @@ using namespace OsmAnd;
 	%template(QVectorPointI) QVector<OsmAnd::Point<int32_t>>;
 	%template(QListVectorLine) QList<std::shared_ptr<OsmAnd::VectorLine>>;
 	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
+	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
