@@ -109,7 +109,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::createFrom(const std::
     return nullptr;
 }
 
-bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName) const
+bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     xmlWriter.writeStartDocument(QStringLiteral("1.0"), true);
 
@@ -529,7 +529,7 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     xmlWriter.writeEndElement();
 }
 
-bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName) const
+bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
@@ -537,7 +537,7 @@ bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, c
     return saveTo(xmlWriter, filename, creatorName);
 }
 
-bool OsmAnd::GpxDocument::saveTo(const QString& filename, const QString& creatorName) const
+bool OsmAnd::GpxDocument::saveTo(const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
