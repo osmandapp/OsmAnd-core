@@ -109,7 +109,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::createFrom(const std::
     return nullptr;
 }
 
-bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     xmlWriter.writeStartDocument(QStringLiteral("1.0"), true);
 
@@ -122,7 +122,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
-    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? QStringLiteral("OsmAnd Core") : creator);
+    xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? creatorName : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:osmand"), QStringLiteral("https://osmand.net"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
@@ -206,7 +206,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             // <hdop>
             if (!qIsNaN(wpt->horizontalDilutionOfPrecision))
-                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 7));
+                xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(wpt->horizontalDilutionOfPrecision, 'f', 1));
 
             // <vdop>
             if (!qIsNaN(wpt->verticalDilutionOfPrecision))
@@ -281,7 +281,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                 {
                     // <hdop>
                     if (!qIsNaN(trkpt->horizontalDilutionOfPrecision))
-                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 7));
+                        xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(trkpt->horizontalDilutionOfPrecision, 'f', 1));
 
                     // <vdop>
                     if (!qIsNaN(trkpt->verticalDilutionOfPrecision))
@@ -382,7 +382,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
             {
                 // <hdop>
                 if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 1));
 
                 // <vdop>
                 if (!qIsNaN(rtept->verticalDilutionOfPrecision))
@@ -529,20 +529,20 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     xmlWriter.writeEndElement();
 }
 
-bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
     xmlWriter.writeNamespace(QStringLiteral("osmand"), QStringLiteral("osmand"));
-    return saveTo(xmlWriter, filename);
+    return saveTo(xmlWriter, filename, creatorName);
 }
 
-bool OsmAnd::GpxDocument::saveTo(const QString& filename) const
+bool OsmAnd::GpxDocument::saveTo(const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
         return false;
-    const bool ok = saveTo(file, filename);
+    const bool ok = saveTo(file, filename, creatorName);
     file.close();
 
     return ok;
