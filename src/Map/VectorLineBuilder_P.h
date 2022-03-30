@@ -54,7 +54,7 @@ namespace OsmAnd
         sk_sp<const SkImage> _specialPathIcon;
         float _pathIconStep;
         float _screenScale;
- 
+
     public:
         virtual ~VectorLineBuilder_P();
 
@@ -107,7 +107,7 @@ namespace OsmAnd
         
         float getScreenScale() const;
         void setScreenScale(const float screenScale);
-        
+
         void setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);
         void setEndCapStyle(const int endCapStyle);
 

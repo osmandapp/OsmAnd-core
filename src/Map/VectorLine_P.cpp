@@ -21,8 +21,7 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define TRACK_WIDTH_THRESHOLD 15.0f
-#define ARROW_DISTANCE_MULTIPLIER 1.5f
+#define TRACK_WIDTH_THRESHOLD 36.0f
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
 // Colorization shemes
@@ -548,8 +547,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     float zoom = this->zoom();
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) / (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
-    double radius = _lineWidth * scale;
-    double simplificationRadius = (_lineWidth - _outlineWidth) * scale;
+    double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
+    double radius = _lineWidth * scale * visualShiftCoef;
+    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = _dashPattern.size() > 0 ? VectorMapSymbol::PrimitiveType::TriangleStrip : VectorMapSymbol::PrimitiveType::Triangles;
@@ -1099,7 +1099,7 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
     {
         return owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
     }
-    return _scaledPathIcon->height() * ARROW_DISTANCE_MULTIPLIER;
+    return _scaledPathIcon->height();
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
