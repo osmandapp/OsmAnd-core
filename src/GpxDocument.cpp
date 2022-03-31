@@ -533,7 +533,7 @@ bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, c
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
-    return saveTo(xmlWriter, filename);
+    return saveTo(xmlWriter, filename, creatorName);
 }
 
 bool OsmAnd::GpxDocument::saveTo(const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
