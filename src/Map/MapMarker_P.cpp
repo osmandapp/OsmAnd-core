@@ -259,7 +259,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 mapSymbolCaption->contentClass = OsmAnd::MapSymbol::ContentClass::Caption;
                 mapSymbolCaption->intersectsWithClasses.insert(
                     mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(QStringLiteral("text_layer_caption")));
-                mapSymbolCaption->setOffset(PointI(0, owner->pinIcon->height() / 2 + textImage->height() / 2 + offset.y + owner->captionTopSpace));
+                mapSymbolCaption->setOffset(PointI(offset.x, owner->pinIcon->height() / 2 + textImage->height() / 2 + offset.y + owner->captionTopSpace));
                 mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
                 mapSymbolCaption->languageId = LanguageId::Invariant;
                 mapSymbolCaption->position31 = _position;
