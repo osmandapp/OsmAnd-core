@@ -124,7 +124,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     xmlWriter.writeAttribute(QStringLiteral("version"), version.isEmpty() ? QStringLiteral("1.1") : version);
     xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? creatorName : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
-    xmlWriter.writeAttribute(QStringLiteral("xmlns:osmand"), QStringLiteral("https://osmand.net"));
+    xmlWriter.writeNamespace(QStringLiteral("https://osmand.net"), QStringLiteral("osmand"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
     xmlWriter.writeAttribute(QStringLiteral("xsi:schemaLocation"), QStringLiteral("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
@@ -218,6 +218,75 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         writeExtensions(wptPt->extensions, wptPt->attributes, xmlWriter);
 
         // </wpt>
+        xmlWriter.writeEndElement();
+    }
+    
+    // <rte>'s
+    for (const auto& route : constOf(routes))
+    {
+        // <rte>
+        xmlWriter.writeStartElement(QStringLiteral("rte"));
+
+        // <name>
+        writeNotNullText(xmlWriter, QStringLiteral("name"), route->name);
+
+        // <desc>
+        writeNotNullText(xmlWriter, QStringLiteral("desc"), route->description);
+
+        // Write extensions
+        writeExtensions(route->extensions, route->attributes, xmlWriter);
+
+        // Write route points
+        for (const auto& routePoint : constOf(route->points))
+        {
+            // <rtept>
+            xmlWriter.writeStartElement(QStringLiteral("rtept"));
+            xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(routePoint->position.latitude, 'f', 7));
+            xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(routePoint->position.longitude, 'f', 7));
+
+            // <name>
+            writeNotNullText(xmlWriter, QStringLiteral("name"), routePoint->name);
+
+            // <desc>
+            writeNotNullText(xmlWriter, QStringLiteral("desc"), routePoint->description);
+
+            // <ele>
+            if (!qIsNaN(routePoint->elevation))
+                xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(routePoint->elevation, 'g', 7));
+
+            // <time>
+            if (!routePoint->timestamp.isNull())
+                xmlWriter.writeTextElement(QStringLiteral("time"), routePoint->timestamp.toString(Qt::DateFormat::ISODate));
+
+            // <cmt>
+            writeNotNullText(xmlWriter, QStringLiteral("cmt"), routePoint->comment);
+
+            // <type>
+            writeNotNullText(xmlWriter, QStringLiteral("type"), routePoint->type);
+
+            // Links
+            if (!routePoint->links.isEmpty())
+                writeLinks(routePoint->links, xmlWriter);
+
+            if (const auto rtept = std::dynamic_pointer_cast<const WptPt>(routePoint.shared_ptr()))
+            {
+                // <hdop>
+                if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
+                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
+
+                // <vdop>
+                if (!qIsNaN(rtept->verticalDilutionOfPrecision))
+                    xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(rtept->verticalDilutionOfPrecision, 'f', 12));
+            }
+
+            // Write extensions
+            writeExtensions(routePoint->extensions, routePoint->attributes, xmlWriter);
+
+            // </rtept>
+            xmlWriter.writeEndElement();
+        }
+
+        // </rte>
         xmlWriter.writeEndElement();
     }
 
@@ -331,75 +400,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         xmlWriter.writeEndElement();
     }
 
-    // <rte>'s
-    for (const auto& route : constOf(routes))
-    {
-        // <rte>
-        xmlWriter.writeStartElement(QStringLiteral("rte"));
-
-        // <name>
-        writeNotNullText(xmlWriter, QStringLiteral("name"), route->name);
-
-        // <desc>
-        writeNotNullText(xmlWriter, QStringLiteral("desc"), route->description);
-
-        // Write extensions
-        writeExtensions(route->extensions, route->attributes, xmlWriter);
-
-        // Write route points
-        for (const auto& routePoint : constOf(route->points))
-        {
-            // <rtept>
-            xmlWriter.writeStartElement(QStringLiteral("rtept"));
-            xmlWriter.writeAttribute(QStringLiteral("lat"), QString::number(routePoint->position.latitude, 'f', 7));
-            xmlWriter.writeAttribute(QStringLiteral("lon"), QString::number(routePoint->position.longitude, 'f', 7));
-
-            // <name>
-            writeNotNullText(xmlWriter, QStringLiteral("name"), routePoint->name);
-
-            // <desc>
-            writeNotNullText(xmlWriter, QStringLiteral("desc"), routePoint->description);
-
-            // <ele>
-            if (!qIsNaN(routePoint->elevation))
-                xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(routePoint->elevation, 'g', 7));
-
-            // <time>
-            if (!routePoint->timestamp.isNull())
-                xmlWriter.writeTextElement(QStringLiteral("time"), routePoint->timestamp.toString(Qt::DateFormat::ISODate));
-
-            // <cmt>
-            writeNotNullText(xmlWriter, QStringLiteral("cmt"), routePoint->comment);
-
-            // <type>
-            writeNotNullText(xmlWriter, QStringLiteral("type"), routePoint->type);
-
-            // Links
-            if (!routePoint->links.isEmpty())
-                writeLinks(routePoint->links, xmlWriter);
-
-            if (const auto rtept = std::dynamic_pointer_cast<const WptPt>(routePoint.shared_ptr()))
-            {
-                // <hdop>
-                if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 1));
-
-                // <vdop>
-                if (!qIsNaN(rtept->verticalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(rtept->verticalDilutionOfPrecision, 'f', 12));
-            }
-
-            // Write extensions
-            writeExtensions(routePoint->extensions, routePoint->attributes, xmlWriter);
-
-            // </rtept>
-            xmlWriter.writeEndElement();
-        }
-
-        // </rte>
-        xmlWriter.writeEndElement();
-    }
-
     // Write gpx extensions
     writeExtensions(extensions, attributes, xmlWriter);
 
@@ -505,7 +505,7 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
     for (const auto& subextension : constOf(extensions))
-        writeExtension(subextension, xmlWriter, QStringLiteral("osmand"));
+        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
 
     // </extensions>
     xmlWriter.writeEndElement();
@@ -514,7 +514,7 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
 void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp)
 {
     // <*>
-    xmlWriter.writeStartElement(namesp, extension->name);
+    xmlWriter.writeStartElement(namesp + extension->name);
     for (const auto attributeEntry : rangeOf(constOf(extension->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
@@ -533,7 +533,6 @@ bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, c
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
     xmlWriter.setAutoFormatting(true);
-    xmlWriter.writeNamespace(QStringLiteral("osmand"), QStringLiteral("osmand"));
     return saveTo(xmlWriter, filename, creatorName);
 }
 
