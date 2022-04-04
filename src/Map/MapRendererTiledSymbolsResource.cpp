@@ -8,6 +8,7 @@
 #include "MapRendererResourcesManager.h"
 #include "MapRendererBaseResourcesCollection.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
+#include "IUpdatableMapSymbolsGroup.h"
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
@@ -38,6 +39,58 @@ OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
 OsmAnd::MapRendererTiledSymbolsResource::~MapRendererTiledSymbolsResource()
 {
     safeUnlink();
+}
+
+bool OsmAnd::MapRendererTiledSymbolsResource::updatesPresent()
+{
+    bool updatesPresent = MapRendererBaseTiledResource::updatesPresent();
+
+    QReadLocker scopedLocker(&_publishedMapSymbolsByGroupLock);
+    for (const auto& group : _publishedMapSymbolsByGroup.keys())
+    {
+        const auto& mapSymbolsGroup = std::const_pointer_cast<MapSymbolsGroup>(group);
+        if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(mapSymbolsGroup))
+        {
+            if (updatableMapSymbolGroup->updatesPresent())
+            {
+                updatesPresent = true;
+                break;
+            }
+        }
+    }
+    return updatesPresent;
+}
+
+bool OsmAnd::MapRendererTiledSymbolsResource::checkForUpdatesAndApply(const MapState& mapState)
+{
+    bool updatesApplied = MapRendererBaseTiledResource::checkForUpdatesAndApply(mapState);
+
+    QReadLocker scopedLocker(&_publishedMapSymbolsByGroupLock);
+    for (const auto& group : _publishedMapSymbolsByGroup.keys())
+    {
+        const auto& mapSymbolsGroup = std::const_pointer_cast<MapSymbolsGroup>(group);
+        if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(mapSymbolsGroup))
+        {
+            IUpdatableMapSymbolsGroup::UpdateResult result = updatableMapSymbolGroup->update(mapState);
+            switch (result)
+            {
+                case IUpdatableMapSymbolsGroup::UpdateResult::All:
+                case IUpdatableMapSymbolsGroup::UpdateResult::Primitive:
+                {
+                    markAsJunk();
+                    updatesApplied = true;
+                    break;
+                }
+                case IUpdatableMapSymbolsGroup::UpdateResult::Properties:
+                    updatesApplied = true;
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+    }
+    return updatesApplied;
 }
 
 bool OsmAnd::MapRendererTiledSymbolsResource::supportsObtainDataAsync() const
@@ -219,6 +272,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     if (queryController && queryController->isAborted())
         return false;
 
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByGroupLock);
+    
     // Register all obtained symbols
     const auto& self = shared_from_this();
     QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
@@ -536,6 +591,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
     const auto& self = shared_from_this();
 
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByGroupLock);
+    
     // Unregister all registered map symbols
     QList< PublishOrUnpublishMapSymbol > mapSymbolsToUnpublish;
     for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(_publishedMapSymbolsByGroup)))

@@ -32,6 +32,7 @@
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     : _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
+    , _version(0)
     , _isHidden(false)
     , _isApproximationEnabled(true)
     , _colorizationSceme(0)
@@ -47,6 +48,13 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 
 OsmAnd::VectorLine_P::~VectorLine_P()
 {
+}
+
+int OsmAnd::VectorLine_P::getVersion() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _version;
 }
 
 bool OsmAnd::VectorLine_P::isHidden() const
@@ -331,6 +339,7 @@ bool OsmAnd::VectorLine_P::applyChanges()
     owner->lineUpdatedObservable.postNotify(owner);
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
+    _version++;
     
     return true;
 }
@@ -378,7 +387,7 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
     _symbolsGroupsRegistry.remove(symbolsGroup);
 }
 
-OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::PointD p2, OsmAnd::PointD p3, OsmAnd::PointD p4) const
+OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4)
 {
     double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
     //double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
@@ -398,7 +407,7 @@ OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::Poi
     return r;
 }
 
-OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
+OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to )
 {
     double mDist = (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y);
     double projection = scalarMultiplication(from.x, from.y, to.x, to.y, point.x, point.y);
@@ -414,49 +423,57 @@ OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, Po
                   from.y + (to.y - from.y) * (projection / mDist));
 }
 
-double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const
+double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC)
 {
     // Scalar multiplication between (AB, AC)
     return (xB - xA) * (xC - xA) + (yB - yA) * (yC - yA);
 }
 
-int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, uint start, uint end, double epsilon, std::vector<bool>& include) const
+int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, uint start, uint end, double epsilon, std::vector<bool>& include)
 {
     double dmax = -1;
     int index = -1;
-    for (int i = start + 1; i <= end - 1; i++) {
-        PointD proj = getProjection(points[i],points[start], points[end]);
-        double d = qSqrt((points[i].x-proj.x)*(points[i].x-proj.x)+
-                         (points[i].y-proj.y)*(points[i].y-proj.y));
+    for (int i = start + 1; i <= end - 1; i++)
+    {
+        PointD proj = getProjection(points[i], points[start], points[end]);
+        double d = qSqrt((points[i].x - proj.x) * (points[i].x - proj.x) +
+                         (points[i].y - proj.y) * (points[i].y - proj.y));
         // calculate distance from line
         if (d > dmax) {
             dmax = d;
             index = i;
         }
     }
-    if (dmax >= epsilon) {
+    if (dmax >= epsilon)
+    {
         int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
         int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
         return enabled1 + enabled2 ;
-    } else {
+    }
+    else
+    {
         include[end] = true;
         return 1;
     }
 }
 
-void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
+void OsmAnd::VectorLine_P::calculateVisibleSegments(const QVector<PointI>& points,
+                                                    const QList<FColorARGB>& colorizationMapping,
+                                                    const AreaI& visibleArea,
+                                                    std::vector<std::vector<PointI>>& segments,
+                                                    QList<QList<FColorARGB>>& segmentColors)
 {
     bool segmentStarted = false;
-    auto visibleArea = _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3));
     PointI curr, drawFrom, drawTo, inter1, inter2;
-    auto prev = drawFrom = _points[0];
+    auto prev = drawFrom = points[0];
     int drawFromIdx = 0, drawToIdx = 0;
     std::vector<PointI> segment;
     QList<FColorARGB> colors;
+    bool hasColorizationMapping = colorizationMapping.size() == points.size();
     bool prevIn = visibleArea.contains(prev);
-    for (int i = 1; i < _points.size(); i++)
+    for (int i = 1; i < points.size(); i++)
     {
-        curr = drawTo = _points[i];
+        curr = drawTo = points[i];
         drawToIdx = i;
         bool currIn = visibleArea.contains(curr);
         bool draw = false;
@@ -507,16 +524,16 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                     colors.clear();
                 }
                 segment.push_back(drawFrom);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawFromIdx]);
+                if (hasColorizationMapping)
+                    colors.push_back(colorizationMapping[drawFromIdx]);
                 
                 segmentStarted = currIn;
             }
             if (segment.empty() || segment.back() != drawTo)
             {
                 segment.push_back(drawTo);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawToIdx]);
+                if (hasColorizationMapping)
+                    colors.push_back(colorizationMapping[drawToIdx]);
                 
             }
         }
@@ -567,7 +584,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     std::vector<std::vector<PointI>> segments;
     QList<QList<FColorARGB>> colors;
-    calculateVisibleSegments(segments, colors);
+    auto visibleArea = _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3));
+    calculateVisibleSegments(_points, _colorizationMapping, visibleArea, segments, colors);
     // Generate new arrow paths for visible segments
     _arrowsOnPath.clear();
     generateArrowsOnPath(_arrowsOnPath, segments);
@@ -1063,7 +1081,6 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
             const auto length = pathMeasure.getLength();
 
             float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
-            
             float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
             auto iconOffset = 0.5f * step;
             const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;

@@ -61,9 +61,13 @@ namespace OsmAnd
         };
         QList< std::shared_ptr<SharedGroupResources> > _referencedSharedGroupsResources;
 
+        mutable QReadWriteLock _publishedMapSymbolsByGroupLock;
         QHash< std::shared_ptr<const MapSymbolsGroup>, QList< std::shared_ptr<const MapSymbol> > > _publishedMapSymbolsByGroup;
         mutable QReadWriteLock _symbolToResourceInGpuLUTLock;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _symbolToResourceInGpuLUT;
+
+        virtual bool updatesPresent() Q_DECL_OVERRIDE;
+        virtual bool checkForUpdatesAndApply(const MapState& mapState) Q_DECL_OVERRIDE;
 
         virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

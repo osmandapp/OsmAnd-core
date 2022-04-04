@@ -13,6 +13,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/VectorLine.h>
+#include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 
 namespace OsmAnd
 {
@@ -20,7 +21,9 @@ namespace OsmAnd
     class VectorLineBuilder_P;
 
     class VectorLinesCollection_P;
-    class OSMAND_CORE_API VectorLinesCollection : public IMapKeyedSymbolsProvider
+    class OSMAND_CORE_API VectorLinesCollection
+        : public std::enable_shared_from_this<VectorLinesCollection>
+        , public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLinesCollection);
 
@@ -35,7 +38,7 @@ namespace OsmAnd
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
 
-        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
@@ -51,6 +54,8 @@ namespace OsmAnd
         
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+        
+        std::shared_ptr<VectorLineArrowsProvider> createArrowsProvider();
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

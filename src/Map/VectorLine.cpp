@@ -24,6 +24,11 @@ OsmAnd::VectorLine::~VectorLine()
 {
 }
 
+int OsmAnd::VectorLine::getVersion() const
+{
+    return _p->getVersion();
+}
+
 bool OsmAnd::VectorLine::isHidden() const
 {
     return _p->isHidden();

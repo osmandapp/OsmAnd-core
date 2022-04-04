@@ -99,6 +99,8 @@ namespace OsmAnd
         const float screenScale;
         EndCapStyle endCapStyle;
 
+        int getVersion() const;
+
         bool isHidden() const;
         void setIsHidden(const bool hidden);
         

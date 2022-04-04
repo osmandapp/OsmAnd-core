@@ -70,3 +70,8 @@ OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMaxZoom() const
 {
     return OsmAnd::MaxZoomLevel;
 }
+
+std::shared_ptr<OsmAnd::VectorLineArrowsProvider> OsmAnd::VectorLinesCollection::createArrowsProvider()
+{
+    return std::make_shared<VectorLineArrowsProvider>(shared_from_this());
+}

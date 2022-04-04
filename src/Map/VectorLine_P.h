@@ -58,6 +58,7 @@ namespace OsmAnd
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
 
+        int _version;
         bool _isHidden;
         bool _isApproximationEnabled;
         bool _showArrows;
@@ -98,20 +99,26 @@ namespace OsmAnd
         
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
-        PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
+        static PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4);
+        static PointD getProjection(PointD point, PointD from, PointD to );
+        static double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC);
+        static int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
+                                   std::vector<bool>& include);
         
-        PointD getProjection(PointD point, PointD from, PointD to ) const;
-        double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
-        
-        int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
-                                   std::vector<bool>& include) const;
-        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const;
+        static void calculateVisibleSegments(const QVector<PointI>& points,
+            const QList<FColorARGB>& colorizationMapping,
+            const AreaI& visibleArea,
+            std::vector<std::vector<PointI>>& segments,
+            QList<QList<FColorARGB>>& segmentColors);
+
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     public:
         virtual ~VectorLine_P();
 
         ImplementationInterface<VectorLine> owner;
+
+        int getVersion() const;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);

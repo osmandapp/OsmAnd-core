@@ -296,7 +296,7 @@ void OsmAnd::MapRendererKeyedSymbolsResource::finishResourcesRenewing()
 }
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getCachedGpuResourceFor(
-                                                                                                                const std::shared_ptr<const MapSymbol>& mapSymbol) const
+    const std::shared_ptr<const MapSymbol>& mapSymbol) const
 {
     const auto citResourceInGPU = _resourcesInGPUCache.constFind(mapSymbol);
     if (citResourceInGPU == _resourcesInGPUCache.cend())
