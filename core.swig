@@ -96,6 +96,7 @@
 #include <OsmAndCore/Map/MapMarker.h>
 #include <OsmAndCore/Map/MapMarkersCollection.h>
 #include <OsmAndCore/Map/VectorLinesCollection.h>
+#include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 #include <OsmAndCore/Map/VectorLineBuilder.h>
 #include <OsmAndCore/Map/VectorLine.h>
 #include <OsmAndCore/Map/MapMarkerBuilder.h>
@@ -267,6 +268,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapMarker::SymbolsGroup)
 	%shared_ptr(OsmAnd::MapMarkersCollection)
 	%shared_ptr(OsmAnd::VectorLinesCollection)
+	%shared_ptr(OsmAnd::VectorLineArrowsProvider)
 	%shared_ptr(OsmAnd::VectorLineBuilder)
 	%shared_ptr(OsmAnd::VectorLine)
 	%shared_ptr(OsmAnd::VectorLine::SymbolsGroup)
@@ -423,6 +425,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapMarker.h>
 %include <OsmAndCore/Map/MapMarkersCollection.h>
 %include <OsmAndCore/Map/VectorLinesCollection.h>
+%include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 %include <OsmAndCore/Map/VectorLineBuilder.h>
 %include <OsmAndCore/Map/VectorLine.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
