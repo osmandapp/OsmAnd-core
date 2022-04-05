@@ -1,46 +1,31 @@
-#ifndef _OSMAND_CORE_VECTOR_LINES_COLLECTION_H_
-#define _OSMAND_CORE_VECTOR_LINES_COLLECTION_H_
+#ifndef _OSMAND_CORE_VECTOR_LINE_ARROWS_PROVIDER_H_
+#define _OSMAND_CORE_VECTOR_LINE_ARROWS_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
-#include <QVector>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
-#include <OsmAndCore/Map/VectorLine.h>
-#include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 
 namespace OsmAnd
 {
-    class VectorLineBuilder;
-    class VectorLineBuilder_P;
-
-    class VectorLinesCollection_P;
-    class OSMAND_CORE_API VectorLinesCollection
-        : public std::enable_shared_from_this<VectorLinesCollection>
-        , public IMapKeyedSymbolsProvider
+    class VectorLinesCollection;
+    class VectorLineArrowsProvider_P;
+    class OSMAND_CORE_API VectorLineArrowsProvider : public IMapKeyedSymbolsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(VectorLinesCollection);
+        Q_DISABLE_COPY_AND_MOVE(VectorLineArrowsProvider);
 
     private:
-        PrivateImplementation<VectorLinesCollection_P> _p;
-        
-        std::shared_ptr<VectorLineArrowsProvider> _arrowsProvider;
+        PrivateImplementation<VectorLineArrowsProvider_P> _p;
     protected:
     public:
-        VectorLinesCollection();
-        virtual ~VectorLinesCollection();
-
-        QList<std::shared_ptr<OsmAnd::VectorLine>> getLines() const;
-        bool removeLine(const std::shared_ptr<VectorLine>& line);
-        void removeAllLines();
-
-        const std::shared_ptr<VectorLineArrowsProvider> getVectorLineArrowsProvider();
+        VectorLineArrowsProvider(const std::shared_ptr<VectorLinesCollection>& collection);
+        virtual ~VectorLineArrowsProvider();
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const Q_DECL_OVERRIDE;
 
@@ -58,10 +43,7 @@ namespace OsmAnd
         
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
-
-    friend class OsmAnd::VectorLineBuilder;
-    friend class OsmAnd::VectorLineBuilder_P;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_VECTOR_LINES_COLLECTION_H_)
+#endif // !defined(_OSMAND_CORE_VECTOR_LINE_ARROWS_PROVIDER_H_)
