@@ -77,6 +77,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             "   y INTEGER NOT NULL,"
             "   z INTEGER NOT NULL,"
             "   image BLOB,"
+            "   time LONG,"
             "   PRIMARY KEY (x, y, z)"
             ")")))
         {
