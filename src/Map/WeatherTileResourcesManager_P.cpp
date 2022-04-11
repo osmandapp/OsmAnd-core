@@ -271,7 +271,10 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, values[band], nullptr);
+                if (requestSucceeded)
+                    callback(true, values[band], nullptr);
+                else
+                    callback(false, 0, nullptr);
             };
         
         resourceProvider->obtainValueAsync(rr, rc);
