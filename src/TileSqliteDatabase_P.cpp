@@ -28,6 +28,7 @@ void OsmAnd::TileSqliteDatabase_P::resetCachedInfo()
     _cachedMinZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedIsTileTimeSupported.storeRelease(std::numeric_limits<int>::min());
+    _cachedIsTimeColumnChecked.storeRelease(std::numeric_limits<int>::min());
 
     {
         QWriteLocker scopedLocker(&_cachedBboxes31Lock);
@@ -77,7 +78,6 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             "   y INTEGER NOT NULL,"
             "   z INTEGER NOT NULL,"
             "   image BLOB,"
-            "   time LONG,"
             "   PRIMARY KEY (x, y, z)"
             ")")))
         {
@@ -230,12 +230,21 @@ bool OsmAnd::TileSqliteDatabase_P::isInvertedY() const
 
 bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
 {
-    int isSupported;
-    if ((isSupported = _cachedIsTileTimeSupported.loadAcquire()) >= 0)
+    bool isValueCached = _cachedIsTileTimeSupported.loadAcquire() == 0 || _cachedIsTileTimeSupported.loadAcquire() == 1;
+    if (isValueCached)
     {
-        return isSupported > 0;
+        return _cachedIsTileTimeSupported.loadAcquire();
     }
+    else
+    {
+        bool isSupported = shouldStoreTime() && hasTileTimeColumn();
+        _cachedIsTileTimeSupported.storeRelease(isSupported);
+        return isSupported;
+    }
+}
 
+bool OsmAnd::TileSqliteDatabase_P::shouldStoreTime() const
+{
     if (!isOpened())
     {
         return false;
@@ -244,26 +253,20 @@ bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
     Meta meta;
     if (!obtainMeta(meta))
     {
-        _cachedIsTileTimeSupported.storeRelease(0);
         return false;
     }
-
+    
     bool ok = false;
     const auto timeColumn = meta.getTimeColumn(&ok);
     if (!ok)
     {
-        _cachedIsTileTimeSupported.storeRelease(0);
         return false;
     }
-
-    isSupported = QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
-    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
     
-    _cachedIsTileTimeSupported.storeRelease(isSupported);
-    return isSupported > 0;
+    return QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
+bool OsmAnd::TileSqliteDatabase_P::hasTileTimeColumn() const
 {
     if (!isOpened())
     {
@@ -272,50 +275,44 @@ bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
     return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
  }
 
-bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false */)
+void OsmAnd::TileSqliteDatabase_P::enableTileTimeSupportIfNeeded()
 {
-    if (!isOpened())
+    bool isUnchecked = _cachedIsTimeColumnChecked.loadAcquire() <= 0;
+    if (isUnchecked)
     {
-        return false;
-    }
-
-    if (isTileTimeSupported() && !force)
-    {
-        return true;
-    }
-
-    {
-        QReadLocker scopedLocker(&_lock);
-
-        if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1")))
+        _cachedIsTimeColumnChecked.storeRelease(1);
+        
+        if (shouldStoreTime() && !hasTileTimeColumn())
         {
-            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
             {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to add time column: %s",
-                    sqlite3_errmsg(_database.get()));
-                return false;
+                QReadLocker scopedLocker(&_lock);
+                if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to add time column: %s",
+                        sqlite3_errmsg(_database.get()));
+                    return;
+                }
             }
+
+            Meta meta;
+            if (!obtainMeta(meta))
+            {
+                return;
+            }
+
+            meta.setTimeColumn(QStringLiteral("yes"));
+
+            if (!storeMeta(meta))
+            {
+                
+                return;
+            }
+
+            _cachedIsTileTimeSupported.storeRelease(1);
         }
     }
-
-    Meta meta;
-    if (!obtainMeta(meta))
-    {
-        return false;
-    }
-
-    meta.setTimeColumn(QStringLiteral("yes"));
-
-    if (!storeMeta(meta))
-    {
-        return false;
-    }
-
-    _cachedIsTileTimeSupported.storeRelease(1);
-
-    return true;
 }
 
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMinZoom() const
@@ -928,9 +925,13 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                         return false;
                     }
                     time = static_cast<int64_t>(timeLL);
+                    *pOutTime = time;
                 }
-
-                *pOutTime = time;
+                else
+                {
+                    *pOutTime = 0;
+                    return false;
+                }
             }
 
             return true;
@@ -952,7 +953,11 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     }
 
     const auto timeSupported = isTileTimeSupported();
-
+    if (!timeSupported)
+    {
+        enableTileTimeSupportIfNeeded();
+    }
+    
     {
         QWriteLocker scopedLocker(&_lock);
 

@@ -81,8 +81,8 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     bool isExists = localFile.exists();
     if (isExists && source->expirationTimeMillis != -1)
     {
-        long currentTime = QDateTime::currentDateTime().toTime_t() * 1000;
-        long lastModifiedTime = localFile.lastModified().toTime_t() * 1000;
+        long currentTime = QDateTime::currentMSecsSinceEpoch();
+        long lastModifiedTime = localFile.lastModified().toUTC().toMSecsSinceEpoch();
         long expirationTime = source->expirationTimeMillis;
         if (currentTime - lastModifiedTime > expirationTime)
             isExpired = true;
