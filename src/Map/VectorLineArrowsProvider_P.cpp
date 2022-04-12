@@ -27,51 +27,82 @@ OsmAnd::VectorLineArrowsProvider_P::~VectorLineArrowsProvider_P()
 {
 }
 
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::VectorLineArrowsProvider_P::getMarker(int markerId) const
+{
+    for (const auto& marker : _markersCollection->getMarkers())
+        if (marker->markerId == markerId)
+            return marker;
+
+    return nullptr;
+}
+
+QList<std::shared_ptr<OsmAnd::MapMarker>> OsmAnd::VectorLineArrowsProvider_P::getLineMarkers(int lineId) const
+{
+    QList<std::shared_ptr<OsmAnd::MapMarker>> res;
+    for (const auto& marker : _markersCollection->getMarkers())
+        if ((marker->markerId & 0x7FFF) == lineId)
+            res.push_back(marker);
+
+    return res;
+}
+
 void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
 {
     QWriteLocker scopedLocker(&_markersLock);
-    
-    const auto& markers = _markersCollection->getMarkers();
-    int lineSymbolIdx = 0;
-    int initialSymbolsCount = markers.size();
+
     for (const auto& line : _linesCollection->getLines())
     {
+        int lineId = line->lineId;
+        if (line->isHidden())
+        {
+            for (const auto& marker : getLineMarkers(lineId))
+                _markersCollection->removeMarker(marker);
+
+            continue;
+        }
+
         const auto& symbolsData = line->getArrowsOnPath();
         int baseOrder = line->baseOrder - 100;
+        int i = 0;
         for (const auto& symbolInfo : symbolsData)
         {
-            if (lineSymbolIdx < initialSymbolsCount)
+            int markerId = lineId | (i++ << 15);
+            const auto& marker = getMarker(markerId);
+            if (marker)
             {
-                auto marker = markers[lineSymbolIdx++];
+                marker->setIsHidden(false);
                 marker->setPosition(symbolInfo.position31);
                 marker->setOnMapSurfaceIconDirection(
-                    reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(marker->markerId),
+                    reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1),
                     OsmAnd::Utilities::normalizedAngleDegrees(symbolInfo.direction));
-                marker->setIsHidden(line->isHidden());
             }
             else
             {
                 OsmAnd::MapMarkerBuilder builder;
-                const auto markerKey = reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(markers.size());
+                const auto markerKey = reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1);
                 builder.addOnMapSurfaceIcon(markerKey, line->getPointImage());
-                builder.setMarkerId(markers.size());
-                builder.setBaseOrder(--baseOrder);
-                builder.setIsHidden(line->isHidden());
-                const auto& marker = builder.buildAndAddToCollection(_markersCollection);
-                marker->setPosition(symbolInfo.position31);
-                marker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
-                marker->setIsAccuracyCircleVisible(false);
+                builder.setMarkerId(markerId);
+                builder.setBaseOrder(baseOrder);
+                builder.setIsHidden(false);
+                builder.setPosition(symbolInfo.position31);
+                builder.setIsAccuracyCircleVisible(false);
+                const auto& newMarker = builder.buildAndAddToCollection(_markersCollection);
+                newMarker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
             }
         }
+        for (const auto& marker : getLineMarkers(lineId))
+        {
+            int instanceId = marker->markerId >> 15;
+            if (instanceId >= i)
+                marker->setIsHidden(true);
+        }
     }
-    while (lineSymbolIdx < initialSymbolsCount && markers.size() > lineSymbolIdx)
-        _markersCollection->removeMarker(markers[lineSymbolIdx++]);
 }
 
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::VectorLineArrowsProvider_P::getProvidedDataKeys() const
 {
     QReadLocker scopedLocker(&_markersLock);
-    
+
     return _markersCollection->getProvidedDataKeys();
 }
 

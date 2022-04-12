@@ -31,6 +31,9 @@ namespace OsmAnd
         mutable QReadWriteLock _markersLock;
         std::shared_ptr<MapMarkersCollection> _markersCollection;
 
+        std::shared_ptr<MapMarker> getMarker(int markerId) const;
+        QList<std::shared_ptr<MapMarker>> getLineMarkers(int lineId) const;
+
         void rebuildArrows();
         
     protected:

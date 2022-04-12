@@ -169,7 +169,8 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         {
             double newWidth = _lineWidth / 3;
             double scale = newWidth / owner->pathIcon->width();
-            _scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
+            auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
+            _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
         }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -424,21 +425,26 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
 {
     double dmax = -1;
     int index = -1;
-    for (int i = start + 1; i <= end - 1; i++) {
-        PointD proj = getProjection(points[i],points[start], points[end]);
-        double d = qSqrt((points[i].x-proj.x)*(points[i].x-proj.x)+
-                         (points[i].y-proj.y)*(points[i].y-proj.y));
+    for (int i = start + 1; i <= end - 1; i++)
+    {
+        PointD proj = getProjection(points[i], points[start], points[end]);
+        double d = qSqrt((points[i].x - proj.x) * (points[i].x - proj.x) +
+                         (points[i].y - proj.y) * (points[i].y - proj.y));
         // calculate distance from line
-        if (d > dmax) {
+        if (d > dmax)
+        {
             dmax = d;
             index = i;
         }
     }
-    if (dmax >= epsilon) {
+    if (dmax >= epsilon)
+    {
         int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
         int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
-        return enabled1 + enabled2 ;
-    } else {
+        return enabled1 + enabled2;
+    }
+    else
+    {
         include[end] = true;
         return 1;
     }
@@ -549,6 +555,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
     double radius = _lineWidth * scale * visualShiftCoef;
+    bool approximate = _isApproximationEnabled && !hasColorizationMapping();
     double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
 
     vectorLine->order = order++;
@@ -569,8 +576,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     QList<QList<FColorARGB>> colors;
     calculateVisibleSegments(segments, colors);
     // Generate new arrow paths for visible segments
-    _arrowsOnPath.clear();
-    generateArrowsOnPath(_arrowsOnPath, segments);
+    generateArrowsOnPath(segments, approximate, simplificationRadius);
     
     PointI origin;
     bool originDefined = false;
@@ -607,9 +613,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             }
         }
         // Do not simplify colorization
-        std::vector<bool> include(pointsCount, !_isApproximationEnabled || hasColorizationMapping());
+        std::vector<bool> include(pointsCount, !approximate);
         include[0] = true;
-        int pointsSimpleCount = _isApproximationEnabled && !hasColorizationMapping()
+        int pointsSimpleCount = approximate
             ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, simplificationRadius / 3, include) + 1
             : pointsCount;
         
@@ -1023,7 +1029,10 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     }
 }
 
-QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(const std::vector<std::vector<PointI>>& visibleSegments) const
+QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
+    const std::vector<std::vector<PointI>>& visibleSegments,
+    bool approximate /*= false*/,
+    double simplificationRadius /*= 0*/) const
 {
     QVector<SkPath> paths;
     if (!visibleSegments.empty())
@@ -1031,11 +1040,26 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(const std::vector<std::v
         PointI origin(visibleSegments.back().back());
         for (const auto& segment : visibleSegments)
         {
+            int pointsCount = (int) segment.size();
+            std::vector<bool> include(pointsCount, !approximate);
+            if (approximate)
+            {
+                std::vector<PointD> points;
+                for (auto& p : constOf(segment))
+                    points.push_back(PointD(p.x, p.y));
+
+                include[0] = true;
+                simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
+            }
+            
             SkPath path;
             const auto& start = segment.back();
             path.moveTo(start.x - origin.x, start.y - origin.y);
             for (int i = (int) segment.size() - 2; i >= 0; i--)
             {
+                if (!include[i])
+                    continue;
+                    
                 const auto& p = segment[i];
                 path.lineTo(p.x - origin.x, p.y - origin.y);
             }
@@ -1047,14 +1071,22 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(const std::vector<std::v
 
 const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrowsOnPath() const
 {
-    return _arrowsOnPath;
+    QReadLocker scopedLocker(&_arrowsOnPathLock);
+
+    return detachedOf(_arrowsOnPath);
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<PointI>>& visibleSegments) const
+void OsmAnd::VectorLine_P::generateArrowsOnPath(
+    const std::vector<std::vector<PointI>>& visibleSegments,
+    bool approximate /*= false*/,
+    double simplificationRadius /*= 0*/)
 {
+    QWriteLocker scopedLocker(&_arrowsOnPathLock);
+
+    _arrowsOnPath.clear();
     if (_showArrows && owner->pathIcon)
     {
-        const auto paths = calculateLinePath(visibleSegments);
+        const auto paths = calculateLinePath(visibleSegments, approximate, simplificationRadius);
         for (const auto& path : paths)
         {
             PointI origin(visibleSegments.back().back());
@@ -1081,7 +1113,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPath
                     // Get mirrored direction
                     float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
                     const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
-                    symbolsData.push_back(arrowSymbol);
+                    _arrowsOnPath.push_back(arrowSymbol);
                 }
             }
         }

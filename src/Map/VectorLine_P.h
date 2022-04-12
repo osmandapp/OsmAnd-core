@@ -41,9 +41,18 @@ namespace OsmAnd
             QList<FColorARGB>& colorMapping,
             bool gap) const;
         
-        QVector<SkPath> calculateLinePath(const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
-        void generateArrowsOnPath(QList<OsmAnd::VectorLine::OnPathSymbolData>& symbolsData, const std::vector<std::vector<OsmAnd::PointI>>& visibleSegments) const;
-        QList<OsmAnd::VectorLine::OnPathSymbolData> _arrowsOnPath;
+        QVector<SkPath> calculateLinePath(
+            const std::vector<std::vector<PointI>>& visibleSegments,
+            bool approximate = false,
+            double simplificationRadius = 0) const;
+        
+        void generateArrowsOnPath(
+            const std::vector<std::vector<PointI>>& visibleSegments,
+            bool approximate = false,
+            double simplificationRadius = 0);
+        
+        mutable QReadWriteLock _arrowsOnPathLock;
+        QList<VectorLine::OnPathSymbolData> _arrowsOnPath;
         sk_sp<const SkImage> _scaledPathIcon;
         
         double getRadius(double width) const;
