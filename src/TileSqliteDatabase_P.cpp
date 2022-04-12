@@ -88,7 +88,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
 
             return false;
         }
-        
+
         if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
         {
             LogPrintf(
@@ -967,6 +967,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
             if (timeSupported && pOutTime)
             {
                 int64_t time = 0;
+                *pOutTime = time;
                 const auto timeValue = readStatementValue(statement, 1);
                 if (!timeValue.isNull())
                 {
@@ -981,7 +982,6 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                 }
                 else
                 {
-                    *pOutTime = 0;
                     return false;
                 }
             }
