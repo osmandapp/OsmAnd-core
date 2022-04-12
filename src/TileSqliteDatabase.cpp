@@ -39,14 +39,14 @@ bool OsmAnd::TileSqliteDatabase::isTileTimeSupported() const
     return _p->isTileTimeSupported();
 }
 
-bool OsmAnd::TileSqliteDatabase::shouldStoreTime() const
+bool OsmAnd::TileSqliteDatabase::hasTimeColumn() const
 {
-    return _p->shouldStoreTime();
+    return _p->hasTimeColumn();
 }
 
-bool OsmAnd::TileSqliteDatabase::hasTileTimeColumn() const
+bool OsmAnd::TileSqliteDatabase::enableTileTimeSupport(bool force /* = false */)
 {
-    return _p->hasTileTimeColumn();
+    return _p->enableTileTimeSupport(force);
 }
 
 void OsmAnd::TileSqliteDatabase::enableTileTimeSupportIfNeeded()

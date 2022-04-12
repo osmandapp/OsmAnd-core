@@ -88,7 +88,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
 
             return false;
         }
-
+        
         if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
         {
             LogPrintf(
@@ -124,7 +124,9 @@ bool OsmAnd::TileSqliteDatabase_P::open()
         _meta = meta;
         _isOpened.storeRelease(1);
     }
-
+    
+    enableTileTimeSupportIfNeeded();
+    
     return true;
 }
 
@@ -230,21 +232,12 @@ bool OsmAnd::TileSqliteDatabase_P::isInvertedY() const
 
 bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
 {
-    bool isValueCached = _cachedIsTileTimeSupported.loadAcquire() == 0 || _cachedIsTileTimeSupported.loadAcquire() == 1;
-    if (isValueCached)
+    int isSupported;
+    if ((isSupported = _cachedIsTileTimeSupported.loadAcquire()) >= 0)
     {
-        return _cachedIsTileTimeSupported.loadAcquire();
+        return isSupported > 0;
     }
-    else
-    {
-        bool isSupported = shouldStoreTime() && hasTileTimeColumn();
-        _cachedIsTileTimeSupported.storeRelease(isSupported);
-        return isSupported;
-    }
-}
 
-bool OsmAnd::TileSqliteDatabase_P::shouldStoreTime() const
-{
     if (!isOpened())
     {
         return false;
@@ -253,20 +246,26 @@ bool OsmAnd::TileSqliteDatabase_P::shouldStoreTime() const
     Meta meta;
     if (!obtainMeta(meta))
     {
+        _cachedIsTileTimeSupported.storeRelease(0);
         return false;
     }
-    
+
     bool ok = false;
     const auto timeColumn = meta.getTimeColumn(&ok);
     if (!ok)
     {
+        _cachedIsTileTimeSupported.storeRelease(0);
         return false;
     }
+
+    isSupported = QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
     
-    return QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
+    _cachedIsTileTimeSupported.storeRelease(isSupported);
+    return isSupported > 0;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::hasTileTimeColumn() const
+bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
 {
     if (!isOpened())
     {
@@ -275,42 +274,95 @@ bool OsmAnd::TileSqliteDatabase_P::hasTileTimeColumn() const
     return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
  }
 
+bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false */)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (isTileTimeSupported() && !force)
+    {
+        return true;
+    }
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1")))
+        {
+            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to add time column: %s",
+                    sqlite3_errmsg(_database.get()));
+                return false;
+            }
+        }
+    }
+
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return false;
+    }
+
+    meta.setTimeColumn(QStringLiteral("yes"));
+
+    if (!storeMeta(meta))
+    {
+        return false;
+    }
+
+    _cachedIsTileTimeSupported.storeRelease(1);
+
+    return true;
+}
+
 void OsmAnd::TileSqliteDatabase_P::enableTileTimeSupportIfNeeded()
 {
-    bool isUnchecked = _cachedIsTimeColumnChecked.loadAcquire() <= 0;
-    if (isUnchecked)
+    if (_cachedIsTimeColumnChecked.loadAcquire() > 0)
     {
-        _cachedIsTimeColumnChecked.storeRelease(1);
-        
-        if (shouldStoreTime() && !hasTileTimeColumn())
+        return;
+    }
+    _cachedIsTimeColumnChecked.storeRelease(1);
+    
+    if (!isOpened())
+    {
+        return;
+    }
+    
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return;
+    }
+
+    bool ok = false;
+    const auto timeColumn = meta.getTimeColumn(&ok);
+    if (!ok)
+    {
+        return;
+    }
+    
+    if (QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0)
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1")))
         {
+            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
             {
-                QReadLocker scopedLocker(&_lock);
-                if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN time INTEGER")))
-                {
-                    LogPrintf(
-                        LogSeverityLevel::Error,
-                        "Failed to add time column: %s",
-                        sqlite3_errmsg(_database.get()));
-                    return;
-                }
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to add time column: %s",
+                    sqlite3_errmsg(_database.get()));;
             }
-
-            Meta meta;
-            if (!obtainMeta(meta))
+            else
             {
-                return;
+                _cachedIsTileTimeSupported.storeRelease(1);
             }
-
-            meta.setTimeColumn(QStringLiteral("yes"));
-
-            if (!storeMeta(meta))
-            {
-                
-                return;
-            }
-
-            _cachedIsTileTimeSupported.storeRelease(1);
         }
     }
 }

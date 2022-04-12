@@ -95,8 +95,8 @@ namespace OsmAnd
         bool close(bool compact = true);
 
         bool isTileTimeSupported() const;
-        bool shouldStoreTime() const;
-        bool hasTileTimeColumn() const;
+        bool hasTimeColumn() const;
+        bool enableTileTimeSupport(bool force = false);
         void enableTileTimeSupportIfNeeded();
 
         ZoomLevel getMinZoom() const;
