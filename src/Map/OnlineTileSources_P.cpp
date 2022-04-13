@@ -82,7 +82,7 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     source->minZoom = ZoomLevel(parseInt(attributes, QStringLiteral("min_zoom"), 5));
     source->tileSize = parseInt(attributes, QStringLiteral("tile_size"), 256);
     long expirationTimeMinutes = parseLong(attributes, QStringLiteral("expiration_time_minutes"), -1);
-    if (expirationTimeMinutes > -1)
+    if (expirationTimeMinutes > 0)
         source->expirationTimeMillis = expirationTimeMinutes * 60 * 1000l;
     const QString ext = !attributes.hasAttribute(QStringLiteral("ext")) ? QStringLiteral(".jpg") : attributes.value(QStringLiteral("ext")).toString();
     source->ext = ext;
@@ -328,7 +328,7 @@ bool OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QString& metaIn
         newSource->avgSize = metaInfo.value(QStringLiteral("avg_img_size"), QStringLiteral("18000")).toUInt();
         newSource->ext = metaInfo.value(QStringLiteral("ext"), QStringLiteral(".jpg"));
         newSource->expirationTimeMillis = metaInfo.value(QStringLiteral("expiration_time_minutes"), QStringLiteral("-1")).toLong();
-        if (newSource->expirationTimeMillis > -1)
+        if (newSource->expirationTimeMillis != -1)
             newSource->expirationTimeMillis = newSource->expirationTimeMillis * 60 * 1000;
         newSource->randoms = metaInfo.value(QStringLiteral("randoms"), QStringLiteral(""));
         newSource->randomsArray = OnlineTileSources_P::parseRandoms(newSource->randoms);
@@ -351,7 +351,7 @@ void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const 
     params.insert(QStringLiteral("ext"), toInstall->ext);
     params.insert(QStringLiteral("randoms"), toInstall->randoms);
     params.insert(QStringLiteral("inverted_y"), toInstall->invertedYTile ? QStringLiteral("true") : QStringLiteral("false"));
-    if (toInstall->expirationTimeMillis > -1)
+    if (toInstall->expirationTimeMillis != -1)
     {
         long expirationTimeMinutes = toInstall->expirationTimeMillis / 60000;
         params.insert(QStringLiteral("expiration_time_minutes"), QString::number(expirationTimeMinutes));
