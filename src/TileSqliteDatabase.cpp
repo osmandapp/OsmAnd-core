@@ -49,11 +49,6 @@ bool OsmAnd::TileSqliteDatabase::enableTileTimeSupport(bool force /* = false */)
     return _p->enableTileTimeSupport(force);
 }
 
-void OsmAnd::TileSqliteDatabase::enableTileTimeSupportIfNeeded()
-{
-    _p->enableTileTimeSupportIfNeeded();
-}
-
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase::getMinZoom() const
 {
     return _p->getMinZoom();

@@ -80,7 +80,6 @@ namespace OsmAnd
         bool isTileTimeSupported() const;
         bool hasTimeColumn() const;
         bool enableTileTimeSupport(bool force = false);
-        void enableTileTimeSupportIfNeeded();
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
