@@ -87,6 +87,7 @@ namespace OsmAnd
 
         bool isBasemap;
         bool isBasemapWithCoastlines;
+        bool isContourLines;
         QList< Ref<ObfMapSectionLevel> > levels;
         
         const Nullable<LatLon> getCenterLatLon() const;

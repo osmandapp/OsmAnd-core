@@ -174,9 +174,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
         // Check origin of map object
         auto isBasemapObject = false;
+        auto isContourLinesObject = false;
         if (const auto binaryMapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
         {
             isBasemapObject = binaryMapObject->section->isBasemap;
+            isContourLinesObject = binaryMapObject->section->isContourLines;
             if(!isBasemapObject) 
             {
                 detailedBinaryMapObjectsPresent = true;
@@ -196,7 +198,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
         else
         {
-            if (isBasemapObject)
+            if (isBasemapObject || isContourLinesObject)
                 basemapMapObjects.push_back(mapObject);
             else
                 detailedmapMapObjects.push_back(mapObject);

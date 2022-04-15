@@ -36,6 +36,7 @@ namespace OsmAnd
         uint64_t creationTimestamp;
         bool isBasemap;
         bool isBasemapWithCoastlines;
+        bool isContourLines;
 
         QList< Ref<ObfMapSectionInfo> > mapSections;
         QList< Ref<ObfAddressSectionInfo> > addressSections;
