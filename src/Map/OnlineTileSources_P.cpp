@@ -328,6 +328,8 @@ bool OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QString& metaIn
         newSource->avgSize = metaInfo.value(QStringLiteral("avg_img_size"), QStringLiteral("18000")).toUInt();
         newSource->ext = metaInfo.value(QStringLiteral("ext"), QStringLiteral(".jpg"));
         newSource->expirationTimeMillis = metaInfo.value(QStringLiteral("expiration_time_minutes"), QStringLiteral("-1")).toLong();
+        if (newSource->expirationTimeMillis != -1)
+            newSource->expirationTimeMillis = newSource->expirationTimeMillis * 60 * 1000;
         newSource->randoms = metaInfo.value(QStringLiteral("randoms"), QStringLiteral(""));
         newSource->randomsArray = OnlineTileSources_P::parseRandoms(newSource->randoms);
         source.reset(newSource);
@@ -350,7 +352,10 @@ void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const 
     params.insert(QStringLiteral("randoms"), toInstall->randoms);
     params.insert(QStringLiteral("inverted_y"), toInstall->invertedYTile ? QStringLiteral("true") : QStringLiteral("false"));
     if (toInstall->expirationTimeMillis != -1)
-        params.insert(QStringLiteral("expiration_time_minutes"), QString::number(toInstall->expirationTimeMillis));
+    {
+        long expirationTimeMinutes = toInstall->expirationTimeMillis / 60000;
+        params.insert(QStringLiteral("expiration_time_minutes"), QString::number(expirationTimeMinutes));
+    }
     
     QString name = toInstall->name;
     QString path = cachePath + QDir::separator() + name;

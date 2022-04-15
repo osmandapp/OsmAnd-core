@@ -928,7 +928,6 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                     }
                     time = static_cast<int64_t>(timeLL);
                 }
-
                 *pOutTime = time;
             }
 

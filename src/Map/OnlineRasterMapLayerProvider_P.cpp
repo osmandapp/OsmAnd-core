@@ -76,7 +76,19 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         QMutexLocker scopedLocker(&_localCachePathMutex);
         localFile.setFile(QDir(_localCachePath).absoluteFilePath(tileLocalRelativePath));
     }
-    if (localFile.exists())
+    
+    bool isExpired = false;
+    bool isExists = localFile.exists();
+    if (isExists && source->expirationTimeMillis != -1)
+    {
+        long currentTime = QDateTime::currentMSecsSinceEpoch();
+        long lastModifiedTime = localFile.lastModified().toUTC().toMSecsSinceEpoch();
+        long expirationTime = source->expirationTimeMillis;
+        if (currentTime - lastModifiedTime > expirationTime)
+            isExpired = true;
+    }
+    
+    if (isExists && !isExpired)
     {
         // Since tile is in local storage, it's safe to unmark it as being processed
         unlockTile(tileId, zoom);
