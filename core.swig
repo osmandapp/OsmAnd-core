@@ -109,6 +109,7 @@
 #include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
 #include <OsmAndCore/Search/AddressesByNameSearch.h>
 #include <OsmAndCore/Search/ReverseGeocoder.h>
+#include <OsmAndCore/Map/MapTiledCollectionProvider.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -273,6 +274,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::VectorLine)
 	%shared_ptr(OsmAnd::VectorLine::SymbolsGroup)
 	%shared_ptr(OsmAnd::VectorLine::OnPathSymbolData)
+	%shared_ptr(OsmAnd::MapTiledCollectionProvider)
 %include <std_pair.i>
 %include <std_string.i>
 #ifdef SWIG_JAVA
@@ -331,6 +333,7 @@ using namespace OsmAnd;
 	%template(QListVectorLine) QList<std::shared_ptr<OsmAnd::VectorLine>>;
 	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
 	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
+	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -439,6 +442,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
 %include <OsmAndCore/Search/AddressesByNameSearch.h>
 %include <OsmAndCore/Search/ReverseGeocoder.h>
+%include <OsmAndCore/Map/MapTiledCollectionProvider.h>
 
 %exception OsmAnd::MapMarker::SymbolsGroup::dynamic_cast(OsmAnd::MapSymbolsGroup *symbolsGroup) {
 $action
