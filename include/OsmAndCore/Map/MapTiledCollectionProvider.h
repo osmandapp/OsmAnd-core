@@ -19,7 +19,7 @@
 #include <OsmAndCore/Map/IAmenityIconProvider.h>
 #include <OsmAndCore/Map/MapMarker.h>
 #include <OsmAndCore/QuadTree.h>
-#include <OsmAndCore.h>
+#include <OsmAndCore/TextRasterizer.h>
 
 namespace OsmAnd
 {
@@ -48,41 +48,29 @@ namespace OsmAnd
             OsmAnd::AreaD calculateRect(double x, double y, double width, double height);
             bool intersects(CollectionQuadTree& boundIntersections, double x, double y, double width, double height);
             QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> buildMapSymbolsGroups(const OsmAnd::TileId tileId, const OsmAnd::ZoomLevel zoom, double scale);
+        
+        protected:
+            MapTiledCollectionProvider();
         public:
-            MapTiledCollectionProvider(const int baseOrder,
-                const QList<OsmAnd::PointI>& hiddenPoints,
-                const bool showCaptions,
-                const OsmAnd::TextRasterizer::Style captionStyle,
-                const double captionTopSpace,
-                const float referenceTileSizeOnScreenInPixels,
-                const double scale);
             virtual ~MapTiledCollectionProvider();
 
-            OsmAnd::MapTiledCollectionProvider * new_MapTiledCollectionProvider(const int baseOrder,
-                const QList<OsmAnd::PointI>& hiddenPoints,
-                const bool showCaptions,
-                const OsmAnd::TextRasterizer::Style captionStyle,
-                const double captionTopSpace,
-                const float referenceTileSizeOnScreenInPixels,
-                const double scale);
+            virtual int getBaseOrder() const = 0;
+            virtual QList<OsmAnd::PointI> getHiddenPoints() const = 0;
+            virtual bool shouldShowCaptions() const = 0;
+            virtual OsmAnd::TextRasterizer::Style getCaptionStyle() const = 0;
+            virtual double getCaptionTopSpace() const = 0;
+            virtual float getReferenceTileSizeOnScreenInPixels() const = 0;
+            virtual double getScale() const = 0;
 
-            virtual OsmAnd::PointI getPoint31(const int index) const;
-            virtual int getPointsCount() const;
-            virtual sk_sp<SkImage> getImageBitmap(const int index, bool isFullSize = true);
-            virtual QString getCaption(const int index) const;
+            virtual OsmAnd::PointI getPoint31(const int index) const = 0;
+            virtual int getPointsCount() const = 0;
+            virtual sk_sp<SkImage> getImageBitmap(const int index, bool isFullSize = true) = 0;
+            virtual QString getCaption(const int index) const = 0;
             virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
             virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
 
-            const int baseOrder;
-            const QList<OsmAnd::PointI> hiddenPoints;
-            const bool showCaptions;
-            const OsmAnd::TextRasterizer::Style captionStyle;
-            const double captionTopSpace;
-            const float referenceTileSizeOnScreenInPixels;
-            const double scale;
-
-            virtual OsmAnd::ZoomLevel getMinZoom() const;
-            virtual OsmAnd::ZoomLevel getMaxZoom() const;
+            virtual OsmAnd::ZoomLevel getMinZoom() const = 0;
+            virtual OsmAnd::ZoomLevel getMaxZoom() const = 0;
 
             virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
 
@@ -94,8 +82,53 @@ namespace OsmAnd
             virtual void obtainDataAsync(const IMapDataProvider::Request& request,
                 const IMapDataProvider::ObtainDataAsyncCallback callback,
                 const bool collectMetric = false) Q_DECL_OVERRIDE;
-
     };
+    
+    SWIG_EMIT_DIRECTOR_BEGIN(MapTiledCollectionProvider);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            int,
+            getBaseOrder);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            QList<OsmAnd::PointI>,
+            getHiddenPoints);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            bool,
+            shouldShowCaptions);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            OsmAnd::TextRasterizer::Style,
+            getCaptionStyle);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            double,
+            getCaptionTopSpace);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            float,
+            getReferenceTileSizeOnScreenInPixels);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            double,
+            getScale);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            OsmAnd::PointI,
+            getPoint31,
+            const int index);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            int,
+            getPointsCount);
+        SWIG_EMIT_DIRECTOR_METHOD(
+            sk_sp<SkImage>,
+            getImageBitmap,
+            const int index,
+            bool isFullSize);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QString,
+            getCaption,
+            const int index);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            ZoomLevel,
+            getMinZoom);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            ZoomLevel,
+            getMaxZoom);
+    SWIG_EMIT_DIRECTOR_END(MapTiledCollectionProvider);
 }
 
-#endif
+#endif // !defined(_OSMAND_CORE_MAP_TILED_COLLECTION_PROVIDER_H_)
