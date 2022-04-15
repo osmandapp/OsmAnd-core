@@ -28,7 +28,6 @@ void OsmAnd::TileSqliteDatabase_P::resetCachedInfo()
     _cachedMinZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedIsTileTimeSupported.storeRelease(std::numeric_limits<int>::min());
-    _cachedIsTimeColumnChecked.storeRelease(std::numeric_limits<int>::min());
 
     {
         QWriteLocker scopedLocker(&_cachedBboxes31Lock);

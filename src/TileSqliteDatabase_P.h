@@ -41,7 +41,6 @@ namespace OsmAnd
         mutable QAtomicInt _cachedInvertedZoom;
         mutable QAtomicInt _cachedInvertedY;
         mutable QAtomicInt _cachedIsTileTimeSupported;
-        mutable QAtomicInt _cachedIsTimeColumnChecked;
         mutable QReadWriteLock _cachedBboxes31Lock;
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
