@@ -8,6 +8,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QFile>
+#include <QDateTime>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkData.h>
