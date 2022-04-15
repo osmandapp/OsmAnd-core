@@ -123,7 +123,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
         _meta = meta;
         _isOpened.storeRelease(1);
     }
-    
+
     return true;
 }
 
@@ -917,7 +917,6 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
             if (timeSupported && pOutTime)
             {
                 int64_t time = 0;
-                *pOutTime = time;
                 const auto timeValue = readStatementValue(statement, 1);
                 if (!timeValue.isNull())
                 {
@@ -928,12 +927,8 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                         return false;
                     }
                     time = static_cast<int64_t>(timeLL);
-                    *pOutTime = time;
                 }
-                else
-                {
-                    return false;
-                }
+                *pOutTime = time;
             }
 
             return true;
