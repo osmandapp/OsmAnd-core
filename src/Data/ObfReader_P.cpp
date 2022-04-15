@@ -244,6 +244,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
 
                 info->isBasemap = info->isBasemap || section->isBasemap;
                 info->isBasemapWithCoastlines = info->isBasemapWithCoastlines || section->isBasemapWithCoastlines;
+                info->isContourLines = info->isContourLines || section->isContourLines;
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
