@@ -186,7 +186,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
 
         // <ele>
         if (!qIsNaN(wptPt->elevation))
-            xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(wptPt->elevation, 'g', 7));
+            xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(wptPt->elevation, 'f', 1));
 
         // <time>
         if (!wptPt->timestamp.isNull())
@@ -252,7 +252,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
 
             // <ele>
             if (!qIsNaN(routePoint->elevation))
-                xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(routePoint->elevation, 'g', 7));
+                xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(routePoint->elevation, 'f', 1));
 
             // <time>
             if (!routePoint->timestamp.isNull())
@@ -272,7 +272,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
             {
                 // <hdop>
                 if (!qIsNaN(rtept->horizontalDilutionOfPrecision))
-                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 12));
+                    xmlWriter.writeTextElement(QStringLiteral("hdop"), QString::number(rtept->horizontalDilutionOfPrecision, 'f', 1));
 
                 // <vdop>
                 if (!qIsNaN(rtept->verticalDilutionOfPrecision))
@@ -330,7 +330,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
 
                 // <ele>
                 if (!qIsNaN(trackPoint->elevation))
-                    xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(trackPoint->elevation, 'g', 7));
+                    xmlWriter.writeTextElement(QStringLiteral("ele"), QString::number(trackPoint->elevation, 'f', 1));
 
                 // <time>
                 if (!trackPoint->timestamp.isNull())
@@ -488,10 +488,10 @@ void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<
 void OsmAnd::GpxDocument::writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bounds>& bounds)
 {
     xmlWriter.writeStartElement(QStringLiteral("bounds"));
-    xmlWriter.writeTextElement(QStringLiteral("minlat"), QString::number(bounds->minlat, 'g', 7));
-    xmlWriter.writeTextElement(QStringLiteral("minlon"), QString::number(bounds->minlon, 'g', 7));
-    xmlWriter.writeTextElement(QStringLiteral("maxlat"), QString::number(bounds->maxlat, 'g', 7));
-    xmlWriter.writeTextElement(QStringLiteral("maxlon"), QString::number(bounds->minlat, 'g', 7));
+    xmlWriter.writeTextElement(QStringLiteral("minlat"), QString::number(bounds->minlat, 'f', 7));
+    xmlWriter.writeTextElement(QStringLiteral("minlon"), QString::number(bounds->minlon, 'f', 7));
+    xmlWriter.writeTextElement(QStringLiteral("maxlat"), QString::number(bounds->maxlat, 'f', 7));
+    xmlWriter.writeTextElement(QStringLiteral("maxlon"), QString::number(bounds->minlat, 'f', 7));
     xmlWriter.writeEndElement();
 }
 
