@@ -262,6 +262,8 @@ namespace OsmAnd
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool hasSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider) Q_DECL_OVERRIDE;
+        virtual bool hasSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider) Q_DECL_OVERRIDE;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool removeAllSymbolsProviders(bool forcedUpdate = false) Q_DECL_OVERRIDE;

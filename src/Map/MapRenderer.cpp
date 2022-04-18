@@ -1301,6 +1301,28 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     return true;
 }
 
+bool OsmAnd::MapRenderer::hasSymbolsProvider(
+    const std::shared_ptr<IMapTiledSymbolsProvider>& provider)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    return _requestedState.tiledSymbolsProviders.contains(provider);
+}
+
+bool OsmAnd::MapRenderer::hasSymbolsProvider(
+    const std::shared_ptr<IMapKeyedSymbolsProvider>& provider)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    return _requestedState.keyedSymbolsProviders.contains(provider);
+}
+
 bool OsmAnd::MapRenderer::removeSymbolsProvider(
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)

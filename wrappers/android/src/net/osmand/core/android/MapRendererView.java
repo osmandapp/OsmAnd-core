@@ -357,6 +357,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.addSymbolsProvider(provider);
     }
 
+    public final boolean hasSymbolsProvider(IMapTiledSymbolsProvider provider) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.hasSymbolsProvider(provider);
+    }
+
+    public final boolean hasSymbolsProvider(IMapKeyedSymbolsProvider provider) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.hasSymbolsProvider(provider);
+    }
+
     public final boolean removeSymbolsProvider(IMapTiledSymbolsProvider provider) {
         NativeCore.checkIfLoaded();
 
