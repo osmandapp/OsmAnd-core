@@ -64,7 +64,7 @@ namespace OsmAnd
 
             virtual OsmAnd::PointI getPoint31(const int index) const = 0;
             virtual int getPointsCount() const = 0;
-            virtual sk_sp<SkImage> getImageBitmap(const int index, bool isFullSize = true) = 0;
+            virtual sk_sp<const SkImage> getImageBitmap(const int index, bool isFullSize = true) = 0;
             virtual QString getCaption(const int index) const = 0;
             virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
             virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
@@ -114,7 +114,7 @@ namespace OsmAnd
             int,
             getPointsCount);
         SWIG_EMIT_DIRECTOR_METHOD(
-            sk_sp<SkImage>,
+            sk_sp<const SkImage>,
             getImageBitmap,
             const int index,
             bool isFullSize);

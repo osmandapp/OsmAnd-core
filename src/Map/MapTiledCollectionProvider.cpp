@@ -126,7 +126,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
                 .setPinIconVerticalAlignment(getPinIconVerticalAlignment())
                 .setPinIconHorisontalAlignment(getPinIconHorisontalAlignment());
 
-            sk_sp<SkImage> img;
+            sk_sp<const SkImage> img;
 
             if (intr)
             {
