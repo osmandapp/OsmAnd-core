@@ -21,7 +21,7 @@ OsmAnd::CoreResourcesAmenityIconProvider::~CoreResourcesAmenityIconProvider()
 sk_sp<SkImage> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
     const std::shared_ptr<const Amenity>& amenity,
     const ZoomLevel zoomLevel,
-    const bool largeIcon /*= false*/) const
+    const bool largeIcon /*= false*/)
 {
     const auto& decodedCategories = amenity->getDecodedCategories();
 

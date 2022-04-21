@@ -70,7 +70,7 @@ namespace OsmAnd
             const float referenceTileSizeOnScreenInPixels,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction amentitiesFilter = nullptr,
-            const std::shared_ptr<const IAmenityIconProvider>& amenityIconProvider = std::make_shared<CoreResourcesAmenityIconProvider>(),
+            const std::shared_ptr<IAmenityIconProvider>& amenityIconProvider = std::make_shared<CoreResourcesAmenityIconProvider>(),
             const int baseOrder = 10000);
         virtual ~AmenitySymbolsProvider();
 
@@ -79,7 +79,7 @@ namespace OsmAnd
         const float referenceTileSizeOnScreenInPixels;
         const Nullable< QHash<QString, QStringList> > categoriesFilter;
         const ObfPoiSectionReader::VisitorFunction amentitiesFilter;
-        const std::shared_ptr<const IAmenityIconProvider> amenityIconProvider;
+        const std::shared_ptr<IAmenityIconProvider> amenityIconProvider;
         const int baseOrder;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;

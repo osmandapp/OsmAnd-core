@@ -34,7 +34,7 @@ namespace OsmAnd
         virtual sk_sp<SkImage> getIcon(
             const std::shared_ptr<const Amenity>& amenity,
             const ZoomLevel zoomLevel,
-            const bool largeIcon = false) const = 0;
+            const bool largeIcon = false) = 0;
         
         virtual TextRasterizer::Style getCaptionStyle(
             const std::shared_ptr<const Amenity>& amenity,
