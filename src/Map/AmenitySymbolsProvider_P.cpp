@@ -91,7 +91,7 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
     QSet<ObfObjectId> searchedIds;
     const float displayDensityFactor = owner->displayDensityFactor;
     const auto requestedZoom = request.zoom;
-    auto visitorFunction =
+    const auto visitorFunction =
         [this, requestedZoom, displayDensityFactor, &mapSymbolsGroups, &searchedIds, &mapSymbolIntersectionClassesRegistry,
          &extendedTileBBox31, &skippedTiles, zoomFilter, from31toPixelsScale, &boundIntersections, &tileBBox31]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
