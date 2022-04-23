@@ -106,6 +106,11 @@ namespace OsmAnd
 
             return bitmap.asImage();
         }
+        
+        inline static sk_sp<const SkImage> nullSkImage()
+        {
+            return nullptr;
+        }
 
     private:
         SwigUtilities();
