@@ -289,6 +289,9 @@ using namespace OsmAnd;
 	%include <swig/java/QList.i>
 		%template(QStringList) QList<QString>;
 	%include <swig/java/QVector.i>
+	namespace std {
+	  %template(VectorDouble) vector<double>;
+    }
 #endif
 %include <std_map.i>
 #ifdef SWIG_JAVA
