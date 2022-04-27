@@ -151,6 +151,16 @@ OsmAnd::ColorARGB OsmAnd::Utilities::parseColor(const QString& value, const Colo
     return result;
 }
 
+bool OsmAnd::Utilities::isColorBright(const ColorARGB color)
+{
+    return (color.r / 255.0) * 0.299 + (color.g / 255.0) * 0.587 + (color.b / 255.0) * 0.114 >= 0.5;
+}
+
+bool OsmAnd::Utilities::isColorBright(const ColorRGB color)
+{
+    return (color.r / 255.0) * 0.299 + (color.g / 255.0) * 0.587 + (color.b / 255.0) * 0.114 >= 0.5;
+}
+
 int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;

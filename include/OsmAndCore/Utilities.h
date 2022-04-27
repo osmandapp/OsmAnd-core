@@ -833,6 +833,8 @@ namespace OsmAnd
         static double parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static double parseWeight(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static ColorARGB parseColor(const QString& value, const ColorARGB defValue, bool* wasParsed = nullptr);
+        static bool isColorBright(const ColorARGB color);
+        static bool isColorBright(const ColorRGB color);
         static int parseArbitraryInt(const QString& value, const int defValue, bool* wasParsed = nullptr);
         static long parseArbitraryLong(const QString& value, const long defValue, bool* wasParsed = nullptr);
         static unsigned int parseArbitraryUInt(const QString& value, const unsigned int defValue, bool* wasParsed = nullptr);

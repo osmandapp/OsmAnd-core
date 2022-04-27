@@ -25,6 +25,8 @@ OsmAnd::VectorLineArrowsProvider_P::VectorLineArrowsProvider_P(
 
 OsmAnd::VectorLineArrowsProvider_P::~VectorLineArrowsProvider_P()
 {
+    for (const auto& line : _linesCollection->getLines())
+        line->lineUpdatedObservable.detach(this);
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::VectorLineArrowsProvider_P::getMarker(int markerId) const
