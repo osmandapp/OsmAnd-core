@@ -17,7 +17,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(FunctorQueryController);
 
     public:
-        OSMAND_CALLABLE(Callback, bool, const FunctorQueryController* const queryController);
+        OSMAND_CALLABLE(Callback, bool, const FunctorQueryController* queryController);
 
     private:
     protected:

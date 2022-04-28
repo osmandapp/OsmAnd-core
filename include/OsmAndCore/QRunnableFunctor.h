@@ -17,9 +17,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(QRunnableFunctor);
 
     public:
-        OSMAND_CALLABLE(Callback,
-            void,
-            const QRunnableFunctor* const runnable);
+        OSMAND_CALLABLE(Callback, void, const QRunnableFunctor* runnable);
 
     private:
     protected:

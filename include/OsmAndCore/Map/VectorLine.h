@@ -56,12 +56,12 @@ namespace OsmAnd
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;
         };
-        
+
         struct OnPathSymbolData
         {
             OnPathSymbolData(PointI position31, float direction);
             ~OnPathSymbolData();
-            
+
             PointI position31;
             float direction;
         };
@@ -101,7 +101,7 @@ namespace OsmAnd
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
-        
+
         bool showArrows() const;
         void setShowArrows(const bool showArrows);
 
@@ -110,13 +110,13 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
-        
+
         QList<FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);
-        
+
         double getLineWidth() const;
         void setLineWidth(const double width);
-        
+
         double getOutlineWidth() const;
         void setOutlineWidth(const double width);
 
@@ -127,17 +127,17 @@ namespace OsmAnd
 
         std::vector<double> getLineDash() const;
         void setLineDash(const std::vector<double> dashPattern);
-        
+
         sk_sp<const SkImage> getPointImage() const;
 
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
-        const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
-        
-        OSMAND_OBSERVER_CALLABLE(OnChangesApplied,
-                                 const VectorLine* const vectorLine);
-        const ObservableAs<VectorLine::OnChangesApplied> lineUpdatedObservable;
+        const QList<VectorLine::OnPathSymbolData> getArrowsOnPath() const;
+
+        OSMAND_OBSERVER_CALLABLE(Updated,
+             const VectorLine* vectorLine);
+        const ObservableAs<VectorLine::Updated> updatedObservable;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

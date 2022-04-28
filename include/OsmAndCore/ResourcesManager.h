@@ -229,7 +229,7 @@ namespace OsmAnd
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;
-        
+
         std::shared_ptr<WeatherTileResourcesManager> _weatherResourcesManager;
     protected:
     public:
@@ -256,7 +256,7 @@ namespace OsmAnd
 
         // Generic accessors:
         std::shared_ptr<const Resource> getResource(const QString& id) const;
-        
+
         // Built-in resources:
         QHash< QString, std::shared_ptr<const BuiltinResource> > getBuiltInResources() const;
         std::shared_ptr<const BuiltinResource> getBuiltInResource(const QString& id) const;
@@ -301,21 +301,21 @@ namespace OsmAnd
             const QString& id,
             const IWebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool updateFromRepository(const QString& id, const QString& filePath);
-        
+
         const std::shared_ptr<const OnlineTileSources> downloadOnlineTileSources() const;
-        
+
         // Tests
         bool addLocalResource(const QString& filePath);
 
         // Observables
         OSMAND_OBSERVER_CALLABLE(LocalResourcesChanged,
-            const ResourcesManager* const resourcesManager,
+            const ResourcesManager* resourcesManager,
             const QList< QString >& added,
             const QList< QString >& removed,
             const QList< QString >& updated);
         const ObservableAs<ResourcesManager::LocalResourcesChanged> localResourcesChangeObservable;
         OSMAND_OBSERVER_CALLABLE(RepositoryUpdated,
-            const ResourcesManager* const resourcesManager);
+            const ResourcesManager* resourcesManager);
         const ObservableAs<ResourcesManager::RepositoryUpdated> repositoryUpdateObservable;
 
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
@@ -333,7 +333,6 @@ namespace OsmAnd
             const float densityFactor = 1.0f,
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
         );
-        
 
         static OsmAnd::ResourcesManager::ResourceType getIndexType(const QStringRef &resourceTypeValue);
     };

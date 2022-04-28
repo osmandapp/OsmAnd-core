@@ -75,12 +75,12 @@ namespace OsmAnd
         virtual void mergeFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection) = 0;
 
         OSMAND_OBSERVER_CALLABLE(CollectionChanged,
-            const IFavoriteLocationsCollection* const collection);
+            const IFavoriteLocationsCollection* collection);
         const ObservableAs<CollectionChanged> collectionChangeObservable;
 
         OSMAND_OBSERVER_CALLABLE(FavoriteLocationChanged,
-            const IFavoriteLocationsCollection* const collection,
-            const std::shared_ptr<const IFavoriteLocation> favoriteLocation);
+            const IFavoriteLocationsCollection* collection,
+            std::shared_ptr<const IFavoriteLocation> favoriteLocation);
         const ObservableAs<IFavoriteLocationsCollection::FavoriteLocationChanged> favoriteLocationChangeObservable;
     };
 }

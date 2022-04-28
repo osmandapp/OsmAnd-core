@@ -20,7 +20,8 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(IObservable);
 
     public:
-        typedef const void* Tag;
+        static_assert(sizeof(int64_t) >= sizeof(intptr_t), "int64_t can't fit a pointer");
+        typedef int64_t Tag;
 
         IObservable()
         {
@@ -72,7 +73,7 @@ namespace OsmAnd
         {
         }
 
-        bool attach(const Tag tag, const Handler handler) const
+        bool attach(Tag tag, const Handler handler) const
         {
             QWriteLocker scopedLocker(&_observersLock);
 
@@ -84,7 +85,7 @@ namespace OsmAnd
             return true;
         }
 
-        bool detach(const Tag tag) const
+        bool detach(Tag tag) const
         {
             QWriteLocker scopedLocker(&_observersLock);
 
@@ -249,7 +250,7 @@ namespace OsmAnd
         ObservableAs();
         virtual ~ObservableAs();
 
-        bool detach(const Tag tag) const;
+        bool detach(Tag tag) const;
     };
 
 #endif

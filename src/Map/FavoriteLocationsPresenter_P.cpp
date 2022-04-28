@@ -32,13 +32,13 @@ bool OsmAnd::FavoriteLocationsPresenter_P::obtainData(
 
 void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()
 {
-    owner->collection->collectionChangeObservable.attach(this,
+    owner->collection->collectionChangeObservable.attach(reinterpret_cast<IObservable::Tag>(this),
         [this]
         (const IFavoriteLocationsCollection* const collection)
         {
             syncFavoriteLocationMarkers();
         });
-    owner->collection->favoriteLocationChangeObservable.attach(this,
+    owner->collection->favoriteLocationChangeObservable.attach(reinterpret_cast<IObservable::Tag>(this),
         [this]
         (const IFavoriteLocationsCollection* const collection, const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
         {
@@ -48,8 +48,8 @@ void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()
 
 void OsmAnd::FavoriteLocationsPresenter_P::unsubscribeToChanges()
 {
-    owner->collection->favoriteLocationChangeObservable.detach(this);
-    owner->collection->collectionChangeObservable.detach(this);
+    owner->collection->favoriteLocationChangeObservable.detach(reinterpret_cast<IObservable::Tag>(this));
+    owner->collection->collectionChangeObservable.detach(reinterpret_cast<IObservable::Tag>(this));
 }
 
 void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
@@ -67,7 +67,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
 
         if (favoriteLocations.contains(obsoleteEntry.key()))
             continue;
-         
+
         _markersCollection->removeMarker(obsoleteEntry.value());
         itObsoleteEntry.remove();
     }

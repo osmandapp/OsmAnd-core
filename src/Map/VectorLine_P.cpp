@@ -52,14 +52,14 @@ OsmAnd::VectorLine_P::~VectorLine_P()
 bool OsmAnd::VectorLine_P::isHidden() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _isHidden;
 }
 
 void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_isHidden != hidden)
     {
         _isHidden = hidden;
@@ -70,14 +70,14 @@ void OsmAnd::VectorLine_P::setIsHidden(const bool hidden)
 bool OsmAnd::VectorLine_P::showArrows() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _showArrows;
 }
 
 void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_showArrows != showArrows)
     {
         _showArrows = showArrows;
@@ -88,14 +88,14 @@ void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
 bool OsmAnd::VectorLine_P::isApproximationEnabled() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _isApproximationEnabled;
 }
 
 void OsmAnd::VectorLine_P::setApproximationEnabled(const bool enabled)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_isApproximationEnabled != enabled)
     {
         _isApproximationEnabled = enabled;
@@ -106,18 +106,18 @@ void OsmAnd::VectorLine_P::setApproximationEnabled(const bool enabled)
 QVector<OsmAnd::PointI> OsmAnd::VectorLine_P::getPoints() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _points;
 }
 
 void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_points != points)
     {
         _points = points;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -126,18 +126,18 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
 QList<OsmAnd::FColorARGB> OsmAnd::VectorLine_P::getColorizationMapping() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _colorizationMapping;
 }
 
 void OsmAnd::VectorLine_P::setColorizationMapping(const QList<FColorARGB> &colorizationMapping)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_colorizationMapping != colorizationMapping)
     {
         _colorizationMapping = colorizationMapping;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -146,25 +146,25 @@ void OsmAnd::VectorLine_P::setColorizationMapping(const QList<FColorARGB> &color
 bool OsmAnd::VectorLine_P::hasColorizationMapping() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _colorizationMapping.size() == _points.size();
 }
 
 double OsmAnd::VectorLine_P::getLineWidth() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _lineWidth;
 }
 
 void OsmAnd::VectorLine_P::setLineWidth(const double width)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_lineWidth != width)
     {
         _lineWidth = width;
-        
+
         if (owner->pathIcon)
         {
             double newWidth = _lineWidth / 3;
@@ -175,24 +175,24 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
-    
+
 }
 
 double OsmAnd::VectorLine_P::getOutlineWidth() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _outlineWidth;
 }
 
 void OsmAnd::VectorLine_P::setOutlineWidth(const double width)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_outlineWidth != width)
     {
         _outlineWidth = width;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -201,11 +201,11 @@ void OsmAnd::VectorLine_P::setOutlineWidth(const double width)
 void OsmAnd::VectorLine_P::setColorizationScheme(const int colorizationScheme)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_colorizationSceme != colorizationScheme)
     {
         _colorizationSceme = colorizationScheme;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -214,18 +214,18 @@ void OsmAnd::VectorLine_P::setColorizationScheme(const int colorizationScheme)
 OsmAnd::FColorARGB OsmAnd::VectorLine_P::getFillColor() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _fillColor;
 }
 
 void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_fillColor != color)
     {
         _fillColor = color;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -234,18 +234,18 @@ void OsmAnd::VectorLine_P::setFillColor(const FColorARGB color)
 std::vector<double> OsmAnd::VectorLine_P::getLineDash() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _dashPattern;
 }
 
 void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     if (_dashPattern != dashPattern)
     {
         _dashPattern = dashPattern;
-        
+
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
@@ -254,14 +254,14 @@ void OsmAnd::VectorLine_P::setLineDash(const std::vector<double> dashPattern)
 bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _hasUnappliedChanges;
 }
 
 bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _hasUnappliedPrimitiveChanges;
 }
 
@@ -274,7 +274,7 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
         bool bboxChanged = abs(bboxShiftPoint.x) > _visibleBBox31.width() || abs(bboxShiftPoint.y) > _visibleBBox31.height();
         changed |= bboxChanged;
     }
-    
+
     //_mapZoomLevel != mapState.zoomLevel ||
     //_mapVisualZoom != mapState.visualZoom ||
     //_mapVisualZoomShift != mapState.visualZoomShift;
@@ -305,23 +305,23 @@ bool OsmAnd::VectorLine_P::update(const MapState& mapState)
 bool OsmAnd::VectorLine_P::applyChanges()
 {
     QReadLocker scopedLocker1(&_lock);
-    
+
     if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
         return false;
-    
+
     QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
     for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
         const auto symbolGroup = symbolGroup_.lock();
         if (!symbolGroup)
             continue;
-        
+
         //const auto& vectorLineSymbolGroup = std::dynamic_pointer_cast<VectorLine::SymbolsGroup>(symbolGroup);
         bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges && _points.size() > 1;
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
-            
+
             if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
             {
                 if (needUpdatePrimitive)
@@ -329,37 +329,37 @@ bool OsmAnd::VectorLine_P::applyChanges()
             }
         }
     }
-    owner->lineUpdatedObservable.postNotify(owner);
+    owner->updatedObservable.postNotify(owner);
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
-    
+
     return true;
 }
 
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup()
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     // Construct new map symbols group for this marker
     const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(std::const_pointer_cast<VectorLine_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
-    
+
     if (_points.size() > 1)
     {
         const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
         generatePrimitive(vectorLine);
         vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
-        owner->lineUpdatedObservable.postNotify(owner);
+        owner->updatedObservable.postNotify(owner);
     }
-    
+
     return symbolsGroup;
 }
 
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup(const MapState& mapState)
 {
     applyMapState(mapState);
-    
+
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
     registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;
@@ -368,14 +368,14 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSy
 void OsmAnd::VectorLine_P::registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const
 {
     QWriteLocker scopedLocker(&_symbolsGroupsRegistryLock);
-    
+
     _symbolsGroupsRegistry.insert(symbolsGroup.get(), symbolsGroup);
 }
 
 void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const
 {
     QWriteLocker scopedLocker(&_symbolsGroupsRegistryLock);
-    
+
     _symbolsGroupsRegistry.remove(symbolsGroup);
 }
 
@@ -395,7 +395,7 @@ OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::Poi
     OsmAnd::PointD r;
     r.x = ((p1.x* p2.y-p1.y*p2.x)*(p3.x - p4.x) - (p3.x* p4.y-p3.y*p4.x)*(p1.x - p2.x)) / d;
     r.y = ((p1.x* p2.y-p1.y*p2.x)*(p3.y - p4.y) - (p3.x* p4.y-p3.y*p4.x)*(p1.y - p2.y)) / d;
-    
+
     return r;
 }
 
@@ -508,14 +508,14 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                 {
                     segments.push_back(segment);
                     segment = std::vector<PointI>();
-                    
+
                     segmentColors.push_back(colors);
                     colors.clear();
                 }
                 segment.push_back(drawFrom);
                 if (hasColorizationMapping())
                     colors.push_back(_colorizationMapping[drawFromIdx]);
-                
+
                 segmentStarted = currIn;
             }
             if (segment.empty() || segment.back() != drawTo)
@@ -523,7 +523,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                 segment.push_back(drawTo);
                 if (hasColorizationMapping())
                     colors.push_back(_colorizationMapping[drawToIdx]);
-                
+
             }
         }
         else
@@ -536,7 +536,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
     }
     if (!segment.empty())
         segments.push_back(segment);
-    
+
     if (!colors.empty())
         segmentColors.push_back(colors);
 }
@@ -563,7 +563,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
-        
+
     const auto verticesAndIndexes = std::make_shared<VectorMapSymbol::VerticesAndIndexes>();
     // Line has no reusable vertices - TODO clarify
     verticesAndIndexes->indices = nullptr;
@@ -577,7 +577,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     calculateVisibleSegments(segments, colors);
     // Generate new arrow paths for visible segments
     generateArrowsOnPath(segments, approximate, simplificationRadius);
-    
+
     PointI origin;
     bool originDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
@@ -586,7 +586,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         auto colorsForSegment = hasColorizationMapping() ? colors[segmentIndex] : QList<FColorARGB>();
         if (points.size() < 2)
             continue;
-        
+
         if (!originDefined)
         {
             originDefined = true;
@@ -618,20 +618,20 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         int pointsSimpleCount = approximate
             ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, simplificationRadius / 3, include) + 1
             : pointsCount;
-        
+
         // generate base points for connecting lines with triangles
         std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
         double ntan = 0, nx1 = 0, ny1 = 0;
         prevPointIdx = 0;
         uint insertIdx = 0;
-        
+
         QVector<uint> solidColorChangeIndexes;
         QList<OsmAnd::FColorARGB> filteredColorsMap;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
             if (!include[pointIdx])
                 continue;
-            
+
             if (hasColorizationMapping())
             {
                 const auto& color = colorsForSegment[pointIdx];
@@ -639,7 +639,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 if (_colorizationSceme == COLORIZATION_SOLID && colorChangeIndexes.contains(pointIdx))
                     solidColorChangeIndexes.push_back(insertIdx);
             }
-            
+
             PointD pnt = pointsToPlot[pointIdx];
             PointD prevPnt = pointsToPlot[prevPointIdx];
             original[insertIdx] = pnt;
@@ -660,7 +660,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             prevPointIdx = pointIdx;
             insertIdx++;
         }
-                
+
         //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndexes->verticesCount,
         //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
         //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
@@ -676,7 +676,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 dashPattern.erase(dashPattern.begin());
                 patternLength--;
             }
-            
+
             OsmAnd::PointD start = original[0];
             OsmAnd::PointD end = original[original.size() - 1];
             OsmAnd::PointD prevPnt = start;
@@ -684,7 +684,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             OsmAnd::PointD pe2 = e2[0];
             OsmAnd::PointD de1 = pe1;
             OsmAnd::PointD de2 = pe2;
-            
+
             std::vector<OsmAnd::PointD> b1tar, b2tar, e1tar, e2tar, origTar;
             if (threshold == 0)
             {
@@ -705,19 +705,19 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 OsmAnd::PointD v = pnt - prevPnt;
                 // unit length
                 OsmAnd::PointD u(v.x / segLength, v.y / segLength);
-                
+
                 double length = (firstDash && threshold > 0 ? threshold : dashPattern[patternIndex]) * scale;
                 bool gap = firstDash && threshold > 0 ? true : patternIndex % 2 == 1;
-                
+
                 OsmAnd::PointD delta;
                 double deltaLength;
                 if (dashPhase == 0)
                     deltaLength = length;
                 else
                     deltaLength = dashPhase;
-                
+
                 delta = OsmAnd::PointD(u.x * deltaLength, u.y * deltaLength);
-                
+
                 if (segLength <= deltaLength)
                 {
                     if (!gap)
@@ -740,7 +740,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                         e1tar.push_back(b1e1);
                         e2tar.push_back(b2e2);
                         origTar.push_back(prevPnt + delta);
-                        
+
                         if (!gap)
                         {
                             createVertexes(vertices, vertex, b1tar, b2tar, e1tar, e2tar, origTar, radius, fillColor, filteredColorsMap, !firstDash || segmentIndex > 0);
@@ -753,17 +753,17 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                             origTar.clear();
                             firstDash = false;
                         }
-                        
+
                         if (!firstDash)
                             patternIndex++;
-                        
+
                         patternIndex %= patternLength;
                         length = dashPattern[patternIndex] * scale;
                         gap = patternIndex % 2 == 1;
                         delta += OsmAnd::PointD(u.x * length, u.y * length);
                         deltaLength += length;
                     }
-                    
+
                     if (!origTar.empty() && !gap)
                     {
                         b1tar.push_back(b1[pointIdx]);
@@ -773,12 +773,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                         origTar.push_back(pnt);
                     }
                 }
-                
+
                 // calculate dash phase
                 dashPhase = length - (segLength - deltaLength);
                 if (dashPhase > length)
                     dashPhase -= length;
-                
+
                 pe1 = e1[pointIdx];
                 pe2 = e2[pointIdx];
                 prevPnt = pnt;
@@ -814,7 +814,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 QList<FColorARGB> colors;
                 for (int i = 0; i < idx - prevIdx; i++)
                     colors.push_back(fillColor);
-                
+
                 crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                     vertex,
                     vertices,
@@ -888,23 +888,23 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
         {
             if (pointIdx == pointsCount - 1)
                 return;
-            
+
             if (gap)
                 vertices.push_back(vertex);
-            
+
             pVertex->positionXY[0] = e2[pointIdx].x;
             pVertex->positionXY[1] = e2[pointIdx].y;
             pVertex->color = mappingColor;
             vertices.push_back(vertex);
-            
+
             if (gap)
                 vertices.push_back(vertex);
-            
+
             pVertex->positionXY[0] = e1[pointIdx].x;
             pVertex->positionXY[1] = e1[pointIdx].y;
             pVertex->color = mappingColor;
             vertices.push_back(vertex);
-            
+
             direction = true;
         }
         else if (pointIdx == pointsCount - 1)
@@ -915,7 +915,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                 pVertex->color = mappingColor;
                 vertices.push_back(vertex);
             }
-            
+
             pVertex->positionXY[0] = b2[pointIdx].x;
             pVertex->positionXY[1] = b2[pointIdx].y;
             pVertex->color = mappingColor;
@@ -936,11 +936,11 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
             (l1.x >= qMin(e1[pointIdx].x, b1[pointIdx + 1].x) && l1.x <= qMax(e1[pointIdx].x, b1[pointIdx + 1].x));
             bool l2Intersects = (l2.x >= qMin(e2[ pointIdx - 1].x, b2[pointIdx].x) && l2.x <= qMax(e2[pointIdx - 1].x, b2[pointIdx].x)) ||
             (l2.x >= qMin(e2[pointIdx].x, b2[pointIdx + 1].x) && l2.x <= qMax(e2[pointIdx].x, b2[pointIdx + 1].x));
-            
+
             // bewel - connecting only 3 points (one excluded depends on angle)
             // miter - connecting 4 points
             // round - generating between 2-3 point triangles (in place of triangle different between bewel/miter)
-            
+
             if (!l2Intersects && !l1Intersects)
             {
                 // skip point
@@ -959,7 +959,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                     vertices.push_back(vertex);
                     phase++;
                 }
-                
+
                 pVertex->positionXY[0] = bp[pointIdx].x;
                 pVertex->positionXY[1] = bp[pointIdx].y;
                 pVertex->color = mappingColor;
@@ -973,7 +973,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                     vertices.push_back(vertex);
                     phase++;
                 }
-                
+
                 if (smoothLevel > 0)
                 {
                     double dv = 1.0 / (1 << smoothLevel);
@@ -992,7 +992,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                         {
                             // avoid overlap
                             vertices.push_back(vertex);
-                            
+
                             pVertex->positionXY[0] = lp.x;
                             pVertex->positionXY[1] = lp.y;
                             pVertex->color = mappingColor;
@@ -1002,7 +1002,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                         nt += dv;
                     }
                 }
-                
+
                 pVertex->positionXY[0] = ep[pointIdx].x;
                 pVertex->positionXY[1] = ep[pointIdx].y;
                 pVertex->color = mappingColor;
@@ -1012,7 +1012,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
                 {
                     // avoid overlap
                     vertices.push_back(vertex);
-                    
+
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
                     pVertex->color = mappingColor;
@@ -1051,7 +1051,7 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
                 include[0] = true;
                 simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
             }
-            
+
             SkPath path;
             const auto& start = segment.back();
             path.moveTo(start.x - origin.x, start.y - origin.y);
@@ -1059,7 +1059,7 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
             {
                 if (!include[i])
                     continue;
-                    
+
                 const auto& p = segment[i];
                 path.lineTo(p.x - origin.x, p.y - origin.y);
             }
@@ -1095,7 +1095,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(
             const auto length = pathMeasure.getLength();
 
             float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
-            
+
             float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
             auto iconOffset = 0.5f * step;
             const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;

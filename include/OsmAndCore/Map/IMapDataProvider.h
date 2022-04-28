@@ -27,7 +27,7 @@ namespace OsmAnd
         class OSMAND_CORE_API Data
         {
             Q_DISABLE_COPY_AND_MOVE(Data);
-        
+
         private:
         protected:
             void release();
@@ -55,8 +55,8 @@ namespace OsmAnd
 
         OSMAND_CALLABLE(ObtainDataAsyncCallback,
             void,
-            const IMapDataProvider* const provider,
-            const bool requestSucceeded,
+            const IMapDataProvider* provider,
+            bool requestSucceeded,
             const std::shared_ptr<Data>& data,
             const std::shared_ptr<Metric>& metric);
 
