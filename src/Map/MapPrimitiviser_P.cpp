@@ -198,7 +198,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
         else
         {
-            if (isBasemapObject || isContourLinesObject)
+            auto isContourLinesOnBasemap = isContourLinesObject && (zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent ? false : true);
+            if (isBasemapObject || isContourLinesOnBasemap)
                 basemapMapObjects.push_back(mapObject);
             else
                 detailedmapMapObjects.push_back(mapObject);
