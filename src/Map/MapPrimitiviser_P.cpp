@@ -147,6 +147,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
+    bool hasContourLinesObjectOnly = true;
     for (const auto& mapObject : constOf(objects))
     {
         if (queryController && queryController->isAborted())
@@ -201,7 +202,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             if (isBasemapObject)
                 basemapMapObjects.push_back(mapObject);
             else
+            {
                 detailedmapMapObjects.push_back(mapObject);
+                if (!isContourLinesObject)
+                    hasContourLinesObjectOnly = false;
+            }
         }
     }
     if (queryController && queryController->isAborted())
@@ -328,20 +333,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         assert(bgMapObject->isClosedFigure());
         if (bgMapObject->isArea)
             polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
-    }
-    
-    bool hasContourLinesObjectOnly;
-    if (!detailedmapMapObjects.isEmpty())
-    {
-        hasContourLinesObjectOnly = true;
-        for (const auto& mapObject : constOf(detailedmapMapObjects))
-        {
-            if (!std::dynamic_pointer_cast<const BinaryMapObject>(mapObject)->section->isContourLines)
-            {
-                hasContourLinesObjectOnly = false;
-                break;
-            }
-        }
     }
 
     // Obtain primitives
