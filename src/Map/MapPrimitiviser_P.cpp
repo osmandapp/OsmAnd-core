@@ -198,8 +198,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
         else
         {
-            auto isContourLinesOnBasemap = isContourLinesObject && (zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent ? false : true);
-            if (isBasemapObject || isContourLinesOnBasemap)
+            if (isBasemapObject)
                 basemapMapObjects.push_back(mapObject);
             else
                 detailedmapMapObjects.push_back(mapObject);
@@ -330,11 +329,25 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (bgMapObject->isArea)
             polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
     }
+    
+    bool hasContourLinesObjectOnly;
+    if (!detailedmapMapObjects.isEmpty())
+    {
+        hasContourLinesObjectOnly = true;
+        for (const auto& mapObject : constOf(detailedmapMapObjects))
+        {
+            if (!std::dynamic_pointer_cast<const BinaryMapObject>(mapObject)->section->isContourLines)
+            {
+                hasContourLinesObjectOnly = false;
+                break;
+            }
+        }
+    }
 
     // Obtain primitives
     const bool detailedDataMissing =
         (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) &&
-        detailedmapMapObjects.isEmpty() &&
+        (detailedmapMapObjects.isEmpty() || hasContourLinesObjectOnly) &&
         detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
