@@ -147,8 +147,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
-    bool hasContourLinesObjectOnly = false;
-    int countContourLinesObjects = 0;
+    int contourLinesObjectsCount = 0;
     for (const auto& mapObject : constOf(objects))
     {
         if (queryController && queryController->isAborted())
@@ -206,15 +205,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             {
                 detailedmapMapObjects.push_back(mapObject);
                 if (isContourLinesObject)
-                    countContourLinesObjects++;
-                else
-                    hasContourLinesObjectOnly = false;
+                    contourLinesObjectsCount++;
             }
         }
     }
     
-    if (countContourLinesObjects == detailedmapMapObjects.size())
-        hasContourLinesObjectOnly = true;
+    bool hasContourLinesObjectOnly = contourLinesObjectsCount == detailedmapMapObjects.size();
     
     if (queryController && queryController->isAborted())
         return nullptr;
