@@ -147,6 +147,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
+    int contourLinesObjectsCount = 0;
     for (const auto& mapObject : constOf(objects))
     {
         if (queryController && queryController->isAborted())
@@ -198,12 +199,19 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         }
         else
         {
-            if (isBasemapObject || isContourLinesObject)
+            if (isBasemapObject)
                 basemapMapObjects.push_back(mapObject);
             else
+            {
                 detailedmapMapObjects.push_back(mapObject);
+                if (isContourLinesObject)
+                    contourLinesObjectsCount++;
+            }
         }
     }
+    
+    bool hasContourLinesObjectOnly = contourLinesObjectsCount == detailedmapMapObjects.size();
+    
     if (queryController && queryController->isAborted())
         return nullptr;
 
@@ -226,7 +234,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent;
+    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
@@ -333,7 +341,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     // Obtain primitives
     const bool detailedDataMissing =
         (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) &&
-        detailedmapMapObjects.isEmpty() &&
+        (detailedmapMapObjects.isEmpty() || hasContourLinesObjectOnly) &&
         detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
