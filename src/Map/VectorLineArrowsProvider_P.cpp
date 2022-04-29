@@ -13,7 +13,7 @@ OsmAnd::VectorLineArrowsProvider_P::VectorLineArrowsProvider_P(
 {
     for (const auto& line : collection->getLines())
     {
-        line->lineUpdatedObservable.attach(this,
+        line->updatedObservable.attach(reinterpret_cast<IObservable::Tag>(this),
             [this]
             (const VectorLine* const vectorLine)
             {
@@ -26,7 +26,7 @@ OsmAnd::VectorLineArrowsProvider_P::VectorLineArrowsProvider_P(
 OsmAnd::VectorLineArrowsProvider_P::~VectorLineArrowsProvider_P()
 {
     for (const auto& line : _linesCollection->getLines())
-        line->lineUpdatedObservable.detach(this);
+        line->updatedObservable.detach(reinterpret_cast<IObservable::Tag>(this));
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::VectorLineArrowsProvider_P::getMarker(int markerId) const
