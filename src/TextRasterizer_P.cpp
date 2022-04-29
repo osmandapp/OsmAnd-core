@@ -120,6 +120,10 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 }
 #endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
+            if (!typeface)
+            {
+                 continue;
+            }
 
             if (pTextPaint == nullptr || pTextPaint->typeface != typeface)
             {
@@ -149,7 +153,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
                 linePaint.fontAscent = metrics.fAscent;
 
-                if (style.bold && (!typeface || (typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
+                if (style.bold && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)
                     pTextPaint->skFont.setEmbolden(true);
             }
             else
@@ -553,7 +557,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
         *outFontAscent = fontAscent;
     }
-    
+
     // Set output line spacing
     if (outLineSpacing)
     {
@@ -590,7 +594,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
     // Position text horizontally and vertically
     const auto textArea = positionText(paints, maxLineWidthInPixels, style.textAlignment);
-    
+
     // Calculate bitmap size
     auto bitmapWidth = qCeil(textArea.width());
     auto bitmapHeight = qCeil(textArea.height());
