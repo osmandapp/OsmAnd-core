@@ -111,7 +111,7 @@
                                                                                                                                 \
             virtual void operator()( __VA_ARGS__ ) const = 0;                                                                   \
                                                                                                                                 \
-            bool attachTo(const ObservableAs<I##name>& observable, const ObservableAs<I##name>::Tag tag);                       \
+            bool attachTo(const OsmAnd::ObservableAs<name>& observable, const OsmAnd::ObservableAs<name>::Tag tag);             \
                                                                                                                                 \
             name getBinding() const;                                                                                            \
         };

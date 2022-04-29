@@ -15,9 +15,9 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API MapRendererSetupOptions Q_DECL_FINAL
     {
-        OSMAND_CALLABLE(GpuWorkerThreadPrologue, void, const IMapRenderer* const mapRenderer);
-        OSMAND_CALLABLE(GpuWorkerThreadEpilogue, void, const IMapRenderer* const mapRenderer);
-        OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* const mapRenderer);
+        OSMAND_CALLABLE(GpuWorkerThreadPrologue, void, const IMapRenderer* mapRenderer);
+        OSMAND_CALLABLE(GpuWorkerThreadEpilogue, void, const IMapRenderer* mapRenderer);
+        OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* mapRenderer);
 
         MapRendererSetupOptions();
         ~MapRendererSetupOptions();

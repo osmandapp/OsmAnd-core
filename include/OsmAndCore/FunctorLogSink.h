@@ -16,8 +16,8 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(FunctorLogSink);
 
     public:
-        OSMAND_CALLABLE(WriteCallback, void, FunctorLogSink* const sink, const LogSeverityLevel level, const char* format, va_list args);
-        OSMAND_CALLABLE(FlushCallback, void, FunctorLogSink* const sink);
+        OSMAND_CALLABLE(WriteCallback, void, FunctorLogSink* sink, LogSeverityLevel level, const char* format, va_list args);
+        OSMAND_CALLABLE(FlushCallback, void, FunctorLogSink* sink);
 
     private:
         const WriteCallback _writeFunctor;

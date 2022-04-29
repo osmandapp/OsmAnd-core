@@ -5,6 +5,8 @@
 
 %{
 #include <OsmAndCore.h>
+#include <OsmAndCore/Observable.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/Color.h>
@@ -94,12 +96,12 @@
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapMarker.h>
+#include <OsmAndCore/Map/MapMarkerBuilder.h>
 #include <OsmAndCore/Map/MapMarkersCollection.h>
-#include <OsmAndCore/Map/VectorLinesCollection.h>
+#include <OsmAndCore/Map/VectorLine.h>
 #include <OsmAndCore/Map/VectorLineArrowsProvider.h>
 #include <OsmAndCore/Map/VectorLineBuilder.h>
-#include <OsmAndCore/Map/VectorLine.h>
-#include <OsmAndCore/Map/MapMarkerBuilder.h>
+#include <OsmAndCore/Map/VectorLinesCollection.h>
 #include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/RoadLocator.h>
 #include <OsmAndCore/IQueryController.h>
@@ -266,6 +268,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
 	%shared_ptr(OsmAnd::OnlineRasterMapLayerProvider)
+    %shared_ptr(OsmAnd::IUpdatableMapSymbolsGroup)
 	%shared_ptr(OsmAnd::MapMarker)
 	%shared_ptr(OsmAnd::MapMarker::SymbolsGroup)
 	%shared_ptr(OsmAnd::MapMarkersCollection)
@@ -354,6 +357,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/ObfsCollection.h>
 %include <OsmAndCore/ObfDataInterface.h>
 %include <OsmAndCore/ResourcesManager.h>
+    %template(ResourcesManagerLocalResourcesChangedObservable) OsmAnd::ObservableAs<OsmAnd::ResourcesManager::LocalResourcesChanged>;
+    %template(ResourcesManagerRepositoryUpdatedObservable) OsmAnd::ObservableAs<OsmAnd::ResourcesManager::RepositoryUpdated>;
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 %include <OsmAndCore/ITypefaceFinder.h>
@@ -409,6 +414,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapRendererDebugSettings.h>
 %include <OsmAndCore/Map/MapRendererTypes.h>
 %include <OsmAndCore/Map/IMapRenderer.h>
+    %template(MapSymbolInformationList) QList<OsmAnd::IMapRenderer::MapSymbolInformation>;
+    %template(MapRendererFramePreparedObservable) OsmAnd::ObservableAs<OsmAnd::IMapRenderer::FramePrepared>;
+    %template(MapRendererStateChangedObservable) OsmAnd::ObservableAs<OsmAnd::IMapRenderer::StateChanged>;
 %include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 %include <OsmAndCore/Map/IMapDataProvider.h>
 %include <OsmAndCore/Map/IMapTiledDataProvider.h>
@@ -438,7 +446,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/VectorLineBuilder.h>
 %include <OsmAndCore/Map/VectorLine.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
-	%template(MapSymbolInformationList) QList<OsmAnd::IMapRenderer::MapSymbolInformation>;
+%include <OsmAndCore/Map/VectorLine.h>
+    %template(VectorLineUpdatedObservable) OsmAnd::ObservableAs<OsmAnd::VectorLine::Updated>;
 %include <OsmAndCore/IRoadLocator.h>
 %include <OsmAndCore/RoadLocator.h>
 %include <OsmAndCore/IQueryController.h>

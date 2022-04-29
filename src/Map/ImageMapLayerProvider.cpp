@@ -75,7 +75,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
 
     if (request.queryController != nullptr && request.queryController->isAborted())
         return false;
-    
+
     sk_sp<SkImage> image;
     if (supportsObtainImage())
     {
@@ -131,11 +131,11 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
             }
             return true;
         }
-        
+
         // Decode image data
         image = SkiaUtilities::createImageFromData(imageData);
     }
-    
+
     if (!image)
         return false;
 
@@ -159,7 +159,7 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
 {
     const auto& request = MapDataProviderHelpers::castRequest<Request>(request_);
     setLastRequestedZoom(request.zoom);
-    
+
     const auto selfWeak = std::weak_ptr<ImageMapLayerProvider>(shared_from_this());
     const auto requestClone = request_.clone();
     const QRunnableFunctor::Callback task =
@@ -175,11 +175,11 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
             bool requestSucceeded = false;
             if (r.zoom == self->getLastRequestedZoom())
                 requestSucceeded = self->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
-            
+
             callback(self.get(), requestSucceeded, data, metric);
         }
     };
-    
+
     const auto taskRunnable = new QRunnableFunctor(task);
     taskRunnable->setAutoDelete(true);
     int priority = getAndDecreasePriority();
@@ -189,7 +189,7 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
 OsmAnd::ZoomLevel OsmAnd::ImageMapLayerProvider::getLastRequestedZoom() const
 {
     QReadLocker scopedLocker(&_lock);
-    
+
     return _lastRequestedZoom;
 }
 
@@ -199,16 +199,16 @@ void OsmAnd::ImageMapLayerProvider::setLastRequestedZoom(const ZoomLevel zoomLev
 
     if (_lastRequestedZoom != zoomLevel)
         _priority = 0;
-    
+
     _lastRequestedZoom = zoomLevel;
 }
 
 int OsmAnd::ImageMapLayerProvider::getAndDecreasePriority()
 {
     QWriteLocker scopedLocker(&_lock);
-    
+
     _priority--;
-    
+
     return _priority;
 }
 

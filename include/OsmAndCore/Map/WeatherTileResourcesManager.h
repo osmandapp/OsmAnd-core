@@ -28,7 +28,7 @@
 namespace OsmAnd
 {
     class WeatherTileResourcesManager_P;
-    
+
     class OSMAND_CORE_API WeatherTileResourcesManager
         : public std::enable_shared_from_this<WeatherTileResourcesManager>
     {
@@ -47,13 +47,13 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
-            
+
             std::shared_ptr<const IQueryController> queryController;
 
             static void copy(ValueRequest& dst, const ValueRequest& src);
             virtual std::shared_ptr<ValueRequest> clone() const;
         };
-        
+
         struct OSMAND_CORE_API TileRequest
         {
             TileRequest();
@@ -66,13 +66,13 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
-            
+
             std::shared_ptr<const IQueryController> queryController;
 
             static void copy(TileRequest& dst, const TileRequest& src);
             virtual std::shared_ptr<TileRequest> clone() const;
         };
-        
+
         struct OSMAND_CORE_API DownloadGeoTileRequest
         {
             DownloadGeoTileRequest();
@@ -89,7 +89,7 @@ namespace OsmAnd
             static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
             virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
         };
-        
+
         class OSMAND_CORE_API Data
         {
             Q_DISABLE_COPY_AND_MOVE(Data);
@@ -115,21 +115,21 @@ namespace OsmAnd
 
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
             void,
-            const bool succeeded,
-            const double value,
+            bool succeeded,
+            double value,
             const std::shared_ptr<Metric>& metric);
-        
+
         OSMAND_CALLABLE(ObtainTileDataAsyncCallback,
             void,
-            const bool requestSucceeded,
+            bool requestSucceeded,
             const std::shared_ptr<Data>& data,
             const std::shared_ptr<Metric>& metric);
 
         OSMAND_CALLABLE(DownloadGeoTilesAsyncCallback,
             void,
-            const bool succeeded,
-            const uint64_t downloadedTiles,
-            const uint64_t totalTiles,
+            bool succeeded,
+            uint64_t downloadedTiles,
+            uint64_t totalTiles,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -155,13 +155,13 @@ namespace OsmAnd
         QString getProjResourcesPath() const;
         uint32_t getTileSize() const;
         float getDensityFactor() const;
-        
+
         ZoomLevel getGeoTileZoom() const;
         ZoomLevel getMinTileZoom(const WeatherType type, const WeatherLayer layer) const;
         ZoomLevel getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
-        
+
         virtual void obtainValue(
             const ValueRequest& request,
             const ObtainValueAsyncCallback callback,

@@ -78,9 +78,9 @@ namespace OsmAnd
         virtual bool suspendGpuWorker() = 0;
         virtual bool resumeGpuWorker() = 0;
 
-        OSMAND_OBSERVER_CALLABLE(FramePreparedObserver,
+        OSMAND_OBSERVER_CALLABLE(FramePrepared,
             IMapRenderer* mapRenderer);
-        const ObservableAs<IMapRenderer::FramePreparedObserver> framePreparedObservable;
+        const ObservableAs<IMapRenderer::FramePrepared> framePreparedObservable;
 
         virtual void reloadEverything() = 0;
 
@@ -140,11 +140,11 @@ namespace OsmAnd
         virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const = 0;
         virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const = 0;
 
-        OSMAND_OBSERVER_CALLABLE(StateChangeObserver,
-            const IMapRenderer* const mapRenderer,
-            const MapRendererStateChange thisChange,
+        OSMAND_OBSERVER_CALLABLE(StateChanged,
+            const IMapRenderer* mapRenderer,
+            MapRendererStateChange thisChange,
             SWIG_OMIT(const) MapRendererStateChanges allChanges);
-        const ObservableAs<IMapRenderer::StateChangeObserver> stateChangeObservable;
+        const ObservableAs<IMapRenderer::StateChanged> stateChangeObservable;
 
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
