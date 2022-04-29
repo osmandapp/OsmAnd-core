@@ -73,8 +73,6 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         {
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
-
-
             if (typeface)
             {
                 if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
@@ -595,7 +593,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
     // Position text horizontally and vertically
     const auto textArea = positionText(paints, maxLineWidthInPixels, style.textAlignment);
-    
+
     // Calculate bitmap size
     auto bitmapWidth = qCeil(textArea.width());
     auto bitmapHeight = qCeil(textArea.height());
