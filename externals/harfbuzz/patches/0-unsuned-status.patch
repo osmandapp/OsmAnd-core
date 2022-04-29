@@ -1,0 +1,11 @@
+--- upstream.original/src/hb-coretext.cc	2022-02-06 11:13:38.000000000 +0100
++++ upstream.patched/src/hb-coretext.cc	2022-04-29 10:07:00.000000000 +0200
+@@ -897,7 +897,7 @@ resize_and_retry:
+     DEBUG_MSG (CORETEXT, nullptr, "Num runs: %d", num_runs);
+ 
+     buffer->len = 0;
+-    uint32_t status_and = ~0, status_or = 0;
++    HB_UNUSED uint32_t status_and = ~0, status_or = 0;
+     CGFloat advances_so_far = 0;
+     /* For right-to-left runs, CoreText returns the glyphs positioned such that
+      * any trailing whitespace is to the left of (0,0).  Adjust coordinate system
