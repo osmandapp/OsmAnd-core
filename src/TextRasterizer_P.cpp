@@ -73,7 +73,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         {
             const auto position = pNextCharacter - pText;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
-            
+
+
             if (typeface)
             {
                 if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
@@ -120,6 +121,10 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 }
 #endif // OSMAND_LOG_CHARACTERS_TYPEFACE
             }
+            if (!typeface)
+            {
+                 continue;
+            }
 
             if (pTextPaint == nullptr || pTextPaint->typeface != typeface)
             {
@@ -149,7 +154,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.minFontBottom = qMin(linePaint.minFontBottom, metrics.fBottom);
                 linePaint.fontAscent = metrics.fAscent;
 
-                if (style.bold && (!typeface || (typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)))
+                if (style.bold && typeface && typeface->skTypeface->fontStyle().weight() <= SkFontStyle::kNormal_Weight)
                     pTextPaint->skFont.setEmbolden(true);
             }
             else
@@ -553,7 +558,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
 
         *outFontAscent = fontAscent;
     }
-    
+
     // Set output line spacing
     if (outLineSpacing)
     {
