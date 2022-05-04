@@ -112,6 +112,7 @@
 #include <OsmAndCore/Search/AddressesByNameSearch.h>
 #include <OsmAndCore/Search/ReverseGeocoder.h>
 #include <OsmAndCore/Map/MapTiledCollectionProvider.h>
+#include <OsmAndCore/Map/MapTiledCollectionPoint.h>
 #include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
 #include "SwigUtilities.h"
 
@@ -279,6 +280,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::VectorLine::SymbolsGroup)
 	%shared_ptr(OsmAnd::VectorLine::OnPathSymbolData)
 	%shared_ptr(OsmAnd::MapTiledCollectionProvider)
+	%shared_ptr(OsmAnd::MapTiledCollectionPoint)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider::SplitLabel)
 %include <std_pair.i>
@@ -343,6 +345,7 @@ using namespace OsmAnd;
 	%template(QListFColorARGB) QList<OsmAnd::FColorARGB>;
 	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
 	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
+	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -458,6 +461,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/AddressesByNameSearch.h>
 %include <OsmAndCore/Search/ReverseGeocoder.h>
 %include <OsmAndCore/Map/MapTiledCollectionProvider.h>
+%include <OsmAndCore/Map/MapTiledCollectionPoint.h>
 %include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;
 

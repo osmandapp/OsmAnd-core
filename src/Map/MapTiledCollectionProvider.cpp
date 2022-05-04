@@ -96,9 +96,17 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
     const auto baseOrder = getBaseOrder();
     const auto& hiddenPoints = getHiddenPoints();
     
-    for (int i = 0; i < getPointsCount(); i++)
+    int pointsCount = getPointsCount();
+    const auto& tilePoints = getTilePoints(tileId, zoom);
+    int tilePointsCount = tilePoints.count();
+    for (int i = 0; i < pointsCount + tilePointsCount; i++)
     {
-        const auto pos31 = getPoint31(i);
+        int it = i - pointsCount;
+        const auto& data = it >=0 && tilePointsCount > it ? tilePoints[it] : nullptr;
+        if (i >= pointsCount && !data)
+            continue;
+        
+        const auto pos31 = i < pointsCount ? getPoint31(i) : data->getPoint31();
         if (extendedTileBBox31.contains(pos31) && !hiddenPoints.contains(pos31))
         {
             if (zoomFilter)
@@ -127,22 +135,25 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
                 .setPinIconHorisontalAlignment(getPinIconHorisontalAlignment());
 
             sk_sp<const SkImage> img;
+            QString caption;
+            if (showCaptions)
+                caption = i < pointsCount ? getCaption(i) : data->getCaption();
 
             if (intr)
             {
-                img = getImageBitmap(i, false);
+                img = i < pointsCount ? getImageBitmap(i, false) : data->getImageBitmap(false);
                 builder.setBaseOrder(builder.getBaseOrder() + 1);
             }
-            else if (showCaptions && !getCaption(i).isEmpty())
+            else if (showCaptions && !caption.isEmpty())
             {
-                img = getImageBitmap(i);
-                builder.setCaption(getCaption(i));
+                img = i < pointsCount ? getImageBitmap(i) : data->getImageBitmap();
+                builder.setCaption(caption);
                 builder.setCaptionStyle(captionStyle);
                 builder.setCaptionTopSpace(captionTopSpace);
             }
             else
             {
-                img = getImageBitmap(i);
+                img = i < pointsCount ? getImageBitmap(i) : data->getImageBitmap();
             }
             builder.setPinIcon(img);
             builder.buildAndAddToCollection(collection);
@@ -161,7 +172,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
 bool OsmAnd::MapTiledCollectionProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
-    std::shared_ptr<OsmAnd::Metric>* const pOutMetric)
+    std::shared_ptr<Metric>* const pOutMetric)
 {
     const auto& req = MapDataProviderHelpers::castRequest<MapTiledCollectionProvider::Request>(request);
     if (pOutMetric)
@@ -197,8 +208,8 @@ void OsmAnd::MapTiledCollectionProvider::obtainDataAsync(
 }
 
 OsmAnd::MapTiledCollectionProvider::Data::Data(
-    const OsmAnd::TileId tileId_,
-    const OsmAnd::ZoomLevel zoom_,
+    const TileId tileId_,
+    const ZoomLevel zoom_,
     const QList< std::shared_ptr<OsmAnd::MapSymbolsGroup> >& symbolsGroups_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapTiledSymbolsProvider::Data(tileId_, zoom_, symbolsGroups_, pRetainableCacheMetadata_)
