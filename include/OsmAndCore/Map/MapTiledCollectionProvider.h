@@ -66,7 +66,7 @@ namespace OsmAnd
             virtual QString getCaption(const int index) const = 0;
             virtual int getPointsCount() const = 0;
 
-            virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const TileId tileId, const ZoomLevel zoom) const = 0;
+            virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const OsmAnd::TileId& tileId, const OsmAnd::ZoomLevel zoom) const = 0;
 
             virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
             virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
@@ -127,7 +127,7 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>,
             getTilePoints,
-            const OsmAnd::TileId tileId,
+            const OsmAnd::TileId& tileId,
             const OsmAnd::ZoomLevel zoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::ZoomLevel,
