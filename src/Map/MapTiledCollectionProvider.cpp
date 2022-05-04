@@ -172,7 +172,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
 bool OsmAnd::MapTiledCollectionProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
-    std::shared_ptr<Metric>* const pOutMetric)
+    std::shared_ptr<OsmAnd::Metric>* const pOutMetric)
 {
     const auto& req = MapDataProviderHelpers::castRequest<MapTiledCollectionProvider::Request>(request);
     if (pOutMetric)
@@ -208,8 +208,8 @@ void OsmAnd::MapTiledCollectionProvider::obtainDataAsync(
 }
 
 OsmAnd::MapTiledCollectionProvider::Data::Data(
-    const TileId tileId_,
-    const ZoomLevel zoom_,
+    const OsmAnd::TileId tileId_,
+    const OsmAnd::ZoomLevel zoom_,
     const QList< std::shared_ptr<OsmAnd::MapSymbolsGroup> >& symbolsGroups_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapTiledSymbolsProvider::Data(tileId_, zoom_, symbolsGroups_, pRetainableCacheMetadata_)

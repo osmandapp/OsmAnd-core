@@ -26,14 +26,14 @@ namespace OsmAnd
     public:
         virtual ~MapTiledCollectionPoint();
         
-        virtual PointI getPoint31() const = 0;
+        virtual OsmAnd::PointI getPoint31() const = 0;
         virtual sk_sp<const SkImage> getImageBitmap(bool isFullSize = true) const = 0;
         virtual QString getCaption() const = 0;
     };
     
     SWIG_EMIT_DIRECTOR_BEGIN(MapTiledCollectionPoint);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            PointI,
+            OsmAnd::PointI,
             getPoint31);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             sk_sp<const SkImage>,

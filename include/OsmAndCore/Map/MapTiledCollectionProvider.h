@@ -32,9 +32,9 @@ namespace OsmAnd
                 Q_DISABLE_COPY_AND_MOVE(Data);
             private:
             public:
-                Data(const TileId tileId,
-                     const ZoomLevel zoom,
-                     const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
+                Data(const OsmAnd::TileId tileId,
+                     const OsmAnd::ZoomLevel zoom,
+                     const QList< std::shared_ptr<OsmAnd::MapSymbolsGroup> >& symbolsGroups,
                      const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
                 virtual ~Data();
             };
@@ -54,31 +54,31 @@ namespace OsmAnd
             virtual ~MapTiledCollectionProvider();
 
             virtual int getBaseOrder() const = 0;
-            virtual QList<PointI> getHiddenPoints() const = 0;
+            virtual QList<OsmAnd::PointI> getHiddenPoints() const = 0;
             virtual bool shouldShowCaptions() const = 0;
-            virtual TextRasterizer::Style getCaptionStyle() const = 0;
+            virtual OsmAnd::TextRasterizer::Style getCaptionStyle() const = 0;
             virtual double getCaptionTopSpace() const = 0;
             virtual float getReferenceTileSizeOnScreenInPixels() const = 0;
             virtual double getScale() const = 0;
             
-            virtual PointI getPoint31(const int index) const = 0;
+            virtual OsmAnd::PointI getPoint31(const int index) const = 0;
             virtual sk_sp<const SkImage> getImageBitmap(const int index, bool isFullSize = true) const = 0;
             virtual QString getCaption(const int index) const = 0;
             virtual int getPointsCount() const = 0;
 
             virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const TileId tileId, const ZoomLevel zoom) const = 0;
 
-            virtual MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
-            virtual MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
+            virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
+            virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
 
-            virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE = 0;
-            virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE = 0;
+            virtual OsmAnd::ZoomLevel getMinZoom() const Q_DECL_OVERRIDE = 0;
+            virtual OsmAnd::ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE = 0;
 
             virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
 
             virtual bool obtainData(const IMapDataProvider::Request& request,
                 std::shared_ptr<IMapDataProvider::Data>& outData,
-                std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
+                std::shared_ptr<OsmAnd::Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
 
             virtual bool supportsNaturalObtainDataAsync() const Q_DECL_OVERRIDE;
             virtual void obtainDataAsync(const IMapDataProvider::Request& request,
@@ -91,13 +91,13 @@ namespace OsmAnd
             int,
             getBaseOrder);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            QList<PointI>,
+            QList<OsmAnd::PointI>,
             getHiddenPoints);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
             shouldShowCaptions);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            TextRasterizer::Style,
+            OsmAnd::TextRasterizer::Style,
             getCaptionStyle);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             double,
@@ -109,7 +109,7 @@ namespace OsmAnd
             double,
             getScale);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            PointI,
+            OsmAnd::PointI,
             getPoint31,
             const int index);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
@@ -127,13 +127,13 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>,
             getTilePoints,
-            const TileId tileId,
-            const ZoomLevel zoom);
+            const OsmAnd::TileId tileId,
+            const OsmAnd::ZoomLevel zoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            ZoomLevel,
+            OsmAnd::ZoomLevel,
             getMinZoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            ZoomLevel,
+            OsmAnd::ZoomLevel,
             getMaxZoom);
     SWIG_EMIT_DIRECTOR_END(MapTiledCollectionProvider);
 }
