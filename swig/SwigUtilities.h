@@ -96,7 +96,7 @@ namespace OsmAnd
                 width,
                 height,
                 SkColorType::kRGBA_8888_SkColorType,
-                SkAlphaType::kUnpremul_SkAlphaType)))
+                SkAlphaType::kPremul_SkAlphaType)))
             {
                 return nullptr;
             }
