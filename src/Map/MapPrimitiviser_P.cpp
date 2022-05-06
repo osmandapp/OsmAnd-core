@@ -2319,16 +2319,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     {
         const auto citCaptionsEnd = captions.cend();
 
-        // Look for native name
-        auto citNativeName =
-            (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
-            ? citCaptionsEnd
-            : captions.constFind(attributeMapping->nativeNameAttributeId);
-        hasNativeName = (citNativeName != citCaptionsEnd);
-        auto nativeNameOrder = hasNativeName
-            ? captionsOrder.indexOf(citNativeName.key())
-            : -1;
-
         // Look for localized name
         const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
         if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
@@ -2353,6 +2343,16 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         std::sort(captionsOrder.begin(), captionsOrder.end(), [textOrderMap] (uint32_t c1, uint32_t c2) {
             return textOrderMap.at(c1) < textOrderMap.at(c2);
         });
+
+        // Look for native name
+        auto citNativeName =
+            (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
+            ? citCaptionsEnd
+            : captions.constFind(attributeMapping->nativeNameAttributeId);
+        hasNativeName = (citNativeName != citCaptionsEnd);
+        auto nativeNameOrder = hasNativeName
+            ? captionsOrder.indexOf(citNativeName.key())
+            : -1;
         
         auto citLocalizedName =
             (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
