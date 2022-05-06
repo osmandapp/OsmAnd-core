@@ -2319,6 +2319,31 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     {
         const auto citCaptionsEnd = captions.cend();
 
+        // Look for localized name
+        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
+        if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
+            localizedNameRuleId = *citLocalizedNameRuleId;
+        
+        // sort captionsOrder by textOrder property
+        std::map<uint32_t, int> textOrderMap;
+        for (const auto& captionAttributeId : constOf(captionsOrder))
+        {
+            const auto& caption = constOf(captions)[captionAttributeId];
+            textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
+            QString captionAttributeTag;
+            if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
+                captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
+            textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
+            evaluationResult.clear();
+            textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
+            int textOrder = 100;
+            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, textOrder);
+            textOrderMap.insert(std::pair(captionAttributeId, textOrder));
+        }
+        std::sort(captionsOrder.begin(), captionsOrder.end(), [textOrderMap] (uint32_t c1, uint32_t c2) {
+            return textOrderMap.at(c1) < textOrderMap.at(c2);
+        });
+
         // Look for native name
         auto citNativeName =
             (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
@@ -2328,11 +2353,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         auto nativeNameOrder = hasNativeName
             ? captionsOrder.indexOf(citNativeName.key())
             : -1;
-
-        // Look for localized name
-        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
-        if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
-            localizedNameRuleId = *citLocalizedNameRuleId;
+        
         auto citLocalizedName =
             (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
