@@ -2325,7 +2325,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             localizedNameRuleId = *citLocalizedNameRuleId;
         
         // sort captionsOrder by textOrder property
-        std::map<uint32_t, int> textOrderMap;
+        QHash<uint32_t, int> textOrderMap;
         for (const auto& captionAttributeId : constOf(captionsOrder))
         {
             const auto& caption = constOf(captions)[captionAttributeId];
@@ -2338,10 +2338,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
             int textOrder = 100;
             evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, textOrder);
-            textOrderMap.insert(std::pair(captionAttributeId, textOrder));
+            textOrderMap.insert(captionAttributeId, textOrder);
         }
-        std::sort(captionsOrder.begin(), captionsOrder.end(), [textOrderMap] (uint32_t c1, uint32_t c2) {
-            return textOrderMap.at(c1) < textOrderMap.at(c2);
+        std::sort(captionsOrder.begin(), captionsOrder.end(), [&textOrderMap] (uint32_t c1, uint32_t c2) {
+            return textOrderMap.value(c1) < textOrderMap.value(c2);
         });
 
         // Look for native name
