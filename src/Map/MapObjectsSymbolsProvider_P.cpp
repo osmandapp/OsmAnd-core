@@ -380,6 +380,10 @@ QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsS
                 break;
 
             fittedSymbolsWidth += symbolWidth + symbolSpacingInPixels;
+            if (fittedSymbolsCount < symbolsCount - 1)
+            {
+                fittedSymbolsCount++;
+            }
         }
         if (fittedSymbolsCount == 0)
             return computedPinPoints;
@@ -433,7 +437,7 @@ void OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolsPinPoints(
 
         auto basePathPointIndex = 0u;
         float scannedPathLengthN = 0.0f;
-        while (scannedPathLengthN <= 1.0f)
+        while (scannedPathLengthN <= 1.0f && basePathPointIndex < pathSegmentsLengthN.size() - 1)
         {
             const auto pathSegmentLengthN = pathSegmentsLengthN[basePathPointIndex];
 
@@ -448,6 +452,11 @@ void OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolsPinPoints(
         computedPinPoint.basePathPointIndex = basePathPointIndex;
         computedPinPoint.normalizedOffsetFromBasePathPoint =
             (symbolCenterN - scannedPathLengthN) / pathSegmentsLengthN[basePathPointIndex];
+        if (computedPinPoint.normalizedOffsetFromBasePathPoint < 0.0f ||
+            computedPinPoint.normalizedOffsetFromBasePathPoint > 1.0f)
+        {
+            computedPinPoint.normalizedOffsetFromBasePathPoint = 0.5f;
+        }
         assert(
             computedPinPoint.normalizedOffsetFromBasePathPoint >= 0.0f &&
             computedPinPoint.normalizedOffsetFromBasePathPoint <= 1.0f);
