@@ -16,15 +16,21 @@ OsmAnd::VectorMapSymbol::~VectorMapSymbol()
 }
 
 OsmAnd::VectorMapSymbol::VerticesAndIndexes::VerticesAndIndexes()
-    : vertices(nullptr)
-    , verticesCount(0)
-    , indices(nullptr)
-    , indicesCount(0)
+: position31(nullptr)
+, vertices(nullptr)
+, verticesCount(0)
+, indices(nullptr)
+, indicesCount(0)
 {
 }
 
 OsmAnd::VectorMapSymbol::VerticesAndIndexes::~VerticesAndIndexes()
 {
+    if (position31 != nullptr)
+    {
+        delete position31;
+        position31 = nullptr;
+    }
     if (vertices != nullptr)
     {
         delete[] vertices;

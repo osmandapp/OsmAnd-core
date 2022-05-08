@@ -314,13 +314,20 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
 OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     GPUAPI* api_,
     const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer_,
-    const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer_)
+    const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer_,
+    const PointI* position31_/* = nullptr*/)
     : MetaResourceInGPU(Type::Mesh, api_)
     , vertexBuffer(vertexBuffer_)
     , indexBuffer(indexBuffer_)
+    , position31(position31_)
 {
 }
 
 OsmAnd::GPUAPI::MeshInGPU::~MeshInGPU()
 {
+    if (position31 != nullptr)
+    {
+        delete position31;
+        position31 = nullptr;
+    }
 }

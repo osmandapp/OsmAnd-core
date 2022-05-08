@@ -2135,20 +2135,29 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
 
     // Get proper scale
-    const auto& position31 =
-        (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
+    PointI position31;
+    if (gpuResource->position31 != nullptr)
+    {
+        position31 = PointI(gpuResource->position31->x, gpuResource->position31->y);
+    }
+    else
+    {
+        position31 = (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
         ? renderable->instanceParameters->position31
         : symbol->getPosition31();
-    auto scaleFactor = symbol->scale;
+    }
+    float scaleFactor = 1.0f;
     switch (symbol->scaleType)
     {
         case VectorMapSymbol::ScaleType::Raw:
+            scaleFactor = symbol->scale;
             break;
         case VectorMapSymbol::ScaleType::In31:
-            scaleFactor *= AtlasMapRenderer::TileSize3D / Utilities::getPowZoom(31 - currentState.zoomLevel);
+            scaleFactor = symbol->scale * AtlasMapRenderer::TileSize3D /
+                                Utilities::getPowZoom(31 - currentState.zoomLevel);
             break;
         case VectorMapSymbol::ScaleType::InMeters:
-            scaleFactor /= Utilities::getMetersPerTileUnit(
+            scaleFactor = symbol->scale / Utilities::getMetersPerTileUnit(
                 currentState.zoomLevel,
                 position31.y >> (ZoomLevel31 - currentState.zoomLevel),
                 AtlasMapRenderer::TileSize3D);

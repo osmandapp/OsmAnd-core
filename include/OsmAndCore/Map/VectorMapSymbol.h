@@ -36,6 +36,8 @@ namespace OsmAnd
             VerticesAndIndexes();
             ~VerticesAndIndexes();
         public:
+            PointI* position31;
+            
             Vertex* vertices;
             unsigned int verticesCount;
             

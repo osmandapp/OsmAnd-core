@@ -1330,8 +1330,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
             s->indicesCount));
     }
 
+    PointI* position31 = nullptr;
+    if (s->position31 != nullptr)
+        position31 = new PointI(s->position31->x, s->position31->y);
+
     // Create mesh resource
-    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource));
+    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, position31));
 
     return true;
 }

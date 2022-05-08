@@ -546,8 +546,7 @@ float OsmAnd::VectorLine_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(
-    const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
+std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine)
 {
     int order = owner->baseOrder;
     float zoom = this->zoom();
@@ -578,8 +577,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     // Generate new arrow paths for visible segments
     generateArrowsOnPath(segments, approximate, simplificationRadius);
 
-    PointI origin;
-    bool originDefined = false;
+    PointI startPos;
+    bool startPosDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
         auto& points = segments[segmentIndex];
@@ -587,11 +586,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (points.size() < 2)
             continue;
 
-        if (!originDefined)
+        if (!startPosDefined)
         {
-            originDefined = true;
-            origin = points[0];
-            vectorLine->position31 = origin;
+            startPosDefined = true;
+            startPos = points[0];
+            vectorLine->position31 = startPos;
+            verticesAndIndexes->position31 = new PointI(startPos);
         }
         int pointsCount = (int) points.size();
         // generate array of points
@@ -600,7 +600,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         uint prevPointIdx = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
-            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - origin.x), (points[pointIdx].y - origin.y));
+            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
             if (hasColorizationMapping() && _colorizationSceme == COLORIZATION_SOLID)
             {
                 FColorARGB prevColor = colorsForSegment[prevPointIdx];
@@ -855,6 +855,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         vertex.positionXY[0] = 0;
         vertex.positionXY[1] = 0;
         vertices.push_back(vertex);
+        verticesAndIndexes->position31 = new PointI(0, 0);
     }
     //verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndexes->verticesCount = (unsigned int) vertices.size();
