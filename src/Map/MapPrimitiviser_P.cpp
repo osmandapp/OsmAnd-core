@@ -2316,6 +2316,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     bool hasNativeName = false;
     bool hasLocalizedName = false;
     uint32_t localizedNameRuleId = std::numeric_limits<uint32_t>::max();
+    QString nameEn;
     {
         const auto citCaptionsEnd = captions.cend();
 
@@ -2330,9 +2331,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         {
             const auto& caption = constOf(captions)[captionAttributeId];
             textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
+            
+            QString tag = attributeMapping->decodeMap[captionAttributeId].tag;
+            if (tag == QString("name:en"))
+                nameEn = caption;
+            
             QString captionAttributeTag;
             if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
-                captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
+                captionAttributeTag = tag;
             textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
             evaluationResult.clear();
             textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
@@ -2415,7 +2421,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 }
                 else if (hasNativeName && !hasLocalizedName)
                 {
-                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
@@ -2446,7 +2452,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 }
                 else if (!hasLocalizedName && hasNativeName)
                 {
-                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
@@ -2461,7 +2467,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 // If there's no localized name, transliterate native name (if exists)
                 if (!hasLocalizedName && hasNativeName)
                 {
-                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
