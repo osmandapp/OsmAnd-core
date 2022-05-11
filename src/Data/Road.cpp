@@ -89,6 +89,10 @@ QString OsmAnd::Road::getRefInLanguage(const QString& lang) const
 
 QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
 {
+    const auto& refEn = getRefInLanguage(QStringLiteral("en"));
+    if (transliterate && !refEn.isEmpty())
+        return refEn;
+    
     QString name = QString();
     if (!lang.isEmpty())
         name = getRefInLanguage(lang);
@@ -96,9 +100,7 @@ QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
     if (name.isNull())
         name = getRefInNativeLanguage();
     
-    if (transliterate && !getRefInLanguage(QString("en")).isEmpty())
-        return getCaptionInLanguage(QString("en"));
-    else if (transliterate && !name.isNull())
+    if (transliterate && !name.isNull())
         return OsmAnd::ICU::transliterateToLatin(name);
     else
         return name;
@@ -170,8 +172,9 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
                 QString value;
                 if (transliterate)
                 {
-                    if (!getRefInLanguage(QString("en")).isEmpty())
-                        value = getRefInLanguage(QString("en"));
+                    const auto& captionEn = getRefInLanguage(QStringLiteral("en"));
+                    if (!captionEn.isEmpty())
+                        value = captionEn;
                     else
                         value = OsmAnd::ICU::transliterateToLatin(captions[k]);
                 }

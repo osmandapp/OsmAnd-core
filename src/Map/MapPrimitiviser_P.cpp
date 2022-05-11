@@ -2369,9 +2369,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             ? citCaptionsEnd
             : captions.constFind(attributeMapping->enNameAttributeId);
         hasEnglishName = (citEnglishName != citCaptionsEnd);
-        auto englishNameOrder = hasLocalizedName
-            ? captionsOrder.indexOf(citEnglishName.key())
-            : -1;
         
 
         // According to presentation settings, adjust set of captions

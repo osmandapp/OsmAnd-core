@@ -243,6 +243,13 @@ QHash<QString, QString> OsmAnd::MapObject::getCaptionsInAllLanguages() const
 
 QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
 {
+    if (transliterate)
+    {
+        const auto& enCaption = getCaptionInLanguage(QStringLiteral("en"));
+        if (!enCaption.isEmpty())
+            return enCaption;
+    }
+    
     QString name = QString();
     if (!lang.isEmpty())
         name = getCaptionInLanguage(lang);
@@ -250,9 +257,7 @@ QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
     if (name.isNull())
         name = getCaptionInNativeLanguage();
     
-    if (transliterate && !getCaptionInLanguage(QString("en")).isEmpty())
-        return getCaptionInLanguage(QString("en"));
-    else if (transliterate && !name.isNull())
+    if (transliterate && !name.isNull())
         return OsmAnd::ICU::transliterateToLatin(name);
     else
         return name;
@@ -260,6 +265,7 @@ QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
 
 OsmAnd::MapObject::AttributeMapping::AttributeMapping()
     : nativeNameAttributeId(std::numeric_limits<uint32_t>::max())
+    , enNameAttributeId(std::numeric_limits<uint32_t>::max())
     , refAttributeId(std::numeric_limits<uint32_t>::max())
     , naturalCoastlineAttributeId(std::numeric_limits<uint32_t>::max())
     , naturalLandAttributeId(std::numeric_limits<uint32_t>::max())
