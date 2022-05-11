@@ -2317,7 +2317,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     bool hasLocalizedName = false;
     bool hasEnglishName = false;
     uint32_t localizedNameRuleId = std::numeric_limits<uint32_t>::max();
-
     {
         const auto citCaptionsEnd = captions.cend();
 
@@ -2332,7 +2331,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         {
             const auto& caption = constOf(captions)[captionAttributeId];
             textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
-            
             QString captionAttributeTag;
             if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
                 captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
