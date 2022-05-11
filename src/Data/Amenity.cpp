@@ -168,6 +168,9 @@ OsmAnd::Amenity::DecodedValue::~DecodedValue()
 
 QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
 {
+    if (transliterate && localizedNames.contains(QStringLiteral("en")));
+        return localizedNames[QStringLiteral("en")];
+    
     QString name = QString();
     if (!lang.isEmpty() && !localizedNames.isEmpty() && localizedNames.contains(lang))
         name = localizedNames[lang];

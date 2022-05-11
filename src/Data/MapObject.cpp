@@ -243,6 +243,13 @@ QHash<QString, QString> OsmAnd::MapObject::getCaptionsInAllLanguages() const
 
 QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
 {
+    if (transliterate)
+    {
+        const auto& enCaption = getCaptionInLanguage(QStringLiteral("en"));
+        if (!enCaption.isEmpty())
+            return enCaption;
+    }
+    
     QString name = QString();
     if (!lang.isEmpty())
         name = getCaptionInLanguage(lang);
@@ -258,6 +265,7 @@ QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
 
 OsmAnd::MapObject::AttributeMapping::AttributeMapping()
     : nativeNameAttributeId(std::numeric_limits<uint32_t>::max())
+    , enNameAttributeId(std::numeric_limits<uint32_t>::max())
     , refAttributeId(std::numeric_limits<uint32_t>::max())
     , naturalCoastlineAttributeId(std::numeric_limits<uint32_t>::max())
     , naturalLandAttributeId(std::numeric_limits<uint32_t>::max())
@@ -426,6 +434,8 @@ void OsmAnd::MapObject::AttributeMapping::registerMapping(
         localizedNameAttributes.insert(languageIdRef, id);
         localizedNameAttributeIds.insert(id, languageIdRef);
         nameAttributeIds.insert(id);
+        if (tag == QLatin1String("name:en"))
+            enNameAttributeId = id;
     }
     else if (QLatin1String("ref") == tag)
         refAttributeId = id;

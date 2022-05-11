@@ -89,6 +89,10 @@ QString OsmAnd::Road::getRefInLanguage(const QString& lang) const
 
 QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
 {
+    const auto& refEn = getRefInLanguage(QStringLiteral("en"));
+    if (transliterate && !refEn.isEmpty())
+        return refEn;
+    
     QString name = QString();
     if (!lang.isEmpty())
         name = getRefInLanguage(lang);
@@ -165,14 +169,28 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
             auto k = kt[i];
             if (section->getAttributeMapping()->decodeMap.size() > k)
             {
+                QString value;
+                if (transliterate)
+                {
+                    const auto& captionEn = getRefInLanguage(QStringLiteral("en"));
+                    if (!captionEn.isEmpty())
+                        value = captionEn;
+                    else
+                        value = OsmAnd::ICU::transliterateToLatin(captions[k]);
+                }
+                else
+                {
+                    value = captions[k];
+                }
+                
                 if (!lang.isEmpty() && destinationTagLangFB == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
                 
                 if (destinationTagFB == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
             
                 if (!lang.isEmpty() && destinationTagLang == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
             
                 if (destinationTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
                     destinationDefault = captions[k];
