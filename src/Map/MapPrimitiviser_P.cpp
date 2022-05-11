@@ -2315,8 +2315,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     // Process captions to find out what names are present and modify that if needed
     bool hasNativeName = false;
     bool hasLocalizedName = false;
+    bool hasEnglishName = false;
     uint32_t localizedNameRuleId = std::numeric_limits<uint32_t>::max();
-    QString nameEn;
+
     {
         const auto citCaptionsEnd = captions.cend();
 
@@ -2332,13 +2333,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             const auto& caption = constOf(captions)[captionAttributeId];
             textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
             
-            QString tag = attributeMapping->decodeMap[captionAttributeId].tag;
-            if (tag == QString("name:en"))
-                nameEn = caption;
-            
             QString captionAttributeTag;
             if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
-                captionAttributeTag = tag;
+                captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
             textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
             evaluationResult.clear();
             textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
@@ -2368,6 +2365,16 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         auto localizedNameOrder = hasLocalizedName
             ? captionsOrder.indexOf(citLocalizedName.key())
             : -1;
+        
+        auto citEnglishName =
+            (attributeMapping->enNameAttributeId == std::numeric_limits<uint32_t>::max())
+            ? citCaptionsEnd
+            : captions.constFind(attributeMapping->enNameAttributeId);
+        hasEnglishName = (citEnglishName != citCaptionsEnd);
+        auto englishNameOrder = hasLocalizedName
+            ? captionsOrder.indexOf(citEnglishName.key())
+            : -1;
+        
 
         // According to presentation settings, adjust set of captions
         switch (env->languagePreference)
@@ -2421,7 +2428,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 }
                 else if (hasNativeName && !hasLocalizedName)
                 {
-                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
@@ -2452,7 +2459,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 }
                 else if (!hasLocalizedName && hasNativeName)
                 {
-                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
@@ -2467,7 +2474,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 // If there's no localized name, transliterate native name (if exists)
                 if (!hasLocalizedName && hasNativeName)
                 {
-                    const auto latinNameValue = (nameEn.count() > 0) ? nameEn : ICU::transliterateToLatin(citNativeName.value());
+                    const auto latinNameValue = (hasEnglishName) ? citEnglishName.value() : ICU::transliterateToLatin(citNativeName.value());
 
                     citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);

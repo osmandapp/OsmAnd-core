@@ -24,7 +24,7 @@ QString OsmAnd::TransportRoute::getName(const QString lang, bool transliterate) 
     else if (!localizedName.isEmpty())
     {
         if (transliterate)
-            name = OsmAnd::ICU::transliterateToLatin(localizedName);
+            name = (!enName.isEmpty()) ? enName : OsmAnd::ICU::transliterateToLatin(localizedName);
         else
             name = localizedName;
     }

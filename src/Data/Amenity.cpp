@@ -175,7 +175,9 @@ QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
     if (name.isEmpty())
         name = nativeName;
     
-    if (transliterate && !name.isEmpty())
+    if (transliterate && !localizedNames["en"].isEmpty())
+        return localizedNames["en"];
+    else if (transliterate && !name.isEmpty())
         return OsmAnd::ICU::transliterateToLatin(name);
     else
         return name;

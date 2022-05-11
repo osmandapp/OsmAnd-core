@@ -96,7 +96,9 @@ QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
     if (name.isNull())
         name = getRefInNativeLanguage();
     
-    if (transliterate && !name.isNull())
+    if (transliterate && !getRefInLanguage(QString("en")).isEmpty())
+        return getCaptionInLanguage(QString("en"));
+    else if (transliterate && !name.isNull())
         return OsmAnd::ICU::transliterateToLatin(name);
     else
         return name;
@@ -165,14 +167,27 @@ QString OsmAnd::Road::getDestinationName(const QString lang, bool transliterate,
             auto k = kt[i];
             if (section->getAttributeMapping()->decodeMap.size() > k)
             {
+                QString value;
+                if (transliterate)
+                {
+                    if (!getRefInLanguage(QString("en")).isEmpty())
+                        value = getRefInLanguage(QString("en"));
+                    else
+                        value = OsmAnd::ICU::transliterateToLatin(captions[k]);
+                }
+                else
+                {
+                    value = captions[k];
+                }
+                
                 if (!lang.isEmpty() && destinationTagLangFB == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
                 
                 if (destinationTagFB == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
             
                 if (!lang.isEmpty() && destinationTagLang == section->getAttributeMapping()->decodeMap[k].tag)
-                    return destRef1 + (transliterate ? OsmAnd::ICU::transliterateToLatin(captions[k]) : captions[k]);
+                    return destRef1 + value;
             
                 if (destinationTagDefault == section->getAttributeMapping()->decodeMap[k].tag)
                     destinationDefault = captions[k];

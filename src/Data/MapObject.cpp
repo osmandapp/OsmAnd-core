@@ -250,7 +250,9 @@ QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
     if (name.isNull())
         name = getCaptionInNativeLanguage();
     
-    if (transliterate && !name.isNull())
+    if (transliterate && !getCaptionInLanguage(QString("en")).isEmpty())
+        return getCaptionInLanguage(QString("en"));
+    else if (transliterate && !name.isNull())
         return OsmAnd::ICU::transliterateToLatin(name);
     else
         return name;
@@ -426,6 +428,8 @@ void OsmAnd::MapObject::AttributeMapping::registerMapping(
         localizedNameAttributes.insert(languageIdRef, id);
         localizedNameAttributeIds.insert(id, languageIdRef);
         nameAttributeIds.insert(id);
+        if (tag == QLatin1String("name:en"))
+            enNameAttributeId = id;
     }
     else if (QLatin1String("ref") == tag)
         refAttributeId = id;
