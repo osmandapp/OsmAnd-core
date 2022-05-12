@@ -244,7 +244,7 @@ bool OsmAnd::ObfDataInterface::loadRoutingTreeNodes(
                 resultOut);
         }
     }
-    
+
     return true;
 }
 
@@ -267,7 +267,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
 
-    QSet<QString> processedMapSectionsNames;
+    QSet<QString> processedRoutingSectionsNames;
 
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -298,9 +298,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         {
             if (queryController && queryController->isAborted())
                 return false;
-
-            // Remember that this section was processed (by name)
-            processedMapSectionsNames.insert(mapSection->name);
 
             // Read objects from each map section
             auto surfaceTypeToMerge = MapSurfaceType::Undefined;
@@ -381,7 +378,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+    if (zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {
@@ -390,21 +387,20 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
             const auto& obfInfo = obfReader->obtainInfo();
 
-            // Skip all OBF readers that have map section, since they were already processed
-            if (!obfInfo->mapSections.isEmpty())
-                continue;
-
             for (const auto& routingSection : constOf(obfInfo->routingSections))
             {
                 // Check if request is aborted
                 if (queryController && queryController->isAborted())
                     return false;
 
-                // Check that map section with same name was not processed from other file
-                if (processedMapSectionsNames.contains(routingSection->name))
+                // Check that routing section with same name was not processed from other file
+                if (processedRoutingSectionsNames.contains(routingSection->name))
                     continue;
 
-                // Read objects from each map section
+                // Remember that this section was processed (by name)
+                processedRoutingSectionsNames.insert(routingSection->name);
+
+                // Read objects from each routing section
                 OsmAnd::ObfRoutingSectionReader::loadRoads(
                     obfReader,
                     routingSection,
