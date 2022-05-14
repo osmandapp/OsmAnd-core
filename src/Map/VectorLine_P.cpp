@@ -1050,7 +1050,8 @@ QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
                     points.push_back(PointD(p.x, p.y));
 
                 include[0] = true;
-                simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
+                if (points.size() > 1)
+                    simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
             }
 
             SkPath path;

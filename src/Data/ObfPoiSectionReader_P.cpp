@@ -901,14 +901,25 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                     const auto& tag = subtypes->subtypes[entry.key()]->tagName;
                     if (tag.contains(QLatin1String("_name")))
+                    {
                         additionalNames.append(entry.value().toString());
-                    if (tag == QLatin1String("name"))
+                        itStringOrDataValue.remove();
+                    }
+                    else if (tag == QLatin1String("name"))
+                    {
                         nativeName = entry.value().toString();
-                    if (!tag.startsWith(QLatin1String("name:")) && tag != QLatin1String("brand"))
+                        itStringOrDataValue.remove();
+                    }
+                    else if (tag.startsWith(QLatin1String("name:")))
+                    {
+                        localizedNames.insert(tag.mid(5), entry.value().toString());
+                        itStringOrDataValue.remove();
+                    }
+                    else if (tag == QLatin1String("brand"))
+                    {
+                        localizedNames.insert(tag, entry.value().toString());
                         continue;
-
-                    localizedNames.insert(tag.mid(5), entry.value().toString());
-                    itStringOrDataValue.remove();
+                    }
                 }
 
                 if (!query.isNull())

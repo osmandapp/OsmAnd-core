@@ -52,6 +52,7 @@ namespace OsmAnd
             QHash< QStringRef, uint32_t > localizedNameAttributes;
             QHash< uint32_t, QStringRef> localizedNameAttributeIds;
             QSet< uint32_t > nameAttributeIds;
+            uint32_t enNameAttributeId;
             uint32_t refAttributeId;
             uint32_t naturalCoastlineAttributeId;
             uint32_t naturalLandAttributeId;
