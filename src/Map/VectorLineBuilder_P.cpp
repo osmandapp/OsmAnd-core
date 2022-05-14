@@ -21,6 +21,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _lineWidth(3.0)
     , _direction(0.0f)
     , _pathIconStep(-1.0)
+    , _pathIconOnSurface(true)
     , _screenScale(2)
     , owner(owner_)
 {
@@ -240,6 +241,20 @@ void OsmAnd::VectorLineBuilder_P::setPathIconStep(const float step)
     _pathIconStep = step;
 }
 
+bool OsmAnd::VectorLineBuilder_P::isPathIconOnSurface() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pathIconOnSurface;
+}
+
+void OsmAnd::VectorLineBuilder_P::setPathIconOnSurface(const bool onSurface)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pathIconOnSurface = onSurface;
+}
+
 float OsmAnd::VectorLineBuilder_P::getScreenScale() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -287,6 +302,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _pathIcon,
                                                           _specialPathIcon,
                                                           _pathIconStep,
+                                                          _pathIconOnSurface,
                                                           _screenScale,
                                                           _endCapStyle));
     line->setLineWidth(_lineWidth);

@@ -74,22 +74,30 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
             {
                 marker->setIsHidden(false);
                 marker->setPosition(symbolInfo.position31);
-                marker->setOnMapSurfaceIconDirection(
-                    reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1),
-                    OsmAnd::Utilities::normalizedAngleDegrees(symbolInfo.direction));
+                if (line->pathIconOnSurface)
+                {
+                    marker->setOnMapSurfaceIconDirection(
+                        reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1),
+                        OsmAnd::Utilities::normalizedAngleDegrees(symbolInfo.direction));
+                }
             }
             else
             {
                 OsmAnd::MapMarkerBuilder builder;
                 const auto markerKey = reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1);
-                builder.addOnMapSurfaceIcon(markerKey, line->getPointImage());
+                if (line->pathIconOnSurface)
+                    builder.addOnMapSurfaceIcon(markerKey, line->getPointImage());
+                else
+                    builder.setPinIcon(line->getPointImage());
+                
                 builder.setMarkerId(markerId);
                 builder.setBaseOrder(baseOrder);
                 builder.setIsHidden(false);
                 builder.setPosition(symbolInfo.position31);
                 builder.setIsAccuracyCircleVisible(false);
                 const auto& newMarker = builder.buildAndAddToCollection(_markersCollection);
-                newMarker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
+                if (line->pathIconOnSurface)
+                    newMarker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
             }
         }
         for (const auto& marker : getLineMarkers(lineId))

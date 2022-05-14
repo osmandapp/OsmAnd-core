@@ -166,6 +166,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconStep(const floa
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::isPathIconOnSurface() const
+{
+    return _p->isPathIconOnSurface();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconOnSurface(const bool onSurface)
+{
+    _p->setPathIconOnSurface(onSurface);
+
+    return *this;
+}
+
 float OsmAnd::VectorLineBuilder::getScreenScale() const
 {
     return _p->getScreenScale();

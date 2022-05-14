@@ -81,6 +81,9 @@ namespace OsmAnd
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);
         
+        bool isPathIconOnSurface() const;
+        VectorLineBuilder& setPathIconOnSurface(const bool onSurface);
+
         float getScreenScale() const;
         VectorLineBuilder& setScreenScale(const float step);
 

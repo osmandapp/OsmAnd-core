@@ -83,6 +83,7 @@ namespace OsmAnd
             const sk_sp<const SkImage>& pathIcon = nullptr,
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const float pathIconStep = -1,
+            const bool pathIconOnSurface = true,
             const float screenScale = 2,
             const EndCapStyle endCapStyle = EndCapStyle::ROUND
         );
@@ -96,6 +97,7 @@ namespace OsmAnd
         const sk_sp<const SkImage> pathIcon;
         const sk_sp<const SkImage> specialPathIcon;
         const float pathIconStep;
+        const bool pathIconOnSurface;
         const float screenScale;
         EndCapStyle endCapStyle;
 

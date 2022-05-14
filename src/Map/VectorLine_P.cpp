@@ -884,7 +884,7 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
     auto pointsCount = original.size();
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
-        const auto& mappingColor = colorMapping.isEmpty() ? fillColor : colorMapping[pointIdx];
+        const auto& mappingColor = pointIdx < colorMapping.size() ? colorMapping[pointIdx] : fillColor;
         if (pointIdx == 0)
         {
             if (pointIdx == pointsCount - 1)
