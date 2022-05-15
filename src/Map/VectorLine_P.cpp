@@ -145,8 +145,6 @@ void OsmAnd::VectorLine_P::setColorizationMapping(const QList<FColorARGB> &color
 
 bool OsmAnd::VectorLine_P::hasColorizationMapping() const
 {
-    QReadLocker scopedLocker(&_lock);
-
     return _colorizationMapping.size() == _points.size();
 }
 
