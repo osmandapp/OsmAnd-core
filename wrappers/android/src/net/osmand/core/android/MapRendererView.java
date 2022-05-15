@@ -225,6 +225,14 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.onResume();
     }
 
+    public final void requestRender() {
+        Log.v(TAG, "requestRender()");
+        NativeCore.checkIfLoaded();
+
+        // Request GLSurfaceView render a frame
+        _glSurfaceView.requestRender();
+    }
+
     public final MapRendererConfiguration getConfiguration() {
         NativeCore.checkIfLoaded();
 
@@ -718,14 +726,14 @@ public abstract class MapRendererView extends FrameLayout {
             }
 
             // Allow renderer to update
-            _mapRenderer.update();
+            if (_mapRenderer.update() && _mapRenderer.isFrameInvalidated()) {
+                // In case a new frame was prepared, render it
+                if (_mapRenderer.prepareFrame())
+                    _mapRenderer.renderFrame();
 
-            // In case a new frame was prepared, render it
-            if (_mapRenderer.prepareFrame())
-                _mapRenderer.renderFrame();
-
-            // Flush all the commands to GPU
-            gl.glFlush();
+                // Flush all the commands to GPU
+                gl.glFlush();
+            }
         }
     }
 
