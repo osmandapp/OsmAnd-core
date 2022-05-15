@@ -726,7 +726,7 @@ public abstract class MapRendererView extends FrameLayout {
             }
 
             // Allow renderer to update
-            if (_mapRenderer.update() && _mapRenderer.isFrameInvalidated()) {
+            if (_mapRenderer.update()/* && _mapRenderer.isFrameInvalidated()*/) {
                 // In case a new frame was prepared, render it
                 if (_mapRenderer.prepareFrame())
                     _mapRenderer.renderFrame();
