@@ -283,7 +283,8 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             if (basemapReader)
             {
                 LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
-                continue;
+                if(!basemapReader->obfFile->filePath.contains(QLatin1String("basemap_mini"), Qt::CaseInsensitive))
+                    continue;
             }
 
             // Save basemap reader for later use
@@ -378,7 +379,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    if (zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
+    if (!basemapReader || zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {
