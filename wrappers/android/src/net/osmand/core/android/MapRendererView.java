@@ -726,14 +726,14 @@ public abstract class MapRendererView extends FrameLayout {
             }
 
             // Allow renderer to update
-            if (_mapRenderer.update()/* && _mapRenderer.isFrameInvalidated()*/) {
-                // In case a new frame was prepared, render it
-                if (_mapRenderer.prepareFrame())
-                    _mapRenderer.renderFrame();
+            _mapRenderer.update();
 
-                // Flush all the commands to GPU
-                gl.glFlush();
-            }
+            // In case a new frame was prepared, render it
+            if (_mapRenderer.prepareFrame())
+                _mapRenderer.renderFrame();
+
+            // Flush all the commands to GPU
+            gl.glFlush();
         }
     }
 
