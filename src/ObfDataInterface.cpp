@@ -271,11 +271,28 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 
     for (const auto& obfReader : constOf(obfReaders))
     {
-        if (obfReader->obfFile->filePath.endsWith(".road.obf"))
+        const auto& obfInfo = obfReader->obtainInfo();
+        auto filePath = obfReader->obfFile->filePath;
+        if (filePath.endsWith(".road.obf") || filePath.contains("basemap_mini"))
         {
-            roadMapsFilter.insert(obfReader->obfFile->filePath);
+            roadMapsFilter.insert(filePath);
         } else {
-            maps.insert(obfReader->obfFile->filePath);
+            maps.insert(filePath);
+        }
+
+        if (obfInfo->isBasemapWithCoastlines)
+        {
+            // In case there's more than 1 basemap reader present, use only first and warn about this fact
+            if (basemapReader)
+            {
+                // if first basemat not mini skip second 
+                if(!basemapReader->obfFile->filePath.contains(QLatin1String("basemap_mini"), Qt::CaseInsensitive))
+                    continue;
+            }
+
+            // Save basemap reader for later use
+            basemapReader = obfReader;
+            maps.insert(filePath);
         }
     }
 
@@ -291,29 +308,19 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         if (queryController && queryController->isAborted())
             return false;
 
+        if (roadMapsFilter.contains(obfReader->obfFile->filePath))
+            continue;
+
         const auto& obfInfo = obfReader->obtainInfo();
 
         // Handle basemap
         if (obfInfo->isBasemapWithCoastlines)
         {
-            // In case there's more than 1 basemap reader present, use only first and warn about this fact
-            if (basemapReader)
-            {
-                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
-                if(!basemapReader->obfFile->filePath.contains(QLatin1String("basemap_mini"), Qt::CaseInsensitive))
-                    continue;
-            }
-
-            // Save basemap reader for later use
-            basemapReader = obfReader;
 
             // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
             if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
                 continue;
         }
-
-        if (roadMapsFilter.contains(obfReader->obfFile->filePath))
-            continue;
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
         {
