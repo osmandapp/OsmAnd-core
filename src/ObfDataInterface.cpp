@@ -266,8 +266,25 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 {
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
+    QSet<QString> roadMapsFilter;
+    QSet<QString> maps;
 
-    QSet<QString> processedRoutingSectionsNames;
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (obfReader->obfFile->filePath.endsWith(".road.obf"))
+        {
+            roadMapsFilter.insert(obfReader->obfFile->filePath);
+        } else {
+            maps.insert(obfReader->obfFile->filePath);
+        }
+    }
+
+    QMutableSetIterator<QString> itMapFilter(roadMapsFilter);
+    while (itMapFilter.hasNext())
+    {
+        auto name = itMapFilter.next();
+        if (!maps.contains(name.replace(".road", ""))) itMapFilter.remove();
+    }
 
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -294,6 +311,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
                 continue;
         }
+
+        if (roadMapsFilter.contains(obfReader->obfFile->filePath))
+            continue;
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
         {
@@ -379,10 +399,13 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    if (!basemapReader || zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
+    if (zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {
+            if(roadMapsFilter.contains(obfReader->obfFile->filePath))
+                continue;
+
             if (queryController && queryController->isAborted())
                 return false;
 
@@ -393,13 +416,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 // Check if request is aborted
                 if (queryController && queryController->isAborted())
                     return false;
-
-                // Check that routing section with same name was not processed from other file
-                if (processedRoutingSectionsNames.contains(routingSection->name))
-                    continue;
-
-                // Remember that this section was processed (by name)
-                processedRoutingSectionsNames.insert(routingSection->name);
 
                 // Read objects from each routing section
                 OsmAnd::ObfRoutingSectionReader::loadRoads(
