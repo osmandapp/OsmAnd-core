@@ -130,6 +130,12 @@ namespace OsmAnd
             const OsmAnd::TileId& tileId,
             const OsmAnd::ZoomLevel zoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            OsmAnd::MapMarker::PinIconVerticalAlignment,
+            getPinIconVerticalAlignment);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            OsmAnd::MapMarker::PinIconHorisontalAlignment,
+            getPinIconHorisontalAlignment);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::ZoomLevel,
             getMinZoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
