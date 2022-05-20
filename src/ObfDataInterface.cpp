@@ -244,7 +244,7 @@ bool OsmAnd::ObfDataInterface::loadRoutingTreeNodes(
                 resultOut);
         }
     }
-    
+
     return true;
 }
 
@@ -267,7 +267,32 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
 
-    QSet<QString> processedMapSectionsNames;
+    QList<QString> regularMapNames;
+    int roadMapsCount = 0;
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        const auto& obfInfo = obfReader->obtainInfo();
+        QFileInfo fileInfo(obfReader->obfFile->filePath);
+        if (!obfReader->obfFile->filePath.contains(QStringLiteral(".road")))
+            regularMapNames << fileInfo.baseName();
+        else
+            roadMapsCount++;
+
+        // Handle basemap
+        if (obfInfo->isBasemapWithCoastlines)
+        {
+            // In case there's more than 1 basemap reader present, use only first that is not mini map and warn about this fact
+            if (basemapReader)
+            {
+                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
+                // If used basemap is not mini, keep it
+                if (!basemapReader->obfFile->filePath.contains(QStringLiteral("basemap_mini")))
+                    continue;
+            }
+            // Save basemap reader for later use
+            basemapReader = obfReader;
+        }
+    }
 
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -275,22 +300,18 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
+        QFileInfo fileInfo(obfReader->obfFile->filePath);
+        if (obfReader->obfFile->filePath.contains(QStringLiteral(".road")) && regularMapNames.contains(fileInfo.baseName()))
+            continue;
 
         // Handle basemap
         if (obfInfo->isBasemapWithCoastlines)
         {
-            // In case there's more than 1 basemap reader present, use only first and warn about this fact
-            if (basemapReader)
-            {
-                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
+            // Ignore this basemap if skipped before
+            if (basemapReader && obfReader != basemapReader)
                 continue;
-            }
-
-            // Save basemap reader for later use
-            basemapReader = obfReader;
-
             // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
-            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+            if (obfReader == basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
                 continue;
         }
 
@@ -298,9 +319,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         {
             if (queryController && queryController->isAborted())
                 return false;
-
-            // Remember that this section was processed (by name)
-            processedMapSectionsNames.insert(mapSection->name);
 
             // Read objects from each map section
             auto surfaceTypeToMerge = MapSurfaceType::Undefined;
@@ -381,7 +399,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
+    if (roadMapsCount > 0 && zoom >= ObfMapSectionLevel::MaxBasemapZoomLevel)
     {
         for (const auto& obfReader : constOf(obfReaders))
         {
@@ -389,9 +407,8 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             const auto& obfInfo = obfReader->obtainInfo();
-
-            // Skip all OBF readers that have map section, since they were already processed
-            if (!obfInfo->mapSections.isEmpty())
+            QFileInfo fileInfo(obfReader->obfFile->filePath);
+            if (!obfReader->obfFile->filePath.contains(QStringLiteral(".road")) || regularMapNames.contains(fileInfo.baseName()))
                 continue;
 
             for (const auto& routingSection : constOf(obfInfo->routingSections))
@@ -399,10 +416,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 // Check if request is aborted
                 if (queryController && queryController->isAborted())
                     return false;
-
-                // Check that map section with same name was not processed from other file
-                if (processedMapSectionsNames.contains(routingSection->name))
-                    continue;
 
                 // Read objects from each map section
                 OsmAnd::ObfRoutingSectionReader::loadRoads(
@@ -703,7 +716,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
         {
             if (foundAmenityById)
                 return false;
-            
+
             // todo: wrong IF since mapObject->id != amenity->id
             if (amenity->id >> 1 == obfId)
                 foundAmenityById = amenity;
@@ -900,18 +913,18 @@ bool OsmAnd::ObfDataInterface::preloadStreets(
     {
         if (queryController && queryController->isAborted())
             return false;
-        
+
         const auto& obfInfo = obfReader->obtainInfo();
         for (const auto& addressSection : constOf(obfInfo->addressSections))
         {
             if (queryController && queryController->isAborted())
                 return false;
-            
+
             for (const auto& streetGroup : constOf(streetGroups))
             {
                 if (addressSection != streetGroup->obfSection)
                     continue;
-                
+
                 QList< std::shared_ptr<const Street> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
                                                                       obfReader,
@@ -920,12 +933,12 @@ bool OsmAnd::ObfDataInterface::preloadStreets(
                                                                       nullptr,
                                                                       nullptr,
                                                                       queryController);
-                
+
                 streetGroup->streets = qMove(intermediateResult);
             }
         }
     }
-    
+
     return true;
 }
 
@@ -989,18 +1002,18 @@ bool OsmAnd::ObfDataInterface::preloadBuildings(
     {
         if (queryController && queryController->isAborted())
             return false;
-        
+
         const auto& obfInfo = obfReader->obtainInfo();
         for (const auto& addressSection : constOf(obfInfo->addressSections))
         {
             if (queryController && queryController->isAborted())
                 return false;
-            
+
             for (const auto& street : constOf(streets))
             {
                 if (addressSection != street->streetGroup->obfSection)
                     continue;
-                
+
                 QList< std::shared_ptr<const Building> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
                                                                          obfReader,
@@ -1014,7 +1027,7 @@ bool OsmAnd::ObfDataInterface::preloadBuildings(
             }
         }
     }
-    
+
     return true;
 }
 
@@ -1133,7 +1146,7 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
     {
         if (queryController && queryController->isAborted())
             return false;
-        
+
         const auto& obfInfo = obfReader->obtainInfo();
         for (const auto& transportSection : constOf(obfInfo->transportSections))
         {
@@ -1142,18 +1155,18 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
 
             if (queryController && queryController->isAborted())
                 return false;
-            
+
             if (bbox31)
             {
                 bool accept = false;
                 accept = accept || transportSection->area31.contains(*bbox31);
                 accept = accept || transportSection->area31.intersects(*bbox31);
                 accept = accept || bbox31->contains(transportSection->area31);
-                
+
                 if (!accept)
                     continue;
             }
-            
+
             OsmAnd::ObfTransportSectionReader::searchTransportStops(
                                                                     obfReader,
                                                                     transportSection,
@@ -1164,7 +1177,7 @@ bool OsmAnd::ObfDataInterface::searchTransportIndex(
                                                                     queryController);
         }
     }
-    
+
     return true;
 }
 
@@ -1196,7 +1209,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
         {
             if (queryController && queryController->isAborted())
                 return false;
-            
+
             const auto& obfInfo = obfReader->obtainInfo();
             const auto section = getTransportSectionInfo(constOf(obfInfo->transportSections), filePointer);
             if (section)
@@ -1207,15 +1220,15 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
                         readers[section->runtimeGeneratedId] = obfReader;
                     if (!sections.contains(section->runtimeGeneratedId))
                         sections[section->runtimeGeneratedId] = section;
-                    
+
                     groupPoints[section->runtimeGeneratedId] = QList<uint32_t>();
                 }
-                
+
                 groupPoints[section->runtimeGeneratedId].push_back(filePointer);
             }
         }
     }
-    
+
     for(const auto& entry : rangeOf(constOf(groupPoints)))
     {
         const auto sectionId = entry.key();
@@ -1233,7 +1246,7 @@ bool OsmAnd::ObfDataInterface::getTransportRoutes(
         for (auto r : result.values())
             OsmAnd::ObfTransportSectionReader::initializeNames(false, stringTable.get(), r);
     }
-    
+
     for (const auto transportRoute : result.values())
     {
         if (!visitor || visitor(transportRoute))
