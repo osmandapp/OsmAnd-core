@@ -12,6 +12,7 @@ OsmAnd::ObfInfo::ObfInfo()
     , creationTimestamp(0)
     , isBasemap(false)
     , isBasemapWithCoastlines(false)
+    , isContourLines(false)
 {
 }
 
