@@ -141,7 +141,7 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
             return false;
         }
 
-        if (compact && !vacuum(_database))
+        if (compact && _meta && !_meta->getUrl().isEmpty() && !vacuum(_database))
         {
             return false;
         }
