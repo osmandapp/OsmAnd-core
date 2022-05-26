@@ -157,7 +157,12 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
 
 bool OsmAnd::TileSqliteDatabase_P::isOnlineTileSource() const
 {
-    return _meta && !_meta->getUrl().isEmpty();
+    Meta meta;
+    if (obtainMeta(meta))
+    {
+        return !meta.getUrl().isEmpty();
+    }
+    return false;
 }
 
 int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
