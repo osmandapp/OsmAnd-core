@@ -34,6 +34,11 @@ bool OsmAnd::TileSqliteDatabase::close(bool compact /* = true */)
     return _p->close(compact);
 }
 
+bool OsmAnd::TileSqliteDatabase::isOnlineTileSource() const
+{
+    return _p->isOnlineTileSource();
+}
+
 bool OsmAnd::TileSqliteDatabase::isTileTimeSupported() const
 {
     return _p->isTileTimeSupported();

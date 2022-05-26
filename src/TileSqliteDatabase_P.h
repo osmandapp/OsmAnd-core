@@ -108,7 +108,8 @@ namespace OsmAnd
         bool removeTilesData(ZoomLevel zoom);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);
-
+        
+        bool isOnlineTileSource() const;
         bool compact();
 
         friend class OsmAnd::TileSqliteDatabase;

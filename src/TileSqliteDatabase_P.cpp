@@ -141,7 +141,7 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
             return false;
         }
 
-        if (compact && _meta && !_meta->getUrl().isEmpty() && !vacuum(_database))
+        if (compact && isOnlineTileSource() && !vacuum(_database))
         {
             return false;
         }
@@ -153,6 +153,11 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
     }
 
     return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::isOnlineTileSource() const
+{
+    return _meta && !_meta->getUrl().isEmpty();
 }
 
 int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const

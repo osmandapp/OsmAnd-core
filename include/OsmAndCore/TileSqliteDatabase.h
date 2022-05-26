@@ -93,6 +93,7 @@ namespace OsmAnd
         bool isOpened() const;
         bool open();
         bool close(bool compact = true);
+        bool isOnlineTileSource() const;
 
         bool isTileTimeSupported() const;
         bool hasTimeColumn() const;
