@@ -535,6 +535,25 @@ int32_t OsmAnd::MapObject::getLabelCoordinateY() const
         return label31Y;
 }
 
+QHash<QString, QString> OsmAnd::MapObject::getTags() const 
+{
+    QHash<QString, QString> result;
+    const auto& decRules = attributeMapping->decodeMap;
+    auto pAttributeId = attributeIds.constData();
+    for (auto idx = 0; idx < attributeIds.size(); idx++) 
+    {
+        const auto& decodedAttribute = decRules[*(pAttributeId + idx)];
+        result.insert(decodedAttribute.tag, decodedAttribute.value);
+    }
+    pAttributeId = additionalAttributeIds.constData();
+    for (auto idx = 0; idx < additionalAttributeIds.size(); idx++) 
+    {
+        const auto& decodedAttribute = decRules[*(pAttributeId + idx)];
+        result.insert(decodedAttribute.tag, decodedAttribute.value);
+    }
+    return result;
+}
+
 QString OsmAnd::MapObject::debugInfo(long id, bool all) const
 {
     return QString();

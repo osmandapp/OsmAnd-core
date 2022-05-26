@@ -152,6 +152,7 @@ namespace OsmAnd
         bool isLabelCoordinatesSpecified() const;
         int32_t getLabelCoordinateX() const;
         int32_t getLabelCoordinateY() const;
+        virtual QHash<QString, QString> getTags() const;
     };
 }
 
