@@ -30,6 +30,12 @@ OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::MapTiledCollectionProvider
     return OsmAnd::MapMarker::PinIconHorisontalAlignment::CenterHorizontal;
 }
 
+OsmAnd::PointI OsmAnd::MapTiledCollectionProvider::getPinIconOffset() const
+{
+    PointI point(0, 0);
+    return point;
+}
+
 bool OsmAnd::MapTiledCollectionProvider::supportsNaturalObtainData() const
 {
     return true;

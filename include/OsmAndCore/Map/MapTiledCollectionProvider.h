@@ -71,10 +71,10 @@ namespace OsmAnd
             virtual OsmAnd::MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
             virtual OsmAnd::MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
 
-            virtual OsmAnd::ZoomLevel getMinZoom() const Q_DECL_OVERRIDE = 0;
-            virtual OsmAnd::ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE = 0;
+            virtual OsmAnd::ZoomLevel getMinZoom() const = 0;
+            virtual OsmAnd::ZoomLevel getMaxZoom() const = 0;
 
-            virtual OsmAnd::PointI getPinIconOffset() const = 0;
+            virtual OsmAnd::PointI getPinIconOffset() const;
 
             virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
 
