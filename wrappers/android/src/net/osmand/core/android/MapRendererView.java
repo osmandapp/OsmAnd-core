@@ -515,6 +515,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getLocationFromScreenPoint(screenPoint, location31);
     }
 
+    public final boolean getScreenPointFromLocation(PointI location31, PointI outScreenPoint, boolean checkOffScreen) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.obtainScreenPointFromPosition(location31, outScreenPoint, checkOffScreen);
+    }
+
     public final void dumpResourcesInfo() {
         NativeCore.checkIfLoaded();
 
