@@ -156,6 +156,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
                 img = i < pointsCount ? getImageBitmap(i) : data->getImageBitmap();
             }
             builder.setPinIcon(img);
+            builder.setPinIconOffset(getPinIconOffset());
             builder.buildAndAddToCollection(collection);
         }
     }

@@ -74,6 +74,8 @@ namespace OsmAnd
             virtual OsmAnd::ZoomLevel getMinZoom() const Q_DECL_OVERRIDE = 0;
             virtual OsmAnd::ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE = 0;
 
+            virtual OsmAnd::PointI getPinIconOffset() const = 0;
+
             virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
 
             virtual bool obtainData(const IMapDataProvider::Request& request,
@@ -141,6 +143,9 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::ZoomLevel,
             getMaxZoom);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            OsmAnd::PointI,
+            getPinIconOffset);
     SWIG_EMIT_DIRECTOR_END(MapTiledCollectionProvider);
 }
 
