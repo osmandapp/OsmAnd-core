@@ -62,8 +62,12 @@ namespace OsmAnd
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
         MapMarkerBuilder& setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
         MapMarkerBuilder& setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value);
+        PointI getPinIconOffset() const;
+        MapMarkerBuilder& setPinIconOffset(const PointI pinIconOffset);
+        
         ColorARGB getPinIconModulationColor() const;
         MapMarkerBuilder& setPinIconModulationColor(const ColorARGB colorValue);
+        
         QString getCaption() const;
         MapMarkerBuilder& setCaption(const QString& caption);
         TextRasterizer::Style getCaptionStyle() const;

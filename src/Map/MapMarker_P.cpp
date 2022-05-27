@@ -241,7 +241,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 offset.y = 0;
                 break;
         }
-        pinIconSymbol->offset = offset;
+        pinIconSymbol->offset = offset + owner->pinIconOffset;
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);

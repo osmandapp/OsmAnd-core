@@ -142,6 +142,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconHorisontalAlignmen
     return *this;
 }
 
+OsmAnd::PointI OsmAnd::MapMarkerBuilder::getPinIconOffset() const
+{
+    return _p->getPinIconOffset();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconOffset(const PointI pinIconOffset)
+{
+    _p->setPinIconOffset(pinIconOffset);
+    
+    return *this;
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getPinIconModulationColor() const
 {
     return _p->getPinIconModulationColor();

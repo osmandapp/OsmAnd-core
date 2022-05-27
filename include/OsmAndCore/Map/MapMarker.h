@@ -82,6 +82,7 @@ namespace OsmAnd
             const sk_sp<const SkImage>& pinIcon,
             const PinIconVerticalAlignment pinIconVerticalAlignment,
             const PinIconHorisontalAlignment pinIconHorisontalAlignment,
+            const PointI pinIconOffset,
             const QString& caption,
             const TextRasterizer::Style captionStyle,
             const double captionTopSpace,
@@ -98,6 +99,7 @@ namespace OsmAnd
         const sk_sp<const SkImage> pinIcon;
         const PinIconVerticalAlignment pinIconVerticalAlignment;
         const PinIconHorisontalAlignment pinIconHorisontalAlignment;
+        const PointI pinIconOffset;
         const QHash< OnSurfaceIconKey, sk_sp<const SkImage> > onMapSurfaceIcons;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;

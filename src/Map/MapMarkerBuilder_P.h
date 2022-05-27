@@ -53,6 +53,7 @@ namespace OsmAnd
         sk_sp<const SkImage> _pinIcon;
         MapMarker::PinIconVerticalAlignment _pinIconVerticalAlignment;
         MapMarker::PinIconHorisontalAlignment _pinIconHorisontalAlignment;
+        PointI _pinIconOffset;
         ColorARGB _pinIconModulationColor;
 
         QString _caption;
@@ -93,6 +94,8 @@ namespace OsmAnd
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
         void setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
         void setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value);
+        PointI getPinIconOffset() const;
+        void setPinIconOffset(const PointI pinIconOffset);
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);

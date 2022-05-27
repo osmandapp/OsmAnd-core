@@ -7,6 +7,7 @@ OsmAnd::MapMarker::MapMarker(
     const sk_sp<const SkImage>& pinIcon_,
     const PinIconVerticalAlignment pinIconVerticalAlignment_,
     const PinIconHorisontalAlignment pinIconHorisontalAlignment_,
+    const PointI pinIconOffset_,
     const QString& caption_,
     const TextRasterizer::Style captionStyle_,
     const double captionTopSpace_,
@@ -19,6 +20,7 @@ OsmAnd::MapMarker::MapMarker(
     , pinIcon(pinIcon_)
     , pinIconVerticalAlignment(pinIconVerticalAlignment_)
     , pinIconHorisontalAlignment(pinIconHorisontalAlignment_)
+    , pinIconOffset(pinIconOffset_)
     , caption(caption_)
     , captionStyle(captionStyle_)
     , captionTopSpace(captionTopSpace_)

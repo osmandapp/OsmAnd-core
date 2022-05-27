@@ -181,6 +181,20 @@ void OsmAnd::MapMarkerBuilder_P::setPinIconHorisontalAlignment(const MapMarker::
     _pinIconHorisontalAlignment = value;
 }
 
+OsmAnd::PointI OsmAnd::MapMarkerBuilder_P::getPinIconOffset() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pinIconOffset;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setPinIconOffset(const PointI pinIconOffset)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pinIconOffset = pinIconOffset;
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder_P::getPinIconModulationColor() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -280,6 +294,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _pinIcon,
         _pinIconVerticalAlignment,
         _pinIconHorisontalAlignment,
+        _pinIconOffset,
         _caption,
         _captionStyle,
         _captionTopSpace,
