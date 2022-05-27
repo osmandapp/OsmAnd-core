@@ -132,6 +132,7 @@ namespace OsmAnd
         bool containsTag(const QString& tag, const bool checkAdditional = false) const;
         bool containsTag(const QStringRef& tagRef, const bool checkAdditional = false) const;
         const AttributeMapping::TagValue* resolveAttributeByIndex(const uint32_t index, const bool additional = false) const;
+        virtual QHash<QString, QString> getResolvedAttributes() const;
 
         // Layers
         virtual LayerType getLayerType() const;
@@ -152,7 +153,6 @@ namespace OsmAnd
         bool isLabelCoordinatesSpecified() const;
         int32_t getLabelCoordinateX() const;
         int32_t getLabelCoordinateY() const;
-        virtual QHash<QString, QString> getTags() const;
     };
 }
 
