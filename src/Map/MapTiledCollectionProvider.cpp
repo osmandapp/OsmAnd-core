@@ -32,8 +32,7 @@ OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::MapTiledCollectionProvider
 
 OsmAnd::PointI OsmAnd::MapTiledCollectionProvider::getPinIconOffset() const
 {
-    PointI point(0, 0);
-    return point;
+    return PointI(0, 0);
 }
 
 bool OsmAnd::MapTiledCollectionProvider::supportsNaturalObtainData() const
