@@ -30,6 +30,11 @@ OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::MapTiledCollectionProvider
     return OsmAnd::MapMarker::PinIconHorisontalAlignment::CenterHorizontal;
 }
 
+OsmAnd::PointI OsmAnd::MapTiledCollectionProvider::getPinIconOffset() const
+{
+    return PointI(0, 0);
+}
+
 bool OsmAnd::MapTiledCollectionProvider::supportsNaturalObtainData() const
 {
     return true;
@@ -156,6 +161,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
                 img = i < pointsCount ? getImageBitmap(i) : data->getImageBitmap();
             }
             builder.setPinIcon(img);
+            builder.setPinIconOffset(getPinIconOffset());
             builder.buildAndAddToCollection(collection);
         }
     }
