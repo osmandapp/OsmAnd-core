@@ -184,8 +184,9 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
     const auto tileNumberingValue = meta.getTileNumbering(&ok);
     if (!ok)
     {
-        _cachedInvertedZoom.storeRelease(0);
-        return 0;
+        // BigPlanet by default
+        _cachedInvertedZoom.storeRelease(17);
+        return 17;
     }
 
     if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM"))
