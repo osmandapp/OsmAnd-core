@@ -63,6 +63,8 @@ tasks.withType(JavaCompile) {
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "0.1-SNAPSHOT"
+
 uploadArchives {
     repositories.ivy {
        // credentials {
@@ -73,7 +75,6 @@ uploadArchives {
         layout "pattern" , {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
         }
-	revision = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "0.1-SNAPSHOT"
     }
 }
 
