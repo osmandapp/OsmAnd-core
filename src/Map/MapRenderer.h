@@ -275,7 +275,7 @@ namespace OsmAnd
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;

@@ -124,7 +124,7 @@ namespace OsmAnd
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) = 0;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
-        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
+        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;

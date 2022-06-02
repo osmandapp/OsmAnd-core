@@ -425,6 +425,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setTarget(target31);
     }
 
+    public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setTarget(target31, forcedUpdate, disableUpdate);
+    }
+
     public final boolean setZoom(float zoom) {
         NativeCore.checkIfLoaded();
 
@@ -519,6 +525,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.obtainScreenPointFromPosition(location31, outScreenPoint, checkOffScreen);
+    }
+
+    public final AreaI getVisibleBBox31() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getVisibleBBox31();
+    }
+
+    public final boolean isPositionVisible(PointI position31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isPositionVisible(position31);
     }
 
     public final void dumpResourcesInfo() {
