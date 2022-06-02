@@ -1501,7 +1501,7 @@ bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool for
     return true;
 }
 
-bool OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1511,7 +1511,9 @@ bool OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /
         return false;
 
     _requestedState.target31 = target31;
-
+    if (disableUpdate)
+        return true;
+    
     notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
 
     return true;
