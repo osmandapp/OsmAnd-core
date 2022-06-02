@@ -394,6 +394,7 @@ artifacts {
 
 // Uploading artifacts to local path
 group = "net.osmand"
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.2"
 uploadArchives {
     repositories.ivy {
     //    credentials {
@@ -404,12 +405,6 @@ uploadArchives {
         layout "pattern" , {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
         }
-
-        def gitInfo = "git describe --long".execute().text.trim()
-        def parsedGitInfo = Pattern.compile("v(\\d+\\.\\d+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
-        assert parsedGitInfo.matches()
-        version = parsedGitInfo.group(1) + "-SNAPSHOT"
-        //version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
     }
 }
 
