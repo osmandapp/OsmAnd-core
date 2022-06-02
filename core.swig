@@ -114,6 +114,8 @@
 #include <OsmAndCore/Map/MapTiledCollectionProvider.h>
 #include <OsmAndCore/Map/MapTiledCollectionPoint.h>
 #include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
+#include <OsmAndCore/Map/PolygonsCollection.h>
+#include <OsmAndCore/Map/PolygonBuilder.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -282,6 +284,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapTiledCollectionProvider)
 	%shared_ptr(OsmAnd::MapTiledCollectionPoint)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider)
+	%shared_ptr(OsmAnd::PolygonsCollection)
+	%shared_ptr(OsmAnd::PolygonBuilder)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider::SplitLabel)
 %include <std_pair.i>
 %include <std_string.i>
@@ -463,6 +467,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapTiledCollectionProvider.h>
 %include <OsmAndCore/Map/MapTiledCollectionPoint.h>
 %include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
+%include <OsmAndCore/Map/PolygonsCollection.h>
+%include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;
 
 %exception OsmAnd::MapMarker::SymbolsGroup::dynamic_cast(OsmAnd::MapSymbolsGroup *symbolsGroup) {
