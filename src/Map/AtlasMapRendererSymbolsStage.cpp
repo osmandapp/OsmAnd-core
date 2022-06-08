@@ -2091,6 +2091,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
             {
                 // Wow! This shouldn't happen ever, since it means that glyphs doesn't fit into the provided path!
                 // And this means that path calculation above gave error!
+                /*
                 LogPrintf(LogSeverityLevel::Error,
                     "computePlacementOfGlyphsOnPath() failed:\n"
                     "\t%d glyphs;\n"
@@ -2135,6 +2136,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
                         {
                             return QStringList() << QString::number(value * projectionScale);
                         }).join(QLatin1String(", "))));
+                */
                 glyphsPlacement.clear();
                 return glyphsPlacement;
             }

@@ -204,6 +204,8 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
             const auto glyphsCount = textPaint.skFont.countText(
                 textPaint.text.constData(), textPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
             );
+            if (glyphsCount < 0)
+                continue;
 
             QVector<SkGlyphID> glyphs(glyphsCount);
             textPaint.skFont.textToGlyphs(
@@ -302,7 +304,9 @@ void OsmAnd::TextRasterizer_P::measureHaloGlyphs(
             const auto glyphsCount = haloTextPaint.skFont.countText(
                 haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16
             );
-
+            if (glyphsCount < 0)
+                continue;
+            
             QVector<SkGlyphID> glyphs(glyphsCount);
             haloTextPaint.skFont.textToGlyphs(
                 haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
