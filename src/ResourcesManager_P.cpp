@@ -1088,7 +1088,7 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     // Download content of the index
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
     const auto& downloadResult = _webClient->downloadData(
-        owner->repositoryBaseUrl + QLatin1String("/get_indexes.php"),
+        owner->indexesUrl,
         &requestResult);
     if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
         return false;

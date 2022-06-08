@@ -16,6 +16,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     const QString& localCachePath_ /*= QString::null*/,
     const QString& appVersion_ /*= QString::null*/,
     const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/,
+    const QString& indexesUrl_ /*= QLatin1String("http://download.osmand.net/get_indexes")*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new ResourcesManager_P(this, webClient))
     , localStoragePath(localStoragePath_)
@@ -26,6 +27,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
         ? localTemporaryPath_
         : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
+    , indexesUrl(indexesUrl_)
     , localCachePath(!localCachePath_.isNull()
         ? localCachePath_
         : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
