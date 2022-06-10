@@ -128,6 +128,10 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
         ? MapStubStyle::Dark
         : MapStubStyle::Light;
     }
+    else
+    {
+        _desiredStubsStyle = MapStubStyle::Light;
+    }
 
     setSettings(resolvedSettings);
 }
