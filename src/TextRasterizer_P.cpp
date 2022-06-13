@@ -142,7 +142,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 hb_font_set_scale(pTextPaint->hbFont.get(), hbFontScale, hbFontScale);
 
                 SkFontMetrics metrics;
-                pTextPaint->height = pTextPaint->skFont.getMetrics(&metrics) + 2.0f;
+                pTextPaint->skFont.getMetrics(&metrics);
+                pTextPaint->height = pTextPaint->skFont.getSize() + 2.0f;
                 linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, pTextPaint->height);
                 linePaint.minFontHeight = qMin(linePaint.minFontHeight, pTextPaint->height);
                 linePaint.maxFontLineSpacing = qMax(linePaint.maxFontLineSpacing, metrics.fLeading);
