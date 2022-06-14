@@ -1153,8 +1153,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     bool is2D = true;
 
     // Check if this symbol instance can be rendered in 2D mode
-    glm::vec2 exactStartPointOnScreen;
-    glm::vec2 exactEndPointOnScreen;
+    glm::vec2 exactStartPointOnScreen(0.0f, 0.0f);
+    glm::vec2 exactEndPointOnScreen(0.0f, 0.0f);
     unsigned int startPathPointIndex2D = 0;
     float offsetFromStartPathPoint2D = 0.0f;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
@@ -1195,8 +1195,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     }
 
     // If 2D failed, check if renderable as 3D
-    glm::vec2 exactStartPointInWorld;
-    glm::vec2 exactEndPointInWorld;
+    glm::vec2 exactStartPointInWorld(0.0f, 0.0f);
+    glm::vec2 exactEndPointInWorld(0.0f, 0.0f);
     unsigned int startPathPointIndex3D = 0;
     float offsetFromStartPathPoint3D = 0.0f;
     unsigned int endPathPointIndex3D = 0;
@@ -1956,7 +1956,7 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
 {
     assert(endPathPointIndex >= startPathPointIndex);
 
-    glm::vec2 subpathDirection;
+    glm::vec2 subpathDirection(0.0f, 0.0f);
     if (endPathPointIndex > startPathPointIndex)
     {
         const auto segmentsCount = endPathPointIndex - startPathPointIndex + 1;
@@ -2072,9 +2072,9 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     auto scannedSegmentsLength = 0.0f;
     auto consumedSegmentsLength = 0.0f;
     auto prevGlyphOffset = offsetFromStartPathPoint;
-    glm::vec2 currentSegmentStartPoint;
-    glm::vec2 currentSegmentDirection;
-    glm::vec2 currentSegmentN;
+    glm::vec2 currentSegmentStartPoint(0.0f, 0.0f);
+    glm::vec2 currentSegmentDirection(0.0f, 0.0f);
+    glm::vec2 currentSegmentN(0.0f, 0.0f);
     auto currentSegmentAngle = 0.0f;
     for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++, pGlyphWidth += glyphWidthIncrement)
     {
