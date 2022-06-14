@@ -1956,7 +1956,7 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
 {
     assert(endPathPointIndex >= startPathPointIndex);
 
-    glm::vec2 subpathDirection;
+    glm::vec2 subpathDirection(0.0f, 0.0f);
     if (endPathPointIndex > startPathPointIndex)
     {
         const auto segmentsCount = endPathPointIndex - startPathPointIndex + 1;
