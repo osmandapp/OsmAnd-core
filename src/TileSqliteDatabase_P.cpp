@@ -176,8 +176,8 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
     Meta meta;
     if (!obtainMeta(meta))
     {
-        _cachedInvertedZoom.storeRelease(0);
-        return 0;
+        _cachedInvertedZoom.storeRelease(17);
+        return 17;
     }
 
     bool ok = false;
