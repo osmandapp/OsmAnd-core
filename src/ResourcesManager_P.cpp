@@ -1086,30 +1086,59 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
 
     // Download content of the index
-    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
-    const auto& downloadResult = _webClient->downloadData(
-        owner->indexesUrl,
-        &requestResult);
-    if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
-        return false;
-
-    // Parse XML
-    QList< std::shared_ptr<const ResourceInRepository> > resources;
-    QXmlStreamReader xmlReader(downloadResult);
-    bool ok = parseRepository(xmlReader, resources);
+    const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("indexes.xml"));
+    const auto tmpFilePathGz = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("indexes.xml.gz"));
+    bool ok = _webClient->downloadFile(owner->indexesUrl, tmpFilePathGz);
     if (!ok)
         return false;
 
+    ArchiveReader archive(tmpFilePathGz);
+    bool success = false;
+    ok = false;
+    const auto archiveItems = archive.getItems(&ok, true);
+    if (ok)
+    {
+        for (const auto& archiveItem : constOf(archiveItems))
+        {
+            if (!archiveItem.isValid())
+                continue;
+            
+            success = archiveItem.isValid() && archive.extractItemToFile(archiveItem.name, tmpFilePath, true);
+            break;
+        }
+    }
+    QFile(tmpFilePathGz).remove();
+    if (!success)
+    {
+        QFile(tmpFilePath).remove();
+        return false;
+    }
+    
+    QFile indexesFile(tmpFilePath);
+    if (!indexesFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QFile(tmpFilePath).remove();
+        return false;
+    }
+
+    // Parse XML
+    QList< std::shared_ptr<const ResourceInRepository> > resources;
+    QXmlStreamReader xmlReader(&indexesFile);
+    ok = parseRepository(xmlReader, resources);
+    indexesFile.close();
+    if (!ok)
+    {
+        indexesFile.remove();
+        return false;
+    }
+
     // Save repository locally
     QFile repositoryCache(QDir(owner->localStoragePath).absoluteFilePath("repository.cache.xml"));
-    if (repositoryCache.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
-    {
-        ok = repositoryCache.write(downloadResult);
-        ok = repositoryCache.flush() && ok;
-        repositoryCache.close();
-        if (!ok)
-            repositoryCache.remove();
-    }
+    if (repositoryCache.exists())
+        repositoryCache.remove();
+    
+    if (!indexesFile.rename(repositoryCache.fileName()))
+        indexesFile.remove();
 
     // Update repository in memory
     _resourcesInRepository.clear();
