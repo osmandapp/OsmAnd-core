@@ -10,7 +10,7 @@
 #include "FunctorQueryController.h"
 #include "GeoTileEvaluator.h"
 
-static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://test.osmand.net/weather/gfs/tiff/");
+static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
 
 OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     WeatherTileResourceProvider* const owner_,
