@@ -140,7 +140,8 @@ using namespace OsmAnd;
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
-    %shared_ptr(OsmAnd::IBillboardMapSymbol)
+	%shared_ptr(OsmAnd::IBillboardMapSymbol)
+	%shared_ptr(OsmAnd::RasterMapSymbol)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
@@ -403,6 +404,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/IBillboardMapSymbol.h>
+%include <OsmAndCore/Map/RasterMapSymbol.h>
 %include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/SymbolRasterizer.h>
@@ -528,6 +530,21 @@ $action
 %extend OsmAnd::IBillboardMapSymbol {
     static std::shared_ptr<OsmAnd::IBillboardMapSymbol> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
         return std::dynamic_pointer_cast<OsmAnd::IBillboardMapSymbol>(mapSymbol);
+    }
+};
+
+%exception OsmAnd::RasterMapSymbol::dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
+$action
+    if (!result) {
+        jclass excep = jenv->FindClass("java/lang/ClassCastException");
+        if (excep) {
+            jenv->ThrowNew(excep, "dynamic_cast exception");
+        }
+    }
+}
+%extend OsmAnd::RasterMapSymbol {
+    static std::shared_ptr<OsmAnd::RasterMapSymbol> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
+        return std::dynamic_pointer_cast<OsmAnd::RasterMapSymbol>(mapSymbol);
     }
 };
 
