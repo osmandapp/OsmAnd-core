@@ -208,10 +208,12 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
         const auto& valueDef = getValueDefinitionById(valueDefId);
         if (valueDefId < 0 || !valueDef)
         {
+            /*
             LogPrintf(LogSeverityLevel::Warning,
                 "Ignoring unknown value '%s' = '%s'",
                 qPrintable(name),
                 qPrintable(value));
+            */
             continue;
         }
 
