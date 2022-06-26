@@ -53,9 +53,10 @@
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IBillboardMapSymbol.h>
 #include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
-#include <OsmAndCore/Map/RasterMapSymbol.h>
+#include <OsmAndCore/Map/IOnPathMapSymbol.h>
 #include <OsmAndCore/Map/OnSurfaceRasterMapSymbol.h>
 #include <OsmAndCore/Map/OnSurfaceVectorMapSymbol.h>
+#include <OsmAndCore/Map/RasterMapSymbol.h>
 #include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
@@ -141,6 +142,7 @@ using namespace OsmAnd;
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::IBillboardMapSymbol)
+	%shared_ptr(OsmAnd::IOnPathMapSymbol)
 	%shared_ptr(OsmAnd::RasterMapSymbol)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
@@ -406,6 +408,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IBillboardMapSymbol.h>
 %include <OsmAndCore/Map/RasterMapSymbol.h>
 %include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
+%include <OsmAndCore/Map/IOnPathMapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/UnresolvedMapStyle.h>
@@ -545,6 +548,21 @@ $action
 %extend OsmAnd::RasterMapSymbol {
     static std::shared_ptr<OsmAnd::RasterMapSymbol> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
         return std::dynamic_pointer_cast<OsmAnd::RasterMapSymbol>(mapSymbol);
+    }
+};
+
+%exception OsmAnd::IOnPathMapSymbol::dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
+$action
+    if (!result) {
+        jclass excep = jenv->FindClass("java/lang/ClassCastException");
+        if (excep) {
+            jenv->ThrowNew(excep, "dynamic_cast exception");
+        }
+    }
+}
+%extend OsmAnd::IOnPathMapSymbol {
+    static std::shared_ptr<OsmAnd::IOnPathMapSymbol> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
+        return std::dynamic_pointer_cast<OsmAnd::IOnPathMapSymbol>(mapSymbol);
     }
 };
 
