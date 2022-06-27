@@ -270,6 +270,7 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
+        std::shared_ptr<const ObfFile> getMiniBasemapObfFile() const;
 
         // Resources in repository:
         bool isRepositoryAvailable() const;
@@ -277,6 +278,7 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const ResourceInRepository> > getResourcesInRepository() const;
         std::shared_ptr<const ResourceInRepository> getResourceInRepository(const QString& id) const;
         bool isResourceInRepository(const QString& id) const;
+        std::shared_ptr<const LocalResource> getMiniBasemapResource() const;
 
         // Install / Uninstall:
         bool isResourceInstalled(const QString& id) const;

@@ -102,6 +102,11 @@ bool OsmAnd::ResourcesManager::isLocalResource(const QString& id) const
     return _p->isLocalResource(id);
 }
 
+std::shared_ptr<const OsmAnd::ObfFile> OsmAnd::ResourcesManager::getMiniBasemapObfFile() const
+{
+    return _p->_miniBasemapObfFile;
+}
+
 bool OsmAnd::ResourcesManager::isRepositoryAvailable() const
 {
     return _p->isRepositoryAvailable();
@@ -127,6 +132,11 @@ std::shared_ptr<const OsmAnd::ResourcesManager::ResourceInRepository> OsmAnd::Re
 bool OsmAnd::ResourcesManager::isResourceInRepository(const QString& id) const
 {
     return _p->isResourceInRepository(id);
+}
+
+std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> OsmAnd::ResourcesManager::getMiniBasemapResource() const
+{
+    return _p->getMiniBasemapResource();
 }
 
 bool OsmAnd::ResourcesManager::isResourceInstalled(const QString& id) const
