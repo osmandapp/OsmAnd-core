@@ -769,8 +769,27 @@ std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::Resourc
 
     const auto citResource = _localResources.constFind(id);
     if (citResource == _localResources.cend())
+    {
+        if (id == owner->miniBasemapFilename)
+            return getMiniBasemapResource();
+
         return nullptr;
+    }
     return *citResource;
+}
+
+std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getMiniBasemapResource() const
+{
+    QString filename = owner->miniBasemapFilename.toLower();
+    filename.remove(0, owner->miniBasemapFilename.lastIndexOf("/") + 1);
+    std::shared_ptr<const OsmAnd::ResourcesManager::InstalledResource> installedResource(new OsmAnd::ResourcesManager::InstalledResource(
+            filename,
+            OsmAnd::ResourcesManager::ResourceType::MapRegion,
+            _miniBasemapObfFile->filePath,
+            _miniBasemapObfFile->fileSize,
+            _miniBasemapObfFile->obfInfo->creationTimestamp));
+    std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> localResource = std::dynamic_pointer_cast<const OsmAnd::ResourcesManager::LocalResource>(installedResource);
+    return localResource;
 }
 
 bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
