@@ -163,7 +163,14 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
 
         if (ok)
         {
-            output = QString(reinterpret_cast<const QChar*>(reordered.constData()), reordered.size());
+            QVector<UChar> reshaped(len);
+            const auto newLen = u_shapeArabic(reordered.constData(), len, reshaped.data(), len, U_SHAPE_TEXT_DIRECTION_VISUAL_LTR | U_SHAPE_LETTERS_SHAPE | U_SHAPE_LENGTH_FIXED_SPACES_AT_END, &icuError);
+            ok = U_SUCCESS(icuError);
+
+            if (ok)
+            {
+                output = qMove(QString(reinterpret_cast<const QChar*>(reshaped.constData()), newLen));
+            }
         }
     }
 
