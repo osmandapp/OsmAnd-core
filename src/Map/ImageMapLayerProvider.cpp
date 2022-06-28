@@ -47,13 +47,6 @@ sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getEmptyImage() const
     return nullptr;
 }
 
-sk_sp<SkImage> OsmAnd::ImageMapLayerProvider::obtainImage(
-    const OsmAnd::IMapTiledDataProvider::Request& request
-)
-{
-    return nullptr;
-}
-
 bool OsmAnd::ImageMapLayerProvider::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData,
@@ -76,7 +69,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (request.queryController != nullptr && request.queryController->isAborted())
         return false;
 
-    sk_sp<SkImage> image;
+    sk_sp<const SkImage> image;
     if (supportsObtainImage())
     {
         image = obtainImage(request);
