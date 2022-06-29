@@ -44,6 +44,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     _p->initialize();
     _p->inflateBuiltInResources();
     _p->scanManagedStoragePath();
+    _p->addMiniBasemapToLocalResources();
     _p->rescanUnmanagedStoragePaths();
     _p->loadRepositoryFromCache();
     _p->attachToFileSystem();

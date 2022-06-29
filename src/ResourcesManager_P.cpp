@@ -179,6 +179,12 @@ bool OsmAnd::ResourcesManager_P::scanManagedStoragePath()
     return true;
 }
 
+void OsmAnd::ResourcesManager_P::addMiniBasemapToLocalResources()
+{
+    if (!owner->miniBasemapFilename.isNull())
+        addLocalResource(owner->miniBasemapFilename);
+}
+
 bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
