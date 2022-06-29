@@ -230,6 +230,7 @@ namespace OsmAnd
         void initialize();
         void loadRepositoryFromCache();
         bool scanManagedStoragePath();
+        void addMiniBasemapToLocalResources();
     public:
         virtual ~ResourcesManager_P();
 
