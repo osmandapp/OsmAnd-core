@@ -204,7 +204,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapObject>& object,
             const QString& genTagVal);
         
-        static bool determineSurfaceType(PointI center, QList< std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType);
+        static bool determineSurfaceType(PointI center, const AreaI area31, QList< std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType);
 
     public:
         ~MapPrimitiviser_P();

@@ -281,12 +281,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
         if (detailedmapCoastlinesPresent)
         {
-            isDeterminedSurfaceType = determineSurfaceType(center, detailedmapCoastlineObjects, surfaceType);
+            isDeterminedSurfaceType = determineSurfaceType(center, area31, detailedmapCoastlineObjects, surfaceType);
         }
 
         if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
         {
-            determineSurfaceType(center, basemapCoastlineObjects, surfaceType);
+            determineSurfaceType(center, area31, basemapCoastlineObjects, surfaceType);
         }
     }
 
@@ -425,7 +425,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
-bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType)
+bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, const AreaI area31, QList<std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType)
 {
     std::shared_ptr<const MapObject> neareastCoastlineMapObject;
     PointI nearestCoastlineSegment0;
@@ -491,9 +491,24 @@ bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::s
     // Rule: Water is always on the right along the direction of coastline segment.
     if (neareastCoastlineMapObject)
     {
-        const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
-        surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
-        return true;
+        // Filter too short nearest coastline for detailed maps.
+        // Rule: to correct calulation coastline should be greater then 1/10 of tilesize.
+        // Size of any detailed map tile is equal tile of ZoomLevel14.
+        const auto detailTileSideDistance31 = Utilities::roundBoundingBox31(area31, ZoomLevel14).width();
+        const auto minDistanceLimit31 = detailTileSideDistance31 / 10;
+        PointI coastlineDiff = nearestCoastlineSegment0 - nearestCoastlineSegment1;
+        const auto nearestCoastlineSegmentDistance31 = std::sqrt(std::pow(coastlineDiff.x, 2) + std::pow(coastlineDiff.y, 2));
+        
+        if (nearestCoastlineSegmentDistance31 > minDistanceLimit31)
+        {
+            const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
+            surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     return false;
 }
