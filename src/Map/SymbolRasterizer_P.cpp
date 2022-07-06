@@ -44,6 +44,9 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 {
     const auto& env = primitivisedObjects->mapPresentationEnvironment;
 
+    std::vector<const std::shared_ptr<const MapObject>> filteredMapObjects;
+    auto combinedText = combineSimilarText(primitivisedObjects, filter, queryController, filteredMapObjects);
+    
     for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
     {
         if (queryController && queryController->isAborted())
@@ -60,8 +63,9 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         //////////////////////////////////////////////////////////////////////////
 
         // Apply filter, if it's present
-        if (filter && !filter(mapObject))
+        if(std::find(filteredMapObjects.begin(), filteredMapObjects.end(), mapObject) != filteredMapObjects.end()){
             continue;
+        }
 
         // Create group
         const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(
@@ -172,7 +176,14 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->glyphsWidth = glyphsWidth;
-                    group->symbols.push_back(qMove(rasterizedSymbol));
+                    
+                    auto it = combinedText.find(textSymbol);
+                    if (it != combinedText.end())
+                    {
+                        auto points31 = it.value();
+                        rasterizedSymbol->combinedPoints31 = points31;
+                        group->symbols.push_back(qMove(rasterizedSymbol));
+                    }
                 }
                 else
                 {
@@ -379,4 +390,211 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         // Add group to output
         outSymbolsGroups.push_back(qMove(group));
     }
+}
+
+QHash<std::shared_ptr<const OsmAnd::MapPrimitiviser::TextSymbol>, QVector<OsmAnd::PointI>> OsmAnd::SymbolRasterizer_P::combineSimilarText(
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+    const FilterByMapObject filter,
+    const std::shared_ptr<const IQueryController>& queryController,
+    std::vector<const std::shared_ptr<const MapObject>>& filteredMapObjects) const
+{
+    const auto& env = primitivisedObjects->mapPresentationEnvironment;
+    PointD div31Pix = primitivisedObjects->scaleDivisor31ToPixel;
+    float combineGap = env->displayDensityFactor * 45;
+    float combineMaxLength = env->displayDensityFactor * 550;// max length
+    QHash<std::shared_ptr<const OsmAnd::MapPrimitiviser::TextSymbol>, QVector<OsmAnd::PointI>> out;
+    QHash<QString, QList<std::shared_ptr<CombineOnPathText>>> namesMap;
+
+    
+    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
+    {
+        if (queryController && queryController->isAborted())
+            return out;
+
+        const auto& mapObject = symbolGroupEntry.key();
+        const auto& symbolsGroup = symbolGroupEntry.value();
+
+        if (filter && !filter(mapObject))
+        {
+            filteredMapObjects.push_back(mapObject);
+            continue;
+        }            
+
+        for (const auto& symbol : constOf(symbolsGroup->symbols))
+        {
+            if (queryController && queryController->isAborted())
+                return out;
+            if (const auto& textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
+            {
+                if (!textSymbol->drawOnPath || mapObject->points31.size() < 2 || textSymbol->value.isEmpty()) {
+                    continue;
+                }
+                std::shared_ptr<CombineOnPathText> combine = std::make_shared<CombineOnPathText>(textSymbol, mapObject->points31);
+                QString key = textSymbol->value + QString::number(textSymbol->order);
+                QHash< QString, QList<std::shared_ptr<CombineOnPathText>>>::iterator it = namesMap.find(key);
+                if (it == namesMap.end())
+                {
+                    QList<std::shared_ptr<CombineOnPathText>> list;
+                    list.append(combine);
+                    namesMap.insert(key, list);
+                }
+                else
+                {
+                    auto& list = it.value();
+                    list.append(combine);
+                }
+            }
+        }
+    }
+    
+    if (namesMap.size() == 0)
+        return out;
+
+    QVector<PointI> pointsS;
+    QVector<PointI> pointsSCombine;
+    QVector<PointI> pointsP;
+    
+    for (auto it = namesMap.begin(); it != namesMap.end(); it++)
+    {
+        QList<std::shared_ptr<CombineOnPathText>> list = it.value();
+        int combined = 20;    // max combined
+
+        bool combineOnIteration = true;
+        if (list.size() > 1)
+        {
+            std::vector<float> distances;
+            for (auto p = list.begin(); p != list.end(); p++)
+            {
+                distances.push_back(calcLength((*p)->points31, div31Pix));
+            }
+
+            while (combined > 0 && combineOnIteration)
+            {
+                combined--;
+                combineOnIteration = false;
+                int pi = 0;
+                for (auto p = list.begin(); p != list.end() && !combineOnIteration; p++, pi++)
+                {
+                    if ((*p)->combined) continue;
+                    pointsP = (*p)->points31;
+                    if (distances[pi] > combineMaxLength) continue;
+
+                    auto sToCombine = p;
+                    float minGap = combineGap;
+                    int siCombine = pi;
+                    float gapMeasure = 0;
+
+                    auto s = p;
+                    int si = pi + 1;
+                    for (s++; s != list.end(); s++, si++)
+                    {
+                        if ((*s)->combined || p == s) continue;
+                        if (distances[si] > combineMaxLength) continue;
+                        pointsS = (*s)->points31;
+                        if (combine2Segments(pointsS, pointsP, (*s)->points31, combineGap, &gapMeasure, false, div31Pix) ||
+                            combine2Segments(pointsP, pointsS, (*p)->points31, combineGap, &gapMeasure, false, div31Pix))
+                        {
+                            if (minGap > gapMeasure)
+                            {
+                                minGap = gapMeasure;
+                                sToCombine = s;
+                                siCombine = si;
+                                pointsSCombine = pointsS;
+                            }
+                        }
+                    }
+                    if (sToCombine != p)
+                    {
+                        if (combine2Segments(pointsSCombine, pointsP, (*sToCombine)->points31, combineGap, &gapMeasure, true, div31Pix))
+                        {
+                            (*p)->combined = true;
+                            combineOnIteration = true;
+                            distances[siCombine] += distances[pi];
+
+                        }
+                        else if (combine2Segments(pointsP, pointsSCombine, (*p)->points31, combineGap, &gapMeasure, true, div31Pix))
+                        {
+                            (*sToCombine)->combined = true;
+                            combineOnIteration = true;
+                            distances[pi] += distances[siCombine];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto it = namesMap.begin(); it != namesMap.end(); it++)
+    {
+        QList<std::shared_ptr<CombineOnPathText>> list = it.value();
+        for (auto p = list.begin(); p != list.end(); p++)
+        {
+            auto it = out.find((*p)->textSymbol);
+            if (it == out.end())
+            {
+                if (!(*p)->combined)
+                {
+                    out.insert((*p)->textSymbol, (*p)->points31);
+                }
+            }
+            else
+            {
+                LogPrintf(LogSeverityLevel::Error, "Text symbol is not single: %s", qPrintable((*p)->textSymbol->value));
+            }
+            
+        }
+    }
+    return out;
+}
+
+double OsmAnd::SymbolRasterizer_P::calcLength(QVector<PointI>& pointsP, PointD scaleDivisor31ToPixel) const
+{
+    double len = 0;
+    double divX = scaleDivisor31ToPixel.x;
+    double divY = scaleDivisor31ToPixel.y;
+    for (int i = 1; i < pointsP.size(); i++)
+    {
+        double dx = (pointsP.at(i).x - pointsP.at(i - 1).x) / divX;
+        double dy = (pointsP.at(i).y - pointsP.at(i - 1).y) / divY;
+        len += sqrt(dx * dx + dy * dy);
+    }
+    return len;
+}
+
+bool OsmAnd::SymbolRasterizer_P::combine2Segments(QVector<PointI>& pointsS, QVector<PointI>& pointsP, QVector<PointI>& outPoints, float combineGap,
+    float* gapMetric, bool combine, PointD scaleDivisor31ToPixel) const
+{
+    double divX = scaleDivisor31ToPixel.x;
+    double divY = scaleDivisor31ToPixel.y;
+    double px0 = pointsP.at(0).x / divX;
+    double py0 = pointsP.at(0).y / divY;
+    double sxl = pointsS.at(pointsS.size() - 1).x / scaleDivisor31ToPixel.x;
+    double syl = pointsS.at(pointsS.size() - 1).y / scaleDivisor31ToPixel.y;
+    *gapMetric = abs(px0 - sxl) + abs(py0 - syl);
+    if (*gapMetric < combineGap)
+    {
+        // calculate scalar product to maker sure connecting good line
+        double px1 = pointsP.at(1).x / divX;
+        double py1 = pointsP.at(1).y / divY;
+        double sxl1 = pointsS.at(pointsS.size() - 2).x / divX;
+        double syl1 = pointsS.at(pointsS.size() - 2).y / divY;
+        double pvx = (px1 - px0) / sqrt((px1 - px0) * (px1 - px0) + (py1 - py0) * (py1 - py0));
+        double pvy = (py1 - py0) / sqrt((px1 - px0) * (px1 - px0) + (py1 - py0) * (py1 - py0));
+        double svx = (sxl - sxl1) / sqrt((sxl - sxl1) * (sxl - sxl1) + (syl - syl1) * (syl - syl1));
+        double svy = (syl - syl1) / sqrt((sxl - sxl1) * (sxl - sxl1) + (syl - syl1) * (syl - syl1));
+
+        if (pvx * svx + svy * pvy <= 0)
+        {
+            return false;
+        }
+        if (combine)
+        {
+            for (int k = 1; k < pointsP.size(); k++)
+            {
+                outPoints.push_back(pointsP.at(k));
+            }
+        }
+        return true;
+    }
+    return false;
 }

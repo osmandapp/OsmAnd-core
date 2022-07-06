@@ -105,6 +105,7 @@ namespace OsmAnd
             virtual ~RasterizedOnPathSymbol();
 
             QVector<SkScalar> glyphsWidth;
+            QVector<PointI> combinedPoints31;
         };
 
         //NOTE: This won't work due to directors+shared_ptr are not supported. To summarize: it's currently impossible to use any %shared_ptr-marked type in a director declaration

@@ -20,6 +20,7 @@
 #include "MapCommonTypes.h"
 #include "MapPrimitiviser.h"
 #include "SymbolRasterizer.h"
+#include "OsmAndCore/PointsAndAreas.h"
 
 namespace OsmAnd
 {
@@ -48,8 +49,28 @@ namespace OsmAnd
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             const FilterByMapObject filter,
             const std::shared_ptr<const IQueryController>& queryController) const;
+    private:
+        QHash<std::shared_ptr<const MapPrimitiviser::TextSymbol>, QVector<PointI>> combineSimilarText(
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+            const FilterByMapObject filter,
+            const std::shared_ptr<const IQueryController>& queryController,
+            std::vector<const std::shared_ptr<const MapObject>>& filteredMapObjects) const;
+        bool combine2Segments(QVector<PointI>& pointsS, QVector<PointI>& pointsP, QVector<PointI>& outPoints, float combineGap,
+                         float* gapMetric, bool combine, PointD scaleDivisor31ToPixel) const;
+        double calcLength(QVector<PointI>& pointsP, PointD scaleDivisor31ToPixel) const;
 
     friend class OsmAnd::SymbolRasterizer;
+    };
+
+    struct CombineOnPathText
+    {
+        CombineOnPathText(const std::shared_ptr<const MapPrimitiviser::TextSymbol> textSymbol_, QVector<PointI> points31_)
+        : textSymbol(textSymbol_), points31(points31_), combined(false)
+        {
+        }
+        const std::shared_ptr<const MapPrimitiviser::TextSymbol> textSymbol;
+        QVector<PointI> points31;
+        bool combined;
     };
 }
 

@@ -140,6 +140,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
                 hasAtLeastOneOnPath = true;
+                const std::shared_ptr< const QVector<PointI> > shareableCombinedPath31(new QVector<PointI>(rasterizedOnPathSymbol->combinedPoints31));
 
                 const auto onPathSymbol = new OnPathRasterMapSymbol(group);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
@@ -148,8 +149,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
-                onPathSymbol->shareablePath31 = shareablePath31;
-                assert(shareablePath31->size() >= 2);
+                onPathSymbol->shareablePath31 = shareableCombinedPath31;
+                assert(shareableCombinedPath31->size() >= 2);
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
                 for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
                 {
