@@ -978,7 +978,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const auto cis = reader.getCodedInputStream().get();
 
     // expand bbox for read coastline in bigger tile (zoom=14)
-    const bool isExpandedBBox = zoom >= ZoomLevel::ZoomLevel14;
+    // TODO: temporarily disabled since it causes freeze while rendering tiles.
+    // Looks like cache->shouldCacheBlock is skipped when it should not.
+    const bool isExpandedBBox = false;//zoom >= ZoomLevel::ZoomLevel14;
     const AreaI *expandBbox31 = nullptr;
     AreaI expBbox;
     if (bbox31 && isExpandedBBox)
@@ -990,7 +992,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     {
         expandBbox31 = bbox31;
     }
-    
     
     const auto filterReadById =
         [filterById, zoom]
@@ -1169,7 +1170,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             blockId.offset = treeNode->dataOffset;
 
             bool isCoastlineObjects = isExpandedBBox && levelSkip;
-
             if (cache && cache->shouldCacheBlock(blockId, treeNode->area31, bbox31) && !isCoastlineObjects)
             {
                 // In case cache is provided, read and cache
