@@ -26,7 +26,7 @@ namespace OsmAnd
     protected:
         PrivateImplementation<TileSqliteDatabasesCollection_P> _p;
     public:
-        TileSqliteDatabasesCollection();
+        TileSqliteDatabasesCollection(bool useFileWatcher = true, bool buildIndexes = true);
         virtual ~TileSqliteDatabasesCollection();
 
         QList<SourceOriginId> getSourceOriginIds() const;
@@ -34,11 +34,13 @@ namespace OsmAnd
         SourceOriginId addDirectory(const QString& dirPath, bool recursive = true);
         SourceOriginId addFile(const QFileInfo& fileInfo);
         SourceOriginId addFile(const QString& filePath);
+        bool removeFile(const QString& filePath);
         bool remove(const SourceOriginId entryId);
 
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases() const;
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases(
             TileId tileId, ZoomLevel zoom) const;
+        virtual std::shared_ptr<TileSqliteDatabase> getTileSqliteDatabase(const QString& filePath) const;
     };
 }
 

@@ -1,8 +1,8 @@
 #include "TileSqliteDatabasesCollection.h"
 #include "TileSqliteDatabasesCollection_P.h"
 
-OsmAnd::TileSqliteDatabasesCollection::TileSqliteDatabasesCollection()
-    : _p(new TileSqliteDatabasesCollection_P(this))
+OsmAnd::TileSqliteDatabasesCollection::TileSqliteDatabasesCollection(bool useFileWatcher /*= true*/, bool buildIndexes /*= true*/)
+    : _p(new TileSqliteDatabasesCollection_P(this, useFileWatcher, buildIndexes))
 {
 }
 
@@ -41,6 +41,11 @@ OsmAnd::TileSqliteDatabasesCollection::SourceOriginId OsmAnd::TileSqliteDatabase
     return _p->addFile(fileInfo);
 }
 
+bool OsmAnd::TileSqliteDatabasesCollection::removeFile(const QString& filePath)
+{
+    return _p->removeFile(QFileInfo(filePath));
+}
+
 bool OsmAnd::TileSqliteDatabasesCollection::remove(const SourceOriginId entryId)
 {
     return _p->remove(entryId);
@@ -56,5 +61,10 @@ QList< std::shared_ptr<const OsmAnd::TileSqliteDatabase> >OsmAnd::TileSqliteData
     ZoomLevel zoom) const
 {
     return _p->getTileSqliteDatabases(tileId, zoom);
+}
+
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::TileSqliteDatabasesCollection::getTileSqliteDatabase(const QString& filePath) const
+{
+    return _p->getTileSqliteDatabase(QFileInfo(filePath));
 }
 

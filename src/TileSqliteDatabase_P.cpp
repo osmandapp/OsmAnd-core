@@ -752,6 +752,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeMeta(const OsmAnd::TileSqliteDatabase_P:
         {
             return false;
         }
+        resetCachedInfo();
     }
 
     return true;
