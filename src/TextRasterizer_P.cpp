@@ -143,7 +143,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
 
                 SkFontMetrics metrics;
                 pTextPaint->skFont.getMetrics(&metrics);
-                pTextPaint->height = pTextPaint->skFont.getSize() + 2.0f;
+                pTextPaint->height = pTextPaint->skFont.getSize() * 1.2f;
                 linePaint.maxFontHeight = qMax(linePaint.maxFontHeight, pTextPaint->height);
                 linePaint.minFontHeight = qMin(linePaint.minFontHeight, pTextPaint->height);
                 linePaint.maxFontLineSpacing = qMax(linePaint.maxFontLineSpacing, metrics.fLeading);
@@ -283,6 +283,7 @@ void OsmAnd::TextRasterizer_P::measureHalo(const Style& style, QVector<LinePaint
             haloTextPaint.skFont.measureText(
                 haloTextPaint.text.constData(), haloTextPaint.text.length()*sizeof(QChar), SkTextEncoding::kUTF16,
                 &haloBounds);
+            haloBounds.inset(-(float)style.haloRadius, -(float)style.haloRadius);
             textPaint.bounds.join(haloBounds);
 
             linePaint.maxBoundsTop = qMax(linePaint.maxBoundsTop, -textPaint.bounds.top());
@@ -364,9 +365,18 @@ SkRect OsmAnd::TextRasterizer_P::positionText(
             horizontalOffset += textPaint.width;
 
             // Position vertically
-            textPaint.positionedBounds.offset(0, -2.0f*textPaint.bounds.top());
+            if(verticalOffset == 0)
+            {
+                textPaint.positionedBounds.offset(0, -2.0f*textPaint.bounds.top());
+                verticalOffset -= textPaint.bounds.top();
+            }
+            else
+            {
+                textPaint.positionedBounds.offset(0, -textPaint.bounds.top());
+                textPaint.positionedBounds.offset(0, verticalOffset);
+                textPaint.positionedBounds.fBottom += textPaint.bounds.fBottom;
+            }
             textPaint.positionedBounds.offset(0, linePaint.maxBoundsTop + textPaint.bounds.top());
-            textPaint.positionedBounds.offset(0, verticalOffset);
 
             // Include into text area
             textArea.join(textPaint.positionedBounds);
