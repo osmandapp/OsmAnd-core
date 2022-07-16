@@ -11,28 +11,38 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::TileSqliteDatabasesCollection_P::TileSqliteDatabasesCollection_P(TileSqliteDatabasesCollection* owner_)
-    : _fileSystemWatcher(new QFileSystemWatcher())
+OsmAnd::TileSqliteDatabasesCollection_P::TileSqliteDatabasesCollection_P(
+    TileSqliteDatabasesCollection* owner_,
+    bool useFileWatcher /*= true*/,
+    bool buildIndexes /*=true*/)
+    : _fileSystemWatcher(useFileWatcher ? new QFileSystemWatcher() : NULL)
     , _lastUnusedSourceOriginId(0)
+    , _buildIndexes(buildIndexes)
     , _collectedSourcesInvalidated(1)
     , owner(owner_)
 {
-    _fileSystemWatcher->moveToThread(gMainThread);
+    if (_fileSystemWatcher)
+    {
+        _fileSystemWatcher->moveToThread(gMainThread);
 
-    _onDirectoryChangedConnection = QObject::connect(
-        _fileSystemWatcher, &QFileSystemWatcher::directoryChanged,
-        (std::function<void(const QString&)>)std::bind(&TileSqliteDatabasesCollection_P::onDirectoryChanged, this, std::placeholders::_1));
-    _onFileChangedConnection = QObject::connect(
-        _fileSystemWatcher, &QFileSystemWatcher::fileChanged,
-        (std::function<void(const QString&)>)std::bind(&TileSqliteDatabasesCollection_P::onFileChanged, this, std::placeholders::_1));
+        _onDirectoryChangedConnection = QObject::connect(
+            _fileSystemWatcher, &QFileSystemWatcher::directoryChanged,
+            (std::function<void(const QString&)>)std::bind(&TileSqliteDatabasesCollection_P::onDirectoryChanged, this, std::placeholders::_1));
+        _onFileChangedConnection = QObject::connect(
+            _fileSystemWatcher, &QFileSystemWatcher::fileChanged,
+            (std::function<void(const QString&)>)std::bind(&TileSqliteDatabasesCollection_P::onFileChanged, this, std::placeholders::_1));
+    }
 }
 
 OsmAnd::TileSqliteDatabasesCollection_P::~TileSqliteDatabasesCollection_P()
 {
-    QObject::disconnect(_onDirectoryChangedConnection);
-    QObject::disconnect(_onFileChangedConnection);
+    if (_fileSystemWatcher)
+    {
+        QObject::disconnect(_onDirectoryChangedConnection);
+        QObject::disconnect(_onFileChangedConnection);
 
-    _fileSystemWatcher->deleteLater();
+        _fileSystemWatcher->deleteLater();
+    }
 }
 
 void OsmAnd::TileSqliteDatabasesCollection_P::invalidateCollectedSources()
@@ -70,7 +80,8 @@ void OsmAnd::TileSqliteDatabasesCollection_P::collectSources() const
             {
                 const auto database = itCollectedSource.value();
 
-                _collectedSourcesIndex.remove(database);
+                if (_buildIndexes)
+                    _collectedSourcesIndex.remove(database);
 
                 itCollectedSource.value().reset();
             }
@@ -88,7 +99,8 @@ void OsmAnd::TileSqliteDatabasesCollection_P::collectSources() const
                 continue;
             const auto database = itDatabaseEntry.value();
 
-            _collectedSourcesIndex.remove(database);
+            if (_buildIndexes)
+                _collectedSourcesIndex.remove(database);
 
             itDatabaseEntry.remove();
         }
@@ -126,19 +138,23 @@ void OsmAnd::TileSqliteDatabasesCollection_P::collectSources() const
             for(const auto& sqliteFileInfo : constOf(sqliteFilesInfo))
             {
                 const auto& sqliteFilePath = sqliteFileInfo.canonicalFilePath();
-                const auto citDatabase = collectedSources.constFind(sqliteFilePath);
-                if (citDatabase != collectedSources.cend())
+                if (_buildIndexes)
                 {
-                    _collectedSourcesIndex.refresh(*citDatabase);
+                    const auto citDatabase = collectedSources.constFind(sqliteFilePath);
+                    if (citDatabase != collectedSources.cend())
+                    {
+                        _collectedSourcesIndex.refresh(*citDatabase);
+                    }
                 }
-
+                
                 const auto database = std::make_shared<TileSqliteDatabase>(sqliteFilePath);
                 collectedSources.insert(sqliteFilePath, database);
 
-                _collectedSourcesIndex.add(database);
+                if (_buildIndexes)
+                    _collectedSourcesIndex.add(database);
             }
 
-            if (directoryAsSourceOrigin->isRecursive)
+            if (_fileSystemWatcher && directoryAsSourceOrigin->isRecursive)
             {
                 QFileInfoList directoriesInfo;
                 Utilities::findDirectories(
@@ -169,14 +185,17 @@ void OsmAnd::TileSqliteDatabasesCollection_P::collectSources() const
             const auto citDatabase = collectedSources.constFind(sqliteFilePath);
             if (citDatabase != collectedSources.cend())
             {
-                _collectedSourcesIndex.refresh(*citDatabase);
+                if (_buildIndexes)
+                    _collectedSourcesIndex.refresh(*citDatabase);
+                
                 continue;
             }
 
             const auto database = std::make_shared<TileSqliteDatabase>(sqliteFilePath);
             collectedSources.insert(sqliteFilePath, database);
 
-            _collectedSourcesIndex.add(database);
+            if (_buildIndexes)
+                _collectedSourcesIndex.add(database);
         }
     }
 
@@ -205,16 +224,19 @@ OsmAnd::TileSqliteDatabasesCollection::SourceOriginId OsmAnd::TileSqliteDatabase
     sourceOrigin->isRecursive = recursive;
     _sourcesOrigins.insert(allocatedId, qMove(std::shared_ptr<const SourceOrigin>(sourceOrigin)));
 
-    _fileSystemWatcher->addPath(dir.canonicalPath());
-    if (recursive)
+    if (_fileSystemWatcher)
     {
-        QFileInfoList subdirs;
-        Utilities::findDirectories(dir, QStringList() << QStringLiteral("*"), subdirs, true);
-        for(const auto& subdir : subdirs)
+        _fileSystemWatcher->addPath(dir.canonicalPath());
+        if (recursive)
         {
-            const auto canonicalPath = subdir.canonicalFilePath();
-            sourceOrigin->watchedSubdirectories.insert(canonicalPath);
-            _fileSystemWatcher->addPath(canonicalPath);
+            QFileInfoList subdirs;
+            Utilities::findDirectories(dir, QStringList() << QStringLiteral("*"), subdirs, true);
+            for(const auto& subdir : subdirs)
+            {
+                const auto canonicalPath = subdir.canonicalFilePath();
+                sourceOrigin->watchedSubdirectories.insert(canonicalPath);
+                _fileSystemWatcher->addPath(canonicalPath);
+            }
         }
     }
 
@@ -233,11 +255,39 @@ OsmAnd::TileSqliteDatabasesCollection::SourceOriginId OsmAnd::TileSqliteDatabase
     sourceOrigin->fileInfo = fileInfo;
     _sourcesOrigins.insert(allocatedId, qMove(std::shared_ptr<const SourceOrigin>(sourceOrigin)));
 
-    _fileSystemWatcher->addPath(fileInfo.canonicalFilePath());
+    if (_fileSystemWatcher)
+        _fileSystemWatcher->addPath(fileInfo.canonicalFilePath());
 
     invalidateCollectedSources();
 
     return allocatedId;
+}
+
+bool OsmAnd::TileSqliteDatabasesCollection_P::removeFile(const QFileInfo& fileInfo)
+{
+    QWriteLocker scopedLocker(&_sourcesOriginsLock);
+
+    for(const auto& itEntry : rangeOf(constOf(_sourcesOrigins)))
+    {
+        const auto& originId = itEntry.key();
+        const auto& entry = itEntry.value();
+        
+        if (entry->type == SourceOriginType::File)
+        {
+            const auto& fileAsSourceOrigin = std::static_pointer_cast<const FileAsSourceOrigin>(entry);
+            if (fileAsSourceOrigin->fileInfo == fileInfo)
+            {
+                if (_fileSystemWatcher)
+                    _fileSystemWatcher->removePath(fileAsSourceOrigin->fileInfo.canonicalFilePath());
+                
+                _sourcesOrigins.remove(originId);
+
+                invalidateCollectedSources();
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool OsmAnd::TileSqliteDatabasesCollection_P::remove(const TileSqliteDatabasesCollection::SourceOriginId entryId)
@@ -248,26 +298,27 @@ bool OsmAnd::TileSqliteDatabasesCollection_P::remove(const TileSqliteDatabasesCo
     if (itSourceOrigin == _sourcesOrigins.end())
         return false;
 
-    const auto& sourceOrigin = *itSourceOrigin;
-    if (sourceOrigin->type == SourceOriginType::Directory)
+    if (_fileSystemWatcher)
     {
-        const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
+        const auto& sourceOrigin = *itSourceOrigin;
+        if (sourceOrigin->type == SourceOriginType::Directory)
+        {
+            const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
 
-        for(const auto& watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
-            _fileSystemWatcher->removePath(watchedSubdirectory);
-        _fileSystemWatcher->removePath(directoryAsSourceOrigin->directory.canonicalPath());
+            for(const auto& watchedSubdirectory : constOf(directoryAsSourceOrigin->watchedSubdirectories))
+                _fileSystemWatcher->removePath(watchedSubdirectory);
+            _fileSystemWatcher->removePath(directoryAsSourceOrigin->directory.canonicalPath());
+        }
+        else if (sourceOrigin->type == SourceOriginType::File)
+        {
+            const auto& fileAsSourceOrigin = std::static_pointer_cast<const FileAsSourceOrigin>(sourceOrigin);
+            _fileSystemWatcher->removePath(fileAsSourceOrigin->fileInfo.canonicalFilePath());
+        }
     }
-    else if (sourceOrigin->type == SourceOriginType::File)
-    {
-        const auto& fileAsSourceOrigin = std::static_pointer_cast<const FileAsSourceOrigin>(sourceOrigin);
-
-        _fileSystemWatcher->removePath(fileAsSourceOrigin->fileInfo.canonicalFilePath());
-    }
-
+    
     _sourcesOrigins.erase(itSourceOrigin);
 
     invalidateCollectedSources();
-
     return true;
 }
 
@@ -302,9 +353,31 @@ QList< std::shared_ptr<const OsmAnd::TileSqliteDatabase> > OsmAnd::TileSqliteDat
     {
         QReadLocker scopedLocker(&_collectedSourcesLock);
 
-        databases = constOf(_collectedSourcesIndex).find(tileId, zoom);
+        if (_buildIndexes)
+            databases = constOf(_collectedSourcesIndex).find(tileId, zoom);
     }
     return databases;
+}
+
+std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::TileSqliteDatabasesCollection_P::getTileSqliteDatabase(const QFileInfo& fileInfo) const
+{
+    // Check if sources were invalidated
+    if (_collectedSourcesInvalidated.loadAcquire() > 0)
+        collectSources();
+    
+    std::shared_ptr<const OsmAnd::TileSqliteDatabase> database;
+    {
+        QReadLocker scopedLocker(&_collectedSourcesLock);
+        
+        for (const auto& collectedSources : constOf(_collectedSources))
+        {
+            const auto& filePath = fileInfo.canonicalFilePath();
+            const auto citDatabase = collectedSources.constFind(filePath);
+            if (citDatabase != collectedSources.cend())
+                return *citDatabase;
+        }
+    }
+    return nullptr;
 }
 
 void OsmAnd::TileSqliteDatabasesCollection_P::onDirectoryChanged(const QString& path)

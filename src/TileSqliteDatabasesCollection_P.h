@@ -27,7 +27,7 @@ namespace OsmAnd
     {
     private:
     protected:
-        TileSqliteDatabasesCollection_P(TileSqliteDatabasesCollection* owner);
+        TileSqliteDatabasesCollection_P(TileSqliteDatabasesCollection* owner, bool useFileWatcher = true, bool buildIndexes = true);
 
         QFileSystemWatcher* const _fileSystemWatcher;
         QMetaObject::Connection _onDirectoryChangedConnection;
@@ -75,6 +75,7 @@ namespace OsmAnd
         mutable QReadWriteLock _sourcesOriginsLock;
         int _lastUnusedSourceOriginId;
 
+        bool _buildIndexes;
         void invalidateCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
         mutable QHash< TileSqliteDatabasesCollection::SourceOriginId, QHash<QString, std::shared_ptr<TileSqliteDatabase> > > _collectedSources;
@@ -89,11 +90,13 @@ namespace OsmAnd
         QList<TileSqliteDatabasesCollection::SourceOriginId> getSourceOriginIds() const;
         TileSqliteDatabasesCollection::SourceOriginId addDirectory(const QDir& dir, bool recursive);
         TileSqliteDatabasesCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
+        bool removeFile(const QFileInfo& fileInfo);
         bool remove(const TileSqliteDatabasesCollection::SourceOriginId entryId);
 
         QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases() const;
         QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases(
             TileId tileId, ZoomLevel zoom) const;
+        std::shared_ptr<TileSqliteDatabase> getTileSqliteDatabase(const QFileInfo& fileInfo) const;
 
     friend class OsmAnd::TileSqliteDatabasesCollection;
     friend class OsmAnd::TileSqliteDatabasesCollection_P__SignalProxy;
