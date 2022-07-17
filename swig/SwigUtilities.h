@@ -104,6 +104,7 @@ namespace OsmAnd
                 return nullptr;
             memcpy(bitmap.getPixels(), pBuffer, bufferSize);
 
+            bitmap.setImmutable(); // Don't copy when we create an image.
             return bitmap.asImage();
         }
         
