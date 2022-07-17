@@ -16,5 +16,6 @@ if (CMAKE_TARGET_OS STREQUAL "android")
 			"${libs_dir}/libboost_atomic.a"
 			"${libs_dir}/libboost_system.a"
 			"${libs_dir}/libboost_thread.a"
+			"${libs_dir}/libboost_chrono.a"
 	)
 endif()

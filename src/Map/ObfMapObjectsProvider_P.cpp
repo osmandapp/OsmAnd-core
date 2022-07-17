@@ -410,18 +410,46 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         loadedSharedRoads.push_back(road);
     }
 
+    int failCounter = 0;
     // Request all future map objects (both binary and roads)
     for (auto& futureBinaryMapObject : futureReferencedBinaryMapObjects)
     {
-        auto binaryMapObject = futureBinaryMapObject.get();
-
-        referencedBinaryMapObjects.push_back(qMove(binaryMapObject));
+        auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+        if (proper::future_status::ready == futureBinaryMapObject.wait_until(timeout))
+        {
+            auto binaryMapObject = futureBinaryMapObject.get();
+            referencedBinaryMapObjects.push_back(qMove(binaryMapObject));
+        }
+        else
+        {
+            failCounter++;
+            LogPrintf(LogSeverityLevel::Error, "Get futureBinaryMapObject timeout exceed = %d", failCounter);
+        }
+        if (failCounter >= 3)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Get futureBinaryMapObjects timeout exceed");
+            break;
+        }
     }
+
     for (auto& futureRoad : futureReferencedRoads)
     {
-        auto road = futureRoad.get();
-
-        referencedRoads.push_back(qMove(road));
+        auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+        if (proper::future_status::ready == futureRoad.wait_until(timeout))
+        {
+            auto road = futureRoad.get();
+            referencedRoads.push_back(qMove(road));
+        }
+        else
+        {
+            failCounter++;
+            LogPrintf(LogSeverityLevel::Error, "Get futureRoad timeout exceed = %d", failCounter);
+        }
+        if (failCounter >= 3)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Get futureRoads timeout exceed");
+            break;
+        }
     }
 
     if (metric)
