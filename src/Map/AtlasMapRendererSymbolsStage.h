@@ -17,6 +17,7 @@
 #include "QuadTree.h"
 #include "AtlasMapRendererStage.h"
 #include "GPUAPI.h"
+#include "VectorMapSymbol.h"
 
 namespace OsmAnd
 {
@@ -66,6 +67,7 @@ namespace OsmAnd
             PointI offsetFromTarget31;
             PointF offsetFromTarget;
             glm::vec3 positionInWorld;
+            std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>> tiledMeshes;
 
             float direction;
         };

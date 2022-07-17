@@ -35,6 +35,7 @@
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "Stopwatch.h"
 #include "GlmExtensions.h"
+#include "GeometryModifiers.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -1027,6 +1028,28 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
 
     // Get distance from symbol to camera
     renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+
+    // Tesselate symbol for the surface
+    if (const auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol)) {
+        float minDistance = 0.01f;
+        switch (vectorMapSymbol->scaleType)
+        {
+            case VectorMapSymbol::ScaleType::In31:
+                minDistance = 1000.0f;
+                break;
+        }
+        auto tiledMeshes = std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>(new std::map<TileId, std::vector<VectorMapSymbol::Vertex>>);
+        bool tesselated = GeometryModifiers::overGrid(vectorMapSymbol,
+                        tiledMeshes,
+                        Utilities::getPowZoom(31 - currentState.zoomLevel),
+                        0.0f,
+                        0.0f,
+                        minDistance,
+                        false);
+        if (tesselated)
+            renderable->tiledMeshes = tiledMeshes;
+    }
+
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(

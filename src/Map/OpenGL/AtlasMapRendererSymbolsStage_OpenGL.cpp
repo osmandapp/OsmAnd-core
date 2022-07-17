@@ -2101,7 +2101,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
         currentAlphaChannelType = AlphaChannelType::Straight;
     }
-
+/*
     // Activate vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->vertexBuffer->refInGPU)));
     GL_CHECK_RESULT;
@@ -2134,6 +2134,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
     }
 
+*/
     // Get proper scale
     PointI position31;
     if (gpuResource->position31 != nullptr)
@@ -2191,7 +2192,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         symbol->modulationColor.b,
         symbol->modulationColor.a);
     GL_CHECK_RESULT;
-
+/*
     // Unbind symbol texture from texture sampler
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
@@ -2235,7 +2236,66 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+*/
+    // Produce Texture Lookup Matrix
+    scaleFactor /= AtlasMapRenderer::TileSize3D;
+    const auto mTextureScale = glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));        
+    const auto mTexturePos = glm::translate(glm::vec3(
+        static_cast<float>(position31.x) / Utilities::getPowZoom(31 - currentState.zoomLevel),
+        0.0f,
+        static_cast<float>(position31.y) / Utilities::getPowZoom(31 - currentState.zoomLevel)));
+    const auto mTextureLookup = mTexturePos * mDirection * mTextureScale;
+    //glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mTextureLookup, 1, GL_FALSE, glm::value_ptr(mTextureLookup));
+    //GL_CHECK_RESULT;
 
+    for (const auto tiledMesh : *renderable->tiledMeshes) {
+
+        // Create vertex buffer
+        GLuint vertexBuffer;
+        glGenBuffers(1, &vertexBuffer);
+        GL_CHECK_RESULT;
+
+        // Bind it
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        GL_CHECK_RESULT;
+
+        // Upload data
+        glBufferData(GL_ARRAY_BUFFER, tiledMesh.second.size()*sizeof(VectorMapSymbol::Vertex), tiledMesh.second.data(), GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
+            2, GL_FLOAT, GL_FALSE,
+            sizeof(VectorMapSymbol::Vertex),
+            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXY)));
+        GL_CHECK_RESULT;
+
+        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
+        GL_CHECK_RESULT;
+        glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexColor,
+            4, GL_FLOAT, GL_FALSE,
+            sizeof(VectorMapSymbol::Vertex),
+            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, color)));
+        GL_CHECK_RESULT;
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+
+        // Unbind symbol texture from texture sampler
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+
+        // Draw symbol actually
+        glDrawArrays(GL_TRIANGLES, 0, tiledMesh.second.size());
+        GL_CHECK_RESULT;
+
+        // Delete buffer
+        glDeleteBuffers(1, &vertexBuffer);
+        GL_CHECK_RESULT;
+
+    }
+//
     GL_POP_GROUP_MARKER;
 
     return true;

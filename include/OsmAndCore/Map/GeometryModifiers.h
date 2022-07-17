@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_GEOMETRY_MODIFIERS_H_
 
 #include "VectorMapSymbol.h"
+#include "AtlasMapRenderer.h"
 
 #include <cmath>
 #include <algorithm>
@@ -122,10 +123,10 @@ namespace OsmAnd
                 inObj.push_back({ E.x, E.y, rodCode, D.color }); // TODO: Set calculated color
                 inObj.push_back(C);
                 inObj.push_back(D);
-                inObj.push_back(E);
+                inObj.push_back({ E.x, E.y, E.g, D.color });
             }
             else {
-                inObj.push_back(B);
+                inObj.push_back({ B.x, B.y, B.g, A.color });
                 inObj.push_back(D);
                 inObj.push_back({ E.x, E.y, rodCode, D.color }); // TODO: Set calculated color
                 inObj.push_back(C);
@@ -148,17 +149,28 @@ namespace OsmAnd
             }
         }
 
+        // Test triangles for CCW and rewire if not
+        inline static void ccwTriangle(VectorMapSymbol::Vertex * A, VectorMapSymbol::Vertex * B, VectorMapSymbol::Vertex * C) {
+            float s = A->positionXY[0] * B->positionXY[1] - A->positionXY[1] * B->positionXY[0];
+            s += B->positionXY[0] * C->positionXY[1] - B->positionXY[1] * C->positionXY[0];
+            s += C->positionXY[0] * A->positionXY[1] - C->positionXY[1] * A->positionXY[0];
+            if (s < 0.0f) {
+                VectorMapSymbol::Vertex * D = B;
+                B = C;
+                C = D;
+            }
+        }
+
         // Put triangle to the tile list
         inline static void putTriangle(std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>& meshes,
                         const VertexAdv& A,
                         const VertexAdv& B,
                         const VertexAdv& C,
-                        const int32_t& gridDimXY,
-                        const float& gridStepXY,
-                        const float& gridPosX,
-                        const float& gridPosY) {
-            auto x = static_cast<int32_t>(floor(((A.x + B.x + C.x) / 3.0f - gridPosX) / gridStepXY)) / gridDimXY;
-            auto y = static_cast<int32_t>(floor(((A.y + B.y + C.y) / 3.0f - gridPosY) / gridStepXY)) / gridDimXY;
+                        const float& tileSizeXY,
+                        const float& tileStartX,
+                        const float& tileStartY) {
+            auto x = static_cast<int32_t>(floor(((A.x + B.x + C.x) / 3.0f - tileStartX) / tileSizeXY));
+            auto y = static_cast<int32_t>(floor(((A.y + B.y + C.y) / 3.0f - tileStartY) / tileSizeXY));
             auto tileId = TileId::fromXY(x, y);
             auto ftile = meshes->find(tileId);
             if (ftile != meshes->end()) {
@@ -176,12 +188,11 @@ namespace OsmAnd
         }
 
         // Cut the mesh by tiles and four grid lines (+ optional mesh optimization)
-        static bool overGrid(const std::shared_ptr<VectorMapSymbol>& symbol,
+        static bool overGrid(const std::shared_ptr<const VectorMapSymbol>& symbol,
                 std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>& meshes,
-                const int32_t& gridDimXY,
-                const float& gridStepXY,
-                const float& gridPosX,
-                const float& gridPosY,
+                const float& tileSizeXY,
+                const float& tileStartX,
+                const float& tileStartY,
                 const float& minDistance,
                 const bool simplify);
         
