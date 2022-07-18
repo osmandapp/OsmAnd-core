@@ -1976,8 +1976,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
         "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
-        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+//        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
+        "uniform vec2 param_vs_tileId;                                                                                      ""\n"
+        "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
+        "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
+        "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
+        "uniform mediump vec4 param_vs_texCoordsOffsetAndScale;                                                             ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -1987,8 +1992,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    v.y = 0.0;                                                                                                     ""\n"
         "    v.z = in_vs_vertexPosition.y;                                                                                  ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
+        "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
+        "        vertexTexCoords -= param_vs_tileId;                                                                                 ""\n"
+        "        mediump vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                   ""\n"
+        "        elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                 ""\n"
+        "        float heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoords).r;            ""\n"
+        "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
+        "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 1.0f;                               ""\n"
+        "    }                                                                                                              ""\n"
         "    gl_Position = param_vs_mModelViewProjection * v;                                                               ""\n"
-        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
+//        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare color
         "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
@@ -2048,8 +2064,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+//    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.tileId, "param_vs_tileId", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.lookupOffsetAndScale, "param_vs_lookupOffsetAndScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_dataSampler, "param_vs_elevation_dataSampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.texCoordsOffsetAndScale, "param_vs_texCoordsOffsetAndScale", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_onSurfaceVectorProgram.id);
@@ -2164,7 +2185,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 AtlasMapRenderer::TileSize3D);
             break;
     }
-    const auto mScale = glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+    const auto mScale = glm::scale(glm::vec3(scaleFactor, 1.0f, scaleFactor));
 
     // Calculate position translate
     const auto mPosition = glm::translate(glm::vec3(
@@ -2181,9 +2202,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
 
     // Set distance from camera
-    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
-    glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
-    GL_CHECK_RESULT;
+//    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
+//    glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+//    GL_CHECK_RESULT;
 
     // Set modulation color
     glUniform4f(_onSurfaceVectorProgram.vs.param.modulationColor,
@@ -2237,18 +2258,48 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 */
-    // Produce Texture Lookup Matrix
+
+    // Set symbol position and scale for heightmap lookup
+    PointF startPosition = Utilities::convert31toFloat(position31, currentState.zoomLevel);
     scaleFactor /= AtlasMapRenderer::TileSize3D;
-    const auto mTextureScale = glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));        
-    const auto mTexturePos = glm::translate(glm::vec3(
-        static_cast<float>(position31.x) / Utilities::getPowZoom(31 - currentState.zoomLevel),
-        0.0f,
-        static_cast<float>(position31.y) / Utilities::getPowZoom(31 - currentState.zoomLevel)));
-    const auto mTextureLookup = mTexturePos * mDirection * mTextureScale;
-    //glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mTextureLookup, 1, GL_FALSE, glm::value_ptr(mTextureLookup));
-    //GL_CHECK_RESULT;
+    glUniform4f(_onSurfaceVectorProgram.vs.param.lookupOffsetAndScale,
+        startPosition.x,
+        startPosition.y,
+        scaleFactor,
+        scaleFactor);
+    GL_CHECK_RESULT;
+
+    const int elevationDataSamplerIndex = 0;
+    
+    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+
+    glUniform1i(_onSurfaceVectorProgram.vs.param.elevation_dataSampler, elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+
+    gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + elevationDataSamplerIndex, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
 
     for (const auto tiledMesh : *renderable->tiledMeshes) {
+
+        // Configure elevation data
+        if (currentState.elevationDataProvider)
+        {
+            configureElevationData(
+                _onSurfaceVectorProgram,
+                tiledMesh.first,
+                elevationDataSamplerIndex);
+        }
+        else {
+
+            glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+            GL_CHECK_RESULT;
+
+        }
+
+        glUniform2f(_onSurfaceVectorProgram.vs.param.tileId,
+            static_cast<float>(tiledMesh.first.x),
+            static_cast<float>(tiledMesh.first.y));
+        GL_CHECK_RESULT;
 
         // Create vertex buffer
         GLuint vertexBuffer;
@@ -2282,10 +2333,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
 
-        // Unbind symbol texture from texture sampler
-        glBindTexture(GL_TEXTURE_2D, 0);
-        GL_CHECK_RESULT;
-
         // Draw symbol actually
         glDrawArrays(GL_TRIANGLES, 0, tiledMesh.second.size());
         GL_CHECK_RESULT;
@@ -2295,6 +2342,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
 
     }
+
+    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+    GL_CHECK_RESULT;
+
+    // Unbind symbol texture from texture sampler
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+
 //
     GL_POP_GROUP_MARKER;
 
@@ -2319,3 +2374,155 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const b
 
     return true;
 }
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::captureElevationDataResource(
+    const TileId normalizedTileId,
+    const ZoomLevel zoomLevel)
+{
+    if (!currentState.elevationDataProvider)
+        return nullptr;
+
+    const auto& resourcesCollection_ = getResources().getCollectionSnapshot(
+        MapRendererResourceType::ElevationData,
+        currentState.elevationDataProvider);
+    const auto& resourcesCollection =
+        std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+    // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+    std::shared_ptr<MapRendererBaseTiledResource> resource_;
+    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
+    {
+        const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
+
+        // Check state and obtain GPU resource
+        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        {
+            // Capture GPU resource
+            const auto gpuResource = resource->resourceInGPU;
+
+            resource->setState(MapRendererResourceState::Uploaded);
+
+            return gpuResource;
+        }
+    }
+
+    return nullptr;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
+    const OnSurfaceVectorProgram& program,
+    const TileId tileId,
+    const int elevationDataSamplerIndex)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
+
+    // In case there's no elevation data provider or if there's no data for this tile,
+    // deactivate elevation data
+    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomLevel);
+    if (!elevationDataResource)
+    {
+        glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+        GL_CHECK_RESULT;
+
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {
+            glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+            GL_CHECK_RESULT;
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            GL_CHECK_RESULT;
+        }
+        return;
+    }
+
+    // Per-tile elevation data configuration
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+        currentState.zoomLevel,
+        tileIdN.y,
+        AtlasMapRenderer::TileSize3D);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+        currentState.zoomLevel,
+        tileIdN.y + 1,
+        AtlasMapRenderer::TileSize3D);
+    glUniform4f(program.vs.param.elevation_scale,
+        upperMetersPerUnit,
+        lowerMetersPerUnit,
+        currentState.elevationConfiguration.zScaleFactor,
+        currentState.elevationConfiguration.dataScaleFactor
+    );
+
+    GL_CHECK_RESULT;
+
+    if (gpuAPI->isSupported_vertexShaderTextureLookup)
+    {
+        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+        GL_CHECK_RESULT;
+
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
+        GL_CHECK_RESULT;
+
+        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+
+        if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+        {
+            const auto tileOnAtlasTexture =
+                std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+            const auto& texture = tileOnAtlasTexture->atlasTexture;
+
+            const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
+            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
+            const PointF texCoordsScale(
+                texture->tileSizeN - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                texture->tileSizeN - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                colIndex * texture->tileSizeN + texture->uHalfTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN
+            );
+
+            glUniform4f(program.vs.param.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
+            GL_CHECK_RESULT;
+        }
+        else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
+        {
+            const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
+
+            const PointF texCoordsScale(
+                1.0f - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
+                1.0f - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+            );
+            const PointF texCoordsOffset(
+                texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                texture->vHalfTexelSizeN + texture->vTexelSizeN
+            );
+
+            glUniform4f(program.vs.param.texCoordsOffsetAndScale,
+                texCoordsOffset.x,
+                texCoordsOffset.y,
+                texCoordsScale.x,
+                texCoordsScale.y);
+            GL_CHECK_RESULT;
+        }
+    }
+}
+

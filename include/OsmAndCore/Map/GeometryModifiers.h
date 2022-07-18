@@ -136,16 +136,16 @@ namespace OsmAnd
         }
 
         // Check points in line
-        inline static bool straightRod(const VertexAdv& A, const VertexAdv& B, const VertexAdv& C) {
+        inline static bool straightRod(const VertexAdv& A, const VertexAdv& B, const VertexAdv& C, const float& maxBreakTangent) {
             float vx = B.x - A.x;
             float vy = B.y - A.y;
             if (fabs(vx) < fabs(vy)) {
                 float dy = C.y - B.y;
-                return fabs(dy) > 0.0f ? fabs((C.x - B.x) / dy - vx / vy) < 0.01f : false;
+                return fabs(dy) > 0.0f ? fabs((C.x - B.x) / dy - vx / vy) < maxBreakTangent : false;
             }
             else {
                 float dx = C.x - B.x;
-                return fabs(dx) > 0.0f ? fabs((C.y - B.y) / dx - vy / vx) < 0.01f : false;
+                return fabs(dx) > 0.0f ? fabs((C.y - B.y) / dx - vy / vx) < maxBreakTangent : false;
             }
         }
 
@@ -166,11 +166,10 @@ namespace OsmAnd
                         const VertexAdv& A,
                         const VertexAdv& B,
                         const VertexAdv& C,
-                        const float& tileSizeXY,
-                        const float& tileStartX,
-                        const float& tileStartY) {
-            auto x = static_cast<int32_t>(floor(((A.x + B.x + C.x) / 3.0f - tileStartX) / tileSizeXY));
-            auto y = static_cast<int32_t>(floor(((A.y + B.y + C.y) / 3.0f - tileStartY) / tileSizeXY));
+                        const double& tileSize,                        
+                        const PointD& tilePosN) {           
+            auto x = static_cast<int32_t>(floor((static_cast<double>(A.x) + static_cast<double>(B.x) + static_cast<double>(C.x)) / 3.0 / tileSize + tilePosN.x));
+            auto y = static_cast<int32_t>(floor((static_cast<double>(A.y) + static_cast<double>(B.y) + static_cast<double>(C.y)) / 3.0 / tileSize + tilePosN.y));
             auto tileId = TileId::fromXY(x, y);
             auto ftile = meshes->find(tileId);
             if (ftile != meshes->end()) {
@@ -190,10 +189,10 @@ namespace OsmAnd
         // Cut the mesh by tiles and four grid lines (+ optional mesh optimization)
         static bool overGrid(const std::shared_ptr<const VectorMapSymbol>& symbol,
                 std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>& meshes,
-                const float& tileSizeXY,
-                const float& tileStartX,
-                const float& tileStartY,
+                const double& tileSize,
+                const PointD& tilePosN,
                 const float& minDistance,
+                const float& maxBreakTangent,                
                 const bool simplify);
         
         private:

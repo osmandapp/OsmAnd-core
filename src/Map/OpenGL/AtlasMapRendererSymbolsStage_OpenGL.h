@@ -247,6 +247,11 @@ namespace OsmAnd
                     GLlocation mModelViewProjection;
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
+                    GLlocation tileId;
+                    GLlocation lookupOffsetAndScale;
+                    GLlocation elevation_scale;
+                    GLlocation elevation_dataSampler;
+                    GLlocation texCoordsOffsetAndScale;
                 } param;
             } vs;
 
@@ -265,6 +270,13 @@ namespace OsmAnd
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
         bool releaseOnSurfaceVector(const bool gpuContextLost);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
+            const TileId normalizedTileId,
+            const ZoomLevel zoomLevel);
+        void configureElevationData(
+            const OnSurfaceVectorProgram& program,
+            const TileId tileId,
+            const int elevationDataSamplerIndex);
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
