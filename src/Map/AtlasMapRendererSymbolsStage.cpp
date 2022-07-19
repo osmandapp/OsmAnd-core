@@ -1030,29 +1030,38 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
 
     // Tesselate symbol for the surface
+    renderable->tiledMeshes = nullptr;
     if (currentState.elevationDataProvider) {
         if (auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol)) {
+            double tileSize = 0.0;
             float minDistance = 0.01f;
             float maxBreakTangent = 0.01f;
             switch (vectorMapSymbol->scaleType)
             {
                 case VectorMapSymbol::ScaleType::In31:
                     minDistance = 1.0f;
+                    tileSize = Utilities::getPowZoom(31 - currentState.zoomLevel);
                     break;
+                case VectorMapSymbol::ScaleType::InMeters:
+                    minDistance = 0.01f;                    
+                    tileSize = Utilities::getMetersPerTileUnit(
+                        currentState.zoomLevel,
+                        position31.y >> (ZoomLevel31 - currentState.zoomLevel),
+                        1.0);
             }
-            auto tiledMeshes = std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>(new std::map<TileId, std::vector<VectorMapSymbol::Vertex>>);
-            bool tesselated = GeometryModifiers::overGrid(vectorMapSymbol,
-                            tiledMeshes,
-                            Utilities::getPowZoom(31 - currentState.zoomLevel),
-                            Utilities::convert31toFloat(position31, currentState.zoomLevel),
-                            minDistance,
-                            maxBreakTangent,
-                            false);
-            renderable->tiledMeshes = tesselated ? tiledMeshes : nullptr;
+            if (tileSize > 0.0) {
+                auto tiledMeshes = std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>(new std::map<TileId, std::vector<VectorMapSymbol::Vertex>>);
+                bool tesselated = GeometryModifiers::overGrid(vectorMapSymbol,
+                                tiledMeshes,
+                                tileSize,
+                                Utilities::convert31toFloat(position31, currentState.zoomLevel),
+                                minDistance,
+                                maxBreakTangent,
+                                false);
+                renderable->tiledMeshes = tesselated ? tiledMeshes : nullptr;
+            }
         }
-    }    
-    else
-        renderable->tiledMeshes = nullptr;
+    }           
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(

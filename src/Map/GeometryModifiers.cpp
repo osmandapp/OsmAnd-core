@@ -280,7 +280,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
             }
         }
 
-        /* ---- NO DIAGONAL CUTTING IS NEEDED ----
+        /* ---- DIAGONAL CUTTING IS DISABLED HERE (and below) ----
 
         // median diagonal line to cut (y=x):
         c = static_cast<int32_t>(round(((wMin + wMax) * 0.5f - gridPosW) / gridStepWU));
@@ -364,12 +364,17 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
         case 1:
             prev = iMinX + iMaxX != 2 ? std::min(iMinX, iMaxX) : 2;
             next = iMinX + iMaxX != 2 ? std::max(iMinX, iMaxX) : 0;
-            point1 = { rod, tgl[iMinX].y + (tgl[iMaxX].y - tgl[iMinX].y) * (rod - xMin) / (xMax - xMin) };
+            rate = (rod - xMin) / (xMax - xMin);
+            point1 = { rod, tgl[iMinX].y + (tgl[iMaxX].y - tgl[iMinX].y) * rate, 0, middleColor(tgl[iMinX], tgl[iMaxX], rate) };
             intoTwo = false;
-            if (rod < tgl[i].x - minDistance)
-                point2 = { rod, tgl[iMinX].y + (tgl[i].y - tgl[iMinX].y) * (rod - xMin) / (tgl[i].x - xMin) };
-            else if (rod > tgl[i].x + minDistance)
-                point2 = { rod, tgl[i].y + (tgl[iMaxX].y - tgl[i].y) * (rod - tgl[i].x) / (xMax - tgl[i].x) };
+            if (rod < tgl[i].x - minDistance) {
+                rate = (rod - xMin) / (tgl[i].x - xMin);
+                point2 = { rod, tgl[iMinX].y + (tgl[i].y - tgl[iMinX].y) * rate, 0, middleColor(tgl[iMinX], tgl[i], rate) };
+            }
+            else if (rod > tgl[i].x + minDistance) {
+                rate = (rod - tgl[i].x) / (xMax - tgl[i].x);
+                point2 = { rod, tgl[i].y + (tgl[iMaxX].y - tgl[i].y) * rate, 0, middleColor(tgl[i], tgl[iMaxX], rate) };
+            }
             else
                 intoTwo = true;
             if (intoTwo)
@@ -382,12 +387,17 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
         case 2:
             prev = iMinY + iMaxY != 2 ? std::min(iMinY, iMaxY) : 2;
             next = iMinY + iMaxY != 2 ? std::max(iMinY, iMaxY) : 0;
-            point1 = { tgl[iMinY].x + (tgl[iMaxY].x - tgl[iMinY].x) * (rod - yMin) / (yMax - yMin), rod };
+            rate = (rod - yMin) / (yMax - yMin);
+            point1 = { tgl[iMinY].x + (tgl[iMaxY].x - tgl[iMinY].x) * rate, rod, 0, middleColor(tgl[iMinY], tgl[iMaxY], rate) };
             intoTwo = false;
-            if (rod < tgl[i].y - minDistance)
-                point2 = { tgl[iMinY].x + (tgl[i].x - tgl[iMinY].x) * (rod - yMin) / (tgl[i].y - yMin), rod };
-            else if (rod > tgl[i].y + minDistance)
-                point2 = { tgl[i].x + (tgl[iMaxY].x - tgl[i].x) * (rod - tgl[i].y) / (yMax - tgl[i].y), rod };
+            if (rod < tgl[i].y - minDistance) {
+                rate = (rod - yMin) / (tgl[i].y - yMin);
+                point2 = { tgl[iMinY].x + (tgl[i].x - tgl[iMinY].x) * rate, rod, 0, middleColor(tgl[iMinY], tgl[i], rate) };
+            }
+            else if (rod > tgl[i].y + minDistance) {
+                rate = (rod - tgl[i].y) / (yMax - tgl[i].y);
+                point2 = { tgl[i].x + (tgl[iMaxY].x - tgl[i].x) * rate, rod, 0, middleColor(tgl[i], tgl[iMaxY], rate) };
+            }
             else
                 intoTwo = true;
             if (intoTwo)
@@ -397,20 +407,23 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
             else
                 threeParts(inObj, tgl[next], point2, tgl[i], tgl[prev], point1, cell, simplify);
             continue;
+
+        /* ---- DIAGONAL CUTTING IS DISABLED HERE (and above) ----
+
         case 3:
             prev = iMinW + iMaxW != 2 ? std::min(iMinW, iMaxW) : 2;
             next = iMinW + iMaxW != 2 ? std::max(iMinW, iMaxW) : 0;
             rate = (rod - wMin) / (wMax - wMin);
-            point1 = { tgl[iMinW].x + (tgl[iMaxW].x - tgl[iMinW].x) * rate, tgl[iMinW].y + (tgl[iMaxW].y - tgl[iMinW].y) * rate };
+            point1 = { tgl[iMinW].x + (tgl[iMaxW].x - tgl[iMinW].x) * rate, tgl[iMinW].y + (tgl[iMaxW].y - tgl[iMinW].y) * rate, 0, middleColor(tgl[iMinW], tgl[iMaxW], rate) };
             w = (tgl[i].x - tgl[i].y) * RSQRT2;
             intoTwo = false;
             if (rod < w - minDistance) {
                 rate = (rod - wMin) / (w - wMin);
-                point2 = { tgl[iMinW].x + (tgl[i].x - tgl[iMinW].x) * rate, tgl[iMinW].y + (tgl[i].y - tgl[iMinW].y) * rate };
+                point2 = { tgl[iMinW].x + (tgl[i].x - tgl[iMinW].x) * rate, tgl[iMinW].y + (tgl[i].y - tgl[iMinW].y) * rate, 0, middleColor(tgl[iMinW], tgl[i], rate) };
             }
             else if (rod > w + minDistance) {
                 rate = (rod - w) / (wMax - w);
-                point2 = { tgl[i].x + (tgl[iMaxW].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxW].y - tgl[i].y) * rate };
+                point2 = { tgl[i].x + (tgl[iMaxW].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxW].y - tgl[i].y) * rate, 0, middleColor(tgl[i], tgl[iMaxW], rate) };
             }
             else
                 intoTwo = true;
@@ -425,16 +438,16 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
             prev = iMinU + iMaxU != 2 ? std::min(iMinU, iMaxU) : 2;
             next = iMinU + iMaxU != 2 ? std::max(iMinU, iMaxU) : 0;
             rate = (rod - uMin) / (uMax - uMin);
-            point1 = { tgl[iMinU].x + (tgl[iMaxU].x - tgl[iMinU].x) * rate, tgl[iMinU].y + (tgl[iMaxU].y - tgl[iMinU].y) * rate };
+            point1 = { tgl[iMinU].x + (tgl[iMaxU].x - tgl[iMinU].x) * rate, tgl[iMinU].y + (tgl[iMaxU].y - tgl[iMinU].y) * rate, 0, middleColor(tgl[iMinU], tgl[iMaxU], rate) };
             u = (tgl[i].x + tgl[i].y) * RSQRT2;
             intoTwo = false;
             if (rod < u - minDistance) {
                 rate = (rod - uMin) / (u - uMin);
-                point2 = { tgl[iMinU].x + (tgl[i].x - tgl[iMinU].x) * rate, tgl[iMinU].y + (tgl[i].y - tgl[iMinU].y) * rate };
+                point2 = { tgl[iMinU].x + (tgl[i].x - tgl[iMinU].x) * rate, tgl[iMinU].y + (tgl[i].y - tgl[iMinU].y) * rate, 0, middleColor(tgl[iMinU], tgl[i], rate) };
             }
             else if (rod > u + minDistance) {
                 rate = (rod - u) / (uMax - u);
-                point2 = { tgl[i].x + (tgl[iMaxU].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxU].y - tgl[i].y) * rate };
+                point2 = { tgl[i].x + (tgl[iMaxU].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxU].y - tgl[i].y) * rate, 0, middleColor(tgl[i], tgl[iMaxU], rate) };
             }
             else
                 intoTwo = true;
@@ -445,6 +458,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
             else
                 threeParts(inObj, tgl[next], point2, tgl[i], tgl[prev], point1, cell, simplify);
             continue;
+        */
         }
         // output the produced triangle (to the map of fragments or to results)
         intoTwo = !simplify || (tgl[0].g == 0 && tgl[1].g == 0 && tgl[2].g == 0) || (tgl[0].g != 0 && tgl[1].g != 0 && tgl[2].g != 0);

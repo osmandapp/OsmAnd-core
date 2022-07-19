@@ -70,6 +70,16 @@ namespace OsmAnd
             signature.cy = trimForHash(C.y);
         }
 
+        // Simple color interpolation
+        inline static FColorARGB middleColor(const VertexAdv& A,
+                                const VertexAdv& B,
+                                const float& Nt) {
+            return { (B.color.a - A.color.a) * Nt + A.color.a,
+                (B.color.r - A.color.r) * Nt + A.color.r,
+                (B.color.g - A.color.g) * Nt + A.color.g,
+                (B.color.b - A.color.b) * Nt + A.color.b };
+        }
+
         // Paving with two triangles
         inline static void twoParts(std::deque<VertexAdv>& inObj,
                                 const VertexAdv& A,
@@ -78,11 +88,11 @@ namespace OsmAnd
                                 const VertexAdv& D,
                                 const int32_t& rodCode) {
             inObj.push_back(A);
-            inObj.push_back({ B.x, B.y, rodCode, A.color }); // TODO: Set calculated color
+            inObj.push_back({ B.x, B.y, rodCode, B.color }); // TODO: Set calculated color
             inObj.push_back(D);
             inObj.push_back(C);
             inObj.push_back({ D.x, D.y, rodCode, D.color });
-            inObj.push_back({ B.x, B.y, A.g, A.color }); // TODO: Set calculated color
+            inObj.push_back({ B.x, B.y, A.g, B.color }); // TODO: Set calculated color
         }
 
         // Paving with three triangles
@@ -115,23 +125,23 @@ namespace OsmAnd
                 rewire = m < r;
             }
             inObj.push_back(A);
-            inObj.push_back({ B.x, B.y, rodCode, A.color }); // TODO: Set calculated color
-            inObj.push_back({ E.x, E.y, D.g, D.color }); // TODO: Set calculated color
+            inObj.push_back({ B.x, B.y, rodCode, B.color });
+            inObj.push_back({ E.x, E.y, D.g, E.color });
             if (rewire) {
-                inObj.push_back({ B.x, B.y, A.g, A.color }); // TODO: Set calculated color
+                inObj.push_back({ B.x, B.y, A.g, B.color });
                 inObj.push_back({ C.x, C.y, 0, C.color });
-                inObj.push_back({ E.x, E.y, rodCode, D.color }); // TODO: Set calculated color
+                inObj.push_back({ E.x, E.y, rodCode, E.color });
                 inObj.push_back(C);
                 inObj.push_back(D);
-                inObj.push_back({ E.x, E.y, E.g, D.color });
+                inObj.push_back(E);
             }
             else {
-                inObj.push_back({ B.x, B.y, B.g, A.color });
+                inObj.push_back(B);
                 inObj.push_back(D);
-                inObj.push_back({ E.x, E.y, rodCode, D.color }); // TODO: Set calculated color
+                inObj.push_back({ E.x, E.y, rodCode, E.color });
                 inObj.push_back(C);
                 inObj.push_back({ D.x, D.y, 0, D.color });
-                inObj.push_back({ B.x, B.y, A.g, A.color }); // TODO: Set calculated color
+                inObj.push_back({ B.x, B.y, A.g, B.color });
             }
         }
 

@@ -2321,7 +2321,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             }
 
             // Upload data
-            glBufferData(GL_ARRAY_BUFFER, sizeof(VectorMapSymbol::Vertex) * tiledMesh.second.size() + 8, tiledMesh.second.data(), GL_STREAM_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(VectorMapSymbol::Vertex) * tiledMesh.second.size(), tiledMesh.second.data(), GL_STREAM_DRAW);
             GL_CHECK_RESULT;
 
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
