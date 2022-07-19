@@ -1030,28 +1030,29 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
 
     // Tesselate symbol for the surface
-    if (const auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol)) {
-        float minDistance = 0.01f;
-        float maxBreakTangent = 0.01f;
-        switch (vectorMapSymbol->scaleType)
-        {
-            case VectorMapSymbol::ScaleType::In31:
-                minDistance = 1.0f;
-                maxBreakTangent = 0.01f;
-                break;
+    if (currentState.elevationDataProvider) {
+        if (auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol)) {
+            float minDistance = 0.01f;
+            float maxBreakTangent = 0.01f;
+            switch (vectorMapSymbol->scaleType)
+            {
+                case VectorMapSymbol::ScaleType::In31:
+                    minDistance = 1.0f;
+                    break;
+            }
+            auto tiledMeshes = std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>(new std::map<TileId, std::vector<VectorMapSymbol::Vertex>>);
+            bool tesselated = GeometryModifiers::overGrid(vectorMapSymbol,
+                            tiledMeshes,
+                            Utilities::getPowZoom(31 - currentState.zoomLevel),
+                            Utilities::convert31toFloat(position31, currentState.zoomLevel),
+                            minDistance,
+                            maxBreakTangent,
+                            false);
+            renderable->tiledMeshes = tesselated ? tiledMeshes : nullptr;
         }
-        auto tiledMeshes = std::shared_ptr<std::map<TileId, std::vector<VectorMapSymbol::Vertex>>>(new std::map<TileId, std::vector<VectorMapSymbol::Vertex>>);
-        bool tesselated = GeometryModifiers::overGrid(vectorMapSymbol,
-                        tiledMeshes,
-                        Utilities::getPowZoom(31 - currentState.zoomLevel),
-                        Utilities::convert31toFloat(position31, currentState.zoomLevel),
-                        minDistance,
-                        maxBreakTangent,
-                        false);
-        if (tesselated)
-            renderable->tiledMeshes = tiledMeshes;
-    }
-
+    }    
+    else
+        renderable->tiledMeshes = nullptr;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(

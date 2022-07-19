@@ -17,9 +17,10 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                         const float& maxBreakTangent,
                         const bool simplify) {
     if (tileSize <= 0.0 || minDistance <= 0.0f) return false;
+    std::cerr.precision(16);
     float gridStepXY = tileSize / static_cast<double>(AtlasMapRenderer::HeixelsPerTileSide - 1);
     float gridPosX = -(tilePosN.x - std::floor(tilePosN.x)) * tileSize;
-    float gridPosY = -(tilePosN.y - std::floor(tilePosN.y)) * tileSize;
+    float gridPosY = -(tilePosN.y - std::floor(tilePosN.y)) * tileSize;    
     int32_t i, j, v;
     const auto s = symbol->getVerticesAndIndexes();
     if (s->vertices == nullptr || s->verticesCount < 3) return false;
@@ -44,7 +45,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                             if (v < s->verticesCount) {
                                 pv = &s->vertices[v];
                                 pvt = pv;
-                                ccwTriangle(pvf, pvs, pvt);
+                                if (simplify) ccwTriangle(pvf, pvs, pvt);
                                 inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
                                 inObj.push_back({ pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color });
                                 inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
@@ -63,7 +64,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                 for (v = 2; v < s->verticesCount; v++) {
                     pvs = pv - 1;
                     pvt = pv;
-                    ccwTriangle(pvf, pvs, pvt);
+                    if (simplify) ccwTriangle(pvf, pvs, pvt);
                     inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
                     inObj.push_back({ pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color });
                     inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
@@ -86,7 +87,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                                 pv = &s->vertices[v];
                                 pvd = pvs;
                                 pvt = pv;
-                                ccwTriangle(pvf, pvd, pvt);
+                                if (simplify) ccwTriangle(pvf, pvd, pvt);
                                 inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
                                 inObj.push_back({ pvd->positionXY[0], pvd->positionXY[1], 0, pvd->color });
                                 inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
@@ -114,7 +115,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                         pvs = pv - 1;
                     }
                     pvt = pv;
-                    ccwTriangle(pvf, pvs, pvt);
+                    if (simplify) ccwTriangle(pvf, pvs, pvt);
                     inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
                     inObj.push_back({ pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color });
                     inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
@@ -135,7 +136,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                             v = s->indices[i + 2];
                             if (v < s->verticesCount) {
                                 pvt = &s->vertices[v];
-                                ccwTriangle(pvf, pvs, pvt);
+                                if (simplify) ccwTriangle(pvf, pvs, pvt);
                                 inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
                                 inObj.push_back({ pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color });
                                 inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
@@ -151,13 +152,10 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                     pvf = pv++;
                     pvs = pv++;
                     pvt = pv++;
-                    ccwTriangle(pvf, pvs, pvt);
+                    if (simplify) ccwTriangle(pvf, pvs, pvt);
                     inObj.push_back({ pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color });
-    //std::cerr << "T1: X=" << pvf->positionXY[0] << " Y=" << pvf->positionXY[1] << std::endl;
                     inObj.push_back({ pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color });
-    //std::cerr << "T2: X=" << pvs->positionXY[0] << " Y=" << pvs->positionXY[1] << std::endl;
                     inObj.push_back({ pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color });
-    //std::cerr << "T3: X=" << pvt->positionXY[0] << " Y=" << pvt->positionXY[1] << std::endl;
                 }
             break;
         default:
@@ -281,6 +279,9 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                 }
             }
         }
+
+        /* ---- NO DIAGONAL CUTTING IS NEEDED ----
+
         // median diagonal line to cut (y=x):
         c = static_cast<int32_t>(round(((wMin + wMax) * 0.5f - gridPosW) / gridStepWU));
         w = c * gridStepWU + gridPosW;
@@ -358,6 +359,7 @@ bool OsmAnd::GeometryModifiers::overGrid(const std::shared_ptr<const VectorMapSy
                 }
             }
         }
+        */
         switch (next) {
         case 1:
             prev = iMinX + iMaxX != 2 ? std::min(iMinX, iMaxX) : 2;
