@@ -8,6 +8,7 @@
 OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     WeatherTileResourcesManager* const owner_,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
+    const bool localData_,
     const QString& localCachePath_,
     const QString& projResourcesPath_,
     const uint32_t tileSize_ /*= 256*/,
@@ -15,6 +16,7 @@ OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : owner(owner_)
     , _bandSettings(bandSettings_)
+    , _localData(localData_)
     , webClient(webClient_)
     , localCachePath(localCachePath_)
     , projResourcesPath(projResourcesPath_)
@@ -32,6 +34,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
     return std::make_shared<WeatherTileResourceProvider>(
         dateTime,
         _bandSettings,
+        _localData,
         localCachePath,
         projResourcesPath,
         tileSize,
@@ -68,6 +71,15 @@ void OsmAnd::WeatherTileResourcesManager_P::updateProvidersBandSettings()
         provider->setBandSettings(bandSettings);
 }
 
+void OsmAnd::WeatherTileResourcesManager_P::updateProvidersLocalData()
+{
+    QWriteLocker scopedLocker(&_resourceProvidersLock);
+
+    const auto& localData = _localData;
+    for (const auto& provider : _resourceProviders.values())
+        provider->setLocalData(localData);
+}
+
 const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> OsmAnd::WeatherTileResourcesManager_P::getBandSettings() const
 {
     QReadLocker scopedLocker(&_bandSettingsLock);
@@ -81,6 +93,21 @@ void OsmAnd::WeatherTileResourcesManager_P::setBandSettings(const QHash<BandInde
 
     _bandSettings = bandSettings;
     updateProvidersBandSettings();
+}
+
+const bool OsmAnd::WeatherTileResourcesManager_P::getLocalData() const
+{
+    QReadLocker scopedLocker(&_localDataLock);
+
+    return _localData;
+}
+
+void OsmAnd::WeatherTileResourcesManager_P::setLocalData(const bool localData)
+{
+    QWriteLocker scopedLocker(&_localDataLock);
+
+    _localData = localData;
+    updateProvidersLocalData();
 }
 
 double OsmAnd::WeatherTileResourcesManager_P::getConvertedBandValue(const BandIndex band, const double value) const
@@ -230,7 +257,6 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
-        rr.dataTime = request.dataTime;
         rr.queryController = request.queryController;
         
         auto band = request.band;
@@ -263,7 +289,6 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
-        rr.dataTime = request.dataTime;
         rr.queryController = request.queryController;
      
         auto band = request.band;
@@ -297,11 +322,10 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
     {
         WeatherTileResourceProvider::TileRequest rr;
         rr.weatherType = request.weatherType;
-        rr.dataTime = request.dataTime;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
         rr.bands = request.bands;
-        rr.localData = request.localData;
+        rr.localData = getLocalData();
         rr.queryController = request.queryController;
         
         const WeatherTileResourceProvider::ObtainTileDataAsyncCallback rc =
@@ -346,11 +370,10 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     {
         WeatherTileResourceProvider::TileRequest rr;
         rr.weatherType = request.weatherType;
-        rr.dataTime = request.dataTime;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
         rr.bands = request.bands;
-        rr.localData = request.localData;
+        rr.localData = getLocalData();
         rr.queryController = request.queryController;
         
         const WeatherTileResourceProvider::ObtainTileDataAsyncCallback rc =
@@ -448,7 +471,7 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
         callback(false, 0, 0, nullptr);
     }
 }
-bool OsmAnd::WeatherTileResourcesManager_P::storeTileData(
+bool OsmAnd::WeatherTileResourcesManager_P::storeLocalTileData(
         const TileId tileId,
         const QDateTime dateTime,
         const ZoomLevel zoom,
@@ -456,12 +479,12 @@ bool OsmAnd::WeatherTileResourcesManager_P::storeTileData(
 {
     auto resourceProvider = getResourceProvider(dateTime);
     if (resourceProvider)
-        return resourceProvider->storeTileData(tileId, dateTime, zoom, outData);
+        return resourceProvider->storeLocalTileData(tileId, zoom, outData);
     else
         return false;
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::containsTileId(
+bool OsmAnd::WeatherTileResourcesManager_P::containsLocalTileId(
         const TileId tileId,
         const QDateTime dateTime,
         const ZoomLevel zoom,
@@ -471,14 +494,14 @@ bool OsmAnd::WeatherTileResourcesManager_P::containsTileId(
 
     for (auto &provider: _resourceProviders.values())
     {
-        if (provider->containsTileId(tileId, dateTime, zoom, outData))
+        if (provider->containsLocalTileId(tileId, dateTime, zoom, outData))
             return true;
     }
 
     return false;
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
+bool OsmAnd::WeatherTileResourcesManager_P::clearLocalDbCache(
         const LatLon topLeft,
         const LatLon bottomRight,
         const ZoomLevel zoom)
@@ -488,14 +511,14 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
     QList<QString> dateTimes;
     for (auto &provider: _resourceProviders.values())
     {
-        QVector<TileId> tileIds = WeatherTileResourceProvider::generateGeoTileIds(topLeft, bottomRight, zoom);
+        QVector<TileId> tileIds = WeatherTileResourcesManager::generateGeoTileIds(topLeft, bottomRight, zoom);
         for (auto &tileId: tileIds)
         {
             bool containsTileId = false;
             for (auto &providerWithTileId: _resourceProviders.values())
             {
                 QByteArray outData;
-                if (provider != providerWithTileId && providerWithTileId->containsTileId(tileId, providerWithTileId->getDateTime(), zoom, outData))
+                if (provider != providerWithTileId && providerWithTileId->containsLocalTileId(tileId, providerWithTileId->getDateTime(), zoom, outData))
                 {
                     containsTileId = true;
                     break;

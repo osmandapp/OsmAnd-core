@@ -34,11 +34,16 @@ namespace OsmAnd
         mutable QReadWriteLock _bandSettingsLock;
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
         void updateProvidersBandSettings();
-        
+
+        mutable QReadWriteLock _localDataLock;
+        bool _localData;
+        void updateProvidersLocalData();
+
     protected:
         WeatherTileResourcesManager_P(
             WeatherTileResourcesManager* const owner,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -55,6 +60,9 @@ namespace OsmAnd
 
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
+
+        const bool getLocalData() const;
+        void setLocalData(const bool localData);
 
         double getConvertedBandValue(const BandIndex band, const double value) const;
         QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
@@ -102,19 +110,19 @@ namespace OsmAnd
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        bool storeTileData(
+        bool storeLocalTileData(
                 const TileId tileId,
                 const QDateTime dateTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        bool containsTileId(
+        bool containsLocalTileId(
                 const TileId tileId,
                 const QDateTime dateTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        bool clearDbCache(
+        bool clearLocalDbCache(
                 const LatLon topLeft,
                 const LatLon bottomRight,
                 const ZoomLevel zoom);

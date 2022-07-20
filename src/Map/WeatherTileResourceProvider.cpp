@@ -11,17 +11,17 @@
 #include "QRunnableFunctor.h"
 
 #include <Logging.h>
-#include <Utilities.h>
 
 OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
     const QDateTime& dateTime,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+    const bool localData,
     const QString& localCachePath,
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
-    : _p(new WeatherTileResourceProvider_P(this, dateTime, bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+    : _p(new WeatherTileResourceProvider_P(this, dateTime, bandSettings, localData, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }
@@ -76,53 +76,6 @@ void OsmAnd::WeatherTileResourceProvider::downloadGeoTilesAsync(
     const bool collectMetric /*= false*/)
 {
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
-}
-
-QVector<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::generateGeoTileIds(
-        const LatLon topLeft,
-        const LatLon bottomRight,
-        const ZoomLevel zoom)
-{
-    QVector<TileId> geoTileIds;
-
-    const auto topLeftTileId = TileId::fromXY(
-            Utilities::getTileNumberX(zoom, topLeft.longitude),
-            Utilities::getTileNumberY(zoom, topLeft.latitude));
-
-    const auto bottomRightTileId = TileId::fromXY(
-            Utilities::getTileNumberX(zoom, bottomRight.longitude),
-            Utilities::getTileNumberY(zoom, bottomRight.latitude));
-
-    if (topLeftTileId == bottomRightTileId)
-    {
-        geoTileIds << topLeftTileId;
-    }
-    else
-    {
-        int maxTileValue = (1 << zoom) - 1;
-        auto x1 = topLeftTileId.x;
-        auto y1 = topLeftTileId.y;
-        auto x2 = bottomRightTileId.x;
-        auto y2 = bottomRightTileId.y;
-        if (x2 < x1)
-            x2 = maxTileValue + x2 + 1;
-        if (y2 < y1)
-            y2 = maxTileValue + y2 + 1;
-
-        auto y = y1;
-        for (int iy = y1; iy <= y2; iy++)
-        {
-            auto x = x1;
-            for (int ix = x1; ix <= x2; ix++)
-            {
-                geoTileIds << TileId::fromXY(x, y);
-                x = x == maxTileValue ? 0 : x + 1;
-            }
-            y = y == maxTileValue ? 0 : y + 1;
-        }
-    }
-
-    return geoTileIds;
 }
 
 OsmAnd::ZoomLevel OsmAnd::WeatherTileResourceProvider::getGeoTileZoom()
@@ -191,27 +144,31 @@ void OsmAnd::WeatherTileResourceProvider::setBandSettings(const QHash<BandIndex,
     return _p->setBandSettings(bandSettings);
 }
 
+void OsmAnd::WeatherTileResourceProvider::setLocalData(const bool localData)
+{
+    return _p->setLocalData(localData);
+}
+
 int OsmAnd::WeatherTileResourceProvider::getCurrentRequestVersion() const
 {
     return _p->getCurrentRequestVersion();
 }
 
-bool OsmAnd::WeatherTileResourceProvider::storeTileData(
+bool OsmAnd::WeatherTileResourceProvider::storeLocalTileData(
         const TileId tileId,
-        const QDateTime dataTime,
         const ZoomLevel zoom,
         QByteArray& outData)
 {
-    return _p->storeTileData(tileId, dataTime, zoom, outData);
+    return _p->storeLocalTileData(tileId, zoom, outData);
 }
 
-bool OsmAnd::WeatherTileResourceProvider::containsTileId(
+bool OsmAnd::WeatherTileResourceProvider::containsLocalTileId(
         const TileId tileId,
         const QDateTime dataTime,
         const ZoomLevel zoom,
         QByteArray& outData)
 {
-    return _p->containsTileId(tileId, dataTime, zoom, outData);
+    return _p->containsLocalTileId(tileId, dataTime, zoom, outData);
 }
 
 bool OsmAnd::WeatherTileResourceProvider::closeProvider(
@@ -230,7 +187,6 @@ OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()
     : point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
-    , dataTime(QDateTime())
 {
 }
 
@@ -248,7 +204,6 @@ void OsmAnd::WeatherTileResourceProvider::ValueRequest::copy(ValueRequest& dst, 
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
-    dst.dataTime = src.dataTime;
     dst.queryController = src.queryController;
 }
 
@@ -278,7 +233,6 @@ OsmAnd::WeatherTileResourceProvider::TileRequest::~TileRequest()
 void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, const TileRequest& src)
 {
     dst.weatherType = src.weatherType;
-    dst.dataTime = src.dataTime;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;

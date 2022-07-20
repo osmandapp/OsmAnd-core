@@ -66,7 +66,6 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
-            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -84,7 +83,6 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
-            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -138,6 +136,7 @@ namespace OsmAnd
     public:
         WeatherTileResourcesManager(
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -149,6 +148,9 @@ namespace OsmAnd
 
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
+
+        const bool getLocalData() const;
+        void setLocalData(const bool localData);
 
         double getConvertedBandValue(const BandIndex band, const double value) const;
         QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
@@ -163,6 +165,11 @@ namespace OsmAnd
         ZoomLevel getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
+
+        static QVector<TileId> generateGeoTileIds(
+                const LatLon topLeft,
+                const LatLon bottomRight,
+                const ZoomLevel zoom);
 
         virtual void obtainValue(
             const ValueRequest& request,
@@ -194,19 +201,19 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        virtual bool storeTileData(
+        virtual bool storeLocalTileData(
                 const TileId tileId,
                 const QDateTime dateTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        virtual bool containsTileId(
+        virtual bool containsLocalTileId(
                 const TileId tileId,
                 const QDateTime dateTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        virtual bool clearDbCache(
+        virtual bool clearLocalDbCache(
                 const LatLon topLeft,
                 const LatLon bottomRight,
                 const ZoomLevel zoom);

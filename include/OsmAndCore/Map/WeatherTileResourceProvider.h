@@ -46,7 +46,6 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
-            QDateTime dataTime;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -61,7 +60,6 @@ namespace OsmAnd
             virtual ~TileRequest();
 
             WeatherType weatherType;
-            QDateTime dataTime;
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
@@ -139,6 +137,7 @@ namespace OsmAnd
         WeatherTileResourceProvider(
             const QDateTime& dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -179,13 +178,10 @@ namespace OsmAnd
             const bool collectMetric = false);
 
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
+        void setLocalData(const bool localData);
 
         int getCurrentRequestVersion() const;
 
-        static QVector<TileId> generateGeoTileIds(
-                const LatLon topLeft,
-                const LatLon bottomRight,
-                const ZoomLevel zoom);
         static ZoomLevel getGeoTileZoom();
         static ZoomLevel getTileZoom(const WeatherLayer layer);
         static WeatherLayer getWeatherLayerByZoom(const ZoomLevel zoom);
@@ -193,13 +189,12 @@ namespace OsmAnd
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
         QDateTime getDateTime();
 
-        bool storeTileData(
+        bool storeLocalTileData(
                 const TileId tileId,
-                const QDateTime dataTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        bool containsTileId(
+        bool containsLocalTileId(
                 const TileId tileId,
                 const QDateTime dataTime,
                 const ZoomLevel zoom,

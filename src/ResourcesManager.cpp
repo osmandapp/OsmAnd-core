@@ -247,6 +247,7 @@ const std::shared_ptr<OsmAnd::WeatherTileResourcesManager> OsmAnd::ResourcesMana
 
 void OsmAnd::ResourcesManager::instantiateWeatherResourcesManager(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+    const bool localData,
     const QString& localCachePath,
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
@@ -255,6 +256,7 @@ void OsmAnd::ResourcesManager::instantiateWeatherResourcesManager(
 {
     _weatherResourcesManager = std::make_shared<WeatherTileResourcesManager>(
         bandSettings,
+        localData,
         localCachePath,
         projResourcesPath,
         tileSize,

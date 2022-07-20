@@ -189,7 +189,7 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
         return 17;
     }
 
-    if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM"))
+    if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM") || tileNumberingValue == QStringLiteral("WeatherForecast"))
     {
         invertedZoomValue = 0;
     }

@@ -330,6 +330,7 @@ namespace OsmAnd
 
         void instantiateWeatherResourcesManager(
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,

@@ -106,6 +106,7 @@ namespace OsmAnd
         QThreadPool *_obtainValueThreadPool;
 
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
+        bool _localData;
 
         mutable QReadWriteLock _lock;
         int _priority;
@@ -113,6 +114,7 @@ namespace OsmAnd
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
+        bool _lastRequestedLocalData;
         int _requestVersion;
 
         int getAndDecreasePriority();
@@ -124,9 +126,7 @@ namespace OsmAnd
         
         mutable QReadWriteLock _geoDbLock;
         QHash<QString, std::shared_ptr<TileSqliteDatabase>> _geoTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(
-                QDateTime dataTime = QDateTime(),
-                bool localData = false);
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(bool localData);
 
         mutable QMutex _rasterTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
@@ -136,8 +136,7 @@ namespace OsmAnd
         QHash<QString, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
         std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(
                 BandIndex band,
-                QDateTime dataTime = QDateTime(),
-                bool localData = false);
+                bool localData);
 
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
@@ -156,6 +155,7 @@ namespace OsmAnd
             WeatherTileResourceProvider* const owner,
             const QDateTime& dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
+            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -209,6 +209,9 @@ namespace OsmAnd
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
 
+        const bool isLocalData() const;
+        void setLocalData(const bool localData);
+
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
@@ -217,9 +220,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             QByteArray& outData,
-            bool forceDownload = false,
-            QDateTime dataTime = QDateTime(),
-            bool localData = false);
+            bool forceDownload = false);
 
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
@@ -228,21 +229,17 @@ namespace OsmAnd
         void lockContourTile(const TileId tileId, const ZoomLevel zoom);
         void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
-        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase(
-                QDateTime dataTime = QDateTime(),
-                bool localData = false);
+        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase(bool localData);
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(
                 BandIndex band,
-                QDateTime dataTime = QDateTime(),
-                bool localData = false);
+                bool localData);
 
-        bool storeTileData(
+        bool storeLocalTileData(
                 const TileId tileId,
-                const QDateTime dataTime,
                 const ZoomLevel zoom,
                 QByteArray& outData);
 
-        bool containsTileId(
+        bool containsLocalTileId(
                 const TileId tileId,
                 const QDateTime dataTime,
                 const ZoomLevel zoom,
