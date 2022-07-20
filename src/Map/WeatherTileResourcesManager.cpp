@@ -174,9 +174,37 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const bool clearGeoCache, const bool clearRasterCache)
+bool OsmAnd::WeatherTileResourcesManager::storeTileData(
+        const TileId tileId,
+        const QDateTime dateTime,
+        const ZoomLevel zoom,
+        QByteArray& outData)
 {
-    return _p->clearDbCache(clearGeoCache, clearRasterCache);
+    return _p->storeTileData(tileId, dateTime, zoom, outData);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::containsTileId(
+        const TileId tileId,
+        const QDateTime dateTime,
+        const ZoomLevel zoom,
+        QByteArray& outData)
+{
+    return _p->containsTileId(tileId, dateTime, zoom, outData);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
+        const LatLon topLeft,
+        const LatLon bottomRight,
+        const ZoomLevel zoom)
+{
+    return _p->clearDbCache(topLeft, bottomRight, zoom);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
+        const bool localData /*= false*/,
+        const QDateTime clearBeforeDateTime /*= QDateTime()*/)
+{
+    return _p->clearDbCache(localData, clearBeforeDateTime);
 }
 
 OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
@@ -234,6 +262,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -244,6 +273,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::Weathe
 
 OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
+    , localData(true)
 {
 }
 
@@ -262,6 +292,7 @@ void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadG
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 

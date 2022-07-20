@@ -66,6 +66,7 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -83,6 +84,7 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -192,7 +194,26 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        virtual bool clearDbCache(const bool clearGeoCache, const bool clearRasterCache);
+        virtual bool storeTileData(
+                const TileId tileId,
+                const QDateTime dateTime,
+                const ZoomLevel zoom,
+                QByteArray& outData);
+
+        virtual bool containsTileId(
+                const TileId tileId,
+                const QDateTime dateTime,
+                const ZoomLevel zoom,
+                QByteArray& outData);
+
+        virtual bool clearDbCache(
+                const LatLon topLeft,
+                const LatLon bottomRight,
+                const ZoomLevel zoom);
+
+        virtual bool clearDbCache(
+                const bool localData = false,
+                const QDateTime clearBeforeDateTime = QDateTime());
     };
 }
 

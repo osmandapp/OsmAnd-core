@@ -99,6 +99,7 @@ namespace OsmAnd
         bool obtainMeta(Meta& outMeta) const;
         bool storeMeta(const Meta& meta);
 
+        bool isEmpty() const;
         bool containsTileData(TileId tileId, ZoomLevel zoom) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;

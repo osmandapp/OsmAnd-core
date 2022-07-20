@@ -123,15 +123,21 @@ namespace OsmAnd
         QWaitCondition _waitUntilAnyGeoTileIsProcessed;
         
         mutable QReadWriteLock _geoDbLock;
-        std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
+        QHash<QString, std::shared_ptr<TileSqliteDatabase>> _geoTilesDbMap;
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(
+                QDateTime dataTime = QDateTime(),
+                bool localData = false);
 
         mutable QMutex _rasterTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
         QWaitCondition _waitUntilAnyRasterTileIsProcessed;
 
         mutable QReadWriteLock _rasterDbLock;
-        QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
+        QHash<QString, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(
+                BandIndex band,
+                QDateTime dataTime = QDateTime(),
+                bool localData = false);
 
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
@@ -211,7 +217,9 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             QByteArray& outData,
-            bool forceDownload = false);
+            bool forceDownload = false,
+            QDateTime dataTime = QDateTime(),
+            bool localData = false);
 
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
@@ -220,11 +228,32 @@ namespace OsmAnd
         void lockContourTile(const TileId tileId, const ZoomLevel zoom);
         void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
-        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
-        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
+        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase(
+                QDateTime dataTime = QDateTime(),
+                bool localData = false);
+        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(
+                BandIndex band,
+                QDateTime dataTime = QDateTime(),
+                bool localData = false);
 
-        bool closeProvider();
-        
+        bool storeTileData(
+                const TileId tileId,
+                const QDateTime dataTime,
+                const ZoomLevel zoom,
+                QByteArray& outData);
+
+        bool containsTileId(
+                const TileId tileId,
+                const QDateTime dataTime,
+                const ZoomLevel zoom,
+                QByteArray& outData);
+
+        bool closeProvider(
+                const TileId tileId,
+                const ZoomLevel zoom);
+
+        bool closeProvider(bool localData);
+
     friend class OsmAnd::WeatherTileResourceProvider;
     };
 }

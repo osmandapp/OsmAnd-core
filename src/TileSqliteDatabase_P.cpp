@@ -757,6 +757,48 @@ bool OsmAnd::TileSqliteDatabase_P::storeMeta(const OsmAnd::TileSqliteDatabase_P:
     return true;
 }
 
+bool OsmAnd::TileSqliteDatabase_P::isEmpty() const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        int res;
+
+        const auto statement = prepareStatement(_database, QStringLiteral("SELECT COUNT(*) FROM tiles"));
+        if (!statement || (res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to query existence: %s",
+                    sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (res > 0)
+        {
+            int64_t count = 0;
+            const auto countValue = readStatementValue(statement, 0);
+            if (!countValue.isNull())
+            {
+                bool ok = false;
+                const auto countI = countValue.toInt(&ok);
+                if (!ok)
+                {
+                    return false;
+                }
+                count = static_cast<int64_t>(countI);
+            }
+            return count == 0;
+        }
+
+        return false;
+    }
+}
+
 bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom) const
 {
     if (!isOpened())
@@ -774,7 +816,7 @@ bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAn
 
         int res;
 
-        const auto statement = prepareStatement(_database, QStringLiteral("EXISTS(SELECT 1 FROM tiles WHERE x=:x AND y=:y AND z=:z LIMIT 1)"));
+        const auto statement = prepareStatement(_database, QStringLiteral("SELECT COUNT(*) FROM tiles WHERE x=:x AND y=:y AND z=:z"));
         if (!statement || !configureStatement(statement, tileId, zoom))
         {
             LogPrintf(
@@ -797,7 +839,24 @@ bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAn
             return false;
         }
 
-        return res > 0;
+        if (res > 0)
+        {
+            int64_t count = 0;
+            const auto countValue = readStatementValue(statement, 0);
+            if (!countValue.isNull())
+            {
+                bool ok = false;
+                const auto countI = countValue.toInt(&ok);
+                if (!ok)
+                {
+                    return false;
+                }
+                count = static_cast<int64_t>(countI);
+            }
+            return count > 0;
+        }
+
+        return false;
     }
 }
 

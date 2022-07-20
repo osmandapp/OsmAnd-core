@@ -111,6 +111,11 @@ bool OsmAnd::TileSqliteDatabase::storeMeta(const OsmAnd::TileSqliteDatabase::Met
     return _p->storeMeta(meta);
 }
 
+bool OsmAnd::TileSqliteDatabase::isEmpty() const
+{
+    return _p->isEmpty();
+}
+
 bool OsmAnd::TileSqliteDatabase::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom) const
 {
     return _p->containsTileData(tileId, zoom);
