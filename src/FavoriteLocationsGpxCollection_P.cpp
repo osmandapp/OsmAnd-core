@@ -139,6 +139,18 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             
             if (item->getCalendarEvent())
                 writer.writeTextElement(QLatin1String("calendar_event"), "true");
+            
+            // all other extensions
+            const auto extensions = item->getExtensions();
+            if (!extensions.empty() && extensions.count() > 0)
+            {
+                for (int i = 0; i < extensions.count(); i++)
+                {
+                    const auto key = extensions.keys()[i];
+                    const auto value = extensions[key];
+                    writer.writeTextElement(key, value);
+                }
+            }
 
             // </extensions>
             writer.writeEndElement();
@@ -161,6 +173,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
     bool isInsideMetadataTag = false;
+    bool isInsideExtensionsTag = false;
 
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -172,6 +185,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 isInsideMetadataTag = true;
             if (isInsideMetadataTag)
                 continue;
+            
+            if (tagName == QLatin1String("extensions"))
+                isInsideExtensionsTag = true;
             
             if (tagName == QLatin1String("wpt"))
             {
@@ -325,12 +341,23 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem->setIsHidden(true);
             }
+            else if (isInsideExtensionsTag)
+            {
+                if (tagName != QLatin1String("extensions"))
+                {
+                    newItem->setExtension(tagName.toString(), xmlReader.readElementText());
+                }
+            }
         }
         else if (xmlReader.isEndElement())
         {
             if (tagName == QLatin1String("metadata"))
             {
                 isInsideMetadataTag = false;
+            }
+            else if (tagName == QLatin1String("extensions"))
+            {
+                isInsideExtensionsTag = false;
             }
             else if (tagName == QLatin1String("wpt"))
             {
