@@ -610,6 +610,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
         {
             QString baseName = fileInfo.baseName();
             QDateTime dateTimeBefore = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
+            dateTimeBefore.setTimeSpec(Qt::UTC);
             bool checkBefore = clearBeforeDateTime.toTime_t() > dateTimeBefore.toTime_t();
             if (checkBefore)
                 deleted = QFile(filePath).remove();
@@ -636,6 +637,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
         {
             QString baseName = fileInfo.baseName();
             QDateTime dateTimeBefore = QDateTime::fromString(baseName.mid(0, baseName.count() - 2), QStringLiteral("yyyyMMdd_hh00"));
+            dateTimeBefore.setTimeSpec(Qt::UTC);
             bool checkBefore = clearBeforeDateTime.toTime_t() > dateTimeBefore.toTime_t();
             if (checkBefore)
                 deleted = QFile(filePath).remove();
