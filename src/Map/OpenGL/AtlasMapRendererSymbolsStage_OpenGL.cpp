@@ -2184,8 +2184,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         symbol->modulationColor.a);
     GL_CHECK_RESULT;
 
-    // If no elevation is needed - do the simple render
-    if (renderable->tiledMeshes == nullptr) {
+    // If no elevation is possible or needed - do the simple render
+    if (!gpuAPI->isSupported_vertexShaderTextureLookup || renderable->tiledMeshes == nullptr) {
 
         glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
         GL_CHECK_RESULT;
