@@ -110,6 +110,15 @@ bool OsmAnd::WebClient::downloadFile(
     return downloadFile(QNetworkRequest(url), fileName, requestResult, progressCallback);
 }
 
+long long OsmAnd::WebClient::getFileSize(
+    const QString& url,
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
+{
+    return 0;
+}
+
 OsmAnd::WebClient::RequestResult::RequestResult(const QNetworkReply* const networkReply)
     : errorCode(networkReply->error())
 {

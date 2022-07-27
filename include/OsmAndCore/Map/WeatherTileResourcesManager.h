@@ -47,6 +47,7 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -66,6 +67,7 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -83,11 +85,29 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
             static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
             virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
+        };
+
+        struct OSMAND_CORE_API FileRequest
+        {
+            FileRequest();
+            FileRequest(const FileRequest& that);
+            virtual ~FileRequest();
+
+            QDateTime dataTime;
+            LatLon topLeft;
+            LatLon bottomRight;
+            bool localData;
+
+            std::shared_ptr<const IQueryController> queryController;
+
+            static void copy(FileRequest& dst, const FileRequest& src);
+            virtual std::shared_ptr<FileRequest> clone() const;
         };
 
         class OSMAND_CORE_API Data
@@ -130,13 +150,19 @@ namespace OsmAnd
             bool succeeded,
             uint64_t downloadedTiles,
             uint64_t totalTiles,
+            int downloadedTileSize,
+            const std::shared_ptr<Metric>& metric);
+
+        OSMAND_CALLABLE(FileAsyncCallback,
+            void,
+            bool succeeded,
+            long long fileSize,
             const std::shared_ptr<Metric>& metric);
 
     protected:
     public:
         WeatherTileResourcesManager(
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
-            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -148,9 +174,6 @@ namespace OsmAnd
 
         const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> getBandSettings() const;
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
-
-        const bool getLocalData() const;
-        void setLocalData(const bool localData);
 
         double getConvertedBandValue(const BandIndex band, const double value) const;
         QString getFormattedBandValue(const BandIndex band, const double value, const bool precise) const;
@@ -191,6 +214,16 @@ namespace OsmAnd
             const ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
 
+        virtual void obtainFile(
+            const FileRequest& request,
+            const FileAsyncCallback callback,
+            const bool collectMetric = false);
+
+        virtual void obtainFileAsync(
+            const FileRequest& request,
+            const FileAsyncCallback callback,
+            const bool collectMetric = false);
+
         virtual void downloadGeoTiles(
             const DownloadGeoTileRequest& request,
             const DownloadGeoTilesAsyncCallback callback,
@@ -201,26 +234,13 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        virtual bool storeLocalTileData(
-                const TileId tileId,
-                const QDateTime dateTime,
-                const ZoomLevel zoom,
-                QByteArray& outData);
-
-        virtual bool containsLocalTileId(
-                const TileId tileId,
-                const QDateTime dateTime,
-                const ZoomLevel zoom,
-                QByteArray& outData);
-
         virtual bool clearLocalDbCache(
-                const LatLon topLeft,
-                const LatLon bottomRight,
+                const QVector<TileId> tileIds,
                 const ZoomLevel zoom);
 
         virtual bool clearDbCache(
                 const bool localData = false,
-                const QDateTime clearBeforeDateTime = QDateTime());
+                const QDateTime beforeDateTime = QDateTime());
     };
 }
 

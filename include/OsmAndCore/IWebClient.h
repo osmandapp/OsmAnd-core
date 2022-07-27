@@ -73,6 +73,11 @@ namespace OsmAnd
             std::shared_ptr<const IRequestResult>* const requestResult = nullptr,
             const RequestProgressCallbackSignature progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
+        virtual long long getFileSize(
+            const QString& url,
+            std::shared_ptr<const IRequestResult>* const requestResult = nullptr,
+            const RequestProgressCallbackSignature progressCallback = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
     };
 }
 

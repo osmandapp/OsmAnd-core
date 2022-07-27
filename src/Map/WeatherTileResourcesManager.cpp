@@ -7,13 +7,12 @@
 
 OsmAnd::WeatherTileResourcesManager::WeatherTileResourcesManager(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
-    const bool localData,
     const QString& localCachePath,
     const QString& projResourcesPath,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
-    : _p(new WeatherTileResourcesManager_P(this, bandSettings, localData, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+    : _p(new WeatherTileResourcesManager_P(this, bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }
@@ -30,16 +29,6 @@ const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> O
 void OsmAnd::WeatherTileResourcesManager::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     _p->setBandSettings(bandSettings);
-}
-
-const bool OsmAnd::WeatherTileResourcesManager::getLocalData() const
-{
-    return _p->getLocalData();
-}
-
-void OsmAnd::WeatherTileResourcesManager::setLocalData(const bool localData)
-{
-    _p->setLocalData(localData);
 }
 
 double OsmAnd::WeatherTileResourcesManager::getConvertedBandValue(const BandIndex band, const double value) const
@@ -218,6 +207,22 @@ void OsmAnd::WeatherTileResourcesManager::obtainDataAsync(
     _p->obtainDataAsync(request, callback, collectMetric);
 }
 
+void OsmAnd::WeatherTileResourcesManager::obtainFile(
+    const FileRequest& request,
+    const FileAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainFile(request, callback, collectMetric);
+}
+
+void OsmAnd::WeatherTileResourcesManager::obtainFileAsync(
+    const FileRequest& request,
+    const FileAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    _p->obtainFileAsync(request, callback, collectMetric);
+}
+
 void OsmAnd::WeatherTileResourcesManager::downloadGeoTiles(
     const DownloadGeoTileRequest& request,
     const DownloadGeoTilesAsyncCallback callback,
@@ -234,43 +239,25 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::storeLocalTileData(
-        const TileId tileId,
-        const QDateTime dateTime,
-        const ZoomLevel zoom,
-        QByteArray& outData)
-{
-    return _p->storeLocalTileData(tileId, dateTime, zoom, outData);
-}
-
-bool OsmAnd::WeatherTileResourcesManager::containsLocalTileId(
-        const TileId tileId,
-        const QDateTime dateTime,
-        const ZoomLevel zoom,
-        QByteArray& outData)
-{
-    return _p->containsLocalTileId(tileId, dateTime, zoom, outData);
-}
-
 bool OsmAnd::WeatherTileResourcesManager::clearLocalDbCache(
-        const LatLon topLeft,
-        const LatLon bottomRight,
+        const QVector<TileId> tileIds,
         const ZoomLevel zoom)
 {
-    return _p->clearLocalDbCache(topLeft, bottomRight, zoom);
+    return _p->clearLocalDbCache(tileIds, zoom);
 }
 
 bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
         const bool localData /*= false*/,
-        const QDateTime clearBeforeDateTime /*= QDateTime()*/)
+        const QDateTime beforeDateTime /*= QDateTime()*/)
 {
-    return _p->clearDbCache(localData, clearBeforeDateTime);
+    return _p->clearDbCache(localData, beforeDateTime);
 }
 
 OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
     : point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
+    , localData(false)
 {
 }
 
@@ -289,6 +276,7 @@ void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, 
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -322,6 +310,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -332,6 +321,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::Weathe
 
 OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
+    , localData(false)
 {
 }
 
@@ -350,12 +340,41 @@ void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadG
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
 std::shared_ptr<OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest> OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::clone() const
 {
     return std::shared_ptr<DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
+}
+
+OsmAnd::WeatherTileResourcesManager::FileRequest::FileRequest()
+    : localData(false)
+{
+}
+
+OsmAnd::WeatherTileResourcesManager::FileRequest::FileRequest(const FileRequest& that)
+{
+    copy(*this, that);
+}
+
+OsmAnd::WeatherTileResourcesManager::FileRequest::~FileRequest()
+{
+}
+
+void OsmAnd::WeatherTileResourcesManager::FileRequest::copy(FileRequest& dst, const FileRequest& src)
+{
+    dst.dataTime = src.dataTime;
+    dst.topLeft = src.topLeft;
+    dst.bottomRight = src.bottomRight;
+    dst.localData = src.localData;
+    dst.queryController = src.queryController;
+}
+
+std::shared_ptr<OsmAnd::WeatherTileResourcesManager::FileRequest> OsmAnd::WeatherTileResourcesManager::FileRequest::clone() const
+{
+    return std::shared_ptr<FileRequest>(new FileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::Data::Data(

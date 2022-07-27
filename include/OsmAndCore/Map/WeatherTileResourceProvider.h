@@ -46,6 +46,7 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
+            BandIndex localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -83,11 +84,28 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
             static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
             virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
+        };
+
+        struct OSMAND_CORE_API FileRequest
+        {
+            FileRequest();
+            FileRequest(const FileRequest& that);
+            virtual ~FileRequest();
+
+            LatLon topLeft;
+            LatLon bottomRight;
+            bool localData;
+
+            std::shared_ptr<const IQueryController> queryController;
+
+            static void copy(FileRequest& dst, const FileRequest& src);
+            virtual std::shared_ptr<FileRequest> clone() const;
         };
 
         class OSMAND_CORE_API Data
@@ -130,6 +148,13 @@ namespace OsmAnd
             bool succeeded,
             uint64_t downloadedTiles,
             uint64_t totalTiles,
+            int downloadedTileSize,
+            const std::shared_ptr<Metric>& metric);
+
+        OSMAND_CALLABLE(FileAsyncCallback,
+            void,
+            bool succeeded,
+            long long fileSize,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -137,7 +162,6 @@ namespace OsmAnd
         WeatherTileResourceProvider(
             const QDateTime& dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
-            const bool localData,
             const QString& localCachePath,
             const QString& projResourcesPath,
             const uint32_t tileSize = 256,
@@ -167,6 +191,16 @@ namespace OsmAnd
             const ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
 
+        virtual void obtainFile(
+            const FileRequest& request,
+            const FileAsyncCallback callback,
+            const bool collectMetric = false);
+
+        virtual void obtainFileAsync(
+            const FileRequest& request,
+            const FileAsyncCallback callback,
+            const bool collectMetric = false);
+
         virtual void downloadGeoTiles(
             const DownloadGeoTileRequest& request,
             const DownloadGeoTilesAsyncCallback callback,
@@ -178,7 +212,6 @@ namespace OsmAnd
             const bool collectMetric = false);
 
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
-        void setLocalData(const bool localData);
 
         int getCurrentRequestVersion() const;
 
@@ -189,23 +222,7 @@ namespace OsmAnd
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
         QDateTime getDateTime();
 
-        bool storeLocalTileData(
-                const TileId tileId,
-                const ZoomLevel zoom,
-                QByteArray& outData);
-
-        bool containsLocalTileId(
-                const TileId tileId,
-                const QDateTime dataTime,
-                const ZoomLevel zoom,
-                QByteArray& outData
-        );
-
-        bool closeProvider(
-                const TileId tileId,
-                const ZoomLevel zoom);
-
-        bool closeProvider(bool localData);
+        bool closeProvider();
     };
 }
 
