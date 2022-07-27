@@ -281,6 +281,7 @@ OsmAnd::ResourcesManager::Resource::Resource(
     , origin(origin_)
     , metadata(_metadata)
 {
+    assert(id == id.toLower());
 }
 
 OsmAnd::ResourcesManager::Resource::~Resource()

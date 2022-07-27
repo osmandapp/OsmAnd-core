@@ -415,7 +415,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
 
         // Create local resource entry
         const auto fileName = obfFileInfo.fileName();
-        const auto resourceId = fileName;
+        const auto resourceId = fileName.toLower();
         const auto pLocalResource = new InstalledResource(
             resourceId,
             resourceType,
@@ -450,7 +450,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
 
         // Determine resource type and id
         auto resourceType = ResourceType::Unknown;
-        auto resourceId = fileName;
+        auto resourceId = fileName.toLower();
         if (fileName.endsWith(".srtm.obf") || fileName.endsWith(".srtmf.obf"))
             resourceType = ResourceType::SrtmMapRegion;
         else if (fileName.endsWith(".road.obf"))
@@ -465,7 +465,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         {
             resourceType = ResourceType::MapRegion;
         }
-        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : QString(fileName).remove(QStringLiteral("_2"));
+        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove(QStringLiteral("_2"));
 
         if (resourceType == ResourceType::Unknown)
         {
@@ -508,7 +508,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
 
         // Create local resource entry
         const auto fileName = sqlitedbFileInfo.fileName();
-        const auto resourceId = fileName;
+        const auto resourceId = fileName.toLower();
         const auto pLocalResource = new InstalledResource(
             resourceId,
             resourceType,
@@ -532,7 +532,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
         const auto fileName = sqlitedbFileInfo.fileName();
 
         // Determine resource type and id
-        QString resourceId = fileName;
+        QString resourceId = fileName.toLower();
         auto resourceType = ResourceType::Unknown;
         if (fileName.endsWith(".hillshade.sqlitedb"))
             resourceType = ResourceType::HillshadeRegion;
@@ -624,7 +624,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_VoicePack(
 
         // Create local resource entry
         const auto fileName = voicePackDirectory.fileName();
-        const auto resourceId = fileName;
+        const auto resourceId = fileName.toLower();
         std::shared_ptr<const LocalResource> localResource(new InstalledResource(
             resourceId,
             ResourceType::VoicePack,
@@ -891,7 +891,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip"))
-                    .append(QLatin1String(".obf"));
+                    .append(QLatin1String(".obf"))
+                    .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?file=") +
@@ -901,7 +902,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip"))
-                    .append(QLatin1String(".road.obf"));
+                    .append(QLatin1String(".road.obf"))
+                    .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?road=yes&file=") +
@@ -913,7 +915,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 bool isSRTMF = srtmMapName.endsWith("srtmf.obf.zip");
                 resourceId = srtmMapName
                         .remove(QLatin1String(!isSRTMF ? "_2.srtm.obf.zip" : "_2.srtmf.obf.zip"))
-                        .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"));
+                        .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"))
+                        .toLower();
                 downloadUrl =
                         owner->repositoryBaseUrl +
                                 QLatin1String("/download.php?srtmcountry=yes&file=") +
@@ -924,7 +927,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].depth.obf'
                 resourceId = QString(name)
                 .remove(QLatin1String("_2.obf.zip"))
-                .append(QLatin1String(".depth.obf"));
+                .append(QLatin1String(".depth.obf"))
+                .toLower();
                 downloadUrl =
                 owner->repositoryBaseUrl +
                 QLatin1String("/download.php?inapp=depth&file=") +
@@ -934,7 +938,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.wiki.obf.zip' -> '[region].wiki.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.wiki.obf.zip"))
-                    .append(QLatin1String(".wiki.obf"));
+                    .append(QLatin1String(".wiki.obf"))
+                    .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?wiki=yes&file=") +
@@ -943,7 +948,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             case ResourceType::HillshadeRegion:
                 // 'Hillshade_[region].sqlitedb' -> 'Hillshade [region].sqlitedb'
                 resourceId = QString(name)
-                    .replace(QLatin1String("_"), QLatin1String(" "));
+                    .replace(QLatin1String("_"), QLatin1String(" "))
+                    .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?hillshade=yes&file=") +
@@ -952,7 +958,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             case ResourceType::SlopeRegion:
                 // 'Slope_[region].sqlitedb' -> '[region].slope.sqlitedb'
                 resourceId = QString(name)
-                    .replace(QLatin1String("_"), QLatin1String(" "));
+                    .replace(QLatin1String("_"), QLatin1String(" "))
+                    .toLower();
                 downloadUrl =
                 owner->repositoryBaseUrl +
                 QLatin1String("/download.php?slope=yes&file=") +
@@ -963,6 +970,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 resourceId = QString(name)
                     .remove(QLatin1String("Heightmap_"))
                     .remove(QLatin1String(".sqlitedb"))
+                    .toLower()
                     .append(QLatin1String(".heightmap.sqlitedb"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
@@ -973,6 +981,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[language]_0.voice.zip' -> '[resourceName].voice'
                 resourceId = QString(name)
                     .remove(QLatin1String("_0.voice.zip"))
+                    .toLower()
                     .append(QLatin1String(".voice"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
@@ -1476,7 +1485,7 @@ bool OsmAnd::ResourcesManager_P::addLocalResource(const QString& filePath)
     }
 
     auto resourceType = ResourceType::MapRegion;
-    const auto resourceId = fileName;
+    const auto resourceId = fileName.toLower();
 
     // Create local resource entry
     const auto pLocalResource = new InstalledResource(
