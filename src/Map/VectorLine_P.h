@@ -31,15 +31,10 @@ namespace OsmAnd
         void createVertexes(
             std::vector<VectorMapSymbol::Vertex> &vertices,
             VectorMapSymbol::Vertex &vertex,
-            std::vector<PointD> &b1,
-            std::vector<PointD> &b2,
-            std::vector<PointD> &e1,
-            std::vector<PointD> &e2,
-            std::vector<PointD> &original,
+            std::vector<OsmAnd::PointD> &original,
             double radius,
             FColorARGB &fillColor,
-            QList<FColorARGB>& colorMapping,
-            bool gap) const;
+            QList<FColorARGB>& colorMapping) const;
         
         QVector<SkPath> calculateLinePath(
             const std::vector<std::vector<PointI>>& visibleSegments,

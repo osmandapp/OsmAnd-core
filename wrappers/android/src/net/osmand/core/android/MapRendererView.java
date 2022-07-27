@@ -226,7 +226,7 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     public final void requestRender() {
-        Log.v(TAG, "requestRender()");
+        //Log.v(TAG, "requestRender()");
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
@@ -537,6 +537,42 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.isPositionVisible(position31);
+    }
+
+    public final double getCurrentTileSizeInMeters() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getCurrentTileSizeInMeters();
+    }
+
+    public final double getCurrentPixelsToMetersScaleFactor() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getCurrentPixelsToMetersScaleFactor();
+    }
+
+    public final int getMaxMissingDataZoomShift() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getMaxMissingDataZoomShift();
+    }
+
+    public final int getMaxMissingDataUnderZoomShift() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getMaxMissingDataUnderZoomShift();
+    }
+
+    public final int getHeixelsPerTileSide() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getHeixelsPerTileSide();
+    }
+
+    public final int getElevationDataTileSize() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getElevationDataTileSize();
     }
 
     public final void dumpResourcesInfo() {

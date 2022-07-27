@@ -80,6 +80,7 @@ BOOST_CONFIGURATION=$(echo "
 	--layout=system
 	--with-thread
 	--with-atomic
+	--with-chrono
 	toolset=clang
 	target-os=linux
 	threading=multi
