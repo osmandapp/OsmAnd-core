@@ -30,7 +30,7 @@ namespace OsmAnd
         virtual ~ArchiveWriter_P();
 
         ImplementationInterface<ArchiveWriter> owner;
-        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath);
+        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip = false);
 
     friend class OsmAnd::ArchiveWriter;
     };

@@ -19,7 +19,7 @@ OsmAnd::ArchiveWriter_P::~ArchiveWriter_P()
 {
 }
 
-void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath)
+void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip /*= false*/)
 {
     struct archive *a;
     struct archive_entry *entry;
@@ -29,8 +29,16 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
     int res;
     
     a = archive_write_new();
-    archive_write_set_format_zip(a);
-    archive_write_add_filter_none(a);
+    if (gzip)
+    {
+        archive_write_add_filter_gzip(a);
+        archive_write_set_format_raw(a);
+    }
+    else
+    {
+        archive_write_set_format_zip(a);
+        archive_write_add_filter_none(a);
+    }
     archive_write_zip_set_compression_deflate(a);
     res = archive_write_open_filename(a, filePath.toUtf8().data());
     if (res != ARCHIVE_OK)
