@@ -891,8 +891,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip"))
-                    .append(QLatin1String(".obf"))
-                    .toLower();
+                    .toLower()
+                    .append(QLatin1String(".obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?file=") +
@@ -902,8 +902,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip"))
-                    .append(QLatin1String(".road.obf"))
-                    .toLower();
+                    .toLower()
+                    .append(QLatin1String(".road.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?road=yes&file=") +
@@ -915,8 +915,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 bool isSRTMF = srtmMapName.endsWith("srtmf.obf.zip");
                 resourceId = srtmMapName
                         .remove(QLatin1String(!isSRTMF ? "_2.srtm.obf.zip" : "_2.srtmf.obf.zip"))
-                        .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"))
-                        .toLower();
+                        .toLower()
+                        .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"));
                 downloadUrl =
                         owner->repositoryBaseUrl +
                                 QLatin1String("/download.php?srtmcountry=yes&file=") +
@@ -927,8 +927,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.obf.zip' -> '[region].depth.obf'
                 resourceId = QString(name)
                 .remove(QLatin1String("_2.obf.zip"))
-                .append(QLatin1String(".depth.obf"))
-                .toLower();
+                .toLower()
+                .append(QLatin1String(".depth.obf"));
                 downloadUrl =
                 owner->repositoryBaseUrl +
                 QLatin1String("/download.php?inapp=depth&file=") +
@@ -938,8 +938,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 // '[region]_2.wiki.obf.zip' -> '[region].wiki.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.wiki.obf.zip"))
-                    .append(QLatin1String(".wiki.obf"))
-                    .toLower();
+                    .toLower()
+                    .append(QLatin1String(".wiki.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?wiki=yes&file=") +
