@@ -167,7 +167,7 @@ bool OsmAnd::ObfInfo::containsDataFor(
 const OsmAnd::Nullable<OsmAnd::LatLon> OsmAnd::ObfInfo::getRegionCenter() const
 {
     Nullable<OsmAnd::LatLon> result;
-    for (const auto r : mapSections)
+    for (const auto &r : mapSections)
     {
         if (r->calculatedCenter.isSet())
             return result = r->calculatedCenter;
@@ -207,7 +207,7 @@ void OsmAnd::ObfInfo::calculateCenterPointForRegions() const
 const QStringList OsmAnd::ObfInfo::getRegionNames() const
 {
     QStringList rg;
-    for (const auto r : addressSections)
+    for (const auto &r : addressSections)
         rg << r->name;
     
     return rg;
