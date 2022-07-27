@@ -462,12 +462,12 @@ OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureForm
 
     if (isSupported_texture_float)
     {
-        format = isSupported_texture_rg ? GL_R32F_EXT : GL_LUMINANCE32F_EXT;
+        format = isSupported_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
         type = GL_FLOAT;
     }
     else if (isSupported_texture_half_float)
     {
-        format = isSupported_texture_rg ? GL_R16F_EXT : GL_LUMINANCE16F_EXT;
+        format = isSupported_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
         type = GL_HALF_FLOAT_OES;
     }
     else
