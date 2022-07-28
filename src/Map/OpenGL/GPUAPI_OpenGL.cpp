@@ -1101,11 +1101,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         float tl;
         float t;
         float tr;
-        
+
         float l;
         float o;
         float r;
-        
+
         float bl;
         float b;
         float br;
@@ -1271,7 +1271,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_PRESENT(glBufferData);
 
     const auto s = symbol->getVerticesAndIndexes();
-    
+
     // Primitive map symbol has to have vertices, so checks are worthless
     assert(s->vertices && s->verticesCount > 0);
 
@@ -1497,12 +1497,12 @@ void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
     GLsizei height,
     const TextureFormat textureFormat)
 {
-    GLenum format = static_cast<GLenum>(textureFormat.format);
+    GLenum format = getBaseInteralTextureFormat(textureFormat);
     GLenum type = static_cast<GLenum>(textureFormat.type);
 
     uint8_t* dummyBuffer = new uint8_t[width * height * getTextureFormatPixelSize(textureFormat)];
 
-    glTexImage2D(target, 0, format, width, height, 0, getBaseInteralTextureFormat(textureFormat), type, dummyBuffer);
+    glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
