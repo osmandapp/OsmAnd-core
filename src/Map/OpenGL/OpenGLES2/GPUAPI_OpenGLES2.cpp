@@ -462,12 +462,12 @@ OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureForm
 
     if (isSupported_texture_float)
     {
-        format = isSupported_texture_rg ? GL_R32F_EXT : GL_LUMINANCE32F_EXT;
+        format = isSupported_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
         type = GL_FLOAT;
     }
     else if (isSupported_texture_half_float)
     {
-        format = isSupported_texture_rg ? GL_R16F_EXT : GL_LUMINANCE16F_EXT;
+        format = isSupported_texture_rg ? GL_RED_EXT : GL_LUMINANCE;
         type = GL_HALF_FLOAT_OES;
     }
     else
@@ -490,28 +490,12 @@ size_t OsmAnd::GPUAPI_OpenGLES2::getTextureFormatPixelSize(const TextureFormat t
 {
     GLenum format = static_cast<GLenum>(textureFormat.format);
     GLenum type = static_cast<GLenum>(textureFormat.type);
-    if ((format == GL_R32F_EXT || format == GL_LUMINANCE32F_EXT) && type == GL_FLOAT)
+    if ((format == GL_RED_EXT || format == GL_LUMINANCE) && type == GL_FLOAT)
         return 4;
-    else if ((format == GL_R16F_EXT || format == GL_LUMINANCE16F_EXT) && type == GL_HALF_FLOAT_OES)
+    else if ((format == GL_RED_EXT || format == GL_LUMINANCE) && type == GL_HALF_FLOAT_OES)
         return 2;
 
     return GPUAPI_OpenGL::getTextureFormatPixelSize(textureFormat);
-}
-
-GLenum OsmAnd::GPUAPI_OpenGLES2::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
-{
-    switch (textureFormat.format)
-    {
-        case GL_R32F_EXT:
-        case GL_R16F_EXT:
-            return GL_RED_EXT;
-
-        case GL_LUMINANCE32F_EXT:
-        case GL_LUMINANCE16F_EXT:
-            return GL_LUMINANCE;
-    }
-
-    return static_cast<GLenum>(textureFormat.format);
 }
 
 OsmAnd::GPUAPI_OpenGLES2::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat_float() const

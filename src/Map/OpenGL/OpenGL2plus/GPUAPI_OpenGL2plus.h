@@ -15,7 +15,7 @@
 #include "CommonTypes.h"
 #include "OpenGL/GPUAPI_OpenGL.h"
 
-namespace OsmAnd 
+namespace OsmAnd
 {
     class GPUAPI_OpenGL2plus : public GPUAPI_OpenGL
     {
@@ -44,7 +44,7 @@ namespace OsmAnd
         virtual TextureFormat getTextureFormat_float() const Q_DECL_OVERRIDE;
         virtual bool isValidTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
         virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
-        virtual GLenum getBaseInteralTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        virtual GLenum getBaseInternalTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
 
         virtual SourceFormat getSourceFormat_float() const Q_DECL_OVERRIDE;
         virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const Q_DECL_OVERRIDE;

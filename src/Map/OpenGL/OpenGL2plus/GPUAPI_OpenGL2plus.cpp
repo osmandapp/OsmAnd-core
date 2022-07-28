@@ -106,7 +106,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     //NOTE: For testing, limit GL version to 2.0
     //_glVersion = 20;
     //////////////////////////////////////////////////////////////////////////
-    
+
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     GL_CHECK_RESULT;
     QRegExp glslVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
@@ -433,7 +433,7 @@ size_t OsmAnd::GPUAPI_OpenGL2plus::getTextureFormatPixelSize(const TextureFormat
     return GPUAPI_OpenGL::getTextureFormatPixelSize(textureFormat);
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL2plus::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
+GLenum OsmAnd::GPUAPI_OpenGL2plus::getBaseInternalTextureFormat(const TextureFormat textureFormat) const
 {
     switch (textureFormat.format)
     {
