@@ -498,22 +498,6 @@ size_t OsmAnd::GPUAPI_OpenGLES2::getTextureFormatPixelSize(const TextureFormat t
     return GPUAPI_OpenGL::getTextureFormatPixelSize(textureFormat);
 }
 
-GLenum OsmAnd::GPUAPI_OpenGLES2::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
-{
-    switch (textureFormat.format)
-    {
-        case GL_R32F_EXT:
-        case GL_R16F_EXT:
-            return GL_RED_EXT;
-
-        case GL_LUMINANCE32F_EXT:
-        case GL_LUMINANCE16F_EXT:
-            return GL_LUMINANCE;
-    }
-
-    return static_cast<GLenum>(textureFormat.format);
-}
-
 OsmAnd::GPUAPI_OpenGLES2::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat_float() const
 {
     GLenum format = GL_INVALID_ENUM;
