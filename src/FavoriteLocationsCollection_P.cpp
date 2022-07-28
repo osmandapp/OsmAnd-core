@@ -37,7 +37,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const QString& icon,
     const QString& background,
     const ColorRGB color,
-    const QHash<QString, QString> extensions,
+    const QHash<QString, QString>& extensions,
     const bool calendarEvent)
 {
     QWriteLocker scopedLocker(&_collectionLock);
@@ -62,7 +62,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const QString& icon,
     const QString& background,
     const ColorRGB color,
-    const QHash<QString, QString> extensions,
+    const QHash<QString, QString>& extensions,
     const bool calendarEvent)
 {
     QWriteLocker scopedLocker(&_collectionLock);

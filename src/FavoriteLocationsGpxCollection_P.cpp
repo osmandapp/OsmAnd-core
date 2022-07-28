@@ -102,59 +102,59 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             // <type>
             writer.writeTextElement(QLatin1String("type"), group);
         }
+        
+        // <extensions>
+        writer.writeStartElement(QLatin1String("extensions"));
+        
+        // <address>
+        const auto address = item->getAddress();
+        if (!address.isEmpty())
+            writer.writeTextElement(QLatin1String("address"), address);
+        
+        // <creation_date>
+        const auto creationTime = item->getCreationTime();
+        if (!creationTime.isEmpty())
+            writer.writeTextElement(QLatin1String("creation_date"), creationTime);
+        
+        // <icon>
+        const auto icon = item->getIcon();
+        if (!icon.isEmpty())
+            writer.writeTextElement(QLatin1String("icon"), icon);
+        
+        // <background>
+        const auto background = item->getBackground();
+        if (!background.isEmpty())
+            writer.writeTextElement(QLatin1String("background"), background);
 
         const auto color = item->getColor();
         if (color != ColorRGB())
         {
-            // <extensions>
-            writer.writeStartElement(QLatin1String("extensions"));
-            
-            // <address>
-            const auto address = item->getAddress();
-            if (!address.isEmpty())
-                writer.writeTextElement(QLatin1String("address"), address);
-            
-            // <creation_date>
-            const auto creationTime = item->getCreationTime();
-            if (!creationTime.isEmpty())
-                writer.writeTextElement(QLatin1String("creation_date"), creationTime);
-            
-            // <icon>
-            const auto icon = item->getIcon();
-            if (!icon.isEmpty())
-                writer.writeTextElement(QLatin1String("icon"), icon);
-            
-            // <background>
-            const auto background = item->getBackground();
-            if (!background.isEmpty())
-                writer.writeTextElement(QLatin1String("background"), background);
-
             // <color>
             const auto colorValue = color.toString();
             writer.writeTextElement(QLatin1String("color"), colorValue);
-
-            // <hidden>
-            if (item->isHidden())
-                writer.writeEmptyElement(QLatin1String("hidden"));
-            
-            if (item->getCalendarEvent())
-                writer.writeTextElement(QLatin1String("calendar_event"), "true");
-            
-            // all other extensions
-            const auto extensions = item->getExtensions();
-            if (!extensions.empty() && extensions.count() > 0)
-            {
-                for (int i = 0; i < extensions.count(); i++)
-                {
-                    const auto key = extensions.keys()[i];
-                    const auto value = extensions[key];
-                    writer.writeTextElement(key, value);
-                }
-            }
-
-            // </extensions>
-            writer.writeEndElement();
         }
+        
+        // <hidden>
+        if (item->isHidden())
+            writer.writeEmptyElement(QLatin1String("hidden"));
+        
+        if (item->getCalendarEvent())
+            writer.writeTextElement(QLatin1String("calendar_event"), "true");
+        
+        // all other extensions
+        const auto extensions = item->getExtensions();
+        if (!extensions.empty() && extensions.count() > 0)
+        {
+            for (int i = 0; i < extensions.count(); i++)
+            {
+                const auto key = extensions.keys()[i];
+                const auto value = extensions[key];
+                writer.writeTextElement(key, value);
+            }
+        }
+
+        // </extensions>
+        writer.writeEndElement();
 
         // </wpt>
         writer.writeEndElement();

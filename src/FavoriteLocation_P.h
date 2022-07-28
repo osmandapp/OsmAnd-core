@@ -90,10 +90,10 @@ namespace OsmAnd
         void setColor(const ColorRGB newColor);
         
         QHash<QString, QString> getExtensions() const;
-        void setExtensions(const QHash<QString, QString> extensions);
+        void setExtensions(const QHash<QString, QString>& extensions);
         
-        QString getExtension(const QString tag);
-        void setExtension(const QString tag, const QString value);
+        QString getExtension(const QString& tag);
+        void setExtension(const QString& tag, const QString& value);
 
     friend class OsmAnd::FavoriteLocation;
     friend class OsmAnd::FavoriteLocationsCollection;

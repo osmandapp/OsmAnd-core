@@ -226,20 +226,24 @@ QHash<QString, QString> OsmAnd::FavoriteLocation_P::getExtensions() const
     return _extensions;
 }
 
-void OsmAnd::FavoriteLocation_P::setExtensions(const QHash<QString, QString> extensions)
+void OsmAnd::FavoriteLocation_P::setExtensions(const QHash<QString, QString>& extensions)
 {
+    QWriteLocker scopedLocker(&_lock);
+    
     _extensions = extensions;
 }
 
-QString OsmAnd::FavoriteLocation_P::getExtension(const QString tag)
+QString OsmAnd::FavoriteLocation_P::getExtension(const QString& tag)
 {
     QReadLocker scopedLocker(&_lock);
     
     return _extensions[tag];
 }
 
-void OsmAnd::FavoriteLocation_P::setExtension(const QString tag, const QString value)
+void OsmAnd::FavoriteLocation_P::setExtension(const QString& tag, const QString& value)
 {
+    QWriteLocker scopedLocker(&_lock);
+    
     _extensions[tag] = value;
 }
 

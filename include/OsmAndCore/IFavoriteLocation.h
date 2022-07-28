@@ -72,10 +72,10 @@ namespace OsmAnd
         virtual void setColor(const ColorRGB newColor) = 0;
         
         virtual QHash<QString, QString> getExtensions() const = 0;
-        virtual void setExtensions(const QHash<QString, QString> extensions) = 0;
+        virtual void setExtensions(const QHash<QString, QString>& extensions) = 0;
         
-        virtual QString getExtension(const QString tag) = 0;
-        virtual void setExtension(const QString tag, const QString value) = 0;
+        virtual QString getExtension(const QString& tag) = 0;
+        virtual void setExtension(const QString& tag, const QString& value) = 0;
 
         virtual uint32_t hash() const;
         virtual bool isEqual(IFavoriteLocation* favoriteLocation) const;

@@ -16,7 +16,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& icon_,
     const QString& background_,
     const ColorRGB color_,
-    const QHash<QString, QString> extensions_,
+    const QHash<QString, QString>& extensions_,
     const bool calendarEvent_)
     : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::Point31)
@@ -51,7 +51,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& icon_,
     const QString& background_,
     const ColorRGB color_,
-    const QHash<QString, QString> extensions_,
+    const QHash<QString, QString>& extensions_,
     const bool calendarEvent_)
     : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::LatLon)
@@ -241,17 +241,17 @@ QHash<QString, QString> OsmAnd::FavoriteLocation::getExtensions() const
     return _p->getExtensions();
 }
 
-void OsmAnd::FavoriteLocation::setExtensions(const QHash<QString, QString> extensions)
+void OsmAnd::FavoriteLocation::setExtensions(const QHash<QString, QString>& extensions)
 {
     _p->setExtensions(extensions);
 }
 
-QString OsmAnd::FavoriteLocation::getExtension(const QString tag)
+QString OsmAnd::FavoriteLocation::getExtension(const QString& tag)
 {
     return _p->getExtension(tag);
 }
 
-void OsmAnd::FavoriteLocation::setExtension(const QString tag, const QString value)
+void OsmAnd::FavoriteLocation::setExtension(const QString& tag, const QString& value)
 {
     _p->setExtension(tag, value);
 }
