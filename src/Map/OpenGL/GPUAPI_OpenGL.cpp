@@ -1437,7 +1437,7 @@ size_t OsmAnd::GPUAPI_OpenGL::getTextureFormatPixelSize(const TextureFormat text
     return 0;
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
+GLenum OsmAnd::GPUAPI_OpenGL::getBaseInternalTextureFormat(const TextureFormat textureFormat) const
 {
     return static_cast<GLenum>(textureFormat.format);
 }
