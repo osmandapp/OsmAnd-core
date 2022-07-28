@@ -490,9 +490,9 @@ size_t OsmAnd::GPUAPI_OpenGLES2::getTextureFormatPixelSize(const TextureFormat t
 {
     GLenum format = static_cast<GLenum>(textureFormat.format);
     GLenum type = static_cast<GLenum>(textureFormat.type);
-    if ((format == GL_R32F_EXT || format == GL_LUMINANCE32F_EXT) && type == GL_FLOAT)
+    if ((format == GL_RED_EXT || format == GL_LUMINANCE) && type == GL_FLOAT)
         return 4;
-    else if ((format == GL_R16F_EXT || format == GL_LUMINANCE16F_EXT) && type == GL_HALF_FLOAT_OES)
+    else if ((format == GL_RED_EXT || format == GL_LUMINANCE) && type == GL_HALF_FLOAT_OES)
         return 2;
 
     return GPUAPI_OpenGL::getTextureFormatPixelSize(textureFormat);
