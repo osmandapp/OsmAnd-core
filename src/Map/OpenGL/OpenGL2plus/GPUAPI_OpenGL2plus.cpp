@@ -391,14 +391,22 @@ bool OsmAnd::GPUAPI_OpenGL2plus::attachToRenderTarget()
         if (framebufferStencilBits == 8)
         {
             _framebufferDepthDataFormat = GL_DEPTH_STENCIL;
-            _framebufferDepthDataType = GL_UNSIGNED_INT_24_8;
-            LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_STENCIL/UNSIGNED_INT_24_8");
+            if (glVersion >= 30)
+            {
+                _framebufferDepthDataType = GL_UNSIGNED_INT_24_8;
+                LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_STENCIL/UNSIGNED_INT_24_8");
+            }
+            else
+            {
+                _framebufferDepthDataType = GL_UNSIGNED_INT;
+                LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_STENCIL/UNSIGNED_INT");
+            }
         }
         else
         {
             _framebufferDepthDataFormat = GL_DEPTH_COMPONENT;
-            _framebufferDepthDataType = GL_UNSIGNED_INT_24_8;
-            LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_COMPONENT/UNSIGNED_INT_24_8");
+            _framebufferDepthDataType = GL_UNSIGNED_INT;
+            LogPrintf(LogSeverityLevel::Info, "OpenGL render target depth buffer: DEPTH_COMPONENT/UNSIGNED_INT");
         }
     }
     else if (_framebufferDepthBits == 16)
@@ -1105,12 +1113,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::pickFramebufferDepthValue(
 
     double value;
     const auto pValue = data.data() + (y * width + x) * _framebufferDepthBytes;
-    if (_framebufferDepthDataFormat == GL_DEPTH_COMPONENT && _framebufferDepthDataType == GL_UNSIGNED_INT)
+    if ((_framebufferDepthDataFormat == GL_DEPTH_COMPONENT || _framebufferDepthDataFormat == GL_DEPTH_STENCIL) && _framebufferDepthDataType == GL_UNSIGNED_INT)
     {
         value = static_cast<double>(*reinterpret_cast<const uint32_t*>(pValue)) / std::numeric_limits<uint32_t>::max();
     }
-    else if ((_framebufferDepthDataFormat == GL_DEPTH_STENCIL || _framebufferDepthDataFormat == GL_DEPTH_COMPONENT) &&
-             _framebufferDepthDataType == GL_UNSIGNED_INT_24_8)
+    else if (_framebufferDepthDataFormat == GL_DEPTH_STENCIL && _framebufferDepthDataType == GL_UNSIGNED_INT_24_8)
     {
         value = static_cast<double>(*reinterpret_cast<const uint32_t*>(pValue) >> 8) / (std::numeric_limits<uint32_t>::max() >> 8);
     }
