@@ -183,12 +183,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileDatabaseMeta(const std:
     return true;
 }
 
-long long OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileSize(
+int OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileSize(
         const TileId tileId,
         const ZoomLevel zoom,
         const bool localData /*= false*/)
 {
-    long long size = 0;
+    int size = 0;
 
     if (localData)
     {
@@ -202,12 +202,7 @@ long long OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileSize(
     }
     else
     {
-        auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
-        auto geoTileUrl = WEATHER_TILES_URL_PREFIX + dateTimeStr + "/"
-                + QString::number(zoom) + QStringLiteral("_")
-                + QString::number(tileId.x) + QStringLiteral("_")
-                + QString::number(15 - tileId.y) + QStringLiteral(".tiff.gz");
-        size = webClient->getFileSize(geoTileUrl);
+        size = 40000;
     }
     return size;
 }
@@ -417,28 +412,6 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
     ObtainTileTask *task = new ObtainTileTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
     _threadPool->start(task, getAndDecreasePriority());
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::obtainFile(
-    const WeatherTileResourceProvider::FileRequest& request,
-    const WeatherTileResourceProvider::FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    const auto requestClone = request.clone();
-    FileTask *task = new FileTask(shared_from_this(), requestClone, callback, collectMetric);
-    task->run();
-    delete task;
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::obtainFileAsync(
-    const WeatherTileResourceProvider::FileRequest& request,
-    const WeatherTileResourceProvider::FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    const auto requestClone = request.clone();
-    FileTask *task = new FileTask(shared_from_this(), requestClone, callback, collectMetric);
-    task->setAutoDelete(true);
-    _threadPool->start(task, 1);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::downloadGeoTiles(
@@ -982,57 +955,6 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     callback(true, data, nullptr);
 }
 
-OsmAnd::WeatherTileResourceProvider_P::FileTask::FileTask(
-    std::shared_ptr<WeatherTileResourceProvider_P> provider,
-    const std::shared_ptr<WeatherTileResourceProvider::FileRequest> request_,
-    const WeatherTileResourceProvider::FileAsyncCallback callback_,
-    const bool collectMetric_ /*= false*/)
-    : _provider(provider)
-    , request(request_)
-    , callback(callback_)
-    , collectMetric(collectMetric_)
-{
-}
-
-OsmAnd::WeatherTileResourceProvider_P::FileTask::~FileTask()
-{
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::FileTask::run()
-{
-    LatLon topLeft = request->topLeft;
-    LatLon bottomRight = request->bottomRight;
-    bool localdata = request->localData;
-    auto dateTime = _provider->dateTime;
-    auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
-
-    if (request->queryController && request->queryController->isAborted())
-    {
-        LogPrintf(LogSeverityLevel::Debug,
-                "Stop operation with weather geo file %f, %f / %f, %f for %s",
-                topLeft.latitude, topLeft.longitude, bottomRight.latitude, bottomRight.longitude, qPrintable(dateTimeStr));
-        callback(false, 0, nullptr);
-        return;
-    }
-
-    ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
-    QVector<TileId> geoTileIds = WeatherTileResourcesManager::generateGeoTileIds(topLeft, bottomRight, geoTileZoom);
-    long long size = 0;
-    for (const auto& tileId : constOf(geoTileIds))
-    {
-        if (request->queryController && request->queryController->isAborted())
-        {
-            LogPrintf(LogSeverityLevel::Debug,
-                    "Stop operation with weather geo file %f, %f / %f, %f for %s",
-                    topLeft.latitude, topLeft.longitude, bottomRight.latitude, bottomRight.longitude, qPrintable(dateTimeStr));
-            return;
-        }
-
-        size = _provider->obtainGeoTileSize(tileId, geoTileZoom, localdata);
-        callback(true, size, nullptr);
-    }
-}
-
 OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::DownloadGeoTileTask(
     std::shared_ptr<WeatherTileResourceProvider_P> provider,
     const std::shared_ptr<WeatherTileResourceProvider::DownloadGeoTileRequest> request_,
@@ -1053,6 +975,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
 {
     LatLon topLeft = request->topLeft;
     LatLon bottomRight = request->bottomRight;
+    bool localData = request->localData;
     auto dateTimeStr = _provider->dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
 
     if (request->queryController && request->queryController->isAborted())
@@ -1078,8 +1001,20 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
             return;
         }
 
-        QByteArray data;
-        bool res = _provider->obtainGeoTile(tileId, geoTileZoom, data, request->forceDownload, request->localData, request->queryController);
-        callback(res, ++downloadedTiles, tilesCount, data.size(), nullptr);
+        bool res = false;
+        int size = 0;
+
+        if (request->calculateSize)
+        {
+            size = _provider->obtainGeoTileSize(tileId, geoTileZoom, localData);
+            res = size > 0;
+        }
+        else
+        {
+            QByteArray data;
+            res = _provider->obtainGeoTile(tileId, geoTileZoom, data, request->forceDownload, localData, request->queryController);
+            size = data.size();
+        }
+        callback(res, ++downloadedTiles, tilesCount, size, nullptr);
     }
 }

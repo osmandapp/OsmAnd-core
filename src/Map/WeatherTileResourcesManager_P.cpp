@@ -384,68 +384,6 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     }
 }
 
-void OsmAnd::WeatherTileResourcesManager_P::obtainFile(
-    const WeatherTileResourcesManager::FileRequest& request,
-    const WeatherTileResourcesManager::FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    auto resourceProvider = getResourceProvider(request.dataTime);
-    if (resourceProvider)
-    {
-        WeatherTileResourceProvider::FileRequest rr;
-        rr.topLeft = request.topLeft;
-        rr.bottomRight = request.bottomRight;
-        rr.localData = request.localData;
-        rr.queryController = request.queryController;
-        
-        const WeatherTileResourceProvider::FileAsyncCallback rc =
-            [callback]
-            (const bool succeeded,
-             const long long fileSize,
-             const std::shared_ptr<Metric>& metric)
-            {
-                callback(succeeded, fileSize, metric);
-            };
-
-        resourceProvider->obtainFile(rr, rc);
-    }
-    else
-    {
-        callback(false, 0, nullptr);
-    }
-}
-
-void OsmAnd::WeatherTileResourcesManager_P::obtainFileAsync(
-    const WeatherTileResourcesManager::FileRequest& request,
-    const WeatherTileResourcesManager::FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    auto resourceProvider = getResourceProvider(request.dataTime);
-    if (resourceProvider)
-    {
-        WeatherTileResourceProvider::FileRequest rr;
-        rr.topLeft = request.topLeft;
-        rr.bottomRight = request.bottomRight;
-        rr.localData = request.localData;
-        rr.queryController = request.queryController;
-
-        const WeatherTileResourceProvider::FileAsyncCallback rc =
-            [callback]
-            (const bool succeeded,
-             const long long fileSize,
-             const std::shared_ptr<Metric>& metric)
-            {
-                callback(succeeded, fileSize, metric);
-            };
-
-        resourceProvider->obtainFileAsync(rr, rc);
-    }
-    else
-    {
-        callback(false, 0, nullptr);
-    }
-}
-
 void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
     const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
     const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
@@ -459,6 +397,7 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
         rr.localData = request.localData;
+        rr.calculateSize = request.calculateSize;
         rr.queryController = request.queryController;
 
         const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback rc =
@@ -466,10 +405,10 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
             (const bool succeeded,
                 const uint64_t downloadedTiles,
                 const uint64_t totalTiles,
-                const int downloadedTileSize,
+                const int tileSize,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(succeeded, downloadedTiles, totalTiles, downloadedTileSize, metric);
+                callback(succeeded, downloadedTiles, totalTiles, tileSize, metric);
             };
 
         resourceProvider->downloadGeoTiles(rr, rc);
@@ -493,6 +432,7 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
         rr.localData = request.localData;
+        rr.calculateSize = request.calculateSize;
         rr.queryController = request.queryController;
 
         const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback rc =
@@ -500,10 +440,10 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
             (const bool succeeded,
                 const uint64_t downloadedTiles,
                 const uint64_t totalTiles,
-                const int downloadedTileSize,
+                const int tileSize,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(succeeded, downloadedTiles, totalTiles, downloadedTileSize, metric);
+                callback(succeeded, downloadedTiles, totalTiles, tileSize, metric);
             };
 
         resourceProvider->downloadGeoTilesAsync(rr, rc);

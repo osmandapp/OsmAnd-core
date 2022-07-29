@@ -91,16 +91,6 @@ namespace OsmAnd
             const WeatherTileResourcesManager::TileRequest& request,
             const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
-        
-        void obtainFile(
-            const WeatherTileResourcesManager::FileRequest& request,
-            const WeatherTileResourcesManager::FileAsyncCallback callback,
-            const bool collectMetric = false);
-
-        void obtainFileAsync(
-            const WeatherTileResourcesManager::FileRequest& request,
-            const WeatherTileResourcesManager::FileAsyncCallback callback,
-            const bool collectMetric = false);
 
         void downloadGeoTiles(
             const WeatherTileResourcesManager::DownloadGeoTileRequest& request,

@@ -79,28 +79,6 @@ namespace OsmAnd
             virtual void run() Q_DECL_OVERRIDE;
         };
 
-        class OSMAND_CORE_API FileTask : public QRunnable
-        {
-            Q_DISABLE_COPY_AND_MOVE(FileTask);
-        private:
-            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
-
-        protected:
-        public:
-            FileTask(
-                    const std::shared_ptr<WeatherTileResourceProvider_P> provider,
-                    const std::shared_ptr<WeatherTileResourceProvider::FileRequest> request,
-                    const WeatherTileResourceProvider::FileAsyncCallback callback,
-                    const bool collectMetric = false);
-            virtual ~FileTask();
-
-            const std::shared_ptr<WeatherTileResourceProvider::FileRequest> request;
-            const WeatherTileResourceProvider::FileAsyncCallback callback;
-            const bool collectMetric;
-
-            virtual void run() Q_DECL_OVERRIDE;
-        };
-
         class OSMAND_CORE_API DownloadGeoTileTask : public QRunnable
         {
             Q_DISABLE_COPY_AND_MOVE(DownloadGeoTileTask);
@@ -217,16 +195,6 @@ namespace OsmAnd
             const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
 
-        void obtainFile(
-            const WeatherTileResourceProvider::FileRequest& request,
-            const WeatherTileResourceProvider::FileAsyncCallback callback,
-            const bool collectMetric = false);
-
-        void obtainFileAsync(
-            const WeatherTileResourceProvider::FileRequest& request,
-            const WeatherTileResourceProvider::FileAsyncCallback callback,
-            const bool collectMetric = false);
-
         void downloadGeoTiles(
             const WeatherTileResourceProvider::DownloadGeoTileRequest& request,
             const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
@@ -244,7 +212,7 @@ namespace OsmAnd
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
 
-        long long obtainGeoTileSize(
+        int obtainGeoTileSize(
             const TileId tileId,
             const ZoomLevel zoom,
             const bool localData = false);

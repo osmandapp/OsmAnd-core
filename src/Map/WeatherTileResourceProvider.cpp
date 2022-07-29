@@ -61,22 +61,6 @@ void OsmAnd::WeatherTileResourceProvider::obtainDataAsync(
     _p->obtainDataAsync(request, callback, collectMetric);
 }
 
-void OsmAnd::WeatherTileResourceProvider::obtainFile(
-    const FileRequest& request,
-    const FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    _p->obtainFile(request, callback, collectMetric);
-}
-
-void OsmAnd::WeatherTileResourceProvider::obtainFileAsync(
-    const FileRequest& request,
-    const FileAsyncCallback callback,
-    const bool collectMetric /*= false*/)
-{
-    _p->obtainFileAsync(request, callback, collectMetric);
-}
-
 void OsmAnd::WeatherTileResourceProvider::downloadGeoTiles(
     const DownloadGeoTileRequest& request,
     const DownloadGeoTilesAsyncCallback callback,
@@ -238,6 +222,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::Weathe
 OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
     , localData(false)
+    , calculateSize(false)
 {
 }
 
@@ -256,39 +241,13 @@ void OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::copy(DownloadG
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
     dst.localData = src.localData;
+    dst.calculateSize = src.calculateSize;
     dst.queryController = src.queryController;
 }
 
 std::shared_ptr<OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest> OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::clone() const
 {
     return std::shared_ptr<DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
-}
-
-OsmAnd::WeatherTileResourceProvider::FileRequest::FileRequest()
-    : localData(false)
-{
-}
-
-OsmAnd::WeatherTileResourceProvider::FileRequest::FileRequest(const FileRequest& that)
-{
-    copy(*this, that);
-}
-
-OsmAnd::WeatherTileResourceProvider::FileRequest::~FileRequest()
-{
-}
-
-void OsmAnd::WeatherTileResourceProvider::FileRequest::copy(FileRequest& dst, const FileRequest& src)
-{
-    dst.topLeft = src.topLeft;
-    dst.bottomRight = src.bottomRight;
-    dst.localData = src.localData;
-    dst.queryController = src.queryController;
-}
-
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider::FileRequest> OsmAnd::WeatherTileResourceProvider::FileRequest::clone() const
-{
-    return std::shared_ptr<FileRequest>(new FileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourceProvider::Data::Data(

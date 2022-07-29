@@ -85,27 +85,12 @@ namespace OsmAnd
             LatLon bottomRight;
             bool forceDownload;
             bool localData;
+            bool calculateSize;
 
             std::shared_ptr<const IQueryController> queryController;
 
             static void copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src);
             virtual std::shared_ptr<DownloadGeoTileRequest> clone() const;
-        };
-
-        struct OSMAND_CORE_API FileRequest
-        {
-            FileRequest();
-            FileRequest(const FileRequest& that);
-            virtual ~FileRequest();
-
-            LatLon topLeft;
-            LatLon bottomRight;
-            bool localData;
-
-            std::shared_ptr<const IQueryController> queryController;
-
-            static void copy(FileRequest& dst, const FileRequest& src);
-            virtual std::shared_ptr<FileRequest> clone() const;
         };
 
         class OSMAND_CORE_API Data
@@ -148,13 +133,7 @@ namespace OsmAnd
             bool succeeded,
             uint64_t downloadedTiles,
             uint64_t totalTiles,
-            int downloadedTileSize,
-            const std::shared_ptr<Metric>& metric);
-
-        OSMAND_CALLABLE(FileAsyncCallback,
-            void,
-            bool succeeded,
-            long long fileSize,
+            int tileSize,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -189,16 +168,6 @@ namespace OsmAnd
         virtual void obtainDataAsync(
             const TileRequest& request,
             const ObtainTileDataAsyncCallback callback,
-            const bool collectMetric = false);
-
-        virtual void obtainFile(
-            const FileRequest& request,
-            const FileAsyncCallback callback,
-            const bool collectMetric = false);
-
-        virtual void obtainFileAsync(
-            const FileRequest& request,
-            const FileAsyncCallback callback,
             const bool collectMetric = false);
 
         virtual void downloadGeoTiles(
