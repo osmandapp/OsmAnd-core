@@ -117,6 +117,10 @@
 #include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
 #include <OsmAndCore/Map/PolygonsCollection.h>
 #include <OsmAndCore/Map/PolygonBuilder.h>
+#include <OsmAndCore/ITileSqliteDatabasesCollection.h>
+#include <OsmAndCore/TileSqliteDatabasesCollection.h>
+#include <OsmAndCore/TileSqliteDatabase.h>
+#include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -290,6 +294,11 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::PolygonsCollection)
 	%shared_ptr(OsmAnd::PolygonBuilder)
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider::SplitLabel)
+	%shared_ptr(OsmAnd::ITileSqliteDatabasesCollection)
+	%shared_ptr(OsmAnd::TileSqliteDatabasesCollection)
+	%shared_ptr(OsmAnd::TileSqliteDatabase)
+	%shared_ptr(OsmAnd::SqliteHeightmapTileProvider)
+
 %include <std_pair.i>
 %include <std_string.i>
 #ifdef SWIG_JAVA
@@ -473,6 +482,11 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapTiledCollectionPoint.h>
 %include <OsmAndCore/Map/GpxAdditionalIconsProvider.h>
 %include <OsmAndCore/Map/PolygonsCollection.h>
+%include <OsmAndCore/ITileSqliteDatabasesCollection.h>
+%include <OsmAndCore/TileSqliteDatabasesCollection.h>
+%include <OsmAndCore/TileSqliteDatabase.h>
+%include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;
 

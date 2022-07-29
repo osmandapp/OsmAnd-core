@@ -1437,7 +1437,7 @@ size_t OsmAnd::GPUAPI_OpenGL::getTextureFormatPixelSize(const TextureFormat text
     return 0;
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL::getBaseInteralTextureFormat(const TextureFormat textureFormat) const
+GLenum OsmAnd::GPUAPI_OpenGL::getBaseInternalTextureFormat(const TextureFormat textureFormat) const
 {
     return static_cast<GLenum>(textureFormat.format);
 }
@@ -1502,7 +1502,7 @@ void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
 
     uint8_t* dummyBuffer = new uint8_t[width * height * getTextureFormatPixelSize(textureFormat)];
 
-    glTexImage2D(target, 0, format, width, height, 0, getBaseInteralTextureFormat(textureFormat), type, dummyBuffer);
+    glTexImage2D(target, 0, format, width, height, 0, getBaseInternalTextureFormat(textureFormat), type, dummyBuffer);
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
