@@ -142,16 +142,8 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             writer.writeTextElement(QLatin1String("calendar_event"), "true");
         
         // all other extensions
-        const auto extensions = item->getExtensions();
-        if (!extensions.empty() && extensions.count() > 0)
-        {
-            for (int i = 0; i < extensions.count(); i++)
-            {
-                const auto key = extensions.keys()[i];
-                const auto value = extensions[key];
-                writer.writeTextElement(key, value);
-            }
-        }
+        for (const auto& extension : rangeOf(item->getExtensions()))
+            writer.writeTextElement(extension.key(), extension.value());
 
         // </extensions>
         writer.writeEndElement();
@@ -187,7 +179,10 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 continue;
             
             if (tagName == QLatin1String("extensions"))
+            {
                 isInsideExtensionsTag = true;
+                continue;
+            }
             
             if (tagName == QLatin1String("wpt"))
             {
@@ -343,10 +338,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
             }
             else if (isInsideExtensionsTag)
             {
-                if (tagName != QLatin1String("extensions"))
-                {
-                    newItem->setExtension(tagName.toString(), xmlReader.readElementText());
-                }
+                newItem->setExtension(tagName.toString(), xmlReader.readElementText());
             }
         }
         else if (xmlReader.isEndElement())
