@@ -30,8 +30,10 @@ namespace OsmAnd
 
         typedef void (GL_APIENTRYP PFNGLPOPGROUPMARKEREXTPROC)(void);
         typedef void (GL_APIENTRYP PFNGLPUSHGROUPMARKEREXTPROC)(GLsizei length, const GLchar* marker);
+        typedef void (GL_APIENTRYP PFNGLLABELOBJECTEXTPROC)(GLenum type, GLuint object, GLsizei length, const GLchar *label);
         static PFNGLPOPGROUPMARKEREXTPROC glPopGroupMarkerEXT;
         static PFNGLPUSHGROUPMARKEREXTPROC glPushGroupMarkerEXT;
+        static PFNGLLABELOBJECTEXTPROC glLabelObjectEXT;
 #endif // !OSMAND_TARGET_OS_ios
     private:
         GLint _depthTexture;

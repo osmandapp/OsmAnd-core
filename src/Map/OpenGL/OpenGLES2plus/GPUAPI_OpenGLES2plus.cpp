@@ -84,6 +84,7 @@ PFNGLGENVERTEXARRAYSOESPROC OsmAnd::GPUAPI_OpenGLES2plus::glGenVertexArraysOES =
 
 OsmAnd::GPUAPI_OpenGLES2plus::PFNGLPOPGROUPMARKEREXTPROC OsmAnd::GPUAPI_OpenGLES2plus::glPopGroupMarkerEXT = nullptr;
 OsmAnd::GPUAPI_OpenGLES2plus::PFNGLPUSHGROUPMARKEREXTPROC OsmAnd::GPUAPI_OpenGLES2plus::glPushGroupMarkerEXT = nullptr;
+OsmAnd::GPUAPI_OpenGLES2plus::PFNGLLABELOBJECTEXTPROC OsmAnd::GPUAPI_OpenGLES2plus::glLabelObjectEXT = nullptr;
 #endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::GPUAPI_OpenGLES2plus::GPUAPI_OpenGLES2plus()

@@ -539,16 +539,16 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.isPositionVisible(position31);
     }
 
-    public final double getCurrentTileSizeInMeters() {
+    public final double getTileSizeInMeters() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getCurrentTileSizeInMeters();
+        return _mapRenderer.getTileSizeInMeters();
     }
 
-    public final double getCurrentPixelsToMetersScaleFactor() {
+    public final double getPixelsToMetersScaleFactor() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getCurrentPixelsToMetersScaleFactor();
+        return _mapRenderer.getPixelsToMetersScaleFactor();
     }
 
     public final int getMaxMissingDataZoomShift() {
