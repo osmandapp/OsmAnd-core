@@ -369,6 +369,15 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
             _isSupported_EXT_debug_marker = false;
         }
     }
+    if (_isSupported_EXT_debug_label && !glLabelObjectEXT)
+    {
+        glLabelObjectEXT = reinterpret_cast<PFNGLLABELOBJECTEXTPROC>(eglGetProcAddress("glLabelObjectEXT"));
+        if (glLabelObjectEXT == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. EXT_debug_label is present, but glLabelObjectEXT() was not found. This extension will be disabled");
+            _isSupported_EXT_debug_label = false;
+        }
+    }
     if (_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
