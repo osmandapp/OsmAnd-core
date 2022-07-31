@@ -39,6 +39,7 @@ namespace OsmAnd
             const QString& icon,
             const QString& background,
             const ColorRGB color,
+            const QHash<QString, QString>& extensions,
             const bool calendarEvent);
 
         FavoriteLocation(
@@ -54,6 +55,7 @@ namespace OsmAnd
             const QString& icon,
             const QString& background,
             const ColorRGB color,
+            const QHash<QString, QString>& extensions,
             const bool calendarEvent);
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
@@ -107,6 +109,12 @@ namespace OsmAnd
         
         virtual ColorRGB getColor() const;
         virtual void setColor(const ColorRGB newColor);
+        
+        virtual QHash<QString, QString> getExtensions() const;
+        virtual void setExtensions(const QHash<QString, QString>& extensions);
+        
+        virtual QString getExtension(const QString& tag);
+        virtual void setExtension(const QString& tag, const QString& value);
 
     friend class OsmAnd::FavoriteLocationsCollection;
     friend class OsmAnd::FavoriteLocationsCollection_P;
