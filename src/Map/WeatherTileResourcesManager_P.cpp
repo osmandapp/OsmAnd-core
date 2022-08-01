@@ -397,7 +397,6 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
         rr.localData = request.localData;
-        rr.calculateSize = request.calculateSize;
         rr.queryController = request.queryController;
 
         const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback rc =
@@ -405,17 +404,16 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
             (const bool succeeded,
                 const uint64_t downloadedTiles,
                 const uint64_t totalTiles,
-                const int tileSize,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(succeeded, downloadedTiles, totalTiles, tileSize, metric);
+                callback(succeeded, downloadedTiles, totalTiles, metric);
             };
 
         resourceProvider->downloadGeoTiles(rr, rc);
     }
     else
     {
-        callback(false, 0, 0, 0, nullptr);
+        callback(false, 0, 0, nullptr);
     }
 }
 
@@ -432,7 +430,6 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
         rr.localData = request.localData;
-        rr.calculateSize = request.calculateSize;
         rr.queryController = request.queryController;
 
         const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback rc =
@@ -440,52 +437,104 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
             (const bool succeeded,
                 const uint64_t downloadedTiles,
                 const uint64_t totalTiles,
-                const int tileSize,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(succeeded, downloadedTiles, totalTiles, tileSize, metric);
+                callback(succeeded, downloadedTiles, totalTiles, metric);
             };
 
         resourceProvider->downloadGeoTilesAsync(rr, rc);
     }
     else
     {
-        callback(false, 0, 0, 0, nullptr);
+        callback(false, 0, 0, nullptr);
     }
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::clearLocalDbCache(
-        const QVector<TileId> tileIds,
+
+long long OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
         const ZoomLevel zoom)
 {
-    auto cacheDir = QDir(localCachePath + QDir::separator() + QStringLiteral("offline"));
+    auto cacheDir = QDir(localCachePath);
+    long long size = 0;
 
     QFileInfoList fileInfos;
-    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db") << QStringLiteral("*.raster.db"), fileInfos, false);
+    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
     for (const auto &fileInfo: constOf(fileInfos))
     {
-        const auto geoDbCachePath = fileInfo.absoluteFilePath();
-        auto getTilesDb = std::make_shared<TileSqliteDatabase>(geoDbCachePath);
-        bool isOpened = getTilesDb->isOpened();
-        if (!isOpened)
-            getTilesDb->open();
+        QString baseName = fileInfo.baseName();
+        QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
+        dateTime.setTimeSpec(Qt::UTC);
 
-        for (const auto &tileId: constOf(tileIds))
+        auto resourceProvider = getResourceProvider(dateTime);
+        if (resourceProvider)
+            size += resourceProvider->calculateTilesSize(tileIds, excludeTileIds, zoom);
+    }
+
+    return size;
+}
+
+bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
+        const ZoomLevel zoom)
+{
+    auto cacheDir = QDir(localCachePath);
+
+    QFileInfoList fileInfos;
+    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
+    for (const auto &fileInfo: constOf(fileInfos))
+    {
+        QString baseName = fileInfo.baseName();
+        QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
+        dateTime.setTimeSpec(Qt::UTC);
+
+        auto resourceProvider = getResourceProvider(dateTime);
+        if (resourceProvider)
         {
-            getTilesDb->removeTileData(tileId, zoom);
-            getTilesDb->compact();
-        }
+            QWriteLocker scopedLocker(&_resourceProvidersLock);
 
-        if (!isOpened)
-            getTilesDb->close();
+            if (!resourceProvider->removeTileData(tileIds, excludeTileIds, zoom))
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                        "Failed to delete tile ids from weather resource provider: %s", qPrintable(baseName));
+            }
+
+            bool isEmpty = resourceProvider->isEmpty();
+            if (isEmpty)
+            {
+                resourceProvider->closeProvider();
+                QString dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+                _resourceProviders.remove(dateTimeStr);
+
+                const auto geoDbCachePath = fileInfo.absoluteFilePath();
+                if (!QFile(geoDbCachePath).remove())
+                {
+                    LogPrintf(LogSeverityLevel::Error,
+                            "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
+                }
+                else
+                {
+                    QFileInfoList rasterFileInfos;
+                    Utilities::findFiles(cacheDir, QStringList() << (dateTime.toString(QStringLiteral("yyyyMMdd_hh00")) + QStringLiteral("*.raster.db")), rasterFileInfos, false);
+                    for (const auto &rasterFileInfo: constOf(rasterFileInfos))
+                    {
+                        if (!QFile(rasterFileInfo.absoluteFilePath()).remove())
+                        {
+                            LogPrintf(LogSeverityLevel::Error,
+                                    "Failed to delete weather raster cache db file: %s", qPrintable(geoDbCachePath));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     return true;
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
-        const bool localData /*= false*/,
-        const QDateTime beforeDateTime /*= QDateTime()*/)
+bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeDateTime /*= QDateTime()*/)
 {
     bool clearBefore = beforeDateTime.isValid() && !beforeDateTime.isNull();
 
@@ -506,13 +555,13 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
     }
 
     bool res = true;
-    auto cacheDir = QDir(localCachePath + QDir::separator() + (localData ? QStringLiteral("offline") : QStringLiteral("online")));
+    auto cacheDir = QDir(localCachePath);
 
     QFileInfoList fileInfos;
     Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db") << QStringLiteral("*.raster.db"), fileInfos, false);
     for (const auto &fileInfo: constOf(fileInfos))
     {
-        bool deleted = false;
+        bool deleted = true;
         const auto filePath = fileInfo.absoluteFilePath();
         if (clearBefore)
         {

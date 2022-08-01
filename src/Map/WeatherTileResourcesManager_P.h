@@ -102,13 +102,17 @@ namespace OsmAnd
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        bool clearLocalDbCache(
-                const QVector<TileId> tileIds,
+        long long calculateDbCacheSize(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
                 const ZoomLevel zoom);
 
         bool clearDbCache(
-                const bool localData = false,
-                const QDateTime clearBeforeDateTime = QDateTime());
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
+
+        bool clearDbCache(const QDateTime clearBeforeDateTime = QDateTime());
 
     friend class OsmAnd::WeatherTileResourcesManager;
     };

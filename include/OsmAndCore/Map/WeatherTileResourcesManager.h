@@ -86,7 +86,6 @@ namespace OsmAnd
             LatLon bottomRight;
             bool forceDownload;
             bool localData;
-            bool calculateSize;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -134,7 +133,6 @@ namespace OsmAnd
             bool succeeded,
             uint64_t downloadedTiles,
             uint64_t totalTiles,
-            int tileSize,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -202,13 +200,17 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        virtual bool clearLocalDbCache(
-                const QVector<TileId> tileIds,
+        long long calculateDbCacheSize(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
                 const ZoomLevel zoom);
 
         virtual bool clearDbCache(
-                const bool localData = false,
-                const QDateTime beforeDateTime = QDateTime());
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
+
+        virtual bool clearDbCache(const QDateTime beforeDateTime = QDateTime());
     };
 }
 

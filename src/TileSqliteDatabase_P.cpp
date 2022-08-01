@@ -423,9 +423,23 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
     auto minZoom = ZoomLevel::InvalidZoomLevel;
     auto maxZoom = ZoomLevel::InvalidZoomLevel;
 
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return false;
+    }
+
+    bool ok = false;
+
+    const auto tileNumberingValue = meta.getTileNumbering(&ok);
+    if (ok && !tileNumberingValue.isEmpty() && tileNumberingValue == QStringLiteral("WeatherForecast"))
+    {
+        minZoom = getMinZoom();
+        maxZoom = getMaxZoom();
+    }
+    else
     {
         QReadLocker scopedLocker(&_lock);
-
         int res;
 
         const auto statement = prepareStatement(_database, QStringLiteral("SELECT MIN(z), MAX(z) FROM tiles"));
@@ -441,8 +455,6 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
 
         if (res > 0)
         {
-            bool ok = false;
-
             const auto minZoomValue = readStatementValue(statement, 0).toLongLong(&ok);
             if (!ok || minZoomValue < ZoomLevel::MinZoomLevel || minZoomValue > ZoomLevel::MaxZoomLevel)
             {
@@ -462,12 +474,6 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
             minZoom = ZoomLevel::MinZoomLevel;
             maxZoom = ZoomLevel::MaxZoomLevel;
         }
-    }
-
-    Meta meta;
-    if (!obtainMeta(meta))
-    {
-        return false;
     }
 
     meta.setMinZoom(minZoom);
@@ -507,6 +513,17 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBox31(ZoomLevel zoom, AreaI* pOutBB
 {
     AreaI bbox31 = AreaI::negative();
 
+    
+    bool ok = false;
+    Meta meta;
+    if (obtainMeta(meta))
+    {
+        const auto tileNumberingValue = meta.getTileNumbering(&ok);
+        if (ok)
+            ok = !tileNumberingValue.isEmpty() && tileNumberingValue == QStringLiteral("WeatherForecast");
+    }
+
+    if (!ok)
     {
         QReadLocker scopedLocker(&_lock);
 
@@ -798,6 +815,61 @@ bool OsmAnd::TileSqliteDatabase_P::isEmpty() const
 
         return false;
     }
+}
+
+bool OsmAnd::TileSqliteDatabase_P::getTileIds(OsmAnd::ZoomLevel zoom, QList<TileId>& tileIds)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    {
+        return false;
+    }
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        int res;
+
+        const auto statement = prepareStatement(_database, QStringLiteral("SELECT x, y FROM tiles WHERE z=:z"));
+        if (!statement || !configureStatement(statement, zoom))
+        {
+            LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to configure tile ids query for zoom : %d table : %s",
+                    zoom,
+                    qPrintable(owner->filename));
+            return false;
+        }
+
+        res = stepStatement(statement);
+        while (res > 0)
+        {
+            int32_t x = readStatementValue(statement, 0).toInt();
+            int32_t y = readStatementValue(statement, 1).toInt();
+
+            TileId tileId = TileId::fromXY(x, y);
+            tileIds.append(tileId);
+
+            res = stepStatement(statement);
+        }
+
+        if (res < 0)
+        {
+            LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to query for %d data %s: %s",
+                    zoom,
+                    qPrintable(owner->filename),
+                    sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom) const

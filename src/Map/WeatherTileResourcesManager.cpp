@@ -223,18 +223,25 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::clearLocalDbCache(
-        const QVector<TileId> tileIds,
+long long OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
         const ZoomLevel zoom)
 {
-    return _p->clearLocalDbCache(tileIds, zoom);
+    return _p->calculateDbCacheSize(tileIds, excludeTileIds, zoom);
 }
 
 bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
-        const bool localData /*= false*/,
-        const QDateTime beforeDateTime /*= QDateTime()*/)
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
+        const ZoomLevel zoom)
 {
-    return _p->clearDbCache(localData, beforeDateTime);
+    return _p->clearDbCache(tileIds, excludeTileIds, zoom);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const QDateTime beforeDateTime /*= QDateTime()*/)
+{
+    return _p->clearDbCache(beforeDateTime);
 }
 
 OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
@@ -306,7 +313,6 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::Weathe
 OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
     , localData(false)
-    , calculateSize(false)
 {
 }
 
@@ -326,7 +332,6 @@ void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadG
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
     dst.localData = src.localData;
-    dst.calculateSize = src.calculateSize;
     dst.queryController = src.queryController;
 }
 

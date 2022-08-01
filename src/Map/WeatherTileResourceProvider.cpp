@@ -148,6 +148,27 @@ int OsmAnd::WeatherTileResourceProvider::getCurrentRequestVersion() const
     return _p->getCurrentRequestVersion();
 }
 
+bool OsmAnd::WeatherTileResourceProvider::isEmpty()
+{
+    return _p->isEmpty();
+
+}
+long long OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
+        const ZoomLevel zoom)
+{
+    return _p->calculateTilesSize(tileIds, excludeTileIds, zoom);
+}
+
+bool OsmAnd::WeatherTileResourceProvider::removeTileData(
+        const QList<TileId> tileIds,
+        const QList<TileId> excludeTileIds,
+        const ZoomLevel zoom)
+{
+    return _p->removeTileData(tileIds, excludeTileIds, zoom);
+}
+
 bool OsmAnd::WeatherTileResourceProvider::closeProvider()
 {
     return _p->closeProvider();
@@ -222,7 +243,6 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::Weathe
 OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
     , localData(false)
-    , calculateSize(false)
 {
 }
 
@@ -241,7 +261,6 @@ void OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::copy(DownloadG
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
     dst.localData = src.localData;
-    dst.calculateSize = src.calculateSize;
     dst.queryController = src.queryController;
 }
 

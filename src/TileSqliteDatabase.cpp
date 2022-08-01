@@ -116,6 +116,11 @@ bool OsmAnd::TileSqliteDatabase::isEmpty() const
     return _p->isEmpty();
 }
 
+bool OsmAnd::TileSqliteDatabase::getTileIds(OsmAnd::ZoomLevel zoom, QList<TileId>& tileIds)
+{
+    return _p->getTileIds(zoom, tileIds);
+}
+
 bool OsmAnd::TileSqliteDatabase::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom) const
 {
     return _p->containsTileData(tileId, zoom);

@@ -125,8 +125,7 @@ namespace OsmAnd
         
         mutable QReadWriteLock _geoDbLock;
         std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase(bool localData);
-        bool obtainGeoTileDatabaseMeta(const std::shared_ptr<OsmAnd::TileSqliteDatabase>& geoTileDb);
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase();
 
         mutable QMutex _rasterTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
@@ -134,9 +133,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _rasterDbLock;
         QHash<QString, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(
-                BandIndex band,
-                bool localData);
+        std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
 
         mutable QMutex _contourTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _contourTilesInProcess;
@@ -149,6 +146,14 @@ namespace OsmAnd
         
         bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
         void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
+
+        bool isEmpty();
+
+        bool removeTileIds(
+                const std::shared_ptr<TileSqliteDatabase> tilesDb,
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
 
     protected:
         WeatherTileResourceProvider_P(
@@ -212,11 +217,6 @@ namespace OsmAnd
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
 
-        int obtainGeoTileSize(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            const bool localData = false);
-
         bool obtainGeoTile(
             const TileId tileId,
             const ZoomLevel zoom,
@@ -232,10 +232,18 @@ namespace OsmAnd
         void lockContourTile(const TileId tileId, const ZoomLevel zoom);
         void unlockContourTile(const TileId tileId, const ZoomLevel zoom);
 
-        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase(bool localData);
-        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(
-                BandIndex band,
-                bool localData);
+        std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
+        std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
+
+        long long calculateTilesSize(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
+
+        bool removeTileData(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
 
         bool closeProvider();
 

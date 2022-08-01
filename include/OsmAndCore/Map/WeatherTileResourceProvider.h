@@ -85,7 +85,6 @@ namespace OsmAnd
             LatLon bottomRight;
             bool forceDownload;
             bool localData;
-            bool calculateSize;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -133,7 +132,6 @@ namespace OsmAnd
             bool succeeded,
             uint64_t downloadedTiles,
             uint64_t totalTiles,
-            int tileSize,
             const std::shared_ptr<Metric>& metric);
 
     protected:
@@ -190,6 +188,18 @@ namespace OsmAnd
         static int getMaxMissingDataZoomShift(const WeatherLayer layer);
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
         QDateTime getDateTime();
+
+        bool isEmpty();
+
+        long long calculateTilesSize(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
+
+        bool removeTileData(
+                const QList<TileId> tileIds,
+                const QList<TileId> excludeTileIds,
+                const ZoomLevel zoom);
 
         bool closeProvider();
     };
