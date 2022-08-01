@@ -119,7 +119,8 @@ namespace OsmAnd
         bool storeMeta(const Meta& meta);
 
         bool isEmpty() const;
-        bool getTileIds(ZoomLevel zoom, QList<TileId>& tileIds);
+        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom);
+        bool getTilesSize(QList<TileId> tileIds, long long &size, ZoomLevel zoom);
         bool containsTileData(TileId tileId, ZoomLevel zoom) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;

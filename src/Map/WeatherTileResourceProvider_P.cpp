@@ -455,22 +455,21 @@ long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
                 + QStringLiteral(".tiff.db");
 
         QList<TileId> geoDBbTileIds;
-        if (!geoDb->getTileIds(zoom, geoDBbTileIds))
+        if (!geoDb->getTileIds(geoDBbTileIds, zoom))
         {
             LogPrintf(LogSeverityLevel::Error,
                     "Failed to get tile ids from weather geo cache db file: %s", qPrintable(geoDbCachePath));
         }
         else
         {
+            QList<TileId> geoTileIdsToCalculate = QList<TileId>();
             for (const auto &geoDBTileId: constOf(geoDBbTileIds))
             {
                 if (((hasTileIds && tileIds.contains(geoDBTileId)) || !hasTileIds) && !excludeTileIds.contains(geoDBTileId))
-                {
-                    QByteArray data;
-                    geoDb->obtainTileData(geoDBTileId, zoom, data);
-                    size += data.size();
-                }
+                    geoTileIdsToCalculate.append(geoDBTileId);
             }
+            if (!geoTileIdsToCalculate.isEmpty())
+                geoDb->getTilesSize(geoTileIdsToCalculate, size, zoom);
         }
     }
 
@@ -492,21 +491,24 @@ long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
                 QReadLocker geoScopedLocker(&_rasterDbLock);
 
                 QList<TileId> rasterDBTileIds;
-                if (!rasterDb->getTileIds(zoom, rasterDBTileIds))
+                if (!rasterDb->getTileIds(rasterDBTileIds, zoom))
                 {
                     LogPrintf(LogSeverityLevel::Error,
                             "Failed to get tile ids from weather raster cache db file: %s", qPrintable(rasterDbCachePath));
                 }
                 else
                 {
+                    QList<TileId> rasterTileIdsToCalculate = QList<TileId>();
                     for (const auto &rasterDBTileId: constOf(rasterDBTileIds))
                     {
                         if (((hasTileIds && tileIds.contains(rasterDBTileId)) || !hasTileIds) && !excludeTileIds.contains(rasterDBTileId))
-                        {
-                            QByteArray data;
-                            rasterDb->obtainTileData(rasterDBTileId, zoom, data);
-                            size += data.size();
-                        }
+                            rasterTileIdsToCalculate.append(rasterDBTileId);
+                    }
+                    if (!rasterTileIdsToCalculate.isEmpty())
+                    {
+                        long long rasterTilesSize = 0;
+                        rasterDb->getTilesSize(rasterTileIdsToCalculate, rasterTilesSize, zoom);
+                        size += rasterTilesSize;
                     }
                 }
             }
@@ -569,7 +571,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
     else
     {
         QList<TileId> dbTileIds;
-        if (!tilesDb->getTileIds(zoom, dbTileIds))
+        if (!tilesDb->getTileIds(dbTileIds, zoom))
         {
             LogPrintf(LogSeverityLevel::Error,
                       "Failed to get tile ids from weather cache db file: %s", qPrintable(tilesDb->filename));

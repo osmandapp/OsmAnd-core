@@ -817,7 +817,7 @@ bool OsmAnd::TileSqliteDatabase_P::isEmpty() const
     }
 }
 
-bool OsmAnd::TileSqliteDatabase_P::getTileIds(OsmAnd::ZoomLevel zoom, QList<TileId>& tileIds)
+bool OsmAnd::TileSqliteDatabase_P::getTileIds(QList<TileId>& tileIds, ZoomLevel zoom)
 {
     if (!isOpened())
     {
@@ -866,6 +866,59 @@ bool OsmAnd::TileSqliteDatabase_P::getTileIds(OsmAnd::ZoomLevel zoom, QList<Tile
                     qPrintable(owner->filename),
                     sqlite3_errmsg(_database.get()));
             return false;
+        }
+    }
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, long long &size, ZoomLevel zoom)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    {
+        return false;
+    }
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        for (TileId tileId : tileIds)
+        {
+            int res;
+
+            const auto statement = prepareStatement(_database, QStringLiteral("SELECT length(image) FROM tiles WHERE x=:x AND y=:y AND z=:z"));
+            if (!statement || !configureStatement(statement, tileId, zoom))
+            {
+                LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to configure tile size query for tileId %dx%d@%d table : %s",
+                        tileId.x,
+                        tileId.y,
+                        zoom,
+                        qPrintable(owner->filename));
+                continue;
+            }
+
+            if ((res = stepStatement(statement)) < 0)
+            {
+                LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to query for %dx%d@%d data %s: %s",
+                        tileId.x,
+                        tileId.y,
+                        zoom,
+                        qPrintable(owner->filename),
+                        sqlite3_errmsg(_database.get()));
+                continue;
+            }
+
+            if (res > 0)
+                size += readStatementValue(statement, 0).toInt();
         }
     }
 
