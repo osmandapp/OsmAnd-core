@@ -77,9 +77,9 @@ bool OsmAnd::ResourcesManager::isBuiltInResource(const QString& id) const
     return _p->isBuiltInResource(id);
 }
 
-bool OsmAnd::ResourcesManager::rescanUnmanagedStoragePaths() const
+bool OsmAnd::ResourcesManager::rescanUnmanagedStoragePaths(bool rescanAll /*= false*/) const
 {
-    return _p->rescanUnmanagedStoragePaths();
+    return _p->rescanUnmanagedStoragePaths(rescanAll);
 }
 
 QList< std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager::getSortedLocalResources() const
