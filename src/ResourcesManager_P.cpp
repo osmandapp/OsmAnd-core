@@ -185,7 +185,7 @@ void OsmAnd::ResourcesManager_P::addMiniBasemapToLocalResources()
         addLocalResource(owner->miniBasemapFilename);
 }
 
-bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
+bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths(bool rescanAll /*= false*/) const
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
 
@@ -198,6 +198,11 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
     {
         if (!loadLocalResourcesFromPath(readonlyExternalStoragePath, true, unmanagedResources))
+            return false;
+    }
+    if (rescanAll)
+    {
+        if (!loadLocalResourcesFromPath(owner->localStoragePath, false, unmanagedResources))
             return false;
     }
 
@@ -508,7 +513,21 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
 
         // Create local resource entry
         const auto fileName = sqlitedbFileInfo.fileName();
-        const auto resourceId = fileName.toLower();
+        QString resourceId(fileName);
+        if (resourceId.startsWith(QStringLiteral("Hillshade ")))
+        {
+            resourceId = resourceId.toLower()
+            .remove(QStringLiteral("hillshade "))
+            .replace(QStringLiteral(".sqlitedb"), QStringLiteral(".hillshade.sqlitedb"))
+            .replace(' ', '_');
+        }
+        else if (resourceId.startsWith(QStringLiteral("Slope ")))
+        {
+            resourceId = resourceId.toLower()
+            .remove(QStringLiteral("slope "))
+            .replace(QStringLiteral(".sqlitedb"), QStringLiteral(".slope.sqlitedb"))
+            .replace(' ', '_');
+        }
         const auto pLocalResource = new InstalledResource(
             resourceId,
             resourceType,
@@ -659,7 +678,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_MapStyleResource(
 
         // Create local resource entry
         const auto fileName = mapStyleFileInfo.fileName();
-        const auto resourceId = fileName;
+        const auto resourceId = fileName.toLower();
         const auto pLocalResource = new UnmanagedResource(
             resourceId,
             ResourceType::MapStyle,
@@ -948,8 +967,10 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             case ResourceType::HillshadeRegion:
                 // 'Hillshade_[region].sqlitedb' -> 'Hillshade [region].sqlitedb'
                 resourceId = QString(name)
-                    .replace(QLatin1String("_"), QLatin1String(" "))
-                    .toLower();
+                    .remove(QLatin1String("Hillshade_"))
+                    .remove(QLatin1String(".sqlitedb"))
+                    .toLower()
+                    .append(QLatin1String(".hillshade.sqlitedb"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?hillshade=yes&file=") +
@@ -958,8 +979,10 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             case ResourceType::SlopeRegion:
                 // 'Slope_[region].sqlitedb' -> '[region].slope.sqlitedb'
                 resourceId = QString(name)
-                    .replace(QLatin1String("_"), QLatin1String(" "))
-                    .toLower();
+                    .remove(QLatin1String("Slope_"))
+                    .remove(QLatin1String(".sqlitedb"))
+                    .toLower()
+                    .append(QLatin1String(".slope.sqlitedb"));
                 downloadUrl =
                 owner->repositoryBaseUrl +
                 QLatin1String("/download.php?slope=yes&file=") +
@@ -1533,7 +1556,10 @@ bool OsmAnd::ResourcesManager_P::installObfFromFile(
 
     // Extract that file without keeping directory structure
     QString localPath = owner->localStoragePath;
-    const auto localFileName = localPath_.isNull() ? QDir(isLive ? localPath + QStringLiteral("/live") : localPath).absoluteFilePath(id) : localPath_;
+    QString capitalizedId(id);
+    capitalizedId.replace(0, 1, capitalizedId[0].toUpper());
+    QString fileName = isLive ? capitalizedId : QString(obfArchiveItem.name).remove(QStringLiteral("_2"));
+    const auto localFileName = localPath_.isNull() ? QDir(isLive ? localPath + QStringLiteral("/live") : localPath).absoluteFilePath(fileName) : localPath_;
     if (!archive.extractItemToFile(obfArchiveItem.name, localFileName, isLive))
         return false;
 
@@ -1550,7 +1576,13 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
     assert(id.endsWith(".sqlitedb"));
 
     // Copy that file
-    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
+    QString fileName(id);
+    fileName.replace(0, 1, fileName[0].toUpper());
+    if (fileName.endsWith(".hillshade.sqlitedb"))
+        fileName = QStringLiteral("Hillshade ").append(fileName).remove(QStringLiteral(".hillshade")).replace('_', ' ');
+    else if (fileName.endsWith(".slope.sqlitedb"))
+        fileName = QStringLiteral("Slope ").append(fileName).remove(QStringLiteral(".slope")).replace('_', ' ');
+    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(fileName) : localPath_;
     bool shouldCopy = filePath.compare(localFileName) != 0;
     if (shouldCopy && !QFile::copy(filePath, localFileName))
     {

@@ -247,7 +247,7 @@ namespace OsmAnd
         bool isBuiltInResource(const QString& id) const;
 
         // Local resources:
-        bool rescanUnmanagedStoragePaths() const;
+        bool rescanUnmanagedStoragePaths(bool rescanAll = false) const;
         QList< std::shared_ptr<const LocalResource> > getSortedLocalResources() const;
         QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
