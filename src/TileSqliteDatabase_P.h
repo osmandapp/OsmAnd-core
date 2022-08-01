@@ -51,6 +51,7 @@ namespace OsmAnd
 
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, AreaI bbox, ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, TileId tileId, ZoomLevel zoom) const;
+        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, QList<TileId> tileIds, ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, ZoomLevel zoom) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);

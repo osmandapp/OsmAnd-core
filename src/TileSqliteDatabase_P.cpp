@@ -887,38 +887,50 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, long long
     {
         QReadLocker scopedLocker(&_lock);
 
-        for (TileId tileId : tileIds)
+        int res;
+
+        QString query = QStringLiteral("SELECT sum(length(image)) FROM tiles WHERE z=:z AND (");
+        for (int i = 0; i < tileIds.count(); i++)
         {
-            int res;
+            query += QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i);
+            query += tileIds[i] != tileIds.last() ? QStringLiteral(" OR ") : QStringLiteral(")");
+        }
 
-            const auto statement = prepareStatement(_database, QStringLiteral("SELECT length(image) FROM tiles WHERE x=:x AND y=:y AND z=:z"));
-            if (!statement || !configureStatement(statement, tileId, zoom))
+        const auto statement = prepareStatement(_database, query);
+        if (!statement || !configureStatement(statement, tileIds, zoom))
+        {
+            LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to configure tile size query for zoom %d table : %s",
+                    zoom,
+                    qPrintable(owner->filename));
+            return false;
+        }
+
+        if ((res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to query for zoom %d data %s: %s",
+                    zoom,
+                    qPrintable(owner->filename),
+                    sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (res > 0)
+        {
+            const auto sizeValue = readStatementValue(statement, 0);
+            if (!sizeValue.isNull())
             {
-                LogPrintf(
-                        LogSeverityLevel::Error,
-                        "Failed to configure tile size query for tileId %dx%d@%d table : %s",
-                        tileId.x,
-                        tileId.y,
-                        zoom,
-                        qPrintable(owner->filename));
-                continue;
+                bool ok = false;
+                const auto countI = sizeValue.toInt(&ok);
+                if (!ok)
+                {
+                    return false;
+                }
+                size = countI;
             }
-
-            if ((res = stepStatement(statement)) < 0)
-            {
-                LogPrintf(
-                        LogSeverityLevel::Error,
-                        "Failed to query for %dx%d@%d data %s: %s",
-                        tileId.x,
-                        tileId.y,
-                        zoom,
-                        qPrintable(owner->filename),
-                        sqlite3_errmsg(_database.get()));
-                continue;
-            }
-
-            if (res > 0)
-                size += readStatementValue(statement, 0).toInt();
         }
     }
 
@@ -1520,8 +1532,30 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
-    const std::shared_ptr<sqlite3_stmt>& statement,
-    OsmAnd::ZoomLevel zoom) const
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        QList<TileId> tileIds,
+        OsmAnd::ZoomLevel zoom) const
+{
+    bool res = configureStatement(statement, zoom);
+    int i = 0;
+    for (TileId tileId : tileIds)
+    {
+        if (isInvertedY())
+        {
+            tileId.y = (1 << zoom) - 1 - tileId.y;
+        }
+
+        if (!(bindStatementParameter(statement, QStringLiteral(":x%1").arg(i), tileId.x)
+                && bindStatementParameter(statement, QStringLiteral(":y%1").arg(i), tileId.y)))
+            res = false;
+        i++;
+    }
+    return res;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        OsmAnd::ZoomLevel zoom) const
 {
     int invertedZoomValue;
     if ((invertedZoomValue = getInvertedZoomValue()) > 0)
