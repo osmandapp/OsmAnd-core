@@ -102,47 +102,51 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
             // <type>
             writer.writeTextElement(QLatin1String("type"), group);
         }
+        
+        // <extensions>
+        writer.writeStartElement(QLatin1String("extensions"));
+        
+        // <address>
+        const auto address = item->getAddress();
+        if (!address.isEmpty())
+            writer.writeTextElement(QLatin1String("address"), address);
+        
+        // <creation_date>
+        const auto creationTime = item->getCreationTime();
+        if (!creationTime.isEmpty())
+            writer.writeTextElement(QLatin1String("creation_date"), creationTime);
+        
+        // <icon>
+        const auto icon = item->getIcon();
+        if (!icon.isEmpty())
+            writer.writeTextElement(QLatin1String("icon"), icon);
+        
+        // <background>
+        const auto background = item->getBackground();
+        if (!background.isEmpty())
+            writer.writeTextElement(QLatin1String("background"), background);
 
         const auto color = item->getColor();
         if (color != ColorRGB())
         {
-            // <extensions>
-            writer.writeStartElement(QLatin1String("extensions"));
-            
-            // <address>
-            const auto address = item->getAddress();
-            if (!address.isEmpty())
-                writer.writeTextElement(QLatin1String("address"), address);
-            
-            // <creation_date>
-            const auto creationTime = item->getCreationTime();
-            if (!creationTime.isEmpty())
-                writer.writeTextElement(QLatin1String("creation_date"), creationTime);
-            
-            // <icon>
-            const auto icon = item->getIcon();
-            if (!icon.isEmpty())
-                writer.writeTextElement(QLatin1String("icon"), icon);
-            
-            // <background>
-            const auto background = item->getBackground();
-            if (!background.isEmpty())
-                writer.writeTextElement(QLatin1String("background"), background);
-
             // <color>
             const auto colorValue = color.toString();
             writer.writeTextElement(QLatin1String("color"), colorValue);
-
-            // <hidden>
-            if (item->isHidden())
-                writer.writeEmptyElement(QLatin1String("hidden"));
-            
-            if (item->getCalendarEvent())
-                writer.writeTextElement(QLatin1String("calendar_event"), "true");
-
-            // </extensions>
-            writer.writeEndElement();
         }
+        
+        // <hidden>
+        if (item->isHidden())
+            writer.writeEmptyElement(QLatin1String("hidden"));
+        
+        if (item->getCalendarEvent())
+            writer.writeTextElement(QLatin1String("calendar_event"), "true");
+        
+        // all other extensions
+        for (const auto& extension : rangeOf(item->getExtensions()))
+            writer.writeTextElement(extension.key(), extension.value());
+
+        // </extensions>
+        writer.writeEndElement();
 
         // </wpt>
         writer.writeEndElement();
@@ -161,6 +165,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
     bool isInsideMetadataTag = false;
+    bool isInsideExtensionsTag = false;
 
     while (!xmlReader.atEnd() && !xmlReader.hasError())
     {
@@ -172,6 +177,12 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 isInsideMetadataTag = true;
             if (isInsideMetadataTag)
                 continue;
+            
+            if (tagName == QLatin1String("extensions"))
+            {
+                isInsideExtensionsTag = true;
+                continue;
+            }
             
             if (tagName == QLatin1String("wpt"))
             {
@@ -325,12 +336,20 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem->setIsHidden(true);
             }
+            else if (isInsideExtensionsTag)
+            {
+                newItem->setExtension(tagName.toString(), xmlReader.readElementText());
+            }
         }
         else if (xmlReader.isEndElement())
         {
             if (tagName == QLatin1String("metadata"))
             {
                 isInsideMetadataTag = false;
+            }
+            else if (tagName == QLatin1String("extensions"))
+            {
+                isInsideExtensionsTag = false;
             }
             else if (tagName == QLatin1String("wpt"))
             {
