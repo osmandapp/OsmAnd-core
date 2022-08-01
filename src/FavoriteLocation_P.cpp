@@ -219,6 +219,34 @@ void OsmAnd::FavoriteLocation_P::setBackground(const QString& newBackground)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QHash<QString, QString> OsmAnd::FavoriteLocation_P::getExtensions() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _extensions;
+}
+
+void OsmAnd::FavoriteLocation_P::setExtensions(const QHash<QString, QString>& extensions)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _extensions = extensions;
+}
+
+QString OsmAnd::FavoriteLocation_P::getExtension(const QString& tag)
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _extensions[tag];
+}
+
+void OsmAnd::FavoriteLocation_P::setExtension(const QString& tag, const QString& value)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _extensions[tag] = value;
+}
+
 void OsmAnd::FavoriteLocation_P::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
 {
     assert(!_weakLink);
