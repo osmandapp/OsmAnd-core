@@ -1754,7 +1754,7 @@ OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 
 bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
 {
-    const auto guessedResourceId = QFileInfo(filePath).fileName().remove(QLatin1String(".zip"));
+    const auto guessedResourceId = QFileInfo(filePath).fileName().remove(QLatin1String(".zip")).toLower();
     return updateFromFile(guessedResourceId, filePath);
 }
 
