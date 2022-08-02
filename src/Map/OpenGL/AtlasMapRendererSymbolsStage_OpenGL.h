@@ -256,6 +256,11 @@ namespace OsmAnd
                     GLlocation mModelViewProjection;
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
+                    GLlocation tileId;
+                    GLlocation lookupOffsetAndScale;
+                    GLlocation elevation_scale;
+                    GLlocation elevation_dataSampler;
+                    GLlocation texCoordsOffsetAndScale;
                 } param;
             } vs;
 
@@ -279,6 +284,11 @@ namespace OsmAnd
         bool applyTerrainVisibilityFiltering(
             const glm::vec3& positionOnScreen,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
+
+        void configureElevationData(
+            const OnSurfaceVectorProgram& program,
+            const TileId tileId,
+            const int elevationDataSamplerIndex);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererSymbolsStage_OpenGL() override;

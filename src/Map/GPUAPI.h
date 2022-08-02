@@ -248,12 +248,14 @@ namespace OsmAnd
                 GPUAPI* api,
                 const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer,
                 const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer,
+                const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
                 const PointI* position31 = nullptr);
 
             virtual ~MeshInGPU();
 
             const std::shared_ptr<ArrayBufferInGPU> vertexBuffer;
             const std::shared_ptr<ElementArrayBufferInGPU> indexBuffer;
+            const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             const PointI* position31;
         };
 

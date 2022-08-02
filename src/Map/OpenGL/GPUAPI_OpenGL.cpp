@@ -1284,10 +1284,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    const auto verticesAndIndexes = symbol->getVerticesAndIndexes();
+    const auto verticesAndIndices = symbol->getVerticesAndIndices();
 
     // Primitive map symbol has to have vertices, so checks are worthless
-    assert(verticesAndIndexes->vertices && verticesAndIndexes->verticesCount > 0);
+    assert(verticesAndIndices->vertices && verticesAndIndices->verticesCount > 0);
 
     // Create vertex buffer
     GLuint vertexBuffer;
@@ -1302,7 +1302,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     setObjectLabel(ObjectType::Buffer, vertexBuffer, QString::asprintf("VectorMapSymbol(@%p)->vertexBuffer", symbol.get()));
 
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, verticesAndIndexes->verticesCount*sizeof(VectorMapSymbol::Vertex), verticesAndIndexes->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, verticesAndIndices->verticesCount*sizeof(VectorMapSymbol::Vertex), verticesAndIndices->vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1312,11 +1312,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     // Create ArrayBuffer resource
     const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(
         this,
-        reinterpret_cast<RefInGPU>(vertexBuffer), verticesAndIndexes->verticesCount));
+        reinterpret_cast<RefInGPU>(vertexBuffer), verticesAndIndices->verticesCount));
 
     // Primitive map symbol may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
-    if (verticesAndIndexes->indices != nullptr && verticesAndIndexes->indicesCount > 0)
+    if (verticesAndIndices->indices != nullptr && verticesAndIndices->indicesCount > 0)
     {
         // Create index buffer
         GLuint indexBuffer;
@@ -1332,7 +1332,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
 
         // Upload data
         glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, verticesAndIndexes->indicesCount*sizeof(VectorMapSymbol::Index), verticesAndIndexes->indices,
+            GL_ELEMENT_ARRAY_BUFFER, verticesAndIndices->indicesCount*sizeof(VectorMapSymbol::Index), verticesAndIndices->indices,
             GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
@@ -1343,15 +1343,19 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         // Create ElementArrayBuffer resource
         indexBufferResource.reset(new ElementArrayBufferInGPU(
             this,
-            reinterpret_cast<RefInGPU>(indexBuffer), verticesAndIndexes->indicesCount));
+            reinterpret_cast<RefInGPU>(indexBuffer), verticesAndIndices->indicesCount));
     }
 
     PointI* position31 = nullptr;
-    if (verticesAndIndexes->position31 != nullptr)
-        position31 = new PointI(verticesAndIndexes->position31->x, verticesAndIndexes->position31->y);
+    if (verticesAndIndices->position31 != nullptr)
+        position31 = new PointI(verticesAndIndices->position31->x, verticesAndIndices->position31->y);
 
+    std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
+    if (verticesAndIndices->partSizes != nullptr)
+        partSizes = std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>(*verticesAndIndices->partSizes));
+    
     // Create mesh resource
-    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, position31));
+    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes, position31));
 
     return true;
 }

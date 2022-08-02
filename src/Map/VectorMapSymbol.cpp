@@ -3,7 +3,7 @@
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : MapSymbol(group_)
-    , _verticesAndIndexes(nullptr)
+    , _verticesAndIndices(nullptr)
     , primitiveType(PrimitiveType::Invalid)
     , scaleType(ScaleType::Raw)
     , scale(1.0f)
@@ -15,16 +15,17 @@ OsmAnd::VectorMapSymbol::~VectorMapSymbol()
     releaseVerticesAndIndices();
 }
 
-OsmAnd::VectorMapSymbol::VerticesAndIndexes::VerticesAndIndexes()
+OsmAnd::VectorMapSymbol::VerticesAndIndices::VerticesAndIndices()
 : position31(nullptr)
 , vertices(nullptr)
 , verticesCount(0)
 , indices(nullptr)
 , indicesCount(0)
+, partSizes(nullptr)
 {
 }
 
-OsmAnd::VectorMapSymbol::VerticesAndIndexes::~VerticesAndIndexes()
+OsmAnd::VectorMapSymbol::VerticesAndIndices::~VerticesAndIndices()
 {
     if (position31 != nullptr)
     {
@@ -44,27 +45,30 @@ OsmAnd::VectorMapSymbol::VerticesAndIndexes::~VerticesAndIndexes()
         indices = nullptr;
     }
     indicesCount = 0;
+
+    if (partSizes != nullptr)
+        partSizes = nullptr;
 }
 
-const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndexes> OsmAnd::VectorMapSymbol::getVerticesAndIndexes() const
+const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndices> OsmAnd::VectorMapSymbol::getVerticesAndIndices() const
 {
     QReadLocker scopedLocker(&_lock);
     
-    return _verticesAndIndexes;
+    return _verticesAndIndices;
 }
 
-void OsmAnd::VectorMapSymbol::setVerticesAndIndexes(const std::shared_ptr<VerticesAndIndexes>& verticesAndIndexes)
+void OsmAnd::VectorMapSymbol::setVerticesAndIndices(const std::shared_ptr<VerticesAndIndices>& verticesAndIndices)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _verticesAndIndexes = verticesAndIndexes;
+    _verticesAndIndices = verticesAndIndices;
 }
 
 void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _verticesAndIndexes.reset();
+    _verticesAndIndices.reset();
 }
 
 void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
@@ -81,16 +85,16 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
 
     mapSymbol.primitiveType = PrimitiveType::TriangleFan;
 
-    const auto verticesAndIndexes = std::make_shared<VerticesAndIndexes>();
+    const auto verticesAndIndices = std::make_shared<VerticesAndIndices>();
     // Circle has no reusable vertices, because it's rendered as triangle-fan,
     // so there's no indices
-    verticesAndIndexes->indices = nullptr;
-    verticesAndIndexes->indicesCount = 0;
+    verticesAndIndices->indices = nullptr;
+    verticesAndIndices->indicesCount = 0;
 
     // Allocate space for pointsCount+2 vertices
-    verticesAndIndexes->verticesCount = pointsCount + 2;
-    verticesAndIndexes->vertices = new Vertex[verticesAndIndexes->verticesCount];
-    auto pVertex = verticesAndIndexes->vertices;
+    verticesAndIndices->verticesCount = pointsCount + 2;
+    verticesAndIndices->vertices = new Vertex[verticesAndIndices->verticesCount];
+    auto pVertex = verticesAndIndices->vertices;
 
     // First vertex is the center
     pVertex->positionXY[0] = 0.0f;
@@ -111,11 +115,11 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     }
 
     // Close the fan
-    pVertex->positionXY[0] = verticesAndIndexes->vertices[1].positionXY[0];
-    pVertex->positionXY[1] = verticesAndIndexes->vertices[1].positionXY[1];
+    pVertex->positionXY[0] = verticesAndIndices->vertices[1].positionXY[0];
+    pVertex->positionXY[1] = verticesAndIndices->vertices[1].positionXY[1];
     pVertex->color = color;
     
-    mapSymbol.setVerticesAndIndexes(verticesAndIndexes);
+    mapSymbol.setVerticesAndIndices(verticesAndIndices);
 }
 
 void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
@@ -132,16 +136,16 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
 
     mapSymbol.primitiveType = PrimitiveType::LineLoop;
 
-    const auto verticesAndIndexes = std::make_shared<VerticesAndIndexes>();
+    const auto verticesAndIndices = std::make_shared<VerticesAndIndices>();
     // Ring as line-loop has no reusable vertices, because it's rendered as triangle-fan,
     // so there's no indices
-    verticesAndIndexes->indices = nullptr;
-    verticesAndIndexes->indicesCount = 0;
+    verticesAndIndices->indices = nullptr;
+    verticesAndIndices->indicesCount = 0;
 
     // Allocate space for pointsCount vertices
-    verticesAndIndexes->verticesCount = pointsCount;
-    verticesAndIndexes->vertices = new Vertex[verticesAndIndexes->verticesCount];
-    auto pVertex = verticesAndIndexes->vertices;
+    verticesAndIndices->verticesCount = pointsCount;
+    verticesAndIndices->vertices = new Vertex[verticesAndIndices->verticesCount];
+    auto pVertex = verticesAndIndices->vertices;
 
     // Generate each vertex
     const auto step = (2.0*M_PI) / pointsCount;
@@ -155,6 +159,6 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
         pVertex += 1;
     }
     
-    mapSymbol.setVerticesAndIndexes(verticesAndIndexes);
+    mapSymbol.setVerticesAndIndices(verticesAndIndices);
 }
 
