@@ -26,9 +26,11 @@ double OsmAnd::WeatherDataConverter::Temperature::toUnit(const Unit& unit_) cons
 
 OsmAnd::WeatherDataConverter::Temperature::Unit OsmAnd::WeatherDataConverter::Temperature::unitFromString(const QString& unitString)
 {
-    if (unitString.toLower() == QStringLiteral("c"))
+    QString unitStr(unitString);
+    unitStr = unitStr.remove(QStringLiteral("°")).toLower();
+    if (unitStr == QStringLiteral("c"))
         return Unit::C;
-    else if (unitString.toLower() == QStringLiteral("f"))
+    else if (unitStr == QStringLiteral("f"))
         return Unit::F;
 
     return Unit::C;
