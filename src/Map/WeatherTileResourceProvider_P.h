@@ -150,10 +150,10 @@ namespace OsmAnd
         bool isEmpty();
 
         bool removeTileIds(
-                const std::shared_ptr<TileSqliteDatabase> tilesDb,
-                const QList<TileId> tileIds,
-                const QList<TileId> excludeTileIds,
-                const ZoomLevel zoom);
+            const std::shared_ptr<TileSqliteDatabase>& tilesDb,
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
     protected:
         WeatherTileResourceProvider_P(
@@ -235,15 +235,15 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
 
-        long long calculateTilesSize(
-                const QList<TileId> tileIds,
-                const QList<TileId> excludeTileIds,
-                const ZoomLevel zoom);
+        uint64_t calculateTilesSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
         bool removeTileData(
-                const QList<TileId> tileIds,
-                const QList<TileId> excludeTileIds,
-                const ZoomLevel zoom);
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
         bool closeProvider();
 

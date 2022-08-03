@@ -872,7 +872,7 @@ bool OsmAnd::TileSqliteDatabase_P::getTileIds(QList<TileId>& tileIds, ZoomLevel 
     return true;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, long long &size, ZoomLevel zoom)
+bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom)
 {
     if (!isOpened())
     {
@@ -924,12 +924,12 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, long long
             if (!sizeValue.isNull())
             {
                 bool ok = false;
-                const auto countI = sizeValue.toInt(&ok);
+                const auto sizeRes = sizeValue.toULongLong(&ok);
                 if (!ok)
                 {
                     return false;
                 }
-                size = countI;
+                size = sizeRes;
             }
         }
     }

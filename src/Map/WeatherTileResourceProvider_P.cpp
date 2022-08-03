@@ -182,8 +182,13 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
     {
-        bool needToDownload = !geoDb->obtainTileData(tileId, zoom, outData) || outData.isEmpty();
-        if ((!localData && (needToDownload || forceDownload)) || (localData && needToDownload && forceDownload))
+        bool needToDownload = forceDownload;
+        if (!forceDownload)
+        {
+            bool hasData = geoDb->obtainTileData(tileId, zoom, outData) && !outData.isEmpty();
+            needToDownload = !hasData && !localData;
+        }
+        if (needToDownload)
         {
             auto filePath = localCachePath
                     + QDir::separator()
@@ -437,12 +442,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEmpty()
     return false;
 }
 
-long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
-    long long size = 0;
+    uint64_t size = 0;
     bool hasTileIds = !tileIds.isEmpty();
     auto geoDb = getGeoTilesDatabase();
     if (geoDb)
@@ -463,9 +468,9 @@ long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
         else
         {
             QList<TileId> geoTileIdsToCalculate = QList<TileId>();
-            for (const auto &geoDBTileId: constOf(geoDBbTileIds))
+            for (const auto& geoDBTileId : constOf(geoDBbTileIds))
             {
-                if (((hasTileIds && tileIds.contains(geoDBTileId)) || !hasTileIds) && !excludeTileIds.contains(geoDBTileId))
+                if ((!hasTileIds || tileIds.contains(geoDBTileId)) && !excludeTileIds.contains(geoDBTileId))
                     geoTileIdsToCalculate.append(geoDBTileId);
             }
             if (!geoTileIdsToCalculate.isEmpty())
@@ -506,7 +511,7 @@ long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
                     }
                     if (!rasterTileIdsToCalculate.isEmpty())
                     {
-                        long long rasterTilesSize = 0;
+                        uint64_t rasterTilesSize = 0;
                         rasterDb->getTilesSize(rasterTileIdsToCalculate, rasterTilesSize, zoom);
                         size += rasterTilesSize;
                     }
@@ -519,9 +524,9 @@ long long OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     bool res = false;
     auto geoDb = getGeoTilesDatabase();
@@ -558,10 +563,10 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
-        const std::shared_ptr<TileSqliteDatabase> tilesDb,
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+    const std::shared_ptr<TileSqliteDatabase>& tilesDb,
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     bool res = false;
     if (tilesDb->isEmpty())

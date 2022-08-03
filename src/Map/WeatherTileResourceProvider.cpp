@@ -153,18 +153,18 @@ bool OsmAnd::WeatherTileResourceProvider::isEmpty()
     return _p->isEmpty();
 
 }
-long long OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     return _p->calculateTilesSize(tileIds, excludeTileIds, zoom);
 }
 
 bool OsmAnd::WeatherTileResourceProvider::removeTileData(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     return _p->removeTileData(tileIds, excludeTileIds, zoom);
 }

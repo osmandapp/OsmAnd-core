@@ -223,18 +223,18 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
-long long OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+uint64_t OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     return _p->calculateDbCacheSize(tileIds, excludeTileIds, zoom);
 }
 
 bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     return _p->clearDbCache(tileIds, excludeTileIds, zoom);
 }

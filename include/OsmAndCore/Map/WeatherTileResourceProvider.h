@@ -46,7 +46,7 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
-            BandIndex localData;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -191,15 +191,15 @@ namespace OsmAnd
 
         bool isEmpty();
 
-        long long calculateTilesSize(
-                const QList<TileId> tileIds,
-                const QList<TileId> excludeTileIds,
-                const ZoomLevel zoom);
+        uint64_t calculateTilesSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
         bool removeTileData(
-                const QList<TileId> tileIds,
-                const QList<TileId> excludeTileIds,
-                const ZoomLevel zoom);
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
         bool closeProvider();
     };

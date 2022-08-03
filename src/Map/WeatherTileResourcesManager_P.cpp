@@ -450,18 +450,17 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
     }
 }
 
-
-long long OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+uint64_t OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     auto cacheDir = QDir(localCachePath);
-    long long size = 0;
+    uint64_t size = 0;
 
     QFileInfoList fileInfos;
     Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
-    for (const auto &fileInfo: constOf(fileInfos))
+    for (const auto& fileInfo : constOf(fileInfos))
     {
         QString baseName = fileInfo.baseName();
         QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
@@ -476,15 +475,15 @@ long long OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
 }
 
 bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
-        const QList<TileId> tileIds,
-        const QList<TileId> excludeTileIds,
-        const ZoomLevel zoom)
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
     auto cacheDir = QDir(localCachePath);
 
     QFileInfoList fileInfos;
     Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
-    for (const auto &fileInfo: constOf(fileInfos))
+    for (const auto& fileInfo : constOf(fileInfos))
     {
         QString baseName = fileInfo.baseName();
         QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
@@ -544,7 +543,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeD
         for (auto &provider: _resourceProviders.values())
         {
             QDateTime dateTime = provider->getDateTime();
-            bool checkBefore = beforeDateTime.toTime_t() > dateTime.toTime_t();
+            bool checkBefore = beforeDateTime > dateTime;
             if (!clearBefore || checkBefore)
             {
                 QString dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
@@ -559,7 +558,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeD
 
     QFileInfoList fileInfos;
     Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db") << QStringLiteral("*.raster.db"), fileInfos, false);
-    for (const auto &fileInfo: constOf(fileInfos))
+    for (const auto& fileInfo : constOf(fileInfos))
     {
         bool deleted = true;
         const auto filePath = fileInfo.absoluteFilePath();
@@ -572,7 +571,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeD
             else
                 dateTimeBefore = QDateTime::fromString(baseName.mid(0, baseName.count() - 2), QStringLiteral("yyyyMMdd_hh00"));
             dateTimeBefore.setTimeSpec(Qt::UTC);
-            bool checkBefore = beforeDateTime.toTime_t() > dateTimeBefore.toTime_t();
+            bool checkBefore = beforeDateTime > dateTimeBefore;
             if (checkBefore)
                 deleted = QFile(filePath).remove();
         }
