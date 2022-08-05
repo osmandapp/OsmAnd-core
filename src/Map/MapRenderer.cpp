@@ -48,20 +48,23 @@ OsmAnd::MapRenderer::MapRenderer(
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
     , _requestedDebugSettings(baseDebugSettings_->createCopy())
+    , gpuAPI(gpuAPI_)
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
     , publishedMapSymbolsByOrderLock(_publishedMapSymbolsByOrderLock)
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
-    , gpuAPI(gpuAPI_)
 {
 }
 
 OsmAnd::MapRenderer::~MapRenderer()
 {
     if (_isRenderingInitialized)
-        releaseRendering();
+    {
+        LogPrintf(LogSeverityLevel::Error, "MapRenderer is destroyed before releaseRendering() was called");
+        assert(false);
+    }
 }
 
 bool OsmAnd::MapRenderer::isRenderingInitialized() const
@@ -189,9 +192,7 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
 }
 
 bool OsmAnd::MapRenderer::updateInternalState(
-    MapRendererInternalState& outInternalState,
-    const MapRendererState& state,
-    const MapRendererConfiguration& configuration) const
+    MapRendererInternalState& outInternalState, const MapRendererState& state, const MapRendererConfiguration& configuration) const
 {
     return true;
 }
@@ -283,11 +284,11 @@ void OsmAnd::MapRenderer::processGpuWorker()
     _gpuThreadDispatcher.runAll();
 }
 
-bool OsmAnd::MapRenderer::initializeRendering()
+bool OsmAnd::MapRenderer::initializeRendering(bool renderTargetAvailable)
 {
     bool ok;
 
-    _resourcesGpuSyncRequestsCounter.store(0);
+    _resourcesGpuSyncRequestsCounter.storeRelaxed(0);
 
     ok = gpuAPI->initialize();
     if (!ok)
@@ -304,6 +305,14 @@ bool OsmAnd::MapRenderer::initializeRendering()
     ok = postInitializeRendering();
     if (!ok)
         return false;
+
+    // Once rendering is initialized, attach to render target if available
+    if (renderTargetAvailable)
+    {
+        ok = attachToRenderTarget();
+        if (!ok)
+            return false;
+    }
 
     // Once rendering is initialized, invalidate frame
     invalidateFrame();
@@ -486,8 +495,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
     if (requestedStateUpdatedMask != 0)
     {
-        // Process updating of providers
-        ok = _resources->updateBindings(_currentState, requestedStateUpdatedMask);
+        ok = handleStateChange(_currentState, requestedStateUpdatedMask);
         if (!ok)
         {
             _requestedStateUpdatedMask.fetchAndOrOrdered(requestedStateUpdatedMask);
@@ -501,8 +509,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     {
         ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
 
-        _currentState.metersPerPixel = getCurrentPixelsToMetersScaleFactor(_currentState.zoomLevel, getInternalStateRef());
-        _currentState.visibleBBox31 = getVisibleBBox31(getInternalStateRef());
+        _currentState.metersPerPixel = getPixelsToMetersScaleFactor(_currentState, getInternalState());
+        _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
 
         // Anyways, invalidate the frame
         invalidateFrame();
@@ -578,7 +586,7 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
     return true;
 }
 
-bool OsmAnd::MapRenderer::releaseRendering(const bool gpuContextLost /*= false*/)
+bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
@@ -649,6 +657,41 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
     _isRenderingInitialized = false;
 
     return true;
+}
+
+bool OsmAnd::MapRenderer::handleStateChange(const MapRendererState& state, MapRendererStateChanges mask)
+{
+    bool ok = true;
+
+    // Process updating of providers
+    ok = ok && _resources->updateBindings(state, mask);
+
+    return ok;
+}
+
+bool OsmAnd::MapRenderer::attachToRenderTarget()
+{
+    if (isAttachedToRenderTarget())
+        return false;
+
+    bool ok;
+    ok = gpuAPI->attachToRenderTarget();
+    if (!ok)
+        return false;
+
+    invalidateFrame();
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::isAttachedToRenderTarget()
+{
+    return gpuAPI->isAttachedToRenderTarget();
+}
+
+bool OsmAnd::MapRenderer::detachFromRenderTarget()
+{
+    return gpuAPI->detachFromRenderTarget(false);
 }
 
 bool OsmAnd::MapRenderer::isIdle() const
@@ -1331,7 +1374,7 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
 
     if (!provider)
         return false;
-        
+
     bool update = forcedUpdate || _requestedState.tiledSymbolsProviders.contains(provider);
     if (!update)
         return false;

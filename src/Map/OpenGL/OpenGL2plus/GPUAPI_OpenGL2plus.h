@@ -32,6 +32,13 @@ namespace OsmAnd
         bool _isSupported_ARB_texture_float;
         bool _isSupported_ATI_texture_float;
         bool _isSupported_ARB_texture_rg;
+        bool _isSupported_EXT_gpu_shader4;
+        bool _isSupported_EXT_debug_marker;
+        bool _isSupported_EXT_debug_label;
+        bool _isSupported_ARB_sync;
+
+        GLenum _framebufferDepthDataFormat;
+        GLenum _framebufferDepthDataType;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
@@ -40,27 +47,28 @@ namespace OsmAnd
         QStringList _gdebuggerGroupsStack;
         QMutex _gdebuggerGroupsStackMutex;
     protected:
-        virtual TextureFormat getTextureFormat(const SkColorType colorType) const Q_DECL_OVERRIDE;
-        virtual TextureFormat getTextureFormat_float() const Q_DECL_OVERRIDE;
-        virtual bool isValidTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
-        virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
-        virtual GLenum getBaseInternalTextureFormat(const TextureFormat textureFormat) const Q_DECL_OVERRIDE;
+        TextureFormat getTextureFormat(const SkColorType colorType) const override;
+        TextureFormat getTextureFormat_float() const override;
+        size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const override;
+        GLenum getBaseInternalTextureFormat(const TextureFormat textureFormat) const override;
 
-        virtual SourceFormat getSourceFormat_float() const Q_DECL_OVERRIDE;
-        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const Q_DECL_OVERRIDE;
+        SourceFormat getSourceFormat_float() const override;
 
-        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) Q_DECL_OVERRIDE;
-        virtual void glPopGroupMarkerEXT_wrapper() Q_DECL_OVERRIDE;
+        void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) override;
+        void glBindVertexArray_wrapper(GLuint array) override;
+        void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) override;
 
-        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) Q_DECL_OVERRIDE;
-        virtual void glBindVertexArray_wrapper(GLuint array) Q_DECL_OVERRIDE;
-        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) Q_DECL_OVERRIDE;
+        GLsync glFenceSync_wrapper(GLenum condition, GLbitfield flags) override;
+        void glDeleteSync_wrapper(GLsync sync) override;
+        GLenum glClientWaitSync_wrapper(GLsync sync, GLbitfield flags, GLuint64 timeout) override;
     public:
         GPUAPI_OpenGL2plus();
         virtual ~GPUAPI_OpenGL2plus();
 
-        virtual bool initialize();
-        virtual bool release(const bool gpuContextLost);
+        bool initialize() override;
+        bool attachToRenderTarget() override;
+        bool detachFromRenderTarget(bool gpuContextLost) override;
+        bool release(bool gpuContextLost) override;
 
         const bool& isSupported_GREMEDY_string_marker;
         const bool& isSupported_ARB_sampler_objects;
@@ -71,28 +79,40 @@ namespace OsmAnd
         const bool& isSupported_ARB_texture_float;
         const bool& isSupported_ATI_texture_float;
         const bool& isSupported_ARB_texture_rg;
+        const bool& isSupported_EXT_gpu_shader4;
+        const bool& isSupported_EXT_debug_marker;
+        const bool& isSupported_EXT_debug_label;
+        const bool& isSupported_ARB_sync;
 
-        virtual GLenum validateResult(const char* const function, const char* const file, const int line);
+        const GLenum& framebufferDepthDataFormat;
+        const GLenum& framebufferDepthDataType;
 
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
-        virtual void uploadDataToTexture2D(GLenum target, GLint level,
+        GLenum validateResult(const char* function, const char* file, int line) override;
+
+        void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format) override;
+        void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
-            const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
-            const SourceFormat sourceFormat);
-        virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount);
+            const GLvoid* data, GLsizei dataRowLengthInElements, GLsizei elementSize,
+            SourceFormat sourceFormat) override;
+        void setMipMapLevelsLimit(GLenum target, uint32_t mipmapLevelsCount) override;
 
-        virtual void preprocessVertexShader(QString& code);
-        virtual void preprocessFragmentShader(QString& code);
-        virtual void optimizeVertexShader(QString& code);
-        virtual void optimizeFragmentShader(QString& code);
+        void preprocessVertexShader(QString& code) override;
+        void preprocessFragmentShader(QString& code, const QString& fragmentTypePrefix = QString(), const QString& fragmentTypePrecision = QString()) override;
+        void optimizeVertexShader(QString& code) override;
+        void optimizeFragmentShader(QString& code) override;
 
-        virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType);
-        virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock);
+        void setTextureBlockSampler(GLenum textureBlock, SamplerType samplerType) override;
+        void applyTextureBlockToTexture(GLenum texture, GLenum textureBlock) override;
 
-        virtual void pushDebugGroupMarker(const QString& title);
-        virtual void popDebugGroupMarker();
+        void pushDebugGroupMarker(const QString& title) override;
+        void popDebugGroupMarker() override;
 
-        virtual void glClearDepth_wrapper(const float depth);
+        void setObjectLabel(ObjectType type, GLuint name, const QString& label) override;
+
+        void glClearDepth_wrapper(float depth) override;
+
+        void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) override;
+        bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) override;
     };
 }
 

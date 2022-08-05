@@ -9,6 +9,7 @@ OsmAnd::MapRendererElevationDataResource::MapRendererElevationDataResource(
     const TileId tileId_,
     const ZoomLevel zoom_)
     : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationData, collection_, tileId_, zoom_)
+    , sourceData(_sourceData)
     , resourceInGPU(_resourceInGPU)
 {
 }
@@ -119,9 +120,7 @@ bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
     if (!ok)
         return false;
 
-    // Since content was uploaded to GPU, it's safe to release it keeping retainable data
-    _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
-    _sourceData.reset();
+    // NOTE: Don't release source data since it's needed for some on-CPU computations
 
     return true;
 }
@@ -139,6 +138,5 @@ void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()
 
 void OsmAnd::MapRendererElevationDataResource::releaseData()
 {
-    _retainableCacheMetadata.reset();
     _sourceData.reset();
 }

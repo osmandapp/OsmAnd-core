@@ -41,44 +41,46 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters> genericInstanceParameters;
 
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-            double distanceToCamera;
             ScreenQuadTree::BBox visibleBBox;
             ScreenQuadTree::BBox intersectionBBox;
         };
 
         struct RenderableBillboardSymbol : RenderableSymbol
         {
-            virtual ~RenderableBillboardSymbol();
+            ~RenderableBillboardSymbol() override;
 
             std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters> instanceParameters;
 
-            PointI offsetFromTarget31;
-            PointF offsetFromTarget;
             glm::vec3 positionInWorld;
+            float elevationInMeters;
+            TileId tileId;
+            PointF offsetInTileN;
         };
 
         struct RenderableOnSurfaceSymbol : RenderableSymbol
         {
-            virtual ~RenderableOnSurfaceSymbol();
+            ~RenderableOnSurfaceSymbol() override;
 
             std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters> instanceParameters;
 
             PointI offsetFromTarget31;
             PointF offsetFromTarget;
             glm::vec3 positionInWorld;
+            double distanceToCamera;
 
             float direction;
         };
 
         struct RenderableOnPathSymbol : RenderableSymbol
         {
-            virtual ~RenderableOnPathSymbol();
+            ~RenderableOnPathSymbol() override;
 
             std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters> instanceParameters;
 
             bool is2D;
             glm::vec2 directionInWorld;
             glm::vec2 directionOnScreen;
+            double distanceToCamera;
 
             struct GlyphPlacement
             {
@@ -111,13 +113,13 @@ namespace OsmAnd
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
@@ -143,12 +145,12 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         // Billboard symbols:
         void obtainRenderablesFromBillboardSymbol(
@@ -157,19 +159,19 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotBillboardRasterSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotBillboardVectorSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         // On-surface symbols:
         void obtainRenderablesFromOnSurfaceSymbol(
@@ -178,19 +180,19 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotOnSurfaceRasterSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         // On-path symbols:
         void obtainRenderablesFromOnPathSymbol(
@@ -200,29 +202,33 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+
+        // Terrain-related:
+        virtual bool applyTerrainVisibilityFiltering(
+            const glm::vec3& positionOnScreen,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const = 0;
 
         // Intersection-related:
-        bool applyVisibilityFiltering(
+        bool applyOnScreenVisibilityFiltering(
             const ScreenQuadTree::BBox& visibleBBox,
-            const ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            const ScreenQuadTree& intersections, AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool applyIntersectionWithOtherSymbolsFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         bool addToIntersections(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         // Utilities:
         QVector<glm::vec2> convertPoints31ToWorld(
@@ -321,7 +327,7 @@ namespace OsmAnd
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
-        void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric);
+        void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
@@ -330,14 +336,14 @@ namespace OsmAnd
             const PointI screenPoint,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;
         void queryLastPreparedSymbolsIn(
-            const AreaI screenArea,
+            const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
         void queryLastVisibleSymbolsAt(
-            const PointI screenPoint,
+            const PointI& screenPoint,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;
         void queryLastVisibleSymbolsIn(
-            const AreaI screenArea,
+            const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
     };

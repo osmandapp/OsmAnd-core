@@ -17,6 +17,7 @@
 #include "Logging.h"
 #include "AtlasMapRenderer.h"
 #include "SkiaUtilities.h"
+#include "GeometryModifiers.h"
 
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
@@ -561,10 +562,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
 
-    const auto verticesAndIndexes = std::make_shared<VectorMapSymbol::VerticesAndIndexes>();
+    const auto verticesAndIndices = std::make_shared<VectorMapSymbol::VerticesAndIndices>();
     // Line has no reusable vertices - TODO clarify
-    verticesAndIndexes->indices = nullptr;
-    verticesAndIndexes->indicesCount = 0;
+    verticesAndIndices->indices = nullptr;
+    verticesAndIndices->indicesCount = 0;
 
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
@@ -589,7 +590,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             startPosDefined = true;
             startPos = points[0];
             vectorLine->position31 = startPos;
-            verticesAndIndexes->position31 = new PointI(startPos);
+            verticesAndIndices->position31 = new PointI(startPos);
         }
         int pointsCount = (int) points.size();
         // generate array of points
@@ -659,7 +660,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             insertIdx++;
         }
 
-        //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndexes->verticesCount,
+        //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndices->verticesCount,
         //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
         //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
         FColorARGB fillColor = _fillColor;
@@ -812,15 +813,30 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         vertex.positionXY[0] = 0;
         vertex.positionXY[1] = 0;
         vertices.push_back(vertex);
-        verticesAndIndexes->position31 = new PointI(0, 0);
+        verticesAndIndices->position31 = new PointI(0, 0);
     }
-    //verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
-    verticesAndIndexes->verticesCount = (unsigned int) vertices.size();
-    verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[vertices.size()];
-    std::copy(vertices.begin(), vertices.end(), verticesAndIndexes->vertices);
+
+    // Tesselate the line for the surface
+	auto partSizes =
+		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+	bool tesselated = GeometryModifiers::overGrid(
+        vertices,
+        nullptr,
+        vectorLine->primitiveType,
+        partSizes,
+        Utilities::getPowZoom(31 - _mapZoomLevel),
+		Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
+        1.0f, 0.01f,
+        false, false);
+	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+
+    //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
+    verticesAndIndices->verticesCount = (unsigned int) vertices.size();
+    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
+    std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
 
     vectorLine->isHidden = _isHidden;
-    vectorLine->setVerticesAndIndexes(verticesAndIndexes);
+    vectorLine->setVerticesAndIndices(verticesAndIndices);
     return vectorLine;
 }
 

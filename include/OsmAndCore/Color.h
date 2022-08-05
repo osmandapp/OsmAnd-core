@@ -319,6 +319,102 @@ namespace OsmAnd
         }
     };
 
+    union ColorRGBA
+    {
+        inline ColorRGBA()
+            : rgba(0xFFFFFFFF)
+        {
+        }
+
+#if !defined(SWIG)
+        static ColorRGBA fromSkColor(const SkColor skColor)
+        {
+            return ColorRGBA(SkColorGetR(skColor), SkColorGetG(skColor), SkColorGetB(skColor), SkColorGetA(skColor));
+        }
+#endif // !defined(SWIG)
+
+        explicit inline ColorRGBA(const uint32_t rgba_)
+            : rgba(rgba_)
+        {
+        }
+
+        inline ColorRGBA(const uint8_t r_, const uint8_t g_, const uint8_t b_, const uint8_t a_)
+            : a(a_)
+            , b(b_)
+            , g(g_)
+            , r(r_)
+        {
+        }
+
+        inline ColorRGBA(const FColorRGBA& other)
+            : a(static_cast<uint8_t>(other.a * 255.0f))
+            , b(static_cast<uint8_t>(other.b * 255.0f))
+            , g(static_cast<uint8_t>(other.g * 255.0f))
+            , r(static_cast<uint8_t>(other.r * 255.0f))
+        {
+        }
+
+#if !defined(SWIG)
+        uint8_t value[4];
+        uint32_t rgba;
+        struct
+        {
+            uint8_t a;
+            uint8_t b;
+            uint8_t g;
+            uint8_t r;
+        };
+#else
+        // Fake unwrap for SWIG
+        uint8_t r, g, b, a;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const ColorRGBA& other) const
+        {
+            return rgba == other.rgba;
+        }
+
+        inline bool operator!=(const ColorRGBA& other) const
+        {
+            return rgba != other.rgba;
+        }
+
+        inline operator FColorRGBA() const
+        {
+            return FColorRGBA(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+        }
+
+        inline SkColor toSkColor() const
+        {
+            return SkColorSetARGB(a, r, g, b);
+        }
+#endif // !defined(SWIG)
+
+        inline ColorRGBA withAlpha(const uint8_t newAlpha) const
+        {
+            return ColorRGBA(r, g, b, newAlpha);
+        }
+
+        inline ColorRGBA& setAlpha(const uint8_t newAlpha)
+        {
+            a = newAlpha;
+            return *this;
+        }
+
+        inline bool isTransparent() const
+        {
+            return (a == 0);
+        }
+
+        inline QString toString() const
+        {
+            if (a == 0)
+                return QLatin1Char('#') + QString::number(rgba, 16).right(6);
+            return QLatin1Char('#') + QString::number(rgba, 16);
+        }
+    };
+
     union ColorHSV;
 
     union OSMAND_CORE_API ColorRGB

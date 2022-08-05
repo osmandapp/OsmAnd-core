@@ -70,7 +70,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(bool gpuContextLost)
 {
     bool ok = true;
     ok = ok && releaseRects2D(gpuContextLost);
@@ -284,7 +284,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -529,7 +529,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -541,7 +541,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool gpuCon
         gpuAPI->releaseVAO(_vaoLine2D, gpuContextLost);
         _vaoLine2D.reset();
     }
-    
+
     if (_iboLine2D.isValid())
     {
         if (!gpuContextLost)
@@ -560,7 +560,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool gpuCon
         }
         _vboLine2D.reset();
     }
-    
+
     if (_programLine2D.id.isValid())
     {
         if (!gpuContextLost)
@@ -772,7 +772,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -784,7 +784,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool gpuCon
         gpuAPI->releaseVAO(_vaoLine3D, gpuContextLost);
         _vaoLine3D.reset();
     }
-    
+
     if (_iboLine3D.isValid())
     {
         if (!gpuContextLost)
@@ -803,7 +803,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool gpuCon
         }
         _vboLine3D.reset();
     }
-    
+
     if (_programLine3D.id.isValid())
     {
         if (!gpuContextLost)
@@ -982,7 +982,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     GL_CHECK_PRESENT(glDrawElements);
 
     gpuAPI->useVAO(_vaoQuad3D);
-    
+
     // Activate program
     glUseProgram(_programQuad3D.id);
     GL_CHECK_RESULT;
@@ -1027,7 +1027,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1039,7 +1039,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool gpuCon
         gpuAPI->releaseVAO(_vaoQuad3D, gpuContextLost);
         _vaoQuad3D.reset();
     }
-    
+
     if (_iboQuad3D.isValid())
     {
         if (!gpuContextLost)
@@ -1058,7 +1058,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool gpuCon
         }
         _vboQuad3D.reset();
     }
-    
+
     if (_programQuad3D.id.isValid())
     {
         if (!gpuContextLost)

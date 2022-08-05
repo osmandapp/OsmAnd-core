@@ -43,7 +43,7 @@ namespace OsmAnd
 
         virtual bool initialize() = 0;
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
-        virtual bool release(const bool gpuContextLost) = 0;
+        virtual bool release(bool gpuContextLost) = 0;
     };
 }
 

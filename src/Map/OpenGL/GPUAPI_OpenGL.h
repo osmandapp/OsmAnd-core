@@ -35,10 +35,14 @@
 #elif defined(OSMAND_TARGET_OS_ios)
 #   include <OpenGLES/ES2/gl.h>
 #   include <OpenGLES/ES2/glext.h>
+#   include <OpenGLES/ES3/gl.h>
+#   include <OpenGLES/ES3/glext.h>
 #elif defined(OSMAND_TARGET_OS_android)
 #   include <EGL/egl.h>
 #   include <GLES2/gl2.h>
 #   include <GLES2/gl2ext.h>
+#   include <GLES3/gl3.h>
+#   include <GLES3/gl3ext.h>
 #else
 #   include <GL/gl.h>
 #endif
@@ -60,17 +64,17 @@
 
 #if OSMAND_GPU_DEBUG
 #   define GL_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 #   define GL_GET_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 #   define GL_GET_AND_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 #   define GL_CHECK_PRESENT(x) \
-        const static OsmAnd::GPUAPI_OpenGL::glPresenseChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
+        const static OsmAnd::GPUAPI_OpenGL::glPresenceChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
 #   define GL_PUSH_GROUP_MARKER(title) \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->pushDebugGroupMarker((title))
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->pushDebugGroupMarker((title)) // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 #   define GL_POP_GROUP_MARKER \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->popDebugGroupMarker()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->popDebugGroupMarker() // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -96,9 +100,7 @@ namespace OsmAnd
     {
         typedef SmartPOD<T, DEFAULT_VALUE> Base;
 
-        virtual ~GLref()
-        {
-        }
+        virtual ~GLref() = default;
 
         inline GLref& operator=(const T& that)
         {
@@ -106,7 +108,7 @@ namespace OsmAnd
             return *this;
         }
 
-        inline bool isValid() const
+        SWIG_OMIT(Q_REQUIRED_RESULT) inline bool isValid() const
         {
             return this->value != DEFAULT_VALUE;
         }
@@ -145,11 +147,11 @@ namespace OsmAnd
         };
 
         template <typename T, typename Enable = void>
-        struct glPresenseChecker
+        struct glPresenceChecker
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+            Q_DISABLE_COPY_AND_MOVE(glPresenceChecker);
 
-            glPresenseChecker(
+            glPresenceChecker(
                     T* const unknownStuff,
                     const char* const functionName)
             {
@@ -162,11 +164,11 @@ namespace OsmAnd
         };
 
         template <typename T>
-        struct glPresenseChecker<T, typename std::enable_if< std::is_pointer<T>::value >::type> Q_DECL_FINAL
+        struct glPresenceChecker<T, typename std::enable_if< std::is_pointer<T>::value >::type> Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+            Q_DISABLE_COPY_AND_MOVE(glPresenceChecker);
 
-            glPresenseChecker(
+            glPresenceChecker(
                 T* const pointerToFunctionPointer,
                 const char* const functionName)
             {
@@ -180,11 +182,11 @@ namespace OsmAnd
         };
 
         template <typename T>
-        struct glPresenseChecker<T, typename std::enable_if< std::is_function<T>::value >::type> Q_DECL_FINAL
+        struct glPresenceChecker<T, typename std::enable_if< std::is_function<T>::value >::type> Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+            Q_DISABLE_COPY_AND_MOVE(glPresenceChecker);
 
-            glPresenseChecker(
+            glPresenceChecker(
                 T* const function,
                 const char* const functionName)
             {
@@ -227,6 +229,21 @@ namespace OsmAnd
 
         friend class OsmAnd::GPUAPI_OpenGL;
         };
+
+        enum class ObjectType
+        {
+            Texture,
+            Buffer,
+            Framebuffer,
+            Renderbuffer,
+            Shader,
+            Program,
+            VertexArray,
+            Query,
+            Sampler,
+            TransformFeedback,
+            ProgramPipeline,
+        };
     private:
         bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -268,36 +285,41 @@ namespace OsmAnd
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
-        bool _isSupported_EXT_debug_marker;
+        bool _isSupported_debug_label;
+        bool _isSupported_debug_marker;
+        bool _isSupported_sync;
         bool _isSupported_texture_storage;
         bool _isSupported_texture_float;
         bool _isSupported_texture_half_float;
         bool _isSupported_texture_rg;
         bool _isSupported_vertex_array_object;
+        bool _isSupported_integerOperations;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
         GLint _maxVaryingFloats;
         GLint _maxVaryingVectors;
         GLint _maxVertexAttribs;
-        
-        virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
 
-        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) = 0;
-        virtual void glPopGroupMarkerEXT_wrapper() = 0;
+        GLint _framebufferDepthBits;
+        GLint _framebufferDepthBytes;
+
+        bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) override;
 
         virtual TextureFormat getTextureFormat(const SkColorType colorType) const;
         virtual TextureFormat getTextureFormat_float() const;
-        virtual bool isValidTextureFormat(const TextureFormat textureFormat) const = 0;
         virtual size_t getTextureFormatPixelSize(const TextureFormat textureFormat) const;
         virtual GLenum getBaseInternalTextureFormat(const TextureFormat textureFormat) const;
 
         virtual SourceFormat getSourceFormat(const SkColorType colorType) const;
         virtual SourceFormat getSourceFormat_float() const = 0;
-        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const = 0;
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
         virtual void glBindVertexArray_wrapper(GLuint array) = 0;
         virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) = 0;
+
+        virtual GLsync glFenceSync_wrapper(GLenum condition, GLbitfield flags) = 0;
+        virtual void glDeleteSync_wrapper(GLsync sync) = 0;
+        virtual GLenum glClientWaitSync_wrapper(GLsync sync, GLbitfield flags, GLuint64 timeout) = 0;
     public:
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
@@ -314,18 +336,24 @@ namespace OsmAnd
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
-        const bool& isSupported_EXT_debug_marker;
+        const bool& isSupported_debug_label;
+        const bool& isSupported_debug_marker;
+        const bool& isSupported_sync;
         const bool& isSupported_texture_storage;
         const bool& isSupported_texture_float;
         const bool& isSupported_texture_half_float;
         const bool& isSupported_texture_rg;
         const bool& isSupported_vertex_array_object;
+        const bool& isSupported_integerOperations;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
         const GLint& maxVaryingFloats;
         const GLint& maxVaryingVectors;
         const GLint& maxVertexAttribs;
-        
+
+        const GLint& framebufferDepthBits;
+        const GLint& framebufferDepthBytes;
+
         virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
 
         virtual GLuint compileShader(GLenum shaderType, const char* source);
@@ -353,13 +381,14 @@ namespace OsmAnd
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount) = 0;
 
         GLname allocateUninitializedVAO();
-        void initializeVAO(const GLname vao);
-        void useVAO(const GLname vao);
+        void initializeVAO(GLname vao);
+        void useVAO(GLname vao);
         void unuseVAO();
-        void releaseVAO(const GLname vao, const bool gpuContextLost = false);
+        void releaseVAO(GLname vao, bool gpuContextLost = false);
 
         virtual void preprocessVertexShader(QString& code) = 0;
-        virtual void preprocessFragmentShader(QString& code) = 0;
+        virtual void preprocessFragmentShader(
+            QString& code, const QString& fragmentTypePrefix = QString(), const QString& fragmentTypePrecision = QString()) = 0;
         virtual void optimizeVertexShader(QString& code) = 0;
         virtual void optimizeFragmentShader(QString& code) = 0;
 
@@ -368,10 +397,14 @@ namespace OsmAnd
             Invalid = -1,
 
             ElevationDataTile,
+
             BitmapTile_Bilinear,
             BitmapTile_BilinearMipmap,
             BitmapTile_TrilinearMipmap,
+
             Symbol,
+
+            DepthBuffer,
 
             __LAST
         };
@@ -386,15 +419,20 @@ namespace OsmAnd
             const QHash<QString, GlslProgramVariable>& variablesMap);
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
-        virtual bool uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile, std::shared_ptr<const ResourceInGPU>& resourceInGPU) override;
+        bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) override;
 
-        virtual void waitUntilUploadIsComplete();
+        void waitUntilUploadIsComplete() override;
 
-        virtual void pushDebugGroupMarker(const QString& title);
-        virtual void popDebugGroupMarker();
+        virtual void pushDebugGroupMarker(const QString& title) = 0;
+        virtual void popDebugGroupMarker() = 0;
+
+        virtual void setObjectLabel(ObjectType type, GLuint name, const QString& label) = 0;
 
         virtual void glClearDepth_wrapper(const float depth) = 0;
+
+        virtual void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) = 0;
+        virtual bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) = 0;
     };
 }
 

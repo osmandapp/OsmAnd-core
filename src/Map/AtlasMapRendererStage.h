@@ -26,11 +26,14 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(AtlasMapRendererStage);
     private:
     protected:
-    public:
-        AtlasMapRendererStage(AtlasMapRenderer* const renderer);
-        virtual ~AtlasMapRendererStage();
+        std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
+            TileId normalizedTileId, ZoomLevel zoomLevel, std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr) const;
 
-        const AtlasMapRendererConfiguration& getCurrentConfiguration() const;
+    public:
+        explicit AtlasMapRendererStage(AtlasMapRenderer* renderer);
+        ~AtlasMapRendererStage() override;
+
+        SWIG_OMIT(Q_REQUIRED_RESULT) const AtlasMapRendererConfiguration& getCurrentConfiguration() const;
     };
 }
 

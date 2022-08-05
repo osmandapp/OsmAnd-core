@@ -572,12 +572,40 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
     return value;
 }
 
+OsmAnd::TileId OsmAnd::Utilities::getTileId(const PointI& point31, ZoomLevel zoom, PointF* pOutOffsetN /*= nullptr*/, PointI* pOutOffset /*= nullptr*/)
+{
+    const auto zoomLevelDelta = MaxZoomLevel - zoom;
+    const auto tileId = TileId::fromXY(point31.x >> zoomLevelDelta, point31.y >> zoomLevelDelta);
+
+    if (pOutOffsetN || pOutOffset)
+    {
+        PointI tile31;
+        tile31.x = tileId.x << zoomLevelDelta;
+        tile31.y = tileId.y << zoomLevelDelta;
+
+        const auto offsetInTile = point31 - tile31;
+        if (pOutOffset)
+        {
+            *pOutOffset = offsetInTile;
+        }
+
+        if (pOutOffsetN)
+        {
+            const auto tileSize31 = 1u << zoomLevelDelta;
+            pOutOffsetN->x = static_cast<float>(static_cast<double>(offsetInTile.x) / tileSize31);
+            pOutOffsetN->y = static_cast<float>(static_cast<double>(offsetInTile.y) / tileSize31);
+        }
+    }
+
+    return tileId;
+}
+
 OsmAnd::TileId OsmAnd::Utilities::normalizeTileId(const TileId input, const ZoomLevel zoom)
 {
     TileId output = input;
-    
+
     const auto tilesCount = static_cast<int32_t>(1u << zoom);
-    
+
     while (output.x < 0)
     {
         output.x += tilesCount;
@@ -586,7 +614,7 @@ OsmAnd::TileId OsmAnd::Utilities::normalizeTileId(const TileId input, const Zoom
     {
         output.y += tilesCount;
     }
-    
+
     // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
     if (zoom < ZoomLevel31)
     {
@@ -599,19 +627,19 @@ OsmAnd::TileId OsmAnd::Utilities::normalizeTileId(const TileId input, const Zoom
             output.y -= tilesCount;
         }
     }
-    
+
     assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
     assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
-    
+
     return output;
 }
 
 OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, const ZoomLevel zoom)
 {
     PointI output = input;
-    
+
     const auto tilesCount = static_cast<int32_t>(1u << zoom);
-    
+
     while (output.x < 0)
     {
         output.x += tilesCount;
@@ -620,7 +648,7 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
     {
         output.y += tilesCount;
     }
-    
+
     // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
     if (zoom < ZoomLevel31)
     {
@@ -633,10 +661,10 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
             output.y -= tilesCount;
         }
     }
-    
+
     assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
     assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
-    
+
     return output;
 }
 
@@ -644,22 +672,22 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
 OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI64& input, const ZoomLevel zoom)
 {
     PointI64 output = input;
-    
+
     const auto tilesCount = static_cast<int64_t>(1ull << zoom);
-    
+
     while (output.x < 0)
         output.x += tilesCount;
     while (output.y < 0)
         output.y += tilesCount;
-    
+
     while (output.x >= tilesCount)
         output.x -= tilesCount;
     while (output.y >= tilesCount)
         output.y -= tilesCount;
-    
+
     assert(output.x >= 0 && output.x < tilesCount);
     assert(output.y >= 0 && output.y < tilesCount);
-    
+
     return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
 }
 #endif // !defined(SWIG)
@@ -679,25 +707,25 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI64& input, co
 OsmAnd::LatLon OsmAnd::Utilities::rhumbDestinationPoint(LatLon latLon, double distance, double bearing)
 {
     double radius = 6371e3;
-    
+
     double d = distance / radius; // angular distance in radians
     double phi1 = qDegreesToRadians(latLon.latitude);
     double lambda1 = qDegreesToRadians(latLon.longitude);
     double theta = qDegreesToRadians(bearing);
-    
+
     double deltaPhi = d * cos(theta);
     double phi2 = phi1 + deltaPhi;
-    
+
     // check for some daft bugger going past the pole, normalise latitude if so
     //if (ABS(phi2) > M_PI_2)
     //    phi2 = phi2>0 ? M_PI-phi2 : -M_PI-phi2;
-    
+
     double deltaPsi = log(tan(phi2 / 2 + M_PI_4) / tan(phi1 / 2 + M_PI_4));
     double q = abs(deltaPsi) > 10e-12 ? deltaPhi / deltaPsi : cos(phi1); // E-W course becomes incorrect with 0/0
-    
+
     double deltalambda = d * sin(theta) / q;
     double lambda2 = lambda1 + deltalambda;
-    
+
     return LatLon(qRadiansToDegrees(phi2), qRadiansToDegrees(lambda2));
 }
 
@@ -712,7 +740,7 @@ OsmAnd::PointD OsmAnd::Utilities::getTileEllipsoidNumberAndOffsetY(int zoom, dou
     double B2 = getPowZoom(zoom);
     PointD res;
     res.x = B2 / 2 - M2 * B2 / 2 / M_PI;
-    
+
     auto xTilesCountForThisZoom = (double)(1 << zoom);
     auto yTileNumber = floor(xTilesCountForThisZoom / 2 - M2 * xTilesCountForThisZoom / 2 / M_PI);
     res.y = floor(((xTilesCountForThisZoom / 2 - M2 * xTilesCountForThisZoom / 2 / M_PI) - yTileNumber) * tileSize);

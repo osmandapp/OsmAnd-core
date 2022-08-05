@@ -212,7 +212,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(const bool gpuContextLost)
+bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 

@@ -177,7 +177,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to select proper pixel format for temporary window") << std::endl;
         return false;
     }
-    
+
     // Create temporary OpenGL context
     const auto hTempGLRC = wglCreateContext(hTempWindowDC);
     if (!hTempGLRC)
@@ -247,7 +247,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto wglExtensions = QString::fromLatin1(wglExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
     if (configuration.verbose)
         output << xT("WGL extensions: ") << QStringToStlString(wglExtensions.join(' ')) << std::endl;
-    
+
     // Create pbuffer
     int pbufferContextAttribs[] = { 0 };
     void* pBufferHandle = nullptr;
@@ -536,7 +536,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to create pbuffer") << std::endl;
         return false;
     }
-    
+
     GLXContext windowlessContext = nullptr;
     if (configuration.useLegacyContext)
     {
@@ -897,7 +897,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             output << xT("Creating map raster layer provider...") << std::endl;
         const std::shared_ptr<OsmAnd::MapRasterLayerProvider_Software> binaryMapRasterTileProvider(new OsmAnd::MapRasterLayerProvider_Software(
             binaryMapPrimitivesProvider));
-        
+
         // Create renderer
         if (configuration.verbose)
             output << xT("Creating OpenGL 2.0+ atlas map renderer...") << std::endl;
@@ -942,11 +942,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             output << xT("Adding providers to map renderer...") << std::endl;
         mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
         mapRenderer->setMapLayerProvider(0, binaryMapRasterTileProvider);
-        
+
         // Initialize rendering
         if (configuration.verbose)
             output << xT("Initializing rendering...") << std::endl;
-        if(!mapRenderer->initializeRendering())
+        if(!mapRenderer->initializeRendering(true))
         {
             output << xT("Failed to initialize rendering") << std::endl;
 

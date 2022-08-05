@@ -60,6 +60,10 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		${m_LIBRARY}
 		${dl_LIBRARY}
 	)
+elseif (CMAKE_TARGET_OS STREQUAL "ios")
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DGLES_SILENCE_DEPRECATION
+	)
 elseif (CMAKE_TARGET_OS STREQUAL "windows")
 	if (CMAKE_HOST_WIN32)
 		find_library(ws2_32_LIBRARY ws2_32)
@@ -136,21 +140,21 @@ endif()
 if (CMAKE_TARGET_OS STREQUAL "ios" OR
 	CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_private_definitions ${target_specific_private_definitions}
-		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
+		-DOSMAND_OPENGLES2PLUS_RENDERER_SUPPORTED
 	)
-	file(GLOB sources_opengles2 "src/Map/OpenGL/OpenGLES2/*.c*")
-	file(GLOB headers_opengles2 "src/Map/OpenGL/OpenGLES2/*.h*")
+	file(GLOB sources_opengles2plus "src/Map/OpenGL/OpenGLES2plus/*.c*")
+	file(GLOB headers_opengles2plus "src/Map/OpenGL/OpenGLES2plus/*.h*")
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengles2}
-		${sources_opengles2}
+		${headers_opengles2plus}
+		${sources_opengles2plus}
 	)
 
 	if (CMAKE_TARGET_OS STREQUAL "android")
 		find_library(EGL_LIBRARY EGL)
-		find_library(GLESv2_LIBRARY GLESv2)
+		find_library(GLESv3_LIBRARY GLESv3)
 		set(target_specific_public_libraries ${target_specific_public_libraries}
 			${EGL_LIBRARY}
-			${GLESv2_LIBRARY}
+			${GLESv3_LIBRARY}
 		)
 	endif()
 endif()

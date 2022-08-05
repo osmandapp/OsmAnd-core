@@ -42,6 +42,8 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
+    , terrainDepthBuffer(_terrainDepthBuffer)
+    , terrainDepthBufferSize(_terrainDepthBufferSize)
 {
 }
 
@@ -52,7 +54,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 {
     GL_CHECK_PRESENT(glClearColor);
-    
+
     const auto gpuAPI = getGPUAPI();
 
     bool ok;
@@ -66,7 +68,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 
     gpuAPI->glClearDepth_wrapper(1.0f);
     GL_CHECK_RESULT;
-    
+
     return true;
 }
 
@@ -89,11 +91,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     _debugStage->clear();
 
     // Setup viewport
-    glViewport(
-        _internalState.glmViewport[0],
-        _internalState.glmViewport[1],
-        _internalState.glmViewport[2],
-        _internalState.glmViewport[3]);
+    glViewport(_internalState.glmViewport[0], _internalState.glmViewport[1], _internalState.glmViewport[2], _internalState.glmViewport[3]);
     GL_CHECK_RESULT;
 
     // Clear buffers
@@ -114,13 +112,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
-    // Turn on depth testing for sky stage (since with disabled depth test, write to depth buffer is blocked),
-    // but since sky is on top of everything, accept all fragments
+    // Turn on depth testing as early as for sky stage since with disabled depth test, write to depth buffer is blocked
+    // but since sky is on top of everything, accept all fragments regardless of depth value
     glEnable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
     glDepthFunc(GL_ALWAYS);
     GL_CHECK_RESULT;
 
+//    // Turn off writing to the color buffer for the sky (depth only)
+//    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+//    GL_CHECK_RESULT;
+
+    // Render the sky (depth only) -- ???
     // Render the sky
     if (!currentDebugSettings->disableSkyStage)
     {
@@ -135,6 +138,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
+//    // Enable writing to color buffer
+//    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+//    GL_CHECK_RESULT;
+
     // Raster map stage is rendered without blending, since it's done in fragment shader
     if (!currentDebugSettings->disableMapLayersStage)
     {
@@ -145,21 +152,36 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
             metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
     }
 
+    // Capture terrain depth buffer
+    if (_terrainDepthBuffer.size() > 0 && _terrainDepthBufferSize == currentState.windowSize)
+    {
+        Stopwatch terrainDepthBufferCaptureStopwatch(metric != nullptr);
+
+        gpuAPI->readFramebufferDepth(0, 0, _terrainDepthBufferSize.x, _terrainDepthBufferSize.y, _terrainDepthBuffer);
+        GL_CHECK_RESULT;
+
+        if (metric)
+            metric->elapsedTimeForTerrainDepthBufferCapture = terrainDepthBufferCaptureStopwatch.elapsed();
+    }
+
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
-    //NOTE: Currently map symbols are incompatible with height-maps
     if (!currentDebugSettings->disableSymbolsStage)
     {
         Stopwatch symbolsStageStopwatch(metric != nullptr);
+
         glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
+
         if (!_symbolsStage->render(metric))
             ok = false;
+
         glDepthMask(GL_TRUE);
         GL_CHECK_RESULT;
+
         if (metric)
             metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
     }
@@ -191,6 +213,30 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
+
+    return ok;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering(bool gpuContextLost)
+{
+    return AtlasMapRenderer::doReleaseRendering(gpuContextLost);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& state, MapRendererStateChanges mask)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    bool ok = AtlasMapRenderer::handleStateChange(state, mask);
+
+    if (mask.isSet(MapRendererStateChange::WindowSize))
+    {
+        const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
+        if (depthBufferSize != _terrainDepthBuffer.size())
+        {
+            _terrainDepthBuffer.resize(depthBufferSize);
+            _terrainDepthBufferSize = state.windowSize;
+        }
+    }
 
     return ok;
 }
@@ -243,8 +289,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         TileSize3D / 2.0f,
         internalState->referenceTileSizeOnScreenInPixels / 2.0f,
         internalState->tileOnScreenScaleFactor);
-    internalState->groundDistanceFromCameraToTarget =
-        internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
+    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
     const auto distanceFromCameraToTargetWithNoVisualScale = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
         state.viewport,
@@ -257,8 +302,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
 
     // Recalculate perspective projection with obtained value
-    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize
-        + internalState->distanceFromCameraToTarget;
+    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
+//    internalState->zSkyplane = 1000.0f; // NOTE: This somehow fixes/eliminates the thing o_O by making the Z plane far enough
+    // 1. calculate upperFovLook vector (-sin(elevationAngle - fov), cos(elevationAngle - fov))
+    // 2. check if that vector hits fog point
+    //    - above ground (case 1, also defined as "intersection with ground is before fog") or
+    //    - below ground (case 2, also defined as "intersection with ground is after fog")
+
     internalState->zFar = glm::length(glm::vec3(
         internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
         internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
@@ -289,9 +339,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera positions
-    internalState->groundCameraPosition =
-        (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz();
     internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
+    internalState->groundCameraPosition = internalState->worldCameraPosition.xz();
 
     // Convenience precalculations
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
@@ -440,7 +489,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[1] = internalState->frustum2D.p1 / TileSize3D;
     p[2] = internalState->frustum2D.p2 / TileSize3D;
     p[3] = internalState->frustum2D.p3 / TileSize3D;
-    
+
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be
     // translated in opposite direction during rendering
@@ -518,7 +567,7 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeOnScreenInPixels() const
+float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
 {
     InternalState internalState;
     bool ok = updateInternalState(internalState, getState(), *getConfiguration());
@@ -591,9 +640,9 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
     return internalState.globalFrustum2D31.getBBox31();
 }
 
-OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(MapRendererInternalState* _internalState) const
+OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(const MapRendererInternalState& internalState_) const
 {
-    const auto internalState = static_cast<InternalState*>(_internalState);
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
     return internalState->globalFrustum2D31.getBBox31();
 }
 
@@ -633,10 +682,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     const auto offsetFromTarget = Utilities::convert31toDouble(offsetFromTarget31, state.zoomLevel);
     const auto positionInWorld = glm::vec3(
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f,
+        0.0f, // TODO: this is not compatible with elevation
         offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-    const auto projectedPosition = glm_extensions::fastProject(
+    const auto projectedPosition = glm_extensions::project(
         positionInWorld,
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport);
@@ -661,10 +710,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
     const auto positionInWorld = glm::vec3(
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f,
+        0.0f, // TODO: this is not compatible with elevation
         offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-    const auto projectedPosition = glm_extensions::fastProject(
+    const auto projectedPosition = glm_extensions::project(
         positionInWorld,
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport);
@@ -673,47 +722,36 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     return true;
 }
 
-double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
+double OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeInMeters() const
 {
     const auto state = getState();
 
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
 
-    const auto metersPerTile = Utilities::getMetersPerTileUnit(
-        state.zoomLevel,
-        internalState.targetTileId.y,
-        1);
+    const auto metersPerTile = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y, 1);
 
     return ok ? metersPerTile : 0.0;
 }
 
-double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() const
+double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor() const
 {
     const auto state = getState();
 
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
 
-    const auto tileSizeOnScreenInPixels =
-        internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
-    const auto metersPerPixel = Utilities::getMetersPerTileUnit(
-        state.zoomLevel,
-        internalState.targetTileId.y,
-        tileSizeOnScreenInPixels);
+    const auto tileSizeOnScreenInPixels = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    const auto metersPerPixel = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y, tileSizeOnScreenInPixels);
 
     return ok ? metersPerPixel : 0.0;
 }
 
-double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const
+double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState_) const
 {
-    const auto internalState = static_cast<InternalState*>(_internalState);
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
     const auto tileSizeOnScreenInPixels = internalState->referenceTileSizeOnScreenInPixels * internalState->tileOnScreenScaleFactor;
-    const auto metersPerPixel = Utilities::getMetersPerTileUnit(
-                                                                zoomLevel,
-                                                                internalState->targetTileId.y,
-                                                                tileSizeOnScreenInPixels);
-    
+    const auto metersPerPixel = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState->targetTileId.y, tileSizeOnScreenInPixels);
     return metersPerPixel;
 }
 

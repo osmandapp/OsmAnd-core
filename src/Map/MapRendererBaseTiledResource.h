@@ -5,12 +5,12 @@
 
 #include "QtExtensions.h"
 
-#include "OsmAndCore.h"
-#include "MapRendererResourceType.h"
-#include "MapRendererResourceState.h"
-#include "MapRendererBaseResource.h"
-#include "TiledEntriesCollection.h"
 #include "IQueryController.h"
+#include "MapRendererBaseResource.h"
+#include "MapRendererResourceState.h"
+#include "MapRendererResourceType.h"
+#include "OsmAndCore.h"
+#include "TiledEntriesCollection.h"
 
 namespace OsmAnd
 {
@@ -18,31 +18,34 @@ namespace OsmAnd
 
     class MapRendererBaseTiledResource
         : public MapRendererBaseResource
-        , public TiledEntriesCollectionEntryWithState < MapRendererBaseTiledResource, MapRendererResourceState, MapRendererResourceState::Unknown >
+        , public TiledEntriesCollectionEntryWithState<MapRendererBaseTiledResource, MapRendererResourceState, MapRendererResourceState::Unknown>
     {
-        typedef TiledEntriesCollectionEntryWithState<MapRendererBaseTiledResource, MapRendererResourceState, MapRendererResourceState::Unknown> BaseTilesCollectionEntryWithState;
+        typedef TiledEntriesCollectionEntryWithState<MapRendererBaseTiledResource, MapRendererResourceState, MapRendererResourceState::Unknown>
+            BaseTilesCollectionEntryWithState;
 
     private:
+
     protected:
         MapRendererBaseTiledResource(
             MapRendererResourcesManager* owner,
-            const MapRendererResourceType type,
+            MapRendererResourceType type,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-            const TileId tileId,
-            const ZoomLevel zoom);
+            TileId tileId,
+            ZoomLevel zoom);
 
-        virtual void detach();
+        void detach() override;
 
-        virtual void removeSelfFromCollection();
+        void removeSelfFromCollection() override;
+
     public:
-        virtual ~MapRendererBaseTiledResource();
+        ~MapRendererBaseTiledResource() override;
 
-        virtual MapRendererResourceState getState() const;
-        virtual void setState(const MapRendererResourceState newState);
-        virtual bool setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState);
+        MapRendererResourceState getState() const override;
+        void setState(MapRendererResourceState newState) override;
+        bool setStateIf(MapRendererResourceState testState, MapRendererResourceState newState) override;
 
-    friend class OsmAnd::MapRendererResourcesManager;
+        friend class OsmAnd::MapRendererResourcesManager;
     };
-}
+} // namespace OsmAnd
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_BASE_TILED_RESOURCE_H_)

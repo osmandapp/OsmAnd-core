@@ -46,16 +46,22 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
+    , _isSupported_debug_label(false)
+    , _isSupported_debug_marker(false)
+    , _isSupported_sync(false)
     , _isSupported_texture_storage(false)
     , _isSupported_texture_float(false)
     , _isSupported_texture_half_float(false)
     , _isSupported_texture_rg(false)
     , _isSupported_vertex_array_object(false)
+    , _isSupported_integerOperations(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
     , _maxVaryingFloats(-1)
     , _maxVaryingVectors(-1)
     , _maxVertexAttribs(-1)
+    , _framebufferDepthBits(0)
+    , _framebufferDepthBytes(0)
     , glVersion(_glVersion)
     , glslVersion(_glslVersion)
     , extensions(_extensions)
@@ -67,23 +73,26 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
-    , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
+    , isSupported_debug_label(_isSupported_debug_label)
+    , isSupported_debug_marker(_isSupported_debug_marker)
+    , isSupported_sync(_isSupported_sync)
     , isSupported_texture_storage(_isSupported_texture_storage)
     , isSupported_texture_float(_isSupported_texture_float)
     , isSupported_texture_half_float(_isSupported_texture_half_float)
     , isSupported_texture_rg(_isSupported_texture_rg)
     , isSupported_vertex_array_object(_isSupported_vertex_array_object)
+    , isSupported_integerOperations(_isSupported_integerOperations)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
     , maxFragmentUniformVectors(_maxFragmentUniformVectors)
     , maxVaryingFloats(_maxVaryingFloats)
     , maxVaryingVectors(_maxVaryingVectors)
     , maxVertexAttribs(_maxVertexAttribs)
+    , framebufferDepthBits(_framebufferDepthBits)
+    , framebufferDepthBytes(_framebufferDepthBytes)
 {
 }
 
-OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL()
-{
-}
+OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL() = default;
 
 GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* source)
 {
@@ -1101,11 +1110,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
         float tl;
         float t;
         float tr;
-        
+
         float l;
         float o;
         float r;
-        
+
         float bl;
         float b;
         float br;
@@ -1114,7 +1123,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
 
     const auto pHeixels = reinterpret_cast<const uint8_t*>(elevationData->pRawData);
     const auto pHeixelsRowLength = elevationData->rowLength;
-    const auto heixelsPerTileSide = elevationData->size;
     const auto itemsPerTileSide = elevationData->size - 2;
     const auto itemsCount = itemsPerTileSide * itemsPerTileSide;
     const auto pItems = new Item[itemsCount];
@@ -1159,6 +1167,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     // Bind it
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     GL_CHECK_RESULT;
+
+    // Name it
+    setObjectLabel(ObjectType::Buffer, buffer, QString::asprintf("MapElevationDataProvider::Data(@%p)->buffer", elevationData.get()));
 
     // Upload data
     glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(Item), pItems, GL_STATIC_DRAW);
@@ -1234,6 +1245,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     glBindTexture(GL_TEXTURE_2D, texture);
     GL_CHECK_RESULT;
 
+    // Name texture
+    setObjectLabel(ObjectType::Texture, texture, QString::asprintf("RasterMapSymbol(@%p)->texture", symbol.get()));
+
     // Allocate square 2D texture
     allocateTexture2D(GL_TEXTURE_2D, 1, imagePixmap.width(), imagePixmap.height(), textureFormat);
 
@@ -1270,10 +1284,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    const auto s = symbol->getVerticesAndIndexes();
-    
+    const auto verticesAndIndices = symbol->getVerticesAndIndices();
+
     // Primitive map symbol has to have vertices, so checks are worthless
-    assert(s->vertices && s->verticesCount > 0);
+    assert(verticesAndIndices->vertices && verticesAndIndices->verticesCount > 0);
 
     // Create vertex buffer
     GLuint vertexBuffer;
@@ -1284,8 +1298,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     GL_CHECK_RESULT;
 
+    // Name it
+    setObjectLabel(ObjectType::Buffer, vertexBuffer, QString::asprintf("VectorMapSymbol(@%p)->vertexBuffer", symbol.get()));
+
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, s->verticesCount*sizeof(VectorMapSymbol::Vertex), s->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, verticesAndIndices->verticesCount*sizeof(VectorMapSymbol::Vertex), verticesAndIndices->vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1295,12 +1312,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     // Create ArrayBuffer resource
     const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(
         this,
-        reinterpret_cast<RefInGPU>(vertexBuffer),
-        s->verticesCount));
+        reinterpret_cast<RefInGPU>(vertexBuffer), verticesAndIndices->verticesCount));
 
     // Primitive map symbol may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
-    if (s->indices != nullptr && s->indicesCount > 0)
+    if (verticesAndIndices->indices != nullptr && verticesAndIndices->indicesCount > 0)
     {
         // Create index buffer
         GLuint indexBuffer;
@@ -1311,11 +1327,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
         GL_CHECK_RESULT;
 
+        // Name it
+        setObjectLabel(ObjectType::Buffer, indexBuffer, QString::asprintf("VectorMapSymbol(@%p)->indexBuffer", symbol.get()));
+
         // Upload data
         glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            s->indicesCount*sizeof(VectorMapSymbol::Index),
-            s->indices,
+            GL_ELEMENT_ARRAY_BUFFER, verticesAndIndices->indicesCount*sizeof(VectorMapSymbol::Index), verticesAndIndices->indices,
             GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
@@ -1326,37 +1343,46 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         // Create ElementArrayBuffer resource
         indexBufferResource.reset(new ElementArrayBufferInGPU(
             this,
-            reinterpret_cast<RefInGPU>(indexBuffer),
-            s->indicesCount));
+            reinterpret_cast<RefInGPU>(indexBuffer), verticesAndIndices->indicesCount));
     }
 
     PointI* position31 = nullptr;
-    if (s->position31 != nullptr)
-        position31 = new PointI(s->position31->x, s->position31->y);
+    if (verticesAndIndices->position31 != nullptr)
+        position31 = new PointI(verticesAndIndices->position31->x, verticesAndIndices->position31->y);
 
+    std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
+    if (verticesAndIndices->partSizes != nullptr)
+        partSizes = std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>(*verticesAndIndices->partSizes));
+    
     // Create mesh resource
-    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, position31));
+    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes, position31));
 
     return true;
 }
 
 void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()
 {
-    // glFinish won't return until all current instructions for GPU (in current context) are complete
-    glFinish();
-    GL_CHECK_RESULT;
-}
+    if (isSupported_sync)
+    {
+        const auto sync = glFenceSync_wrapper(GL_SYNC_GPU_COMMANDS_COMPLETE /*0x9117*/, 0);
+        GL_CHECK_RESULT;
 
-void OsmAnd::GPUAPI_OpenGL::pushDebugGroupMarker(const QString& title)
-{
-    if (isSupported_EXT_debug_marker)
-        glPushGroupMarkerEXT_wrapper(0, qPrintable(title));
-}
+        GLenum result = GL_TIMEOUT_EXPIRED;
+        while(result == GL_TIMEOUT_EXPIRED)
+        {
+            result = glClientWaitSync_wrapper(sync, GL_SYNC_FLUSH_COMMANDS_BIT /*0x00000001*/, 8333333);
+            GL_CHECK_RESULT;
+        }
 
-void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
-{
-    if (isSupported_EXT_debug_marker)
-        glPopGroupMarkerEXT_wrapper();
+        glDeleteSync_wrapper(sync);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        // glFinish won't return until all current instructions for GPU (in current context) are complete
+        glFinish();
+        GL_CHECK_RESULT;
+    }
 }
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
@@ -1490,22 +1516,13 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const
     return SourceFormat::Make(type, format);
 }
 
-void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
-    GLenum target,
-    GLsizei levels,
-    GLsizei width,
-    GLsizei height,
-    const TextureFormat textureFormat)
+void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat textureFormat)
 {
-    GLenum format = static_cast<GLenum>(textureFormat.format);
-    GLenum type = static_cast<GLenum>(textureFormat.type);
+    auto format = static_cast<GLenum>(textureFormat.format);
+    auto type = static_cast<GLenum>(textureFormat.type);
 
-    uint8_t* dummyBuffer = new uint8_t[width * height * getTextureFormatPixelSize(textureFormat)];
-
-    glTexImage2D(target, 0, format, width, height, 0, getBaseInternalTextureFormat(textureFormat), type, dummyBuffer);
+    glTexImage2D(target, 0, format, width, height, 0, getBaseInternalTextureFormat(textureFormat), type, nullptr);
     GL_CHECK_RESULT;
-
-    delete[] dummyBuffer;
 }
 
 OsmAnd::GLname OsmAnd::GPUAPI_OpenGL::allocateUninitializedVAO()
@@ -1701,7 +1718,7 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
     _lastUsedSimulatedVAOObject.reset();
 }
 
-void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao, const bool gpuContextLost /*= false*/)
+void OsmAnd::GPUAPI_OpenGL::releaseVAO(GLname vao, bool gpuContextLost /*= false*/)
 {
     if (isSupported_vertex_array_object)
     {

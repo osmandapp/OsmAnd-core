@@ -12,10 +12,12 @@
 
 namespace OsmAnd
 {
-    class AtlasMapRendererSymbolsStage_OpenGL 
+    class AtlasMapRendererSymbolsStage_OpenGL
         : public AtlasMapRendererSymbolsStage
         , private AtlasMapRendererStageHelper_OpenGL
     {
+        using AtlasMapRendererStageHelper_OpenGL::getRenderer;
+
     private:
     protected:
         bool renderBillboardSymbol(
@@ -42,12 +44,19 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mOrthographicProjection;
                     GLlocation viewport;
+                    GLlocation cameraInWorld;
+                    GLlocation target31;
+
+                    // Per-tile data
+                    GLlocation elevation_scale;
 
                     // Per-symbol data
-                    GLlocation symbolOffsetFromTarget;
+                    GLlocation position31;
+                    GLlocation offsetInTile;
                     GLlocation symbolSize;
                     GLlocation distanceFromCamera;
                     GLlocation onScreenOffset;
+                    GLlocation elevationInMeters;
                 } param;
             } vs;
 
@@ -67,14 +76,14 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseBillboardRaster(const bool gpuContextLost);
+        bool releaseBillboardRaster(bool gpuContextLost);
 
         bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath(const bool gpuContextLost);
+        bool releaseOnPath(bool gpuContextLost);
 
         struct Glyph
         {
@@ -125,12 +134,12 @@ namespace OsmAnd
         } _onPath2dProgram;
         unsigned int _onPathSymbol2dMaxGlyphsPerDrawCall;
         bool initializeOnPath2D();
-        bool initializeOnPath2DProgram(const unsigned int maxGlyphsPerDrawCall);
+        bool initializeOnPath2DProgram(unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath2D(const bool gpuContextLost);
+        bool releaseOnPath2D(bool gpuContextLost);
 
         GLname _onPathSymbol3dVAO;
         GLname _onPathSymbol3dVBO;
@@ -173,12 +182,12 @@ namespace OsmAnd
         } _onPath3dProgram;
         unsigned int _onPathSymbol3dMaxGlyphsPerDrawCall;
         bool initializeOnPath3D();
-        bool initializeOnPath3DProgram(const unsigned int maxGlyphsPerDrawCall);
+        bool initializeOnPath3DProgram(unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath3D(const bool gpuContextLost);
+        bool releaseOnPath3D(bool gpuContextLost);
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
@@ -227,7 +236,7 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnSurfaceRaster(const bool gpuContextLost);
+        bool releaseOnSurfaceRaster(bool gpuContextLost);
 
         struct OnSurfaceVectorProgram {
             GLname id;
@@ -247,6 +256,11 @@ namespace OsmAnd
                     GLlocation mModelViewProjection;
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
+                    GLlocation tileId;
+                    GLlocation lookupOffsetAndScale;
+                    GLlocation elevation_scale;
+                    GLlocation elevation_dataSampler;
+                    GLlocation texCoordsOffsetAndScale;
                 } param;
             } vs;
 
@@ -264,14 +278,24 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnSurfaceVector(const bool gpuContextLost);
-    public:
-        AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
-        virtual ~AtlasMapRendererSymbolsStage_OpenGL();
+        bool releaseOnSurfaceVector(bool gpuContextLost);
 
-        virtual bool initialize();
-        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release(const bool gpuContextLost);
+        // Terrain-related:
+        bool applyTerrainVisibilityFiltering(
+            const glm::vec3& positionOnScreen,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
+
+        void configureElevationData(
+            const OnSurfaceVectorProgram& program,
+            const TileId tileId,
+            const int elevationDataSamplerIndex);
+    public:
+        explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
+        ~AtlasMapRendererSymbolsStage_OpenGL() override;
+
+        bool initialize() override;
+        bool render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
+        bool release(bool gpuContextLost) override;
     };
 }
 

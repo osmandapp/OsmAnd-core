@@ -21,31 +21,27 @@ namespace OsmAnd
         private:
         protected:
         public:
-            Data(
-                const TileId tileId,
-                const ZoomLevel zoom,
-                const size_t rowLength,
-                const uint32_t size,
-                const float* const pRawData);
-            virtual ~Data();
+            Data(TileId tileId, ZoomLevel zoom, size_t rowLength, uint32_t size, const float* pRawData);
+            ~Data() override;
 
             const size_t rowLength;
             const uint32_t size;
             const float* pRawData;
+            const float heixelSizeN;
+            const float halfHeixelSizeN;
+
+            bool getValue(const PointF& coordinates, float& outValue) const;
         };
 
     private:
     protected:
         IMapElevationDataProvider();
     public:
-        virtual ~IMapElevationDataProvider();
+        ~IMapElevationDataProvider() override;
 
-        virtual unsigned int getTileSize() const = 0;
+        SWIG_OMIT(Q_REQUIRED_RESULT) virtual unsigned int getTileSize() const = 0;
 
-        virtual bool obtainElevationData(
-            const Request& request,
-            std::shared_ptr<Data>& outElevationData,
-            std::shared_ptr<Metric>* const pOutMetric = nullptr);
+        virtual bool obtainElevationData(const Request& request, std::shared_ptr<Data>& outElevationData, std::shared_ptr<Metric>* pOutMetric);
     };
 }
 

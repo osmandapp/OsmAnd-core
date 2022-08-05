@@ -237,10 +237,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     polygon->position31 = _points[0];
     polygon->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
 
-    const auto verticesAndIndexes = std::make_shared<VectorMapSymbol::VerticesAndIndexes>();
+    const auto verticesAndIndices = std::make_shared<VectorMapSymbol::VerticesAndIndices>();
     // Line has no reusable vertices - TODO clarify
-    verticesAndIndexes->indices = nullptr;
-    verticesAndIndexes->indicesCount = 0;
+    verticesAndIndices->indices = nullptr;
+    verticesAndIndices->indicesCount = 0;
     
     polygon->scaleType = VectorMapSymbol::ScaleType::In31;
     polygon->scale = 1.0;
@@ -277,7 +277,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
         if (include[pointIdx])
             original[insertIdx++] = { pointsToPlot[pointIdx].x, pointsToPlot[pointIdx].y };
     
-    verticesAndIndexes->position31 = new PointI(polygon->position31.x, polygon->position31.y);
+    verticesAndIndices->position31 = new PointI(polygon->position31.x, polygon->position31.y);
     
     std::vector<std::vector<EPoint>> polygons;
 
@@ -315,12 +315,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
         vertices.push_back(vertex);
     }
     
-    verticesAndIndexes->verticesCount = vertices.size();
-    verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[vertices.size()];
-    std::copy(vertices.begin(), vertices.end(), verticesAndIndexes->vertices);
+    verticesAndIndices->verticesCount = vertices.size();
+    verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
+    std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
 
     polygon->isHidden = _isHidden;
-    polygon->setVerticesAndIndexes(verticesAndIndexes);
+    polygon->setVerticesAndIndices(verticesAndIndices);
     
     return polygon;
 }

@@ -78,7 +78,7 @@ namespace OsmAnd
         virtual void lostDataInGPU() Q_DECL_OVERRIDE;
         virtual void releaseData() Q_DECL_OVERRIDE;
 
-        void unloadFromGPU(const bool gpuContextLost);
+        void unloadFromGPU(bool gpuContextLost);
     public:
         virtual ~MapRendererTiledSymbolsResource();
 

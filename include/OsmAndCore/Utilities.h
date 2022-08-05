@@ -41,7 +41,7 @@ namespace OsmAnd
 #endif
             return tm_snapshot;
         }
-        
+
         inline static double toRadians(const double angle)
         {
             return angle / 180.0 * M_PI;
@@ -64,11 +64,9 @@ namespace OsmAnd
             return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
         }
 
-        inline static PointI convertLatLonTo31(const LatLon latLon)
+        inline static PointI convertLatLonTo31(const LatLon& latLon)
         {
-            return PointI(
-                get31TileNumberX(latLon.longitude),
-                get31TileNumberY(latLon.latitude));
+            return { get31TileNumberX(latLon.longitude), get31TileNumberY(latLon.latitude) };
         }
 
         inline static double get31LongitudeX(const double x)
@@ -81,11 +79,9 @@ namespace OsmAnd
             return getLatitudeFromTile(21, y / 1024.);
         }
 
-        inline static LatLon convert31ToLatLon(const PointI point31)
+        inline static LatLon convert31ToLatLon(const PointI& point31)
         {
-            return LatLon(
-                get31LatitudeY(point31.y),
-                get31LongitudeX(point31.x));
+            return { get31LatitudeY(point31.y), get31LongitudeX(point31.x) };
         }
 
         inline static double getTileNumberX(const float zoom, const double longitude)
@@ -117,17 +113,13 @@ namespace OsmAnd
         inline static PointF convert31toFloat(const PointI& p, const ZoomLevel zoom)
         {
             const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
-            return PointF(
-                static_cast<float>((static_cast<double>(p.x) / tileSize31)),
-                static_cast<float>((static_cast<double>(p.y) / tileSize31)));
+            return { static_cast<float>((static_cast<double>(p.x) / tileSize31)), static_cast<float>((static_cast<double>(p.y) / tileSize31)) };
         }
 
         inline static PointD convert31toDouble(const PointI64& p, const ZoomLevel zoom)
         {
             const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
-            return PointD(
-                (static_cast<double>(p.x) / tileSize31),
-                (static_cast<double>(p.y) / tileSize31));
+            return { (static_cast<double>(p.x) / tileSize31), (static_cast<double>(p.y) / tileSize31) };
         }
 
         inline static double normalizeLatitude(double latitude)
@@ -168,11 +160,11 @@ namespace OsmAnd
             return qPow(2, zoom);
         }
 
-        inline static PointD getScaleDivisor31ToPixel(const PointI areaSizeInPixels, const ZoomLevel zoom)
+        inline static PointD getScaleDivisor31ToPixel(const PointI& areaSizeInPixels, const ZoomLevel zoom)
         {
             PointD scaleDivisor31ToPixel;
 
-            const auto tileDivisor = getPowZoom(31 - zoom);
+            const auto tileDivisor = getPowZoom(MaxZoomLevel - zoom);
             scaleDivisor31ToPixel.x = tileDivisor / static_cast<double>(areaSizeInPixels.x);
             scaleDivisor31ToPixel.y = tileDivisor / static_cast<double>(areaSizeInPixels.y);
 
@@ -187,7 +179,7 @@ namespace OsmAnd
             double lon2 = getLongitudeFromTile(zoom, 1);
             return distance(lon1, lat1, lon2, lat2);
         }
-        
+
         inline static double getLongitudeFromTile(const float zoom, const double x)
         {
             return x / getPowZoom(zoom) * 360.0 - 180.0;
@@ -276,12 +268,12 @@ namespace OsmAnd
             return p;
         }
 
-        inline static double projection31(const PointI a, const PointI b, const PointI c)
+        inline static double projection31(const PointI& a, const PointI& b, const PointI& c)
         {
             return projection31(a.x, a.y, b.x, b.y, c.x, c.y);
         }
 
-        inline static double projectionCoeff31(const PointI a, const PointI b, const PointI c)
+        inline static double projectionCoeff31(const PointI& a, const PointI& b, const PointI& c)
         {
             double mDist = Utilities::x31toMeters(a.x - b.x) * Utilities::x31toMeters(a.x - b.x) +
                            Utilities::x31toMeters(a.y - b.y) * Utilities::x31toMeters(a.y - b.y);
@@ -565,7 +557,7 @@ namespace OsmAnd
                 diff += 360.0;
             return diff;
         }
-        
+
 #if !defined(SWIG)
         inline static AreaI64 boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
         {
@@ -615,7 +607,7 @@ namespace OsmAnd
             roundedBBox31.top() = bbox31.top() & ~roundingMask;
 
             roundedBBox31.left() = bbox31.left() & ~roundingMask;
-            
+
             roundedBBox31.bottom() = bbox31.bottom() & ~roundingMask;
             if ((bbox31.bottom() & roundingMask) != 0)
                 roundedBBox31.bottom() += tilesCount;
@@ -795,10 +787,11 @@ namespace OsmAnd
 
         static PointD getTileEllipsoidNumberAndOffsetY(int zoom, double latitude, int tileSize);
 
-        static TileId normalizeTileId(const TileId input, const ZoomLevel zoom);
-        static PointI normalizeCoordinates(const PointI& input, const ZoomLevel zoom);
+        static TileId getTileId(const PointI& point31, ZoomLevel zoom, PointF* pOutOffsetN = nullptr, PointI* pOutOffset = nullptr);
+        static TileId normalizeTileId(TileId input, ZoomLevel zoom);
+        static PointI normalizeCoordinates(const PointI& input, ZoomLevel zoom);
 #if !defined(SWIG)
-        static PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom);
+        static PointI normalizeCoordinates(const PointI64& input, ZoomLevel zoom);
 #endif // !defined(SWIG)
 
         enum class CHCode : uint8_t

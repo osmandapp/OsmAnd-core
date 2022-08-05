@@ -33,7 +33,7 @@ public class AtlasMapRendererView extends MapRendererView {
      */
     @Override
     protected IMapRenderer createMapRendererInstance() {
-        return OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
+        return OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2plus);
     }
 
     /**
@@ -72,5 +72,5 @@ public class AtlasMapRendererView extends MapRendererView {
 //    }
 //    virtual unsigned int getVisibleTilesCount() const = 0;
 //
-//    virtual float getCurrentTileSizeOnScreenInPixels() const = 0;
+//    virtual float getTileSizeOnScreenInPixels() const = 0;
 }

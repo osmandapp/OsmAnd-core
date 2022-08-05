@@ -2,7 +2,6 @@
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
-#include <QLinkedList>
 #include <QSet>
 #include <QVector>
 #include "restore_internal_warnings.h"
@@ -10,7 +9,6 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include "restore_internal_warnings.h"
 
@@ -41,9 +39,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRende
 {
 }
 
-OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
-{
-}
+OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
 
 void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
@@ -62,7 +58,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     }
 
     Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
-    
+
     ScreenQuadTree visibleSymbols(intersections.getRootArea(), intersections.maxDepth);
     visibleSymbols.insertFrom(renderableSymbols,
         []
@@ -107,7 +103,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
     QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const
 {
     QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
-    
+
     {
         QReadLocker scopedLocker(&_lastPreparedIntersectionsLock);
         _lastPreparedIntersections.select(screenPoint, selectedRenderables);
@@ -117,7 +113,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsIn(
-    const AreaI screenArea,
+    const AreaI& screenArea,
     QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
     const bool strict /*= false*/) const
 {
@@ -131,9 +127,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsIn(
     convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsAt(
-    const PointI screenPoint,
-    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const
+void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsAt(const PointI& screenPoint, QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const
 {
     QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
 
@@ -146,9 +140,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsAt(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
-    const AreaI screenArea,
-    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
-    const bool strict /*= false*/) const
+    const AreaI& screenArea, QList<IMapRenderer::MapSymbolInformation>& outMapSymbols, const bool strict /*= false*/) const
 {
     QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
 
@@ -197,7 +189,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
         return result;
     }
-    
+
     // Otherwise, use last accepted map symbols by order
     const auto result = obtainRenderableSymbols(
         _lastAcceptedMapSymbolsByOrder,
@@ -217,9 +209,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 {
     Stopwatch stopwatch(metric != nullptr);
 
-    typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
+    typedef std::list< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     PlottedSymbols plottedSymbols;
-    
+
     struct PlottedSymbolRef
     {
         PlottedSymbols::iterator iterator;
@@ -229,10 +221,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         QList< PlottedSymbolRef > symbolsRefs;
 
-        void discard(
-            const AtlasMapRendererSymbolsStage* const stage,
-            PlottedSymbols& plottedSymbols,
-            ScreenQuadTree& intersections)
+        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, ScreenQuadTree& intersections)
         {
             // Discard entire group
             for (auto& symbolRef : symbolsRefs)
@@ -242,7 +231,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
-                //assert(removed);
+                assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 plottedSymbols.erase(symbolRef.iterator);
             }
@@ -305,10 +294,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         QHash< std::shared_ptr<const MapSymbolsGroup::AdditionalInstance>, PlottedSymbolsRefGroupInstance > instancesRefs;
 
-        void discard(
-            const AtlasMapRendererSymbolsStage* const stage,
-            PlottedSymbols& plottedSymbols,
-            ScreenQuadTree& intersections)
+        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, ScreenQuadTree& intersections)
         {
             // Discard all instances
             for (auto& instanceRef : instancesRefs)
@@ -325,7 +311,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // (max(width, height) / 2^depth) >= 64
     const auto viewportMaxDimension = qMax(currentState.viewport.height(), currentState.viewport.width());
     const auto treeDepth = 32u - SkCLZ(viewportMaxDimension >> 6);
-    outIntersections = qMove(ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u)));
+    outIntersections = ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u));
     ComputedPathsDataCache computedPathsDataCache;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
     {
@@ -554,7 +540,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             {
                                 if (plottedGroupSymbol.renderable->mapSymbol != symbolWithIconContentClass)
                                     continue;
-                                
+
                                 iconPlotted = true;
                                 break;
                             }
@@ -642,8 +628,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                 this,
                                 plottedSymbols,
                                 outIntersections,
-                                [mapSymbol]
-                                (const std::shared_ptr<const RenderableSymbol>& renderableSymbol) -> bool
+                                [mapSymbol](const std::shared_ptr<const RenderableSymbol>& renderableSymbol) -> bool
                                 {
                                     return (renderableSymbol->mapSymbol == mapSymbol);
                                 });
@@ -833,10 +818,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     */
     //////////////////////////////////////////////////////////////////////////
 
+    // Get target tile and offset
+    PointF offsetInTileN;
+    const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+
     // Get GPU resource
     const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
     if (!gpuResource)
         return;
+
+    // Calculate location of symbol in world coordinates.
+    const auto offsetFromTarget = Utilities::convert31toFloat(position31 - currentState.target31, currentState.zoomLevel);
+    auto positionInWorld = glm::vec3(offsetFromTarget.x * AtlasMapRenderer::TileSize3D, 0.0f, offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+    // Get elevation data
+    float elevationInMeters = 0.0f;
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+    {
+        if (elevationData->getValue(offsetInTileN, elevationInMeters))
+        {
+            const auto scaledElevationInMeters = elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
+
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+            const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+
+            positionInWorld.y = static_cast<float>((scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor);
+        }
+    }
 
     std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
     renderable->mapSymbolGroup = mapSymbolGroup;
@@ -844,18 +854,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     renderable->genericInstanceParameters = instanceParameters;
     renderable->instanceParameters = instanceParameters;
     renderable->gpuResource = gpuResource;
+    renderable->positionInWorld = positionInWorld;
+    renderable->elevationInMeters = elevationInMeters;
+    renderable->tileId = tileId;
+    renderable->offsetInTileN = offsetInTileN;
     outRenderableSymbols.push_back(renderable);
-
-    // Calculate location of symbol in world coordinates.
-    renderable->offsetFromTarget31 = position31 - currentState.target31;
-    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
-    renderable->positionInWorld = glm::vec3(
-        renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f,
-        renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-
-    // Get distance from symbol to camera
-    renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
@@ -896,8 +899,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         ? renderable->instanceParameters->offset
         : symbol->offset;
 
-    // Calculate position in screen coordinates (same calculation as done in shader)
-    const auto symbolOnScreen = glm_extensions::fastProject(
+    // Calculate position on-screen coordinates (must correspond to calculation in shader)
+    const auto symbolOnScreen = glm_extensions::project(
         renderable->positionInWorld,
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport);
@@ -915,7 +918,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     boundsInWindow.bottom() += symbol->margin.bottom();
     renderable->intersectionBBox = boundsInWindow;
 
-    if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
+    if (!applyTerrainVisibilityFiltering(symbolOnScreen, metric))
+        return false;
+
+    if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
         return false;
 
     if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
@@ -951,7 +957,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : onSurfaceMapSymbol->getPosition31();
-    const auto& direction = 
+    const auto& direction =
         (instanceParameters && instanceParameters->overridesDirection)
         ? instanceParameters->direction
         : onSurfaceMapSymbol->getDirection();
@@ -991,7 +997,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             return;
         }
     }
-    
+
     // Get GPU resource
     const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
     if (!gpuResource)
@@ -1002,7 +1008,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         if (gpuMeshResource->position31 != nullptr)
             position31 = PointI(gpuMeshResource->position31->x, gpuMeshResource->position31->y);
     }
-    
+
+    // Check and hide the symbol if put under 3D-terrain
+    if (std::dynamic_pointer_cast<const RasterMapSymbol>(onSurfaceMapSymbol))
+    {
+        PointF offsetInTileN;
+		const auto tileId = Utilities::normalizeTileId(
+			Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+		float elevationInMeters = 0.0f;
+		std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+        if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+        {
+            if (elevationData->getValue(offsetInTileN, elevationInMeters))
+                return;
+        }
+    }
+
     std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
     renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = mapSymbol;
@@ -1135,6 +1156,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     {
         const auto& path31 = *onPathMapSymbol->shareablePath31;
 
+        // Check and hide the symbol if put under 3D-terrain
+        const auto count = path31.size();
+        auto pPoint31 = path31.constData();
+        for (auto idx = 0u; idx < count; idx++)
+        {
+            PointF offsetInTileN;
+			const auto tileId = Utilities::normalizeTileId(
+				Utilities::getTileId(*(pPoint31++), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+			float elevationInMeters = 0.0f;
+			std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+            if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+            {
+                if (elevationData->getValue(offsetInTileN, elevationInMeters))
+                    return;
+            }
+        }
+
         ComputedPathData computedPathData;
 
         //TODO: optimize by using lazy computation
@@ -1146,7 +1184,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         itComputedPathData = computedPathsDataCache.insert(onPathMapSymbol->shareablePath31, computedPathData);
     }
     const auto& computedPathData = *itComputedPathData;
-     
+
     // Pin-point represents center of symbol
     const auto halfSizeInPixels = onPathMapSymbol->size.x / 2.0f;
     bool fits = true;
@@ -1361,7 +1399,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             const auto pinPointInWorld = Utilities::convert31toFloat(
                 pinPointOnPath.point31 - currentState.target31,
                 currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
-            const auto pinPointOnScreen = glm_extensions::fastProject(
+            const auto pinPointOnScreen = glm_extensions::project(
                 glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
                 internalState.mPerspectiveProjectionView,
                 internalState.glmViewport).xy();
@@ -1404,7 +1442,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         const auto oobb = calculateOnPath2dOOBB(renderable);
         renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
 
-        if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
+        if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
             return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -1442,7 +1480,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         const auto oobb = calculateOnPath3dOOBB(renderable);
         renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
 
-        if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
+        if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
             return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -1499,7 +1537,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage::applyVisibilityFiltering(
+bool OsmAnd::AtlasMapRendererSymbolsStage::applyOnScreenVisibilityFiltering(
     const ScreenQuadTree::BBox& visibleBBox,
     const ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
@@ -1538,7 +1576,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         return true;
 
     Stopwatch stopwatch(metric != nullptr);
-    
+
     // Check intersections
     const auto checkIntersectionsWithinGroup = renderable->mapSymbolGroup->intersectionProcessingMode.isSet(
         MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup);
@@ -1675,7 +1713,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::addToIntersections(
 
     if (renderable->mapSymbol->intersectsWithClasses.isEmpty())
         return true;
-    
+
     Stopwatch stopwatch(metric != nullptr);
 
     const auto inserted = intersections.insert(renderable, renderable->intersectionBBox);
@@ -1720,7 +1758,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
 
     for (auto idx = 0u; idx < count; idx++)
     {
-        *(pPointInWorld++) = 
+        *(pPointInWorld++) =
             Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomLevel) *
             static_cast<float>(AtlasMapRenderer::TileSize3D);
     }
@@ -1749,7 +1787,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScree
 
     for (auto idx = 0u; idx < count; idx++)
     {
-        *(pPointOnScreen++) = glm_extensions::fastProject(
+        *(pPointOnScreen++) = glm_extensions::project(
             glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
             internalState.mPerspectiveProjectionView,
             internalState.glmViewport).xy();
@@ -2249,7 +2287,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(
     bboxInDirection = AreaF::fromCenterAndSize(
         centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
         bboxInDirection.width(), bboxInDirection.height());
-    
+
     return OOBBF(bboxInDirection, -directionAngle);
 }
 
@@ -2285,7 +2323,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
         {
             const auto& glyphPoint = glyphPoints[idx];
 
-            // Rotate to align with it's segment
+            // Rotate to align with its segment
             glm::vec2 pointInWorld;
             pointInWorld.x = glyphPoint.x*segmentAngleCos - glyphPoint.y*segmentAngleSin;
             pointInWorld.y = glyphPoint.x*segmentAngleSin + glyphPoint.y*segmentAngleCos;
@@ -2376,19 +2414,19 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
 
     // Project points of OOBB in world to screen
     const PointF projectedRotatedBBoxInWorldP0(static_cast<glm::vec2>(
-        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
+        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP1(static_cast<glm::vec2>(
-        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
+        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP2(static_cast<glm::vec2>(
-        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
+        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP3(static_cast<glm::vec2>(
-        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
+        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
 #if OSMAND_DEBUG && 0
@@ -2438,7 +2476,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
     bboxInDirection = AreaF::fromCenterAndSize(
         centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
         bboxInDirection.width(), bboxInDirection.height());
-    
+
     return OOBBF(bboxInDirection, -directionAngle);
 }
 
