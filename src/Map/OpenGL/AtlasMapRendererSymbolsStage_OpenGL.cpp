@@ -70,16 +70,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
                 metric->billboardSymbolsRendered += 1;
             }
         }
-//        else if (const auto& renderableOnPathSymbol = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
-//        {
-//            Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
-//            ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType, lastUsedProgram);
-//            if (metric)
-//            {
-//                metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
-//                metric->onPathSymbolsRendered += 1;
-//            }
-//        }
+        else if (const auto& renderableOnPathSymbol = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
+        {
+            Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
+            ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType, lastUsedProgram);
+            if (metric)
+            {
+                metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
+                metric->onPathSymbolsRendered += 1;
+            }
+        }
         else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);

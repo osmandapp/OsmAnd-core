@@ -817,18 +817,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     }
 
     // Tesselate the line for the surface
-    auto partSizes = std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
-    bool tesselated = GeometryModifiers::overGrid(vertices,
-                    nullptr,
-                    vectorLine->primitiveType,
-                    partSizes,
-                    Utilities::getPowZoom(31 - _mapZoomLevel),
-                    Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
-                    1.0f,
-                    0.01f,
-                    false,
-                    false);
-    verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+	auto partSizes =
+		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+	bool tesselated = GeometryModifiers::overGrid(
+        vertices,
+        nullptr,
+        vectorLine->primitiveType,
+        partSizes,
+        Utilities::getPowZoom(31 - _mapZoomLevel),
+		Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
+        1.0f, 0.01f,
+        false, false);
+	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
 
     //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndices->verticesCount = (unsigned int) vertices.size();

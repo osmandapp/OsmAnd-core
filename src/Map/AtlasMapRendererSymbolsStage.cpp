@@ -1008,7 +1008,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         if (gpuMeshResource->position31 != nullptr)
             position31 = PointI(gpuMeshResource->position31->x, gpuMeshResource->position31->y);
     }
-    
+
+    // Check and hide the symbol if put under 3D-terrain
+    if (std::dynamic_pointer_cast<const RasterMapSymbol>(onSurfaceMapSymbol))
+    {
+        PointF offsetInTileN;
+		const auto tileId = Utilities::normalizeTileId(
+			Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+		float elevationInMeters = 0.0f;
+		std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+        if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+        {
+            if (elevationData->getValue(offsetInTileN, elevationInMeters))
+                return;
+        }
+    }
+
     std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
     renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = mapSymbol;
@@ -1140,6 +1155,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     if (itComputedPathData == computedPathsDataCache.end())
     {
         const auto& path31 = *onPathMapSymbol->shareablePath31;
+
+        // Check and hide the symbol if put under 3D-terrain
+        const auto count = path31.size();
+        auto pPoint31 = path31.constData();
+        for (auto idx = 0u; idx < count; idx++)
+        {
+            PointF offsetInTileN;
+			const auto tileId = Utilities::normalizeTileId(
+				Utilities::getTileId(*(pPoint31++), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+			float elevationInMeters = 0.0f;
+			std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+            if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+            {
+                if (elevationData->getValue(offsetInTileN, elevationInMeters))
+                    return;
+            }
+        }
 
         ComputedPathData computedPathData;
 
