@@ -205,7 +205,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 mapObject->points31,
                 env->getGlobalPathPadding(),
                 env->getDefaultBlockPathSpacing() * 10,
-                env->getDefaultSymbolPathSpacing(),
+                env->getDefaultSymbolPathSpacing() * 20, // Temp fix to avoid intersections of street names vs road shields on map
                 symbolsWidthsInPixels,
                 mapObject->getMinZoomLevel(),
                 mapObject->getMaxZoomLevel(),
