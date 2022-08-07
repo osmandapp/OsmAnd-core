@@ -1891,7 +1891,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
                 assert(outOffsetFromPathPoint >= 0.0f);
             }
             scannedLength -= segmentLength;
-            if (testPathPointIndex == 0)
+            if (testPathPointIndex == 0 && scannedLength > offsetFromOriginPathPoint)
                 return false;
             testPathPointIndex--;
         }
