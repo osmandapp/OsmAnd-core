@@ -585,12 +585,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::closeProvider()
     QWriteLocker geoScopedLocker(&_geoDbLock);
     QWriteLocker rasterScopedLocker(&_rasterDbLock);
 
-    for (auto& rasterTileDb : _rasterTilesDbMap.values())
-    {
-        rasterTileDb->close();
-    }
-
-    return _geoTilesDb->close();
+    _geoTilesDb->close();
+    
+    for (auto& db : _rasterTilesDbMap.values())
+        db->close();
+    
+    return true;
 }
 
 OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::ObtainValueTask(
