@@ -53,6 +53,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
         {
             meta.setMinZoom(WeatherTileResourceProvider::getGeoTileZoom());
             meta.setMaxZoom(WeatherTileResourceProvider::getGeoTileZoom());
+            meta.setTileNumbering(QStringLiteral(""));
             _geoTilesDb->storeMeta(meta);
         }
     }
@@ -146,6 +147,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
         {
             meta.setMinZoom(WeatherTileResourceProvider::getTileZoom(WeatherLayer::Low));
             meta.setMaxZoom(WeatherTileResourceProvider::getTileZoom(WeatherLayer::High));
+            meta.setTileNumbering(QStringLiteral(""));
             meta.setTileSize(tileSize);
             db->storeMeta(meta);
         }
