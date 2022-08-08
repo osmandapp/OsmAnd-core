@@ -152,18 +152,16 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     const QByteArray& data,
-    int64_t time /* = 0*/,
-    bool recompute /*= true*/)
+    int64_t time /* = 0*/)
 {
-    return _p->storeTileData(tileId, zoom, data, time, recompute);
+    return _p->storeTileData(tileId, zoom, data, time);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeTileData(
     OsmAnd::TileId tileId,
-    OsmAnd::ZoomLevel zoom,
-    bool recompute /*= true*/)
+    OsmAnd::ZoomLevel zoom)
 {
-    return _p->removeTileData(tileId, zoom, recompute);
+    return _p->removeTileData(tileId, zoom);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeTilesData()

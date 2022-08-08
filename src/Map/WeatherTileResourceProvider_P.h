@@ -236,7 +236,8 @@ namespace OsmAnd
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
-            const ZoomLevel zoom);
+            const ZoomLevel zoom,
+            const bool rasterOnly = false);
 
         bool removeTileData(
             const QList<TileId>& tileIds,

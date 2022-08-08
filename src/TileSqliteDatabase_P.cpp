@@ -418,28 +418,6 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMaxZoom() const
     return static_cast<ZoomLevel>(maxZoomValue);
 }
 
-bool OsmAnd::TileSqliteDatabase_P::setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom)
-{
-    Meta meta;
-    if (!obtainMeta(meta))
-    {
-        return false;
-    }
-    
-    meta.setMinZoom(minZoom);
-    meta.setMaxZoom(maxZoom);
-    
-    if (!storeMeta(meta))
-    {
-        return false;
-    }
-    
-    _cachedMinZoom.storeRelease(minZoom);
-    _cachedMaxZoom.storeRelease(maxZoom);
-    
-    return true;
-}
-
 bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
 {
     auto minZoom = ZoomLevel::InvalidZoomLevel;
@@ -485,7 +463,24 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
         }
     }
     
-    return setMinMaxZoom(minZoom, maxZoom);
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return false;
+    }
+    
+    meta.setMinZoom(minZoom);
+    meta.setMaxZoom(maxZoom);
+    
+    if (!storeMeta(meta))
+    {
+        return false;
+    }
+    
+    _cachedMinZoom.storeRelease(minZoom);
+    _cachedMaxZoom.storeRelease(maxZoom);
+    
+    return true;
 }
 
 OsmAnd::AreaI OsmAnd::TileSqliteDatabase_P::getBBox31() const
@@ -1137,8 +1132,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     const QByteArray& data,
-    int64_t time /* = 0 */,
-    bool recompute /*= true*/)
+    int64_t time /* = 0 */)
 {
     if (!isOpened())
     {
@@ -1198,29 +1192,22 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         }
     }
 
-    if (recompute)
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
     {
-        if (zoom < getMinZoom() || zoom > getMaxZoom())
-        {
-            if (!recomputeMinMaxZoom())
-            {
-                return false;
-            }
-        }
-        if (!recomputeBBox31(zoom))
+        if (!recomputeMinMaxZoom())
         {
             return false;
         }
     }
-    else
+    if (!recomputeBBox31(zoom))
     {
-        return setMinMaxZoom(zoom, zoom);
+        return false;
     }
 
     return true;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom, bool recompute /*= true*/)
+bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom)
 {
     if (!isOpened())
     {
@@ -1257,17 +1244,14 @@ bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd:
             return false;
         }
     }
-
-    if (recompute)
+    
+    if (!recomputeMinMaxZoom())
     {
-        if (!recomputeMinMaxZoom())
-        {
-            return false;
-        }
-        if (!recomputeBBox31(zoom))
-        {
-            return false;
-        }
+        return false;
+    }
+    if (!recomputeBBox31(zoom))
+    {
+        return false;
     }
 
     return true;
