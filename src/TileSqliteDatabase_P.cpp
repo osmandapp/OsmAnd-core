@@ -189,7 +189,7 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
         return 17;
     }
 
-    if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM") || tileNumberingValue == QStringLiteral("WeatherForecast"))
+    if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM"))
     {
         invertedZoomValue = 0;
     }
@@ -418,26 +418,33 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMaxZoom() const
     return static_cast<ZoomLevel>(maxZoomValue);
 }
 
-bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
+bool OsmAnd::TileSqliteDatabase_P::setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom)
 {
-    auto minZoom = ZoomLevel::InvalidZoomLevel;
-    auto maxZoom = ZoomLevel::InvalidZoomLevel;
-
     Meta meta;
     if (!obtainMeta(meta))
     {
         return false;
     }
-
-    bool ok = false;
-
-    const auto tileNumberingValue = meta.getTileNumbering(&ok);
-    if (ok && !tileNumberingValue.isEmpty() && tileNumberingValue == QStringLiteral("WeatherForecast"))
+    
+    meta.setMinZoom(minZoom);
+    meta.setMaxZoom(maxZoom);
+    
+    if (!storeMeta(meta))
     {
-        minZoom = getMinZoom();
-        maxZoom = getMaxZoom();
+        return false;
     }
-    else
+    
+    _cachedMinZoom.storeRelease(minZoom);
+    _cachedMaxZoom.storeRelease(maxZoom);
+    
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
+{
+    auto minZoom = ZoomLevel::InvalidZoomLevel;
+    auto maxZoom = ZoomLevel::InvalidZoomLevel;
+    
     {
         QReadLocker scopedLocker(&_lock);
         int res;
@@ -446,15 +453,17 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
         if (!statement || (res = stepStatement(statement)) < 0)
         {
             LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to query min-max zoom: %s",
-                sqlite3_errmsg(_database.get()));
-
+                      LogSeverityLevel::Error,
+                      "Failed to query min-max zoom: %s",
+                      sqlite3_errmsg(_database.get()));
+            
             return false;
         }
 
         if (res > 0)
         {
+            bool ok = false;
+            
             const auto minZoomValue = readStatementValue(statement, 0).toLongLong(&ok);
             if (!ok || minZoomValue < ZoomLevel::MinZoomLevel || minZoomValue > ZoomLevel::MaxZoomLevel)
             {
@@ -475,19 +484,8 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
             maxZoom = ZoomLevel::MaxZoomLevel;
         }
     }
-
-    meta.setMinZoom(minZoom);
-    meta.setMaxZoom(maxZoom);
-
-    if (!storeMeta(meta))
-    {
-        return false;
-    }
-
-    _cachedMinZoom.storeRelease(minZoom);
-    _cachedMaxZoom.storeRelease(maxZoom);
-
-    return true;
+    
+    return setMinMaxZoom(minZoom, maxZoom);
 }
 
 OsmAnd::AreaI OsmAnd::TileSqliteDatabase_P::getBBox31() const
@@ -513,17 +511,6 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBox31(ZoomLevel zoom, AreaI* pOutBB
 {
     AreaI bbox31 = AreaI::negative();
 
-    
-    bool ok = false;
-    Meta meta;
-    if (obtainMeta(meta))
-    {
-        const auto tileNumberingValue = meta.getTileNumbering(&ok);
-        if (ok)
-            ok = !tileNumberingValue.isEmpty() && tileNumberingValue == QStringLiteral("WeatherForecast");
-    }
-
-    if (!ok)
     {
         QReadLocker scopedLocker(&_lock);
 
@@ -1150,7 +1137,8 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     const QByteArray& data,
-    int64_t time /* = 0 */)
+    int64_t time /* = 0 */,
+    bool recompute /*= true*/)
 {
     if (!isOpened())
     {
@@ -1210,22 +1198,29 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         }
     }
 
-    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    if (recompute)
     {
-        if (!recomputeMinMaxZoom())
+        if (zoom < getMinZoom() || zoom > getMaxZoom())
+        {
+            if (!recomputeMinMaxZoom())
+            {
+                return false;
+            }
+        }
+        if (!recomputeBBox31(zoom))
         {
             return false;
         }
     }
-    if (!recomputeBBox31(zoom))
+    else
     {
-        return false;
+        return setMinMaxZoom(zoom, zoom);
     }
 
     return true;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom)
+bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom, bool recompute /*= true*/)
 {
     if (!isOpened())
     {
@@ -1263,13 +1258,16 @@ bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd:
         }
     }
 
-    if (!recomputeMinMaxZoom())
+    if (recompute)
     {
-        return false;
-    }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
+        if (!recomputeMinMaxZoom())
+        {
+            return false;
+        }
+        if (!recomputeBBox31(zoom))
+        {
+            return false;
+        }
     }
 
     return true;

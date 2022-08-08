@@ -45,6 +45,7 @@ namespace OsmAnd
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
         void resetCachedInfo();
+        bool setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom);
 
     protected:
         TileSqliteDatabase_P(TileSqliteDatabase* owner);
@@ -83,6 +84,7 @@ namespace OsmAnd
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
+        
         bool recomputeMinMaxZoom();
 
         AreaI getBBox31() const;
@@ -106,8 +108,8 @@ namespace OsmAnd
         bool containsTileData(TileId tileId, ZoomLevel zoom) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
-        bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
-        bool removeTileData(TileId tileId, ZoomLevel zoom);
+        bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0, bool recompute = true);
+        bool removeTileData(TileId tileId, ZoomLevel zoom, bool recompute = true);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeTilesData(AreaI bbox31, bool strict = true);

@@ -102,6 +102,7 @@ namespace OsmAnd
         };
 
     private:
+        ImplementationInterface<WeatherTileResourceProvider> owner;
         QThreadPool *_threadPool;
         QThreadPool *_obtainValueThreadPool;
 
@@ -125,14 +126,13 @@ namespace OsmAnd
         
         mutable QReadWriteLock _geoDbLock;
         std::shared_ptr<TileSqliteDatabase> _geoTilesDb;
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> createGeoTilesDatabase();
 
         mutable QMutex _rasterTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _rasterTilesInProcess;
         QWaitCondition _waitUntilAnyRasterTileIsProcessed;
 
         mutable QReadWriteLock _rasterDbLock;
-        QHash<QString, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
+        QHash<BandIndex, std::shared_ptr<TileSqliteDatabase>> _rasterTilesDbMap;
         std::shared_ptr<OsmAnd::TileSqliteDatabase> createRasterTilesDatabase(BandIndex band);
 
         mutable QMutex _contourTilesInProcessMutex;
@@ -169,8 +169,6 @@ namespace OsmAnd
         
     public:
         ~WeatherTileResourceProvider_P();
-
-        ImplementationInterface<WeatherTileResourceProvider> owner;
 
         const std::shared_ptr<const IWebClient> webClient;
 
