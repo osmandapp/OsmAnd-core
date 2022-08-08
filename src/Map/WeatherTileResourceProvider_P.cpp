@@ -134,10 +134,10 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
 {
     auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
     auto rasterDbCachePath = localCachePath
-            + QDir::separator()
-            + dateTimeStr + QStringLiteral("_")
-            + QString::number(band)
-            + QStringLiteral(".raster.db");
+        + QDir::separator()
+        + dateTimeStr + QStringLiteral("_")
+        + QString::number(band)
+        + QStringLiteral(".raster.db");
 
     auto db = std::make_shared<TileSqliteDatabase>(rasterDbCachePath);
     if (db->open())
