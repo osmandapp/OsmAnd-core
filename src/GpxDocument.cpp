@@ -722,13 +722,13 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     gpxTypes.insert(QStringLiteral("rpt"), QString(typeid(WptPt).name()));
 
     QXmlStreamReader::TokenType tok;
-    while ((tok = parser.readNext()) != QXmlStreamReader::TokenType::EndDocument)
+    while ((tok = parser.readNext()) != QXmlStreamReader::TokenType::EndDocument && !parser.hasError())
     {
         if (tok == QXmlStreamReader::TokenType::StartElement)
         {
             std::shared_ptr<GpxExtensions> parse = parserState.top();
             QString tag = parser.name().toString();
-            QString parseClassName = QString(typeid(*parse).name());
+            QString parseClassName = QString(typeid(parse.get()).name());
             if (gpxTypes.keys().contains(tag) && gpxTypes.value(tag) != parseClassName)
                 extensionReadMode = false;
 
