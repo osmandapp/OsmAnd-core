@@ -707,31 +707,13 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     auto document = std::make_shared<GpxDocument>();
     parserState.push(document);
 
-    QMap<QString, QString> gpxTypes;
-    gpxTypes.insert(QStringLiteral("gpx"), QString(typeid(GpxDocument).name()));
-    gpxTypes.insert(QStringLiteral("metadata"), QString(typeid(Metadata).name()));
-    gpxTypes.insert(QStringLiteral("author"), QString(typeid(Author).name()));
-    gpxTypes.insert(QStringLiteral("copyright"), QString(typeid(Copyright).name()));
-    gpxTypes.insert(QStringLiteral("bounds"), QString(typeid(Bounds).name()));
-    gpxTypes.insert(QStringLiteral("wpt"), QString(typeid(WptPt).name()));
-    gpxTypes.insert(QStringLiteral("rte"), QString(typeid(Route).name()));
-    gpxTypes.insert(QStringLiteral("rtept"), QString(typeid(WptPt).name()));
-    gpxTypes.insert(QStringLiteral("trk"), QString(typeid(Track).name()));
-    gpxTypes.insert(QStringLiteral("trkseg"), QString(typeid(TrkSegment).name()));
-    gpxTypes.insert(QStringLiteral("trkpt"), QString(typeid(WptPt).name()));
-    gpxTypes.insert(QStringLiteral("rpt"), QString(typeid(WptPt).name()));
-
-    QXmlStreamReader::TokenType tok;
-    while ((tok = parser.readNext()) != QXmlStreamReader::TokenType::EndDocument)
+    while (!parser.atEnd() && !parser.hasError())
     {
-        if (tok == QXmlStreamReader::TokenType::StartElement)
+        parser.readNext();
+        if (parser.isStartElement())
         {
             std::shared_ptr<GpxExtensions> parse = parserState.top();
-            QString tag = parser.name().toString();
-            QString parseClassName = QString(typeid(*parse).name());
-            if (gpxTypes.keys().contains(tag) && gpxTypes.value(tag) != parseClassName)
-                extensionReadMode = false;
-
+            const auto tag = parser.name().toString();
             if (extensionReadMode && parse != nullptr && !routePointExtension)
             {
                 QString tagName = tag.toLower();
@@ -1085,7 +1067,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 }
             }
         }
-        else if (tok == QXmlStreamReader::TokenType::EndElement)
+        else if (parser.isEndElement())
         {
             std::shared_ptr<GpxExtensions> parse = parserState.top();
             QString tag = parser.name().toString();
