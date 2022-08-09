@@ -1156,23 +1156,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     {
         const auto& path31 = *onPathMapSymbol->shareablePath31;
 
-        // Check and hide the symbol if put under 3D-terrain
-        const auto count = path31.size();
-        auto pPoint31 = path31.constData();
-        for (auto idx = 0u; idx < count; idx++)
-        {
-            PointF offsetInTileN;
-			const auto tileId = Utilities::normalizeTileId(
-				Utilities::getTileId(*(pPoint31++), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-			float elevationInMeters = 0.0f;
-			std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-            if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
-            {
-                if (elevationData->getValue(offsetInTileN, elevationInMeters))
-                    return;
-            }
-        }
-
         ComputedPathData computedPathData;
 
         //TODO: optimize by using lazy computation
@@ -1335,13 +1318,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         subpathStartIndex,
         exactStartPointInWorld,
         subpathEndIndex,
-        exactEndPointOnScreen);
+        exactEndPointInWorld);
     renderable->directionInWorld = directionInWorld;
     renderable->directionOnScreen = directionOnScreen;
     renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
         is2D,
-        is2D ? computedPathData.pathOnScreen : computedPathData.pathInWorld,
-        is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
+        computedPathData.pathOnScreen,
+        computedPathData.pathSegmentsLengthsOnScreen,
+        computedPathData.pathInWorld,
+        computedPathData.pathSegmentsLengthsInWorld,
         subpathStartIndex,
         is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
         subpathEndIndex,
@@ -1441,7 +1426,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         // Calculate OOBB for 2D SOP
         const auto oobb = calculateOnPath2dOOBB(renderable);
         renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
-
+        
+        int32_t countVisible = 0;
+        int32_t countInvisible = 0;
+        for (const auto& glyph : constOf(renderable->glyphsPlacement))
+        {
+            glm::highp_vec3 glyphOnScreen = { glyph.anchorPoint.x, glyph.anchorPoint.y, glyph.depth };
+            if (std::isnan(glyph.depth) || applyTerrainVisibilityFiltering(glyphOnScreen, metric))
+                countVisible++;
+            else
+                countInvisible++;
+        }
+        if (countVisible < countInvisible)
+            return false;
+        
         if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
             return false;
 
@@ -2073,8 +2071,10 @@ double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
 QVector<OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnPathSymbol::GlyphPlacement>
 OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const bool is2D,
-    const QVector<glm::vec2>& path,
-    const QVector<float>& pathSegmentsLengths,
+    const QVector<glm::vec2>& pathOnScreen,
+    const QVector<float>& pathSegmentsLengthsOnScreen,
+    const QVector<glm::vec2>& pathInWorld,
+    const QVector<float>& pathSegmentsLengthsInWorld,
     const unsigned int startPathPointIndex,
     const float offsetFromStartPathPoint,
     const unsigned int endPathPointIndex,
@@ -2104,6 +2104,9 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
         pGlyphWidth += glyphsCount - 1;
     }
     const auto glyphWidthIncrement = (shouldInvert ? -1 : +1);
+
+    // Check 3D-Terrain is shown
+    bool elevate = false;
 
     // Plot glyphs one by one
     auto segmentScanIndex = startPathPointIndex;
@@ -2180,7 +2183,8 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
             }
 
             // Check this segment
-            const auto& segmentLength = pathSegmentsLengths[segmentScanIndex];
+            const auto& segmentLength =
+                is2D ? pathSegmentsLengthsOnScreen[segmentScanIndex] : pathSegmentsLengthsInWorld[segmentScanIndex];
             consumedSegmentsLength = scannedSegmentsLength;
             scannedSegmentsLength += segmentLength;
             segmentScanIndex++;
@@ -2188,8 +2192,10 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
                 continue;
 
             // Get points for this segment
-            const auto& segmentStartPoint = path[segmentScanIndex - 1];
-            const auto& segmentEndPoint = path[segmentScanIndex - 0];
+            const auto& segmentStartPoint =
+                is2D ? pathOnScreen[segmentScanIndex - 1] : pathInWorld[segmentScanIndex - 1];
+            const auto& segmentEndPoint =
+                is2D ? pathOnScreen[segmentScanIndex - 0] : pathInWorld[segmentScanIndex - 0];
             currentSegmentStartPoint = segmentStartPoint;
 
             // Get segment direction and normal
@@ -2212,8 +2218,58 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
         }
 
         // Compute anchor point
-        const auto anchorOffsetFromSegmentStartPoint = (anchorOffset - consumedSegmentsLength);
-        const auto anchorPoint = currentSegmentStartPoint + anchorOffsetFromSegmentStartPoint * currentSegmentDirection;
+        auto anchorOffsetFromSegmentStartPoint = (anchorOffset - consumedSegmentsLength);
+        auto anchorPoint = currentSegmentStartPoint + anchorOffsetFromSegmentStartPoint * currentSegmentDirection;
+
+        // TODO: more precise computation of anchor point in world
+        auto segmentLengthInWorld = pathSegmentsLengthsInWorld[segmentScanIndex - 1];
+        anchorOffsetFromSegmentStartPoint /= 
+            is2D ? pathSegmentsLengthsOnScreen[segmentScanIndex - 1] : pathSegmentsLengthsInWorld[segmentScanIndex - 1];
+        anchorOffsetFromSegmentStartPoint *= segmentLengthInWorld;
+        auto anchorPointInWorld = pathInWorld[segmentScanIndex - 1];
+        currentSegmentDirection = pathInWorld[segmentScanIndex] - anchorPointInWorld;
+        currentSegmentDirection /= segmentLengthInWorld;
+        anchorPointInWorld += anchorOffsetFromSegmentStartPoint * currentSegmentDirection;
+       
+        float glyphDepth = NAN;
+
+        // Compute elevated anchor point
+        glm::highp_vec3 position3D = { anchorPointInWorld.x, 0.0f, anchorPointInWorld.y};
+        PointD position2D = static_cast<PointD>(anchorPointInWorld) / static_cast<double>(AtlasMapRenderer::TileSize3D);
+        position2D *= static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
+        PointI position31 = static_cast<PointI>(position2D) + currentState.target31;
+        PointF offsetInTileN;
+        const auto tileId = Utilities::normalizeTileId(
+            Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+        float elevationInMeters = 0.0f;
+        std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+        if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+        {
+            if (elevationData->getValue(offsetInTileN, elevationInMeters))
+            {
+                elevate = true;
+                if (is2D)
+                {
+                    const auto scaledElevationInMeters = elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
+
+                    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+                    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+                    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+
+                    position3D.y = static_cast<float>((scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor);
+                }
+            }
+        }
+        if (is2D)
+        {
+            auto glyphOnScreen = glm_extensions::project(
+                            position3D,
+                            internalState.mPerspectiveProjectionView,
+                            internalState.glmViewport);
+            anchorPoint.x = glyphOnScreen.x;
+            anchorPoint.y = glyphOnScreen.y;
+            glyphDepth = glyphOnScreen.z;
+        }
 
         // Add glyph location data.
         // In case inverted, filling is performed from back-to-front. Otherwise from front-to-back
@@ -2221,8 +2277,13 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
             anchorPoint,
             glyphWidth,
             currentSegmentAngle,
+            glyphDepth,
             currentSegmentN);
     }
+
+    // Check and hide not ready onPath3D if put under 3D-terrain
+    if (elevate && !is2D)
+        glyphsPlacement.clear();
 
     return glyphsPlacement;
 }
