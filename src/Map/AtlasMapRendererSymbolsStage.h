@@ -94,10 +94,12 @@ namespace OsmAnd
                     const glm::vec2& anchorPoint_,
                     const float width_,
                     const float angle_,
+                    const float depth_,
                     const glm::vec2& vNormal_)
                     : anchorPoint(anchorPoint_)
                     , width(width_)
                     , angle(angle_)
+                    , depth(depth_)
                     , vNormal(vNormal_)
                 {
                 }
@@ -105,6 +107,7 @@ namespace OsmAnd
                 glm::vec2 anchorPoint;
                 float width;
                 float angle;
+                float depth;
                 glm::vec2 vNormal;
             };
             QVector< GlyphPlacement > glyphsPlacement;
@@ -294,8 +297,10 @@ namespace OsmAnd
 
         QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const bool is2D,
-            const QVector<glm::vec2>& path,
-            const QVector<float>& pathSegmentsLengths,
+            const QVector<glm::vec2>& pathOnScreen,
+            const QVector<float>& pathSegmentsLengthsOnScreen,
+            const QVector<glm::vec2>& pathInWorld,
+            const QVector<float>& pathSegmentsLengthsInWorld,
             const unsigned int startPathPointIndex,
             const float offsetFromStartPathPoint,
             const unsigned int endPathPointIndex,
