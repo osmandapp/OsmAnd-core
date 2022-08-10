@@ -488,13 +488,13 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
                 else
                 {
                     QList<TileId> rasterTileIdsToCalculate = QList<TileId>();
+                    const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
+                    int zoomShift = maxZoom - zoom;
                     for (const auto &rasterDBTileId : constOf(rasterDBTileIds))
                     {
                         if (((hasTileIds && tileIds.contains(rasterDBTileId)) || !hasTileIds) && !excludeTileIds.contains(rasterDBTileId))
                         {
                             rasterTileIdsToCalculate.append(rasterDBTileId);
-                            const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
-                            int zoomShift = maxZoom - zoom;
                             if (zoomShift > 0)
                             {
                                 const auto underscaleTiles = Utilities::getTileIdsUnderscaledByZoomShift(rasterDBTileId, zoomShift).toList();
@@ -547,7 +547,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
             {
                 QWriteLocker rasterScopedLocker(&_rasterDbLock);
 
-                removeTileIds(rasterTileDb, tileIds, excludeTileIds, zoom);
+                res |= removeTileIds(rasterTileDb, tileIds, excludeTileIds, zoom);
             }
         }
     }
@@ -577,9 +577,21 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
         else
         {
             bool hasTileIds = !tileIds.isEmpty();
+            const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
+            int zoomShift = maxZoom - zoom;
             for (auto &dbTileId : dbTileIds)
             {
-                if (((hasTileIds && tileIds.contains(dbTileId)) || !hasTileIds) && !excludeTileIds.contains(dbTileId))
+                bool shouldDelete = ((hasTileIds && tileIds.contains(dbTileId)) || !hasTileIds) && !excludeTileIds.contains(dbTileId);
+                if (zoomShift > 0 && shouldDelete)
+                {
+                    const auto underscaleTiles = Utilities::getTileIdsUnderscaledByZoomShift(dbTileId, zoomShift).toList();
+                    for (const auto& underscaleTileId : underscaleTiles)
+                    {
+                        if (tilesDb->removeTileData(underscaleTileId, maxZoom))
+                            res = true;
+                    }
+                }
+                if (shouldDelete)
                 {
                     if (tilesDb->removeTileData(dbTileId, zoom))
                         res = true;
