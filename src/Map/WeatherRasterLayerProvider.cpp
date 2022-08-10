@@ -6,11 +6,13 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
     const WeatherLayer weatherLayer_,
     const QDateTime& dateTime,
-    const QList<BandIndex> bands)
+    const QList<BandIndex> bands,
+    const bool localData)
     : _resourcesManager(resourcesManager)
+    , weatherLayer(weatherLayer_)
     , _dateTime(dateTime)
     , _bands(bands)
-    , weatherLayer(weatherLayer_)
+    , _localData(localData)
 {
 }
 
@@ -44,6 +46,20 @@ void OsmAnd::WeatherRasterLayerProvider::setBands(const QList<BandIndex>& bands)
     QWriteLocker scopedLocker(&_lock);
     
     _bands = bands;
+}
+
+const bool OsmAnd::WeatherRasterLayerProvider::getLocalData() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _localData;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setLocalData(const bool localData)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _localData = localData;
 }
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const
@@ -93,6 +109,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
     _request.tileId = request.tileId;
     _request.zoom = request.zoom;
     _request.bands = getBands();
+    _request.localData = getLocalData();
     _request.queryController = request.queryController;
 
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =

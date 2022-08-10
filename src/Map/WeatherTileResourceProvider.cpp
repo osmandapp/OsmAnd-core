@@ -133,6 +133,11 @@ int OsmAnd::WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(const W
         return 0;
 }
 
+QDateTime OsmAnd::WeatherTileResourceProvider::getDateTime()
+{
+    return _p->dateTime;
+}
+
 void OsmAnd::WeatherTileResourceProvider::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     return _p->setBandSettings(bandSettings);
@@ -141,6 +146,27 @@ void OsmAnd::WeatherTileResourceProvider::setBandSettings(const QHash<BandIndex,
 int OsmAnd::WeatherTileResourceProvider::getCurrentRequestVersion() const
 {
     return _p->getCurrentRequestVersion();
+}
+
+bool OsmAnd::WeatherTileResourceProvider::isEmpty()
+{
+    return _p->isEmpty();
+
+}
+uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
+{
+    return _p->calculateTilesSize(tileIds, excludeTileIds, zoom);
+}
+
+bool OsmAnd::WeatherTileResourceProvider::removeTileData(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
+{
+    return _p->removeTileData(tileIds, excludeTileIds, zoom);
 }
 
 bool OsmAnd::WeatherTileResourceProvider::closeProvider()
@@ -152,6 +178,7 @@ OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()
     : point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
+    , localData(false)
 {
 }
 
@@ -169,6 +196,7 @@ void OsmAnd::WeatherTileResourceProvider::ValueRequest::copy(ValueRequest& dst, 
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -201,6 +229,7 @@ void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, co
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
     dst.version = src.version;
     dst.ignoreVersion = src.ignoreVersion;
@@ -213,6 +242,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::Weathe
 
 OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
+    , localData(false)
 {
 }
 
@@ -230,6 +260,7 @@ void OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::copy(DownloadG
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 

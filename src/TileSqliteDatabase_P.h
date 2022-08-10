@@ -45,12 +45,14 @@ namespace OsmAnd
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
         void resetCachedInfo();
+        bool setMinMaxZoom(OsmAnd::ZoomLevel minZoom, OsmAnd::ZoomLevel maxZoom);
 
     protected:
         TileSqliteDatabase_P(TileSqliteDatabase* owner);
 
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, AreaI bbox, ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, TileId tileId, ZoomLevel zoom) const;
+        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, QList<TileId> tileIds, ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, ZoomLevel zoom) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
@@ -82,6 +84,7 @@ namespace OsmAnd
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
+        
         bool recomputeMinMaxZoom();
 
         AreaI getBBox31() const;
@@ -99,6 +102,9 @@ namespace OsmAnd
         bool obtainMeta(Meta& outMeta) const;
         bool storeMeta(const Meta& meta);
 
+        bool isEmpty() const;
+        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom);
+        bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom);
         bool containsTileData(TileId tileId, ZoomLevel zoom) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;

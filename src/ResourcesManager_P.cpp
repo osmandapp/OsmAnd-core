@@ -470,7 +470,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
         {
             resourceType = ResourceType::MapRegion;
         }
-        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName : fileName.toLower().remove(QStringLiteral("_2"));
+        resourceId = resourceType == ResourceType::LiveUpdateRegion ? fileName.toLower() : fileName.toLower().remove(QStringLiteral("_2"));
 
         if (resourceType == ResourceType::Unknown)
         {

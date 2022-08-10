@@ -31,13 +31,15 @@ namespace OsmAnd
 
         QDateTime _dateTime;
         QList<BandIndex> _bands;
+        bool _localData;
 
     protected:
     public:
         WeatherRasterLayerProvider(const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
                                    const WeatherLayer weatherLayer,
                                    const QDateTime& dateTime,
-                                   const QList<BandIndex> bands);
+                                   const QList<BandIndex> bands,
+                                   const bool localData);
         virtual ~WeatherRasterLayerProvider();
         
         const WeatherLayer weatherLayer;
@@ -46,6 +48,8 @@ namespace OsmAnd
         void setDateTime(const QDateTime& dateTime);
         const QList<BandIndex> getBands() const;
         void setBands(const QList<BandIndex>& bands);
+        const bool getLocalData() const;
+        void setLocalData(const bool localData);
 
         virtual MapStubStyle getDesiredStubsStyle() const Q_DECL_OVERRIDE;
 

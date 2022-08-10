@@ -46,6 +46,7 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -63,6 +64,7 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
+            bool localData;
 
             int version;
             bool ignoreVersion;
@@ -82,6 +84,7 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -184,6 +187,19 @@ namespace OsmAnd
         static WeatherLayer getWeatherLayerByZoom(const ZoomLevel zoom);
         static int getMaxMissingDataZoomShift(const WeatherLayer layer);
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
+        QDateTime getDateTime();
+
+        bool isEmpty();
+
+        uint64_t calculateTilesSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
+        bool removeTileData(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
 
         bool closeProvider();
     };

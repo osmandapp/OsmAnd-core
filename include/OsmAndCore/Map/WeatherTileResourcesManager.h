@@ -47,6 +47,7 @@ namespace OsmAnd
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -66,6 +67,7 @@ namespace OsmAnd
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -83,6 +85,7 @@ namespace OsmAnd
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
+            bool localData;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -162,6 +165,11 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
+        static QVector<TileId> generateGeoTileIds(
+                const LatLon topLeft,
+                const LatLon bottomRight,
+                const ZoomLevel zoom);
+
         virtual void obtainValue(
             const ValueRequest& request,
             const ObtainValueAsyncCallback callback,
@@ -192,7 +200,17 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        virtual bool clearDbCache(const bool clearGeoCache, const bool clearRasterCache);
+        uint64_t calculateDbCacheSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
+        virtual bool clearDbCache(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
+        virtual bool clearDbCache(const QDateTime beforeDateTime = QDateTime());
     };
 }
 

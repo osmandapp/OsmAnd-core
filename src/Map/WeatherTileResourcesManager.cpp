@@ -1,6 +1,8 @@
 #include "WeatherTileResourcesManager.h"
 #include "WeatherTileResourcesManager_P.h"
 
+#include <Utilities.h>
+
 #include "Logging.h"
 
 OsmAnd::WeatherTileResourcesManager::WeatherTileResourcesManager(
@@ -82,6 +84,53 @@ int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataZoomShift(const Weathe
 int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const
 {
     return _p->getMaxMissingDataUnderZoomShift(type, layer);
+}
+
+QVector<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::generateGeoTileIds(
+        const LatLon topLeft,
+        const LatLon bottomRight,
+        const ZoomLevel zoom)
+{
+    QVector<TileId> geoTileIds;
+
+    const auto topLeftTileId = TileId::fromXY(
+            Utilities::getTileNumberX(zoom, topLeft.longitude),
+            Utilities::getTileNumberY(zoom, topLeft.latitude));
+
+    const auto bottomRightTileId = TileId::fromXY(
+            Utilities::getTileNumberX(zoom, bottomRight.longitude),
+            Utilities::getTileNumberY(zoom, bottomRight.latitude));
+
+    if (topLeftTileId == bottomRightTileId)
+    {
+        geoTileIds << topLeftTileId;
+    }
+    else
+    {
+        int maxTileValue = (1 << zoom) - 1;
+        auto x1 = topLeftTileId.x;
+        auto y1 = topLeftTileId.y;
+        auto x2 = bottomRightTileId.x;
+        auto y2 = bottomRightTileId.y;
+        if (x2 < x1)
+            x2 = maxTileValue + x2 + 1;
+        if (y2 < y1)
+            y2 = maxTileValue + y2 + 1;
+
+        auto y = y1;
+        for (int iy = y1; iy <= y2; iy++)
+        {
+            auto x = x1;
+            for (int ix = x1; ix <= x2; ix++)
+            {
+                geoTileIds << TileId::fromXY(x, y);
+                x = x == maxTileValue ? 0 : x + 1;
+            }
+            y = y == maxTileValue ? 0 : y + 1;
+        }
+    }
+
+    return geoTileIds;
 }
 
 void OsmAnd::WeatherTileResourcesManager::obtainValue(
@@ -174,15 +223,32 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const bool clearGeoCache, const bool clearRasterCache)
+uint64_t OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
 {
-    return _p->clearDbCache(clearGeoCache, clearRasterCache);
+    return _p->calculateDbCacheSize(tileIds, excludeTileIds, zoom);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
+    const QList<TileId>& tileIds,
+    const QList<TileId>& excludeTileIds,
+    const ZoomLevel zoom)
+{
+    return _p->clearDbCache(tileIds, excludeTileIds, zoom);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const QDateTime beforeDateTime /*= QDateTime()*/)
+{
+    return _p->clearDbCache(beforeDateTime);
 }
 
 OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
     : point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
+    , localData(false)
 {
 }
 
@@ -201,6 +267,7 @@ void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, 
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -234,6 +301,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 
@@ -244,6 +312,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::Weathe
 
 OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
     : forceDownload(false)
+    , localData(false)
 {
 }
 
@@ -262,6 +331,7 @@ void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadG
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
+    dst.localData = src.localData;
     dst.queryController = src.queryController;
 }
 

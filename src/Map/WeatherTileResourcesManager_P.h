@@ -34,7 +34,7 @@ namespace OsmAnd
         mutable QReadWriteLock _bandSettingsLock;
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
         void updateProvidersBandSettings();
-        
+
     protected:
         WeatherTileResourcesManager_P(
             WeatherTileResourcesManager* const owner,
@@ -91,7 +91,7 @@ namespace OsmAnd
             const WeatherTileResourcesManager::TileRequest& request,
             const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
             const bool collectMetric = false);
-        
+
         void downloadGeoTiles(
             const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
@@ -102,8 +102,18 @@ namespace OsmAnd
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
-        bool clearDbCache(const bool clearGeoCache, const bool clearRasterCache);
-        
+        uint64_t calculateDbCacheSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
+        bool clearDbCache(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
+        bool clearDbCache(const QDateTime clearBeforeDateTime = QDateTime());
+
     friend class OsmAnd::WeatherTileResourcesManager;
     };
 }

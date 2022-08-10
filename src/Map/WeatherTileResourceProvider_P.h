@@ -78,7 +78,7 @@ namespace OsmAnd
 
             virtual void run() Q_DECL_OVERRIDE;
         };
-                
+
         class OSMAND_CORE_API DownloadGeoTileTask : public QRunnable
         {
             Q_DISABLE_COPY_AND_MOVE(DownloadGeoTileTask);
@@ -100,8 +100,9 @@ namespace OsmAnd
 
             virtual void run() Q_DECL_OVERRIDE;
         };
-        
+
     private:
+        ImplementationInterface<WeatherTileResourceProvider> owner;
         QThreadPool *_threadPool;
         QThreadPool *_obtainValueThreadPool;
 
@@ -113,6 +114,7 @@ namespace OsmAnd
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
+        bool _lastRequestedLocalData;
         int _requestVersion;
 
         int getAndDecreasePriority();
@@ -145,6 +147,14 @@ namespace OsmAnd
         bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
         void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
 
+        bool isEmpty();
+
+        bool removeTileIds(
+            const std::shared_ptr<TileSqliteDatabase>& tilesDb,
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
     protected:
         WeatherTileResourceProvider_P(
             WeatherTileResourceProvider* const owner,
@@ -159,8 +169,6 @@ namespace OsmAnd
         
     public:
         ~WeatherTileResourceProvider_P();
-
-        ImplementationInterface<WeatherTileResourceProvider> owner;
 
         const std::shared_ptr<const IWebClient> webClient;
 
@@ -211,7 +219,9 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             QByteArray& outData,
-            bool forceDownload = false);
+            bool forceDownload = false,
+            bool localData = false,
+            std::shared_ptr<const IQueryController> queryController = nullptr);
 
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
         void unlockGeoTile(const TileId tileId, const ZoomLevel zoom);
@@ -223,8 +233,19 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
 
+        uint64_t calculateTilesSize(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom,
+            const bool rasterOnly = false);
+
+        bool removeTileData(
+            const QList<TileId>& tileIds,
+            const QList<TileId>& excludeTileIds,
+            const ZoomLevel zoom);
+
         bool closeProvider();
-        
+
     friend class OsmAnd::WeatherTileResourceProvider;
     };
 }
