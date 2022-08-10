@@ -151,7 +151,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (metric)
             metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
     }
-
+    /* Disable depth buffer reading
     // Capture terrain depth buffer
     if (_terrainDepthBuffer.size() > 0 && _terrainDepthBufferSize == currentState.windowSize)
     {
@@ -163,7 +163,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (metric)
             metric->elapsedTimeForTerrainDepthBufferCapture = terrainDepthBufferCaptureStopwatch.elapsed();
     }
-
+    */
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
