@@ -2466,6 +2466,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFilterin
     const auto renderer = getRenderer();
 
     auto depthValue = 0.0f;
+    /* Disable depth buffer reading
     if (!gpuAPI->pickFramebufferDepthValue(
             renderer->terrainDepthBuffer,
             positionOnScreen.x,
@@ -2476,6 +2477,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFilterin
     {
         return true;
     }
+    */ return true;
 
     // NOTE: To reduce Z-fight, reduce precision of comparison
     return positionOnScreen.z - depthValue <= 0.00001f;
