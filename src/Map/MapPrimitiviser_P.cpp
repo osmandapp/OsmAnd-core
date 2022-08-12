@@ -1357,19 +1357,34 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
         primitivisedObjects->primitivesGroups.push_back(qMove(group));
     }
 
+    int failCounter = 0;
     // Wait for future primitives groups
     Stopwatch futureSharedPrimitivesGroupsStopwatch(metric != nullptr);
     for (auto& futureSharedGroup : futureSharedPrimitivesGroups)
     {
-        auto group = futureSharedGroup.get();
+        auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+        if (proper::future_status::ready == futureSharedGroup.wait_until(timeout))
+        {
+            auto group = futureSharedGroup.get();
 
-        // Add polygons, polylines and points from group to current context
-        primitivisedObjects->polygons.append(group->polygons);
-        primitivisedObjects->polylines.append(group->polylines);
-        primitivisedObjects->points.append(group->points);
+            // Add polygons, polylines and points from group to current context
+            primitivisedObjects->polygons.append(group->polygons);
+            primitivisedObjects->polylines.append(group->polylines);
+            primitivisedObjects->points.append(group->points);
 
-        // Add shared group to current context
-        primitivisedObjects->primitivesGroups.push_back(qMove(group));
+            // Add shared group to current context
+            primitivisedObjects->primitivesGroups.push_back(qMove(group));
+        }
+        else
+        {
+            failCounter++;
+            LogPrintf(LogSeverityLevel::Error, "Get futureSharedGroup timeout exceed = %d", failCounter);
+        }
+        if (failCounter >= 3)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Get futureSharedGroup timeout exceed");
+            break;
+        }
     }
     if (metric)
         metric->elapsedTimeForFutureSharedPrimitivesGroups += futureSharedPrimitivesGroupsStopwatch.elapsed();
@@ -2047,13 +2062,28 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
     }
 
+    int failCounter = 0;
     for (auto& futureGroup : futureSharedSymbolGroups)
     {
-        const auto group = futureGroup.get();
+        auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+        if (proper::future_status::ready == futureGroup.wait_until(timeout))
+        {
+            const auto group = futureGroup.get();
 
-        // Add shared group to current context
-        assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-        primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+            // Add shared group to current context
+            assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
+            primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+        }
+        else
+        {
+            failCounter++;
+            LogPrintf(LogSeverityLevel::Error, "Get futureGroup timeout exceed = %d", failCounter);
+        }
+        if (failCounter >= 3)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Get futureGroup timeout exceed");
+            break;
+        }
     }
 }
 

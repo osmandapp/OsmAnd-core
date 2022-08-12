@@ -195,15 +195,29 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     if (queryController && queryController->isAborted())
         return false;
 
+    int failCounter = 0;
     // Wait for future referenced shared groups
     for (auto& futureGroup : futureReferencedSharedGroupsResources)
     {
         if (queryController && queryController->isAborted())
             break;
 
-        auto groupResources = futureGroup.get();
-
-        _referencedSharedGroupsResources.push_back(qMove(groupResources));
+        auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+        if (proper::future_status::ready == futureGroup.wait_until(timeout))
+        {
+            auto groupResources = futureGroup.get();
+            _referencedSharedGroupsResources.push_back(qMove(groupResources));
+        }
+        else
+        {
+            failCounter++;
+            LogPrintf(LogSeverityLevel::Error, "Get groupResources timeout exceed = %d", failCounter);
+        }
+        if (failCounter >= 3)
+        {
+            LogPrintf(LogSeverityLevel::Error, "Get groupResources timeout exceed");
+            break;
+        }
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         const auto symbolsGroupWithId = std::static_pointer_cast<const IMapSymbolsGroupWithUniqueId>(groupResources->group);
