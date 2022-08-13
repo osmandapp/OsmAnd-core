@@ -148,12 +148,14 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool allowFastCheckByFrustum = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // Billboard symbols:
         void obtainRenderablesFromBillboardSymbol(
@@ -162,19 +164,23 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool allowFastCheckByFrustum = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotBillboardRasterSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotBillboardVectorSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // On-surface symbols:
         void obtainRenderablesFromOnSurfaceSymbol(
@@ -183,19 +189,23 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool allowFastCheckByFrustum = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotOnSurfaceRasterSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // On-path symbols:
         void obtainRenderablesFromOnPathSymbol(
@@ -205,11 +215,13 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool allowFastCheckByFrustum = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
             ScreenQuadTree& intersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            bool applyFiltering = true,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // Terrain-related:
         virtual bool applyTerrainVisibilityFiltering(
