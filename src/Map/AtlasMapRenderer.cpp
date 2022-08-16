@@ -73,6 +73,22 @@ unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
     return internalState->visibleTiles.size();
 }
 
+OsmAnd::PointD OsmAnd::AtlasMapRenderer::getCameraCoordinates() const
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+    const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
+
+    return internalState->cameraCoordinates;
+}
+
+float OsmAnd::AtlasMapRenderer::getCameraHeight() const
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+    const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
+
+    return internalState->distanceFromCameraToGroundInMeters;
+}
+
 uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
     const std::shared_ptr<const MapRendererConfiguration>& current_,
     const std::shared_ptr<const MapRendererConfiguration>& updated_) const

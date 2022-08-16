@@ -52,6 +52,9 @@ namespace OsmAnd
         float referenceTileSizeOnScreenInPixels;
         float distanceFromCameraToTarget;
         float groundDistanceFromCameraToTarget;
+        float distanceFromCameraToGround;
+        float distanceFromCameraToGroundInMeters;
+        PointD cameraCoordinates;
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;
         float pixelInWorldProjectionScale;
@@ -60,6 +63,7 @@ namespace OsmAnd
         Frustum2DF frustum2D;
         Frustum2D31 frustum2D31;
         Frustum2D31 globalFrustum2D31;
+        Frustum2DF extraField2D;
     };
 }
 
