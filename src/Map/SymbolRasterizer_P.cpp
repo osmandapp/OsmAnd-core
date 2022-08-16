@@ -21,6 +21,7 @@
 #include "SkiaUtilities.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "QuadTree.h"
 
 // #define OSMAND_DUMP_SYMBOLS 1
 #if !defined(OSMAND_DUMP_SYMBOLS)
@@ -43,7 +44,9 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
     const std::shared_ptr<const IQueryController>& queryController) const
 {
     const auto& env = primitivisedObjects->mapPresentationEnvironment;
-
+    
+    QList<std::multimap<int, std::shared_ptr<const RasterizedSymbol>>> symbolsContainer;
+    std::map<std::shared_ptr<const RasterizedSymbol>, const std::shared_ptr<RasterizedSymbolsGroup>> mapGroups;
     for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
     {
         if (queryController && queryController->isAborted())
@@ -66,6 +69,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         // Create group
         const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(
             mapObject));
+        std::multimap<int, std::shared_ptr<const RasterizedSymbol>> orderMapSymbols;
+        bool isSymbolsAdded = false;
 
         // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
         // This offset is computed only in case symbol is not on-path and not along-path
@@ -172,7 +177,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->glyphsWidth = glyphsWidth;
-                    group->symbols.push_back(qMove(rasterizedSymbol));
+                    //group->symbols.push_back(qMove(rasterizedSymbol));
+                    orderMapSymbols.insert(std::pair<int, std::shared_ptr<const RasterizedSymbol>>(rasterizedSymbol->order, rasterizedSymbol));
+                    mapGroups.insert(std::pair<std::shared_ptr<const RasterizedSymbol>, const std::shared_ptr<RasterizedSymbolsGroup>>(rasterizedSymbol, group));
+                    isSymbolsAdded = true;
                 }
                 else
                 {
@@ -184,7 +192,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - vertical offset
                     PointI localOffset;
                     localOffset.y += textSymbol->verticalOffset;
-                    if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
+                    if (isSymbolsAdded && !textSymbol->drawAlongPath)
                     {
                         localOffset.y += symbolExtraTopSpace;
                         localOffset.y += rasterizedText->height() / 2;
@@ -235,7 +243,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         rasterizedSymbol->intersectionBBox.top() -= static_cast<int>(symbolExtraTopSpace);
                         rasterizedSymbol->intersectionBBox.bottom() += static_cast<int>(symbolExtraBottomSpace);
                     }
-                    group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    //group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    orderMapSymbols.insert(std::pair<int, std::shared_ptr<const RasterizedSymbol>>(rasterizedSymbol->order, rasterizedSymbol));
+                    mapGroups.insert(std::pair<std::shared_ptr<const RasterizedSymbol>, const std::shared_ptr<RasterizedSymbolsGroup>>(rasterizedSymbol, group));
+                    isSymbolsAdded = true;
 
                     // Next symbol should also take into account:
                     //  - height / 2
@@ -322,7 +333,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     localOffset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.y))
                     localOffset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
-                if (!group->symbols.isEmpty() && !iconSymbol->drawAlongPath)
+                if (isSymbolsAdded && !iconSymbol->drawAlongPath)
                     localOffset.y += rasterizedIcon->height() / 2;
 
                 // Increment total offset
@@ -364,7 +375,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         static_cast<int>(rasterizedIcon->width()),
                         static_cast<int>(rasterizedIcon->height())));
                 }
-                group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                //group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                orderMapSymbols.insert(std::pair<int, std::shared_ptr<const RasterizedSymbol>>(rasterizedSymbol->order, rasterizedSymbol));
+                mapGroups.insert(std::pair<std::shared_ptr<const RasterizedSymbol>, const std::shared_ptr<RasterizedSymbolsGroup>>(rasterizedSymbol, group));
+                isSymbolsAdded = true;
 
                 // Next symbol should also take into account:
                 //  - height / 2
@@ -377,6 +391,39 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         }
 
         // Add group to output
-        outSymbolsGroups.push_back(qMove(group));
+        //outSymbolsGroups.push_back(qMove(group));
+        symbolsContainer.push_back(orderMapSymbols);
+    }
+    
+    QuadTree< std::shared_ptr<const RasterizedSymbol>, AreaI::CoordType> intersections;
+    for (auto i = symbolsContainer.begin(); i != symbolsContainer.end(); ++i)
+    {
+        auto map = *i;
+        for (const auto &m : map)
+        {
+            const auto & symbol = m.second;
+            const auto & group = mapGroups.at(symbol);
+            if (const auto& s = std::dynamic_pointer_cast<const RasterizedSpriteSymbol>(symbol))
+            {
+                QList<std::shared_ptr<const RasterizedSymbol>> outList;
+                intersections.query(s->intersectionBBox, outList);
+                if (outList.isEmpty()) {
+                    group->symbols.push_back(symbol);
+                }
+                if (s->intersectionBBox.width() > 0 && s->intersectionBBox.height() > 0)
+                {
+                    intersections.insert(symbol, s->intersectionBBox);
+                }
+            }
+            else
+            {
+                group->symbols.push_back(symbol);
+            }
+        }
+    }
+    
+    for (const auto & g : mapGroups)
+    {
+        outSymbolsGroups.push_back(g.second);
     }
 }

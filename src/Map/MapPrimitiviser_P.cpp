@@ -2262,8 +2262,8 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
 
     // Obtain texts for this symbol
     //HACK: (only in case it's first tag)
-    if (primitive->attributeIdIndex == 0)
-    {
+//    if (primitive->attributeIdIndex == 0)
+//    {
         obtainPrimitiveTexts(
             context,
             primitivisedObjects,
@@ -2273,7 +2273,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
             textEvaluator,
             outSymbols,
             metric);
-    }
+//    }
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
