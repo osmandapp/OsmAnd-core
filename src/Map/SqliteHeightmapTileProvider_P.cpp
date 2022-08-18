@@ -47,7 +47,7 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
     QByteArray data;
     for (const auto& database : owner->sourcesCollection->getTileSqliteDatabases(request.tileId, request.zoom))
     {
-        if (database->obtainTileData(request.tileId, request.zoom, data))
+        if (database->obtainTileData(request.tileId, request.zoom, data) && !data.isEmpty())
         {
             break;
         }
