@@ -123,14 +123,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
-    
-    //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
-    //{
-    //    int i = 5;
-    //}
-    //////////////////////////////////////////////////////////////////////////
-
     const Context context(owner->environment, zoom);
     const std::shared_ptr<PrimitivisedObjects> primitivisedObjects(new PrimitivisedObjects(
         owner->environment,
@@ -148,24 +140,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
+    bool basemapCoastlineInTile = false;
     for (const auto& mapObject : constOf(objects))
     {
         if (queryController && queryController->isAborted())
             break;
-
-        //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString().contains("74584457"))
-        //{
-        //    /*if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
-        //    {
-        //        const auto t = mapObject->toString();
-        //        int i = 5;
-        //    }*/
-        //    int i = 5;
-        //}
-        //else
-        //    continue;
-        //////////////////////////////////////////////////////////////////////////
         
         if(!mapObject->intersectedOrContainedBy(area31) &&
            !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
@@ -193,9 +172,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
             if (isBasemapObject)
+            {
                 basemapCoastlineObjects.push_back(mapObject);
+                if (!basemapCoastlineInTile && mapObject->intersectedOrContainedBy(area31))
+                {
+                    basemapCoastlineInTile = true;
+                }
+            }
             else
+            {
                 detailedmapCoastlineObjects.push_back(mapObject);
+            }
         }
         else
         {
@@ -215,16 +202,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     if (queryController && queryController->isAborted())
         return nullptr;
 
-    //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(8329, 5465), ZoomLevel14) && zoom == ZoomLevel14)
-    //{
-    //    const auto tl = Utilities::convert31ToLatLon(area31.topLeft);
-    //    const auto br = Utilities::convert31ToLatLon(area31.bottomRight);
-
-    //    int i = 5;
-    //}
-    //////////////////////////////////////////////////////////////////////////
-
     if (metric)
         metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
 
@@ -237,9 +214,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
+    bool coastlinesWereAdded = false;
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
     {
-        const bool coastlinesWereAdded = polygonizeCoastlines(
+        coastlinesWereAdded = polygonizeCoastlines(
             area31,
             zoom,
             primitivisedObjects,
@@ -255,6 +233,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     else
     {
         shouldAddBasemapCoastlines = !detailedLandDataPresent;
+    }
+    if (!coastlinesWereAdded && !shouldAddBasemapCoastlines && basemapCoastlineInTile)
+    {
+        // fix tile bug case 65.63109 34.89257
+        shouldAddBasemapCoastlines = true;
     }
     if (shouldAddBasemapCoastlines)
     {
@@ -451,12 +434,20 @@ bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::s
                 {
                     if (segmentIndex0 == 0)
                     {
+                        nearestCoastlineSegment0 = pPoints[segmentIndex0];
                         nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
-                        mCenter = pPoints[segmentIndex0];
-                        if (!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
+                        mCenter = center;
+                        if (coastlineMapObject->isClosedFigure() && coastlineMapObject->points31.size() > 2)
                         {
-                            nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                            mCenter = center;
+                            // fix tile bug case 44.37105 8.92100
+                            auto last = pPoints[coastlineMapObject->points31.size() - 2];
+                            double d1 = OsmAnd::Utilities::squareDistance31(center, last);
+                            double d2 = OsmAnd::Utilities::squareDistance31(center, nearestCoastlineSegment1);
+                            if (d1 < d2)
+                            {
+                                nearestCoastlineSegment1 = nearestCoastlineSegment0;
+                                nearestCoastlineSegment0 = last;
+                            }
                         }
                     }
                     else if (segmentIndex0 == coastlineMapObject->points31.size() - 1)
