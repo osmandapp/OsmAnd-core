@@ -1208,7 +1208,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         bool shouldNotSkip = false;
                         if (isCoastline(mapObject))
                         {
-                            // fix tile bug case 43.19717 5.44922
                             for (const auto & p : mapObject->points31)
                             {
                                 if (bbox31->contains(p))

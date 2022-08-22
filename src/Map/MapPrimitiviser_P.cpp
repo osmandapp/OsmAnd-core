@@ -236,7 +236,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
     if (!coastlinesWereAdded && !shouldAddBasemapCoastlines && basemapCoastlineInTile)
     {
-        // fix tile bug case 65.63109 34.89257
         shouldAddBasemapCoastlines = true;
     }
     if (shouldAddBasemapCoastlines)
@@ -439,7 +438,6 @@ bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::s
                         mCenter = center;
                         if (coastlineMapObject->isClosedFigure() && coastlineMapObject->points31.size() > 2)
                         {
-                            // fix tile bug case 44.37105 8.92100
                             auto last = pPoints[coastlineMapObject->points31.size() - 2];
                             double d1 = OsmAnd::Utilities::squareDistance31(center, last);
                             double d2 = OsmAnd::Utilities::squareDistance31(center, nearestCoastlineSegment1);
