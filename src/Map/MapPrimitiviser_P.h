@@ -244,6 +244,8 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric);
 
+        static const int ORDER_FOR_SPEC_SYMBOLS = -1000000;
+
     friend class OsmAnd::MapPrimitiviser;
     };
 }

@@ -2716,6 +2716,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->shieldResourceName = prepareIconValue(primitive->sourceObject,text->shieldResourceName);
         text->underlayIconResourceName = prepareIconValue(primitive->sourceObject,text->underlayIconResourceName);
         
+        if (!text->shieldResourceName.isEmpty())
+            text->order -= ORDER_FOR_SPEC_SYMBOLS;
+        
         QString intersectsWith;
         ok = evaluationResult.getStringValue(
             env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
@@ -2864,7 +2867,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
     //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
-    icon->order += 1000000;
+    icon->order -= ORDER_FOR_SPEC_SYMBOLS;
 
     evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 
