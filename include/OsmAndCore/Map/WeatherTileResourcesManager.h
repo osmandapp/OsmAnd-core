@@ -169,6 +169,11 @@ namespace OsmAnd
                 const LatLon topLeft,
                 const LatLon bottomRight,
                 const ZoomLevel zoom);
+        
+        virtual void obtainMinMaxValue(const QDateTime date,
+                                       const BandIndex band,
+                                       const QVector<TileId>& visibleTiles,
+                                       const ZoomLevel zoom);
 
         virtual void obtainValue(
             const ValueRequest& request,

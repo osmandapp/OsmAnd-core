@@ -133,6 +133,14 @@ QVector<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::generateGeoTileIds(
     return geoTileIds;
 }
 
+void OsmAnd::WeatherTileResourcesManager::obtainMinMaxValue(const QDateTime date,
+                               const BandIndex band,
+                               const QVector<TileId>& visibleTiles,
+                               const ZoomLevel zoom)
+{
+    _p->obtainMinMaxValue(date, band, visibleTiles, zoom);
+}
+
 void OsmAnd::WeatherTileResourcesManager::obtainValue(
     const ValueRequest& request,
     const ObtainValueAsyncCallback callback,

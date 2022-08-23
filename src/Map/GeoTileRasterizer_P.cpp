@@ -9,6 +9,7 @@
 #include <gdal_utils.h>
 #include <gdal_alg.h>
 #include <ogr_api.h>
+#include <gdal_utils.h>
 #include <ogrsf_frmts.h>
 #include <SkCanvas.h>
 #include <SkPath.h>
@@ -633,6 +634,18 @@ QList<OsmAnd::Ref<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluateBand
         LogPrintf(LogSeverityLevel::Error, "%s driver not available", pszDriverName);
         return QList<Ref<GeoContour>>();
     }
+    auto hBand = GDALGetRasterBand(hDataset, band);
+    int okmin = FALSE, okmax = FALSE;
+    double minValue = GDALGetRasterMinimum(hBand, &okmin);
+    double maxValue = GDALGetRasterMaximum(hBand, &okmax);
+    if (okmin && okmax)
+    {
+        levels.clear();
+        for (int i = 0; i < 10; i++)
+        {
+            levels << (minValue + (maxValue - minValue) * i / 9);
+        }
+    }
 
     auto rand = QRandomGenerator::global()->generate() % 1000;
     const auto fileName = QString::asprintf("/vsimem/shapeFile%p_%d_%d_%dx%d@%d_contour_%d", this, band, levels.length(), tileBBox31.left(), tileBBox31.top(), zoom, rand);
@@ -664,8 +677,6 @@ QList<OsmAnd::Ref<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluateBand
         LogPrintf(LogSeverityLevel::Error, "Gdal layer creation value field failed");
         return QList<Ref<GeoContour>>();
     }
-    
-    auto hBand = GDALGetRasterBand(hDataset, band);
 
     QStringList levelsList;
     for (auto level : levels)

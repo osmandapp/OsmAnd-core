@@ -174,6 +174,17 @@ bool OsmAnd::WeatherTileResourceProvider::closeProvider()
     return _p->closeProvider();
 }
 
+bool OsmAnd::WeatherTileResourceProvider::obtainGeoTile(
+        const TileId tileId,
+        const ZoomLevel zoom,
+        QByteArray& outData,
+        bool forceDownload /*= false*/,
+        bool localData /*= false*/,
+        std::shared_ptr<const IQueryController> queryController /*= nullptr*/)
+{
+    return _p->obtainGeoTile(tileId, zoom, outData, forceDownload, localData, queryController);
+}
+
 OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()
     : point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)

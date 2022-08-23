@@ -71,6 +71,11 @@ namespace OsmAnd
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
         std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(const QDateTime& dateTime);
+        
+        void obtainMinMaxValue(const QDateTime date,
+                               const BandIndex band,
+                               const QVector<TileId>& visibleTiles,
+                               const ZoomLevel zoom);
 
         void obtainValue(
             const WeatherTileResourcesManager::ValueRequest& request,

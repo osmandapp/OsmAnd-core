@@ -177,6 +177,14 @@ namespace OsmAnd
             const DownloadGeoTileRequest& request,
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
+        
+        bool obtainGeoTile(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            QByteArray& outData,
+            bool forceDownload = false,
+            bool localData = false,
+            std::shared_ptr<const IQueryController> queryController = nullptr);
 
         void setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings);
 

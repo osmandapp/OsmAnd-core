@@ -5,6 +5,7 @@
 #include "Logging.h"
 #include "WeatherDataConverter.h"
 #include "TileSqliteDatabase.h"
+#include "GeoTileEvaluator.h"
 
 OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     WeatherTileResourcesManager* const owner_,
@@ -334,6 +335,56 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
     {
         callback(false, nullptr, nullptr);
     }
+}
+
+void OsmAnd::WeatherTileResourcesManager_P::obtainMinMaxValue(const QDateTime date, const BandIndex band, const QVector<TileId>& visibleTiles, const ZoomLevel zoom)
+{
+    if (zoom < getMinTileZoom(WeatherType::Contour, WeatherLayer::Low) || zoom > getMaxTileZoom(WeatherType::Contour, WeatherLayer::High))
+        return;
+    const auto geoTileZoom = getGeoTileZoom();
+    auto resourceProvider = getResourceProvider(date);
+    
+    QHash<TileId, QList<TileId>> geoTileIds;
+    for (const auto& tileId : visibleTiles)
+    {
+        if (zoom > geoTileZoom)
+            geoTileIds[Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom)] << tileId;
+        else
+            geoTileIds[tileId] << tileId;
+    }
+    double min = DBL_MAX, max = DBL_MIN;
+    for (const auto tileId : geoTileIds.keys())
+    {
+        QByteArray geoTileData;
+        if (resourceProvider->obtainGeoTile(tileId, getGeoTileZoom(), geoTileData))
+        {
+            for (const auto& underscaleId : geoTileIds[tileId])
+            {
+                LatLon latLon(Utilities::getLatitudeFromTile(zoom, underscaleId.y), Utilities::getLongitudeFromTile(zoom, underscaleId.x));
+                GeoTileEvaluator *evaluator = new GeoTileEvaluator(
+                    tileId,
+                    geoTileData,
+                    zoom,
+                    QString()
+                );
+                QList<double> values;
+                if (evaluator->evaluate(latLon, values))
+                {
+                    for (const auto d : values)
+                    {
+                        if (d == 0)
+                            continue;
+                        min = fmin(d, min);
+                        max = fmax(d, max);
+                    }
+                }
+                delete evaluator;
+            }
+        }
+    }
+    
+    LogPrintf(LogSeverityLevel::Error,
+            "Min: %f, max: %f", min, max);
 }
 
 void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
