@@ -9,9 +9,12 @@
 #include <QIODevice>
 #include "restore_internal_warnings.h"
 
+#include "ArchiveWriter.h"
 #include "FavoriteLocation.h"
 #include "Utilities.h"
 #include "Logging.h"
+
+#define BACKUP_MAX_COUNT 20
 
 OsmAnd::FavoriteLocationsGpxCollection_P::FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner_)
     : FavoriteLocationsCollection_P(owner_)
@@ -33,8 +36,51 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& filename) c
     writer.setAutoFormatting(true);
     const bool ok = saveTo(writer);
     file.close();
+    if (ok)
+        backup(getBackupFile(QFileInfo(filename).absolutePath()), filename);
 
     return ok;
+}
+
+void OsmAnd::FavoriteLocationsGpxCollection_P::backup(const QString& backupFile, const QString& externalFile) const
+{
+    bool ok = true;
+    OsmAnd::ArchiveWriter archiveWriter;
+    archiveWriter.createArchive(&ok, backupFile, {externalFile}, QFileInfo(backupFile).absolutePath(), true);
+    if (!ok)
+        LogPrintf(LogSeverityLevel::Error, "Favorites backup failed");
+}
+
+QString OsmAnd::FavoriteLocationsGpxCollection_P::getBackupFile(const QString& basePath) const
+{
+    QString fld = basePath + QDir::separator() + QStringLiteral("favourites_backup");
+    QDir dir(fld);
+    if (!dir.exists())
+        dir.mkpath(QStringLiteral("."));
+    int back = 1;
+    QString backPrefix;
+    QString firstModified;
+    auto firstModifiedMin = QDateTime::currentDateTime();
+    while (back <= BACKUP_MAX_COUNT)
+    {
+        backPrefix = QString::number(back);
+        if (back < 10)
+        {
+            backPrefix = QStringLiteral("0") + backPrefix;
+        }
+        QFileInfo bak(fld + QDir::separator() + QStringLiteral("favourites_bak_") + backPrefix + QStringLiteral(".gpx.gz"));
+        if (!bak.exists())
+        {
+            return bak.filePath();
+        }
+        else if (bak.lastModified() < firstModifiedMin)
+        {
+            firstModified = bak.filePath();
+            firstModifiedMin = bak.lastModified();
+        }
+        back++;
+    }
+    return firstModified;
 }
 
 bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(const QString& filename)
