@@ -33,6 +33,8 @@
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "Stopwatch.h"
 #include "GlmExtensions.h"
+#include "MapMarker.h"
+#include "VectorLine.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -190,13 +192,82 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         return result;
     }
 
+    // Do not suspend MapMarker and VectorLine objects
+
+    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+        return false;
+
+    // Acquire fresh MapMarker and VectorLine objects from publishedMapSymbolsByOrder
+    MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
+    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
+    {
+        const auto order = mapSymbolsByOrderEntry.key();
+        const auto& mapSymbols = mapSymbolsByOrderEntry.value();
+        MapRenderer::PublishedMapSymbolsByGroup acceptedMapSymbols;
+        for (const auto& mapSymbolsEntry : constOf(mapSymbols))
+        {
+            const auto& mapSymbolsGroup = mapSymbolsEntry.first;
+            const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
+
+            if (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            {
+                acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
+            }
+        }
+        if (!acceptedMapSymbols.empty())
+            filteredPublishedMapSymbols[order] = acceptedMapSymbols;
+    }
+
+    // Filter out old MapMarker and VectorLine objects from _lastAcceptedMapSymbolsByOrder
+    MapRenderer::PublishedMapSymbolsByOrder filteredLastAcceptedMapSymbols;
+    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(_lastAcceptedMapSymbolsByOrder)))
+    {
+        const auto order = mapSymbolsByOrderEntry.key();
+        const auto& mapSymbols = mapSymbolsByOrderEntry.value();
+        MapRenderer::PublishedMapSymbolsByGroup acceptedMapSymbols;
+        for (const auto& mapSymbolsEntry : constOf(mapSymbols))
+        {
+            const auto& mapSymbolsGroup = mapSymbolsEntry.first;
+            const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
+
+            if (!std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            {
+                acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
+            }
+        }
+        filteredLastAcceptedMapSymbols[order] = acceptedMapSymbols;
+    }
+
+    // Append new MapMarker and VectorLine objects to filteredLastAcceptedMapSymbols
+    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(filteredPublishedMapSymbols)))
+    {
+        const auto order = mapSymbolsByOrderEntry.key();
+        const auto& mapSymbols = mapSymbolsByOrderEntry.value();
+
+        auto itAcceptedMapSymbols = filteredLastAcceptedMapSymbols.find(order);
+        if (itAcceptedMapSymbols != filteredLastAcceptedMapSymbols.end())
+        {
+            auto& acceptedMapSymbols = *itAcceptedMapSymbols;
+            acceptedMapSymbols.insert(mapSymbols.begin(), mapSymbols.end());
+        }
+        else
+        {
+            filteredLastAcceptedMapSymbols[order] = mapSymbols;
+        }
+    }
+
     // Otherwise, use last accepted map symbols by order
     const auto result = obtainRenderableSymbols(
-        _lastAcceptedMapSymbolsByOrder,
+        filteredLastAcceptedMapSymbols,
         outRenderableSymbols,
         outIntersections,
         nullptr,
         metric);
+
+    publishedMapSymbolsByOrderLock.unlock();
+
     return result;
 }
 
