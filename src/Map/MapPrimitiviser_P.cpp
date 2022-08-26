@@ -215,7 +215,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
     bool coastlinesWereAdded = false;
-    if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
+    if (detailedmapCoastlinesPresent &&
+        (zoom >= MapPrimitiviser::DetailedLandDataMinZoom || !basemapCoastlinesPresent))
     {
         coastlinesWereAdded = polygonizeCoastlines(
             area31,
