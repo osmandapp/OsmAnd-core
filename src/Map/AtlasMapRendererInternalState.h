@@ -53,7 +53,13 @@ namespace OsmAnd
         float distanceFromCameraToTarget;
         float groundDistanceFromCameraToTarget;
         float distanceFromCameraToGround;
-        float distanceFromCameraToGroundInMeters;
+        float distanceFromCameraToFog;
+        float distanceFromCameraToMist;
+        float skyHeightInKilometers;
+        float skyShift;
+        float skyLine;
+        double metersPerUnit;
+        double distanceFromCameraToGroundInMeters;
         PointD cameraCoordinates;
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;

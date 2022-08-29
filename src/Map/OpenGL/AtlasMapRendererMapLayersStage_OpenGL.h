@@ -135,6 +135,10 @@ namespace OsmAnd
             struct {
                 // Parameters
                 struct {
+                    // Common data
+                    GLlocation worldCameraPosition;
+                    GLlocation mistConfiguration;
+                    GLlocation mistColor;
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {

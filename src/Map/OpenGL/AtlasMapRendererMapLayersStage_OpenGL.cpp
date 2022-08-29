@@ -163,15 +163,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             ? 0
             : vsUniformsPerLayer /*param_vs_elevationLayer*/ +
               1 /*param_vs_elevationLayerTexelSize*/);
+    const auto fsOtherUniforms =
+        1 /*param_fs_worldCameraPosition*/ +
+        1 /*param_fs_mistConfiguration*/;
+        1 /*param_fs_mistColor*/;
     const auto maxBatchSizeByUniforms =
-        (gpuAPI->maxVertexUniformVectors - vsOtherUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
+        (gpuAPI->maxVertexUniformVectors - vsOtherUniforms - fsOtherUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
 
     // ... by varying floats
     const auto varyingFloatsPerLayer =
         2 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingFloats =
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
-        (setupOptions.elevationVisualizationEnabled ? 4 : 0) /*v2f_elevationColor*/;
+        (setupOptions.elevationVisualizationEnabled ? 4 : 0) /*v2f_elevationColor*/ +
+        4 /*v2f_position*/;
     const auto maxBatchSizeByVaryingFloats =
         (gpuAPI->maxVaryingFloats - otherVaryingFloats) / varyingFloatsPerLayer;
 
@@ -180,7 +185,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingVectors =
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
-        (setupOptions.elevationVisualizationEnabled ? 1 : 0) /*v2f_elevationColor*/;
+        (setupOptions.elevationVisualizationEnabled ? 1 : 0) /*v2f_elevationColor* +
+        1 /*v2f_position*/;
     const auto maxBatchSizeByVaryingVectors =
         (gpuAPI->maxVaryingVectors - otherVaryingVectors) / varyingVectorsPerLayer;
 
@@ -274,6 +280,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
         "    PARAM_OUTPUT lowp vec4 v2f_elevationColor;                                                                     ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "PARAM_OUTPUT vec4 v2f_position;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
@@ -569,6 +576,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         //   Finally output processed modified vertex
+        "    v2f_position = v;                                                                                              ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "}                                                                                                                  ""\n");
     const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
@@ -606,7 +614,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
         "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
+        "PARAM_INPUT vec4 v2f_position;                                                                                     ""\n"
         "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
+        "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
+        "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
         // Parameters: per-layer data
         "struct FsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
@@ -676,6 +689,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
+        //   Gradually dispel distant tiles in mist
+        "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
+        "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
+        "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
+        "    float distanceToCamera = param_fs_mistConfiguration.z-distance(infrontPosition, param_fs_worldCameraPosition); ""\n"
+        "    float nearFactor = clamp(exp(distanceToCamera / param_fs_mistConfiguration.w - 4.0f), 0.0f, 1.0f);             ""\n"
+        "    float farFactor = 1.0f - nearFactor;                                                                           ""\n"
+        "    finalColor.r = finalColor.r * nearFactor + farFactor * param_fs_mistColor.r;                                   ""\n"
+        "    finalColor.g = finalColor.g * nearFactor + farFactor * param_fs_mistColor.g;                                   ""\n"
+        "    finalColor.b = finalColor.b * nearFactor + farFactor * param_fs_mistColor.b;                                   ""\n"
         "                                                                                                                   ""\n"
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -923,6 +946,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_elevationLayerTexelSize",
             GlslVariableType::Uniform);
     }
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.worldCameraPosition,
+        "param_fs_worldCameraPosition",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.mistConfiguration,
+        "param_fs_mistConfiguration",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.mistColor,
+        "param_fs_mistColor",
+        GlslVariableType::Uniform);
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     outRasterLayerTileProgram.fs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
@@ -1257,6 +1292,29 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
         GL_CHECK_RESULT;
     }
+
+    // Set camera position for mist calculation
+    glUniform4f(program.fs.param.worldCameraPosition,
+        internalState.worldCameraPosition.x,
+        internalState.worldCameraPosition.y,
+        internalState.worldCameraPosition.z,
+        1.0f);
+    GL_CHECK_RESULT;
+
+    // Set mist parameters
+    glm::vec2 leftDirection = (internalState.mAzimuthInv * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)).xz();
+    glUniform4f(program.fs.param.mistConfiguration,
+        leftDirection.x,
+        leftDirection.y,
+        internalState.distanceFromCameraToFog,
+        internalState.distanceFromCameraToMist);
+    GL_CHECK_RESULT;
+    glUniform4f(program.fs.param.mistColor,
+        currentState.fogConfiguration.color.r,
+        currentState.fogConfiguration.color.g,
+        currentState.fogConfiguration.color.b,
+        1.0f);
+    GL_CHECK_RESULT;
 
     // Configure samplers
     auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;

@@ -81,7 +81,7 @@ OsmAnd::PointD OsmAnd::AtlasMapRenderer::getCameraCoordinates() const
     return internalState->cameraCoordinates;
 }
 
-float OsmAnd::AtlasMapRenderer::getCameraHeight() const
+double OsmAnd::AtlasMapRenderer::getCameraHeight() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
