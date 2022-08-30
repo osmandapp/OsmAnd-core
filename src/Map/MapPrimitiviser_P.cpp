@@ -237,7 +237,8 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
-    if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
+    if (detailedmapCoastlinesPresent &&
+                (zoom >= MapPrimitiviser::DetailedLandDataMinZoom || !basemapCoastlinesPresent))
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             area31,
