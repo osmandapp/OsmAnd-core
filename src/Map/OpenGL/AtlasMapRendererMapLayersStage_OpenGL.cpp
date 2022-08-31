@@ -165,7 +165,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
               1 /*param_vs_elevationLayerTexelSize*/);
     const auto fsOtherUniforms =
         1 /*param_fs_worldCameraPosition*/ +
-        1 /*param_fs_mistConfiguration*/;
+        1 /*param_fs_mistConfiguration*/ +
         1 /*param_fs_mistColor*/;
     const auto maxBatchSizeByUniforms =
         (gpuAPI->maxVertexUniformVectors - vsOtherUniforms - fsOtherUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
@@ -651,6 +651,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    lowp vec4 finalColor;                                                                                          ""\n"
         "                                                                                                                   ""\n"
+        //   Get the distance rate for hiding tiles in mist
+        "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
+        "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
+        "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
+        "    float distanceToCamera = param_fs_mistConfiguration.z-distance(infrontPosition, param_fs_worldCameraPosition); ""\n"
+        "    float notFar = clamp(exp(distanceToCamera / param_fs_mistConfiguration.w - 4.0f), 0.0f, 1.0f);                 ""\n"
+        "                                                                                                                   ""\n"
         //   Mix colors of all layers.
         //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -667,11 +674,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
         "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
+        "    finalColor = finalColor * notFar + (1.0f - notFar) * param_fs_mistColor * firstLayerColorFactor;               ""\n"
         "                                                                                                                   ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
         "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    mixColors(finalColor, v2f_elevationColor);                                                                     ""\n"
+        "    mixColors(finalColor, notFar * v2f_elevationColor);                                                            ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
 #if 0
@@ -689,16 +697,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
-        //   Gradually dispel distant tiles in mist
-        "    vec4 infrontPosition = v2f_position;                                                                           ""\n"
-        "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
-        "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
-        "    float distanceToCamera = param_fs_mistConfiguration.z-distance(infrontPosition, param_fs_worldCameraPosition); ""\n"
-        "    float nearFactor = clamp(exp(distanceToCamera / param_fs_mistConfiguration.w - 4.0f), 0.0f, 1.0f);             ""\n"
-        "    float farFactor = 1.0f - nearFactor;                                                                           ""\n"
-        "    finalColor.r = finalColor.r * nearFactor + farFactor * param_fs_mistColor.r;                                   ""\n"
-        "    finalColor.g = finalColor.g * nearFactor + farFactor * param_fs_mistColor.g;                                   ""\n"
-        "    finalColor.b = finalColor.b * nearFactor + farFactor * param_fs_mistColor.b;                                   ""\n"
         "                                                                                                                   ""\n"
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -717,6 +715,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                       ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
         "        mixColors(finalColor, layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);       ""\n"
+        "        finalColor = finalColor * notFar + (1.0f - notFar) * param_fs_mistColor * finalColor.a;                    ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
@@ -1293,7 +1292,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         GL_CHECK_RESULT;
     }
 
-    // Set camera position for mist calculation
+    // Set camera position for mist calculations
     glUniform4f(program.fs.param.worldCameraPosition,
         internalState.worldCameraPosition.x,
         internalState.worldCameraPosition.y,

@@ -244,7 +244,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
     if (mask.isSet(MapRendererStateChange::WindowSize))
     {
-        _depthBufferRange = static_cast<double>(1ULL << gpuAPI->framebufferDepthBits);
+        GLint depthBits;
+        glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+        GL_CHECK_RESULT;
+
+        _depthBufferRange = static_cast<double>(1ull << depthBits);
+
         const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
         if (depthBufferSize != _terrainDepthBuffer.size())
         {
@@ -383,12 +388,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<float>((internalState->distanceFromCameraToGroundInMeters / 1000.0 + 8.0) *
         qTan(internalState->fovInRadians));
 
-    // Define the maximum renderable distance from camera
-    const auto znear = static_cast<double>(_zNear);
-    const auto lowerLimit = znear / (1.0 - (1.0 - znear / static_cast<double>(internalState->zSkyplane)) /
-        (1.0 - 2.0 / qMax(_depthBufferRange, 65536.0)));
-    internalState->zFar = static_cast<float>(qMax(lowerLimit,
-        distanceFromCameraToTarget + 12000.0 / metersPerUnit * elevationSine));
+    // Calculate maximum renderable distance from camera
+    const auto zNear = static_cast<double>(_zNear);
+    // Take into account the depth of the oceans
+    const auto zMinFar = qMax(distanceToSkyplane, distanceFromCameraToTarget + 12000.0 / metersPerUnit * elevationSine);
+    const auto zRange = qMax(_depthBufferRange, 65536.0);
+    const auto zIndex = qMin(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear), zRange - 1.0);
+    // Avoid z-fighting with terrain at the far end
+    internalState->zFar =
+        static_cast<float>(zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zIndex - 0.501)));
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
