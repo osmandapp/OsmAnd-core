@@ -42,6 +42,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
+    , depthBufferRange(_depthBufferRange)
     , terrainDepthBuffer(_terrainDepthBuffer)
     , terrainDepthBufferSize(_terrainDepthBufferSize)
 {
@@ -63,7 +64,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     if (!ok)
         return false;
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.937f, 0.906f, 0.906f, 1.0f);
     GL_CHECK_RESULT;
 
     gpuAPI->glClearDepth_wrapper(1.0f);
@@ -87,16 +88,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     GL_CHECK_PRESENT(glDisable);
     GL_CHECK_PRESENT(glBlendFunc);
     GL_CHECK_PRESENT(glClear);
-    GL_CHECK_PRESENT(glClearColor);
 
     _debugStage->clear();
 
     // Setup viewport
     glViewport(_internalState.glmViewport[0], _internalState.glmViewport[1], _internalState.glmViewport[2], _internalState.glmViewport[3]);
-    GL_CHECK_RESULT;
-
-    // Set background color
-    glClearColor(0.922f, 0.906f, 0.894f, 1.0f);
     GL_CHECK_RESULT;
 
     // Clear buffers
@@ -248,6 +244,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
     if (mask.isSet(MapRendererStateChange::WindowSize))
     {
+        GLint depthBits;
+        glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+        GL_CHECK_RESULT;
+
+        _depthBufferRange = static_cast<double>(1ull << depthBits);
+
         const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
         if (depthBufferSize != _terrainDepthBuffer.size())
         {
@@ -307,8 +309,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         TileSize3D / 2.0f,
         internalState->referenceTileSizeOnScreenInPixels / 2.0f,
         internalState->tileOnScreenScaleFactor);
-    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
-    internalState->distanceFromCameraToGround = internalState->distanceFromCameraToTarget * qSin(qDegreesToRadians(state.elevationAngle));
+    const auto elevationAngleInRadians = qDegreesToRadians(static_cast<double>(state.elevationAngle));
+    const auto elevationSine = qSin(elevationAngleInRadians);
+    const auto elevationCosine = qCos(elevationAngleInRadians);
+    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * elevationCosine;
+    internalState->distanceFromCameraToGround = internalState->distanceFromCameraToTarget * elevationSine;
     const auto distanceFromCameraToTargetWithNoVisualScale = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
         state.viewport,
@@ -319,31 +324,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         internalState->distanceFromCameraToTarget / distanceFromCameraToTargetWithNoVisualScale;
     internalState->pixelInWorldProjectionScale = static_cast<float>(AtlasMapRenderer::TileSize3D)
         / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
-
-    // Recalculate perspective projection with obtained value
-    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
-//    internalState->zSkyplane = 1000.0f; // NOTE: This somehow fixes/eliminates the thing o_O by making the Z plane far enough
-    // 1. calculate upperFovLook vector (-sin(elevationAngle - fov), cos(elevationAngle - fov))
-    // 2. check if that vector hits fog point
-    //    - above ground (case 1, also defined as "intersection with ground is before fog") or
-    //    - below ground (case 2, also defined as "intersection with ground is after fog")
-
-    internalState->zFar = glm::length(glm::vec3(
-        internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
-        internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
-        internalState->zSkyplane));
-    internalState->mPerspectiveProjection = glm::frustum(
-        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
-        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
-        _zNear, internalState->zFar);
-    internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
-
-    // Calculate orthographic projection
-    const auto viewportBottom = state.windowSize.y - state.viewport.bottom();
-    internalState->mOrthographicProjection = glm::ortho(
-        static_cast<float>(state.viewport.left()), static_cast<float>(state.viewport.right()),
-        static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
-        _zNear, internalState->zFar);
 
     // Setup camera
     internalState->mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -internalState->distanceFromCameraToTarget));
@@ -361,6 +341,77 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
     internalState->groundCameraPosition = internalState->worldCameraPosition.xz();
 
+    // Get camera global coordinates and height
+    PointD groundPos, offsetInTileN;
+    groundPos.x = internalState->groundCameraPosition.x / TileSize3D + internalState->targetInTileOffsetN.x;
+    groundPos.y = internalState->groundCameraPosition.y / TileSize3D + internalState->targetInTileOffsetN.y;
+    offsetInTileN.x = groundPos.x - floor(groundPos.x);
+    offsetInTileN.y = groundPos.y - floor(groundPos.y);
+    TileId tileId;
+    tileId.x = floor(groundPos.x) + internalState->targetTileId.x;
+    tileId.y = floor(groundPos.y) + internalState->targetTileId.y;
+    const auto tileIdN = Utilities::normalizeTileId(tileId, state.zoomLevel);
+    groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
+    groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
+    const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, groundPos.y, TileSize3D);
+    internalState->metersPerUnit = metersPerUnit;
+    internalState->distanceFromCameraToGroundInMeters =
+        qMax(0.0, static_cast<double>(internalState->distanceFromCameraToGround) * metersPerUnit);
+    internalState->cameraCoordinates.x = Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x);
+    internalState->cameraCoordinates.y = Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y);
+    
+    // Calculate distance to horizon
+    double radius = 6371e3;
+    auto inglobeAngle = qAcos(radius / (radius + internalState->distanceFromCameraToGroundInMeters));
+    const auto skylineAngle = qMax(0.0, elevationAngleInRadians - inglobeAngle);
+    // Tweak angle for low zoom levels
+    inglobeAngle = inglobeAngle < M_PI / 12.0 ? inglobeAngle :
+        1.1648753803647327974577447574825e-6 * internalState->distanceFromCameraToGroundInMeters;
+    const auto groundDistanceToHorizonInMeters = radius * inglobeAngle;   
+
+    // Get the farthest edge for terrain to render
+    const auto distanceFromCameraToTarget = static_cast<double>(internalState->distanceFromCameraToTarget);
+    const auto distanceFromTargetToHorizon = groundDistanceToHorizonInMeters / metersPerUnit -
+        static_cast<double>(internalState->groundDistanceFromCameraToTarget);
+    const auto additionalDistanceToSkyplane =
+        qMax(0.01, qMin(static_cast<double>(state.fogConfiguration.distanceToFog) *
+        internalState->scaleToRetainProjectedSize, distanceFromTargetToHorizon) * elevationCosine);
+    const auto distanceToSkyplane = distanceFromCameraToTarget + additionalDistanceToSkyplane;
+    internalState->zSkyplane = static_cast<float>(distanceToSkyplane);
+    internalState->skyShift = static_cast<float>(additionalDistanceToSkyplane * elevationSine / elevationCosine);
+    internalState->distanceFromCameraToFog = qSqrt(internalState->zSkyplane * internalState->zSkyplane +
+        internalState->skyShift * internalState->skyShift);
+    internalState->distanceFromCameraToMist = static_cast<float>(additionalDistanceToSkyplane * 0.125);
+
+    // Calculate approximate height of the visible sky
+    internalState->skyHeightInKilometers =
+        static_cast<float>((internalState->distanceFromCameraToGroundInMeters / 1000.0 + 8.0) *
+        qTan(internalState->fovInRadians));
+
+    // Calculate maximum renderable distance from camera
+    const auto zNear = static_cast<double>(_zNear);
+    // Take into account the depth of the oceans
+    const auto zMinFar = qMax(distanceToSkyplane, distanceFromCameraToTarget + 12000.0 / metersPerUnit * elevationSine);
+    const auto zRange = qMax(_depthBufferRange, 65536.0);
+    const auto zIndex = qMin(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear), zRange - 1.0);
+    // Avoid z-fighting with terrain at the far end
+    internalState->zFar =
+        static_cast<float>(zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zIndex - 0.501)));
+
+    // Recalculate perspective projection
+    internalState->mPerspectiveProjection = glm::frustum(
+        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
+        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
+        _zNear, internalState->zFar);
+    internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
+
+    // Calculate orthographic projection
+    const auto viewportBottom = state.windowSize.y - state.viewport.bottom();
+    internalState->mOrthographicProjection = glm::ortho(
+        static_cast<float>(state.viewport.left()), static_cast<float>(state.viewport.right()),
+        static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
+        _zNear, internalState->zFar);
+
     // Convenience precalculations
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
 
@@ -370,8 +421,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
-    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 3.0f;
-    internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
+    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
+    internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
+
+    // Determine skyline position
+    internalState->skyLine =
+        qMax(0.0f, static_cast<float>(distanceToSkyplane * qTan(skylineAngle)) - internalState->skyShift) /
+        internalState->skyplaneSize.y;
+
 
     // Update frustum
     updateFrustum(internalState, state);
@@ -507,28 +564,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
 
     internalState->globalFrustum2D31 = internalState->frustum2D31 + state.target31;
 
-    // Get camera ground position and tile
-    PointD groundPos, offsetInTileN;
-    groundPos.x = eye_g.x / TileSize3D + internalState->targetInTileOffsetN.x;
-    groundPos.y = eye_g.z / TileSize3D + internalState->targetInTileOffsetN.y;
-    offsetInTileN.x = groundPos.x - floor(groundPos.x);
-    offsetInTileN.y = groundPos.y - floor(groundPos.y);
-    TileId tileId;
-    tileId.x = floor(groundPos.x) + internalState->targetTileId.x;
-    tileId.y = floor(groundPos.y) + internalState->targetTileId.y;
-    const auto tileIdN = Utilities::normalizeTileId(tileId, state.zoomLevel);
-    groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
-    groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
-    internalState->cameraCoordinates.x = Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x);
-    internalState->cameraCoordinates.y = Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y);
+    // Get maximum height of terrain below camera
+    const auto maxTerrainHeight = static_cast<float>(10000.0 / internalState->metersPerUnit);
 
-    // Get camera height and maximum height of terrain below
-    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileIdN.y, TileSize3D);
-    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileIdN.y + 1, TileSize3D);
-    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-    internalState->distanceFromCameraToGroundInMeters = internalState->distanceFromCameraToGround * metersPerUnit;
-    float maxTerrainHeight = 10000.0f / metersPerUnit;
-    
     // Get intersection points on elevated plane
     if (internalState->distanceFromCameraToGround > maxTerrainHeight)
     {

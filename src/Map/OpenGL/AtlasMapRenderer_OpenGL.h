@@ -28,6 +28,7 @@ namespace OsmAnd
     private:
     protected:
         const static float _zNear;
+        double _depthBufferRange;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
 
@@ -66,6 +67,7 @@ namespace OsmAnd
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
+        const double depthBufferRange;
         const std::vector<std::byte>& terrainDepthBuffer;
         const PointI& terrainDepthBufferSize;
 

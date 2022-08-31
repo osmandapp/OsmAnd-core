@@ -35,18 +35,25 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
         "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_position;                                                                                     ""\n"
+        "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
-        "uniform vec2 param_vs_planeSize;                                                                                   ""\n"
+        "uniform mat4 param_vs_mProjection;                                                                                 ""\n"
+        "uniform vec4 param_vs_planeSize;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    vec4 v;                                                                                                        ""\n"
-        "    v.xy = in_vs_vertexPosition * param_vs_planeSize;                                                              ""\n"
-        "    v.z = 0.0;                                                                                                     ""\n"
+        "    v.xy = in_vs_vertexPosition * param_vs_planeSize.xy;                                                           ""\n"
+        "    v.z = param_vs_planeSize.z;                                                                                    ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
+        "    v.y += param_vs_planeSize.w;                                                                                   ""\n"
         "                                                                                                                   ""\n"
-        "    gl_Position = param_vs_mProjectionViewModel * v;                                                               ""\n"
+        "    v2f_position = in_vs_vertexPosition;                                                                           ""\n"
+        "    v = param_vs_mProjection * v;                                                                                  ""\n"
+        "    v.y--;                                                                                                         ""\n"
+        "    gl_Position = v;                                                                                               ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
@@ -61,12 +68,27 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_position;                                                                                     ""\n"
+        "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform lowp vec4 param_fs_skyColor;                                                                               ""\n"
+        "uniform vec4 param_fs_skySize;                                                                                     ""\n"
+        "uniform vec4 param_fs_fogColor;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = param_fs_skyColor;                                                                     ""\n"
+        "    vec4 color;                                                                                                    ""\n"
+        "    float position;                                                                                                ""\n"
+        "    float skyHeight = param_fs_skySize.y / (1.0f - param_fs_skySize.z);                                            ""\n"
+        "    bool sky = v2f_position.y > param_fs_skySize.z;                                                                ""\n"
+        "    position = (v2f_position.y - (sky ? param_fs_skySize.z : 0.0f)) * skyHeight;                                   ""\n"
+        "    float low = 1.0f / pow(1.1f + position, 4.0f);                                                                 ""\n"
+        "    float high = 1.0f - low;                                                                                       ""\n"
+        "    color.r = sky ? 0.7647059f * low + high * exp(1.0f - position / 3.0f) * 0.3101728f : param_fs_fogColor.r;      ""\n"
+        "    color.g = sky ? 0.8039216f * low + high * exp(1.0f - position / 5.0f) * 0.3390262f : param_fs_fogColor.g;      ""\n"
+        "    color.b = sky ? 0.9019608f * low + high * exp(1.0f - position / 12.0f) * 0.3678794f : param_fs_fogColor.b;     ""\n"
+        "    color.a = 1.0f;                                                                                                ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = color;                                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -97,9 +119,10 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id, variablesMap);
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.mProjection, "param_vs_mProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.skySize, "param_fs_skySize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.fogColor, "param_fs_fogColor", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_program.id);
@@ -109,13 +132,22 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         return false;
     }
 
+    struct Vertex
+    {
+        // XY coordinates: Y up, X right
+        float positionXY[2];
+
+        // Color
+        FColorARGB color;
+    };
+
     // Vertex data (x,y)
     float vertices[4][2] =
     {
-        { -0.5f, -0.5f },
-        { -0.5f,  0.5f },
-        {  0.5f,  0.5f },
-        {  0.5f, -0.5f }
+        {  1.0f, 0.0f },
+        {  1.0f, 1.0f },
+        { -1.0f, 1.0f },
+        { -1.0f, 0.0f }
     };
     const auto verticesCount = 4;
 
@@ -123,7 +155,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GLushort indices[6] =
     {
         0, 1, 2,
-        0, 2, 3
+        2, 3, 0
     };
     const auto indicesCount = 6;
 
@@ -182,19 +214,35 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
 
-    // Set projection*view*model matrix:
-    const auto mFogTranslate = glm::translate(glm::vec3(0.0f, 0.0f, -internalState.correctedFogDistance));
-    const auto mModel = internalState.mAzimuthInv * mFogTranslate;
-    const auto mProjectionViewModel = internalState.mPerspectiveProjectionView * mModel;
-    glUniformMatrix4fv(_program.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionViewModel));
+    // Set projection matrix:
+    glUniformMatrix4fv(_program.vs.param.mProjection,
+        1,
+        GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjection));
     GL_CHECK_RESULT;
 
     // Set size of the skyplane
-    glUniform2f(_program.vs.param.planeSize, internalState.skyplaneSize.x, internalState.skyplaneSize.y);
+    glUniform4f(_program.vs.param.planeSize,
+        internalState.skyplaneSize.x,
+        internalState.skyplaneSize.y,
+        -internalState.zSkyplane,
+        internalState.skyShift);
     GL_CHECK_RESULT;
 
-    // Set sky parameters
-    glUniform4f(_program.fs.param.skyColor, currentState.skyColor.r, currentState.skyColor.g, currentState.skyColor.b, 1.0f);
+    // Set parameters of the sky
+    glUniform4f(_program.fs.param.skySize,
+        0.0f, // TODO: put sky width (in kilometers) here for the spherified horizon
+        internalState.skyHeightInKilometers,
+        internalState.skyLine,
+        0.0f);
+    GL_CHECK_RESULT;
+
+    // Set the color of fog
+    glUniform4f(_program.fs.param.fogColor,
+        currentState.fogConfiguration.color.r,
+        currentState.fogConfiguration.color.g,
+        currentState.fogConfiguration.color.b,
+        1.0f);
     GL_CHECK_RESULT;
 
     // Draw the skyplane actually

@@ -78,6 +78,6 @@ OsmAnd::FogConfiguration::FogConfiguration()
     , originFactor(0.36f)
     , heightOriginFactor(0.05f)
     , density(1.9f)
-    , color(1.0f, 0.0f, 0.0f)
+    , color(0.9215686f, 0.9058824f, 0.8941176f)
 {
 }
