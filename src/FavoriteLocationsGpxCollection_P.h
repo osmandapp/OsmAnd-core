@@ -34,6 +34,7 @@ namespace OsmAnd
         bool loadFrom(QXmlStreamReader& reader);
         
         void backup(const QString& backupFile, const QString& externalFile) const;
+        void clearOldBackups(const QString& basePath) const;
         QString getBackupFile(const QString& basePath) const;
 
     friend class OsmAnd::FavoriteLocationsGpxCollection;
