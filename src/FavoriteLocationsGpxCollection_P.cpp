@@ -14,7 +14,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-#define BACKUP_MAX_COUNT 20
+#define BACKUP_MAX_COUNT 10
+#define BACKUP_MAX_PER_DAY 2 // The third one is the current backup
 
 OsmAnd::FavoriteLocationsGpxCollection_P::FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner_)
     : FavoriteLocationsCollection_P(owner_)
@@ -45,10 +46,24 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& filename) c
 void OsmAnd::FavoriteLocationsGpxCollection_P::backup(const QString& backupFile, const QString& externalFile) const
 {
     bool ok = true;
+    const auto basePath = QFileInfo(backupFile).absolutePath();
     OsmAnd::ArchiveWriter archiveWriter;
-    archiveWriter.createArchive(&ok, backupFile, {externalFile}, QFileInfo(backupFile).absolutePath(), true);
+    archiveWriter.createArchive(&ok, backupFile, {externalFile}, basePath);
     if (!ok)
         LogPrintf(LogSeverityLevel::Error, "Favorites backup failed");
+    clearOldBackups(basePath);
+}
+
+void OsmAnd::FavoriteLocationsGpxCollection_P::clearOldBackups(const QString& basePath) const
+{
+    QString fld = basePath + QDir::separator() + QStringLiteral("favourites_backup");
+    QDir dir(fld);
+    QFileInfoList fileInfos = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
+    for (int index = fileInfos.size(); index > BACKUP_MAX_COUNT; --index)
+    {
+         const QFileInfo& info = fileInfos[index - 1];
+         QFile::remove(info.absoluteFilePath());
+    }
 }
 
 QString OsmAnd::FavoriteLocationsGpxCollection_P::getBackupFile(const QString& basePath) const
@@ -57,30 +72,15 @@ QString OsmAnd::FavoriteLocationsGpxCollection_P::getBackupFile(const QString& b
     QDir dir(fld);
     if (!dir.exists())
         dir.mkpath(QStringLiteral("."));
-    int back = 1;
-    QString backPrefix;
-    QString firstModified;
-    auto firstModifiedMin = QDateTime::currentDateTime();
-    while (back <= BACKUP_MAX_COUNT)
+    const auto fileName = QDateTime::currentDateTime().toString(QStringLiteral("yyyy_MM_dd_hh_mm_ss"));
+    const auto date = fileName.mid(0, 10);
+    QFileInfoList fileInfos = dir.entryInfoList(QStringList() << (date + QStringLiteral("*")), QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
+    for (int index = fileInfos.size(); index > BACKUP_MAX_PER_DAY; --index)
     {
-        backPrefix = QString::number(back);
-        if (back < 10)
-        {
-            backPrefix = QStringLiteral("0") + backPrefix;
-        }
-        QFileInfo bak(fld + QDir::separator() + QStringLiteral("favourites_bak_") + backPrefix + QStringLiteral(".gpx.gz"));
-        if (!bak.exists())
-        {
-            return bak.filePath();
-        }
-        else if (bak.lastModified() < firstModifiedMin)
-        {
-            firstModified = bak.filePath();
-            firstModifiedMin = bak.lastModified();
-        }
-        back++;
+         const QFileInfo& info = fileInfos[index - 1];
+         QFile::remove(info.absoluteFilePath());
     }
-    return firstModified;
+    return fld + QDir::separator() + fileName + QStringLiteral(".gpx.zip");
 }
 
 bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(const QString& filename)
