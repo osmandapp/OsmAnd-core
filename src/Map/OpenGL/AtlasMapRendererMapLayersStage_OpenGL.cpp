@@ -656,7 +656,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    infrontPosition.xz = v2f_position.xz * param_fs_mistConfiguration.xy;                                          ""\n"
         "    infrontPosition.xz = v2f_position.xz - (infrontPosition.x + infrontPosition.z) * param_fs_mistConfiguration.xy;""\n"
         "    float distanceToCamera = param_fs_mistConfiguration.z-distance(infrontPosition, param_fs_worldCameraPosition); ""\n"
-        "    float notFar = clamp(exp(distanceToCamera / param_fs_mistConfiguration.w - 4.0f), 0.0f, 1.0f);                 ""\n"
+        "    float notFar = clamp(exp(distanceToCamera * 8.0f / param_fs_mistConfiguration.w - 4.0f), 0.0f, 1.0f);          ""\n"
         "                                                                                                                   ""\n"
         //   Mix colors of all layers.
         //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
@@ -1306,7 +1306,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         leftDirection.x,
         leftDirection.y,
         internalState.distanceFromCameraToFog,
-        internalState.distanceFromCameraToMist);
+        internalState.distanceFromTargetToFog);
     GL_CHECK_RESULT;
     glUniform4f(program.fs.param.mistColor,
         currentState.fogConfiguration.color.r,

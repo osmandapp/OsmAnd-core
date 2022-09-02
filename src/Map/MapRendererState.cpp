@@ -2,7 +2,7 @@
 
 OsmAnd::MapRendererState::MapRendererState()
     : fieldOfView(16.5f)
-    , skyColor(ColorRGB(140, 190, 214))
+    , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
@@ -40,7 +40,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 
 OsmAnd::MapState::MapState()
     : fieldOfView(16.5f)
-    , skyColor(ColorRGB(140, 190, 214))
+    , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))

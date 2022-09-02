@@ -54,7 +54,7 @@ namespace OsmAnd
         float groundDistanceFromCameraToTarget;
         float distanceFromCameraToGround;
         float distanceFromCameraToFog;
-        float distanceFromCameraToMist;
+        float distanceFromTargetToFog;
         float skyHeightInKilometers;
         float skyShift;
         float skyLine;

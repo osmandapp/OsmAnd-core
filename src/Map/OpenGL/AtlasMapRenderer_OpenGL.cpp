@@ -35,7 +35,21 @@
 
 #include "OpenGL/Utilities_OpenGL.h"
 
+// Set camera's near depth limit
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;
+
+// Set average radius of Earth
+const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
+// Set minimum earth angle for advanced horizon
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumAngleForAdvancedHorizon = M_PI / 12.0;
+// Set distance-per-angle factor for smooth horizon slide beyond minimum earth angle
+const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 1.1648753803647327974577447574825e-6;
+// Set minimum height of visible sky for colouring
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.0;
+// Set the minimum height of terrain to render
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumHeightFromGroundInMeters = -12000.0;
+// Set the maximum height of terrain to render
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromGroundInMeters = 10000.0;
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
     : AtlasMapRenderer(
@@ -361,13 +375,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->cameraCoordinates.y = Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y);
     
     // Calculate distance to horizon
-    double radius = 6371e3;
-    auto inglobeAngle = qAcos(radius / (radius + internalState->distanceFromCameraToGroundInMeters));
+    auto inglobeAngle = qAcos(_radius / (_radius + internalState->distanceFromCameraToGroundInMeters));
     const auto skylineAngle = qMax(0.0, elevationAngleInRadians - inglobeAngle);
     // Tweak angle for low zoom levels
-    inglobeAngle = inglobeAngle < M_PI / 12.0 ? inglobeAngle :
-        1.1648753803647327974577447574825e-6 * internalState->distanceFromCameraToGroundInMeters;
-    const auto groundDistanceToHorizonInMeters = radius * inglobeAngle;   
+    inglobeAngle = inglobeAngle < _minimumAngleForAdvancedHorizon ? inglobeAngle :
+        _distancePerAngleFactor * internalState->distanceFromCameraToGroundInMeters;
+    const auto groundDistanceToHorizonInMeters = _radius * inglobeAngle;   
 
     // Get the farthest edge for terrain to render
     const auto distanceFromCameraToTarget = static_cast<double>(internalState->distanceFromCameraToTarget);
@@ -381,22 +394,26 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->skyShift = static_cast<float>(additionalDistanceToSkyplane * elevationSine / elevationCosine);
     internalState->distanceFromCameraToFog = qSqrt(internalState->zSkyplane * internalState->zSkyplane +
         internalState->skyShift * internalState->skyShift);
-    internalState->distanceFromCameraToMist = static_cast<float>(additionalDistanceToSkyplane * 0.125);
+    internalState->distanceFromTargetToFog = static_cast<float>(additionalDistanceToSkyplane);
 
     // Calculate approximate height of the visible sky
-    internalState->skyHeightInKilometers =
-        static_cast<float>((internalState->distanceFromCameraToGroundInMeters / 1000.0 + 8.0) *
+    internalState->skyHeightInKilometers = static_cast<float>(
+        (internalState->distanceFromCameraToGroundInMeters / 1000.0 + _minimumSkyHeightInKilometers) *
         qTan(internalState->fovInRadians));
 
     // Calculate maximum renderable distance from camera
     const auto zNear = static_cast<double>(_zNear);
     // Take into account the depth of the oceans
-    const auto zMinFar = qMax(distanceToSkyplane, distanceFromCameraToTarget + 12000.0 / metersPerUnit * elevationSine);
+    const auto zMinFar = qMax(distanceToSkyplane,
+        distanceFromCameraToTarget - _minimumHeightFromGroundInMeters / metersPerUnit * elevationSine);
+    // Get depth buffer value range (shouldn't be less than 2^16)
     const auto zRange = qMax(_depthBufferRange, 65536.0);
+    // Calculate z-value for the current distance to skyplane
     const auto zIndex = qMin(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear), zRange - 1.0);
-    // Avoid z-fighting with terrain at the far end
+    // Calculate zFar to let skyplane have the minimum z for a particular depth value
+    // in order to avoid z-fighting with terrain at the far end
     internalState->zFar =
-        static_cast<float>(zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zIndex - 0.501)));
+        static_cast<float>(zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zIndex - 0.500001)));
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
@@ -565,7 +582,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->globalFrustum2D31 = internalState->frustum2D31 + state.target31;
 
     // Get maximum height of terrain below camera
-    const auto maxTerrainHeight = static_cast<float>(10000.0 / internalState->metersPerUnit);
+    const auto maxTerrainHeight = static_cast<float>(_maximumHeightFromGroundInMeters / internalState->metersPerUnit);
 
     // Get intersection points on elevated plane
     if (internalState->distanceFromCameraToGround > maxTerrainHeight)

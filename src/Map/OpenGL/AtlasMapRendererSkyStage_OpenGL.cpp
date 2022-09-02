@@ -73,6 +73,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform vec4 param_fs_skySize;                                                                                     ""\n"
+        "uniform vec4 param_fs_skyColor;                                                                                    ""\n"
         "uniform vec4 param_fs_fogColor;                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -88,7 +89,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         "    color.g = sky ? 0.8039216f * low + high * exp(1.0f - position / 5.0f) * 0.3390262f : param_fs_fogColor.g;      ""\n"
         "    color.b = sky ? 0.9019608f * low + high * exp(1.0f - position / 12.0f) * 0.3678794f : param_fs_fogColor.b;     ""\n"
         "    color.a = 1.0f;                                                                                                ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = color;                                                                                 ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = color * param_fs_skyColor;                                                             ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -122,6 +123,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     ok = ok && lookup->lookupLocation(_program.vs.param.mProjection, "param_vs_mProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.skySize, "param_fs_skySize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.fogColor, "param_fs_fogColor", GlslVariableType::Uniform);
     if (!ok)
     {
@@ -235,6 +237,14 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
         internalState.skyHeightInKilometers,
         internalState.skyLine,
         0.0f);
+    GL_CHECK_RESULT;
+
+    // Set color filter for the sky
+    glUniform4f(_program.fs.param.skyColor,
+        currentState.skyColor.r,
+        currentState.skyColor.g,
+        currentState.skyColor.b,
+        1.0f);
     GL_CHECK_RESULT;
 
     // Set the color of fog

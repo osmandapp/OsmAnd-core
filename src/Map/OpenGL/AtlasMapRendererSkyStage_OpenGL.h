@@ -46,6 +46,7 @@ namespace OsmAnd
                 struct {
                     // Common data
                     GLlocation skySize;
+                    GLlocation skyColor;
                     GLlocation fogColor;
                 } param;
             } fs;

@@ -28,6 +28,12 @@ namespace OsmAnd
     private:
     protected:
         const static float _zNear;
+        const static double _radius;
+        const static double _minimumAngleForAdvancedHorizon;
+        const static double _distancePerAngleFactor;
+        const static double _minimumSkyHeightInKilometers;
+        const static double _minimumHeightFromGroundInMeters;
+        const static double _maximumHeightFromGroundInMeters;
         double _depthBufferRange;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
