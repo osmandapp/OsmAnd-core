@@ -409,11 +409,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     // Get depth buffer value range (shouldn't be less than 2^16)
     const auto zRange = qMax(_depthBufferRange, 65536.0);
     // Calculate z-value for the current distance to skyplane
-    const auto zIndex = qMin(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear), zRange - 1.0);
+    const auto zValue = static_cast<float>(qMin(
+        std::floor(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear)),
+        zRange - 1.0));
     // Calculate zFar to let skyplane have the minimum z for a particular depth value
     // in order to avoid z-fighting with terrain at the far end
-    internalState->zFar =
-        static_cast<float>(zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zIndex - 0.500001)));
+    internalState->zFar = _zNear /
+        (1.0f - (1.0f - _zNear / internalState->zSkyplane) * static_cast<float>(zRange) / (zValue - 0.50001f));
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
