@@ -293,6 +293,8 @@ namespace OsmAnd
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
+        virtual bool setBackgroundColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;
 

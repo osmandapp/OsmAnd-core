@@ -10,6 +10,7 @@ OsmAnd::MapRendererState::MapRendererState()
     , visualZoom(1.0f)
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
+    , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , metersPerPixel(1.0)
 {
 }
@@ -31,6 +32,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.visualZoom = visualZoom;
     mapState.visualZoomShift = visualZoomShift;
     mapState.stubsStyle = stubsStyle;
+    mapState.backgroundColor = backgroundColor;
     
     mapState.metersPerPixel = metersPerPixel;
     mapState.visibleBBox31 = visibleBBox31;
@@ -48,6 +50,7 @@ OsmAnd::MapState::MapState()
     , visualZoom(1.0f)
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
+    , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , metersPerPixel(1.0)
 {
 }
