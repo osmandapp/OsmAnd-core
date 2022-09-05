@@ -112,10 +112,10 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     // Vertex data (x,y)
     float vertices[4][2] =
     {
-        { -0.5f, -0.5f },
-        { -0.5f,  0.5f },
-        {  0.5f,  0.5f },
-        {  0.5f, -0.5f }
+        { -0.5f, 0.0f },
+        { -0.5f, 0.5f },
+        {  0.5f, 0.5f },
+        {  0.5f, 0.0f }
     };
     const auto verticesCount = 4;
 

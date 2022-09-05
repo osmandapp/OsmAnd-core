@@ -96,7 +96,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     GL_CHECK_RESULT;
 
     // Set background color
-    glClearColor(0.922f, 0.906f, 0.894f, 1.0f);
+    glClearColor(currentState.backgroundColor.r, currentState.backgroundColor.g, currentState.backgroundColor.b, 1.0f);
     GL_CHECK_RESULT;
 
     // Clear buffers
@@ -185,6 +185,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
+
+    // Set premultiplied alpha color blending
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     if (!currentDebugSettings->disableSymbolsStage)

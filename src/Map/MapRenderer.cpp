@@ -1676,6 +1676,21 @@ bool OsmAnd::MapRenderer::setStubsStyle(const MapStubStyle style, bool forcedUpd
     return true;
 }
 
+bool OsmAnd::MapRenderer::setBackgroundColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.backgroundColor != color;
+    if (!update)
+        return false;
+
+    _requestedState.backgroundColor = color;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::BackgroundColor);
+
+    return true;
+}
+
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
 {
     return MinZoomLevel;
