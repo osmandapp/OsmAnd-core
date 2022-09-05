@@ -47,34 +47,35 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
 
     GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
-    // First vector layer or first raster layers batch should be rendered without blending,
-    // since blending is performed inside shader itself.
+    // First vector layer or first raster layers batch should be rendered without premultiplied alpha blending,
+    // since it is performed inside shader itself.
     bool blendingEnabled = false;
-    glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     // Initially, configure for premultiplied alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Premultiplied;
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
 
     GLname lastUsedProgram;
     GLlocation elevationDataVertexAttribArray;
     const auto& batchedLayersByTiles = batchLayersByTiles(internalState);
     for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
     {
-        // Any layer or layers batch after first one has to be rendered using blending,
+        // Any layer or layers batch after first one has to be rendered using premultiplied alpha blending,
         // since output color of new batch needs to be blended with destination color.
         if (!batchedLayersByTile->containsOriginLayer != blendingEnabled)
         {
             if (batchedLayersByTile->containsOriginLayer)
             {
-                glDisable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 GL_CHECK_RESULT;
             }
             else
             {
-                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 GL_CHECK_RESULT;
             }
 
@@ -1109,15 +1110,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     batchedResourceInGPU->texCoordsScale.y);
                 GL_CHECK_RESULT;
             }
-
-            // Perform drawing of a subtile
-            glDrawElements(
-                GL_TRIANGLES,
-                indicesPerSubtile,
-                GL_UNSIGNED_SHORT,
-                reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtileIndex));
-            GL_CHECK_RESULT;
         }
+        // Perform drawing of a subtile
+        glDrawElements(
+            GL_TRIANGLES,
+            indicesPerSubtile,
+            GL_UNSIGNED_SHORT,
+            reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtileIndex));
+        GL_CHECK_RESULT;
     }
 
     // Unbind textures from texture samplers, that were used

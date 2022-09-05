@@ -583,6 +583,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setStubsStyle(style);
     }
 
+    public final boolean setBackgroundColor(FColorRGB color) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setBackgroundColor(color);
+    }
+
     public final MapRendererDebugSettings getDebugSettings() {
         NativeCore.checkIfLoaded();
 
