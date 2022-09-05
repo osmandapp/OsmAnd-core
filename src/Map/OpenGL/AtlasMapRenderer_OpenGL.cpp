@@ -46,8 +46,6 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumAngleForAdvancedHorizon = 
 const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 1.1648753803647327974577447574825e-6;
 // Set minimum height of visible sky for colouring
 const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.0;
-// Set the minimum height of terrain to render
-const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumHeightFromGroundInMeters = -12000.0;
 // Set the maximum height of terrain to render
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromGroundInMeters = 10000.0;
 
@@ -403,19 +401,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Calculate maximum renderable distance from camera
     const auto zNear = static_cast<double>(_zNear);
-    // Take into account the depth of the oceans
-    const auto zMinFar = qMax(distanceToSkyplane,
-        distanceFromCameraToTarget - _minimumHeightFromGroundInMeters / metersPerUnit * elevationSine);
     // Get depth buffer value range (shouldn't be less than 2^16)
     const auto zRange = qMax(_depthBufferRange, 65536.0);
-    // Calculate z-value for the current distance to skyplane
-    const auto zValue = static_cast<float>(qMin(
-        std::floor(zRange * zMinFar * (1.0 - zNear / distanceToSkyplane) / (zMinFar - zNear)),
-        zRange - 1.0));
-    // Calculate zFar to let skyplane have the minimum z for a particular depth value
+    // Calculate zFar to let skyplane have the maximum z for a particular depth value
     // in order to avoid z-fighting with terrain at the far end
-    internalState->zFar = _zNear /
-        (1.0f - (1.0f - _zNear / internalState->zSkyplane) * static_cast<float>(zRange) / (zValue - 0.50001f));
+    internalState->zFar = static_cast<float>(
+        zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001)));
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
@@ -487,7 +478,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const glm::vec4 nBR_c(+internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
 
     // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFar = internalState->zSkyplane;
+    const auto zFar = internalState->zFar;
     const auto zFarK = zFar / _zNear;
     const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
     const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
