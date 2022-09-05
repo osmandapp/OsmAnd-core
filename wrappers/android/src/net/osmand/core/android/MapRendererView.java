@@ -22,6 +22,9 @@ import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.jni.MapSymbolInformationList;
+import net.osmand.core.jni.MapAnimator;
+import net.osmand.core.jni.MapRendererFramePreparedObservable;
+import net.osmand.core.jni.MapRendererTargetChangedObservable;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -47,6 +50,11 @@ public abstract class MapRendererView extends FrameLayout {
      * Reference to OsmAndCore::IMapRenderer instance
      */
     protected final IMapRenderer _mapRenderer;
+
+    /**
+     * Reference to OsmAndCore::MapAnimator instance
+     */
+    protected final MapAnimator _animator;
 
     /**
      * Only instance of GPU-worker thread epilogue. Since reference to it is maintained,
@@ -93,6 +101,19 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private float _densityFactor;
 
+
+    /**
+     * Width and height of current window
+     */
+    private int _windowWidth;
+    private int _windowHeight;
+
+    /**
+     * Viewport X/Y scale. Can be used to change screen center.
+     */
+    private float _viewportXScale;
+    private float _viewportYScale;
+
     public MapRendererView(Context context) {
         this(context, null);
     }
@@ -124,6 +145,10 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new RendererProxy());
         _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
+        // Create animator for that map
+        _animator = new MapAnimator();
+        _animator.setMapRenderer(_mapRenderer);
     }
 
     public void setMapRendererSetupOptionsConfigurator(
@@ -233,6 +258,24 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.requestRender();
     }
 
+    public final MapAnimator getAnimator() {
+        NativeCore.checkIfLoaded();
+
+        return _animator;
+    }
+
+    public final MapRendererFramePreparedObservable getFramePreparedObservable() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getFramePreparedObservable();
+    }
+
+    public final MapRendererTargetChangedObservable getTargetChangedObservable() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getTargetChangedObservable();
+    }
+
     public final MapRendererConfiguration getConfiguration() {
         NativeCore.checkIfLoaded();
 
@@ -275,6 +318,53 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getState();
+    }
+
+    public final int getWindowWidth() {
+        NativeCore.checkIfLoaded();
+
+        return _windowWidth;
+    }
+
+    public final int getWindowHeight() {
+        NativeCore.checkIfLoaded();
+
+        return _windowHeight;
+    }
+
+    public final float getViewportXScale() {
+        NativeCore.checkIfLoaded();
+
+        return _viewportXScale;
+    }
+
+    public final float getViewportYScale() {
+        NativeCore.checkIfLoaded();
+
+        return _viewportYScale;
+    }
+
+    public final void setViewportXScale(float xScale) {
+        NativeCore.checkIfLoaded();
+
+        _viewportXScale = xScale;
+        setViewportXYScale(xScale, _viewportYScale);
+    }
+
+    public final void setViewportYScale(float yScale) {
+        NativeCore.checkIfLoaded();
+
+        _viewportYScale = yScale;
+        setViewportXYScale(_viewportXScale, yScale);
+    }
+
+    public final void setViewportXYScale(float xScale, float yScale) {
+        NativeCore.checkIfLoaded();
+
+        _viewportXScale = xScale;
+        _viewportYScale = yScale;
+
+        updateViewport();
     }
 
     public MapSymbolInformationList getSymbolsAt(PointI screenPoint) {
@@ -413,10 +503,22 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setAzimuth(azimuth);
     }
 
+    public final float getElevationAngle() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getElevationAngle();
+    }
+
     public final boolean setElevationAngle(float elevationAngle) {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setElevationAngle(elevationAngle);
+    }
+
+    public final PointI getTarget() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getTarget31();
     }
 
     public final boolean setTarget(PointI target31) {
@@ -431,6 +533,14 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setTarget(target31, forcedUpdate, disableUpdate);
     }
 
+    public final float getZoom() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getZoomLevel().ordinal() + (_mapRenderer.getState().getVisualZoom() >= 1.0f 
+            ? _mapRenderer.getState().getVisualZoom() - 1.0f 
+            : (_mapRenderer.getState().getVisualZoom() - 1.0f) * 2.0f);
+    }
+
     public final boolean setZoom(float zoom) {
         NativeCore.checkIfLoaded();
 
@@ -441,6 +551,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setZoom(zoomLevel, visualZoom);
+    }
+
+    public final ZoomLevel getZoomLevel() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getZoomLevel();
     }
 
     public final boolean setZoomLevel(ZoomLevel zoomLevel) {
@@ -579,6 +695,16 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         _mapRenderer.dumpResourcesInfo();
+    }
+
+    private final void updateViewport() {
+        boolean isXScaleDown = _viewportXScale < 1.0;
+        boolean isYScaleDown = _viewportYScale < 1.0;
+        float correctedX = isXScaleDown ? -_windowWidth * _viewportXScale : 0;
+        float correctedY = isYScaleDown ? -_windowHeight * _viewportYScale : 0;
+        _mapRenderer.setViewport(new AreaI(new PointI((int) correctedX, (int) correctedY), 
+            new PointI((int) (_windowWidth * (isXScaleDown ? 1.0 :_viewportXScale)),
+                       (int) (_windowHeight * (isYScaleDown ? 1.0 :_viewportYScale)))));
     }
 
     /**
@@ -765,8 +891,11 @@ public abstract class MapRendererView extends FrameLayout {
             Log.v(TAG, "RendererProxy.onSurfaceChanged()...");
 
             // Set new "window" size and viewport that covers entire "window"
+            _windowWidth = width;
+            _windowHeight = height;
             _mapRenderer.setWindowSize(new PointI(width, height));
-            _mapRenderer.setViewport(new AreaI(0, 0, height, width));
+
+            updateViewport();
 
             // In case rendering is not initialized, initialize it
             // (happens when surface is created for the first time, or recreated)

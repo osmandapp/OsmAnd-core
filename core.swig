@@ -121,6 +121,7 @@
 #include <OsmAndCore/TileSqliteDatabasesCollection.h>
 #include <OsmAndCore/TileSqliteDatabase.h>
 #include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+#include <OsmAndCore/Map/MapAnimator.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -298,6 +299,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::TileSqliteDatabasesCollection)
 	%shared_ptr(OsmAnd::TileSqliteDatabase)
 	%shared_ptr(OsmAnd::SqliteHeightmapTileProvider)
+	%shared_ptr(OsmAnd::MapAnimator)
+	%shared_ptr(OsmAnd::MapAnimator::IAnimation)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -362,6 +365,7 @@ using namespace OsmAnd;
 	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
 	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
+	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::MapAnimator::IAnimation>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -437,6 +441,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IMapRenderer.h>
     %template(MapSymbolInformationList) QList<OsmAnd::IMapRenderer::MapSymbolInformation>;
     %template(MapRendererFramePreparedObservable) OsmAnd::ObservableAs<OsmAnd::IMapRenderer::FramePrepared>;
+    %template(MapRendererTargetChangedObservable) OsmAnd::ObservableAs<OsmAnd::IMapRenderer::TargetChanged>;
     %template(MapRendererStateChangedObservable) OsmAnd::ObservableAs<OsmAnd::IMapRenderer::StateChanged>;
 %include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 %include <OsmAndCore/Map/IMapDataProvider.h>
@@ -486,6 +491,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/TileSqliteDatabasesCollection.h>
 %include <OsmAndCore/TileSqliteDatabase.h>
 %include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+%include <OsmAndCore/Map/MapAnimator.h>
 
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;

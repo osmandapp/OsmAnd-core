@@ -85,7 +85,7 @@ namespace OsmAnd
         
         OSMAND_OBSERVER_CALLABLE(TargetChanged,
             IMapRenderer* mapRenderer);
-        const ObservableAs<IMapRenderer::FramePrepared> targetChangedObservable;
+        const ObservableAs<IMapRenderer::TargetChanged> targetChangedObservable;
 
         virtual void reloadEverything() = 0;
 
