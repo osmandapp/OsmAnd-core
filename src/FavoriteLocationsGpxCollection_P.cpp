@@ -106,12 +106,14 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
     //      version="1.1"
     //      creator="OsmAnd"
     //      xmlns="http://www.topografix.com/GPX/1/1"
+    //      xmlns:osmand="https://osmand.net"
     //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     writer.writeStartElement(QLatin1String("gpx"));
     writer.writeAttribute(QLatin1String("version"), QLatin1String("1.1"));
     writer.writeAttribute(QLatin1String("creator"), QLatin1String("OsmAnd"));
     writer.writeAttribute(QLatin1String("xmlns"), QLatin1String("http://www.topografix.com/GPX/1/1"));
+    writer.writeNamespace(QStringLiteral("https://osmand.net"), QStringLiteral("osmand"));
     writer.writeAttribute(QLatin1String("xmlns:xsi"), QLatin1String("http://www.w3.org/2001/XMLSchema-instance"));
     writer.writeAttribute(QLatin1String("xsi:schemaLocation"), QLatin1String("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
@@ -189,7 +191,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         
         // all other extensions
         for (const auto& extension : rangeOf(item->getExtensions()))
-            writer.writeTextElement(extension.key(), extension.value());
+        {
+            auto k = extension.key();
+            k.replace(QStringLiteral(":"), QStringLiteral("_-_"));
+            writer.writeTextElement(QStringLiteral("osmand:") + k, extension.value());
+        }
 
         // </extensions>
         writer.writeEndElement();
