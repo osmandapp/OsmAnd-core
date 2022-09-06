@@ -152,7 +152,7 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
     double dx = (ix - px) * zoomCoef;
     double dy = (iy - py) * zoomCoef;
 
-    double *pBuffer = static_cast<double *>(CPLMalloc(sizeof(double) * bufferSize));
+    float *pBuffer = static_cast<float *>(CPLMalloc(sizeof(float) * bufferSize));
     GDALRasterIOExtraArg extraArg;
     INIT_RASTERIO_EXTRA_ARG(extraArg);
     extraArg.eResampleAlg = GRIORA_Cubic;
@@ -162,7 +162,7 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
         GF_Read,
         px, py, originMatrixSize, originMatrixSize,
         pBuffer, matrixSize, matrixSize,
-        GDT_Float64,
+        GDT_Float32,
         bandsCount,
         nullptr,
         0,
@@ -191,7 +191,7 @@ bool OsmAnd::GeoTileEvaluator_P::evaluate(
         }
         else
         {
-            auto value = pBuffer[index];
+            double value = pBuffer[index];
             const auto hBand = GDALGetRasterBand(hSourceDS.get(), band);
             
             int ok = false;

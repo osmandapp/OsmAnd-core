@@ -637,7 +637,7 @@ QList<OsmAnd::Ref<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluateBand
     auto rand = QRandomGenerator::global()->generate() % 1000;
     const auto fileName = QString::asprintf("/vsimem/shapeFile%p_%d_%d_%dx%d@%d_contour_%d", this, band, levels.length(), tileBBox31.left(), tileBBox31.top(), zoom, rand);
     std::shared_ptr<GDALDataset> spDataset(
-        driver->Create(qPrintable(fileName), 0, 0, 0, GDT_Float64, NULL),
+        driver->Create(qPrintable(fileName), 0, 0, 0, GDT_Float32, NULL),
         [fileName]
         (auto spDataset)
         {
