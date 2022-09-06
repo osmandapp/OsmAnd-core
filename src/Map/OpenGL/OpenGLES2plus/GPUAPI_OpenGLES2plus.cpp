@@ -1483,7 +1483,7 @@ void OsmAnd::GPUAPI_OpenGLES2plus::preprocessVertexShader(QString& code)
             "precision highp int;                                                                                               ""\n"
             "                                                                                                                   ""\n");
     }
-    else if (glslVersion >= 110)
+    else if (glslVersion >= 100)
     {
         shaderHeader = QStringLiteral(
             // It have been reported that GL_FRAGMENT_PRECISION_HIGH may not be defined in some cases
