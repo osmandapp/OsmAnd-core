@@ -23,7 +23,8 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
     DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/,
+    bool coastlineOnly /*= false*/)
 {
     ObfMapSectionReader_P::loadMapObjects(
         *reader->_p,
@@ -37,7 +38,8 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
         cache,
         outReferencedCacheEntries,
         queryController,
-        metric);
+        metric,
+        coastlineOnly);
 }
 
 OsmAnd::ObfMapSectionReader::DataBlock::DataBlock(

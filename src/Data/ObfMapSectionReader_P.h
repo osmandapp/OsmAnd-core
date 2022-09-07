@@ -102,7 +102,8 @@ namespace OsmAnd
             const FilterReadingByIdFunction filterById,
             const VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController,
-            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
+            bool coastlineOnly);
 
         static void readMapObjectId(
             const ObfReader_P& reader,
@@ -137,7 +138,8 @@ namespace OsmAnd
             DataBlocksCache* cache,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
             const std::shared_ptr<const IQueryController>& queryController,
-            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric,
+            bool coastlineOnly);
 
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfReader_P;

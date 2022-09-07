@@ -113,6 +113,7 @@ namespace OsmAnd
         
         // Geometry information
         bool isArea;
+        bool isOverscaledCoastline;
         QVector< PointI > points31;
         QList< QVector< PointI > > innerPolygonsPoints31;
         AreaI bbox31;
