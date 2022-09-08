@@ -97,7 +97,26 @@ namespace OsmAnd
             QReadWriteLock loadedConditionLock;
             QWaitCondition loadedCondition;
         };
+        struct TileSharedEntry : TiledEntriesCollectionEntryWithState < TileSharedEntry, TileState, TileState::Undefined >
+        {
+            TileSharedEntry(const TiledEntriesCollection<TileSharedEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+                : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
+            {
+            }
+
+            virtual ~TileSharedEntry()
+            {
+                safeUnlink();
+            }
+
+            std::shared_ptr<ObfMapObjectsProvider::Data> dataSharedRef;
+
+            QReadWriteLock loadedConditionLock;
+            QWaitCondition loadedCondition;
+        };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
+        const ZoomLevel _coastlineZoom = ZoomLevel::ZoomLevel13;
+        mutable TiledEntriesCollection<TileSharedEntry> _coastlineReferences;
 
         typedef OsmAnd::Link<ObfMapObjectsProvider_P*> Link;
         std::shared_ptr<Link> _link;

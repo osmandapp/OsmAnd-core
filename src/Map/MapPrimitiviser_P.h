@@ -13,6 +13,7 @@
 #include "MapCommonTypes.h"
 #include "MapPresentationEnvironment.h"
 #include "MapPrimitiviser.h"
+#include "commonOsmAndCore.h"
 
 namespace OsmAnd
 {
@@ -74,11 +75,19 @@ namespace OsmAnd
         static bool polygonizeCoastlines(
             const AreaI area31,
             const ZoomLevel zoom,
-            const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const QList< std::shared_ptr<const MapObject> >& coastlines,
             QList< std::shared_ptr<const MapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
             bool includeBrokenCoastlines);
+        
+        static bool polygonizeCoastlines(
+            const AreaI area31,
+            const ZoomLevel zoom,
+            const QList< std::shared_ptr<const MapObject> >& coastlines,
+            QList< std::shared_ptr<const MapObject> >& outVectorized);
+        
+        static MapDataObject convertToLegacy(const MapObject & coreObj);
+        static const std::shared_ptr<MapObject> convertFromLegacy(const MapDataObject * legacyObj);
 
         static bool buildCoastlinePolygonSegment(
             const AreaI area31,
@@ -204,7 +213,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapObject>& object,
             const QString& genTagVal);
         
-        static bool determineSurfaceType(PointI center, QList< std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType);
+        static OsmAnd::MapSurfaceType determineSurfaceType(AreaI area31, QList< std::shared_ptr<const MapObject> >& coastlines);
 
     public:
         ~MapPrimitiviser_P();

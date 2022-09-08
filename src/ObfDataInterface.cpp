@@ -69,7 +69,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     ObfMapSectionReader::DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
-    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/,
+    bool coastlineOnly /*= false*/)
 {
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
@@ -118,7 +119,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 cache,
                 outReferencedCacheEntries,
                 queryController,
-                metric);
+                metric,
+                coastlineOnly);
             if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
                 if (mergedSurfaceType == MapSurfaceType::Undefined)
@@ -131,7 +133,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
 
     // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
     // read tile from MaxBasemapZoomLevel that covers requested tile
-    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel) && !coastlineOnly)
     {
         const auto& obfInfo = basemapReader->obtainInfo();
 
@@ -165,7 +167,8 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 cache,
                 outReferencedCacheEntries,
                 queryController,
-                metric);
+                metric,
+                false);
 
             // Basemap must always have a surface type defined
             assert(surfaceTypeToMerge != MapSurfaceType::Undefined);

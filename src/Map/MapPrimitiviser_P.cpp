@@ -5,6 +5,7 @@
 #include <proper/future.h>
 #include <set>
 #include <algorithm>
+#include <memory>
 
 #include "QtExtensions.h"
 #include "QtCommon.h"
@@ -23,6 +24,7 @@
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
 #include "Logging.h"
+#include "multipolygons.h"
 
 //#define OSMAND_VERBOSE_MAP_PRIMITIVISER 1
 #if !defined(OSMAND_VERBOSE_MAP_PRIMITIVISER)
@@ -123,14 +125,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
-    
-    //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
-    //{
-    //    int i = 5;
-    //}
-    //////////////////////////////////////////////////////////////////////////
-
     const Context context(owner->environment, zoom);
     const std::shared_ptr<PrimitivisedObjects> primitivisedObjects(new PrimitivisedObjects(
         owner->environment,
@@ -145,6 +139,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > detailedmapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
+    QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
@@ -153,19 +148,16 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (queryController && queryController->isAborted())
             break;
 
-        //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString().contains("74584457"))
-        //{
-        //    /*if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
-        //    {
-        //        const auto t = mapObject->toString();
-        //        int i = 5;
-        //    }*/
-        //    int i = 5;
-        //}
-        //else
-        //    continue;
-        //////////////////////////////////////////////////////////////////////////
+        // Check overscaled coastline objects of 13 zoom
+        if (mapObject->isCoastline)
+        {
+            const auto binaryMapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject);
+            if (binaryMapObject)
+            {
+                extraCoastlineObjects.push_back(mapObject);
+            }
+            continue;
+        }
         
         if(!mapObject->intersectedOrContainedBy(area31) &&
            !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
@@ -215,16 +207,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     if (queryController && queryController->isAborted())
         return nullptr;
 
-    //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(8329, 5465), ZoomLevel14) && zoom == ZoomLevel14)
-    //{
-    //    const auto tl = Utilities::convert31ToLatLon(area31.topLeft);
-    //    const auto br = Utilities::convert31ToLatLon(area31.bottomRight);
-
-    //    int i = 5;
-    //}
-    //////////////////////////////////////////////////////////////////////////
-
     if (metric)
         metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
 
@@ -234,34 +216,34 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
+    const auto detailedLandDataPresent = detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
-    auto shouldAddBasemapCoastlines = true;
+    
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             area31,
             zoom,
-            primitivisedObjects,
             detailedmapCoastlineObjects,
             polygonizedCoastlineObjects,
             basemapCoastlinesPresent,
             true);
-        fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-        shouldAddBasemapCoastlines =
-            (!coastlinesWereAdded && !detailedLandDataPresent) ||
-            zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap);
+        fillEntireArea = !coastlinesWereAdded;
     }
-    else
-    {
-        shouldAddBasemapCoastlines = !detailedLandDataPresent;
-    }
+    
+    bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
+    bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
+                                 && !hasExtraCoastlines
+                                 && !detailedLandDataPresent
+                                 && basemapCoastlinesPresent;
+    
+    shouldAddBasemapCoastlines = shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom;
+    
     if (shouldAddBasemapCoastlines)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             area31,
             zoom,
-            primitivisedObjects,
             basemapCoastlineObjects,
             polygonizedCoastlineObjects,
             false,
@@ -278,15 +260,42 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         const auto center = area31.center();
         assert(area31.contains(center));
         bool isDeterminedSurfaceType = false;
-
-        if (detailedmapCoastlinesPresent)
+        
+        if (hasExtraCoastlines)
         {
-            isDeterminedSurfaceType = determineSurfaceType(center, detailedmapCoastlineObjects, surfaceType);
+            AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel13);
+            MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
+            QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
+            polygonizeCoastlines(
+                bboxZoom13,
+                ZoomLevel::ZoomLevel13,
+                extraCoastlineObjects,
+                polygonizedCoastlines);
+            surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
+            if (surfaceTypeOverscaled != MapSurfaceType::Undefined)
+            {
+                isDeterminedSurfaceType = true;
+                surfaceType = surfaceTypeOverscaled;
+            }
         }
-
+        
         if (!isDeterminedSurfaceType && basemapCoastlinesPresent)
         {
-            determineSurfaceType(center, basemapCoastlineObjects, surfaceType);
+            ZoomLevel basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
+            AreaI bboxBasemap = Utilities::roundBoundingBox31(area31, basemapZoom);
+            QList< std::shared_ptr<const MapObject> > polygonizedCoastlines;
+            MapSurfaceType surfaceTypeBasemap = MapSurfaceType::Undefined;
+            polygonizeCoastlines(
+                bboxBasemap,
+                basemapZoom,
+                basemapCoastlineObjects,
+                polygonizedCoastlines);
+            surfaceTypeBasemap = determineSurfaceType(area31, polygonizedCoastlines);
+            if (surfaceTypeBasemap != MapSurfaceType::Undefined)
+            {
+                isDeterminedSurfaceType = true;
+                surfaceType = surfaceTypeBasemap;
+            }
         }
     }
 
@@ -425,79 +434,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
-bool OsmAnd::MapPrimitiviser_P::determineSurfaceType(PointI center, QList<std::shared_ptr<const MapObject> > & coastlineObjects, OsmAnd::MapSurfaceType & surfaceType)
-{
-    std::shared_ptr<const MapObject> neareastCoastlineMapObject;
-    PointI nearestCoastlineSegment0;
-    PointI nearestCoastlineSegment1;
-    PointI mCenter = center;
-    double squaredMinDistance = std::numeric_limits<double>::max();
-
-    for (const auto &coastlineMapObject : constOf(coastlineObjects))
-    {
-        int segmentIndex0 = -1;
-        int segmentIndex1 = -1;
-        const auto squaredDistance = Utilities::minimalSquaredDistanceToLineSegmentFromPoint(
-            coastlineMapObject->points31,
-            center,
-            &segmentIndex0,
-            &segmentIndex1);
-        if (segmentIndex0 != -1 && segmentIndex1 != -1 && coastlineMapObject->points31.size() > 1)
-        {
-            const auto pPoints = coastlineMapObject->points31.constData();
-            if (squaredDistance <= squaredMinDistance)
-            {
-                if (segmentIndex0 == segmentIndex1)
-                {
-                    if (segmentIndex0 == 0)
-                    {
-                        nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
-                        mCenter = pPoints[segmentIndex0];
-                        if (!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
-                        {
-                            nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                            mCenter = center;
-                        }
-                    }
-                    else if (segmentIndex0 == coastlineMapObject->points31.size() - 1)
-                    {
-                        nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
-                        mCenter = pPoints[segmentIndex0];
-                        if (!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
-                        {
-                            nearestCoastlineSegment1 = pPoints[segmentIndex1];
-                            mCenter = center;
-                        }
-                    }
-                    else
-                    {
-                        nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
-                        nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
-                        mCenter = pPoints[segmentIndex0];
-                    }
-                }
-                else
-                {
-                    nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                    nearestCoastlineSegment1 = pPoints[segmentIndex1];
-                    mCenter = center;
-                }
-                squaredMinDistance = squaredDistance;
-                neareastCoastlineMapObject = coastlineMapObject;
-            }
-        }
-    }
-    // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment
-    // Rule: Water is always on the right along the direction of coastline segment.
-    if (neareastCoastlineMapObject)
-    {
-        const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
-        surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
-        return true;
-    }
-    return false;
-}
-
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseWithoutSurface(
     const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
@@ -620,7 +556,6 @@ OsmAnd::AreaI OsmAnd::MapPrimitiviser_P::alignAreaForCoastlines(const AreaI& are
 bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
     const AreaI area31,
     const ZoomLevel zoom,
-    const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const QList< std::shared_ptr<const MapObject> >& coastlines,
     QList< std::shared_ptr<const MapObject> >& outVectorized,
     bool abortIfBrokenCoastlinesExist,
@@ -955,7 +890,7 @@ void OsmAnd::MapPrimitiviser_P::appendCoastlinePolygons(
     if (polyline.isEmpty())
         return;
 
-    if (polyline.first() == polyline.last())
+    if (polyline.first() == polyline.last() && polyline.size() > 2)
     {
         closedPolygons.push_back(polyline);
         return;
@@ -2955,4 +2890,142 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
     defaultSymbolPathSpacing = env->getDefaultSymbolPathSpacing();
     defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
+}
+
+bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
+    const AreaI area31,
+    const ZoomLevel zoom,
+    const QList< std::shared_ptr<const MapObject> >& coastlines,
+    QList< std::shared_ptr<const MapObject> >& outVectorized)
+{
+    std::vector<FoundMapDataObject> legacyCoastlineObjects;
+    QList<shared_ptr<MapDataObject>> legacyObjectsHolder;
+    for (const auto & c : constOf(coastlines))
+    {
+        auto dataObj = std::make_shared<MapDataObject>(convertToLegacy(*c));
+        legacyObjectsHolder.push_back(dataObj);
+        FoundMapDataObject legacyObj(dataObj.get());
+        legacyCoastlineObjects.push_back(legacyObj);
+    }
+    std::vector<FoundMapDataObject> legacyCoastlineObjectsResult;
+    bool processed = processCoastlines(legacyCoastlineObjects, (int) area31.topLeft.x, (int) area31.bottomRight.x, (int) area31.bottomRight.y,
+                      (int) area31.topLeft.y, static_cast<int>(zoom), false, false, legacyCoastlineObjectsResult);
+    if (processed)
+    {
+        for (const auto & legacyCoastline : constOf(legacyCoastlineObjectsResult))
+        {
+            outVectorized.push_back(convertFromLegacy(legacyCoastline.obj));
+        }
+    }
+    return processed;
+}
+
+MapDataObject OsmAnd::MapPrimitiviser_P::convertToLegacy(const MapObject & coreObj)
+{
+    MapDataObject legacyObj;
+    for (const auto & p : coreObj.points31)
+    {
+        legacyObj.points.push_back(std::make_pair(p.x, p.y));
+    }
+    for (const uint32_t & a : coreObj.attributeIds)
+    {
+        auto tagVal = coreObj.attributeMapping->decodeMap[a];
+        legacyObj.types.push_back(std::make_pair(tagVal.tag.toStdString(), tagVal.value.toStdString()));
+    }
+    for (const uint32_t & a : coreObj.additionalAttributeIds)
+    {
+        auto tagVal = coreObj.attributeMapping->decodeMap[a];
+        legacyObj.additionalTypes.push_back(std::make_pair(tagVal.tag.toStdString(), tagVal.value.toStdString()));
+    }
+    legacyObj.polygonInnerCoordinates.reserve(coreObj.innerPolygonsPoints31.size());
+    for (const auto & innerVector : coreObj.innerPolygonsPoints31)
+    {
+        std::vector<pair<int, int> > coordinates;
+        for (const auto & c : innerVector)
+        {
+            coordinates.push_back(std::make_pair(c.x, c.y));
+        }
+        legacyObj.polygonInnerCoordinates.push_back(coordinates);
+    }
+    legacyObj.area = coreObj.isArea;
+    return legacyObj;
+}
+
+const std::shared_ptr<OsmAnd::MapObject> OsmAnd::MapPrimitiviser_P::convertFromLegacy(const MapDataObject * legacyObj)
+{
+    const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
+    for (auto const & point : constOf(legacyObj->points))
+    {
+        PointI p(point.first, point.second);
+        mapObject->points31.push_back(p);
+    }
+    mapObject->isArea = legacyObj->area;
+    for (const auto & t : constOf(legacyObj->types))
+    {
+        if (t.first == "natural")
+        {
+            if (t.second == "coastline")
+                mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
+            if (t.second == "land")
+                mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
+            if (t.second == "coastline_line")
+                mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineLineAttributeId);
+            if (t.second == "coastline_broken")
+                mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineBrokenAttributeId);
+        }
+    }
+    return mapObject;
+}
+
+
+// Try to draw a line y = center.y (line through of the center of area) and find intersection with closest coastline
+OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI area31, QList< std::shared_ptr<const MapObject> >& coastlines)
+{
+    const PointI center = area31.center();
+    int distByX = INT_MAX;
+    std::pair<PointI, PointI> foundSegment;
+    bool isOcean = false;
+    OsmAnd::MapSurfaceType surfaceType = MapSurfaceType::Undefined;
+    for (const auto & mapObj : constOf(coastlines))
+    {
+        if (mapObj->points31.size() < 2)
+            continue;
+        
+        for (int i = 0; i < mapObj->points31.size() - 1; i++)
+        {
+            const PointI & start = mapObj->points31.at(i);
+            const PointI & end = mapObj->points31.at(i + 1);
+            int intersectX = ray_intersect_x(start.x, start.y, end.x, end.y, center.y);
+            if (intersectX != INT_MAX && intersectX != INT_MIN)
+            {
+                if (abs(intersectX - center.x) < distByX)
+                {
+                    // previous segment further than found
+                    distByX = abs(intersectX - center.x);
+                    
+                    //water is always in right side
+                    if ((intersectX < center.x && end.x > center.x) || (intersectX > center.x && end.x < center.x))
+                    {
+                        //the excluding when coastline is too big and "end" point in other quater
+                        isOcean = (start.y - center.y > 0 && start.x - center.x < 0) || (start.y - center.y < 0 && start.x - center.x > 0);
+                    }
+                    else
+                    {
+                        //(end.y - center.y) * (end.x - center.x) - overflow INT
+                        isOcean = (end.y - center.y < 0 && end.x - center.x < 0) || (end.y - center.y > 0 && end.x - center.x > 0);
+                    }
+                    
+                    if (isOcean)
+                    {
+                        surfaceType = MapSurfaceType::FullWater;
+                    }
+                    else
+                    {
+                        surfaceType = MapSurfaceType::FullLand;
+                    }
+                }
+            }
+        }
+    }
+    return surfaceType;
 }

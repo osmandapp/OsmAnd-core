@@ -50,7 +50,8 @@ namespace OsmAnd
             ObfMapSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
-            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr,
+            bool coastlineOnly = false);
 
         bool loadRoads(
             const RoutingDataLevel dataLevel,

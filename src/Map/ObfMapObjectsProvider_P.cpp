@@ -68,6 +68,52 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 #endif
 
     std::shared_ptr<TileEntry> tileEntry;
+    std::shared_ptr<TileSharedEntry> coastlineTileEntry;
+    std::shared_ptr<ObfMapObjectsProvider::Data> coastlineTile = nullptr;
+    TileId overscaledTileId;
+    
+    if (request.zoom > _coastlineZoom)
+    {
+        for (;;)
+        {
+            int zoomShift = request.zoom - _coastlineZoom;
+            overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
+            _coastlineReferences.obtainOrAllocateEntry(coastlineTileEntry, overscaledTileId, _coastlineZoom,
+                []
+                (const TiledEntriesCollection<TileSharedEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileSharedEntry*
+                {
+                    return new TileSharedEntry(collection, tileId, zoom);
+                });
+            
+            // If state is "Undefined", change it to "Loading" and proceed with loading
+            if (coastlineTileEntry->setStateIf(TileState::Undefined, TileState::Loading))
+                break;
+            
+            // In case tile entry is being loaded, wait until it will finish loading
+            if (coastlineTileEntry->getState() == TileState::Loading)
+            {
+                QReadLocker scopedLcoker(&coastlineTileEntry->loadedConditionLock);
+
+                // If tile is in 'Loading' state, wait until it will become 'Loaded'
+                while (coastlineTileEntry->getState() != TileState::Loaded)
+                    REPEAT_UNTIL(coastlineTileEntry->loadedCondition.wait(&coastlineTileEntry->loadedConditionLock));
+            }
+            
+            // Try to lock coastline tile reference
+            coastlineTile = coastlineTileEntry->dataSharedRef;
+            
+            // Otherwise consider this coastline tile entry as expired
+            if (!coastlineTile)
+            {
+                _coastlineReferences.removeEntry(overscaledTileId, _coastlineZoom);
+                coastlineTileEntry.reset();
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
 
     for (;;)
     {
@@ -133,6 +179,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     // General:
     auto tileSurfaceType = MapSurfaceType::Undefined;
+    auto coastlineTileSurfaceType = MapSurfaceType::Undefined;
 
     // BinaryMapObjects:
     QList< std::shared_ptr< const ObfMapSectionReader::DataBlock > > referencedBinaryMapObjectsDataBlocks;
@@ -382,6 +429,30 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             loadMapObjectsMetric.get(),
             loadRoadsMetric.get());
     }
+    
+    QList< std::shared_ptr<const BinaryMapObject> > loadedCoastlineMapObjects;
+    if (request.zoom > _coastlineZoom && !coastlineTile)
+    {
+        const auto coastlineTileBBox31 = Utilities::tileBoundingBox31(overscaledTileId, _coastlineZoom);
+        Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
+        if (metric)
+        {
+            loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
+            metric->submetrics.push_back(loadMapObjectsMetric);
+        }
+        dataInterface->loadBinaryMapObjects(
+            &loadedCoastlineMapObjects,
+            &coastlineTileSurfaceType,
+            _coastlineZoom,
+            &coastlineTileBBox31,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,// query queryController
+            nullptr,
+            true// coastlineOnly
+        );
+    }
 
     // Process loaded-and-shared map objects (both binary and roads)
     for (auto& binaryMapObject : loadedBinaryMapObjects)
@@ -454,6 +525,30 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     if (metric)
         metric->elapsedTimeForRead += totalReadTimeStopwatch.elapsed();
+    
+    if (request.zoom > _coastlineZoom && !coastlineTile)
+    {
+        QList< std::shared_ptr<const MapObject> > coastlineMapObjects;
+        coastlineMapObjects.reserve(loadedCoastlineMapObjects.size());
+        for (const auto& coastline : constOf(loadedCoastlineMapObjects))
+            coastlineMapObjects.push_back(coastline);
+        const std::shared_ptr<IMapObjectsProvider::Data> newCoastlineTile(new IMapObjectsProvider::Data(
+            overscaledTileId,
+            _coastlineZoom,
+            coastlineTileSurfaceType,
+            coastlineMapObjects,
+            nullptr));
+        coastlineTile = newCoastlineTile;
+        coastlineTileEntry->dataSharedRef = coastlineTile;
+        coastlineTileEntry->setState(TileState::Loaded);
+       
+        // Notify that tile has been loaded
+        {
+            QWriteLocker scopedLcoker(&coastlineTileEntry->loadedConditionLock);
+            coastlineTileEntry->loadedCondition.wakeAll();
+        }
+    }
+    //int costlineTileSize = coastlineTile ? coastlineTile->mapObjects.size() : 0;
 
     // Prepare data for the tile
     const auto sharedMapObjectsCount =
@@ -492,6 +587,16 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     // Publish new tile
     outMapObjects = newTile;
+    
+    if (coastlineTile)
+    {
+        for (const std::shared_ptr<const MapObject> & coastline : constOf(coastlineTile->mapObjects))
+        {
+            auto zoomMin = coastline->getMinZoomLevel();
+            auto zoomMax = coastline->getMaxZoomLevel();
+            outMapObjects->mapObjects.push_back(coastline);
+        }
+    }
 
     // Store weak reference to new tile and mark it as 'Loaded'
     tileEntry->dataWeakRef = newTile;
