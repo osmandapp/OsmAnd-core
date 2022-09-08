@@ -214,7 +214,6 @@ namespace OsmAnd
             const QString& genTagVal);
         
         static OsmAnd::MapSurfaceType determineSurfaceType(AreaI area31, QList< std::shared_ptr<const MapObject> >& coastlines);
-        static void debugCoastlines(AreaI bbox, AreaI bbox2, QList< std::shared_ptr<const MapObject> >& coastlines, QList< std::shared_ptr<const MapObject> >& polygonized);
 
     public:
         ~MapPrimitiviser_P();

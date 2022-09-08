@@ -114,54 +114,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitivisedObjects;
 }
 
-void OsmAnd::MapPrimitiviser_P::debugCoastlines(AreaI bbox, AreaI bbox2, QList< std::shared_ptr<const MapObject> >& coastlines,
-                                                QList< std::shared_ptr<const MapObject> >& polygonized)
-{
-    LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox.topLeft.y),
-               Utilities::get31LongitudeX(bbox.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox.topLeft.y),
-               Utilities::get31LongitudeX(bbox.bottomRight.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox.bottomRight.y),
-               Utilities::get31LongitudeX(bbox.bottomRight.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox.bottomRight.y),
-               Utilities::get31LongitudeX(bbox.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox.topLeft.y),
-               Utilities::get31LongitudeX(bbox.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox2.topLeft.y),
-               Utilities::get31LongitudeX(bbox2.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox2.topLeft.y),
-               Utilities::get31LongitudeX(bbox2.bottomRight.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox2.bottomRight.y),
-               Utilities::get31LongitudeX(bbox2.bottomRight.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox2.bottomRight.y),
-               Utilities::get31LongitudeX(bbox2.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "%f,%f", Utilities::get31LatitudeY(bbox2.topLeft.y),
-               Utilities::get31LongitudeX(bbox2.topLeft.x));
-    LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-    for (auto obj : coastlines)
-    {
-         for (auto point : obj->points31)
-         {
-             double lat = Utilities::get31LatitudeY(point.y);
-             double lon = Utilities::get31LongitudeX(point.x);
-             LogPrintf(LogSeverityLevel::Info, "%f,%f", lat, lon);
-         }
-     }
-     LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-     for (auto obj : polygonized)
-     {
-         LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-         for (auto point : obj->points31)
-         {
-             double lat = Utilities::get31LatitudeY(point.y);
-             double lon = Utilities::get31LongitudeX(point.x);
-             LogPrintf(LogSeverityLevel::Info, "%f,%f", lat, lon);
-         }
-     }
-}
-
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseWithSurface(
     const AreaI area31,
     const PointI areaSizeInPixels,
@@ -267,10 +219,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const auto detailedLandDataPresent = detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
     
-    //debug
-    double lat = Utilities::get31LatitudeY(area31.topLeft.y);
-    double lon = Utilities::get31LongitudeX(area31.topLeft.x);
-    
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
@@ -300,9 +248,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             polygonizedCoastlineObjects,
             false,
             true);
-        //ZoomLevel basemapZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-        //AreaI bboxBasemap = Utilities::roundBoundingBox31(area31, basemapZoom);
-        //debugCoastlines(bboxBasemap, area31, basemapCoastlineObjects, polygonizedCoastlineObjects);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
     }
 
@@ -326,7 +271,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 ZoomLevel::ZoomLevel13,
                 detailedOverscaledCoastlines,
                 polygonizedCoastlines);
-            //debugCoastlines(bboxZoom13, area31, detailedOverscaledCoastlines, polygonizedCoastlines);
             surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
             if (surfaceTypeOverscaled != MapSurfaceType::Undefined)
             {
@@ -346,7 +290,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 basemapZoom,
                 basemapCoastlineObjects,
                 polygonizedCoastlines);
-            //debugCoastlines(bboxBasemap, area31, basemapCoastlineObjects, polygonizedCoastlines);
             surfaceTypeBasemap = determineSurfaceType(area31, polygonizedCoastlines);
             if (surfaceTypeBasemap != MapSurfaceType::Undefined)
             {
@@ -3035,7 +2978,7 @@ const std::shared_ptr<OsmAnd::MapObject> OsmAnd::MapPrimitiviser_P::convertFromL
 }
 
 
-// Try to draw a ray from the center of area to the right (x = INT_MAX) and find intersection with closest coastline
+// Try to draw a line y = center.y (line through of the center of area) and find intersection with closest coastline
 OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI area31, QList< std::shared_ptr<const MapObject> >& coastlines)
 {
     const PointI center = area31.center();
@@ -3055,30 +2998,23 @@ OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI are
             int intersectX = ray_intersect_x(start.x, start.y, end.x, end.y, center.y);
             if (intersectX != INT_MAX && intersectX != INT_MIN)
             {
-                /*LogPrintf(LogSeverityLevel::Info, "INTERSECT");
-                double lat = Utilities::get31LatitudeY(center.y);
-                double lon = Utilities::get31LongitudeX(intersectX);
-                
-                double lat1 = Utilities::get31LatitudeY(start.y);
-                double lon1 = Utilities::get31LongitudeX(start.x);
-                double lat2 = Utilities::get31LatitudeY(end.y);
-                double lon2 = Utilities::get31LongitudeX(end.x);
-                double lat3 = Utilities::get31LatitudeY(center.y);
-                double lon3 = Utilities::get31LongitudeX(center.x);
-                LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-                LogPrintf(LogSeverityLevel::Info, "%f,%f", lat1, lon1);
-                LogPrintf(LogSeverityLevel::Info, "%f,%f", lat2, lon2);
-                LogPrintf(LogSeverityLevel::Info, "latitude,longitude");
-                LogPrintf(LogSeverityLevel::Info, "%f,%f", lat, lon);
-                LogPrintf(LogSeverityLevel::Info, "%f,%f", lat3, lon3);*/
-                
                 if (abs(intersectX - center.x) < distByX)
                 {
                     // previous segment further than found
                     distByX = abs(intersectX - center.x);
+                    
                     //water is always in right side
-                    //(end.y - center.y) * (end.x - center.x) - overflow INT
-                    isOcean = (end.y - center.y < 0 && end.x - center.x < 0) || (end.y - center.y > 0 && end.x - center.x > 0);
+                    if ((intersectX < center.x && end.x > center.x) || (intersectX > center.x && end.x < center.x))
+                    {
+                        //the excluding when coastline is too big and "end" point in other quater
+                        isOcean = (start.y - center.y > 0 && start.x - center.x < 0) || (start.y - center.y < 0 && start.x - center.x > 0);
+                    }
+                    else
+                    {
+                        //(end.y - center.y) * (end.x - center.x) - overflow INT
+                        isOcean = (end.y - center.y < 0 && end.x - center.x < 0) || (end.y - center.y > 0 && end.x - center.x > 0);
+                    }
+                    
                     if (isOcean)
                     {
                         surfaceType = MapSurfaceType::FullWater;
