@@ -139,7 +139,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > detailedmapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
-    QList< std::shared_ptr<const MapObject> > detailedOverscaledCoastlines;
+    QList< std::shared_ptr<const MapObject> > extraCoastlineObjects;
     bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     int contourLinesObjectsCount = 0;
@@ -149,12 +149,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             break;
 
         // Check overscaled coastline objects of 13 zoom
-        if (mapObject->isOverscaledCoastline)
+        if (mapObject->isCoastline)
         {
             const auto binaryMapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject);
             if (binaryMapObject)
             {
-                detailedOverscaledCoastlines.push_back(mapObject);
+                extraCoastlineObjects.push_back(mapObject);
             }
             continue;
         }
@@ -231,9 +231,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         fillEntireArea = !coastlinesWereAdded;
     }
     
-    bool hasOverscaledDetailCoastline = !detailedOverscaledCoastlines.isEmpty();
+    bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
-                                 && !hasOverscaledDetailCoastline
+                                 && !hasExtraCoastlines
                                  && !detailedLandDataPresent
                                  && basemapCoastlinesPresent;
     
@@ -261,7 +261,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         assert(area31.contains(center));
         bool isDeterminedSurfaceType = false;
         
-        if (hasOverscaledDetailCoastline)
+        if (hasExtraCoastlines)
         {
             AreaI bboxZoom13 = Utilities::roundBoundingBox31(area31, ZoomLevel::ZoomLevel13);
             MapSurfaceType surfaceTypeOverscaled = MapSurfaceType::Undefined;
@@ -269,7 +269,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             polygonizeCoastlines(
                 bboxZoom13,
                 ZoomLevel::ZoomLevel13,
-                detailedOverscaledCoastlines,
+                extraCoastlineObjects,
                 polygonizedCoastlines);
             surfaceTypeOverscaled = determineSurfaceType(area31, polygonizedCoastlines);
             if (surfaceTypeOverscaled != MapSurfaceType::Undefined)
@@ -2898,21 +2898,21 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
     const QList< std::shared_ptr<const MapObject> >& coastlines,
     QList< std::shared_ptr<const MapObject> >& outVectorized)
 {
-    std::vector<FoundMapDataObject> coastLinesVector;
-    QList<shared_ptr<MapDataObject>> sharedDataList;
+    std::vector<FoundMapDataObject> legacyCoastlineObjects;
+    QList<shared_ptr<MapDataObject>> legacyObjectsHolder;
     for (const auto & c : constOf(coastlines))
     {
         auto dataObj = std::make_shared<MapDataObject>(convertToLegacy(*c));
-        sharedDataList.push_back(dataObj);
+        legacyObjectsHolder.push_back(dataObj);
         FoundMapDataObject legacyObj(dataObj.get());
-        coastLinesVector.push_back(legacyObj);
+        legacyCoastlineObjects.push_back(legacyObj);
     }
-    std::vector<FoundMapDataObject> legacyCoastlineVector;
-    bool processed = processCoastlines(coastLinesVector, (int) area31.topLeft.x, (int) area31.bottomRight.x, (int) area31.bottomRight.y,
-                      (int) area31.topLeft.y, static_cast<int>(zoom), false, false, legacyCoastlineVector);
+    std::vector<FoundMapDataObject> legacyCoastlineObjectsResult;
+    bool processed = processCoastlines(legacyCoastlineObjects, (int) area31.topLeft.x, (int) area31.bottomRight.x, (int) area31.bottomRight.y,
+                      (int) area31.topLeft.y, static_cast<int>(zoom), false, false, legacyCoastlineObjectsResult);
     if (processed)
     {
-        for (const auto & legacyCoastline : constOf(legacyCoastlineVector))
+        for (const auto & legacyCoastline : constOf(legacyCoastlineObjectsResult))
         {
             outVectorized.push_back(convertFromLegacy(legacyCoastline.obj));
         }

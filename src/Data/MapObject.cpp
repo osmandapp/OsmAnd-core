@@ -29,7 +29,7 @@ OsmAnd::MapObject::MapObject()
     , isArea(false)
     , labelX(0)
     , labelY(0)
-    , isOverscaledCoastline(false)
+    , isCoastline(false)
 {
 }
 

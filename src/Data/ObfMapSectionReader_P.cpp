@@ -586,7 +586,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 if (coastlineOnly)
                 {
                     if (isCoastline(mapObject))
-                        mapObject->isOverscaledCoastline = true;
+                        mapObject->isCoastline = true;
                     else
                         break;
                 }
