@@ -662,6 +662,39 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         });
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
+    const MapRendererState& state, const PointI& screenPoint, PointD& position) const
+{
+    if (screenPoint.x < 0 || screenPoint.y < 0)
+        return false;
+    const auto nearInWorld = glm::unProject(
+        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport);
+    const auto farInWorld = glm::unProject(
+        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport);
+    const auto rayD = glm::normalize(farInWorld - nearInWorld);
+
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+    float distance;
+    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
+    if (!intersects || distance > internalState.zSkyplane - _zNear)
+        return false;
+
+    auto intersection = nearInWorld + distance*rayD;
+    intersection /= static_cast<float>(TileSize3D);
+
+    position.x = intersection.x;
+    position.y = intersection.z;
+
+    return true;
+}
+
 OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
 {
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
@@ -693,41 +726,55 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     bool ok = updateInternalState(internalState, state, *getConfiguration());
     if (!ok)
         return false;
-
-    const auto nearInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
-    const auto farInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
-    const auto rayD = glm::normalize(farInWorld - nearInWorld);
-
-    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
-    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
-    float distance;
-    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
-    if (!intersects)
+    
+    PointD position;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    if (!ok)
         return false;
 
-    auto intersection = nearInWorld + distance*rayD;
-    intersection /= static_cast<float>(TileSize3D);
+    position += internalState.targetInTileOffsetN;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
+    position *= tileSize31;
 
-    double x = intersection.x + internalState.targetInTileOffsetN.x;
-    double y = intersection.z + internalState.targetInTileOffsetN.y;
+    location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
+    location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
+    const PointI& screenPoint, const PointI& location31, PointI& target31) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    PointD position;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    if (!ok)
+        return false;
 
     const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
     const auto tileSize31 = (1u << zoomLevelDiff);
-    x *= tileSize31;
-    y *= tileSize31;
+    position *= tileSize31;
 
-    location.x = static_cast<int64_t>(x)+(internalState.targetTileId.x << zoomLevelDiff);
-    location.y = static_cast<int64_t>(y)+(internalState.targetTileId.y << zoomLevelDiff);
+    PointI64 target;
+    target.x = static_cast<int64_t>(location31.x) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.x);
+    target.y = static_cast<int64_t>(location31.y) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.y);
+
+    target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
+    PointI& target31) const
+{
+    const auto state = getState();
+
+    return getNewTargetByScreenPoint(state, screenPoint, location31, target31);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
