@@ -229,7 +229,7 @@ void OsmAnd::MapAnimator_P::cancelAllAnimations()
     _animationsByKey.clear();
 }
 
-void OsmAnd::MapAnimator_P::update(const float timePassed)
+bool OsmAnd::MapAnimator_P::update(const float timePassed)
 {
     if (_isPaused)
     {
@@ -238,7 +238,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
             _renderer->resumeSymbolsUpdate();
             _rendererSymbolsUpdateSuspended = false;
         }
-        return;
+        return true;
     }
 
     QWriteLocker scopedLocker(&_animationsCollectionLock);
@@ -263,6 +263,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
 
     // Perform all animations
     auto itAnimations = mutableIteratorOf(_animationsByKey);
+    int pausedAnimationsCount = 0;
     while(itAnimations.hasNext())
     {
         auto& animations = itAnimations.next().value();
@@ -272,15 +273,21 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
             while (itAnimation.hasNext())
             {
                 const auto& animation = itAnimation.next();
-
-                if (!animation->isPaused() && animation->process(timePassed))
+                bool paused = animation->isPaused();
+                if (!paused && animation->process(timePassed))
                     itAnimation.remove();
+
+                if (paused)
+                    pausedAnimationsCount++;
             }
         }
         
         if (animations.isEmpty())
             itAnimations.remove();
     }
+    // Return true to indicate that processing has finished
+    int animationsCount = _animationsByKey.size();
+    return animationsCount == 0 || animationsCount == pausedAnimationsCount;
 }
 
 void OsmAnd::MapAnimator_P::animateZoomBy(

@@ -101,9 +101,9 @@ void OsmAnd::MapAnimator::cancelAllAnimations()
     _p->cancelAllAnimations();
 }
 
-void OsmAnd::MapAnimator::update(const float timePassed)
+bool OsmAnd::MapAnimator::update(const float timePassed)
 {
-    _p->update(timePassed);
+    return _p->update(timePassed);
 }
 
 void OsmAnd::MapAnimator::animateZoomBy(

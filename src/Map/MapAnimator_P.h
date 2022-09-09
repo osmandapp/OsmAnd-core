@@ -621,7 +621,7 @@ namespace OsmAnd
         QList< std::shared_ptr<const IAnimation> > getAllAnimations() const;
         void cancelAllAnimations();
 
-        void update(const float timePassed);
+        bool update(const float timePassed);
 
         void animateZoomBy(
             const float deltaValue,
