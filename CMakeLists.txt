@@ -176,7 +176,13 @@ file(GLOB legacy_shared_sources
 
 set(legacy_shared_dirs_public
 	"${CORE_LEGACY}/native/src"
+	"${CORE_LEGACY}/native/include"
 )
+
+file(GLOB common_legacy_sources
+		"${LEGACY_SRC}/multipolygons.h"
+		"${LEGACY_SRC}/multipolygons.cpp"
+	)
 
 set(target_legacy_shared_public_includes
 	${legacy_shared_dirs_public}
@@ -192,8 +198,6 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/binaryRoutePlanner.cpp"
 		"${LEGACY_SRC}/commonOsmAndCore.h"
 		"${LEGACY_SRC}/common.cpp"
-		"${LEGACY_SRC}/multipolygons.h"
-		"${LEGACY_SRC}/multipolygons.cpp"
 		"${LEGACY_SRC}/ElapsedTimer.h"
 		"${LEGACY_SRC}/ElapsedTimer.cpp"
 		"${LEGACY_SRC}/generalRouter.h"
@@ -299,6 +303,7 @@ set(merged_sources
 	${target_specific_sources}
 	${legacy_shared_sources}
 	${legacy_sources}
+	${common_legacy_sources}
 )
 set(merged_dependencies
 	skia_static
