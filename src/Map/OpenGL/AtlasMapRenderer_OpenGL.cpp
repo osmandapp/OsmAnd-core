@@ -662,6 +662,80 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         });
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
+    const MapRendererState& state, const PointI& screenPoint, PointD& position, const float height /*=0.0f*/) const
+{
+    if (screenPoint.x < 0 || screenPoint.y < 0)
+        return false;
+    const auto nearInWorld = glm::unProject(
+        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport);
+    const auto farInWorld = glm::unProject(
+        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport);
+    const auto rayD = glm::normalize(farInWorld - nearInWorld);
+
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+    float distance;
+    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
+    if (!intersects || distance > internalState.zSkyplane - _zNear)
+        return false;
+
+    auto intersection = nearInWorld + distance*rayD;
+    auto pointOnPlane = intersection.xz();
+
+    if (height != 0.0f)
+    {
+        auto pointOffset = glm::normalize(rayD.xz());
+        const auto offsetLength = height * qTan(qAcos(-rayD.y));
+        pointOffset *= offsetLength;
+        pointOnPlane -= pointOffset;
+    }
+
+    position = pointOnPlane / static_cast<float>(TileSize3D);
+
+    return true;
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_OpenGL::captureElevationDataResource(
+    const MapRendererState& state, TileId normalizedTileId, ZoomLevel zoomLevel,
+    std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
+{
+    if (!state.elevationDataProvider)
+        return nullptr;
+
+    const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, state.elevationDataProvider);
+    const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+    // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+    std::shared_ptr<MapRendererBaseTiledResource> resource_;
+    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
+    {
+        const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
+
+        // Check state and obtain GPU resource
+        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        {
+            // Capture GPU resource
+            auto gpuResource = resource->resourceInGPU;
+            if (pOutSource) {
+                *pOutSource = resource->sourceData;
+            }
+
+            resource->setState(MapRendererResourceState::Uploaded);
+
+            return gpuResource;
+        }
+    }
+
+    return nullptr;
+}
+
 OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
 {
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
@@ -693,41 +767,90 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     bool ok = updateInternalState(internalState, state, *getConfiguration());
     if (!ok)
         return false;
-
-    const auto nearInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
-    const auto farInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
-    const auto rayD = glm::normalize(farInWorld - nearInWorld);
-
-    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
-    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
-    float distance;
-    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
-    if (!intersects)
+    
+    PointD position;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    if (!ok)
         return false;
 
-    auto intersection = nearInWorld + distance*rayD;
-    intersection /= static_cast<float>(TileSize3D);
+    position += internalState.targetInTileOffsetN;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
+    position *= tileSize31;
 
-    double x = intersection.x + internalState.targetInTileOffsetN.x;
-    double y = intersection.z + internalState.targetInTileOffsetN.y;
+    location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
+    location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
+    const PointI& screenPoint, const PointI& location31, PointI& target31, const float height /*=0.0f*/) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    PointD position;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height);
+    if (!ok)
+        return false;
 
     const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
     const auto tileSize31 = (1u << zoomLevelDiff);
-    x *= tileSize31;
-    y *= tileSize31;
+    position *= tileSize31;
 
-    location.x = static_cast<int64_t>(x)+(internalState.targetTileId.x << zoomLevelDiff);
-    location.y = static_cast<int64_t>(y)+(internalState.targetTileId.y << zoomLevelDiff);
+    PointI64 target;
+    target.x = static_cast<int64_t>(location31.x) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.x);
+    target.y = static_cast<int64_t>(location31.y) + (1ull << ZoomLevel::MaxZoomLevel) - static_cast<int64_t>(position.y);
+
+    target31 = Utilities::normalizeCoordinates(target, ZoomLevel31);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
+    PointI& target31, const float height /*=0.0f*/) const
+{
+    const auto state = getState();
+
+    return getNewTargetByScreenPoint(state, screenPoint, location31, target31, height);
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const MapRendererState& state,
+    const PointI& location31_) const
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+
+    // Get elevation data
+    float height = 0.0f;
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
+    {
+        float elevationInMeters = 0.0f;
+        if (elevationData->getValue(offsetInTileN, elevationInMeters))
+        {
+            const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
+
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+            const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+
+            height = static_cast<float>((scaledElevationInMeters / metersPerUnit) * state.elevationConfiguration.zScaleFactor);
+        }
+    }   
+    
+    return height;
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const PointI& location31) const
+{
+    const auto state = getState();
+
+    return getHeightOfLocation(state, location31);
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const

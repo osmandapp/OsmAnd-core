@@ -6,6 +6,10 @@ OsmAnd::MapRendererState::MapRendererState()
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , fixedPixel(-1, -1)
+    , fixedLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , fixedHeight(0.0f)
+    , fixedZoomLevel(MinZoomLevel)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
     , visualZoomShift(0.0f)
@@ -28,6 +32,10 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.azimuth = azimuth;
     mapState.elevationAngle = elevationAngle;
     mapState.target31 = target31;
+    mapState.fixedPixel = fixedPixel;
+    mapState.fixedLocation31 = fixedLocation31;
+    mapState.fixedHeight = fixedHeight;
+    mapState.fixedZoomLevel = fixedZoomLevel;
     mapState.zoomLevel = zoomLevel;
     mapState.visualZoom = visualZoom;
     mapState.visualZoomShift = visualZoomShift;
@@ -46,6 +54,10 @@ OsmAnd::MapState::MapState()
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , fixedPixel(-1, -1)
+    , fixedLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , fixedHeight(0.0f)
+    , fixedZoomLevel(MinZoomLevel)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
     , visualZoomShift(0.0f)
