@@ -39,6 +39,7 @@
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
 {
+    _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage() = default;
@@ -48,7 +49,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     Stopwatch stopwatch(metric != nullptr);
 
     ScreenQuadTree intersections;
-    if (!obtainRenderableSymbols(renderableSymbols, intersections, metric))
+    bool forceSymbolsUpdate = false;
+    int symbolsUpdateInterval = renderer->getSymbolsUpdateInterval();
+    if (symbolsUpdateInterval > 0)
+    {
+        float timeSinceLastUpdate = std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - _lastResumeSymbolsUpdateTime).count();
+        forceSymbolsUpdate = timeSinceLastUpdate * 1000.0 > symbolsUpdateInterval;
+    }
+    if (!obtainRenderableSymbols(renderableSymbols, intersections, metric, forceSymbolsUpdate))
     {
         // In case obtain failed due to lock, schedule another frame
         invalidateFrame();
@@ -57,6 +65,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
             metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
 
         return;
+    }
+    else if (forceSymbolsUpdate)
+    {
+        _lastResumeSymbolsUpdateTime = std::chrono::high_resolution_clock::now();
     }
 
     Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
@@ -162,12 +174,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     ScreenQuadTree& outIntersections,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric,
+    bool forceUpdate /*= false*/) const
 {
     Stopwatch stopwatch(metric != nullptr);
 
     // In case symbols update was not suspended, process published symbols
-    if (!renderer->isSymbolsUpdateSuspended())
+    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate)
     {
         if (!publishedMapSymbolsByOrderLock.tryLockForRead())
             return false;

@@ -147,7 +147,7 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
         // Create animator for that map
-        _animator = new MapAnimator();
+        _animator = new MapAnimator(false);
         _animator.setMapRenderer(_mapRenderer);
     }
 
@@ -407,6 +407,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.resumeSymbolsUpdate();
+    }
+
+    public final int getSymbolsUpdateInterval() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSymbolsUpdateInterval();
+    }
+
+    public final void setSymbolsUpdateInterval(int interval) {
+        NativeCore.checkIfLoaded();
+
+        _mapRenderer.setSymbolsUpdateInterval(interval);
     }
 
     public final boolean setMapLayerProvider(

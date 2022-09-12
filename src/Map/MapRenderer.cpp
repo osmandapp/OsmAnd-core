@@ -1136,6 +1136,16 @@ bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
     return (prevCounter <= 1);
 }
 
+int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
+{
+    return _symbolsUpdateInterval;
+}
+
+void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
+{
+    _symbolsUpdateInterval = interval;
+}
+
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

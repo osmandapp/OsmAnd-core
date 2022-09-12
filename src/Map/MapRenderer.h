@@ -92,6 +92,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
+        int _symbolsUpdateInterval;
 
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -313,6 +314,8 @@ namespace OsmAnd
         virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const Q_DECL_OVERRIDE;
         virtual bool suspendSymbolsUpdate() Q_DECL_OVERRIDE;
         virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
+        virtual int getSymbolsUpdateInterval() Q_DECL_OVERRIDE;
+        virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;

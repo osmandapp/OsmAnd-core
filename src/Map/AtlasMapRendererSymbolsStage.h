@@ -116,7 +116,8 @@ namespace OsmAnd
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric,
+            bool forceUpdate = false) const;
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
@@ -124,6 +125,7 @@ namespace OsmAnd
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
+        std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;
