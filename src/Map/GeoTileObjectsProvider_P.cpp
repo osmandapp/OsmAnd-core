@@ -129,6 +129,7 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     _request.zoom = request.zoom;
     _request.bands = bands;
     _request.queryController = request.queryController;
+    _request.localData = owner->localData;
 
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
         [this, band, &contourStyleName, &contourTypes, &request, &outData, &tileEntry, &result]
