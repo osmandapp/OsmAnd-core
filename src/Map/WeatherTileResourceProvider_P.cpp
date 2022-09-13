@@ -577,26 +577,34 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
         else
         {
             bool hasTileIds = !tileIds.isEmpty();
-            const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
-            int zoomShift = maxZoom - zoom;
             for (auto &dbTileId : dbTileIds)
             {
                 bool shouldDelete = ((hasTileIds && tileIds.contains(dbTileId)) || !hasTileIds) && !excludeTileIds.contains(dbTileId);
-                if (zoomShift > 0 && shouldDelete)
-                {
-                    const auto underscaleTiles = Utilities::getTileIdsUnderscaledByZoomShift(dbTileId, zoomShift).toList();
-                    for (const auto& underscaleTileId : underscaleTiles)
-                    {
-                        if (tilesDb->removeTileData(underscaleTileId, maxZoom))
-                            res = true;
-                    }
-                }
                 if (shouldDelete)
                 {
                     if (tilesDb->removeTileData(dbTileId, zoom))
                         res = true;
                 }
             }
+
+            const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
+            QList<TileId> dbMaxZoomTileIds;
+            if (tilesDb->getTileIds(dbMaxZoomTileIds, maxZoom))
+            {
+                bool hasMaxZoomTileIds = !dbMaxZoomTileIds.isEmpty();
+                for (auto &dbMaxZoomTileId : dbMaxZoomTileIds)
+                {
+                    const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(dbMaxZoomTileId, maxZoom - zoom);
+                    
+                    bool shouldDelete = ((hasMaxZoomTileIds && tileIds.contains(overscaledTileId)) || !hasMaxZoomTileIds) && !excludeTileIds.contains(overscaledTileId);
+                    if (shouldDelete)
+                    {
+                        if (tilesDb->removeTileData(dbMaxZoomTileId, maxZoom))
+                            res = true;
+                    }
+                }
+            }
+
             if (res)
                 tilesDb->compact();
         }
