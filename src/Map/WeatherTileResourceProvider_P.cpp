@@ -577,30 +577,30 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
         else
         {
             bool hasTileIds = !tileIds.isEmpty();
+            QList<TileId> tilesToDelete;
             for (auto &dbTileId : dbTileIds)
             {
                 bool shouldDelete = ((hasTileIds && tileIds.contains(dbTileId)) || !hasTileIds) && !excludeTileIds.contains(dbTileId);
                 if (shouldDelete)
-                {
-                    if (tilesDb->removeTileData(dbTileId, zoom))
-                        res = true;
-                }
+                    tilesToDelete.append(dbTileId);
             }
 
-            const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
-            QList<TileId> dbMaxZoomTileIds;
-            if (tilesDb->getTileIds(dbMaxZoomTileIds, maxZoom))
+            if (tilesToDelete.count() > 0)
             {
-                bool hasMaxZoomTileIds = !dbMaxZoomTileIds.isEmpty();
-                for (auto &dbMaxZoomTileId : dbMaxZoomTileIds)
+                for (auto &tileToDelete : tilesToDelete)
                 {
-                    const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(dbMaxZoomTileId, maxZoom - zoom);
-                    
-                    bool shouldDelete = ((hasMaxZoomTileIds && tileIds.contains(overscaledTileId)) || !hasMaxZoomTileIds) && !excludeTileIds.contains(overscaledTileId);
-                    if (shouldDelete)
+                    res |= tilesDb->removeTileData(tileToDelete, zoom);
+                }
+
+                const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
+                    QList<TileId> dbMaxZoomTileIds;
+                if (tilesDb->getTileIds(dbMaxZoomTileIds, maxZoom))
+                {
+                    for (auto &dbMaxZoomTileId : dbMaxZoomTileIds)
                     {
-                        if (tilesDb->removeTileData(dbMaxZoomTileId, maxZoom))
-                            res = true;
+                        const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(dbMaxZoomTileId, maxZoom - zoom);
+                        if (tilesToDelete.contains(overscaledTileId))
+                            res |= tilesDb->removeTileData(dbMaxZoomTileId, maxZoom);
                     }
                 }
             }
