@@ -2801,7 +2801,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
-    icon->order += ORDER_FOR_ICONS;
 
     evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 
