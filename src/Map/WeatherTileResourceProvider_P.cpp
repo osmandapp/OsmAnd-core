@@ -582,16 +582,14 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileIds(
             {
                 bool shouldDelete = ((hasTileIds && tileIds.contains(dbTileId)) || !hasTileIds) && !excludeTileIds.contains(dbTileId);
                 if (shouldDelete)
+                {
                     tilesToDelete.append(dbTileId);
+                    res |= tilesDb->removeTileData(dbTileId, zoom);
+                }
             }
 
             if (tilesToDelete.count() > 0)
             {
-                for (auto &tileToDelete : tilesToDelete)
-                {
-                    res |= tilesDb->removeTileData(tileToDelete, zoom);
-                }
-
                 const auto maxZoom = WeatherTileResourceProvider::getTileZoom(WeatherLayer::High);
                     QList<TileId> dbMaxZoomTileIds;
                 if (tilesDb->getTileIds(dbMaxZoomTileIds, maxZoom))
