@@ -710,11 +710,15 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
         return nullptr;
 
     const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, state.elevationDataProvider);
+
+    if (!resourcesCollection_)
+        return nullptr;
+
     const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
     // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
     std::shared_ptr<MapRendererBaseTiledResource> resource_;
-    if (resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
+    if (resourcesCollection && resourcesCollection->obtainResource(normalizedTileId, zoomLevel, resource_))
     {
         const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
 
