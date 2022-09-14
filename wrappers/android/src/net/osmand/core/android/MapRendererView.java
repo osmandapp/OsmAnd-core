@@ -366,7 +366,10 @@ public abstract class MapRendererView extends FrameLayout {
         _viewportXScale = xScale;
         _viewportYScale = yScale;
 
-        updateViewport();
+        _mapRenderer.setTargetByPixelLocation(
+            new PointI((int)(_windowWidth * _viewportXScale / 2f),
+                       (int)(_windowHeight * _viewportYScale / 2f)),
+            _mapRenderer.getState().getTarget31());
     }
 
     public final int getFrameId() {
@@ -785,14 +788,6 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
-    private final void updateViewport() {
-        _mapRenderer.setViewport(new AreaI(new PointI(0, 0), new PointI(_windowWidth, _windowHeight)));
-        _mapRenderer.setTargetByPixelLocation(
-            new PointI((int)(_windowWidth * _viewportXScale / 2f),
-                       (int)(_windowHeight * _viewportYScale / 2f)),
-            _mapRenderer.getState().getTarget31());
-    }
-
     /**
      * EGL context factory
      * <p/>
@@ -980,8 +975,7 @@ public abstract class MapRendererView extends FrameLayout {
             _windowWidth = width;
             _windowHeight = height;
             _mapRenderer.setWindowSize(new PointI(width, height));
-
-            updateViewport();
+            _mapRenderer.setViewport(new AreaI(new PointI(0, 0), new PointI(width, height)));
 
             // In case rendering is not initialized, initialize it
             // (happens when surface is created for the first time, or recreated)
