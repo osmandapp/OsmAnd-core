@@ -64,6 +64,10 @@ namespace OsmAnd
         float azimuth;
         float elevationAngle;
         PointI target31;
+        PointI fixedPixel;
+        PointI fixedLocation31;
+        float fixedHeight;
+        ZoomLevel fixedZoomLevel;
         ZoomLevel zoomLevel;
         float visualZoom;
         float visualZoomShift;
@@ -98,6 +102,10 @@ namespace OsmAnd
         float azimuth;
         float elevationAngle;
         PointI target31;
+        PointI fixedPixel;
+        PointI fixedLocation31;
+        float fixedHeight;
+        ZoomLevel fixedZoomLevel;
         ZoomLevel zoomLevel;
         float visualZoom;
         float visualZoomShift;

@@ -33,6 +33,11 @@ namespace OsmAnd
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const;
+        bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
+            const PointI& screenPoint, PointD& position, const float height = 0.0f) const;
+        std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
+            TileId normalizedTileId, ZoomLevel zoomLevel,
+            std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr) const;
 
         // State-related:
         InternalState _internalState;
@@ -62,6 +67,9 @@ namespace OsmAnd
 
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
+        bool getNewTargetByScreenPoint(const MapRendererState& state,
+            const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
+        float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
@@ -73,6 +81,9 @@ namespace OsmAnd
 
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
+        bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
+            PointI& target31, const float height = 0.0f) const override;
+        float getHeightOfLocation(const PointI& location31) const override;
 
         AreaI getVisibleBBox31() const override;
         bool isPositionVisible(const PointI64& position) const override;

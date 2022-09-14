@@ -580,12 +580,14 @@ void OsmAnd::MapAnimator_P::elevationAngleSetter(const float newValue, Animation
 
 OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->getState().target31;
+    return _renderer->getState().fixedLocation31;
 }
 
 void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    _renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    _renderer->setTargetByPixelLocation(_renderer->getState().fixedPixel,
+        Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    //_renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }
 
