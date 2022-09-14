@@ -576,6 +576,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[3] = internalState->frustum2D.p3 / TileSize3D;
 
     // Determine visible tileset
+    QSet<TileId> visibleTiles;
     internalState->visibleTiles.resize(0);
     bool mainPart = true;
     bool extraPart = false;
@@ -589,7 +590,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
             p[i].y += internalState->targetInTileOffsetN.y ;
         }
 
-        QSet<TileId> visibleTiles;
         const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
         const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
         int pxMin = std::numeric_limits<int32_t>::max();
@@ -623,9 +623,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
             pxMax = xMax;
         }
 
-        for (const auto& tileId : constOf(visibleTiles))
-            internalState->visibleTiles.push_back(tileId);
-
         // Add the bottom tileset
         extraPart = mainPart && !isnan(internalState->extraField2D.p0.x);
         if (extraPart)
@@ -638,6 +635,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
 
         mainPart = false;
     }
+
+    for (const auto& tileId : constOf(visibleTiles))
+        internalState->visibleTiles.push_back(tileId);
 
     // Normalize and make unique visible tiles
     QSet<TileId> uniqueTiles;
@@ -683,7 +683,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
     float distance;
     const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
-    if (!intersects || distance > internalState.zSkyplane - _zNear)
+    if (!intersects)
         return false;
 
     auto intersection = nearInWorld + distance*rayD;

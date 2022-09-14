@@ -47,35 +47,34 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
 
     GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
-    // First vector layer or first raster layers batch should be rendered without premultiplied alpha blending,
-    // since it is performed inside shader itself.
+    // First vector layer or first raster layers batch should be rendered without blending,
+    // since blending is performed inside shader itself.
     bool blendingEnabled = false;
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
     // Initially, configure for premultiplied alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Premultiplied;
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
 
     GLname lastUsedProgram;
     GLlocation elevationDataVertexAttribArray;
     const auto& batchedLayersByTiles = batchLayersByTiles(internalState);
     for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
     {
-        // Any layer or layers batch after first one has to be rendered using premultiplied alpha blending,
+        // Any layer or layers batch after first one has to be rendered using blending,
         // since output color of new batch needs to be blended with destination color.
         if (!batchedLayersByTile->containsOriginLayer != blendingEnabled)
         {
             if (batchedLayersByTile->containsOriginLayer)
             {
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable(GL_BLEND);
                 GL_CHECK_RESULT;
             }
             else
             {
-                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glEnable(GL_BLEND);
                 GL_CHECK_RESULT;
             }
 
@@ -89,7 +88,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
                 batchedLayersByTile,
                 currentAlphaChannelType,
                 elevationDataVertexAttribArray,
-                lastUsedProgram);
+                lastUsedProgram,
+                blendingEnabled);
         }
     }
 
@@ -164,8 +164,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             ? 0
             : vsUniformsPerLayer /*param_vs_elevationLayer*/ +
               1 /*param_vs_elevationLayerTexelSize*/);
+    const auto fsOtherUniforms =
+        1 /*param_fs_lastBatch*/ +
+        1 /*param_fs_blendingEnabled*/ + 
+        1 /*param_fs_backgroundColor*/;
     const auto maxBatchSizeByUniforms =
-        (gpuAPI->maxVertexUniformVectors - vsOtherUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
+        (gpuAPI->maxVertexUniformVectors - vsOtherUniforms - fsOtherUniforms) /
+        (vsUniformsPerLayer + fsUniformsPerLayer);
 
     // ... by varying floats
     const auto varyingFloatsPerLayer =
@@ -608,6 +613,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    PARAM_INPUT lowp vec4 v2f_elevationColor;                                                                      ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
+        "uniform lowp float param_fs_blendingEnabled;                                                                       ""\n"
+        "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
         // Parameters: per-layer data
         "struct FsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
@@ -659,7 +668,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
         "#if ELEVATION_VISUALIZATION_ENABLED                                                                                ""\n"
-        "    mixColors(finalColor, v2f_elevationColor);                                                                     ""\n"
+        "    mixColors(finalColor, v2f_elevationColor * param_fs_lastBatch);                                                ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
         "                                                                                                                   ""\n"
 #if 0
@@ -678,7 +687,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "                                                                                                                   ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
+        "    lowp vec4 overColor = finalColor * finalColor.a + (1.0 - finalColor.a) * param_fs_backgroundColor;             ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = finalColor * param_fs_blendingEnabled + (1.0 - param_fs_blendingEnabled) * overColor;  ""\n"
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
@@ -924,6 +934,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             "param_vs_elevationLayerTexelSize",
             GlslVariableType::Uniform);
     }
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.lastBatch,
+        "param_fs_lastBatch",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.blendingEnabled,
+        "param_fs_blendingEnabled",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.backgroundColor,
+        "param_fs_backgroundColor",
+        GlslVariableType::Uniform);
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     outRasterLayerTileProgram.fs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
@@ -968,7 +990,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const Ref<PerTileBatchedLayers>& batch,
     AlphaChannelType& currentAlphaChannelType,
     GLlocation& activeElevationVertexAttribArray,
-    GLname& lastUsedProgram)
+    GLname& lastUsedProgram,
+    const bool blendingEnabled)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1024,6 +1047,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
         currentAlphaChannelType = AlphaChannelType::Premultiplied;
     }
+
+    // Indicate the last batch to enable elevation colouring in shader
+    glUniform1f(program.fs.param.lastBatch, batch->lastBatch ? 1.0f : 0.0f);
+    GL_CHECK_RESULT;
+
+    // Fragment shader needs to know if it's drawing on top of previous layers or the background
+    glUniform1f(program.fs.param.blendingEnabled, (blendingEnabled ? 1.0f : 0.0f));
+    GL_CHECK_RESULT;
 
     // Perform rendering of exact-scale, overscale and underscale cases. All cases support batching
     const auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
@@ -1110,7 +1141,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     batchedResourceInGPU->texCoordsScale.y);
                 GL_CHECK_RESULT;
             }
-        }
+        }      
         // Perform drawing of a subtile
         glDrawElements(
             GL_TRIANGLES,
@@ -1257,6 +1288,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
         GL_CHECK_RESULT;
     }
+
+    glUniform4f(program.fs.param.backgroundColor,
+        currentState.backgroundColor.r,
+        currentState.backgroundColor.g,
+        currentState.backgroundColor.b,
+        1.0f);
+    GL_CHECK_RESULT;
 
     // Configure samplers
     auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
@@ -1962,6 +2000,10 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(stubResource));
             batch->layers.push_back(qMove(batchedLayer));
         }
+
+        if (!batch->layers.isEmpty())
+            batch->lastBatch = true;
+
     }
 
     // Finally sort per-tile batched layers, so that batches were rendered by layer indices order
@@ -2008,6 +2050,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers::PerTileBatc
     const TileId tileId_,
     const bool containsOriginLayer_)
     : tileId(tileId_)
+    , lastBatch(false)
     , containsOriginLayer(containsOriginLayer_)
 {
 }
