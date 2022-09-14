@@ -114,6 +114,8 @@ public abstract class MapRendererView extends FrameLayout {
     private float _viewportXScale;
     private float _viewportYScale;
 
+    private int frameId;
+
     public MapRendererView(Context context) {
         this(context, null);
     }
@@ -367,6 +369,10 @@ public abstract class MapRendererView extends FrameLayout {
         updateViewport();
     }
 
+    public final int getFrameId() {
+        return frameId;
+    }
+
     public MapSymbolInformationList getSymbolsAt(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 
@@ -548,8 +554,8 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getZoom() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getZoomLevel().ordinal() + (_mapRenderer.getState().getVisualZoom() >= 1.0f 
-            ? _mapRenderer.getState().getVisualZoom() - 1.0f 
+        return _mapRenderer.getState().getZoomLevel().ordinal() + (_mapRenderer.getState().getVisualZoom() >= 1.0f
+            ? _mapRenderer.getState().getVisualZoom() - 1.0f
             : (_mapRenderer.getState().getVisualZoom() - 1.0f) * 2.0f);
     }
 
@@ -720,7 +726,7 @@ public abstract class MapRendererView extends FrameLayout {
         boolean isYScaleDown = _viewportYScale < 1.0;
         float correctedX = isXScaleDown ? -_windowWidth * _viewportXScale : 0;
         float correctedY = isYScaleDown ? -_windowHeight * _viewportYScale : 0;
-        _mapRenderer.setViewport(new AreaI(new PointI((int) correctedX, (int) correctedY), 
+        _mapRenderer.setViewport(new AreaI(new PointI((int) correctedX, (int) correctedY),
             new PointI((int) (_windowWidth * (isXScaleDown ? 1.0 :_viewportXScale)),
                        (int) (_windowHeight * (isYScaleDown ? 1.0 :_viewportYScale)))));
     }
@@ -931,13 +937,15 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.w(TAG, "Rendering not yet initialized");
                 return;
             }
-
             // Allow renderer to update
             _mapRenderer.update();
 
             // In case a new frame was prepared, render it
-            if (_mapRenderer.prepareFrame())
+            if (_mapRenderer.prepareFrame()) {
+                frameId++;
                 _mapRenderer.renderFrame();
+            }
+
 
             // Flush all the commands to GPU
             gl.glFlush();
