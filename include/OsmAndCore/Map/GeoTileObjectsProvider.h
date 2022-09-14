@@ -34,11 +34,13 @@ namespace OsmAnd
             const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
             const QDateTime& dateTime,
             const BandIndex band,
+            const bool localData,
             const uint32_t cacheSize = 0);
         virtual ~GeoTileObjectsProvider();
 
         const QDateTime dateTime;
         const BandIndex band;
+        const bool localData;
         const uint32_t cacheSize;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
