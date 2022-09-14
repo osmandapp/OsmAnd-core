@@ -111,8 +111,8 @@ public abstract class MapRendererView extends FrameLayout {
     /**
      * Viewport X/Y scale. Can be used to change screen center.
      */
-    private float _viewportXScale;
-    private float _viewportYScale;
+    private float _viewportXScale = 1f;
+    private float _viewportYScale = 1f;
 
     public MapRendererView(Context context) {
         this(context, null);
@@ -509,6 +509,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setSkyColor(color);
     }
 
+    public final float getAzimuth() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getAzimuth();
+    }
+
     public final boolean setAzimuth(float azimuth) {
         NativeCore.checkIfLoaded();
 
@@ -530,13 +536,27 @@ public abstract class MapRendererView extends FrameLayout {
     public final PointI getTarget() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getTarget31();
+        PointI fixedPixel = _mapRenderer.getState().getFixedPixel();
+        if (fixedPixel.getX() >= 0 && fixedPixel.getY() >= 0)
+            return _mapRenderer.getState().getFixedLocation31();
+        else
+            return _mapRenderer.getState().getTarget31();
     }
 
     public final boolean setTarget(PointI target31) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTarget(target31);
+        if (_windowWidth > 0 && _windowHeight > 0)
+        {
+            return _mapRenderer.setTargetByPixelLocation(
+                new PointI((int)(_windowWidth * _viewportXScale / 2f),
+                           (int)(_windowHeight * _viewportYScale / 2f)),
+                target31);
+        }
+        else
+        {
+            return _mapRenderer.setTarget(target31);
+        }
     }
 
     public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
@@ -760,13 +780,11 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     private final void updateViewport() {
-        boolean isXScaleDown = _viewportXScale < 1.0;
-        boolean isYScaleDown = _viewportYScale < 1.0;
-        float correctedX = isXScaleDown ? -_windowWidth * _viewportXScale : 0;
-        float correctedY = isYScaleDown ? -_windowHeight * _viewportYScale : 0;
-        _mapRenderer.setViewport(new AreaI(new PointI((int) correctedX, (int) correctedY), 
-            new PointI((int) (_windowWidth * (isXScaleDown ? 1.0 :_viewportXScale)),
-                       (int) (_windowHeight * (isYScaleDown ? 1.0 :_viewportYScale)))));
+        _mapRenderer.setViewport(new AreaI(new PointI(0, 0), new PointI(_windowWidth, _windowHeight)));
+        _mapRenderer.setTargetByPixelLocation(
+            new PointI((int)(_windowWidth * _viewportXScale / 2f),
+                       (int)(_windowHeight * _viewportYScale / 2f)),
+            _mapRenderer.getState().getTarget31());
     }
 
     /**
