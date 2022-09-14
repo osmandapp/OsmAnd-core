@@ -114,6 +114,8 @@ public abstract class MapRendererView extends FrameLayout {
     private float _viewportXScale = 1f;
     private float _viewportYScale = 1f;
 
+    private int frameId;
+
     public MapRendererView(Context context) {
         this(context, null);
     }
@@ -367,6 +369,10 @@ public abstract class MapRendererView extends FrameLayout {
         updateViewport();
     }
 
+    public final int getFrameId() {
+        return frameId;
+    }
+
     public MapSymbolInformationList getSymbolsAt(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 
@@ -593,8 +599,8 @@ public abstract class MapRendererView extends FrameLayout {
     public final float getZoom() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getState().getZoomLevel().ordinal() + (_mapRenderer.getState().getVisualZoom() >= 1.0f 
-            ? _mapRenderer.getState().getVisualZoom() - 1.0f 
+        return _mapRenderer.getState().getZoomLevel().ordinal() + (_mapRenderer.getState().getVisualZoom() >= 1.0f
+            ? _mapRenderer.getState().getVisualZoom() - 1.0f
             : (_mapRenderer.getState().getVisualZoom() - 1.0f) * 2.0f);
     }
 
@@ -993,13 +999,15 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.w(TAG, "Rendering not yet initialized");
                 return;
             }
-
             // Allow renderer to update
             _mapRenderer.update();
 
             // In case a new frame was prepared, render it
-            if (_mapRenderer.prepareFrame())
+            if (_mapRenderer.prepareFrame()) {
+                frameId++;
                 _mapRenderer.renderFrame();
+            }
+
 
             // Flush all the commands to GPU
             gl.glFlush();

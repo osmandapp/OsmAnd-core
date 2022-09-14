@@ -253,8 +253,7 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric);
 
-        static const int ORDER_FOR_SHIELDS = -1000000;
-        static const int ORDER_FOR_ICONS = -1000000;
+        static const int ORDER_FOR_SHIELDS = -180000;
 
     friend class OsmAnd::MapPrimitiviser;
     };
