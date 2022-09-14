@@ -218,6 +218,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
     const auto detailedLandDataPresent = detailedBinaryMapObjectsPresent && !hasContourLinesObjectOnly;
     auto fillEntireArea = true;
+    bool detailCoastlineBroken = false;
     
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
     {
@@ -229,13 +230,38 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             basemapCoastlinesPresent,
             true);
         fillEntireArea = !coastlinesWereAdded;
+        
+        if (!coastlinesWereAdded)
+        {
+            //detect if broken coastline inside area31 (tile bbox)
+            for (auto obj : detailedmapCoastlineObjects)
+            {
+                for (auto point : obj->points31)
+                {
+                    if (area31.contains(point))
+                    {
+                        detailCoastlineBroken = true;
+                        break;
+                    }
+                }
+                if (detailCoastlineBroken)
+                    break;
+            }
+        }
     }
+    
     
     bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
                                  && !hasExtraCoastlines
                                  && !detailedLandDataPresent
                                  && basemapCoastlinesPresent;
+    
+    if (detailCoastlineBroken && basemapCoastlinesPresent)
+    {
+        shouldAddBasemapCoastlines = true;
+        polygonizedCoastlineObjects.clear();
+    }
     
     shouldAddBasemapCoastlines = shouldAddBasemapCoastlines || zoom < MapPrimitiviser::DetailedLandDataMinZoom;
     
