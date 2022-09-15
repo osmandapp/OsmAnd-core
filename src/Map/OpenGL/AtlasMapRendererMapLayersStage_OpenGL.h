@@ -72,6 +72,7 @@ namespace OsmAnd
 
             const TileId tileId;
             const bool containsOriginLayer;
+            bool lastBatch;
             QList< Ref<BatchedLayer> > layers;
 
             bool operator<(const PerTileBatchedLayers& that) const;
@@ -135,6 +136,10 @@ namespace OsmAnd
             struct {
                 // Parameters
                 struct {
+                    // Common data
+                    GLlocation lastBatch;
+                    GLlocation blendingEnabled;
+                    GLlocation backgroundColor;
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
@@ -155,7 +160,8 @@ namespace OsmAnd
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
             GLlocation& activeElevationVertexAttribArray,
-            GLname& lastUsedProgram);
+            GLname& lastUsedProgram,
+            const bool blendingEnabled);
         void configureElevationData(
             const RasterLayerTileProgram& program,
             const TileId tileId,
