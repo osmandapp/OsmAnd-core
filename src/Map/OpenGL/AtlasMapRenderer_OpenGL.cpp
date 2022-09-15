@@ -707,7 +707,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
     const MapRendererState& state, TileId normalizedTileId, ZoomLevel zoomLevel,
     std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
 {
-    if (!state.elevationDataProvider)
+    if (!isRenderingInitialized() || !state.elevationDataProvider)
         return nullptr;
 
     const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, state.elevationDataProvider);
