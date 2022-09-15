@@ -270,7 +270,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendere
 bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     MapRendererInternalState& outInternalState_,
     const MapRendererState& state,
-    const MapRendererConfiguration& configuration_) const
+    const MapRendererConfiguration& configuration_,
+    const bool skipTiles /*=false*/) const
 {
     bool ok;
     ok = AtlasMapRenderer::updateInternalState(outInternalState_, state, configuration_);
@@ -380,7 +381,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     updateFrustum(internalState, state);
 
     // Compute visible tileset
-    computeVisibleTileset(internalState, state);
+    if (!skipTiles)
+        computeVisibleTileset(internalState, state);
 
     return true;
 }
@@ -793,7 +795,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendere
     const PointI& screenPoint, const PointI& location31, PointI& target31, const float height /*=0.0f*/) const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 
@@ -863,7 +865,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 

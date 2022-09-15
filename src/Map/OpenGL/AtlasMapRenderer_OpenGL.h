@@ -46,7 +46,8 @@ namespace OsmAnd
         const MapRendererInternalState& getInternalState() const override;
         MapRendererInternalState& getInternalState() override;
         bool updateInternalState(
-            MapRendererInternalState& outInternalState, const MapRendererState& state, const MapRendererConfiguration& configuration) const override;
+            MapRendererInternalState& outInternalState, const MapRendererState& state,
+            const MapRendererConfiguration& configuration, const bool skipTiles = false) const override;
 
         // Resources:
         void onValidateResourcesOfType(MapRendererResourceType type) override;

@@ -25,7 +25,10 @@ OsmAnd::AtlasMapRenderer::~AtlasMapRenderer()
 }
 
 bool OsmAnd::AtlasMapRenderer::updateInternalState(
-    MapRendererInternalState& outInternalState_, const MapRendererState& state, const MapRendererConfiguration& configuration) const
+    MapRendererInternalState& outInternalState_,
+    const MapRendererState& state,
+    const MapRendererConfiguration& configuration,
+    const bool skipTiles /*=false*/) const
 {
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
 
