@@ -585,8 +585,7 @@ OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter(AnimationContext& context, 
 
 void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    _renderer->setTargetByPixelLocation(_renderer->getState().fixedPixel,
-        Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    _renderer->setTargetByUpdatedPixelLocation(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
     //_renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }
