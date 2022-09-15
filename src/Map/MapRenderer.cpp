@@ -1448,7 +1448,7 @@ bool OsmAnd::MapRenderer::setWindowSize(const PointI& windowSize, bool forcedUpd
 
     _requestedState.windowSize = windowSize;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::WindowSize);
 
@@ -1465,7 +1465,7 @@ bool OsmAnd::MapRenderer::setViewport(const AreaI& viewport, bool forcedUpdate /
 
     _requestedState.viewport = viewport;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Viewport);
 
@@ -1485,7 +1485,7 @@ bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpd
 
     _requestedState.fieldOfView = fieldOfView;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::FieldOfView);
 
@@ -1537,7 +1537,7 @@ bool OsmAnd::MapRenderer::setAzimuth(const float azimuth, bool forcedUpdate /*= 
 
     _requestedState.azimuth = normalizedAzimuth;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Azimuth);
 
@@ -1557,7 +1557,7 @@ bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool for
 
     _requestedState.elevationAngle = elevationAngle;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationAngle);
 
@@ -1582,7 +1582,7 @@ bool OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /
     return true;
 }
 
-bool OsmAnd::MapRenderer::setTargetByPixelLocation(const PointI& screenPoint_, const PointI& location31_,
+bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -1596,7 +1596,8 @@ bool OsmAnd::MapRenderer::setTargetByPixelLocation(const PointI& screenPoint_, c
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
     const auto height = getHeightOfLocation(_requestedState, location31);
     PointI target31;
-    if(!getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height))
+    bool haveTarget = getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height);
+    if(!haveTarget)
         return false;
 
     bool update = forcedUpdate || (_requestedState.target31 != target31) ||
@@ -1617,7 +1618,7 @@ bool OsmAnd::MapRenderer::setTargetByPixelLocation(const PointI& screenPoint_, c
     return true;
 }
 
-bool OsmAnd::MapRenderer::setTargetByCurrentPixelLocation(MapRendererState& state,
+bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0)
@@ -1636,7 +1637,8 @@ bool OsmAnd::MapRenderer::setTargetByCurrentPixelLocation(MapRendererState& stat
         state.fixedZoomLevel = state.zoomLevel;
     }
     PointI target31;
-    if(!getNewTargetByScreenPoint(state, state.fixedPixel, state.fixedLocation31, target31, height))
+    bool haveTarget = getNewTargetByScreenPoint(state, state.fixedPixel, state.fixedLocation31, target31, height);
+    if(!haveTarget)
         return false;
 
     bool update = forcedUpdate || (state.target31 != target31);
@@ -1652,21 +1654,53 @@ bool OsmAnd::MapRenderer::setTargetByCurrentPixelLocation(MapRendererState& stat
     return true;
 }
 
-bool OsmAnd::MapRenderer::setTargetByCurrentPixelLocation(
+bool OsmAnd::MapRenderer::setMapTarget(
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return setTargetByCurrentPixelLocation(_requestedState, forcedUpdate, disableUpdate);
+    return setMapTarget(_requestedState, forcedUpdate, disableUpdate);
 }
 
-bool OsmAnd::MapRenderer::setTargetByUpdatedPixelLocation(const PointI& location31_,
+bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint_,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (screenPoint_.x < 0 || screenPoint_.y < 0)
+    {
+        _requestedState.fixedPixel = screenPoint_;
+        return false;
+    }
+
+    PointI target31;
+    bool haveTarget = getNewTargetByScreenPoint(_requestedState,
+        screenPoint_, _requestedState.fixedLocation31, target31, _requestedState.fixedHeight);
+    if(!haveTarget)
+        return false;
+
+    bool update = forcedUpdate || (_requestedState.target31 != target31) ||
+        (_requestedState.fixedPixel != screenPoint_);
+    if (!update)
+        return false;
+
+    _requestedState.fixedPixel = screenPoint_;
+    _requestedState.target31 = target31;
+    if (disableUpdate)
+        return true;
+    
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);        
-    const bool toTarget = _requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.x < 0;
+    const bool toTarget = _requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0;
     bool update = forcedUpdate ||
         (location31 != (toTarget ? _requestedState.target31 : _requestedState.fixedLocation31));
     if (!update)
@@ -1681,7 +1715,7 @@ bool OsmAnd::MapRenderer::setTargetByUpdatedPixelLocation(const PointI& location
         return true;
 
     if (!toTarget)
-        return setTargetByCurrentPixelLocation(_requestedState, forcedUpdate, disableUpdate);
+        return setMapTarget(_requestedState, forcedUpdate, disableUpdate);
     
     notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
     
@@ -1725,7 +1759,7 @@ bool OsmAnd::MapRenderer::setZoom(const ZoomLevel zoomLevel, const float visualZ
     _requestedState.zoomLevel = zoomLevel;
     _requestedState.visualZoom = visualZoom;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
@@ -1747,7 +1781,7 @@ bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpd
 
     _requestedState.zoomLevel = zoomLevel;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
@@ -1766,7 +1800,7 @@ bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdat
 
     _requestedState.visualZoom = visualZoom;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
@@ -1785,7 +1819,7 @@ bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool f
 
     _requestedState.visualZoomShift = visualZoomShift;
 
-    setTargetByCurrentPixelLocation(_requestedState, forcedUpdate);
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
