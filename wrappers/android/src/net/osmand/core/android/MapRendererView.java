@@ -599,6 +599,19 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setTargetByCurrentPixelLocation(forcedUpdate, disableUpdate);
     }
 
+    public final boolean setTargetByUpdatedPixelLocation(PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setTargetByUpdatedPixelLocation(location31);
+    }
+
+    public final boolean setTargetByUpdatedPixelLocation(PointI location31,
+        boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setTargetByUpdatedPixelLocation(location31, forcedUpdate, disableUpdate);
+    }
+
     public final float getZoom() {
         NativeCore.checkIfLoaded();
 

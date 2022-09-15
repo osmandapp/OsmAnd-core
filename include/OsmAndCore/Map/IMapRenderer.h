@@ -131,6 +131,8 @@ namespace OsmAnd
         virtual bool setTargetByPixelLocation(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setTargetByCurrentPixelLocation(bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setTargetByUpdatedPixelLocation(const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
