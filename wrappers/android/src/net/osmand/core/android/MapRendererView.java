@@ -366,7 +366,7 @@ public abstract class MapRendererView extends FrameLayout {
         _viewportXScale = xScale;
         _viewportYScale = yScale;
 
-        _mapRenderer.setTargetByPixelLocation(
+        _mapRenderer.setMapTarget(
             new PointI((int)(_windowWidth * _viewportXScale / 2f),
                        (int)(_windowHeight * _viewportYScale / 2f)),
             _mapRenderer.getState().getTarget31());
@@ -557,7 +557,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         if (_windowWidth > 0 && _windowHeight > 0)
         {
-            return _mapRenderer.setTargetByPixelLocation(
+            return _mapRenderer.setMapTarget(
                 new PointI((int)(_windowWidth * _viewportXScale / 2f),
                            (int)(_windowHeight * _viewportYScale / 2f)),
                 target31);
@@ -574,42 +574,53 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setTarget(target31, forcedUpdate, disableUpdate);
     }
 
-    public final boolean setTargetByPixelLocation(PointI screenPoint, PointI location31) {
+    public final boolean setMapTarget(PointI screenPoint, PointI location31) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByPixelLocation(screenPoint, location31);
+        return _mapRenderer.setMapTarget(screenPoint, location31);
     }
 
-    public final boolean setTargetByPixelLocation(PointI screenPoint, PointI location31,
+    public final boolean setMapTarget(PointI screenPoint, PointI location31,
         boolean forcedUpdate, boolean disableUpdate) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByPixelLocation(screenPoint, location31, forcedUpdate, disableUpdate);
+        return _mapRenderer.setMapTarget(screenPoint, location31, forcedUpdate, disableUpdate);
     }
 
-    public final boolean setTargetByCurrentPixelLocation() {
+    public final boolean setMapTarget() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByCurrentPixelLocation();
+        return _mapRenderer.setMapTarget();
     }
 
-    public final boolean setTargetByCurrentPixelLocation(boolean forcedUpdate, boolean disableUpdate) {
+    public final boolean setMapTarget(boolean forcedUpdate, boolean disableUpdate) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByCurrentPixelLocation(forcedUpdate, disableUpdate);
+        return _mapRenderer.setMapTarget(forcedUpdate, disableUpdate);
     }
 
-    public final boolean setTargetByUpdatedPixelLocation(PointI location31) {
+    public final boolean setMapTargetPixelCoordinates(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByUpdatedPixelLocation(location31);
+        return _mapRenderer.setMapTargetPixelCoordinates(screenPoint);
     }
 
-    public final boolean setTargetByUpdatedPixelLocation(PointI location31,
-        boolean forcedUpdate, boolean disableUpdate) {
+    public final boolean setMapTargetPixelCoordinates(PointI screenPoint, boolean forcedUpdate, boolean disableUpdate) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setTargetByUpdatedPixelLocation(location31, forcedUpdate, disableUpdate);
+        return _mapRenderer.setMapTargetPixelCoordinates(screenPoint, forcedUpdate, disableUpdate);
+    }
+
+    public final boolean setMapTargetLocation(PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMapTargetLocation(location31);
+    }
+
+    public final boolean setMapTargetLocation(PointI location31, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMapTargetLocation(location31, forcedUpdate, disableUpdate);
     }
 
     public final float getZoom() {
@@ -739,6 +750,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getHeightOfLocation(location31);
+    }
+
+    public final float getMapTargetDistance(PointI location31, boolean checkOffScreen) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getMapTargetDistance(location31, checkOffScreen);
     }
 
     public final boolean getScreenPointFromLocation(PointI location31, PointI outScreenPoint, boolean checkOffScreen) {

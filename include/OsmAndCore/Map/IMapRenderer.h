@@ -128,10 +128,12 @@ namespace OsmAnd
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) = 0;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
-        virtual bool setTargetByPixelLocation(const PointI& screenPoint, const PointI& location31,
+        virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
-        virtual bool setTargetByCurrentPixelLocation(bool forcedUpdate = false, bool disableUpdate = false) = 0;
-        virtual bool setTargetByUpdatedPixelLocation(const PointI& location31,
+        virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setMapTargetLocation(const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
@@ -172,6 +174,7 @@ namespace OsmAnd
         virtual bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
             PointI& target31, const float height = 0.0f) const = 0;
         virtual float getHeightOfLocation(const PointI& location31) const = 0;
+        virtual float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const = 0;
 
         virtual double getTileSizeInMeters() const = 0;
         virtual double getPixelsToMetersScaleFactor() const = 0;

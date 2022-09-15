@@ -531,6 +531,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
     internalState->distanceFromCameraToGroundInMeters = internalState->distanceFromCameraToGround * metersPerUnit;
     float maxTerrainHeight = 10000.0f / metersPerUnit;
+    internalState->metersPerUnit = metersPerUnit;
     
     // Get intersection points on elevated plane
     if (internalState->distanceFromCameraToGround > maxTerrainHeight)
@@ -855,6 +856,31 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const PointI& locatio
     const auto state = getState();
 
     return getHeightOfLocation(state, location31);
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& location31, bool checkOffScreen /*=false*/) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    if (!checkOffScreen && !internalState.globalFrustum2D31.test(location31))
+        return false;
+
+    float height = getHeightOfLocation(state, location31);
+    const auto offsetFromTarget31 = location31 - state.target31;
+    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
+    const auto positionInWorld = glm::vec3(
+        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        height,
+        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+    const auto distance = static_cast<float>(internalState.metersPerUnit / 1000.0 *
+        static_cast<double>(glm::distance(internalState.worldCameraPosition, positionInWorld)));
+
+    return distance;
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
