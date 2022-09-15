@@ -166,7 +166,8 @@ namespace OsmAnd
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration) const;
+            const MapRendererConfiguration& configuration,
+            const bool skipTiles = false) const;
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;

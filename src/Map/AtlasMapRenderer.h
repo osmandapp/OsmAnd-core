@@ -57,7 +57,8 @@ namespace OsmAnd
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration) const Q_DECL_OVERRIDE;
+            const MapRendererConfiguration& configuration,
+            const bool skipTiles = false) const Q_DECL_OVERRIDE;
 
         // Debug-related:
 

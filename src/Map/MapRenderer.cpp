@@ -192,7 +192,10 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
 }
 
 bool OsmAnd::MapRenderer::updateInternalState(
-    MapRendererInternalState& outInternalState, const MapRendererState& state, const MapRendererConfiguration& configuration) const
+    MapRendererInternalState& outInternalState,
+    const MapRendererState& state,
+    const MapRendererConfiguration& configuration,
+    const bool skipTiles /*=false*/) const
 {
     return true;
 }
