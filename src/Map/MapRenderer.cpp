@@ -1660,6 +1660,34 @@ bool OsmAnd::MapRenderer::setTargetByCurrentPixelLocation(
     return setTargetByCurrentPixelLocation(_requestedState, forcedUpdate, disableUpdate);
 }
 
+bool OsmAnd::MapRenderer::setTargetByUpdatedPixelLocation(const PointI& location31_,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);        
+    const bool toTarget = _requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.x < 0;
+    bool update = forcedUpdate ||
+        (location31 != (toTarget ? _requestedState.target31 : _requestedState.fixedLocation31));
+    if (!update)
+        return false;
+
+    if (toTarget)
+        _requestedState.target31 = location31;
+    else
+        _requestedState.fixedLocation31 = location31;
+
+    if (disableUpdate)
+        return true;
+
+    if (!toTarget)
+        return setTargetByCurrentPixelLocation(_requestedState, forcedUpdate, disableUpdate);
+    
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+    
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
     const auto zoomLevel = qBound(
