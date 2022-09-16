@@ -15,7 +15,7 @@
 #include "Logging.h"
 
 #define BACKUP_MAX_COUNT 10
-#define BACKUP_MAX_PER_DAY 2 // The third one is the current backup
+#define BACKUP_MAX_PER_DAY 3
 
 OsmAnd::FavoriteLocationsGpxCollection_P::FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner_)
     : FavoriteLocationsCollection_P(owner_)
@@ -46,7 +46,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& filename) c
 void OsmAnd::FavoriteLocationsGpxCollection_P::backup(const QString& backupFile, const QString& externalFile) const
 {
     bool ok = true;
-    const auto basePath = QFileInfo(backupFile).absolutePath();
+    const auto basePath = QFileInfo(externalFile).absolutePath();
     OsmAnd::ArchiveWriter archiveWriter;
     archiveWriter.createArchive(&ok, backupFile, {externalFile}, basePath);
     if (!ok)
