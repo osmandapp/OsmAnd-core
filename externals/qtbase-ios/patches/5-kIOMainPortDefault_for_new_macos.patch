@@ -1,0 +1,23 @@
+diff --git a/src/corelib/global/qglobal.cpp b/src/corelib/global/qglobal.cpp
+index 559ef431..1b2b1abf 100644
+--- a/src/corelib/global/qglobal.cpp
++++ b/src/corelib/global/qglobal.cpp
+@@ -106,6 +106,9 @@
+ #include <sys/sysctl.h>
+ #endif
+ 
++/* Both kIOMasterPortDefault or kIOMainPortDefault are synonyms for 0. */
++static const mach_port_t darwin_default_master_port = 0;
++
+ #if defined(Q_OS_INTEGRITY)
+ extern "C" {
+     // Function mmap resides in libshm_client.a. To be able to link with it one needs
+@@ -3059,7 +3062,7 @@ QByteArray QSysInfo::machineUniqueId()
+ {
+ #if defined(Q_OS_DARWIN) && __has_include(<IOKit/IOKitLib.h>)
+     char uuid[UuidStringLen + 1];
+-    io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
++    io_service_t service = IOServiceGetMatchingService(darwin_default_master_port, IOServiceMatching("IOPlatformExpertDevice"));
+     QCFString stringRef = (CFStringRef)IORegistryEntryCreateCFProperty(service, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+     CFStringGetCString(stringRef, uuid, sizeof(uuid), kCFStringEncodingMacRoman);
+     return QByteArray(uuid);
