@@ -237,7 +237,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         writeExtensions(route->extensions, route->attributes, xmlWriter);
 
         // Write route points
-        for (const auto& routePoint : constOf(route->points))
+        for (auto& routePoint : constOf(route->points))
         {
             // <rtept>
             xmlWriter.writeStartElement(QStringLiteral("rtept"));
@@ -278,9 +278,18 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                 if (!qIsNaN(rtept->verticalDilutionOfPrecision))
                     xmlWriter.writeTextElement(QStringLiteral("vdop"), QString::number(rtept->verticalDilutionOfPrecision, 'f', 12));
             }
-
+            // Remove "gap" profile
+            auto exts = QList(routePoint->extensions);
+            for (const auto& ext : exts)
+            {
+                if (ext->name == QStringLiteral("profile") && ext->value == QStringLiteral("gap"))
+                {
+                    exts.removeAll(ext);
+                    break;
+                }
+            }
             // Write extensions
-            writeExtensions(routePoint->extensions, routePoint->attributes, xmlWriter);
+            writeExtensions(exts, routePoint->attributes, xmlWriter);
 
             // </rtept>
             xmlWriter.writeEndElement();
@@ -360,10 +369,18 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
                     auto it = trkpt->extensions.begin();
                     while (it != trkpt->extensions.end())
                     {
-                        if ((*it)->name == QStringLiteral("speed") || (*it)->name == QStringLiteral("heading"))
+                        // Leave "profile" and "trkpt" tags for rtept only
+                        if ((*it)->name == QStringLiteral("speed") ||
+                            (*it)->name == QStringLiteral("heading") ||
+                            (*it)->name == QStringLiteral("profile") ||
+                            (*it)->name == QStringLiteral("trkpt_idx"))
+                        {
                             it = trkpt->extensions.erase(it);
+                        }
                         else
+                        {
                             ++it;
+                        }
                     }
                     
                     if (trkpt->speed > 0)
