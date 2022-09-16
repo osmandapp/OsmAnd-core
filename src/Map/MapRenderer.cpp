@@ -1862,6 +1862,28 @@ bool OsmAnd::MapRenderer::setBackgroundColor(const FColorRGB& color, bool forced
     return true;
 }
 
+bool OsmAnd::MapRenderer::setSymbolsOpacity(const float opacityFactor, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.symbolsOpacity != opacityFactor;
+    if (!update)
+        return false;
+
+    _requestedState.symbolsOpacity = opacityFactor;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::SymbolsOpacity);
+
+    return true;
+}
+
+float OsmAnd::MapRenderer::getSymbolsOpacity() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.symbolsOpacity;
+}
+
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
 {
     return MinZoomLevel;

@@ -603,13 +603,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
+   
+    // Apply symbols opacity factor to modulation color
+    auto modulationColor = symbol->modulationColor;
+    modulationColor.a *= currentState.symbolsOpacity;
+    if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
+    {
+        modulationColor.r *= currentState.symbolsOpacity;
+        modulationColor.g *= currentState.symbolsOpacity;
+        modulationColor.b *= currentState.symbolsOpacity;
+    }
 
     // Set modulation color
     glUniform4f(_billboardRasterProgram.fs.param.modulationColor,
-        symbol->modulationColor.r,
-        symbol->modulationColor.g,
-        symbol->modulationColor.b,
-        symbol->modulationColor.a);
+        modulationColor.r,
+        modulationColor.g,
+        modulationColor.b,
+        modulationColor.a);
     GL_CHECK_RESULT;
 
     // Apply settings from texture block to texture
@@ -1378,12 +1388,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     // Apply settings from texture block to texture
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
+    // Apply symbols opacity factor to modulation color
+    auto modulationColor = symbol->modulationColor;
+    modulationColor.a *= currentState.symbolsOpacity;
+    if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
+    {
+        modulationColor.r *= currentState.symbolsOpacity;
+        modulationColor.g *= currentState.symbolsOpacity;
+        modulationColor.b *= currentState.symbolsOpacity;
+    }
+
     // Set modulation color
     glUniform4f(_onPath2dProgram.fs.param.modulationColor,
-        symbol->modulationColor.r,
-        symbol->modulationColor.g,
-        symbol->modulationColor.b,
-        symbol->modulationColor.a);
+        modulationColor.r,
+        modulationColor.g,
+        modulationColor.b,
+        modulationColor.a);
     GL_CHECK_RESULT;
 
     // Draw chains of glyphs
@@ -1523,12 +1543,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
 
+    // Apply symbols opacity factor to modulation color
+    auto modulationColor = symbol->modulationColor;
+    modulationColor.a *= currentState.symbolsOpacity;
+    if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
+    {
+        modulationColor.r *= currentState.symbolsOpacity;
+        modulationColor.g *= currentState.symbolsOpacity;
+        modulationColor.b *= currentState.symbolsOpacity;
+    }
+
     // Set modulation color
     glUniform4f(_onPath3dProgram.fs.param.modulationColor,
-        symbol->modulationColor.r,
-        symbol->modulationColor.g,
-        symbol->modulationColor.b,
-        symbol->modulationColor.a);
+        modulationColor.r,
+        modulationColor.g,
+        modulationColor.b,
+        modulationColor.a);
     GL_CHECK_RESULT;
 
     // Apply settings from texture block to texture
@@ -1970,12 +2000,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
 
+    // Apply symbols opacity factor to modulation color
+    auto modulationColor = symbol->modulationColor;
+    modulationColor.a *= currentState.symbolsOpacity;
+    if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
+    {
+        modulationColor.r *= currentState.symbolsOpacity;
+        modulationColor.g *= currentState.symbolsOpacity;
+        modulationColor.b *= currentState.symbolsOpacity;
+    }
+
     // Set modulation color
     glUniform4f(_onSurfaceRasterProgram.fs.param.modulationColor,
-        symbol->modulationColor.r,
-        symbol->modulationColor.g,
-        symbol->modulationColor.b,
-        symbol->modulationColor.a);
+        modulationColor.r,
+        modulationColor.g,
+        modulationColor.b,
+        modulationColor.a);
     GL_CHECK_RESULT;
 
     // Apply settings from texture block to texture
