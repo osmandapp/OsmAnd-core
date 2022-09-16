@@ -237,7 +237,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         writeExtensions(route->extensions, route->attributes, xmlWriter);
 
         // Write route points
-        for (auto& routePoint : constOf(route->points))
+        for (const auto& routePoint : constOf(route->points))
         {
             // <rtept>
             xmlWriter.writeStartElement(QStringLiteral("rtept"));
