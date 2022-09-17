@@ -1597,7 +1597,8 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     }
 
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
-    const auto height = getHeightOfLocation(_requestedState, location31);
+    // Temporarily disable height calculation for setMapTarget
+    const auto height = 0.0f; //getHeightOfLocation(_requestedState, location31);
     PointI target31;
     bool haveTarget = getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height);
     if(!haveTarget)
@@ -1627,7 +1628,8 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
     if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0)
         return false;
 
-    auto height = getHeightOfLocation(state, state.fixedLocation31);
+    // Temporarily disable height calculation for setMapTarget
+    auto height = 0.0f; //getHeightOfLocation(state, state.fixedLocation31);
     const auto zoomDelta = state.zoomLevel - state.fixedZoomLevel;
     if (height == 0.0f)
     {

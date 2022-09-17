@@ -108,12 +108,6 @@ public abstract class MapRendererView extends FrameLayout {
     private int _windowWidth;
     private int _windowHeight;
 
-    /**
-     * Viewport X/Y scale. Can be used to change screen center.
-     */
-    private float _viewportXScale = 1f;
-    private float _viewportYScale = 1f;
-
     private int frameId;
 
     public MapRendererView(Context context) {
@@ -334,44 +328,6 @@ public abstract class MapRendererView extends FrameLayout {
         return _windowHeight;
     }
 
-    public final float getViewportXScale() {
-        NativeCore.checkIfLoaded();
-
-        return _viewportXScale;
-    }
-
-    public final float getViewportYScale() {
-        NativeCore.checkIfLoaded();
-
-        return _viewportYScale;
-    }
-
-    public final void setViewportXScale(float xScale) {
-        NativeCore.checkIfLoaded();
-
-        _viewportXScale = xScale;
-        setViewportXYScale(xScale, _viewportYScale);
-    }
-
-    public final void setViewportYScale(float yScale) {
-        NativeCore.checkIfLoaded();
-
-        _viewportYScale = yScale;
-        setViewportXYScale(_viewportXScale, yScale);
-    }
-
-    public final void setViewportXYScale(float xScale, float yScale) {
-        NativeCore.checkIfLoaded();
-
-        _viewportXScale = xScale;
-        _viewportYScale = yScale;
-
-        _mapRenderer.setMapTarget(
-            new PointI((int)(_windowWidth * _viewportXScale / 2f),
-                       (int)(_windowHeight * _viewportYScale / 2f)),
-            _mapRenderer.getState().getTarget31());
-    }
-
     public final int getFrameId() {
         return frameId;
     }
@@ -557,10 +513,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         if (_windowWidth > 0 && _windowHeight > 0)
         {
-            return _mapRenderer.setMapTarget(
-                new PointI((int)(_windowWidth * _viewportXScale / 2f),
-                           (int)(_windowHeight * _viewportYScale / 2f)),
-                target31);
+            return _mapRenderer.setMapTargetLocation(target31);
         }
         else
         {
