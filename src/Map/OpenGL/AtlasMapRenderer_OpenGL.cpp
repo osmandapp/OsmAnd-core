@@ -190,7 +190,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
-    if (!currentDebugSettings->disableSymbolsStage)
+    if (!currentDebugSettings->disableSymbolsStage && !qFuzzyIsNull(currentState.symbolsOpacity))
     {
         Stopwatch symbolsStageStopwatch(metric != nullptr);
 

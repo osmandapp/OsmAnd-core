@@ -632,6 +632,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setBackgroundColor(color);
     }
 
+    public final boolean setSymbolsOpacity(float opacityFactor) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSymbolsOpacity(opacityFactor);
+    }
+
+    public final float getSymbolsOpacity() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSymbolsOpacity();
+    }
+
     public final MapRendererDebugSettings getDebugSettings() {
         NativeCore.checkIfLoaded();
 

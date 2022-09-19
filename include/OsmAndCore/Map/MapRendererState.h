@@ -48,6 +48,7 @@ namespace OsmAnd
         Zoom,
         StubsStyle,
         BackgroundColor,
+        SymbolsOpacity
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
@@ -73,6 +74,7 @@ namespace OsmAnd
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
+        float symbolsOpacity;
         
         double metersPerPixel;
         AreaI visibleBBox31;
@@ -111,6 +113,7 @@ namespace OsmAnd
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
+        float symbolsOpacity;
         
         double metersPerPixel;
         AreaI visibleBBox31;
