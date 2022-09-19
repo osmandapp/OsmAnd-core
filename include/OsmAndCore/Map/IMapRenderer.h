@@ -178,6 +178,8 @@ namespace OsmAnd
         virtual float getHeightOfLocation(const PointI& location31) const = 0;
         virtual float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const = 0;
 
+        virtual float getCameraHeightInMeters() const = 0;
+
         virtual double getTileSizeInMeters() const = 0;
         virtual double getPixelsToMetersScaleFactor() const = 0;
 

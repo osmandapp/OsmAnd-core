@@ -93,6 +93,8 @@ namespace OsmAnd
         bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
         bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
 
+        float getCameraHeightInMeters() const override;
+        
         double getTileSizeInMeters() const override;
         double getPixelsToMetersScaleFactor() const override;
     };

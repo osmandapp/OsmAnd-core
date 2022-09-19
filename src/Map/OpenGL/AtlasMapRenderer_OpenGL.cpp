@@ -977,6 +977,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     return true;
 }
 
+float OsmAnd::AtlasMapRenderer_OpenGL::getCameraHeightInMeters() const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
+
+    return internalState.distanceFromCameraToGroundInMeters;
+}
+
 double OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeInMeters() const
 {
     const auto state = getState();
