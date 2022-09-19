@@ -723,6 +723,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getMapTargetDistance(location31, checkOffScreen);
     }
 
+    public final float getCameraHeightInMeters() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getCameraHeightInMeters();
+    }
+
     public final boolean getScreenPointFromLocation(PointI location31, PointI outScreenPoint, boolean checkOffScreen) {
         NativeCore.checkIfLoaded();
 
