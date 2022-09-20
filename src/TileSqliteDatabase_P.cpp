@@ -100,36 +100,51 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             return false;
         }
 
-        if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
+        const auto statement = prepareStatement(database, QStringLiteral("PRAGMA index_list(tiles)"));
+        if (!statement || (res = stepStatement(statement)) < 0)
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to create index on tiles(x): %s",
+                "Failed to query indices: %s",
                 sqlite3_errmsg(database.get()));
 
             return false;
         }
 
-        if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_y_index ON tiles(y)")))
+        if (res == 0)
         {
-            LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to create index on tiles(y): %s",
-                sqlite3_errmsg(database.get()));
 
-            return false;
+            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to create index on tiles(x): %s",
+                    sqlite3_errmsg(database.get()));
+
+                return false;
+            }
+
+            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_y_index ON tiles(y)")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to create index on tiles(y): %s",
+                    sqlite3_errmsg(database.get()));
+
+                return false;
+            }
+
+            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_z_index ON tiles(z)")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to create index on tiles(z): %s",
+                    sqlite3_errmsg(database.get()));
+
+                return false;
+            }
+
         }
-
-        if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_z_index ON tiles(z)")))
-        {
-            LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to create index on tiles(z): %s",
-                sqlite3_errmsg(database.get()));
-
-            return false;
-        }
-
         resetCachedInfo();
         _database = database;
         _meta = meta;
@@ -194,30 +209,15 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
 
     bool ok = false;
     const auto tileNumberingValue = meta.getTileNumbering(&ok);
-    if (!ok)
-    {
-        // BigPlanet by default
-        _cachedInvertedZoom.storeRelease(17);
-        return 17;
-    }
 
-    if (tileNumberingValue.isEmpty() ||
-        tileNumberingValue == QStringLiteral("OSM") || tileNumberingValue == QStringLiteral("simple"))
-    {
-        invertedZoomValue = 0;
-    }
-    else if (tileNumberingValue == QStringLiteral("BigPlanet"))
+    // BigPlanet by default
+    if (!ok || tileNumberingValue == QStringLiteral("BigPlanet"))
     {
         invertedZoomValue = 17;
     }
     else
     {
-        LogPrintf(
-            LogSeverityLevel::Warning,
-            "Unsupported tile numbering '%s'",
-            qPrintable(tileNumberingValue));
-        _cachedInvertedZoom.storeRelease(0);
-        return 0;
+        invertedZoomValue = 0;
     }
 
     _cachedInvertedZoom.storeRelease(invertedZoomValue);
@@ -619,89 +619,71 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBoxes31(
 
     AreaI bbox31 = AreaI::negative();
 
+    int minZ, maxZ;
+
+    int res = 0;
+
     {
         QReadLocker scopedLocker(&_lock);
 
-        int res;
-
-        const auto statement = prepareStatement(_database, QStringLiteral("SELECT z, MIN(x), MAX(x), MIN(y), MAX(y) FROM tiles GROUP BY z"));
-        if (!statement)
+        const auto statement = prepareStatement(_database, QStringLiteral("SELECT MIN(z), MAX(z) FROM tiles"));
+        if (!statement || (res = stepStatement(statement)) < 0)
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to query bboxes grouped by zoom: %s",
+                "Failed to query bboxes by zoom: %s",
                 sqlite3_errmsg(_database.get()));
 
             return false;
         }
 
-        while ((res = stepStatement(statement)) > 0)
+        if (res > 0)
         {
             bool ok = false;
 
-            const auto zoomValue = readStatementValue(statement, 0).toLongLong(&ok);
-            if (!ok || zoomValue < ZoomLevel::MinZoomLevel || zoomValue > ZoomLevel::MaxZoomLevel)
+            minZ = readStatementValue(statement, 0).toLongLong(&ok);
+            if (!ok || minZ < ZoomLevel::MinZoomLevel || minZ > ZoomLevel::MaxZoomLevel)
             {
-                continue;
-            }
-            auto zoom = static_cast<ZoomLevel>(zoomValue);
-
-            int invertedZoomValue;
-            if ((invertedZoomValue = getInvertedZoomValue()) > 0)
-            {
-                zoom = static_cast<ZoomLevel>(invertedZoomValue - zoom);
+                return false;
             }
 
-            auto minX = readStatementValue(statement, 1).toLongLong(&ok);
-            if (!ok || minX < 0)
+            maxZ = readStatementValue(statement, 1).toLongLong(&ok);
+            if (!ok || maxZ < ZoomLevel::MinZoomLevel || maxZ > ZoomLevel::MaxZoomLevel)
             {
-                continue;
+                return false;
             }
 
-            auto maxX = readStatementValue(statement, 2).toLongLong(&ok);
-            if (!ok || maxX < 0)
-            {
-                continue;
-            }
-
-            auto minY = readStatementValue(statement, 3).toLongLong(&ok);
-            if (!ok || minY < 0)
-            {
-                continue;
-            }
-
-            auto maxY = readStatementValue(statement, 4).toLongLong(&ok);
-            if (!ok || maxY < 0)
-            {
-                continue;
-            }
-
-            if (isInvertedY())
-            {
-                minY = (1 << zoom) - 1 - minY;
-                maxY = (1 << zoom) - 1 - maxY;
-            }
-
-            const auto zoomBbox31 = AreaI(
-                minY << (31 - zoom),
-                minX << (31 - zoom),
-                ((maxY + 1) << (31 - zoom)) - 1,
-                ((maxX + 1) << (31 - zoom)) - 1
-            );
-
-            bboxes31[zoom] = zoomBbox31;
-            bbox31.enlargeToInclude(zoomBbox31);
         }
 
-        if (res < 0)
+    }
+
+    if (res > 0)
+    {
+
+        const auto invertedZoomValue = getInvertedZoomValue();
+
+        auto minZoom = static_cast<ZoomLevel>(minZ);
+        auto maxZoom = static_cast<ZoomLevel>(maxZ);
+        if (invertedZoomValue > 0)
         {
-            LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to query bboxes grouped by zoom: %s",
-                sqlite3_errmsg(_database.get()));
-
-            return false;
+            minZoom = static_cast<ZoomLevel>(invertedZoomValue - minZoom);
+            maxZoom = static_cast<ZoomLevel>(invertedZoomValue - maxZoom);
         }
+        if (minZoom > maxZoom)
+            std::swap(minZoom, maxZoom);
+
+        ZoomLevel zoom = minZoom;
+        AreaI zoomBbox31;
+        while (zoom <= maxZoom)
+        {
+            if (recomputeBBox31(zoom, &zoomBbox31))
+            {
+                bboxes31[zoom] = zoomBbox31;
+                bbox31.enlargeToInclude(zoomBbox31);
+            }
+            zoom = static_cast<ZoomLevel>(static_cast<unsigned>(zoom) + 1);
+        }
+
     }
 
     {
