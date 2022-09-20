@@ -69,6 +69,16 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             return false;
         }
 
+        if (!execStatement(database, QStringLiteral("PRAGMA temp_store = 2")))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to set temporary store: %s",
+                sqlite3_errmsg(database.get()));
+
+            return false;
+        }
+
         const auto meta = readMeta(database);
 
         if (!execStatement(database, QStringLiteral(
