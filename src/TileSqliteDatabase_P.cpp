@@ -69,6 +69,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             return false;
         }
 
+#if defined(OSMAND_TARGET_OS_android)
         if (!execStatement(database, QStringLiteral("PRAGMA temp_store = 2")))
         {
             LogPrintf(
@@ -78,6 +79,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
 
             return false;
         }
+#endif
 
         const auto meta = readMeta(database);
 
@@ -199,7 +201,8 @@ int OsmAnd::TileSqliteDatabase_P::getInvertedZoomValue() const
         return 17;
     }
 
-    if (tileNumberingValue.isEmpty() || tileNumberingValue == QStringLiteral("OSM"))
+    if (tileNumberingValue.isEmpty() ||
+        tileNumberingValue == QStringLiteral("OSM") || tileNumberingValue == QStringLiteral("simple"))
     {
         invertedZoomValue = 0;
     }
