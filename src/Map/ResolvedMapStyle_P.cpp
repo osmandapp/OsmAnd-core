@@ -197,6 +197,11 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
     const std::shared_ptr<RuleNode> resolvedRuleNode(new RuleNode(
         unresolvedRuleNode->isSwitch));
 
+    const auto& val = unresolvedRuleNode->values["engine_v1"];
+    if(!val.isEmpty() && val == "true"){
+       return resolvedRuleNode;
+    }
+
     // Resolve values
     for (const auto& itUnresolvedValueEntry : rangeOf(constOf(unresolvedRuleNode->values)))
     {
