@@ -197,11 +197,6 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
     const std::shared_ptr<RuleNode> resolvedRuleNode(new RuleNode(
         unresolvedRuleNode->isSwitch));
 
-    const auto& val = unresolvedRuleNode->values["engine_v1"];
-    if(!val.isEmpty() && val == "true"){
-       return resolvedRuleNode;
-    }
-
     // Resolve values
     for (const auto& itUnresolvedValueEntry : rangeOf(constOf(unresolvedRuleNode->values)))
     {
@@ -209,17 +204,20 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
         const auto& value = itUnresolvedValueEntry.value();
 
         // Find value definition id and object
-		const auto valueDefId = getValueDefinitionIdByName(name);
+        const auto valueDefId = getValueDefinitionIdByName(name);
         const auto& valueDef = getValueDefinitionById(valueDefId);
-		if ((valueDefId < 0 || !valueDef)) {
-			if (name != SEQ_ATTR) {
-				LogPrintf(LogSeverityLevel::Warning, "Ignoring unknown value '%s' = '%s'", qPrintable(name),
-						  qPrintable(value));
-			}
-			continue;
-		}
+        if ((valueDefId < 0 || !valueDef))
+        {
+            if (name != SEQ_ATTR && name != ORDER_BY_DENSITY_ATTR && name != ONEWAY_ARROWS_COLOR_ATTR &&
+                name != ADD_POINT_ATTR)
+            {
+                LogPrintf(LogSeverityLevel::Warning, "Ignoring unknown value '%s' = '%s'", qPrintable(name),
+                          qPrintable(value));
+            }
+            continue;
+        }
 
-		// Try to resolve value
+        // Try to resolve value
         ResolvedValue resolvedValue;
         if (!resolveValue(value, valueDef->dataType, valueDef->isComplex, resolvedValue))
         {

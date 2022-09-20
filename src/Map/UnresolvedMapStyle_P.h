@@ -20,6 +20,9 @@
 
 static const QString SEQ_PLACEHOLDER = QStringLiteral("#SEQ");
 static const QString SEQ_ATTR = QStringLiteral("seq");
+static const QString ORDER_BY_DENSITY_ATTR = QStringLiteral("orderByDensity");
+static const QString ONEWAY_ARROWS_COLOR_ATTR = QStringLiteral("onewayArrowsColor");
+static const QString ADD_POINT_ATTR = QStringLiteral("addPoint");
 
 namespace OsmAnd
 {
