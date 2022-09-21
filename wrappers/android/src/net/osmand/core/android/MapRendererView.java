@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
+import android.os.SystemClock;
 
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.FColorRGB;
@@ -33,6 +34,9 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Base abstract class for all map renderers, based on native OsmAndCore::IMapRenderer.
  * <p/>
@@ -55,6 +59,8 @@ public abstract class MapRendererView extends FrameLayout {
      * Reference to OsmAndCore::MapAnimator instance
      */
     protected final MapAnimator _animator;
+    private long _animationStartTime;
+    private boolean _animationFinished;
 
     /**
      * Only instance of GPU-worker thread epilogue. Since reference to it is maintained,
@@ -110,6 +116,12 @@ public abstract class MapRendererView extends FrameLayout {
 
     private int frameId;
 
+    private List<MapRendererViewListener> listeners = new ArrayList<>();
+
+    public interface MapRendererViewListener {
+        void onUpdateFrame(MapRendererView mapRenderer);
+    }
+
     public MapRendererView(Context context) {
         this(context, null);
     }
@@ -145,6 +157,24 @@ public abstract class MapRendererView extends FrameLayout {
         // Create animator for that map
         _animator = new MapAnimator(false);
         _animator.setMapRenderer(_mapRenderer);
+    }
+
+    public void addListener(MapRendererViewListener listener) {
+        if (!this.listeners.contains(listener)) {
+            List<MapRendererViewListener> listeners = new ArrayList<>();
+            listeners.addAll(this.listeners);
+            listeners.add(listener);
+            this.listeners = listeners;
+        }
+    }
+
+    public void removeListener(MapRendererViewListener listener) {
+        if (this.listeners.contains(listener)) {
+            List<MapRendererViewListener> listeners = new ArrayList<>();
+            listeners.addAll(this.listeners);
+            listeners.remove(listener);
+            this.listeners = listeners;
+        }
     }
 
     public void setMapRendererSetupOptionsConfigurator(
@@ -789,6 +819,29 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
+    public final void resumeAnimation() {
+        _animationStartTime = SystemClock.uptimeMillis();
+        _animationFinished = false;
+        _animator.resume();
+    }
+
+    public final boolean isAnimationPaused() {
+        return _animator.isPaused();
+    }
+
+    public final void pauseAnimation() {
+        _animator.pause();
+    }
+
+    public final void stopAnimation() {
+        _animator.pause();
+        _animator.getAllAnimations();
+    }
+
+    public final boolean isAnimationFinished() {
+        return _animationFinished;
+    }
+
     /**
      * EGL context factory
      * <p/>
@@ -994,6 +1047,15 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.w(TAG, "Rendering not yet initialized");
                 return;
             }
+
+            long currTime = SystemClock.uptimeMillis();
+            _animationFinished = _animator.update((currTime - _animationStartTime) / 1000f);
+            _animationStartTime = currTime;
+
+            for (MapRendererViewListener listener : listeners) {
+                listener.onUpdateFrame(MapRendererView.this);
+            }
+
             // Allow renderer to update
             _mapRenderer.update();
 
