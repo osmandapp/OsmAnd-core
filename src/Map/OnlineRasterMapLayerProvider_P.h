@@ -27,6 +27,7 @@ namespace OsmAnd
     private:
         static const QString buildUrlToLoad(const QString& urlToLoad, const QList<QString> randomsArray, int32_t x, int32_t y, const ZoomLevel zoom);
         static const QString eqtBingQuadKey(ZoomLevel z, int32_t x, int32_t y);
+        static const QString calcBoundingBoxForTile(ZoomLevel zoom, int32_t x, int32_t y);
         const QString getUrlToLoad(int32_t x, int32_t y, const ZoomLevel zoom) const;
     protected:
         OnlineRasterMapLayerProvider_P(

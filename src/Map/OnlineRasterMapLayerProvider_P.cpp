@@ -318,6 +318,10 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::buildUrlToLoad(const QStri
     if (bingQuadKeyParamIndex != -1)
         return finalUrl.replace(QStringLiteral("{q}"), eqtBingQuadKey(zoom, x, y));
     
+    int bbKeyParamIndex = urlToLoad.indexOf(QStringLiteral("{bbox}"));
+    if (bbKeyParamIndex != -1)
+        return finalUrl.replace(QStringLiteral("{bbox}"), calcBoundingBoxForTile(zoom, x, y));
+    
     return finalUrl
         .replace(QLatin1String("{0}"), QString::number(zoom))
         .replace(QLatin1String("{1}"), QString::number(x))
@@ -342,4 +346,16 @@ const QString OsmAnd::OnlineRasterMapLayerProvider_P::eqtBingQuadKey(ZoomLevel z
     for (char &ch : tn)
         res = res.append(ch);
     return res;
+}
+
+const QString OsmAnd::OnlineRasterMapLayerProvider_P::calcBoundingBoxForTile(ZoomLevel zoom, int32_t x, int32_t y)
+{
+    double xmin = Utilities::getLongitudeFromTile(zoom, x);
+    double xmax = Utilities::getLongitudeFromTile(zoom, x+1);
+    double ymin = Utilities::getLatitudeFromTile(zoom, y+1);
+    double ymax = Utilities::getLatitudeFromTile(zoom, y);
+    return QString("%1,%2,%3,%4").arg(xmin, 0, 'f', 8)
+                                 .arg(ymin, 0, 'f', 8)
+                                 .arg(xmax, 0, 'f', 8)
+                                 .arg(ymax, 0, 'f', 8);
 }
