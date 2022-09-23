@@ -1318,6 +1318,7 @@ bool OsmAnd::MapRenderer::setElevationConfiguration(
 }
 
 bool OsmAnd::MapRenderer::addSymbolsProvider(
+    const int subsectionIndex,
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
@@ -1326,11 +1327,59 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     if (!provider)
         return false;
 
-    bool update = forcedUpdate || !_requestedState.tiledSymbolsProviders.contains(provider);
+    const auto itTiledSymbolSubsection = _requestedState.tiledSymbolsProviders.find(subsectionIndex);
+    const auto isSet = (itTiledSymbolSubsection != _requestedState.tiledSymbolsProviders.end());
+
+    bool update = forcedUpdate || (!isSet || !itTiledSymbolSubsection->contains(provider));
     if (!update)
         return false;
 
-    _requestedState.tiledSymbolsProviders.insert(provider);
+    if (isSet)
+        itTiledSymbolSubsection->insert(provider);
+    else
+    {
+        QSet< std::shared_ptr<IMapTiledSymbolsProvider> > providers;
+        providers.insert(provider);
+        _requestedState.tiledSymbolsProviders[subsectionIndex] = providers;
+    }
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::addSymbolsProvider(
+    const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
+{
+    return addSymbolsProvider(0, provider, forcedUpdate);
+}
+
+bool OsmAnd::MapRenderer::addSymbolsProvider(
+    const int subsectionIndex,
+    const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    const auto itKeyedSymbolSubsection = _requestedState.keyedSymbolsProviders.find(subsectionIndex);
+    const auto isSet = (itKeyedSymbolSubsection != _requestedState.keyedSymbolsProviders.end());
+
+    bool update = forcedUpdate || (!isSet || !itKeyedSymbolSubsection->contains(provider));
+    if (!update)
+        return false;
+
+    if (isSet)
+        itKeyedSymbolSubsection->insert(provider);
+    else
+    {
+        QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > providers;
+        providers.insert(provider);
+        _requestedState.keyedSymbolsProviders[subsectionIndex] = providers;
+    }
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1341,20 +1390,7 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
     bool forcedUpdate /*= false*/)
 {
-    QMutexLocker scopedLocker(&_requestedStateMutex);
-
-    if (!provider)
-        return false;
-
-    bool update = forcedUpdate || !_requestedState.keyedSymbolsProviders.contains(provider);
-    if (!update)
-        return false;
-
-    _requestedState.keyedSymbolsProviders.insert(provider);
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
-
-    return true;
+    return addSymbolsProvider(0, provider, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::hasSymbolsProvider(
@@ -1365,7 +1401,13 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
     if (!provider)
         return false;
 
-    return _requestedState.tiledSymbolsProviders.contains(provider);
+    for (const auto& tiledSymbolsSubsection : constOf(_requestedState.tiledSymbolsProviders))
+    {
+        if (tiledSymbolsSubsection.contains(provider))
+            return true;
+    }
+
+    return false;
 }
 
 bool OsmAnd::MapRenderer::hasSymbolsProvider(
@@ -1376,7 +1418,51 @@ bool OsmAnd::MapRenderer::hasSymbolsProvider(
     if (!provider)
         return false;
 
-    return _requestedState.keyedSymbolsProviders.contains(provider);
+    for (const auto& keyedSymbolsSubsection : constOf(_requestedState.keyedSymbolsProviders))
+    {
+        if (keyedSymbolsSubsection.contains(provider))
+            return true;
+    }
+
+    return false;
+}
+
+int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
+    const std::shared_ptr<IMapTiledSymbolsProvider>& provider)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return 0;
+
+    for (const auto& subsectionEntry : rangeOf(constOf(_requestedState.tiledSymbolsProviders)))
+    {
+        const auto subsectionIndex = subsectionEntry.key();
+        const auto& subsection = subsectionEntry.value();
+        if (subsection.contains(provider))
+            return subsectionIndex;
+    }
+
+    return 0;
+}
+
+int OsmAnd::MapRenderer::getSymbolsProviderSubsection(
+    const std::shared_ptr<IMapKeyedSymbolsProvider>& provider)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return 0;
+
+    for (const auto& subsectionEntry : rangeOf(constOf(_requestedState.keyedSymbolsProviders)))
+    {
+        const auto subsectionIndex = subsectionEntry.key();
+        const auto& subsection = subsectionEntry.value();
+        if (subsection.contains(provider))
+            return subsectionIndex;
+    }
+
+    return 0;
 }
 
 bool OsmAnd::MapRenderer::removeSymbolsProvider(
@@ -1388,11 +1474,17 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     if (!provider)
         return false;
 
-    bool update = forcedUpdate || _requestedState.tiledSymbolsProviders.contains(provider);
+    bool update = forcedUpdate;
+    for (auto& tiledSymbolsSubsection : _requestedState.tiledSymbolsProviders)
+    {
+        if (tiledSymbolsSubsection.contains(provider))
+        {
+            tiledSymbolsSubsection.remove(provider);
+            update = true;
+        }
+    }
     if (!update)
         return false;
-
-    _requestedState.tiledSymbolsProviders.remove(provider);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1408,11 +1500,17 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     if (!provider)
         return false;
 
-    bool update = forcedUpdate || _requestedState.keyedSymbolsProviders.contains(provider);
+    bool update = forcedUpdate;
+    for (auto& keyedSymbolsSubsection : _requestedState.keyedSymbolsProviders)
+    {
+        if (keyedSymbolsSubsection.contains(provider))
+        {
+            keyedSymbolsSubsection.remove(provider);
+            update = true;
+        }
+    }
     if (!update)
         return false;
-
-    _requestedState.keyedSymbolsProviders.remove(provider);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1434,6 +1532,33 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
     _requestedState.keyedSymbolsProviders.clear();
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSymbolSubsectionConfiguration(
+    const int subsectionIndex,
+    const SymbolSubsectionConfiguration& configuration,
+    bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!configuration.isValid())
+        return false;
+
+    const auto itSymbolSubsectionConfiguration = _requestedState.symbolSubsectionConfigurations.find(subsectionIndex);
+    const auto isSet = (itSymbolSubsectionConfiguration != _requestedState.symbolSubsectionConfigurations.end());
+
+    bool update = forcedUpdate || (!isSet || *itSymbolSubsectionConfiguration != configuration);
+    if (!update)
+        return false;
+
+    if (isSet)
+        *itSymbolSubsectionConfiguration = configuration;
+    else
+        _requestedState.symbolSubsectionConfigurations[subsectionIndex] = configuration;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Configuration);
 
     return true;
 }

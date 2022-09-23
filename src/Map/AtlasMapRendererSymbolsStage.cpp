@@ -943,6 +943,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     renderable->elevationInMeters = elevationInMeters;
     renderable->tileId = tileId;
     renderable->offsetInTileN = offsetInTileN;
+    renderable->opacityFactor = getSubsectionOpacityFactor(mapSymbol);
     outRenderableSymbols.push_back(renderable);
 }
 
@@ -1117,6 +1118,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     renderable->genericInstanceParameters = instanceParameters;
     renderable->instanceParameters = instanceParameters;
     renderable->gpuResource = gpuResource;
+    renderable->opacityFactor = getSubsectionOpacityFactor(mapSymbol);
     outRenderableSymbols.push_back(renderable);
 
     // Calculate location of symbol in world coordinates.
@@ -1418,6 +1420,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         subpathEndIndex,
         directionOnScreen,
         onPathMapSymbol->glyphsWidth);
+    renderable->opacityFactor = getSubsectionOpacityFactor(onPathMapSymbol);
     outRenderableSymbols.push_back(renderable);
 
     if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
@@ -2632,6 +2635,20 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
         bboxInDirection.width(), bboxInDirection.height());
 
     return OOBBF(bboxInDirection, -directionAngle);
+}
+
+float OsmAnd::AtlasMapRendererSymbolsStage::getSubsectionOpacityFactor(
+    const std::shared_ptr<const MapSymbol>& mapSymbol) const
+{
+    const auto citSubsectionConfiguration =
+        currentState.symbolSubsectionConfigurations.constFind(mapSymbol->subsection);
+    if (citSubsectionConfiguration == currentState.symbolSubsectionConfigurations.cend())
+        return 1.0f;
+    else
+    {
+        const auto& subsectionConfiguration = *citSubsectionConfiguration;
+        return subsectionConfiguration.opacityFactor;
+    }
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const

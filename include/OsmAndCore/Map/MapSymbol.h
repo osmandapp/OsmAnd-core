@@ -47,6 +47,7 @@ namespace OsmAnd
 
         bool isHidden;
         FColorARGB modulationColor;
+        int subsection;
 
         bool allowFastCheckByFrustum;
     };

@@ -43,6 +43,7 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             ScreenQuadTree::BBox visibleBBox;
             ScreenQuadTree::BBox intersectionBBox;
+            float opacityFactor;
         };
 
         struct RenderableBillboardSymbol : RenderableSymbol
@@ -324,6 +325,8 @@ namespace OsmAnd
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
 
         OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
+
+        float getSubsectionOpacityFactor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 
         // Debug-related:
         void addPathDebugLine(

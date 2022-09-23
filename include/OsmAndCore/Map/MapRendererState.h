@@ -37,6 +37,7 @@ namespace OsmAnd
         Elevation_DataProvider,
         Elevation_Configuration,
         Symbols_Providers,
+        Symbols_Configuration,
         WindowSize,
         Viewport,
         FieldOfView,
@@ -93,8 +94,9 @@ namespace OsmAnd
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         ElevationConfiguration elevationConfiguration;
 
-        QSet< std::shared_ptr<IMapTiledSymbolsProvider> > tiledSymbolsProviders;
-        QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > keyedSymbolsProviders;
+        QMap<int, QSet< std::shared_ptr<IMapTiledSymbolsProvider> > > tiledSymbolsProviders;
+        QMap<int, QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > > keyedSymbolsProviders;
+        QMap<int, SymbolSubsectionConfiguration > symbolSubsectionConfigurations;
 
         PointI windowSize;
         AreaI viewport;

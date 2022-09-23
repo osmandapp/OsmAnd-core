@@ -113,12 +113,17 @@ namespace OsmAnd
         virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool hasSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider) = 0;
         virtual bool hasSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider) = 0;
+        virtual int getSymbolsProviderSubsection(const std::shared_ptr<IMapTiledSymbolsProvider>& provider) = 0;
+        virtual int getSymbolsProviderSubsection(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider) = 0;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool removeAllSymbolsProviders(bool forcedUpdate = false) = 0;
+        virtual bool setSymbolSubsectionConfiguration(const int subsectionIndex, const SymbolSubsectionConfiguration& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;

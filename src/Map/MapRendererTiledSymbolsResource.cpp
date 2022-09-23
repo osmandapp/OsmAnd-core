@@ -233,6 +233,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     if (queryController && queryController->isAborted())
         return false;
 
+    // Get symbol subsection
+    const auto symbolSubsection = resourcesManager->renderer->getSymbolsProviderSubsection(provider);
+
     // Register all obtained symbols
     const auto& self = shared_from_this();
     QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
@@ -246,6 +249,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
+            // Set symbol subsection
+            mapSymbol->subsection = symbolSubsection;
+
             PublishOrUnpublishMapSymbol mapSymbolToPublish = {
                 symbolsGroup,
                 std::static_pointer_cast<const MapSymbol>(mapSymbol),
@@ -264,6 +270,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
         mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
+            // Set symbol subsection
+            mapSymbol->subsection = symbolSubsection;
+
             PublishOrUnpublishMapSymbol mapSymbolToPublish = {
                 symbolsGroup,
                 std::static_pointer_cast<const MapSymbol>(mapSymbol),

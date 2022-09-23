@@ -277,12 +277,17 @@ namespace OsmAnd
         virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool hasSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider) Q_DECL_OVERRIDE;
         virtual bool hasSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider) Q_DECL_OVERRIDE;
+        virtual int getSymbolsProviderSubsection(const std::shared_ptr<IMapTiledSymbolsProvider>& provider) Q_DECL_OVERRIDE;
+        virtual int getSymbolsProviderSubsection(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider) Q_DECL_OVERRIDE;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool removeAllSymbolsProviders(bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSymbolSubsectionConfiguration(const int subsectionIndex, const SymbolSubsectionConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
