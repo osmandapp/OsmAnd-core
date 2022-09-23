@@ -15,6 +15,7 @@ import net.osmand.core.jni.IMapLayerProvider;
 import net.osmand.core.jni.IMapRenderer;
 import net.osmand.core.jni.IMapTiledSymbolsProvider;
 import net.osmand.core.jni.MapLayerConfiguration;
+import net.osmand.core.jni.SymbolSubsectionConfiguration;
 import net.osmand.core.jni.MapRendererConfiguration;
 import net.osmand.core.jni.MapRendererDebugSettings;
 import net.osmand.core.jni.MapRendererSetupOptions;
@@ -456,10 +457,22 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.addSymbolsProvider(provider);
     }
 
+    public final boolean addSymbolsProvider(int subsectionIndex, IMapTiledSymbolsProvider provider) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.addSymbolsProvider(subsectionIndex, provider);
+    }
+
     public final boolean addSymbolsProvider(IMapKeyedSymbolsProvider provider) {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.addSymbolsProvider(provider);
+    }
+
+    public final boolean addSymbolsProvider(int subsectionIndex, IMapKeyedSymbolsProvider provider) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.addSymbolsProvider(subsectionIndex, provider);
     }
 
     public final boolean hasSymbolsProvider(IMapTiledSymbolsProvider provider) {
@@ -490,6 +503,14 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.removeAllSymbolsProviders();
+    }
+
+    public final boolean setSymbolSubsectionConfiguration(
+            int subsectionIndex,
+            SymbolSubsectionConfiguration symbolSubsectionConfiguration) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSymbolSubsectionConfiguration(subsectionIndex, symbolSubsectionConfiguration);
     }
 
     public final boolean setFieldOfView(float fieldOfView) {

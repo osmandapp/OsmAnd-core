@@ -357,11 +357,27 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
         const auto provider = itBindedProvider.key();
 
         // Skip binding if it's still active
-        if (state.tiledSymbolsProviders.contains(std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider)) ||
-            state.keyedSymbolsProviders.contains(std::dynamic_pointer_cast<IMapKeyedSymbolsProvider>(provider)))
+        bool skip = false;
+        for (const auto& tiledSymbolsSubsection : constOf(state.tiledSymbolsProviders))
         {
-            continue;
+            if (tiledSymbolsSubsection.contains(std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider)))
+            {
+                skip = true;
+                break;
+            }
         }
+        if (skip)
+            continue;
+        for (const auto& keyedSymbolsSubsection : constOf(state.keyedSymbolsProviders))
+        {
+            if (keyedSymbolsSubsection.contains(std::dynamic_pointer_cast<IMapKeyedSymbolsProvider>(provider)))
+            {
+                skip = true;
+                break;
+            }
+        }
+        if (skip)
+            continue;
 
         // Clean-up resources (deferred)
         _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
@@ -375,39 +391,45 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
     }
 
     // Create new binding and storage
-    for (const auto& provider : constOf(state.tiledSymbolsProviders))
+    for (const auto& tiledSymbolsSubsection : constOf(state.tiledSymbolsProviders))
     {
-        // If binding already exists, skip creation
-        if (bindings.providersToCollections.contains(provider))
-            continue;
+        for (const auto& provider : constOf(tiledSymbolsSubsection))
+        {
+            // If binding already exists, skip creation
+            if (bindings.providersToCollections.contains(provider))
+                continue;
 
-        // Create new resources collection
-        const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-            static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection()));
+            // Create new resources collection
+            const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
+                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection()));
 
-        // Add binding
-        bindings.providersToCollections.insert(provider, newResourcesCollection);
-        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+            // Add binding
+            bindings.providersToCollections.insert(provider, newResourcesCollection);
+            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
 
-        // Add resources collection
-        resources.push_back(qMove(newResourcesCollection));
+            // Add resources collection
+            resources.push_back(qMove(newResourcesCollection));
+        }
     }
-    for (const auto& provider : constOf(state.keyedSymbolsProviders))
+    for (const auto& keyedSymbolsSubsection : constOf(state.keyedSymbolsProviders))
     {
-        // If binding already exists, skip creation
-        if (bindings.providersToCollections.contains(provider))
-            continue;
+        for (const auto& provider : constOf(keyedSymbolsSubsection))
+        {
+            // If binding already exists, skip creation
+            if (bindings.providersToCollections.contains(provider))
+                continue;
 
-        // Create new resources collection
-        const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-            static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
+            // Create new resources collection
+            const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
+                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
 
-        // Add binding
-        bindings.providersToCollections.insert(provider, newResourcesCollection);
-        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+            // Add binding
+            bindings.providersToCollections.insert(provider, newResourcesCollection);
+            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
 
-        // Add resources collection
-        resources.push_back(qMove(newResourcesCollection));
+            // Add resources collection
+            resources.push_back(qMove(newResourcesCollection));
+        }
     }
 }
 

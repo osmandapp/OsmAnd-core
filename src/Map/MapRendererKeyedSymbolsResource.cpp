@@ -126,7 +126,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     // Process data
     if (!dataAvailable)
         return true;
-
+   
     // Convert data
     for (const auto& mapSymbol : constOf(_sourceData->symbolsGroup->symbols))
     {
@@ -139,6 +139,10 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
             AlphaChannelPresence::Present);
     }
 
+    // Get symbol subsection
+    const auto symbolsProvider = std::static_pointer_cast<IMapKeyedSymbolsProvider>(provider);
+    const auto symbolSubsection = resourcesManager->renderer->getSymbolsProviderSubsection(symbolsProvider);
+
     // Register all obtained symbols
     _mapSymbolsGroup = _sourceData->symbolsGroup;
     const auto self = shared_from_this();
@@ -146,6 +150,9 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     mapSymbolsToPublish.reserve(_mapSymbolsGroup->symbols.size());
     for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
     {
+        // Set symbol subsection
+        symbol->subsection = symbolSubsection;
+
         PublishOrUnpublishMapSymbol mapSymbolToPublish = {
             _mapSymbolsGroup,
             std::static_pointer_cast<const MapSymbol>(symbol),

@@ -6,6 +6,11 @@ OsmAnd::MapLayerConfiguration::MapLayerConfiguration()
 {
 }
 
+OsmAnd::SymbolSubsectionConfiguration::SymbolSubsectionConfiguration()
+    : opacityFactor(1.0f)
+{
+}
+
 OsmAnd::ElevationConfiguration::ElevationConfiguration()
     : dataScaleFactor(1.0f)
     , slopeAlgorithm(SlopeAlgorithm::ZevenbergenThorne)

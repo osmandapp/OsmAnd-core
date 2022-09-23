@@ -606,12 +606,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
    
     // Apply symbols opacity factor to modulation color
     auto modulationColor = symbol->modulationColor;
-    modulationColor.a *= currentState.symbolsOpacity;
+    auto opacityFactor = renderable->opacityFactor * currentState.symbolsOpacity;
+    modulationColor.a *= opacityFactor;
     if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
     {
-        modulationColor.r *= currentState.symbolsOpacity;
-        modulationColor.g *= currentState.symbolsOpacity;
-        modulationColor.b *= currentState.symbolsOpacity;
+        modulationColor.r *= opacityFactor;
+        modulationColor.g *= opacityFactor;
+        modulationColor.b *= opacityFactor;
     }
 
     // Set modulation color
@@ -1390,12 +1391,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
     // Apply symbols opacity factor to modulation color
     auto modulationColor = symbol->modulationColor;
-    modulationColor.a *= currentState.symbolsOpacity;
+    auto opacityFactor = renderable->opacityFactor * currentState.symbolsOpacity;
+    modulationColor.a *= opacityFactor;
     if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
     {
-        modulationColor.r *= currentState.symbolsOpacity;
-        modulationColor.g *= currentState.symbolsOpacity;
-        modulationColor.b *= currentState.symbolsOpacity;
+        modulationColor.r *= opacityFactor;
+        modulationColor.g *= opacityFactor;
+        modulationColor.b *= opacityFactor;
     }
 
     // Set modulation color
@@ -1545,12 +1547,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
     // Apply symbols opacity factor to modulation color
     auto modulationColor = symbol->modulationColor;
-    modulationColor.a *= currentState.symbolsOpacity;
+    auto opacityFactor = renderable->opacityFactor * currentState.symbolsOpacity;
+    modulationColor.a *= opacityFactor;
     if (currentAlphaChannelType == AlphaChannelType::Premultiplied)
     {
-        modulationColor.r *= currentState.symbolsOpacity;
-        modulationColor.g *= currentState.symbolsOpacity;
-        modulationColor.b *= currentState.symbolsOpacity;
+        modulationColor.r *= opacityFactor;
+        modulationColor.g *= opacityFactor;
+        modulationColor.b *= opacityFactor;
     }
 
     // Set modulation color

@@ -46,6 +46,39 @@ namespace OsmAnd
         }
     };
 
+    struct OSMAND_CORE_API SymbolSubsectionConfiguration Q_DECL_FINAL
+    {
+        SymbolSubsectionConfiguration();
+
+        float opacityFactor;
+#if !defined(SWIG)
+        inline SymbolSubsectionConfiguration& setOpacityFactor(const float newOpacityFactor)
+        {
+            opacityFactor = newOpacityFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        inline bool isValid() const
+        {
+            return
+                (opacityFactor >= 0.0f && opacityFactor <= 1.0f);
+        }
+
+        inline bool operator==(const SymbolSubsectionConfiguration& r) const
+        {
+            return
+                qFuzzyCompare(opacityFactor, r.opacityFactor);
+        }
+
+        inline bool operator!=(const SymbolSubsectionConfiguration& r) const
+        {
+            return
+                !qFuzzyCompare(opacityFactor, r.opacityFactor);
+        }
+    };
+
     struct OSMAND_CORE_API ElevationConfiguration Q_DECL_FINAL
     {
         enum class SlopeAlgorithm {
