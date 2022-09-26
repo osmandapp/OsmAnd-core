@@ -30,8 +30,6 @@ namespace OsmAnd
         virtual PointD getCameraCoordinates() const = 0;
         virtual float getCameraHeight() const = 0;
 
-        virtual float getTileSizeOnScreenInPixels() const = 0;
-
         virtual int getTileSize3D() const = 0;
     };
 }

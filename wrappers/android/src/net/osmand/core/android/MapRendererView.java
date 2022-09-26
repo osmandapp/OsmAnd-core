@@ -810,6 +810,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getPixelsToMetersScaleFactor();
     }
 
+    public final double getTileSizeOnScreenInPixels() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getTileSizeOnScreenInPixels();
+    }
+    
     public final int getMaxMissingDataZoomShift() {
         NativeCore.checkIfLoaded();
 

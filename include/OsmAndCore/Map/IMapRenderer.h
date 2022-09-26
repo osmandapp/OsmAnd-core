@@ -187,6 +187,7 @@ namespace OsmAnd
 
         virtual double getTileSizeInMeters() const = 0;
         virtual double getPixelsToMetersScaleFactor() const = 0;
+        virtual float getTileSizeOnScreenInPixels() const = 0;
 
         virtual int getMaxMissingDataZoomShift() const = 0;
         virtual int getMaxMissingDataUnderZoomShift() const = 0;
