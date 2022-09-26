@@ -879,7 +879,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
         height,
         offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-    const auto distance = static_cast<float>(internalState.metersPerUnit / 1000.0 *
+
+    const auto upperMetersPerUnit =
+        Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y, TileSize3D);
+    const auto lowerMetersPerUnit =
+        Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y + 1, TileSize3D);    
+    const auto targetMetersPerUnit =
+        glm::mix(upperMetersPerUnit, lowerMetersPerUnit, internalState.targetInTileOffsetN.y);
+    const auto averageMetersPerUnit = (internalState.metersPerUnit + targetMetersPerUnit) / 2.0f;
+
+    const auto distance = static_cast<float>( averageMetersPerUnit / 1000.0 *
         static_cast<double>(glm::distance(internalState.worldCameraPosition, positionInWorld)));
 
     return distance;
