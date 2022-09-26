@@ -933,18 +933,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         }
     }
 
-    std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
-    renderable->mapSymbolGroup = mapSymbolGroup;
-    renderable->mapSymbol = mapSymbol;
-    renderable->genericInstanceParameters = instanceParameters;
-    renderable->instanceParameters = instanceParameters;
-    renderable->gpuResource = gpuResource;
-    renderable->positionInWorld = positionInWorld;
-    renderable->elevationInMeters = elevationInMeters;
-    renderable->tileId = tileId;
-    renderable->offsetInTileN = offsetInTileN;
-    renderable->opacityFactor = getSubsectionOpacityFactor(mapSymbol);
-    outRenderableSymbols.push_back(renderable);
+    // Don't render fully transparent symbols
+    const auto opacityFactor = getSubsectionOpacityFactor(mapSymbol);
+    if (opacityFactor > 0.0f)
+    {
+        std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+        renderable->mapSymbolGroup = mapSymbolGroup;
+        renderable->mapSymbol = mapSymbol;
+        renderable->genericInstanceParameters = instanceParameters;
+        renderable->instanceParameters = instanceParameters;
+        renderable->gpuResource = gpuResource;
+        renderable->positionInWorld = positionInWorld;
+        renderable->elevationInMeters = elevationInMeters;
+        renderable->tileId = tileId;
+        renderable->offsetInTileN = offsetInTileN;
+        renderable->opacityFactor = opacityFactor;
+        outRenderableSymbols.push_back(renderable);
+    }
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
@@ -1112,31 +1117,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         }
     }
 
-    std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
-    renderable->mapSymbolGroup = mapSymbolGroup;
-    renderable->mapSymbol = mapSymbol;
-    renderable->genericInstanceParameters = instanceParameters;
-    renderable->instanceParameters = instanceParameters;
-    renderable->gpuResource = gpuResource;
-    renderable->opacityFactor = getSubsectionOpacityFactor(mapSymbol);
-    outRenderableSymbols.push_back(renderable);
+    // Don't render fully transparent symbols
+    const auto opacityFactor = getSubsectionOpacityFactor(mapSymbol);
+    if (opacityFactor > 0.0f)
+    {
+        std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
+        renderable->mapSymbolGroup = mapSymbolGroup;
+        renderable->mapSymbol = mapSymbol;
+        renderable->genericInstanceParameters = instanceParameters;
+        renderable->instanceParameters = instanceParameters;
+        renderable->gpuResource = gpuResource;
+        renderable->opacityFactor = opacityFactor;
+        outRenderableSymbols.push_back(renderable);
 
-    // Calculate location of symbol in world coordinates.
-    renderable->offsetFromTarget31 = position31 - currentState.target31;
-    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
-    renderable->positionInWorld = glm::vec3(
-        renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f,
-        renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+        // Calculate location of symbol in world coordinates.
+        renderable->offsetFromTarget31 = position31 - currentState.target31;
+        renderable->offsetFromTarget =
+            Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
+        renderable->positionInWorld = glm::vec3(
+            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+            0.0f,
+            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-    // Get direction
-    if (IOnSurfaceMapSymbol::isAzimuthAlignedDirection(direction))
-        renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
-    else
-        renderable->direction = direction;
+        // Get direction
+        if (IOnSurfaceMapSymbol::isAzimuthAlignedDirection(direction))
+            renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
+        else
+            renderable->direction = direction;
 
-    // Get distance from symbol to camera
-    renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+        // Get distance from symbol to camera
+        renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+    }
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
@@ -1393,35 +1404,39 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         subpathEndIndex,
         exactEndPointOnScreen);
 
-    // Plot symbol instance.
-    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-    renderable->mapSymbolGroup = mapSymbolGroup;
-    renderable->mapSymbol = onPathMapSymbol;
-    renderable->genericInstanceParameters = instanceParameters;
-    renderable->instanceParameters = instanceParameters;
-    renderable->gpuResource = gpuResource;
-    renderable->is2D = is2D;
-    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-        computedPathData.pathInWorld,
-        subpathStartIndex,
-        exactStartPointInWorld,
-        subpathEndIndex,
-        exactEndPointInWorld);
-    renderable->directionInWorld = directionInWorld;
-    renderable->directionOnScreen = directionOnScreen;
-    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-        is2D,
-        computedPathData.pathOnScreen,
-        computedPathData.pathSegmentsLengthsOnScreen,
-        computedPathData.pathInWorld,
-        computedPathData.pathSegmentsLengthsInWorld,
-        subpathStartIndex,
-        is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
-        subpathEndIndex,
-        directionOnScreen,
-        onPathMapSymbol->glyphsWidth);
-    renderable->opacityFactor = getSubsectionOpacityFactor(onPathMapSymbol);
-    outRenderableSymbols.push_back(renderable);
+    // Don't render fully transparent symbols
+    const auto opacityFactor = getSubsectionOpacityFactor(onPathMapSymbol);
+    if (opacityFactor > 0.0f)
+    {
+        std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+        renderable->mapSymbolGroup = mapSymbolGroup;
+        renderable->mapSymbol = onPathMapSymbol;
+        renderable->genericInstanceParameters = instanceParameters;
+        renderable->instanceParameters = instanceParameters;
+        renderable->gpuResource = gpuResource;
+        renderable->is2D = is2D;
+        renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+            computedPathData.pathInWorld,
+            subpathStartIndex,
+            exactStartPointInWorld,
+            subpathEndIndex,
+            exactEndPointInWorld);
+        renderable->directionInWorld = directionInWorld;
+        renderable->directionOnScreen = directionOnScreen;
+        renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+            is2D,
+            computedPathData.pathOnScreen,
+            computedPathData.pathSegmentsLengthsOnScreen,
+            computedPathData.pathInWorld,
+            computedPathData.pathSegmentsLengthsInWorld,
+            subpathStartIndex,
+            is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
+            subpathEndIndex,
+            directionOnScreen,
+            onPathMapSymbol->glyphsWidth);
+        renderable->opacityFactor = opacityFactor;
+        outRenderableSymbols.push_back(renderable);
+    }
 
     if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
     {
