@@ -46,12 +46,12 @@ bool OsmAnd::MapAnimator::cancelAnimation(const std::shared_ptr<const IAnimation
     return _p->cancelAnimation(animation);
 }
 
-QList< std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> > OsmAnd::MapAnimator::getAnimations(const Key key) const
+QList< std::shared_ptr<const OsmAnd::IAnimation> > OsmAnd::MapAnimator::getAnimations(const Key key) const
 {
     return _p->getAnimations(key);
 }
 
-QList< std::shared_ptr<OsmAnd::MapAnimator::IAnimation> > OsmAnd::MapAnimator::getAnimations(const Key key)
+QList< std::shared_ptr<OsmAnd::IAnimation> > OsmAnd::MapAnimator::getAnimations(const Key key)
 {
     return _p->getAnimations(key);
 }
@@ -76,22 +76,22 @@ bool OsmAnd::MapAnimator::cancelCurrentAnimation(const Key key, const AnimatedVa
     return _p->cancelCurrentAnimation(key, animatedValue);
 }
 
-std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> OsmAnd::MapAnimator::getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const
+std::shared_ptr<const OsmAnd::IAnimation> OsmAnd::MapAnimator::getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const
 {
     return _p->getCurrentAnimation(key, animatedValue);
 }
 
-std::shared_ptr<OsmAnd::MapAnimator::IAnimation> OsmAnd::MapAnimator::getCurrentAnimation(const Key key, const AnimatedValue animatedValue)
+std::shared_ptr<OsmAnd::IAnimation> OsmAnd::MapAnimator::getCurrentAnimation(const Key key, const AnimatedValue animatedValue)
 {
     return _p->getCurrentAnimation(key, animatedValue);
 }
 
-QList< std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> > OsmAnd::MapAnimator::getAllAnimations() const
+QList< std::shared_ptr<const OsmAnd::IAnimation> > OsmAnd::MapAnimator::getAllAnimations() const
 {
     return _p->getAllAnimations();
 }
 
-QList< std::shared_ptr<OsmAnd::MapAnimator::IAnimation> > OsmAnd::MapAnimator::getAllAnimations()
+QList< std::shared_ptr<OsmAnd::IAnimation> > OsmAnd::MapAnimator::getAllAnimations()
 {
     return _p->getAllAnimations();
 }
@@ -268,12 +268,4 @@ void OsmAnd::MapAnimator::animateMoveWith(
     const Key key /*= nullptr*/)
 {
     _p->animateMoveWith(velocity, deceleration, zeroizeAzimuth, invZeroizeElevationAngle, key);
-}
-
-OsmAnd::MapAnimator::IAnimation::IAnimation()
-{
-}
-
-OsmAnd::MapAnimator::IAnimation::~IAnimation()
-{
 }
