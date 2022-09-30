@@ -121,6 +121,10 @@
 #include <OsmAndCore/TileSqliteDatabasesCollection.h>
 #include <OsmAndCore/TileSqliteDatabase.h>
 #include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+#include <OsmAndCore/Map/Animation.h>
+#include <OsmAndCore/Map/AnimatorTypes.h>
+#include <OsmAndCore/Map/IAnimation.h>
+#include <OsmAndCore/Map/MapMarkersAnimator.h>
 #include <OsmAndCore/Map/MapAnimator.h>
 #include "SwigUtilities.h"
 
@@ -300,7 +304,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::TileSqliteDatabase)
 	%shared_ptr(OsmAnd::SqliteHeightmapTileProvider)
 	%shared_ptr(OsmAnd::MapAnimator)
-	%shared_ptr(OsmAnd::MapAnimator::IAnimation)
+	%shared_ptr(OsmAnd::MapMarkersAnimator)
+	%shared_ptr(OsmAnd::IAnimation)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -365,7 +370,7 @@ using namespace OsmAnd;
 	%template(QListMapMarker) QList<std::shared_ptr<OsmAnd::MapMarker>>;
 	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
-	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::MapAnimator::IAnimation>>;
+	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -491,6 +496,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/TileSqliteDatabasesCollection.h>
 %include <OsmAndCore/TileSqliteDatabase.h>
 %include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+%include <OsmAndCore/Map/Animation.h>
+%include <OsmAndCore/Map/AnimatorTypes.h>
+%include <OsmAndCore/Map/IAnimation.h>
+%include <OsmAndCore/Map/MapMarkersAnimator.h>
 %include <OsmAndCore/Map/MapAnimator.h>
 
 %include <OsmAndCore/Map/PolygonBuilder.h>

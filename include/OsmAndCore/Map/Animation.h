@@ -1,11 +1,11 @@
 #ifndef _OSMAND_CORE_ANIMATION_H_
 #define _OSMAND_CORE_ANIMATION_H_
 
-#include "stdlib_common.h"
+#include <OsmAndCore/stdlib_common.h>
 #include <functional>
 
-#include "QtExtensions.h"
-#include "ignore_warnings_on_external_includes.h"
+#include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QtMath>
 #include <QHash>
 #include <QMap>
@@ -13,10 +13,10 @@
 #include <QReadWriteLock>
 #include <QMutex>
 #include <QVariant>
-#include "restore_internal_warnings.h"
+#include <OsmAndCore/restore_internal_warnings.h>
 
-#include "OsmAndCore.h"
-#include "IAnimation.h"
+#include <OsmAndCore.h>
+#include <OsmAndCore/Map/IAnimation.h>
 
 namespace OsmAnd
 {
@@ -26,7 +26,7 @@ namespace OsmAnd
         QVariantHash storageHash;
     };
 
-    class GenericAnimation : public IAnimation
+    class OSMAND_CORE_API GenericAnimation : public IAnimation
     {
         Q_DISABLE_COPY_AND_MOVE(GenericAnimation);
     public:
@@ -255,10 +255,6 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         {
             return (value.x == 0 && value.y == 0);
         }
-    public:
-        virtual ~GenericAnimation();
-
-        virtual bool process(const float timePassed) = 0;
 
         const Key key;
         const AnimatedValue animatedValue;
@@ -267,6 +263,11 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         const float duration;
 
         const TimingFunction timingFunction;
+
+    public:
+        virtual ~GenericAnimation();
+
+        virtual bool process(const float timePassed) = 0;
 
         virtual Key getKey() const;
         virtual AnimatedValue getAnimatedValue() const;
@@ -284,7 +285,7 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
     };
 
     template <typename T>
-    class Animation : public GenericAnimation
+    class OSMAND_CORE_API Animation : public GenericAnimation
     {
         Q_DISABLE_COPY_AND_MOVE(Animation);
     public:
