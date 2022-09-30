@@ -531,7 +531,8 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
 void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp)
 {
     // <*>
-    xmlWriter.writeStartElement(namesp + extension->name);
+    QString extKey(extension->name);
+    xmlWriter.writeStartElement(namesp + extKey.replace(QStringLiteral(":"), QStringLiteral("_-_")));
     for (const auto attributeEntry : rangeOf(constOf(extension->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
