@@ -267,6 +267,7 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
     bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.1;
+    changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     if (!changed && _visibleBBox31 != mapState.visibleBBox31)
     {
         auto bboxShiftPoint = _visibleBBox31.topLeft - mapState.visibleBBox31.topLeft;
@@ -287,6 +288,7 @@ void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
+    _hasElevationDataProvider = mapState.hasElevationDataProvider;
 }
 
 bool OsmAnd::VectorLine_P::update(const MapState& mapState)
@@ -819,15 +821,17 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     // Tesselate the line for the surface
 	auto partSizes =
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
-	bool tesselated = GeometryModifiers::overGrid(
-        vertices,
-        nullptr,
-        vectorLine->primitiveType,
-        partSizes,
-        Utilities::getPowZoom(31 - _mapZoomLevel),
-		Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
-        1.0f, 0.01f,
-        false, false);
+	bool tesselated = _hasElevationDataProvider
+        ? GeometryModifiers::overGrid(
+            vertices,
+            nullptr,
+            vectorLine->primitiveType,
+            partSizes,
+            Utilities::getPowZoom(31 - _mapZoomLevel),
+            Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
+            1.0f, 0.01f,
+            false, false)
+        : false;
 	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
 
     //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;

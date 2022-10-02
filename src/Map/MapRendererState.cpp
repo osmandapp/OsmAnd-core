@@ -46,6 +46,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     
     mapState.metersPerPixel = metersPerPixel;
     mapState.visibleBBox31 = visibleBBox31;
+    mapState.hasElevationDataProvider = elevationDataProvider != nullptr;
 
     return mapState;
 }
@@ -67,6 +68,7 @@ OsmAnd::MapState::MapState()
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , symbolsOpacity(1.0f)
     , metersPerPixel(1.0)
+    , hasElevationDataProvider(false)
 {
 }
 

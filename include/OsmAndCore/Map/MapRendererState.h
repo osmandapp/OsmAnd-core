@@ -79,6 +79,7 @@ namespace OsmAnd
         
         double metersPerPixel;
         AreaI visibleBBox31;
+        bool hasElevationDataProvider;
     };
 
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL

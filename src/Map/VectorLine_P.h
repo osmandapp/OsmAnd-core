@@ -80,6 +80,7 @@ namespace OsmAnd
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;
+        bool _hasElevationDataProvider;
 
         float zoom() const;
 
