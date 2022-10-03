@@ -31,6 +31,10 @@ namespace OsmAnd
             const float halfHeixelSizeN;
 
             bool getValue(const PointF& coordinates, float& outValue) const;
+            bool getClosestPoint(const float startElevationFactor, const float endElevationFactor,
+                const PointF& startCoordinates, const float startElevation,
+                const PointF& endCoordinates, const float endElevation,
+                PointF& outCoordinates, float* outHeightInMeters = nullptr) const;
         };
 
     private:

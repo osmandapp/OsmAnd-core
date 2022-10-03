@@ -55,7 +55,7 @@ namespace OsmAnd
         float distanceFromCameraToGround;
         float distanceFromCameraToGroundInMeters;
         double metersPerUnit;
-        PointD cameraCoordinates;
+        LatLon cameraCoordinates;
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;
         float pixelInWorldProjectionScale;

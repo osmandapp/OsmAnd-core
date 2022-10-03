@@ -1670,8 +1670,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
 
             // NOTE: Must be in sync with IMapElevationDataProvider::Data::getValue
-            const PointF texCoordsScale(texture->tileSizeN - 3.0f * texture->uTexelSizeN, texture->tileSizeN - 3.0f * texture->vTexelSizeN);
-            const PointF texCoordsOffset(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN, rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN);
+            const PointF texCoordsScale(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
+                texture->tileSizeN - 3.0f * texture->vTexelSizeN);
+            const PointF texCoordsOffset(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -1691,8 +1693,8 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
 
             const PointF texCoordsScale(
-                1.0f - 2.0f * texture->uHalfTexelSizeN - 2.0f * texture->uTexelSizeN,
-                1.0f - 2.0f * texture->vHalfTexelSizeN - 2.0f * texture->vTexelSizeN
+                1.0f - 3.0f * texture->uTexelSizeN,
+                1.0f - 3.0f * texture->vTexelSizeN
             );
             const PointF texCoordsOffset(
                 texture->uHalfTexelSizeN + texture->uTexelSizeN,
