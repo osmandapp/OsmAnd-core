@@ -792,6 +792,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.obtainScreenPointFromPosition(location31, outScreenPoint, checkOffScreen);
     }
 
+    public final boolean getElevatedPointFromLocation(PointI location31, PointI outScreenPoint, boolean checkOffScreen) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.obtainElevatedPointFromPosition(location31, outScreenPoint, checkOffScreen);
+    }
+
     public final AreaI getVisibleBBox31() {
         NativeCore.checkIfLoaded();
 

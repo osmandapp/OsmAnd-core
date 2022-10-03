@@ -95,6 +95,7 @@ namespace OsmAnd
         bool isPositionVisible(const PointI& position31) const override;
         bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
         bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
+        bool obtainElevatedPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
 
         float getCameraHeightInMeters() const override;
         
