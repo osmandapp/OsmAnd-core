@@ -82,6 +82,9 @@ namespace OsmAnd
 
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
+        bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
+            float* heightInMeters = nullptr) const override;
+        float getLocationHeightInMeters(const PointI& location31) const override;
         bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
             PointI& target31, const float height = 0.0f) const override;
         float getHeightOfLocation(const PointI& location31) const override;

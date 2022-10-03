@@ -172,6 +172,10 @@ namespace OsmAnd
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
+        virtual bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
+            float* heightInMeters = nullptr) const = 0;
+
+        virtual float getLocationHeightInMeters(const PointI& location31) const = 0;
 
         virtual AreaI getVisibleBBox31() const = 0;
         virtual bool isPositionVisible(const PointI64& position) const = 0;

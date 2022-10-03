@@ -76,7 +76,7 @@ unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
     return internalState->visibleTiles.size();
 }
 
-OsmAnd::PointD OsmAnd::AtlasMapRenderer::getCameraCoordinates() const
+OsmAnd::LatLon OsmAnd::AtlasMapRenderer::getCameraCoordinates() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());

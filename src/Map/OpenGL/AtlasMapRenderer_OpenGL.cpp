@@ -362,7 +362,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera positions
-    internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
+    internalState->worldCameraPosition = (internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
     internalState->groundCameraPosition = internalState->worldCameraPosition.xz();
 
     // Convenience precalculations
@@ -524,8 +524,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const auto tileIdN = Utilities::normalizeTileId(tileId, state.zoomLevel);
     groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
     groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
-    internalState->cameraCoordinates.x = Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x);
-    internalState->cameraCoordinates.y = Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y);
+    internalState->cameraCoordinates = LatLon(Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y),
+        Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
 
     // Get camera height and maximum height of terrain below
     const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileIdN.y, TileSize3D);
@@ -789,6 +789,137 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
+    const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+    
+    PointD position;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    if (!ok)
+        return false;
+
+    position += internalState.targetInTileOffsetN;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
+    position *= tileSize31;
+
+    PointI64 location;
+    location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
+    location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+
+    // Find the intersection point with elevated surface
+    const auto elevationScaleFactor =
+        state.elevationConfiguration.zScaleFactor * state.elevationConfiguration.dataScaleFactor;
+    const PointD endPoint =
+        Utilities::convert31toDouble(Utilities::normalizeCoordinates(location, ZoomLevel31), state.zoomLevel);
+    const auto endTileId = PointD(std::floor(endPoint.x), std::floor(endPoint.y));
+    PointD startPoint =
+        Utilities::convert31toDouble(Utilities::convertLatLonTo31(internalState.cameraCoordinates), state.zoomLevel);
+    auto startPointZ = static_cast<double>(internalState.worldCameraPosition.y);
+    const auto deltaX = endPoint.x - startPoint.x;
+    const auto deltaY = endPoint.y - startPoint.y;
+    const auto factorX = deltaX / deltaY;
+    const auto factorY = deltaY / deltaX;
+    const auto factorZX = startPointZ / deltaX;
+    const auto factorZY = startPointZ / deltaY;
+    auto midPoint = startPoint;
+    auto midPointZ = startPointZ;
+    auto tmpPoint = midPoint;
+    auto tmpPointZ = midPointZ;
+    do
+    {
+        auto startTileId = PointD(std::floor(startPoint.x), std::floor(startPoint.y));
+        if (startTileId.x != endTileId.x && startPoint.x != endTileId.x + 1.0 && endPoint.x != startTileId.x + 1.0)
+        {
+            midPoint.x = startTileId.x +
+                (endTileId.x > startTileId.x ? 1.0 : startPoint.x > startTileId.x ? 0.0 : -1.0);
+            midPoint.y = startPoint.y + (midPoint.x - startPoint.x) * factorY;
+            midPointZ = startPointZ - (midPoint.x - startPoint.x) * factorZX;
+        }
+        if (startTileId.y != endTileId.y && startPoint.y != endTileId.y + 1.0 && endPoint.y != startTileId.y + 1.0)
+        {
+            tmpPoint.y = startTileId.y +
+                (endTileId.y > startTileId.y ? 1.0 : startPoint.y > startTileId.y ? 0.0 : -1.0);
+            tmpPoint.x = startPoint.x + (tmpPoint.y - startPoint.y) * factorX;
+            tmpPointZ = startPointZ - (tmpPoint.y - startPoint.y) * factorZY;
+            if (midPoint == startPoint || std::fabs(tmpPoint.x - startPoint.x) + std::fabs(tmpPoint.y - startPoint.y) <
+                std::fabs(midPoint.x - startPoint.x) + std::fabs(midPoint.y - startPoint.y))
+            {
+                midPoint = tmpPoint;
+                midPointZ = tmpPointZ;
+            }
+        }
+        if (midPoint == startPoint)
+        {
+            midPoint = endPoint;
+            midPointZ = 0.0;
+        }
+        startTileId =
+            PointD(std::floor(std::min(startPoint.x, midPoint.x)), std::floor(std::min(startPoint.y, midPoint.y)));
+        const TileId tileId = TileId::fromXY(static_cast<int32_t>(startTileId.x), static_cast<int32_t>(startTileId.y));
+        std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+        if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
+        {
+            const auto startPointOffset = PointF(static_cast<float>(startPoint.x - startTileId.x),
+                static_cast<float>(startPoint.y - startTileId.y));
+            const auto midPointOffset = PointF(static_cast<float>(midPoint.x - startTileId.x),
+                static_cast<float>(midPoint.y - startTileId.y));
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+            const auto startMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, startPointOffset.y);
+            const auto midMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, midPointOffset.y);
+            PointF exactLocation;
+            float exactHeight = 0.0f;
+            if (elevationData->getClosestPoint(static_cast<float>(startMetersPerUnit / elevationScaleFactor),
+                static_cast<float>(midMetersPerUnit / elevationScaleFactor),
+                startPointOffset, startPointZ, midPointOffset, midPointZ, exactLocation, &exactHeight))
+            {
+                location31 = PointI(
+                    static_cast<int32_t>((static_cast<double>(exactLocation.x) + startTileId.x) * tileSize31),
+                    static_cast<int32_t>((static_cast<double>(exactLocation.y) + startTileId.y) * tileSize31));
+                if (heightInMeters)
+                    *heightInMeters = exactHeight;
+                return true;
+            }
+        }
+        startPoint = midPoint;
+        startPointZ = midPointZ;
+    }
+    while (midPoint != endPoint);
+
+    // If no intersections with elevated surface was found
+    location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+
+    return true;
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& location31_) const
+{
+    const auto state = getState();
+
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+
+    // Get elevation data
+    float height = 0.0f;
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
+    {
+        float elevationInMeters = 0.0f;
+        if (elevationData->getValue(offsetInTileN, elevationInMeters))
+            return elevationInMeters;
+    }   
+    
+    return height;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
