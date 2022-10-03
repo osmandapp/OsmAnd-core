@@ -1119,6 +1119,36 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::obtainElevatedPointFromPosition(const PointI& position31,
+    PointI& outScreenPoint, bool checkOffScreen) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    if (!checkOffScreen && !internalState.globalFrustum2D31.test(position31))
+        return false;
+
+    float height = getHeightOfLocation(state, position31);
+    const auto offsetFromTarget31 = position31 - state.target31;
+    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
+    const auto positionInWorld = glm::vec3(
+        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        height,
+        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+    const auto projectedPosition = glm_extensions::project(
+        positionInWorld,
+        internalState.mPerspectiveProjectionView,
+        internalState.glmViewport);
+    outScreenPoint.x = projectedPosition.x;
+    outScreenPoint.y = state.windowSize.y - projectedPosition.y;
+    return true;
+}
+
 float OsmAnd::AtlasMapRenderer_OpenGL::getCameraHeightInMeters() const
 {
     const auto state = getState();
