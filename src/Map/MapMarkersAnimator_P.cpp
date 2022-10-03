@@ -406,9 +406,12 @@ float OsmAnd::MapMarkersAnimator_P::directionGetter(const Key key, AnimationCont
 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
-
-    OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
-    return marker->getOnMapSurfaceIconDirection(iconKey);
+    if (marker)
+    {
+        OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
+        return marker->getOnMapSurfaceIconDirection(iconKey);
+    }
+    return Q_SNAN;
 }
 
 void OsmAnd::MapMarkersAnimator_P::directionSetter(const Key key, const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -421,9 +424,11 @@ void OsmAnd::MapMarkersAnimator_P::directionSetter(const Key key, const float ne
 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
-
-    OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
-    return marker->setOnMapSurfaceIconDirection(iconKey, newValue);
+    if (marker)
+    {
+        OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
+        return marker->setOnMapSurfaceIconDirection(iconKey, newValue);
+    }
 }
 
 OsmAnd::PointI64 OsmAnd::MapMarkersAnimator_P::positionGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -437,7 +442,7 @@ OsmAnd::PointI64 OsmAnd::MapMarkersAnimator_P::positionGetter(const Key key, Ani
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
 
-    return marker->getPosition();
+    return marker ? marker->getPosition() : PointI64();
 }
 
 void OsmAnd::MapMarkersAnimator_P::positionSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -450,8 +455,8 @@ void OsmAnd::MapMarkersAnimator_P::positionSetter(const Key key, const PointI64 
 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
-
-    marker->setPosition(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    if (marker)
+        marker->setPosition(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
 }
 
 void OsmAnd::MapMarkersAnimator_P::constructPositionAnimationByDelta(
