@@ -666,7 +666,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
-    const MapRendererState& state, const PointI& screenPoint, PointD& position, const float height /*=0.0f*/) const
+    const MapRendererState& state, const PointI& screenPoint, PointD& position,
+    const float height /*=0.0f*/, float* distance /*=nullptr*/) const
 {
     if (screenPoint.x < 0 || screenPoint.y < 0)
         return false;
@@ -684,12 +685,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
 
     const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
     const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
-    float distance;
-    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, distance);
+    float length;
+    const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, length);
     if (!intersects)
         return false;
 
-    auto intersection = nearInWorld + distance*rayD;
+    auto intersection = nearInWorld + length*rayD;
     auto pointOnPlane = intersection.xz();
 
     if (height != 0.0f)
@@ -701,6 +702,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     }
 
     position = pointOnPlane / static_cast<float>(TileSize3D);
+
+    if (distance)
+        *distance = length;
 
     return true;
 }
@@ -802,7 +806,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         return false;
     
     PointD position;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    float distance = 0.0f;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, 0.0f, &distance);
     if (!ok)
         return false;
 
@@ -818,22 +823,30 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     // Find the intersection point with elevated surface
     const auto elevationScaleFactor =
         state.elevationConfiguration.zScaleFactor * state.elevationConfiguration.dataScaleFactor;
-    const PointD endPoint =
+    PointD endPoint =
         Utilities::convert31toDouble(Utilities::normalizeCoordinates(location, ZoomLevel31), state.zoomLevel);
-    const auto endTileId = PointD(std::floor(endPoint.x), std::floor(endPoint.y));
     PointD startPoint =
         Utilities::convert31toDouble(Utilities::convertLatLonTo31(internalState.cameraCoordinates), state.zoomLevel);
     auto startPointZ = static_cast<double>(internalState.worldCameraPosition.y);
+    double endPointZ = 0.0;
+    if (distance < 0.0f)
+    {
+        endPoint = startPoint + startPoint - endPoint;
+        endPointZ = startPointZ * 2.0;
+    }
+    const auto endTileId = PointD(std::floor(endPoint.x), std::floor(endPoint.y));
     const auto deltaX = endPoint.x - startPoint.x;
     const auto deltaY = endPoint.y - startPoint.y;
+    const auto deltaZ = endPointZ - startPointZ;
     const auto factorX = deltaX / deltaY;
     const auto factorY = deltaY / deltaX;
-    const auto factorZX = startPointZ / deltaX;
-    const auto factorZY = startPointZ / deltaY;
+    const auto factorZX = deltaZ / deltaX;
+    const auto factorZY = deltaZ / deltaY;
     auto midPoint = startPoint;
     auto midPointZ = startPointZ;
     auto tmpPoint = midPoint;
     auto tmpPointZ = midPointZ;
+    auto tilesCount = internalState.visibleTiles.size();
     do
     {
         auto startTileId = PointD(std::floor(startPoint.x), std::floor(startPoint.y));
@@ -842,14 +855,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
             midPoint.x = startTileId.x +
                 (endTileId.x > startTileId.x ? 1.0 : startPoint.x > startTileId.x ? 0.0 : -1.0);
             midPoint.y = startPoint.y + (midPoint.x - startPoint.x) * factorY;
-            midPointZ = startPointZ - (midPoint.x - startPoint.x) * factorZX;
+            midPointZ = startPointZ + (midPoint.x - startPoint.x) * factorZX;
         }
         if (startTileId.y != endTileId.y && startPoint.y != endTileId.y + 1.0 && endPoint.y != startTileId.y + 1.0)
         {
             tmpPoint.y = startTileId.y +
                 (endTileId.y > startTileId.y ? 1.0 : startPoint.y > startTileId.y ? 0.0 : -1.0);
             tmpPoint.x = startPoint.x + (tmpPoint.y - startPoint.y) * factorX;
-            tmpPointZ = startPointZ - (tmpPoint.y - startPoint.y) * factorZY;
+            tmpPointZ = startPointZ + (tmpPoint.y - startPoint.y) * factorZY;
             if (midPoint == startPoint || std::fabs(tmpPoint.x - startPoint.x) + std::fabs(tmpPoint.y - startPoint.y) <
                 std::fabs(midPoint.x - startPoint.x) + std::fabs(midPoint.y - startPoint.y))
             {
@@ -892,8 +905,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         }
         startPoint = midPoint;
         startPointZ = midPointZ;
+        tilesCount--;
     }
-    while (midPoint != endPoint);
+    while (midPoint != endPoint && tilesCount > 0);
 
     // If no intersections with elevated surface was found
     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
@@ -1125,7 +1139,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainElevatedPointFromPosition(const Poin
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 
