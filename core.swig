@@ -126,6 +126,10 @@
 #include <OsmAndCore/Map/IAnimation.h>
 #include <OsmAndCore/Map/MapMarkersAnimator.h>
 #include <OsmAndCore/Map/MapAnimator.h>
+#include <OsmAndCore/Map/WeatherDataConverter.h>
+#include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
+#include <OsmAndCore/Map/WeatherTileResourceProvider.h>
+#include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -306,6 +310,10 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapAnimator)
 	%shared_ptr(OsmAnd::MapMarkersAnimator)
 	%shared_ptr(OsmAnd::IAnimation)
+	%shared_ptr(OsmAnd::WeatherDataConverter)
+	%shared_ptr(OsmAnd::WeatherRasterLayerProvider)
+	%shared_ptr(OsmAnd::WeatherTileResourceProvider)
+	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -501,6 +509,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IAnimation.h>
 %include <OsmAndCore/Map/MapMarkersAnimator.h>
 %include <OsmAndCore/Map/MapAnimator.h>
+%include <OsmAndCore/Map/WeatherDataConverter.h>
+%include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
+%include <OsmAndCore/Map/WeatherTileResourceProvider.h>
+%include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;
