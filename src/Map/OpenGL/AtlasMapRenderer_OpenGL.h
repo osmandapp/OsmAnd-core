@@ -34,7 +34,7 @@ namespace OsmAnd
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
-            const PointI& screenPoint, PointD& position, const float height = 0.0f) const;
+            const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
             TileId normalizedTileId, ZoomLevel zoomLevel,
             std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource = nullptr) const;
