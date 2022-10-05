@@ -313,7 +313,15 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::WeatherDataConverter)
 	%shared_ptr(OsmAnd::WeatherRasterLayerProvider)
 	%shared_ptr(OsmAnd::WeatherTileResourceProvider)
+	%shared_ptr(OsmAnd::WeatherTileResourceProvider::Data)
+	%shared_ptr(OsmAnd::WeatherTileResourceProvider::ValueRequest)
+	%shared_ptr(OsmAnd::WeatherTileResourceProvider::TileRequest)
+	%shared_ptr(OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest)
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
+	%shared_ptr(OsmAnd::WeatherTileResourcesManager::Data)
+	%shared_ptr(OsmAnd::WeatherTileResourcesManager::ValueRequest)
+	%shared_ptr(OsmAnd::WeatherTileResourcesManager::TileRequest)
+	%shared_ptr(OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest)
 
 %include <std_pair.i>
 %include <std_string.i>
