@@ -25,6 +25,7 @@ import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.jni.MapSymbolInformationList;
 import net.osmand.core.jni.MapAnimator;
+import net.osmand.core.jni.MapMarkersAnimator;
 import net.osmand.core.jni.MapRendererFramePreparedObservable;
 import net.osmand.core.jni.MapRendererTargetChangedObservable;
 
@@ -59,9 +60,16 @@ public abstract class MapRendererView extends FrameLayout {
     /**
      * Reference to OsmAndCore::MapAnimator instance
      */
-    protected final MapAnimator _animator;
-    private long _animationStartTime;
-    private boolean _animationFinished;
+    protected final MapAnimator _mapAnimator;
+    private long _mapAnimationStartTime;
+    private boolean _mapAnimationFinished;
+
+    /**
+     * Reference to OsmAndCore::MapMarkersAnimator instance
+     */
+    protected final MapMarkersAnimator _mapMarkersAnimator;
+    private long _mapMarkersAnimationStartTime;
+    private boolean _mapMarkersAnimationFinished;
 
     /**
      * Only instance of GPU-worker thread epilogue. Since reference to it is maintained,
@@ -155,9 +163,13 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.setRenderer(new RendererProxy());
         _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
-        // Create animator for that map
-        _animator = new MapAnimator(false);
-        _animator.setMapRenderer(_mapRenderer);
+        // Create map animator for that map
+        _mapAnimator = new MapAnimator(false);
+        _mapAnimator.setMapRenderer(_mapRenderer);
+
+        // Create map markers animator
+        _mapMarkersAnimator = new MapMarkersAnimator();
+        _mapMarkersAnimator.setMapRenderer(_mapRenderer);
     }
 
     public void addListener(MapRendererViewListener listener) {
@@ -285,10 +297,16 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.requestRender();
     }
 
-    public final MapAnimator getAnimator() {
+    public final MapAnimator getMapAnimator() {
         NativeCore.checkIfLoaded();
 
-        return _animator;
+        return _mapAnimator;
+    }
+
+    public final MapMarkersAnimator getMapMarkersAnimator() {
+        NativeCore.checkIfLoaded();
+
+        return _mapMarkersAnimator;
     }
 
     public final MapRendererFramePreparedObservable getFramePreparedObservable() {
@@ -858,27 +876,50 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
-    public final void resumeAnimation() {
-        _animationStartTime = SystemClock.uptimeMillis();
-        _animationFinished = false;
-        _animator.resume();
+    public final void resumeMapAnimation() {
+        _mapAnimationStartTime = SystemClock.uptimeMillis();
+        _mapAnimationFinished = false;
+        _mapAnimator.resume();
     }
 
-    public final boolean isAnimationPaused() {
-        return _animator.isPaused();
+    public final boolean isMapAnimationPaused() {
+        return _mapAnimator.isPaused();
     }
 
-    public final void pauseAnimation() {
-        _animator.pause();
+    public final void pauseMapAnimation() {
+        _mapAnimator.pause();
     }
 
-    public final void stopAnimation() {
-        _animator.pause();
-        _animator.getAllAnimations();
+    public final void stopMapAnimation() {
+        _mapAnimator.pause();
+        _mapAnimator.getAllAnimations();
     }
 
-    public final boolean isAnimationFinished() {
-        return _animationFinished;
+    public final boolean isMapAnimationFinished() {
+        return _mapAnimationFinished;
+    }
+
+    public final void resumeMapMarkersAnimation() {
+        _mapMarkersAnimationStartTime = SystemClock.uptimeMillis();
+        _mapMarkersAnimationFinished = false;
+        _mapMarkersAnimator.resume();
+    }
+
+    public final boolean isMapMarkersAnimationPaused() {
+        return _mapMarkersAnimator.isPaused();
+    }
+
+    public final void pauseMapMarkersAnimation() {
+        _mapMarkersAnimator.pause();
+    }
+
+    public final void stopMapMarkersAnimation() {
+        _mapMarkersAnimator.pause();
+        _mapMarkersAnimator.getAllAnimations();
+    }
+
+    public final boolean isMapMarkersAnimationFinished() {
+        return _mapMarkersAnimationFinished;
     }
 
     /**
@@ -1088,8 +1129,10 @@ public abstract class MapRendererView extends FrameLayout {
             }
 
             long currTime = SystemClock.uptimeMillis();
-            _animationFinished = _animator.update((currTime - _animationStartTime) / 1000f);
-            _animationStartTime = currTime;
+            _mapAnimationFinished = _mapAnimator.update((currTime - _mapAnimationStartTime) / 1000f);
+            _mapAnimationStartTime = currTime;
+            _mapMarkersAnimationFinished = _mapMarkersAnimator.update((currTime - _mapMarkersAnimationStartTime) / 1000f);
+            _mapMarkersAnimationStartTime = currTime;
 
             for (MapRendererViewListener listener : listeners) {
                 listener.onUpdateFrame(MapRendererView.this);
