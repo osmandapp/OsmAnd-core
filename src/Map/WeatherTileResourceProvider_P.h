@@ -158,7 +158,7 @@ namespace OsmAnd
     protected:
         WeatherTileResourceProvider_P(
             WeatherTileResourceProvider* const owner,
-            const QDateTime& dateTime,
+            const int64_t dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
@@ -172,7 +172,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const IWebClient> webClient;
 
-        const QDateTime dateTime;
+        const int64_t dateTime;
         const QString localCachePath;
         const QString projResourcesPath;
         const uint32_t tileSize;

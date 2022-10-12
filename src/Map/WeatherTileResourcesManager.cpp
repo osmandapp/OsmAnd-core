@@ -239,7 +239,7 @@ bool OsmAnd::WeatherTileResourcesManager::clearDbCache(
     return _p->clearDbCache(tileIds, excludeTileIds, zoom);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::clearDbCache(const QDateTime beforeDateTime /*= QDateTime()*/)
+bool OsmAnd::WeatherTileResourcesManager::clearDbCache(int64_t beforeDateTime /*= 0*/)
 {
     return _p->clearDbCache(beforeDateTime);
 }
@@ -263,7 +263,7 @@ OsmAnd::WeatherTileResourcesManager::ValueRequest::~ValueRequest()
 
 void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, const ValueRequest& src)
 {
-    dst.dataTime = src.dataTime;
+    dst.dateTime = src.dateTime;
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
@@ -297,7 +297,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
 {
     dst.weatherLayer = src.weatherLayer;
     dst.weatherType = src.weatherType;
-    dst.dataTime = src.dataTime;
+    dst.dateTime = src.dateTime;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
@@ -327,7 +327,7 @@ OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::~DownloadGeoTileReq
 
 void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src)
 {
-    dst.dataTime = src.dataTime;
+    dst.dateTime = src.dateTime;
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;
@@ -346,7 +346,7 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
     sk_sp<const SkImage> image_,
-    QHash<BandIndex, QList<Ref<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<Ref<GeoContour>>>()*/)
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>()*/)
     : tileId(tileId_)
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)

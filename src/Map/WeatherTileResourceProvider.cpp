@@ -13,7 +13,7 @@
 #include <Logging.h>
 
 OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
-    const QDateTime& dateTime,
+    const int64_t dateTime,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,
     const QString& projResourcesPath,
@@ -133,7 +133,7 @@ int OsmAnd::WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(const W
         return 0;
 }
 
-QDateTime OsmAnd::WeatherTileResourceProvider::getDateTime()
+int64_t OsmAnd::WeatherTileResourceProvider::getDateTime()
 {
     return _p->dateTime;
 }
@@ -275,7 +275,7 @@ OsmAnd::WeatherTileResourceProvider::Data::Data(
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
     sk_sp<const SkImage> image_,
-    QHash<BandIndex, QList<Ref<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<Ref<GeoContour>>>()*/)
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>()*/)
     : tileId(tileId_)
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)

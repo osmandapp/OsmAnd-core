@@ -43,7 +43,7 @@ namespace OsmAnd
             ValueRequest(const ValueRequest& that);
             virtual ~ValueRequest();
 
-            QDateTime dataTime;
+            int64_t dateTime;
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
@@ -63,7 +63,7 @@ namespace OsmAnd
 
             WeatherLayer weatherLayer;
             WeatherType weatherType;
-            QDateTime dataTime;
+            int64_t dateTime;
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;
@@ -81,7 +81,7 @@ namespace OsmAnd
             DownloadGeoTileRequest(const DownloadGeoTileRequest& that);
             virtual ~DownloadGeoTileRequest();
 
-            QDateTime dataTime;
+            int64_t dateTime;
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
@@ -105,7 +105,7 @@ namespace OsmAnd
                 AlphaChannelPresence alphaChannelPresence,
                 float densityFactor,
                 sk_sp<const SkImage> image,
-                QHash<BandIndex, QList<Ref<GeoContour>>> contourMap = QHash<BandIndex, QList<Ref<GeoContour>>>());
+                QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap = QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>());
             virtual ~Data();
 
             TileId tileId;
@@ -113,7 +113,7 @@ namespace OsmAnd
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
             sk_sp<const SkImage> image;
-            QHash<BandIndex, QList<Ref<GeoContour>>> contourMap;
+            QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
         };
 
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
@@ -210,7 +210,7 @@ namespace OsmAnd
             const QList<TileId>& excludeTileIds,
             const ZoomLevel zoom);
 
-        virtual bool clearDbCache(const QDateTime beforeDateTime = QDateTime());
+        virtual bool clearDbCache(int64_t beforeDateTime = 0);
     };
 }
 

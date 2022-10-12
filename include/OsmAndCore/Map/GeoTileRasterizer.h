@@ -77,12 +77,12 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        virtual QHash<BandIndex, QList<Ref<GeoContour>>> evaluateContours(
+        virtual QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> evaluateContours(
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
         static sk_sp<SkImage> rasterizeBandContours(
-            const QList<Ref<GeoContour>>& contours,
+            const QList<std::shared_ptr<GeoContour>>& contours,
             const TileId tileId,
             const ZoomLevel zoom,
             const int width,

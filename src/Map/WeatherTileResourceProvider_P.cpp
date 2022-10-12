@@ -15,7 +15,7 @@ static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.n
 
 OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     WeatherTileResourceProvider* const owner_,
-    const QDateTime& dateTime_,
+    const int64_t dateTime_,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
     const QString& localCachePath_,
     const QString& projResourcesPath_,
@@ -39,7 +39,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
 {
     _obtainValueThreadPool->setMaxThreadCount(1);
     
-    auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     auto geoDbCachePath = localCachePath
     + QDir::separator()
     + dateTimeStr
@@ -132,7 +132,7 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndUpdateRequestVersion(
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)
 {
-    auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     auto rasterDbCachePath = localCachePath
         + QDir::separator()
         + dateTimeStr + QStringLiteral("_")
@@ -165,7 +165,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         std::shared_ptr<const IQueryController> queryController /*= nullptr*/)
 {
     bool res = false;
-    auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     auto geoTileUrl = WEATHER_TILES_URL_PREFIX + dateTimeStr + "/"
         + QString::number(zoom) + QStringLiteral("_")
         + QString::number(tileId.x) + QStringLiteral("_")
@@ -439,7 +439,7 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
 
             auto geoDbCachePath = localCachePath
                     + QDir::separator()
-                    + dateTime.toString(QStringLiteral("yyyyMMdd_hh00"))
+                    + QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"))
                     + QStringLiteral(".tiff.db");
 
             QList<TileId> geoDBbTileIds;
@@ -463,11 +463,12 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
     }
 
     WeatherBand values[] = { WeatherBand::Cloud, WeatherBand::Temperature, WeatherBand::Pressure, WeatherBand::WindSpeed, WeatherBand::Precipitation };
+    auto dateTiemStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     for (WeatherBand band : values)
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
-            + dateTime.toString(QStringLiteral("yyyyMMdd_hh00"))
+            + dateTiemStr
             + QStringLiteral("_")
             + QString::number(static_cast<BandIndex>(band))
             + QStringLiteral(".raster.db");
@@ -531,11 +532,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
     }
 
     WeatherBand values[] = { WeatherBand::Cloud, WeatherBand::Temperature, WeatherBand::Pressure, WeatherBand::WindSpeed, WeatherBand::Precipitation };
+    auto dateTiemStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     for (WeatherBand band : values)
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
-            + dateTime.toString(QStringLiteral("yyyyMMdd_hh00"))
+            + dateTiemStr
             + QStringLiteral("_")
             + QString::number(static_cast<BandIndex>(band))
             + QStringLiteral(".raster.db");
@@ -979,7 +981,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     
     _provider->lockContourTile(tileId, zoom);
 
-    QHash<BandIndex, QList<Ref<GeoContour>>> contourMap;
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
                 
     ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     QByteArray geoTileData;
@@ -1102,7 +1104,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
     LatLon topLeft = request->topLeft;
     LatLon bottomRight = request->bottomRight;
     bool localData = request->localData;
-    auto dateTimeStr = _provider->dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(_provider->dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
 
     if (request->queryController && request->queryController->isAborted())
     {

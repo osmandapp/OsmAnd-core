@@ -29,7 +29,7 @@ namespace OsmAnd
         mutable QReadWriteLock _resourceProvidersLock;
         QHash<QString, std::shared_ptr<WeatherTileResourceProvider>> _resourceProviders;
         
-        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider(const QDateTime& dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider(int64_t dateTime);
 
         mutable QReadWriteLock _bandSettingsLock;
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
@@ -70,7 +70,7 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
-        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(const QDateTime& dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(int64_t dateTime);
 
         void obtainValue(
             const WeatherTileResourcesManager::ValueRequest& request,
@@ -112,7 +112,7 @@ namespace OsmAnd
             const QList<TileId>& excludeTileIds,
             const ZoomLevel zoom);
 
-        bool clearDbCache(const QDateTime clearBeforeDateTime = QDateTime());
+        bool clearDbCache(int64_t beforeDateTime = 0);
 
     friend class OsmAnd::WeatherTileResourcesManager;
     };

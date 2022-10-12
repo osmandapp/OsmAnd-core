@@ -9,6 +9,7 @@
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/IWebClient.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/LatLon.h>
@@ -126,6 +127,14 @@
 #include <OsmAndCore/Map/IAnimation.h>
 #include <OsmAndCore/Map/MapMarkersAnimator.h>
 #include <OsmAndCore/Map/MapAnimator.h>
+#include <OsmAndCore/Map/GeoCommonTypes.h>
+#include <OsmAndCore/Map/GeoContour.h>
+#include <OsmAndCore/Map/GeoBandSettings.h>
+#include <OsmAndCore/Map/WeatherCommonTypes.h>
+#include <OsmAndCore/Map/WeatherDataConverter.h>
+#include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
+#include <OsmAndCore/Map/WeatherTileResourceProvider.h>
+#include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -150,6 +159,9 @@ using namespace OsmAnd;
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
+ 	%shared_ptr(OsmAnd::IWebClient)
+ 	%shared_ptr(OsmAnd::IWebClient::IRequestResult)
+ 	%shared_ptr(OsmAnd::IWebClient::IHttpRequestResult)
 	%shared_ptr(OsmAnd::IBillboardMapSymbol)
 	%shared_ptr(OsmAnd::IOnPathMapSymbol)
 	%shared_ptr(OsmAnd::RasterMapSymbol)
@@ -306,6 +318,15 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapAnimator)
 	%shared_ptr(OsmAnd::MapMarkersAnimator)
 	%shared_ptr(OsmAnd::IAnimation)
+    %shared_ptr(OsmAnd::GeoBandSettings)
+    %shared_ptr(OsmAnd::GeoContour)
+    %shared_ptr(OsmAnd::WeatherDataConverter)
+ 	%shared_ptr(OsmAnd::WeatherRasterLayerProvider)
+ 	%shared_ptr(OsmAnd::WeatherTileResourceProvider)
+ 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::ValueRequest)
+ 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::TileRequest)
+ 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest)
+ 	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -330,6 +351,7 @@ using namespace OsmAnd;
 %template(QStringStringHash) QHash<QString, QString>;
 %template(QStringStringMap) QMap<QString, QString>;
 %template(QVariantIntHash) QHash<int, QVariant>;
+%template(QStringStringListHash) QHash<QString, QStringList>;
 %template(QStringStringListHash) QHash<QString, QStringList>;
 
 #ifdef SWIG_JAVA
@@ -381,6 +403,7 @@ using namespace OsmAnd;
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
 	%template(ObfDataTypesMask) OsmAnd::Bitmask<OsmAnd::ObfDataType, unsigned int>;
 	%template(ObfAddressStreetGroupTypesMask) OsmAnd::Bitmask<OsmAnd::ObfAddressStreetGroupType, unsigned int>;
+%include <OsmAndCore/IWebClient.h>
 %include <OsmAndCore/IObfsCollection.h>
 %include <OsmAndCore/ObfsCollection.h>
 %include <OsmAndCore/ObfDataInterface.h>
@@ -501,6 +524,20 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IAnimation.h>
 %include <OsmAndCore/Map/MapMarkersAnimator.h>
 %include <OsmAndCore/Map/MapAnimator.h>
+%include <OsmAndCore/Map/GeoCommonTypes.h>
+%include <OsmAndCore/Map/GeoContour.h>
+%include <OsmAndCore/Map/GeoBandSettings.h>
+%include <OsmAndCore/Map/WeatherCommonTypes.h>
+%include <OsmAndCore/Map/WeatherDataConverter.h>
+%include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
+%include <OsmAndCore/Map/WeatherTileResourceProvider.h>
+%include <OsmAndCore/Map/WeatherTileResourcesManager.h>
+	%template(BandIndexGeoBandSettingsHash) QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>>;
+	%template(BandIndexList) QList<OsmAnd::BandIndex>;
+	%template(TileIdList) QList<OsmAnd::TileId>;
+	%template(TileIdVector) QVector<OsmAnd::TileId>;
+	%template(GeoContourList) QList<std::shared_ptr<OsmAnd::GeoContour>>;
+	%template(BandIndexGeoContourSettingsHash) QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>>;
 
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;

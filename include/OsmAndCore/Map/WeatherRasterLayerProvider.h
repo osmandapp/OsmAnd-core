@@ -29,7 +29,7 @@ namespace OsmAnd
         
         mutable QReadWriteLock _lock;
 
-        QDateTime _dateTime;
+        int64_t _dateTime;
         QList<BandIndex> _bands;
         bool _localData;
 
@@ -37,15 +37,15 @@ namespace OsmAnd
     public:
         WeatherRasterLayerProvider(const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
                                    const WeatherLayer weatherLayer,
-                                   const QDateTime& dateTime,
+                                   const int64_t dateTime,
                                    const QList<BandIndex> bands,
                                    const bool localData);
         virtual ~WeatherRasterLayerProvider();
         
         const WeatherLayer weatherLayer;
 
-        const QDateTime getDateTime() const;
-        void setDateTime(const QDateTime& dateTime);
+        const int64_t getDateTime() const;
+        void setDateTime(int64_t dateTime);
         const QList<BandIndex> getBands() const;
         void setBands(const QList<BandIndex>& bands);
         const bool getLocalData() const;

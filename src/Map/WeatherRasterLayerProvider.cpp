@@ -5,14 +5,14 @@
 OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
     const WeatherLayer weatherLayer_,
-    const QDateTime& dateTime,
+    const int64_t dateTime,
     const QList<BandIndex> bands,
     const bool localData)
     : _resourcesManager(resourcesManager)
-    , weatherLayer(weatherLayer_)
     , _dateTime(dateTime)
     , _bands(bands)
     , _localData(localData)
+    , weatherLayer(weatherLayer_)
 {
 }
 
@@ -20,14 +20,14 @@ OsmAnd::WeatherRasterLayerProvider::~WeatherRasterLayerProvider()
 {
 }
 
-const QDateTime OsmAnd::WeatherRasterLayerProvider::getDateTime() const
+const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTime() const
 {
     QReadLocker scopedLocker(&_lock);
     
     return _dateTime;
 }
 
-void OsmAnd::WeatherRasterLayerProvider::setDateTime(const QDateTime& dateTime)
+void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTime)
 {
     QWriteLocker scopedLocker(&_lock);
     
@@ -105,7 +105,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
     WeatherTileResourcesManager::TileRequest _request;
     _request.weatherType = WeatherType::Raster;
     _request.weatherLayer = weatherLayer;
-    _request.dataTime = getDateTime();
+    _request.dateTime = getDateTime();
     _request.tileId = request.tileId;
     _request.zoom = request.zoom;
     _request.bands = getBands();

@@ -46,7 +46,7 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
-        QList<Ref<GeoContour>> evaluateBandContours(
+        QList<std::shared_ptr<GeoContour>> evaluateBandContours(
             GDALDatasetH hDataset,
             const OsmAnd::BandIndex band,
             QList<double>& levels,
@@ -81,12 +81,12 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        QHash<BandIndex, QList<Ref<GeoContour>>> evaluateContours(
+        QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> evaluateContours(
             std::shared_ptr<Metric>* const pOutMetric = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
         
         static sk_sp<SkImage> rasterizeBandContours(
-            const QList<Ref<GeoContour>>& contours,
+            const QList<std::shared_ptr<GeoContour>>& contours,
             const TileId tileId,
             const ZoomLevel zoom,
             const int width,

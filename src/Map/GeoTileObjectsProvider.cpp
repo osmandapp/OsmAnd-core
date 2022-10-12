@@ -5,7 +5,7 @@
 
 OsmAnd::GeoTileObjectsProvider::GeoTileObjectsProvider(
     const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
-    const QDateTime& dateTime_,
+    const int64_t dateTime_,
     const BandIndex band_,
     const bool localData,
     const uint32_t cacheSize_ /*= 0*/)

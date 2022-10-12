@@ -104,7 +104,7 @@ namespace OsmAnd
                 AlphaChannelPresence alphaChannelPresence,
                 float densityFactor,
                 sk_sp<const SkImage> image,
-                QHash<BandIndex, QList<Ref<GeoContour>>> contourMap = QHash<BandIndex, QList<Ref<GeoContour>>>());
+                QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap = QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>());
             virtual ~Data();
 
             TileId tileId;
@@ -112,7 +112,7 @@ namespace OsmAnd
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
             sk_sp<const SkImage> image;
-            QHash<BandIndex, QList<Ref<GeoContour>>> contourMap;
+            QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
         };
 
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
@@ -137,7 +137,7 @@ namespace OsmAnd
     protected:
     public:
         WeatherTileResourceProvider(
-            const QDateTime& dateTime,
+            const int64_t dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
@@ -187,7 +187,7 @@ namespace OsmAnd
         static WeatherLayer getWeatherLayerByZoom(const ZoomLevel zoom);
         static int getMaxMissingDataZoomShift(const WeatherLayer layer);
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
-        QDateTime getDateTime();
+        int64_t getDateTime();
 
         bool isEmpty();
 

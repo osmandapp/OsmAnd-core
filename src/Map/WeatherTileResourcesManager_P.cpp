@@ -28,7 +28,7 @@ OsmAnd::WeatherTileResourcesManager_P::~WeatherTileResourcesManager_P()
 {
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::createResourceProvider(const QDateTime& dateTime)
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::createResourceProvider(int64_t dateTime)
 {
     return std::make_shared<WeatherTileResourceProvider>(
         dateTime,
@@ -41,9 +41,9 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
     );
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider(const QDateTime& dateTime)
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider(int64_t dateTime)
 {
-    auto dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
     {
         QReadLocker scopedLocker(&_resourceProvidersLock);
 
@@ -224,7 +224,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
@@ -257,7 +257,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
@@ -293,7 +293,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
     const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
@@ -341,7 +341,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
@@ -389,7 +389,7 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
     const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::DownloadGeoTileRequest rr;
@@ -422,7 +422,7 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
     const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dataTime);
+    auto resourceProvider = getResourceProvider(request.dateTime);
     if (resourceProvider)
     {
         WeatherTileResourceProvider::DownloadGeoTileRequest rr;
@@ -466,7 +466,7 @@ uint64_t OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
         QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
         dateTime.setTimeSpec(Qt::UTC);
 
-        auto resourceProvider = getResourceProvider(dateTime);
+        auto resourceProvider = getResourceProvider(dateTime.toMSecsSinceEpoch());
         if (resourceProvider)
             size += resourceProvider->calculateTilesSize(tileIds, excludeTileIds, zoom);
     }
@@ -489,7 +489,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
         QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
         dateTime.setTimeSpec(Qt::UTC);
 
-        auto resourceProvider = getResourceProvider(dateTime);
+        auto resourceProvider = getResourceProvider(dateTime.toMSecsSinceEpoch());
         if (resourceProvider)
         {
             QWriteLocker scopedLocker(&_resourceProvidersLock);
@@ -533,20 +533,23 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
     return true;
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeDateTime /*= QDateTime()*/)
+bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime /*= 0*/)
 {
-    bool clearBefore = beforeDateTime.isValid() && !beforeDateTime.isNull();
+    if (beforeDateTime == 0)
+        beforeDateTime = QDateTime().toUTC().toMSecsSinceEpoch();
+
+    bool clearBefore = beforeDateTime > 0;
 
     {
         QWriteLocker scopedLocker(&_resourceProvidersLock);
 
         for (auto &provider: _resourceProviders.values())
         {
-            QDateTime dateTime = provider->getDateTime();
+            uint64_t dateTime = provider->getDateTime();
             bool checkBefore = beforeDateTime > dateTime;
             if (!clearBefore || checkBefore)
             {
-                QString dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
+                QString dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
                 provider->closeProvider();
                 _resourceProviders.remove(dateTimeStr);
             }
@@ -571,7 +574,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(const QDateTime beforeD
             else
                 dateTimeBefore = QDateTime::fromString(baseName.mid(0, baseName.count() - 2), QStringLiteral("yyyyMMdd_hh00"));
             dateTimeBefore.setTimeSpec(Qt::UTC);
-            bool checkBefore = beforeDateTime > dateTimeBefore;
+            bool checkBefore = beforeDateTime > dateTimeBefore.toMSecsSinceEpoch();
             if (checkBefore)
                 deleted = QFile(filePath).remove();
         }
