@@ -273,7 +273,7 @@ void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, 
 
 std::shared_ptr<OsmAnd::WeatherTileResourcesManager::ValueRequest> OsmAnd::WeatherTileResourcesManager::ValueRequest::clone() const
 {
-    return std::shared_ptr<ValueRequest>(new ValueRequest(*this));
+    return std::shared_ptr<WeatherTileResourcesManager::ValueRequest>(new ValueRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::TileRequest::TileRequest()
@@ -307,7 +307,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
 
 std::shared_ptr<OsmAnd::WeatherTileResourcesManager::TileRequest> OsmAnd::WeatherTileResourcesManager::TileRequest::clone() const
 {
-    return std::shared_ptr<TileRequest>(new TileRequest(*this));
+    return std::shared_ptr<WeatherTileResourcesManager::TileRequest>(new TileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::DownloadGeoTileRequest()
@@ -337,7 +337,7 @@ void OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::copy(DownloadG
 
 std::shared_ptr<OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest> OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest::clone() const
 {
-    return std::shared_ptr<DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
+    return std::shared_ptr<WeatherTileResourcesManager::DownloadGeoTileRequest>(new DownloadGeoTileRequest(*this));
 }
 
 OsmAnd::WeatherTileResourcesManager::Data::Data(
