@@ -35,7 +35,7 @@ namespace OsmAnd
         bool _isHidden;
         QString _elevation;
         QString _time;
-        QString _creationTime;
+        QString _pickupTime;
         QString _title;
         QString _description;
         QString _address;
@@ -43,6 +43,8 @@ namespace OsmAnd
         QString _icon;
         QString _background;
         ColorRGB _color;
+        QString _comment;
+        QString _amenityOriginName;
         QHash<QString, QString> _extensions;
         bool _calendarEvent;
 
@@ -62,8 +64,8 @@ namespace OsmAnd
         QString getTime() const;
         void setTime(const QString& newTitle);
         
-        QString getCreationTime() const;
-        void setCreationTime(const QString& newTitle);
+        QString getPickupTime() const;
+        void setPickupTime(const QString& newTitle);
 
         QString getTitle() const;
         void setTitle(const QString& newTime);
@@ -94,6 +96,12 @@ namespace OsmAnd
         
         QString getExtension(const QString& tag);
         void setExtension(const QString& tag, const QString& value);
+        
+        virtual QString getComment() const;
+        virtual void setComment(const QString& comment);
+        
+        virtual QString getAmenityOriginName() const;
+        virtual void setAmenityOriginName(const QString& originName);
 
     friend class OsmAnd::FavoriteLocation;
     friend class OsmAnd::FavoriteLocationsCollection;
