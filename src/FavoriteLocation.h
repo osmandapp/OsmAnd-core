@@ -83,8 +83,8 @@ namespace OsmAnd
         virtual QString getTime() const;
         virtual void setTime(const QString& newTime);
         
-        virtual QString getCreationTime() const;
-        virtual void setCreationTime(const QString& newTime);
+        virtual QString getPickupTime() const;
+        virtual void setPickupTime(const QString& newTime);
         
         virtual bool getCalendarEvent() const;
         virtual void setCalendarEvent(const bool calendarEvent);
@@ -115,6 +115,12 @@ namespace OsmAnd
         
         virtual QString getExtension(const QString& tag);
         virtual void setExtension(const QString& tag, const QString& value);
+        
+        virtual QString getComment() const;
+        virtual void setComment(const QString& comment);
+        
+        virtual QString getAmenityOriginName() const;
+        virtual void setAmenityOriginName(const QString& originName);
 
     friend class OsmAnd::FavoriteLocationsCollection;
     friend class OsmAnd::FavoriteLocationsCollection_P;

@@ -44,8 +44,8 @@ namespace OsmAnd
         virtual QString getTime() const = 0;
         virtual void setTime(const QString& newTime) = 0;
         
-        virtual QString getCreationTime() const = 0;
-        virtual void setCreationTime(const QString& newTime) = 0;
+        virtual QString getPickupTime() const = 0;
+        virtual void setPickupTime(const QString& newTime) = 0;
         
         virtual bool getCalendarEvent() const = 0;
         virtual void setCalendarEvent(const bool calendarEvent) = 0;
@@ -70,6 +70,12 @@ namespace OsmAnd
         
         virtual ColorRGB getColor() const = 0;
         virtual void setColor(const ColorRGB newColor) = 0;
+        
+        virtual QString getComment() const = 0;
+        virtual void setComment(const QString& comment) = 0;
+        
+        virtual QString getAmenityOriginName() const = 0;
+        virtual void setAmenityOriginName(const QString& originName) = 0;
         
         virtual QHash<QString, QString> getExtensions() const = 0;
         virtual void setExtensions(const QHash<QString, QString>& extensions) = 0;

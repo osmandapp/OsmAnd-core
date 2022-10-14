@@ -8,7 +8,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const PointI position31_,
     const QString& elevation_,
     const QString& time_,
-    const QString& creationTime_,
+    const QString& pickupTime_,
     const QString& title_,
     const QString& description_,
     const QString& address_,
@@ -25,7 +25,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
     setElevation(elevation_);
     setTime(time_);
-    setCreationTime(creationTime_);
+    setPickupTime(pickupTime_);
     setTitle(title_);
     setDescription(description_);
     setAddress(address_);
@@ -43,7 +43,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const LatLon latLon_,
     const QString& elevation_,
     const QString& time_,
-    const QString& creationTime_,
+    const QString& pickupTime_,
     const QString& title_,
     const QString& description_,
     const QString& address_,
@@ -60,7 +60,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 {
     setElevation(elevation_);
     setTime(time_);
-    setCreationTime(creationTime_);
+    setPickupTime(pickupTime_);
     setTitle(title_);
     setDescription(description_);
     setAddress(address_);
@@ -139,14 +139,14 @@ void OsmAnd::FavoriteLocation::setTime(const QString& newTime)
     _p->setTime(newTime);
 }
 
-QString OsmAnd::FavoriteLocation::getCreationTime() const
+QString OsmAnd::FavoriteLocation::getPickupTime() const
 {
-    return _p->getCreationTime();
+    return _p->getPickupTime();
 }
 
-void OsmAnd::FavoriteLocation::setCreationTime(const QString& newTime)
+void OsmAnd::FavoriteLocation::setPickupTime(const QString& newTime)
 {
-    _p->setCreationTime(newTime);
+    _p->setPickupTime(newTime);
 }
 
 void OsmAnd::FavoriteLocation::setCalendarEvent(const bool calendarEvent)
@@ -255,6 +255,27 @@ void OsmAnd::FavoriteLocation::setExtension(const QString& tag, const QString& v
 {
     _p->setExtension(tag, value);
 }
+
+QString OsmAnd::FavoriteLocation::getComment() const
+{
+    return _p->getComment();
+}
+
+void OsmAnd::FavoriteLocation::setComment(const QString& comment)
+{
+    _p->setComment(comment);
+}
+
+QString OsmAnd::FavoriteLocation::getAmenityOriginName() const
+{
+    return _p->getAmenityOriginName();
+}
+
+void OsmAnd::FavoriteLocation::setAmenityOriginName(const QString &originName)
+{
+    _p->setAmenityOriginName(originName);
+}
+
 
 void OsmAnd::FavoriteLocation::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
 {

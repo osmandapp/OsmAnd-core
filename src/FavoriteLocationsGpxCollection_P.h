@@ -21,6 +21,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsGpxCollection_P);
 
     private:
+        void writeExtension(const QString &key, const QString &value, QXmlStreamWriter &writer) const;
     protected:
         FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner);
     public:
@@ -29,6 +30,8 @@ namespace OsmAnd
         ImplementationInterface<FavoriteLocationsGpxCollection> owner;
 
         bool saveTo(const QString& filename) const;
+        bool extracted(const QHash<QString, QString>::const_iterator &extension, QXmlStreamWriter &writer) const;
+        
         bool saveTo(QXmlStreamWriter& writer) const;
         bool loadFrom(const QString& filename);
         bool loadFrom(QXmlStreamReader& reader);

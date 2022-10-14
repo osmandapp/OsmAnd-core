@@ -66,18 +66,18 @@ void OsmAnd::FavoriteLocation_P::setTime(const QString& newTime)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
-QString OsmAnd::FavoriteLocation_P::getCreationTime() const
+QString OsmAnd::FavoriteLocation_P::getPickupTime() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _creationTime;
+    return _pickupTime;
 }
 
-void OsmAnd::FavoriteLocation_P::setCreationTime(const QString& newTime)
+void OsmAnd::FavoriteLocation_P::setPickupTime(const QString& newTime)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _creationTime = newTime;
+    _pickupTime = newTime;
 
     if (const auto link = _weakLink.lock())
         link->_p->notifyFavoriteLocationChanged(owner);
@@ -245,6 +245,40 @@ void OsmAnd::FavoriteLocation_P::setExtension(const QString& tag, const QString&
     QWriteLocker scopedLocker(&_lock);
     
     _extensions[tag] = value;
+}
+
+QString OsmAnd::FavoriteLocation_P::getComment() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _comment;
+}
+
+void OsmAnd::FavoriteLocation_P::setComment(const QString& comment)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _comment = comment;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+QString OsmAnd::FavoriteLocation_P::getAmenityOriginName() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _amenityOriginName;
+}
+
+void OsmAnd::FavoriteLocation_P::setAmenityOriginName(const QString &originName)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _amenityOriginName = originName;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 void OsmAnd::FavoriteLocation_P::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
