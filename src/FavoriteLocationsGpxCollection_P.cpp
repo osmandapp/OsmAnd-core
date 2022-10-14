@@ -424,7 +424,8 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
                 newItem->setIsHidden(true);
             }
-            else if (isInsideExtensionsTag)
+            // TODO: read group_items from android
+            else if (isInsideExtensionsTag && newItem)
             {
                 newItem->setExtension(tagName.toString(), xmlReader.readElementText());
             }
