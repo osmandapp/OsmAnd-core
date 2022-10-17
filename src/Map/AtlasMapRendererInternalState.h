@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QVector>
+#include <QMap>
 #include "restore_internal_warnings.h"
 
 #include <glm/glm.hpp>
@@ -25,8 +26,10 @@ namespace OsmAnd
 
         TileId targetTileId;
         PointF targetInTileOffsetN;
-        QVector<TileId> visibleTiles;
-        QVector<TileId> uniqueTiles;
+        QMap<ZoomLevel, QVector<TileId>> visibleTiles;
+        QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
+        QMap<ZoomLevel, TileId> uniqueTilesTargets;
+
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;
@@ -53,14 +56,22 @@ namespace OsmAnd
         float distanceFromCameraToTarget;
         float groundDistanceFromCameraToTarget;
         float distanceFromCameraToGround;
-        float distanceFromCameraToGroundInMeters;
+        float distanceFromCameraToFog;
+        float distanceFromTargetToFog;
+        float fogShiftFactor;
+        float skyHeightInKilometers;
+        float skyShift;
+        float skyLine;
+        float zLowerDetail;
+        double distanceFromCameraToGroundInMeters;        
         double metersPerUnit;
         LatLon cameraCoordinates;
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;
         float pixelInWorldProjectionScale;
         PointF skyplaneSize;
-        float correctedFogDistance;
+        PointF leftMiddlePoint;
+        PointF rightMiddlePoint;
         Frustum2DF frustum2D;
         Frustum2D31 frustum2D31;
         Frustum2D31 globalFrustum2D31;

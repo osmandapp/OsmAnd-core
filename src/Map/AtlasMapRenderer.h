@@ -91,8 +91,10 @@ namespace OsmAnd
 
         virtual QVector<TileId> getVisibleTiles() const Q_DECL_OVERRIDE;
         virtual unsigned int getVisibleTilesCount() const Q_DECL_OVERRIDE;
+        virtual unsigned int getAllTilesCount() const Q_DECL_OVERRIDE;
+        virtual unsigned int getDetailLevelsCount() const Q_DECL_OVERRIDE;
         virtual LatLon getCameraCoordinates() const Q_DECL_OVERRIDE;
-        virtual float getCameraHeight() const Q_DECL_OVERRIDE;
+        virtual double getCameraHeight() const Q_DECL_OVERRIDE;
 
         virtual int getTileSize3D() const Q_DECL_OVERRIDE;
 

@@ -35,13 +35,27 @@
 
 #include "OpenGL/Utilities_OpenGL.h"
 
+// Set camera's near depth limit
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;
+// Set average radius of Earth
+const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
+// Set minimum earth angle for advanced horizon
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumAngleForAdvancedHorizon = M_PI / 12.0;
+// Set distance-per-angle factor for smooth horizon slide beyond minimum earth angle
+const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 1.1648753803647327974577447574825e-6;
+// Set minimum height of visible sky for colouring
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.0;
+// Set maximum height of terrain to render
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromGroundInMeters = 10000.0;
+// Set minimal distance factor for tiles of each detail level (SQRT(2) * 2)
+const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.8284271247461900976033774484194;
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
     : AtlasMapRenderer(
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
+    , depthBufferRange(_depthBufferRange)
     , terrainDepthBuffer(_terrainDepthBuffer)
     , terrainDepthBufferSize(_terrainDepthBufferSize)
 {
@@ -251,6 +265,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
     if (mask.isSet(MapRendererStateChange::WindowSize))
     {
+        GLint depthBits;
+
+        glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+        GL_CHECK_RESULT;
+
+        _depthBufferRange = static_cast<double>(1ull << depthBits);
+
         const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
         if (depthBufferSize != _terrainDepthBuffer.size())
         {
@@ -311,8 +332,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         TileSize3D / 2.0f,
         internalState->referenceTileSizeOnScreenInPixels / 2.0f,
         internalState->tileOnScreenScaleFactor);
-    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
-    internalState->distanceFromCameraToGround = internalState->distanceFromCameraToTarget * qSin(qDegreesToRadians(state.elevationAngle));
+    const auto elevationAngleInRadians = qDegreesToRadians(static_cast<double>(state.elevationAngle));
+    const auto elevationSine = qSin(elevationAngleInRadians);
+    const auto elevationCosine = qCos(elevationAngleInRadians);
+    const auto elevationTangent = elevationSine / elevationCosine;
+    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * elevationCosine;
+    internalState->distanceFromCameraToGround = internalState->distanceFromCameraToTarget * elevationSine;    
     const auto distanceFromCameraToTargetWithNoVisualScale = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
         state.viewport,
@@ -323,31 +348,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         internalState->distanceFromCameraToTarget / distanceFromCameraToTargetWithNoVisualScale;
     internalState->pixelInWorldProjectionScale = static_cast<float>(AtlasMapRenderer::TileSize3D)
         / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
-
-    // Recalculate perspective projection with obtained value
-    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
-//    internalState->zSkyplane = 1000.0f; // NOTE: This somehow fixes/eliminates the thing o_O by making the Z plane far enough
-    // 1. calculate upperFovLook vector (-sin(elevationAngle - fov), cos(elevationAngle - fov))
-    // 2. check if that vector hits fog point
-    //    - above ground (case 1, also defined as "intersection with ground is before fog") or
-    //    - below ground (case 2, also defined as "intersection with ground is after fog")
-
-    internalState->zFar = glm::length(glm::vec3(
-        internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
-        internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
-        internalState->zSkyplane));
-    internalState->mPerspectiveProjection = glm::frustum(
-        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
-        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
-        _zNear, internalState->zFar);
-    internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
-
-    // Calculate orthographic projection
-    const auto viewportBottom = state.windowSize.y - state.viewport.bottom();
-    internalState->mOrthographicProjection = glm::ortho(
-        static_cast<float>(state.viewport.left()), static_cast<float>(state.viewport.right()),
-        static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
-        _zNear, internalState->zFar);
 
     // Setup camera
     internalState->mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -internalState->distanceFromCameraToTarget));
@@ -365,24 +365,107 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->worldCameraPosition = (internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz();
     internalState->groundCameraPosition = internalState->worldCameraPosition.xz();
 
+    // Get camera global coordinates and height
+    PointD groundPos, offsetInTileN;
+    groundPos.x = internalState->groundCameraPosition.x / TileSize3D + internalState->targetInTileOffsetN.x;
+    groundPos.y = internalState->groundCameraPosition.y / TileSize3D + internalState->targetInTileOffsetN.y;
+    offsetInTileN.x = groundPos.x - floor(groundPos.x);
+    offsetInTileN.y = groundPos.y - floor(groundPos.y);
+    TileId tileId;
+    tileId.x = floor(groundPos.x) + internalState->targetTileId.x;
+    tileId.y = floor(groundPos.y) + internalState->targetTileId.y;
+    const auto tileIdN = Utilities::normalizeTileId(tileId, state.zoomLevel);
+    groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
+    groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
+    const auto metersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, groundPos.y, TileSize3D);
+    internalState->metersPerUnit = metersPerUnit;
+    internalState->distanceFromCameraToGroundInMeters =
+        qMax(0.0, static_cast<double>(internalState->distanceFromCameraToGround) * metersPerUnit);
+    internalState->cameraCoordinates = LatLon(Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y),
+        Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
+
+    // Calculate distance to horizon
+    auto inglobeAngle = qAcos(_radius / (_radius + internalState->distanceFromCameraToGroundInMeters));
+    const auto skylineAngle = qMax(0.0, elevationAngleInRadians - inglobeAngle);
+    // Tweak angle for low zoom levels
+    inglobeAngle = inglobeAngle < _minimumAngleForAdvancedHorizon ? inglobeAngle :
+        _distancePerAngleFactor * internalState->distanceFromCameraToGroundInMeters;
+    const auto groundDistanceToHorizonInMeters = _radius * inglobeAngle;   
+
+    // Get the farthest edge for terrain to render
+    const auto distanceFromTargetToHorizon = static_cast<float>(groundDistanceToHorizonInMeters / metersPerUnit -
+        static_cast<double>(internalState->groundDistanceFromCameraToTarget));
+    const auto farEnd = qMin(state.visibleDistance * internalState->scaleToRetainProjectedSize,
+        distanceFromTargetToHorizon);
+    const auto additionalDistanceToSkyplane = qMax(0.01, static_cast<double>(farEnd) * elevationCosine);
+    const auto distanceToSkyplane =
+        static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToSkyplane;
+    internalState->zSkyplane = static_cast<float>(distanceToSkyplane);
+    internalState->skyShift = static_cast<float>(additionalDistanceToSkyplane * elevationTangent);
+
+    // Calculate approximate height of the visible sky
+    internalState->skyHeightInKilometers = static_cast<float>(
+        (internalState->distanceFromCameraToGroundInMeters / 1000.0 + _minimumSkyHeightInKilometers) *
+        qTan(internalState->fovInRadians));
+
+    // Calculate maximum renderable distance from camera
+    const auto zNear = static_cast<double>(_zNear);
+    // Get depth buffer value range (shouldn't be less than 2^16)
+    const auto zRange = qMax(_depthBufferRange, 65536.0);
+    // Calculate zFar to let skyplane have the maximum z for a particular depth value
+    // in order to avoid z-fighting with terrain at the far end
+    internalState->zFar = static_cast<float>(
+        zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001)));
+    
+    // Calculate distance for tiles of high detail
+    const auto visibleDistance = qMin(farEnd, internalState->distanceFromCameraToTarget *
+        static_cast<float>(qSin(internalState->fovInRadians) /
+        qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)))) /
+        internalState->scaleToRetainProjectedSize;
+    const auto minDistanceGap = static_cast<float>(_detailDistanceFactor * TileSize3D);
+    internalState->zLowerDetail = state.detailedDistance < visibleDistance - minDistanceGap ?
+        internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize + static_cast<float>(
+        qMax(0.01, static_cast<double>(state.detailedDistance) * elevationCosine)) :
+        internalState->zFar;
+
+    // Recalculate perspective projection
+    internalState->mPerspectiveProjection = glm::frustum(
+        -internalState->projectionPlaneHalfWidth, internalState->projectionPlaneHalfWidth,
+        -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
+        _zNear, internalState->zFar);
+    internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
+
+    // Calculate orthographic projection
+    const auto viewportBottom = state.windowSize.y - state.viewport.bottom();
+    internalState->mOrthographicProjection = glm::ortho(
+        static_cast<float>(state.viewport.left()), static_cast<float>(state.viewport.right()),
+        static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
+        _zNear, internalState->zFar);
+
     // Convenience precalculations
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
 
-    // Correct fog distance
-    internalState->correctedFogDistance = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize
-        + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
-
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
-    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 3.0f;
-    internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
+    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
+    internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
+
+    // Determine skyline position and fog parameters
+    const auto horizonShift = static_cast<float>(distanceToSkyplane * qTan(skylineAngle));
+    internalState->skyLine = qMax(0.0f, horizonShift - internalState->skyShift) / internalState->skyplaneSize.y;
+
+    internalState->distanceFromCameraToFog =
+        qSqrt(internalState->skyShift * internalState->skyShift + internalState->zSkyplane * internalState->zSkyplane);
+    internalState->distanceFromTargetToFog = static_cast<float>(additionalDistanceToSkyplane);
+    internalState->fogShiftFactor = qBound(0.0f, (internalState->skyShift - horizonShift) / TileSize3D, 1.0f);
+
 
     // Update frustum
     updateFrustum(internalState, state);
 
     // Compute visible tileset
     if (!skipTiles)
-        computeVisibleTileset(internalState, state);
+        computeVisibleTileset(internalState, state, visibleDistance, elevationCosine);
 
     return true;
 }
@@ -415,20 +498,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const glm::vec4 nBL_c(-internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
     const glm::vec4 nBR_c(+internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
 
-    // 4 points of frustum far clipping box in camera coordinate space
-    const auto zFar = internalState->zSkyplane;
-    const auto zFarK = zFar / _zNear;
-    const glm::vec4 fTL_c(zFarK * nTL_c.x, zFarK * nTL_c.y, zFarK * nTL_c.z, 1.0f);
-    const glm::vec4 fTR_c(zFarK * nTR_c.x, zFarK * nTR_c.y, zFarK * nTR_c.z, 1.0f);
-    const glm::vec4 fBL_c(zFarK * nBL_c.x, zFarK * nBL_c.y, zFarK * nBL_c.z, 1.0f);
-    const glm::vec4 fBR_c(zFarK * nBR_c.x, zFarK * nBR_c.y, zFarK * nBR_c.z, 1.0f);
+    // 4 points of frustum lower detail plane in camera coordinate space
+    const auto zMid = internalState->zLowerDetail;
+    const auto zMidK = zMid / _zNear;
+    const glm::vec4 mTL_c(zMidK * nTL_c.x, zMidK * nTL_c.y, -zMid, 1.0f);
+    const glm::vec4 mTR_c(zMidK * nTR_c.x, zMidK * nTR_c.y, -zMid, 1.0f);
+    const glm::vec4 mBL_c(zMidK * nBL_c.x, zMidK * nBL_c.y, -zMid, 1.0f);
+    const glm::vec4 mBR_c(zMidK * nBR_c.x, zMidK * nBR_c.y, -zMid, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
     const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    const auto fTL_g = internalState->mCameraViewInv * fTL_c;
-    const auto fTR_g = internalState->mCameraViewInv * fTR_c;
-    const auto fBL_g = internalState->mCameraViewInv * fBL_c;
-    const auto fBR_g = internalState->mCameraViewInv * fBR_c;
+    const auto mTL_g = internalState->mCameraViewInv * mTL_c;
+    const auto mTR_g = internalState->mCameraViewInv * mTR_c;
+    const auto mBL_g = internalState->mCameraViewInv * mBL_c;
+    const auto mBR_g = internalState->mCameraViewInv * mBR_c;
     const auto nTL_g = internalState->mCameraViewInv * nTL_c;
     const auto nTR_g = internalState->mCameraViewInv * nTR_c;
     const auto nBL_g = internalState->mCameraViewInv * nBL_c;
@@ -441,61 +524,65 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     glm::vec3 intersectionPoint;
     glm::vec2 intersectionPoints[4];
 
+    // Get (up to) 2 additional points of frustum edges & plane intersection
+    auto middleIntersectionsCounter = 0;
+    glm::vec2 middleIntersections[2];
+
     // Get extra tiling field for elevated terrain
     int extraIntersectionsCounter = state.elevationAngle < 90.0f - state.fieldOfView ? 0 : -1;
     glm::vec2 extraIntersections[4];
 
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz(), fBL_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz(), mBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
         if (extraIntersectionsCounter == 0)
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz(), fBR_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz(), mBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
         if (extraIntersectionsCounter == 1)
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), fTR_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), mTR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+        if (middleIntersectionsCounter < 2)
+            middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), fTL_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), mTL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+        if (middleIntersectionsCounter < 2)
+            middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz(), fBR_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, mTR_g.xyz(), mBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+        if (middleIntersectionsCounter < 2)
+            middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
-        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz(), fBL_g.xyz(), intersectionPoint))
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, mTL_g.xyz(), mBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
+        if (middleIntersectionsCounter < 2)
+            middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
         Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), nBL_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
     }
     if (intersectionPointsCounter < 4 &&
         Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), nBR_g.xyz(), intersectionPoint))
     {
-        intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz();
-        intersectionPointsCounter++;
+        intersectionPoints[intersectionPointsCounter++] = intersectionPoint.xz();
     }
     assert(intersectionPointsCounter == 4);
 
@@ -512,44 +599,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
 
     internalState->globalFrustum2D31 = internalState->frustum2D31 + state.target31;
 
-    // Get camera ground position and tile
-    PointD groundPos, offsetInTileN;
-    groundPos.x = eye_g.x / TileSize3D + internalState->targetInTileOffsetN.x;
-    groundPos.y = eye_g.z / TileSize3D + internalState->targetInTileOffsetN.y;
-    offsetInTileN.x = groundPos.x - floor(groundPos.x);
-    offsetInTileN.y = groundPos.y - floor(groundPos.y);
-    TileId tileId;
-    tileId.x = floor(groundPos.x) + internalState->targetTileId.x;
-    tileId.y = floor(groundPos.y) + internalState->targetTileId.y;
-    const auto tileIdN = Utilities::normalizeTileId(tileId, state.zoomLevel);
-    groundPos.x = static_cast<double>(tileIdN.x) + offsetInTileN.x;
-    groundPos.y = static_cast<double>(tileIdN.y) + offsetInTileN.y;
-    internalState->cameraCoordinates = LatLon(Utilities::getLatitudeFromTile(state.zoomLevel, groundPos.y),
-        Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
-
-    // Get camera height and maximum height of terrain below
-    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileIdN.y, TileSize3D);
-    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileIdN.y + 1, TileSize3D);
-    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-    internalState->distanceFromCameraToGroundInMeters = internalState->distanceFromCameraToGround * metersPerUnit;
-    float maxTerrainHeight = 10000.0f / metersPerUnit;
-    internalState->metersPerUnit = metersPerUnit;
+    // Get maximum height of terrain below camera
+    const auto maxTerrainHeight = static_cast<float>(_maximumHeightFromGroundInMeters / internalState->metersPerUnit);    
     
     // Get intersection points on elevated plane
     if (internalState->distanceFromCameraToGround > maxTerrainHeight)
     {
         const glm::vec3 planeE(0.0f, maxTerrainHeight, 0.0f);
         if (extraIntersectionsCounter == 2 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), fBL_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBR_g.xyz(), intersectionPoint))
         {
-            extraIntersections[extraIntersectionsCounter] = intersectionPoint.xz();
-            extraIntersectionsCounter++;
+            extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
         if (extraIntersectionsCounter == 3 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), fBR_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBL_g.xyz(), intersectionPoint))
         {
-            extraIntersections[extraIntersectionsCounter] = intersectionPoint.xz();
-            extraIntersectionsCounter++;
+            extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
     }
     else if (extraIntersectionsCounter == 2)
@@ -567,99 +632,230 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     }
     else
         internalState->extraField2D.p0 = PointF(NAN, NAN);
+
+    internalState->rightMiddlePoint = PointF(middleIntersections[0].x, middleIntersections[0].y);
+    internalState->leftMiddlePoint = PointF(middleIntersections[1].x, middleIntersections[1].y);
 }
 
-void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const
+inline void OsmAnd::AtlasMapRenderer_OpenGL::computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
+    const PointF* points, QSet<TileId>* visibleTiles) const
 {
+    // "Round"-up tile indices
+    // In-tile normalized position is added, since all tiles are going to be
+    // translated in opposite direction during rendering
+    PointF p[4];    
+    for(int i = 0; i < 4; i++)
+        p[i] = points[i] +  targetInTileOffsetN;
+
+    const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
+    const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
+    int pxMin = std::numeric_limits<int32_t>::max();
+    int pxMax = std::numeric_limits<int32_t>::min();
+    float x;
+    for (int y = yMin; y <= yMax; y++)
+    {
+        int xMin = std::numeric_limits<int32_t>::max();
+        int xMax = std::numeric_limits<int32_t>::min();
+        for (int k = 0; k < 4; k++)
+        {
+            if (Utilities::rayIntersectX(p[k % 4], p[(k + 1) % 4], y, x))
+            {
+                xMin = qMin(xMin, qFloor(x));
+                xMax = qMax(xMax, qFloor(x));
+            }
+            if (p[k % 4].y > y - 1 && p[k % 4].y < y)
+            {
+                xMin = qMin(xMin, qFloor(p[k % 4].x));
+                xMax = qMax(xMax, qFloor(p[k % 4].x));
+            }
+        }
+        for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
+        {
+            TileId tileId;
+            tileId.x = x + targetTileId.x;
+            tileId.y = y - 1 + targetTileId.y;
+            visibleTiles->insert(tileId);
+        }
+        pxMin = xMin;
+        pxMax = xMax;
+    }
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
+    InternalState* internalState, const MapRendererState& state,
+    const float visibleDistance, const double elevationCosine) const
+{
+    float tileSize = TileSize3D;
+    internalState->visibleTiles.clear();
+    internalState->uniqueTiles.clear();
+
     // Normalize 2D-frustum points to tiles
     PointF p[4];
-    p[0] = internalState->frustum2D.p0 / TileSize3D;
-    p[1] = internalState->frustum2D.p1 / TileSize3D;
-    p[2] = internalState->frustum2D.p2 / TileSize3D;
-    p[3] = internalState->frustum2D.p3 / TileSize3D;
+    p[0] = internalState->frustum2D.p0 / tileSize;
+    p[1] = internalState->frustum2D.p1 / tileSize;
+    p[2] = internalState->frustum2D.p2 / tileSize;
+    p[3] = internalState->frustum2D.p3 / tileSize;
 
-    // Determine visible tileset
-    QSet<TileId> visibleTiles;
-    internalState->visibleTiles.resize(0);
-    bool mainPart = true;
-    bool extraPart = false;
-    while (mainPart || extraPart)
+    // Determine tileset of high detail level
+    QSet<TileId> preciseTiles;
+    auto higherDetailTiles = &preciseTiles;
+    computeTileset(internalState->targetTileId, internalState->targetInTileOffsetN, p, higherDetailTiles);
+    if (!isnan(internalState->extraField2D.p0.x))
     {
-        // "Round"-up tile indices
-        // In-tile normalized position is added, since all tiles are going to be
-        // translated in opposite direction during rendering
-        for(int i = 0; i < 4; i++) {
-            p[i].x += internalState->targetInTileOffsetN.x ;
-            p[i].y += internalState->targetInTileOffsetN.y ;
-        }
-
-        const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
-        const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
-        int pxMin = std::numeric_limits<int32_t>::max();
-        int pxMax = std::numeric_limits<int32_t>::min();
-        float x;
-        for (int y = yMin; y <= yMax; y++)
-        {
-            int xMin = std::numeric_limits<int32_t>::max();
-            int xMax = std::numeric_limits<int32_t>::min();
-            for (int k = 0; k < 4; k++)
-            {
-                if (Utilities::rayIntersectX(p[k % 4], p[(k + 1) % 4], y, x))
-                {
-                    xMin = qMin(xMin, qFloor(x));
-                    xMax = qMax(xMax, qFloor(x));
-                }
-                if (p[k % 4].y > y - 1 && p[k % 4].y < y)
-                {
-                    xMin = qMin(xMin, qFloor(p[k % 4].x));
-                    xMax = qMax(xMax, qFloor(p[k % 4].x));
-                }
-            }
-            for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
-            {
-                TileId tileId;
-                tileId.x = x + internalState->targetTileId.x;
-                tileId.y = y - 1 + internalState->targetTileId.y;
-                visibleTiles.insert(tileId);
-            }
-            pxMin = xMin;
-            pxMax = xMax;
-        }
-
-        // Add the bottom tileset
-        extraPart = mainPart && !isnan(internalState->extraField2D.p0.x);
-        if (extraPart)
-        {
-            p[0] = internalState->extraField2D.p0 / TileSize3D;
-            p[1] = internalState->extraField2D.p1 / TileSize3D;
-            p[2] = internalState->extraField2D.p2 / TileSize3D;
-            p[3] = internalState->extraField2D.p3 / TileSize3D;
-        }
-
-        mainPart = false;
+        p[0] = internalState->extraField2D.p0 / tileSize;
+        p[1] = internalState->extraField2D.p1 / tileSize;
+        p[2] = internalState->extraField2D.p2 / tileSize;
+        p[3] = internalState->extraField2D.p3 / tileSize;
+        // Add extra tiles to tileset of high detail level
+        computeTileset(internalState->targetTileId, internalState->targetInTileOffsetN, p, higherDetailTiles);
     }
 
-    for (const auto& tileId : constOf(visibleTiles))
-        internalState->visibleTiles.push_back(tileId);
+    auto higherZoomLevel = state.zoomLevel;
+    auto higherTargetTileId = internalState->targetTileId;
+    QSet<TileId> additionalTiles;
+    auto currentDetailTiles = &additionalTiles;
 
+    // Add tiles of lower detail levels
+    if (internalState->zLowerDetail != internalState->zFar && higherZoomLevel > MinZoomLevel)
+    {            
+        // 4 points of frustum near clipping box in camera coordinate space
+        const glm::vec4 nTL_c(-internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+        const glm::vec4 nTR_c(+internalState->projectionPlaneHalfWidth, +internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+        const glm::vec4 nBL_c(-internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+        const glm::vec4 nBR_c(+internalState->projectionPlaneHalfWidth, -internalState->projectionPlaneHalfHeight, -_zNear, 1.0f);
+    
+        // Transform 2 frustum vertices to global space
+        const auto nTL_g = internalState->mCameraViewInv * nTL_c;
+        const auto nTR_g = internalState->mCameraViewInv * nTR_c;
+
+        // 4 points of frustum edges & plane intersection
+        const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+        const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+        glm::vec3 intersectionPoint;
+        auto middleIntersectionsCounter = 2;
+        glm::vec2 middleIntersections[4];
+        middleIntersections[0] = glm::vec2(internalState->rightMiddlePoint.x, internalState->rightMiddlePoint.y);
+        middleIntersections[1] = glm::vec2(internalState->leftMiddlePoint.x, internalState->leftMiddlePoint.y);
+
+        QSet<TileId> visibleTiles;
+        PointF offsetInTileN;
+        TileId currentTargetTileId;
+        auto distanceToLowerDetail = state.detailedDistance;
+        for (auto zoomLevel = state.zoomLevel - 1; zoomLevel >= MinZoomLevel; zoomLevel--)
+        {
+            // Calculate distance to tiles of lower detail level
+            tileSize *= 2.0f;
+            const auto distanceGap = static_cast<float>(_detailDistanceFactor * tileSize);
+            distanceToLowerDetail += distanceGap;
+            const auto zLowerDetail =
+                distanceToLowerDetail < visibleDistance - distanceGap ?
+                internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize +
+                static_cast<float>(qMax(0.01, static_cast<double>(distanceToLowerDetail) * elevationCosine)) :
+                internalState->zFar;
+
+            // 4 points of frustum lower detail plane in camera coordinate space
+            const auto zMid = zLowerDetail;
+            const auto zMidK = zMid / _zNear;
+            const glm::vec4 mTL_c(zMidK * nTL_c.x, zMidK * nTL_c.y, -zMid, 1.0f);
+            const glm::vec4 mTR_c(zMidK * nTR_c.x, zMidK * nTR_c.y, -zMid, 1.0f);
+            const glm::vec4 mBL_c(zMidK * nBL_c.x, zMidK * nBL_c.y, -zMid, 1.0f);
+            const glm::vec4 mBR_c(zMidK * nBR_c.x, zMidK * nBR_c.y, -zMid, 1.0f);
+
+            // Transform 4 frustum vertices between detail levels to global space
+            const auto mTL_g = internalState->mCameraViewInv * mTL_c;
+            const auto mTR_g = internalState->mCameraViewInv * mTR_c;
+            const auto mBL_g = internalState->mCameraViewInv * mBL_c;
+            const auto mBR_g = internalState->mCameraViewInv * mBR_c;
+
+            if (middleIntersectionsCounter < 4 &&
+                Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz(), mTL_g.xyz(), intersectionPoint))
+            {
+                middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
+            }
+            if (middleIntersectionsCounter < 4 &&
+                Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz(), mTR_g.xyz(), intersectionPoint))
+            {
+                middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
+            }
+            if (middleIntersectionsCounter < 4 &&
+                Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, mTL_g.xyz(), mBL_g.xyz(), intersectionPoint))
+            {
+                middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
+            }
+            if (middleIntersectionsCounter < 4 &&
+                Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, mTR_g.xyz(), mBR_g.xyz(), intersectionPoint))
+            {
+                middleIntersections[middleIntersectionsCounter++] = intersectionPoint.xz();
+            }
+            if (middleIntersectionsCounter < 4)
+                break;
+
+            // Determine tileset of current detail level
+            p[0] = PointF(middleIntersections[0].x, middleIntersections[0].y) / tileSize;
+            p[1] = PointF(middleIntersections[1].x, middleIntersections[1].y) / tileSize;
+            p[2] = PointF(middleIntersections[2].x, middleIntersections[2].y) / tileSize;
+            p[3] = PointF(middleIntersections[3].x, middleIntersections[3].y) / tileSize;
+            currentTargetTileId =
+                Utilities::getTileId(state.target31, static_cast<ZoomLevel>(zoomLevel), &offsetInTileN);
+            computeTileset(currentTargetTileId, offsetInTileN, p, currentDetailTiles);
+
+            // Remove overlapping tiles of higher detail level
+            const auto tilesEnd = currentDetailTiles->cend();
+            if (tilesEnd != currentDetailTiles->cbegin())
+            {
+                visibleTiles.clear();
+                for (const auto& tileId : constOf(*higherDetailTiles))
+                    if (currentDetailTiles->constFind(TileId::fromXY(tileId.x >> 1, tileId.y >> 1)) == tilesEnd)
+                        visibleTiles.insert(tileId);
+                internalState->visibleTiles[higherZoomLevel] = 
+                    QVector<TileId>(visibleTiles.begin(), visibleTiles.end());
+            }
+            else
+                internalState->visibleTiles[higherZoomLevel] =
+                    QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
+
+            computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
+    
+            higherZoomLevel = static_cast<ZoomLevel>(zoomLevel);
+            higherTargetTileId = currentTargetTileId;
+            std::swap(higherDetailTiles, currentDetailTiles);
+            if (zLowerDetail == internalState->zFar)
+                break;
+
+            currentDetailTiles->clear();
+
+            // Prepare points for next detail level calculations
+            middleIntersectionsCounter = 2;
+            middleIntersections[0] = middleIntersections[3];
+            middleIntersections[1] = middleIntersections[2];
+        }   
+    }
+
+    internalState->visibleTiles[higherZoomLevel] =
+        QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
+    computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
+}
+
+void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* internalState,
+    ZoomLevel zoomLevel, TileId targetTileId) const
+{
     // Normalize and make unique visible tiles
     QSet<TileId> uniqueTiles;
-    for (const auto& tileId : constOf(internalState->visibleTiles))
-        uniqueTiles.insert(Utilities::normalizeTileId(tileId, state.zoomLevel));
-    internalState->uniqueTiles.resize(0);
-    for (const auto& tileId : constOf(uniqueTiles))
-        internalState->uniqueTiles.push_back(tileId);
+    for (const auto& tileId : constOf(internalState->visibleTiles[zoomLevel]))
+        uniqueTiles.insert(Utilities::normalizeTileId(tileId, zoomLevel));
+    internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
+    internalState->uniqueTilesTargets[zoomLevel] = targetTileId;
 
     // Sort visible tiles by distance from target
-    std::sort(internalState->uniqueTiles,
-        [internalState]
+    std::sort(internalState->uniqueTiles[zoomLevel],
+        [targetTileId]
         (const TileId& l, const TileId& r) -> bool
         {
-            const auto lx = l.x - internalState->targetTileId.x;
-            const auto ly = l.y - internalState->targetTileId.y;
+            const auto lx = l.x - targetTileId.x;
+            const auto ly = l.y - targetTileId.y;
 
-            const auto rx = r.x - internalState->targetTileId.x;
-            const auto ry = r.y - internalState->targetTileId.y;
+            const auto rx = r.x - targetTileId.x;
+            const auto ry = r.y - targetTileId.y;
 
             return (lx*lx + ly*ly) < (rx*rx + ry*ry);
         });
@@ -846,7 +1042,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     auto midPointZ = startPointZ;
     auto tmpPoint = midPoint;
     auto tmpPointZ = midPointZ;
-    auto tilesCount = internalState.visibleTiles.size();
+    int tilesCount = 0;
+    const auto tiles = internalState.visibleTiles.cend();
+    if (tiles != internalState.visibleTiles.cbegin())
+        tilesCount = (tiles - 1)->size();
     do
     {
         auto startTileId = PointD(std::floor(startPoint.x), std::floor(startPoint.y));
@@ -922,18 +1121,14 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
 
     // Get elevation data
-    float height = 0.0f;
+    float elevationInMeters = -20000.0f;
     PointF offsetInTileN;
     TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
     if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
-    {
-        float elevationInMeters = 0.0f;
-        if (elevationData->getValue(offsetInTileN, elevationInMeters))
-            return elevationInMeters;
-    }   
+        elevationData->getValue(offsetInTileN, elevationInMeters);
     
-    return height;
+    return elevationInMeters;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
@@ -1025,15 +1220,9 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
         height,
         offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-    PointF offsetInTileN;
-    const auto tileId = Utilities::getTileId(state.target31, state.zoomLevel, &offsetInTileN);
-    const auto upperMetersPerUnit =
-        Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
-    const auto lowerMetersPerUnit =
-        Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);    
-    const auto locationMetersPerUnit =
-        glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-    const auto averageMetersPerUnit = (internalState.metersPerUnit + locationMetersPerUnit) / 2.0f;
+    PointD target = Utilities::convert31toDouble(state.target31, state.zoomLevel);
+    const auto locationMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target.y, TileSize3D);
+    const auto averageMetersPerUnit = (internalState.metersPerUnit + locationMetersPerUnit) / 2.0;
 
     const auto distance = static_cast<float>( averageMetersPerUnit / 1000.0 *
         static_cast<double>(glm::distance(internalState.worldCameraPosition, positionInWorld)));

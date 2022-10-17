@@ -2,7 +2,9 @@
 
 OsmAnd::MapRendererState::MapRendererState()
     : fieldOfView(16.5f)
-    , skyColor(ColorRGB(140, 190, 214))
+    , visibleDistance(3500)
+    , detailedDistance(500)
+    , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
@@ -15,6 +17,7 @@ OsmAnd::MapRendererState::MapRendererState()
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
+    , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
     , symbolsOpacity(1.0f)
     , metersPerPixel(1.0)
 {
@@ -29,6 +32,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     MapState mapState;
 
     mapState.fieldOfView = fieldOfView;
+    mapState.visibleDistance = visibleDistance;
+    mapState.detailedDistance = detailedDistance;
     mapState.skyColor = skyColor;
     mapState.azimuth = azimuth;
     mapState.elevationAngle = elevationAngle;
@@ -42,6 +47,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.visualZoomShift = visualZoomShift;
     mapState.stubsStyle = stubsStyle;
     mapState.backgroundColor = backgroundColor;
+    mapState.fogColor = fogColor;
     mapState.symbolsOpacity = symbolsOpacity;
     
     mapState.metersPerPixel = metersPerPixel;
@@ -53,7 +59,9 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 
 OsmAnd::MapState::MapState()
     : fieldOfView(16.5f)
-    , skyColor(ColorRGB(140, 190, 214))
+    , visibleDistance(3500)
+    , detailedDistance(500)
+    , skyColor(ColorRGB(255, 255, 255))
     , azimuth(0.0f)
     , elevationAngle(45.0f)
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
@@ -66,6 +74,7 @@ OsmAnd::MapState::MapState()
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
+    , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
     , symbolsOpacity(1.0f)
     , metersPerPixel(1.0)
     , hasElevationDataProvider(false)

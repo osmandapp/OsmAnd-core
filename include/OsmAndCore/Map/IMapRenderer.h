@@ -128,7 +128,8 @@ namespace OsmAnd
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) = 0;
-        virtual bool setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate = false) = 0;
+        virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) = 0;
+        virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) = 0;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) = 0;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
@@ -149,6 +150,7 @@ namespace OsmAnd
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) = 0;
 
         virtual bool setBackgroundColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
+        virtual bool setFogColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
 

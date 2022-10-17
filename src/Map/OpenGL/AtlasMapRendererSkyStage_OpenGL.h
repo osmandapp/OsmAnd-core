@@ -36,7 +36,7 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLlocation mProjectionViewModel;
+                    GLlocation mProjection;
                     GLlocation planeSize;
                 } param;
             } vs;
@@ -45,7 +45,9 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
+                    GLlocation skySize;
                     GLlocation skyColor;
+                    GLlocation fogColor;
                 } param;
             } fs;
         } _program;

@@ -141,25 +141,23 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
-        TileId _centerTileId;
-        QVector<TileId> _activeTiles;
-        ZoomLevel _activeZoom;
+        QMap<ZoomLevel, QVector<TileId>> _activeTiles;
+        QMap<ZoomLevel, TileId> _activeTilesTargets;
         QVector<QRunnable*> _requestedResourcesTasks;
         bool updatesPresent() const;
         virtual bool checkForUpdatesAndApply(const MapState& mapState) const;
-        void updateResources(
-            const TileId centerTileId,
-            const QVector<TileId>& tiles,
-            const ZoomLevel zoom);
+        void updateResources(QMap<ZoomLevel, QVector<TileId>>& tiles, QMap<ZoomLevel, TileId>& targets);
         void requestNeededResources(
             const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
             const TileId centerTileId,
             const QVector<TileId>& activeTiles,
-            const ZoomLevel activeZoom);
+            const ZoomLevel activeZoom,
+            const ZoomLevel currentZoom);
         void requestNeededResources(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
             const QVector<TileId>& tiles,
-            const ZoomLevel zoom);
+            const ZoomLevel zoom,
+            const ZoomLevel currentZoom);
         void requestNeededTiledResources(
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
             const QVector<TileId>& tiles,
@@ -178,8 +176,8 @@ namespace OsmAnd
         void cleanupJunkResources(
             const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& pendingRemovalResourcesCollections,
             const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
-            const QVector<TileId>& activeTiles,
-            const ZoomLevel activeZoom);
+            const QMap<ZoomLevel, QVector<TileId>>& tiles,
+            const ZoomLevel currentZoom);
         bool cleanupJunkResource(
             const std::shared_ptr<MapRendererBaseResource>& resource,
             bool& needsResourcesUploadOrUnload);
@@ -233,7 +231,7 @@ namespace OsmAnd
         void updateMapLayerProviderBindings(const MapRendererState& state);
         void updateSymbolProviderBindings(const MapRendererState& state);
 
-        void updateActiveZone(const TileId centerTileId, const QVector<TileId>& tiles, const ZoomLevel zoom);
+        void updateActiveZone(QMap<ZoomLevel, QVector<TileId>>& tiles, QMap<ZoomLevel, TileId>& targets);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

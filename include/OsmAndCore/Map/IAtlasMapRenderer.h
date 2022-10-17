@@ -27,8 +27,10 @@ namespace OsmAnd
 
         virtual QVector<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
+        virtual unsigned int getAllTilesCount() const = 0;
+        virtual unsigned int getDetailLevelsCount() const = 0;
         virtual LatLon getCameraCoordinates() const = 0;
-        virtual float getCameraHeight() const = 0;
+        virtual double getCameraHeight() const = 0;
 
         virtual int getTileSize3D() const = 0;
     };

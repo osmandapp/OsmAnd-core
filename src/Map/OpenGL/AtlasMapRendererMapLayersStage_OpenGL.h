@@ -80,7 +80,7 @@ namespace OsmAnd
         private:
             Q_DISABLE_COPY(PerTileBatchedLayers);
         };
-        QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(const AtlasMapRendererInternalState& internalState);
+        QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(const QVector<TileId>& tiles, ZoomLevel zoomLevel);
 
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;
@@ -108,6 +108,7 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mapScale;
                     GLlocation targetInTilePosN;
+                    GLlocation tileSize;
                     GLlocation distanceFromCameraToTarget;
                     GLlocation cameraElevationAngleN;
                     GLlocation groundCameraPosition;
@@ -140,6 +141,9 @@ namespace OsmAnd
                     GLlocation lastBatch;
                     GLlocation blendingEnabled;
                     GLlocation backgroundColor;
+                    GLlocation worldCameraPosition;
+                    GLlocation mistConfiguration;
+                    GLlocation mistColor;
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
@@ -161,17 +165,22 @@ namespace OsmAnd
             AlphaChannelType& currentAlphaChannelType,
             GLlocation& activeElevationVertexAttribArray,
             GLname& lastUsedProgram,
-            const bool blendingEnabled);
-        void configureElevationData(
+            bool& haveElevation,
+            const bool withElevation,
+            const bool blendingEnabled,
+            const ZoomLevel zoomLevel);
+        bool configureElevationData(
             const RasterLayerTileProgram& program,
             const TileId tileId,
             const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray);
+            GLlocation& activeElevationVertexAttribArray,
+            const ZoomLevel zoomLevel);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
-            GLlocation& activeElevationVertexAttribArray);
+            GLlocation& activeElevationVertexAttribArray,
+            const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             const TileId normalizedTileId,

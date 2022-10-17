@@ -41,14 +41,16 @@ namespace OsmAnd
         WindowSize,
         Viewport,
         FieldOfView,
+        VisibleDistance,
+        DetailedDistance,
         SkyColor,
-        FogConfiguration,
         Azimuth,
         ElevationAngle,
         Target,
         Zoom,
         StubsStyle,
         BackgroundColor,
+        FogColor,
         SymbolsOpacity
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
@@ -61,8 +63,9 @@ namespace OsmAnd
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
+        float visibleDistance;
+        float detailedDistance;
         FColorRGB skyColor;
-        FogConfiguration fogConfiguration;
         float azimuth;
         float elevationAngle;
         PointI target31;
@@ -75,6 +78,7 @@ namespace OsmAnd
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
+        FColorRGB fogColor;
         float symbolsOpacity;
         
         double metersPerPixel;
@@ -102,8 +106,9 @@ namespace OsmAnd
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
+        float visibleDistance;
+        float detailedDistance;
         FColorRGB skyColor;
-        FogConfiguration fogConfiguration;
         float azimuth;
         float elevationAngle;
         PointI target31;
@@ -116,6 +121,7 @@ namespace OsmAnd
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
+        FColorRGB fogColor;
         float symbolsOpacity;
         
         double metersPerPixel;
