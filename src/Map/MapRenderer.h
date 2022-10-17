@@ -292,7 +292,8 @@ namespace OsmAnd
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setVisibleDistance(const float visibleDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setDetailedDistance(const float detailedDistance, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
@@ -313,6 +314,7 @@ namespace OsmAnd
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool setBackgroundColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFogColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
 

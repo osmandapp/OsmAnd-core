@@ -55,7 +55,7 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
         return false;
 
     // Notify resources manager about new active zone
-    getResources().updateActiveZone(internalState->targetTileId, internalState->uniqueTiles, currentState.zoomLevel);
+    getResources().updateActiveZone(internalState->uniqueTiles);
 
     return true;
 }
@@ -65,10 +65,35 @@ QVector<OsmAnd::TileId> OsmAnd::AtlasMapRenderer::getVisibleTiles() const
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
 
-    return detachedOf(internalState->visibleTiles);
+    const auto tiles = internalState->visibleTiles.cend();
+    return detachedOf(tiles != internalState->visibleTiles.cbegin() ?
+        (tiles - 1)->second : QVector<OsmAnd::TileId>());
 }
 
 unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+    const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
+    int tilesCount = 0;
+    const auto tiles = internalState->visibleTiles.cend();
+    if (tiles != internalState->visibleTiles.cbegin())
+        tilesCount = (tiles - 1)->second.size();
+
+    return tilesCount;
+}
+
+unsigned int OsmAnd::AtlasMapRenderer::getAllTilesCount() const
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+    const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
+    int tilesCount = 0;
+    for (const auto& tiles : constOf(internalState->visibleTiles))
+        tilesCount += tiles.second.size();
+
+    return tilesCount;
+}
+
+unsigned int OsmAnd::AtlasMapRenderer::getDetailLevelsCount() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
@@ -84,7 +109,7 @@ OsmAnd::LatLon OsmAnd::AtlasMapRenderer::getCameraCoordinates() const
     return internalState->cameraCoordinates;
 }
 
-float OsmAnd::AtlasMapRenderer::getCameraHeight() const
+double OsmAnd::AtlasMapRenderer::getCameraHeight() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());

@@ -28,11 +28,23 @@ namespace OsmAnd
     private:
     protected:
         const static float _zNear;
+        const static double _radius;
+        const static double _minimumAngleForAdvancedHorizon;
+        const static double _distancePerAngleFactor;
+        const static double _minimumSkyHeightInKilometers;
+        const static double _maximumHeightFromGroundInMeters;
+        const static double _detailDistanceFactor;
+        double _depthBufferRange;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
-        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const;
+        void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
+            const PointF* points, QSet<TileId>* visibleTiles) const;
+        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state,
+            const float visibleDistance, const double elevationCosine) const;
+        void computeUniqueTileset(InternalState* internalState,
+            const ZoomLevel zoomLevel, const TileId targetTileId) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
@@ -75,6 +87,7 @@ namespace OsmAnd
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
+        const double depthBufferRange;
         const std::vector<std::byte>& terrainDepthBuffer;
         const PointI& terrainDepthBufferSize;
 

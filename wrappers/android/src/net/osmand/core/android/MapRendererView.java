@@ -537,6 +537,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setFieldOfView(fieldOfView);
     }
 
+    public final boolean setVisibleDistance(float visibleDistance) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setVisibleDistance(visibleDistance);
+    }
+
+    public final boolean setDetailedDistance(float detailedDistance) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setDetailedDistance(detailedDistance);
+    }
+
     public final boolean setSkyColor(FColorRGB color) {
         NativeCore.checkIfLoaded();
 
@@ -699,6 +711,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setBackgroundColor(color);
+    }
+
+    public final boolean setFogColor(FColorRGB color) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setFogColor(color);
     }
 
     public final boolean setSymbolsOpacity(float opacityFactor) {

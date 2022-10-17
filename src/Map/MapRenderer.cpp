@@ -1620,20 +1620,38 @@ bool OsmAnd::MapRenderer::setFieldOfView(const float fieldOfView, bool forcedUpd
     return true;
 }
 
-bool OsmAnd::MapRenderer::setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setVisibleDistance(const float visibleDistance, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (!configuration.isValid())
+    if (visibleDistance < 0.0f)
         return false;
 
-    bool update = forcedUpdate || (_requestedState.fogConfiguration != configuration);
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.visibleDistance, visibleDistance);
     if (!update)
         return false;
 
-    _requestedState.fogConfiguration = configuration;
+    _requestedState.visibleDistance = visibleDistance;
 
-    notifyRequestedStateWasUpdated(MapRendererStateChange::FogConfiguration);
+    notifyRequestedStateWasUpdated(MapRendererStateChange::VisibleDistance);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setDetailedDistance(const float detailedDistance, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (detailedDistance < 0.0f)
+        return false;
+
+    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.detailedDistance, detailedDistance);
+    if (!update)
+        return false;
+
+    _requestedState.detailedDistance = detailedDistance;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::DetailedDistance);
 
     return true;
 }
@@ -1988,6 +2006,21 @@ bool OsmAnd::MapRenderer::setBackgroundColor(const FColorRGB& color, bool forced
     _requestedState.backgroundColor = color;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::BackgroundColor);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setFogColor(const FColorRGB& color, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.fogColor != color;
+    if (!update)
+        return false;
+
+    _requestedState.fogColor = color;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::FogColor);
 
     return true;
 }
