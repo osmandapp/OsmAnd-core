@@ -66,7 +66,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
         const auto& tilesEntry = itTiles - 1;
-        const auto& batchedLayersByTiles = batchLayersByTiles(tilesEntry->second, tilesEntry.key());
+        const auto& batchedLayersByTiles = batchLayersByTiles(tilesEntry.value(), tilesEntry.key());
         for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
         {
             // Any layer or layers batch after first one has to be rendered using blending,

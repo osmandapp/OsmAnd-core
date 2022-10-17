@@ -7,7 +7,6 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QVector>
 #include <QMap>
-#include <QPair>
 #include "restore_internal_warnings.h"
 
 #include <glm/glm.hpp>
@@ -27,8 +26,10 @@ namespace OsmAnd
 
         TileId targetTileId;
         PointF targetInTileOffsetN;
-        QMap<ZoomLevel, QPair<TileId, QVector<TileId>>> visibleTiles;
-        QMap<ZoomLevel, QPair<TileId, QVector<TileId>>> uniqueTiles;
+        QMap<ZoomLevel, QVector<TileId>> visibleTiles;
+        QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
+        QMap<ZoomLevel, TileId> uniqueTilesTargets;
+
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;

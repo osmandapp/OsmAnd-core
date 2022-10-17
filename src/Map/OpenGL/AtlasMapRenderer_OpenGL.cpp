@@ -807,12 +807,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
                 for (const auto& tileId : constOf(*higherDetailTiles))
                     if (currentDetailTiles->constFind(TileId::fromXY(tileId.x >> 1, tileId.y >> 1)) == tilesEnd)
                         visibleTiles.insert(tileId);
-                internalState->visibleTiles[higherZoomLevel] = QPair<TileId, QVector<TileId>>(
-                    higherTargetTileId, QVector<TileId>(visibleTiles.begin(), visibleTiles.end()));
+                internalState->visibleTiles[higherZoomLevel] = 
+                    QVector<TileId>(visibleTiles.begin(), visibleTiles.end());
             }
             else
-                internalState->visibleTiles[higherZoomLevel] = QPair<TileId, QVector<TileId>>(
-                    higherTargetTileId, QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end()));
+                internalState->visibleTiles[higherZoomLevel] =
+                    QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
 
             computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
     
@@ -831,8 +831,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
         }   
     }
 
-    internalState->visibleTiles[higherZoomLevel] = QPair<TileId, QVector<TileId>>(
-        higherTargetTileId, QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end()));
+    internalState->visibleTiles[higherZoomLevel] =
+        QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
     computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
 }
 
@@ -841,13 +841,13 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
 {
     // Normalize and make unique visible tiles
     QSet<TileId> uniqueTiles;
-    for (const auto& tileId : constOf(internalState->visibleTiles[zoomLevel].second))
+    for (const auto& tileId : constOf(internalState->visibleTiles[zoomLevel]))
         uniqueTiles.insert(Utilities::normalizeTileId(tileId, zoomLevel));
-    internalState->uniqueTiles[zoomLevel] = QPair<TileId, QVector<TileId>>(
-        targetTileId, QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end()));
+    internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
+    internalState->uniqueTilesTargets[zoomLevel] = targetTileId;
 
     // Sort visible tiles by distance from target
-    std::sort(internalState->uniqueTiles[zoomLevel].second,
+    std::sort(internalState->uniqueTiles[zoomLevel],
         [targetTileId]
         (const TileId& l, const TileId& r) -> bool
         {
@@ -1045,7 +1045,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     int tilesCount = 0;
     const auto tiles = internalState.visibleTiles.cend();
     if (tiles != internalState.visibleTiles.cbegin())
-        tilesCount = (tiles - 1)->second.size();
+        tilesCount = (tiles - 1)->size();
     do
     {
         auto startTileId = PointD(std::floor(startPoint.x), std::floor(startPoint.y));

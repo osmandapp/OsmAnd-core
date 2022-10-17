@@ -55,7 +55,7 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
         return false;
 
     // Notify resources manager about new active zone
-    getResources().updateActiveZone(internalState->uniqueTiles);
+    getResources().updateActiveZone(internalState->uniqueTiles, internalState->uniqueTilesTargets);
 
     return true;
 }
@@ -67,7 +67,7 @@ QVector<OsmAnd::TileId> OsmAnd::AtlasMapRenderer::getVisibleTiles() const
 
     const auto tiles = internalState->visibleTiles.cend();
     return detachedOf(tiles != internalState->visibleTiles.cbegin() ?
-        (tiles - 1)->second : QVector<OsmAnd::TileId>());
+        (tiles - 1).value() : QVector<OsmAnd::TileId>());
 }
 
 unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
@@ -77,7 +77,7 @@ unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
     int tilesCount = 0;
     const auto tiles = internalState->visibleTiles.cend();
     if (tiles != internalState->visibleTiles.cbegin())
-        tilesCount = (tiles - 1)->second.size();
+        tilesCount = (tiles - 1)->size();
 
     return tilesCount;
 }
@@ -88,7 +88,7 @@ unsigned int OsmAnd::AtlasMapRenderer::getAllTilesCount() const
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
     int tilesCount = 0;
     for (const auto& tiles : constOf(internalState->visibleTiles))
-        tilesCount += tiles.second.size();
+        tilesCount += tiles.size();
 
     return tilesCount;
 }
