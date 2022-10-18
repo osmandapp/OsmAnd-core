@@ -397,9 +397,29 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<double>(internalState->groundDistanceFromCameraToTarget));
     const auto farEnd = qMin(state.visibleDistance * internalState->scaleToRetainProjectedSize,
         distanceFromTargetToHorizon);
-    const auto additionalDistanceToSkyplane = qMax(0.01, static_cast<double>(farEnd) * elevationCosine);
-    const auto distanceToSkyplane =
-        static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToSkyplane;
+
+    // Get depth buffer value range (shouldn't be less than 2^16)
+    const auto zRange = qMax(_depthBufferRange, 65536.0);
+    // Calculate maximum renderable distance from camera
+    const auto zNear = static_cast<double>(_zNear);
+    const auto additionalDistanceToZFar = qMax(0.01, static_cast<double>(farEnd) * elevationCosine);
+    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToZFar;
+    // Calculate distanceToSkyplane to let skyplane have the penultimate depth value
+    // in order to avoid z-fighting with terrain at the far end
+    auto distanceToSkyplane = zNear / (1.0 - (1.0 - zNear / zFar) * (zRange - 1.50001) / zRange);
+    auto additionalDistanceToSkyplane =
+        distanceToSkyplane - static_cast<double>(internalState->distanceFromCameraToTarget);
+    if (additionalDistanceToSkyplane < 0.01)
+    {
+        additionalDistanceToSkyplane = additionalDistanceToZFar;
+        distanceToSkyplane =
+            static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToSkyplane;
+        // Calculate zFar to let skyplane have the penultimate depth value
+        // in order to avoid z-fighting with terrain at the far end
+        zFar = zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001));
+    }
+    internalState->zFar = static_cast<float>(zFar);
+    // Calculate skyplane position
     internalState->zSkyplane = static_cast<float>(distanceToSkyplane);
     internalState->skyShift = static_cast<float>(additionalDistanceToSkyplane * elevationTangent);
 
@@ -408,21 +428,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         (internalState->distanceFromCameraToGroundInMeters / 1000.0 + _minimumSkyHeightInKilometers) *
         qTan(internalState->fovInRadians));
 
-    // Calculate maximum renderable distance from camera
-    const auto zNear = static_cast<double>(_zNear);
-    // Get depth buffer value range (shouldn't be less than 2^16)
-    const auto zRange = qMax(_depthBufferRange, 65536.0);
-    // Calculate zFar to let skyplane have the maximum z for a particular depth value
-    // in order to avoid z-fighting with terrain at the far end
-    internalState->zFar = static_cast<float>(
-        zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001)));
-    
     // Calculate distance for tiles of high detail
     const auto distanceToScreenTop = internalState->distanceFromCameraToTarget *
         static_cast<float>(qSin(internalState->fovInRadians) /
         qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
     const auto visibleDistance = (distanceToScreenTop < farEnd ? distanceToScreenTop :
-        static_cast<float>((internalState->zFar - internalState->distanceFromCameraToTarget) / elevationCosine)) /
+        static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine)) /
         internalState->scaleToRetainProjectedSize;
     const auto minDistanceGap = static_cast<float>(_detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = state.detailedDistance < visibleDistance - minDistanceGap ?
