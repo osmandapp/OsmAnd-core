@@ -418,9 +418,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001)));
     
     // Calculate distance for tiles of high detail
-    const auto visibleDistance = qMin(farEnd, internalState->distanceFromCameraToTarget *
+    const auto distanceToScreenTop = internalState->distanceFromCameraToTarget *
         static_cast<float>(qSin(internalState->fovInRadians) /
-        qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)))) /
+        qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
+    const auto visibleDistance = (distanceToScreenTop < farEnd ? distanceToScreenTop :
+        static_cast<float>((internalState->zFar - internalState->distanceFromCameraToTarget) / elevationCosine)) /
         internalState->scaleToRetainProjectedSize;
     const auto minDistanceGap = static_cast<float>(_detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = state.detailedDistance < visibleDistance - minDistanceGap ?
