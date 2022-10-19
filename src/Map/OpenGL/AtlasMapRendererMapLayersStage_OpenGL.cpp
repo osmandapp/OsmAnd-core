@@ -1909,7 +1909,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<
                 &resourceState);
             if (resourceState != MapRendererResourceState::Unavailable)
                 atLeastOneNotUnavailable = true;
-            if (exactMatchGpuResource)
+            if (exactMatchGpuResource && resourceState == MapRendererResourceState::Uploaded)
             {
                 // Exact match, no zoom shift or offset
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(exactMatchGpuResource));
