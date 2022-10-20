@@ -217,17 +217,21 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     GL_CHECK_RESULT;
 
     // Set projection matrix:
+    const auto skyPerspectiveProjection = glm::frustum(
+        -internalState.projectionPlaneHalfWidth, internalState.projectionPlaneHalfWidth,
+        -internalState.projectionPlaneHalfHeight, internalState.projectionPlaneHalfHeight,
+        internalState.zNear, internalState.zFar * 2.0f);
     glUniformMatrix4fv(_program.vs.param.mProjection,
         1,
         GL_FALSE,
-        glm::value_ptr(internalState.mPerspectiveProjection));
+        glm::value_ptr(skyPerspectiveProjection));
     GL_CHECK_RESULT;
 
     // Set size of the skyplane
     glUniform4f(_program.vs.param.planeSize,
         internalState.skyplaneSize.x,
         internalState.skyplaneSize.y,
-        -internalState.zSkyplane,
+        -internalState.zFar,
         internalState.skyShift);
     GL_CHECK_RESULT;
 
