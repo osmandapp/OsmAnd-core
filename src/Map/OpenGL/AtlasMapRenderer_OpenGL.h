@@ -32,9 +32,9 @@ namespace OsmAnd
         const static double _minimumAngleForAdvancedHorizon;
         const static double _distancePerAngleFactor;
         const static double _minimumSkyHeightInKilometers;
-        const static double _maximumHeightFromGroundInMeters;
+        const static double _maximumHeightFromSeaLevelInMeters;
+        const static double _maximumDepthFromSeaLevelInMeters;
         const static double _detailDistanceFactor;
-        double _depthBufferRange;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
 
@@ -87,7 +87,6 @@ namespace OsmAnd
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
-        const double depthBufferRange;
         const std::vector<std::byte>& terrainDepthBuffer;
         const PointI& terrainDepthBufferSize;
 

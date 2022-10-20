@@ -46,7 +46,7 @@ namespace OsmAnd
         glm::vec2 groundCameraPosition;
         glm::vec3 worldCameraPosition;
         glm::mat4 mPerspectiveProjectionView;
-        float zSkyplane;
+        float zNear;
         float zFar;
         float projectionPlaneHalfHeight;
         float projectionPlaneHalfWidth;

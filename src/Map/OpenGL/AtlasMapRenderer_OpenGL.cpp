@@ -46,7 +46,9 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 1.164875
 // Set minimum height of visible sky for colouring
 const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.0;
 // Set maximum height of terrain to render
-const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromGroundInMeters = 10000.0;
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromSeaLevelInMeters = 10000.0;
+// Set maximum depth of terrain to render
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 12000.0;
 // Set minimal distance factor for tiles of each detail level (SQRT(2) * 2)
 const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.8284271247461900976033774484194;
 
@@ -55,7 +57,6 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
         gpuAPI_,
         std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
         std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
-    , depthBufferRange(_depthBufferRange)
     , terrainDepthBuffer(_terrainDepthBuffer)
     , terrainDepthBufferSize(_terrainDepthBufferSize)
 {
@@ -131,11 +132,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
-    // Turn on depth testing as early as for sky stage since with disabled depth test, write to depth buffer is blocked
-    // but since sky is on top of everything, accept all fragments regardless of depth value
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
-    glDepthFunc(GL_ALWAYS);
+    // Turn off depth testing and writing to depth buffer for sky stage since sky is on top of everything
+    glDisable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
 
 //    // Turn off writing to the color buffer for the sky (depth only)
@@ -152,6 +150,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         if (metric)
             metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
     }
+
+    // Turn on depth testing prior to raster map stage and further stages
+    glEnable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
 
     // Change depth test function prior to raster map stage and further stages
     glDepthFunc(GL_LEQUAL);
@@ -265,13 +267,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
     if (mask.isSet(MapRendererStateChange::WindowSize))
     {
-        GLint depthBits;
-
-        glGetIntegerv(GL_DEPTH_BITS, &depthBits);
-        GL_CHECK_RESULT;
-
-        _depthBufferRange = static_cast<double>(1ull << depthBits);
-
         const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
         if (depthBufferSize != _terrainDepthBuffer.size())
         {
@@ -395,33 +390,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     // Get the farthest edge for terrain to render
     const auto distanceFromTargetToHorizon = static_cast<float>(groundDistanceToHorizonInMeters / metersPerUnit -
         static_cast<double>(internalState->groundDistanceFromCameraToTarget));
-    const auto farEnd = qMin(state.visibleDistance * internalState->scaleToRetainProjectedSize,
-        distanceFromTargetToHorizon);
-
-    // Get depth buffer value range (shouldn't be less than 2^16)
-    const auto zRange = qMax(_depthBufferRange, 65536.0);
-    // Calculate maximum renderable distance from camera
-    const auto zNear = static_cast<double>(_zNear);
-    const auto additionalDistanceToZFar = qMax(0.01, static_cast<double>(farEnd) * elevationCosine);
+    const auto farEnd = qMin(distanceFromTargetToHorizon,
+        state.visibleDistance * internalState->scaleToRetainProjectedSize);
+    const auto deepEnd = qMin(static_cast<float>(_maximumDepthFromSeaLevelInMeters / metersPerUnit),
+        state.visibleDistance) * internalState->scaleToRetainProjectedSize;
+    const auto additionalDistanceToZFar =
+        qMax(static_cast<double>(farEnd) * elevationCosine, static_cast<double>(deepEnd) * elevationSine);
     auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToZFar;
-    // Calculate distanceToSkyplane to let skyplane have the penultimate depth value
-    // in order to avoid z-fighting with terrain at the far end
-    auto distanceToSkyplane = zNear / (1.0 - (1.0 - zNear / zFar) * (zRange - 1.50001) / zRange);
-    auto additionalDistanceToSkyplane =
-        distanceToSkyplane - static_cast<double>(internalState->distanceFromCameraToTarget);
-    if (additionalDistanceToSkyplane < 0.01)
-    {
-        additionalDistanceToSkyplane = additionalDistanceToZFar;
-        distanceToSkyplane =
-            static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToSkyplane;
-        // Calculate zFar to let skyplane have the penultimate depth value
-        // in order to avoid z-fighting with terrain at the far end
-        zFar = zNear / (1.0 - (1.0 - zNear / distanceToSkyplane) * zRange / (zRange - 1.50001));
-    }
     internalState->zFar = static_cast<float>(zFar);
+    internalState->zNear = _zNear;
+
     // Calculate skyplane position
-    internalState->zSkyplane = static_cast<float>(distanceToSkyplane);
-    internalState->skyShift = static_cast<float>(additionalDistanceToSkyplane * elevationTangent);
+    internalState->skyShift = static_cast<float>(additionalDistanceToZFar * elevationTangent);
 
     // Calculate approximate height of the visible sky
     internalState->skyHeightInKilometers = static_cast<float>(
@@ -438,7 +418,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto minDistanceGap = static_cast<float>(_detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = state.detailedDistance < visibleDistance - minDistanceGap ?
         internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize + static_cast<float>(
-        qMax(0.01, static_cast<double>(state.detailedDistance) * elevationCosine)) :
+        qMax(0.0, static_cast<double>(state.detailedDistance) * elevationCosine)) :
         internalState->zFar;
 
     // Recalculate perspective projection
@@ -459,17 +439,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
 
     // Calculate skyplane size
-    float zSkyplaneK = internalState->zSkyplane / _zNear;
+    float zSkyplaneK = internalState->zFar / _zNear;
     internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
     internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
 
     // Determine skyline position and fog parameters
-    const auto horizonShift = static_cast<float>(distanceToSkyplane * qTan(skylineAngle));
+    const auto horizonShift = static_cast<float>(zFar * qTan(skylineAngle));
     internalState->skyLine = qMax(0.0f, horizonShift - internalState->skyShift) / internalState->skyplaneSize.y;
 
     internalState->distanceFromCameraToFog =
-        qSqrt(internalState->skyShift * internalState->skyShift + internalState->zSkyplane * internalState->zSkyplane);
-    internalState->distanceFromTargetToFog = static_cast<float>(additionalDistanceToSkyplane);
+        qSqrt(internalState->skyShift * internalState->skyShift + internalState->zFar * internalState->zFar);
+    internalState->distanceFromTargetToFog = static_cast<float>(additionalDistanceToZFar);
     internalState->fogShiftFactor = qBound(0.0f, (internalState->skyShift - horizonShift) / TileSize3D, 1.0f);
 
 
@@ -613,7 +593,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->globalFrustum2D31 = internalState->frustum2D31 + state.target31;
 
     // Get maximum height of terrain below camera
-    const auto maxTerrainHeight = static_cast<float>(_maximumHeightFromGroundInMeters / internalState->metersPerUnit);    
+    const auto maxTerrainHeight = static_cast<float>(_maximumHeightFromSeaLevelInMeters / internalState->metersPerUnit);    
     
     // Get intersection points on elevated plane
     if (internalState->distanceFromCameraToGround > maxTerrainHeight)
@@ -758,12 +738,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
         {
             // Calculate distance to tiles of lower detail level
             tileSize *= 2.0f;
-            const auto distanceGap = static_cast<float>(_detailDistanceFactor * tileSize);
-            distanceToLowerDetail += distanceGap;
+            distanceToLowerDetail += static_cast<float>(_detailDistanceFactor * tileSize);
             const auto zLowerDetail =
-                distanceToLowerDetail < visibleDistance - distanceGap ?
+                distanceToLowerDetail < visibleDistance ?
                 internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize +
-                static_cast<float>(qMax(0.01, static_cast<double>(distanceToLowerDetail) * elevationCosine)) :
+                static_cast<float>(qMax(0.0, static_cast<double>(distanceToLowerDetail) * elevationCosine)) :
                 internalState->zFar;
 
             // 4 points of frustum lower detail plane in camera coordinate space
