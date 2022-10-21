@@ -287,7 +287,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     MapRendererInternalState& outInternalState_,
     const MapRendererState& state,
     const MapRendererConfiguration& configuration_,
-    const bool skipTiles /*=false*/) const
+    const bool skipTiles /*=false*/, const bool sortTiles /*=false*/) const
 {
     bool ok;
     ok = AtlasMapRenderer::updateInternalState(outInternalState_, state, configuration_);
@@ -458,7 +458,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Compute visible tileset
     if (!skipTiles)
-        computeVisibleTileset(internalState, state, visibleDistance, elevationCosine);
+        computeVisibleTileset(internalState, state, visibleDistance, elevationCosine, sortTiles);
 
     return true;
 }
@@ -676,7 +676,7 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::computeTileset(const TileId targetT
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
     InternalState* internalState, const MapRendererState& state,
-    const float visibleDistance, const double elevationCosine) const
+    const float visibleDistance, const double elevationCosine, const bool sortTiles) const
 {
     float tileSize = TileSize3D;
     internalState->visibleTiles.clear();
@@ -806,7 +806,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
                 internalState->visibleTiles[higherZoomLevel] =
                     QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
 
-            computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
+            computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId, sortTiles);
     
             higherZoomLevel = static_cast<ZoomLevel>(zoomLevel);
             higherTargetTileId = currentTargetTileId;
@@ -825,11 +825,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
 
     internalState->visibleTiles[higherZoomLevel] =
         QVector<TileId>(higherDetailTiles->begin(), higherDetailTiles->end());
-    computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId);
+    computeUniqueTileset(internalState, higherZoomLevel, higherTargetTileId, sortTiles);
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* internalState,
-    ZoomLevel zoomLevel, TileId targetTileId) const
+    ZoomLevel zoomLevel, TileId targetTileId, const bool sortTiles) const
 {
     // Normalize and make unique visible tiles
     QSet<TileId> uniqueTiles;
@@ -837,20 +837,22 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
         uniqueTiles.insert(Utilities::normalizeTileId(tileId, zoomLevel));
     internalState->uniqueTiles[zoomLevel] = QVector<TileId>(uniqueTiles.begin(), uniqueTiles.end());
     internalState->uniqueTilesTargets[zoomLevel] = targetTileId;
+    if (sortTiles)
+    {
+        // Sort visible tiles by distance from target
+        std::sort(internalState->uniqueTiles[zoomLevel],
+            [targetTileId]
+            (const TileId& l, const TileId& r) -> bool
+            {
+                const auto lx = l.x - targetTileId.x;
+                const auto ly = l.y - targetTileId.y;
 
-    // Sort visible tiles by distance from target
-    std::sort(internalState->uniqueTiles[zoomLevel],
-        [targetTileId]
-        (const TileId& l, const TileId& r) -> bool
-        {
-            const auto lx = l.x - targetTileId.x;
-            const auto ly = l.y - targetTileId.y;
+                const auto rx = r.x - targetTileId.x;
+                const auto ry = r.y - targetTileId.y;
 
-            const auto rx = r.x - targetTileId.x;
-            const auto ry = r.y - targetTileId.y;
-
-            return (lx*lx + ly*ly) < (rx*rx + ry*ry);
-        });
+                return (lx*lx + ly*ly) < (rx*rx + ry*ry);
+            });
+    }
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
@@ -943,7 +945,7 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
 float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
 
     return ok ? internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor : 0.0;
 }
@@ -963,7 +965,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
     
@@ -1035,8 +1037,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     auto tmpPoint = midPoint;
     auto tmpPointZ = midPointZ;
     int tilesCount = 0;
-    const auto tiles = internalState.visibleTiles.cend();
-    if (tiles != internalState.visibleTiles.cbegin())
+    const auto tiles = internalState.uniqueTiles.cend();
+    if (tiles != internalState.uniqueTiles.cbegin())
         tilesCount = (tiles - 1)->size();
     do
     {
@@ -1225,7 +1227,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
     if (!ok)
         return AreaI::largest();
 
@@ -1241,7 +1243,7 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(const MapRendere
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position) const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
     if (!ok)
         return false;
 
@@ -1251,11 +1253,25 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31) const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
     if (!ok)
         return false;
 
     return internalState.globalFrustum2D31.test(position31);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int tileY, const int zoom) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    if (!ok)
+        return false;
+
+    const auto& tilesOfZoom = internalState.uniqueTiles.constFind(static_cast<ZoomLevel>(zoom));
+    if (tilesOfZoom != internalState.uniqueTiles.cend())
+        return tilesOfZoom->contains(TileId::fromXY(tileX, tileY));
+
+    return false;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const
@@ -1263,7 +1279,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 
@@ -1291,7 +1307,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 
@@ -1359,7 +1375,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeInMeters() const
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
 
     const auto metersPerTile = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y, 1);
 
@@ -1371,7 +1387,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getPixelsToMetersScaleFactor() const
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
 
     const auto tileSizeOnScreenInPixels = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(state.zoomLevel, internalState.targetTileId.y, tileSizeOnScreenInPixels);

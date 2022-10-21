@@ -846,6 +846,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.isPositionVisible(position31);
     }
 
+    public final boolean isTileVisible(int tileX, int tileY, int zoom) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isTileVisible(tileX, tileY, zoom);
+    }
+
     public final double getTileSizeInMeters() {
         NativeCore.checkIfLoaded();
 

@@ -195,7 +195,7 @@ bool OsmAnd::MapRenderer::updateInternalState(
     MapRendererInternalState& outInternalState,
     const MapRendererState& state,
     const MapRendererConfiguration& configuration,
-    const bool skipTiles /*=false*/) const
+    const bool skipTiles /*=false*/, const bool sortTiles /*=false*/) const
 {
     return true;
 }
@@ -510,7 +510,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     // Update internal state, that is derived from current state and configuration
     if (requestedStateUpdatedMask != 0 || currentConfigurationInvalidatedMask != 0)
     {
-        ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
+        ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration, false, true);
 
         _currentState.metersPerPixel = getPixelsToMetersScaleFactor(_currentState, getInternalState());
         _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
