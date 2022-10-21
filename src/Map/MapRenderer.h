@@ -167,7 +167,7 @@ namespace OsmAnd
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
             const MapRendererConfiguration& configuration,
-            const bool skipTiles = false) const;
+            const bool skipTiles = false, const bool sortTiles = false) const;
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;

@@ -58,7 +58,7 @@ namespace OsmAnd
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
             const MapRendererConfiguration& configuration,
-            const bool skipTiles = false) const Q_DECL_OVERRIDE;
+            const bool skipTiles = false, const bool sortTiles = false) const Q_DECL_OVERRIDE;
 
         // Debug-related:
 

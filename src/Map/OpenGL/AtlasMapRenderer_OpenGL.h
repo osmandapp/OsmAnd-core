@@ -42,9 +42,9 @@ namespace OsmAnd
         void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
             const PointF* points, QSet<TileId>* visibleTiles) const;
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state,
-            const float visibleDistance, const double elevationCosine) const;
+            const float visibleDistance, const double elevationCosine, const bool sortTiles) const;
         void computeUniqueTileset(InternalState* internalState,
-            const ZoomLevel zoomLevel, const TileId targetTileId) const;
+            const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
@@ -59,7 +59,8 @@ namespace OsmAnd
         MapRendererInternalState& getInternalState() override;
         bool updateInternalState(
             MapRendererInternalState& outInternalState, const MapRendererState& state,
-            const MapRendererConfiguration& configuration, const bool skipTiles = false) const override;
+            const MapRendererConfiguration& configuration,
+            const bool skipTiles = false, const bool sortTiles = false) const override;
 
         // Resources:
         void onValidateResourcesOfType(MapRendererResourceType type) override;
@@ -105,6 +106,7 @@ namespace OsmAnd
         AreaI getVisibleBBox31() const override;
         bool isPositionVisible(const PointI64& position) const override;
         bool isPositionVisible(const PointI& position31) const override;
+        bool isTileVisible(const int tileX, const int tileY, const int zoom) const override;
         bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
         bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
         bool obtainElevatedPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
