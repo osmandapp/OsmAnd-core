@@ -1395,9 +1395,6 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     const auto attributeIdsCount = mapObject->attributeIds.size();
     for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
     {
-        if (*pAttributeId == mapObject->attributeMapping->naturalCoastlineLineAttributeId)
-            continue;
-        
         const auto& decodedAttribute = decRules[*pAttributeId];
 
         //////////////////////////////////////////////////////////////////////////
