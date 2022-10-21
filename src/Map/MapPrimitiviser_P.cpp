@@ -254,7 +254,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     bool hasExtraCoastlines = !extraCoastlineObjects.isEmpty();
     bool shouldAddBasemapCoastlines = !detailedmapCoastlinesPresent
                                  && !hasExtraCoastlines
-                                 && !detailedLandDataPresent
+                                 //&& !detailedLandDataPresent
                                  && basemapCoastlinesPresent;
     
     if (detailCoastlineBroken && basemapCoastlinesPresent)
