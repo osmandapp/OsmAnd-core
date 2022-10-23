@@ -3,6 +3,7 @@
 
 #include <OsmAndCore/stdlib_common.h>
 #include <OsmAndCore/Map/MapMarker.h>
+#include <OsmAndCore/IQueryController.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
@@ -16,6 +17,16 @@ namespace OsmAnd
 {
     struct SwigUtilities
     {
+        inline static bool isAborted(const IQueryController* queryController)
+        {
+            return queryController && queryController->isAborted();
+        }
+
+        inline static bool isAborted(const std::shared_ptr<const IQueryController>& queryController)
+        {
+            return queryController && queryController->isAborted();
+        }
+
         inline static QByteArray readEntireFile(const QString& filename)
         {
             QFile file(filename);

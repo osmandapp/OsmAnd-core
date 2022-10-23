@@ -11,6 +11,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/PrivateImplementation.h>
 
@@ -59,21 +60,46 @@ namespace OsmAnd
 
         virtual QByteArray downloadData(
             const QString& url,
-            std::shared_ptr<const IRequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr,
+            std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
         virtual QString downloadString(
             const QString& url,
-            std::shared_ptr<const IRequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr,
+            std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
         virtual bool downloadFile(
             const QString& url,
             const QString& fileName,
-            std::shared_ptr<const IRequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr,
+            std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
     };
+
+    SWIG_EMIT_DIRECTOR_BEGIN(IWebClient);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QByteArray,
+            downloadData,
+            const QString& url,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback,
+            const std::shared_ptr<const IQueryController>& queryController);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QString,
+            downloadString,
+            const QString& url,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback,
+            const std::shared_ptr<const IQueryController>& queryController);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            bool,
+            downloadFile,
+            const QString& url,
+            const QString& fileName,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback,
+            const std::shared_ptr<const IQueryController>& queryController);
+    SWIG_EMIT_DIRECTOR_END(IWebClient);
 }
 
 #endif // !defined(_OSMAND_CORE_I_WEB_CLIENT_H_)

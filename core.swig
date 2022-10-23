@@ -160,8 +160,6 @@ using namespace OsmAnd;
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
  	%shared_ptr(OsmAnd::IWebClient)
- 	%shared_ptr(OsmAnd::IWebClient::IRequestResult)
- 	%shared_ptr(OsmAnd::IWebClient::IHttpRequestResult)
 	%shared_ptr(OsmAnd::IBillboardMapSymbol)
 	%shared_ptr(OsmAnd::IOnPathMapSymbol)
 	%shared_ptr(OsmAnd::RasterMapSymbol)
@@ -352,7 +350,6 @@ using namespace OsmAnd;
 %template(QStringStringMap) QMap<QString, QString>;
 %template(QVariantIntHash) QHash<int, QVariant>;
 %template(QStringStringListHash) QHash<QString, QStringList>;
-%template(QStringStringListHash) QHash<QString, QStringList>;
 
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
@@ -538,6 +535,8 @@ using namespace OsmAnd;
 	%template(TileIdVector) QVector<OsmAnd::TileId>;
 	%template(GeoContourList) QList<std::shared_ptr<OsmAnd::GeoContour>>;
 	%template(BandIndexGeoContourSettingsHash) QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>>;
+	%template(ZoomLevelDoubleListHash) QHash<OsmAnd::ZoomLevel, QList<double>>;
+	%template(ZoomLevelStringListHash) QHash<OsmAnd::ZoomLevel, QStringList>;
 
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;
