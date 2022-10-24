@@ -31,6 +31,7 @@ namespace OsmAnd
         const static double _radius;
         const static double _minimumAngleForAdvancedHorizon;
         const static double _distancePerAngleFactor;
+        const static double _maximumAbsoluteLatitudeForRealHorizon;
         const static double _minimumSkyHeightInKilometers;
         const static double _maximumHeightFromSeaLevelInMeters;
         const static double _maximumDepthFromSeaLevelInMeters;
@@ -45,6 +46,8 @@ namespace OsmAnd
             const float visibleDistance, const double elevationCosine, const bool sortTiles) const;
         void computeUniqueTileset(InternalState* internalState,
             const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
+        double getRealDistanceToHorizon(const InternalState& internalState, const MapRendererState& state,
+            const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
@@ -83,6 +86,7 @@ namespace OsmAnd
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
         bool getNewTargetByScreenPoint(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
+        float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const override;
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);

@@ -39,10 +39,13 @@
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;
 // Set average radius of Earth
 const double OsmAnd::AtlasMapRenderer_OpenGL::_radius = 6371e3;
-// Set minimum earth angle for advanced horizon
-const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumAngleForAdvancedHorizon = M_PI / 12.0;
-// Set distance-per-angle factor for smooth horizon slide beyond minimum earth angle
-const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 1.1648753803647327974577447574825e-6;
+// Set minimum earth angle for advanced horizon (non-realistic)
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumAngleForAdvancedHorizon = M_PI / 15.0;
+// Set distance-per-angle factor for smooth horizon transition beyond minimum earth angle
+const double OsmAnd::AtlasMapRenderer_OpenGL::_distancePerAngleFactor = 
+    _minimumAngleForAdvancedHorizon / _radius / (1.0 / qCos(_minimumAngleForAdvancedHorizon) - 1.0);
+// Set latitude limit for the camera where realistic horizon will be displayed
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumAbsoluteLatitudeForRealHorizon = 70.0;
 // Set minimum height of visible sky for colouring
 const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.0;
 // Set maximum height of terrain to render
@@ -380,15 +383,31 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
 
     // Calculate distance to horizon
-    auto inglobeAngle = qAcos(_radius / (_radius + internalState->distanceFromCameraToGroundInMeters));
-    const auto skylineAngle = qMax(0.0, elevationAngleInRadians - inglobeAngle);
-    // Tweak angle for low zoom levels
-    inglobeAngle = inglobeAngle < _minimumAngleForAdvancedHorizon ? inglobeAngle :
-        _distancePerAngleFactor * internalState->distanceFromCameraToGroundInMeters;
-    const auto groundDistanceToHorizonInMeters = _radius * inglobeAngle;   
+    const auto inglobeAngle = qAcos(_radius / (_radius + internalState->distanceFromCameraToGroundInMeters));
+    const auto referenceDistance = _radius * inglobeAngle / metersPerUnit;
+    double groundDistanceToHorizon;
+    if (inglobeAngle < _minimumAngleForAdvancedHorizon)
+    {
+        // Get real distance to horizon
+        groundDistanceToHorizon =
+            getRealDistanceToHorizon(*internalState, state, groundPos, inglobeAngle, referenceDistance);
+    }
+    else
+    {
+        // Use advanced horizon at great heights
+        const auto lastDistanceToHorizon = getRealDistanceToHorizon(*internalState, state,
+            groundPos, _minimumAngleForAdvancedHorizon, referenceDistance);
+        const auto lastDistanceToHorizonInMeters = _radius * _minimumAngleForAdvancedHorizon;
+        const auto borderMetersPerUnit = lastDistanceToHorizonInMeters / lastDistanceToHorizon;
+        const auto transFactor = qMin(1.0, (inglobeAngle / _minimumAngleForAdvancedHorizon - 1.0) * 2.0);
+        const auto smoothMetersPerUnit = metersPerUnit * transFactor + borderMetersPerUnit * (1.0 - transFactor);
+        groundDistanceToHorizon =
+            _radius * _distancePerAngleFactor * internalState->distanceFromCameraToGroundInMeters
+            / smoothMetersPerUnit;
+    }   
 
     // Get the farthest edge for terrain to render
-    const auto distanceFromTargetToHorizon = static_cast<float>(groundDistanceToHorizonInMeters / metersPerUnit -
+    const auto distanceFromTargetToHorizon = static_cast<float>(groundDistanceToHorizon -
         static_cast<double>(internalState->groundDistanceFromCameraToTarget));
     const auto farEnd = qMin(distanceFromTargetToHorizon,
         state.visibleDistance * internalState->scaleToRetainProjectedSize);
@@ -443,8 +462,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth;
     internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight;
 
-    // Determine skyline position and fog parameters
-    const auto horizonShift = static_cast<float>(zFar * qTan(skylineAngle));
+    // Determine skyline position and fog parameters    
+    const auto horizonShift = static_cast<float>(zFar * qTan(qMax(0.0, elevationAngleInRadians - inglobeAngle)));
     internalState->skyLine = qMax(0.0f, horizonShift - internalState->skyShift) / internalState->skyplaneSize.y;
 
     internalState->distanceFromCameraToFog =
@@ -855,6 +874,39 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
     }
 }
 
+double OsmAnd::AtlasMapRenderer_OpenGL::getRealDistanceToHorizon(
+    const InternalState& internalState, const MapRendererState& state,
+     const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const
+{
+    const auto farthestLocation = Utilities::rhumbDestinationPoint(internalState.cameraCoordinates,
+        _radius * inglobeAngle, state.azimuth);
+    const auto farthestPos =
+        Utilities::convert31toDouble(Utilities::convertLatLonTo31(farthestLocation), state.zoomLevel);
+    auto delta = farthestPos - groundPosition;
+    const auto tileCount = static_cast<double>(1u << state.zoomLevel);
+    const auto absAzimuth = std::fabs(state.azimuth);
+    if (absAzimuth > 89.99f && absAzimuth < 90.01f && std::fabs(delta.y) > tileCount / 2.0 ||
+        (state.azimuth < -90.0f || state.azimuth > 90.0f) && delta.y < 0.0 ||
+        state.azimuth > -90.0f && state.azimuth < 90.0f && delta.y > 0.0)
+        delta.y = tileCount - std::fabs(delta.y);
+    const auto shortestDistance = qSqrt(delta.x * delta.x + delta.y * delta.y) * TileSize3D;
+    delta.x = tileCount - std::fabs(delta.x);
+    const auto alternativeDistance = qSqrt(delta.x * delta.x + delta.y * delta.y) * TileSize3D;
+    const auto distance =
+        std::fabs(shortestDistance - referenceDistance) < std::fabs(alternativeDistance - referenceDistance) ? 
+        shortestDistance : alternativeDistance;
+
+    // Slowly start using simple horizon distance instead (at pole regions)
+    const auto absLatitude = std::fabs(internalState.cameraCoordinates.latitude);
+    if (absLatitude > _maximumAbsoluteLatitudeForRealHorizon)
+    {
+        const auto referenceFactor = qMin(1.0, (absLatitude - _maximumAbsoluteLatitudeForRealHorizon) / 5.0);
+        return referenceDistance * referenceFactor + distance * (1.0 - referenceFactor);
+    }
+
+    return distance;
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
     const MapRendererState& state, const PointI& screenPoint, PointD& position,
     const float height /*=0.0f*/, float* distance /*=nullptr*/) const
@@ -1013,9 +1065,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     // Find the intersection point with elevated surface
     const auto elevationScaleFactor =
         state.elevationConfiguration.zScaleFactor * state.elevationConfiguration.dataScaleFactor;
-    PointD endPoint =
-        Utilities::convert31toDouble(Utilities::normalizeCoordinates(location, ZoomLevel31), state.zoomLevel);
-    PointD startPoint =
+    auto endPoint =
+        Utilities::convert31toDouble(location, state.zoomLevel);
+    auto startPoint =
         Utilities::convert31toDouble(Utilities::convertLatLonTo31(internalState.cameraCoordinates), state.zoomLevel);
     auto startPointZ = static_cast<double>(internalState.worldCameraPosition.y);
     double endPointZ = 0.0;
@@ -1070,7 +1122,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         }
         startTileId =
             PointD(std::floor(std::min(startPoint.x, midPoint.x)), std::floor(std::min(startPoint.y, midPoint.y)));
-        const TileId tileId = TileId::fromXY(static_cast<int32_t>(startTileId.x), static_cast<int32_t>(startTileId.y));
+        const auto tileId = Utilities::normalizeTileId(
+            TileId::fromXY(static_cast<int32_t>(startTileId.x), static_cast<int32_t>(startTileId.y)), state.zoomLevel);
         std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
         if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
         {
@@ -1108,10 +1161,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     return true;
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& location31_) const
+float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRendererState& state,
+    const PointI& location31_) const
 {
-    const auto state = getState();
-
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
 
     // Get elevation data
@@ -1123,6 +1175,13 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& l
         elevationData->getValue(offsetInTileN, elevationInMeters);
     
     return elevationInMeters;
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const PointI& location31) const
+{
+    const auto state = getState();
+
+    return getLocationHeightInMeters(state, location31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendererState& state,
@@ -1206,20 +1265,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
     if (!checkOffScreen && !internalState.globalFrustum2D31.test(location31))
         return false;
 
-    float height = getHeightOfLocation(state, location31);
-    const auto offsetFromTarget31 = location31 - state.target31;
-    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
-    const auto positionInWorld = glm::vec3(
-        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        height,
-        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-
-    PointD target = Utilities::convert31toDouble(state.target31, state.zoomLevel);
-    const auto locationMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, target.y, TileSize3D);
-    const auto averageMetersPerUnit = (internalState.metersPerUnit + locationMetersPerUnit) / 2.0;
-
-    const auto distance = static_cast<float>( averageMetersPerUnit / 1000.0 *
-        static_cast<double>(glm::distance(internalState.worldCameraPosition, positionInWorld)));
+    const auto height = getLocationHeightInMeters(state, location31);
+    const auto locationVerticalDistance = _radius + static_cast<double>(height > -20000.0f ? height : 0.0f);
+    const auto groundDistanceToTarget =
+        Utilities::distance(internalState.cameraCoordinates, Utilities::convert31ToLatLon(location31));
+    const auto inglobeAngle = groundDistanceToTarget / _radius;
+    const auto cameraVerticalDistance = _radius + internalState.distanceFromCameraToGroundInMeters;
+    const auto verticalDelta = cameraVerticalDistance - locationVerticalDistance * qCos(inglobeAngle);
+    const auto horizontalDelta = locationVerticalDistance * qSin(inglobeAngle);
+    const auto distance =
+        static_cast<float>(qSqrt(verticalDelta * verticalDelta + horizontalDelta * horizontalDelta) / 1000.0);
 
     return distance;
 }

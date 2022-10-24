@@ -124,6 +124,7 @@ namespace OsmAnd
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
+        virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
     protected:
         MapRenderer(
