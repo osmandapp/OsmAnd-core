@@ -589,6 +589,12 @@ public abstract class MapRendererView extends FrameLayout {
             return _mapRenderer.getState().getTarget31();
     }
 
+    public final PointI getTargetScreenPosition() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getFixedPixel();
+    }
+
     public final boolean setTarget(PointI target31) {
         NativeCore.checkIfLoaded();
 
