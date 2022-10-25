@@ -16,6 +16,7 @@
 #include "IQueryController.h"
 #include "SkiaUtilities.h"
 #include "MapDataProviderHelpers.h"
+#include "MapRenderer.h"
 
 OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
     : _priority(0)
@@ -79,21 +80,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
 
         if (!image)
         {
-            const auto emptyImage = getEmptyImage();
-            if (emptyImage)
-            {
-                // Return empty tile
-                outData.reset(new IRasterMapLayerProvider::Data(
-                    request.tileId,
-                    request.zoom,
-                    getAlphaChannelPresence(),
-                    getTileDensityFactor(),
-                    emptyImage));
-            }
-            else
-            {
-                outData.reset();
-            }
+            outData.reset();
             return true;
         }
     }
@@ -164,11 +151,33 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
         {
             std::shared_ptr<IMapDataProvider::Data> data;
             std::shared_ptr<Metric> metric;
-            const auto& r = MapDataProviderHelpers::castRequest<Request>(*requestClone);
+            Request r;
+            Request::copy(r, *requestClone);
             bool requestSucceeded = false;
-            if (r.zoom == self->getLastRequestedZoom())
-                requestSucceeded = self->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
-
+            const auto maxZoomShift = r.zoom - MinZoomLevel > MapRenderer::MaxMissingDataZoomShift ?
+                MapRenderer::MaxMissingDataZoomShift : r.zoom - MinZoomLevel;
+            for (r.zoomShift = 0; r.zoomShift <= maxZoomShift; r.zoomShift++)
+            {
+                requestSucceeded = self->obtainData(r, data, collectMetric ? &metric : nullptr);
+                if (!requestSucceeded || data)
+                    break;                    
+            }
+            if (requestSucceeded && !data)
+            {
+                const auto emptyImage = self->getEmptyImage();
+                if (emptyImage)
+                {
+                    // Return empty tile
+                    data.reset(new IRasterMapLayerProvider::Data(
+                        r.tileId,
+                        r.zoom,
+                        self->getAlphaChannelPresence(),
+                        self->getTileDensityFactor(),
+                        emptyImage));
+                }
+                else
+                    data.reset();
+            }
             callback(self.get(), requestSucceeded, data, metric);
         }
     };
