@@ -7,6 +7,7 @@
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QtGlobal>
 #include <QThreadPool>
+#include <QMutex>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
@@ -56,7 +57,9 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         ZoomLevel _lastRequestedZoom;
+        mutable QMutex _threadPoolMutex;
         QThreadPool *_threadPool;
+        QThreadPool *_cacheThreadPool;
         
         int getAndDecreasePriority();
         ZoomLevel getLastRequestedZoom() const;

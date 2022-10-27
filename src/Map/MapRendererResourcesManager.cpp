@@ -935,12 +935,67 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                 [this, resource, queryController]
                 (const bool requestSucceeded, const bool dataAvailable)
                 {
-                    endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
-                    if (queryController->isAborted())
-                        processResourceRequestCancellation(resource);
+                    // Repeat the request for remote resource if proper data is not found in cache
+                    const auto cachedResource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource);                    
+                    if (cachedResource && requestSucceeded &&
+                        (!dataAvailable || cachedResource->zoom != cachedResource->_sourceData->zoom) &&
+                        cachedResource->getState() == MapRendererResourceState::ProcessingRequest &&
+                        !queryController->isAborted())
+                    {
+                        // Create a complete resource for received data that has different zoom level
+                        if (dataAvailable && cachedResource->zoom != cachedResource->_sourceData->zoom)
+                        {
+                            const auto link_ = cachedResource->link.lock();
+                            const auto tiledResources =
+                                static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
+                            if (!tiledResources->containsResource(
+                                cachedResource->_sourceData->tileId,
+                                cachedResource->_sourceData->zoom))
+                            {
+                                const auto resourceAllocator =
+                                    [this, cachedResource]
+                                    (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+                                        const TileId tileId,
+                                        const ZoomLevel zoom) -> MapRendererBaseTiledResource*
+                                    {
+                                        auto resource = new MapRendererRasterMapLayerResource(
+                                            this, collection, tileId, zoom);
+                                        resource->_sourceData = cachedResource->_sourceData;
+                                        resource->setState(MapRendererResourceState::Ready);
+                                        return resource;
+                                    };                            
+                                std::shared_ptr<MapRendererBaseTiledResource> completeResource;
+                                tiledResources->obtainOrAllocateEntry(
+                                    completeResource,
+                                    cachedResource->_sourceData->tileId,
+                                    cachedResource->_sourceData->zoom,
+                                    resourceAllocator);
+                                requestResourcesUploadOrUnload();
+                            }
+                        }
+                        // Continue requesting data for the same resource (last time)
+                        if (cachedResource->_sourceData)
+                            cachedResource->_sourceData.reset();
+                        const MapRendererBaseResource::ObtainDataAsyncCallback callback =
+                            [this, resource, queryController]
+                            (const bool requestSucceeded, const bool dataAvailable)
+                            {
+                                endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
+                                if (queryController->isAborted())
+                                    processResourceRequestCancellation(resource);
+                            };
+                        // Request data accessible locally or remotely
+                        resource->obtainDataAsync(callback, queryController, false);
+                    }
+                    else
+                    {
+                        endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
+                        if (queryController->isAborted())
+                            processResourceRequestCancellation(resource);
+                    }
                 };
-
-            resource->obtainDataAsync(callback, queryController);
+            // Request locally accessible data only (for the first time)
+            resource->obtainDataAsync(callback, queryController, true);
         }
     }
     else

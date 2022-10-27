@@ -295,7 +295,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
 
 void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
     const ObtainDataAsyncCallback callback,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const bool cacheOnly /*=false*/)
 {
 }
 

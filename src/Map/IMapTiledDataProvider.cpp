@@ -57,6 +57,7 @@ OsmAnd::IMapTiledDataProvider::Data::~Data()
 OsmAnd::IMapTiledDataProvider::Request::Request()
     : tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
+    , cacheOnly(false)
 {
 }
 
@@ -82,6 +83,7 @@ void OsmAnd::IMapTiledDataProvider::Request::copy(Request& dst, const IMapDataPr
 
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
+    dst.cacheOnly = src.cacheOnly;
 }
 
 std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapTiledDataProvider::Request::clone() const

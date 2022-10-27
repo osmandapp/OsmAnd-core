@@ -41,7 +41,9 @@ namespace OsmAnd
         typedef std::function<void(const bool requestSucceeded, const bool dataAvailable)> ObtainDataAsyncCallback;
         virtual bool supportsObtainDataAsync() const = 0;
         virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) = 0;
-        virtual void obtainDataAsync(ObtainDataAsyncCallback callback, const std::shared_ptr<const IQueryController>& queryController) = 0;
+        virtual void obtainDataAsync(ObtainDataAsyncCallback callback,
+            const std::shared_ptr<const IQueryController>& queryController,
+            const bool cacheOnly = false) = 0;
 
         virtual bool uploadToGPU() = 0;
         virtual void unloadFromGPU() = 0;
