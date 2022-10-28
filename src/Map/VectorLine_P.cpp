@@ -22,7 +22,6 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define TRACK_WIDTH_THRESHOLD 36.0f
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
 // Colorization shemes
@@ -166,7 +165,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
 
         if (owner->pathIcon)
         {
-            double newWidth = _lineWidth / 3;
+            double newWidth = _lineWidth / 3.4f;
             double scale = newWidth / owner->pathIcon->width();
             auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
             _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
@@ -958,7 +957,7 @@ void OsmAnd::VectorLine_P::generateArrowsOnPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth <= TRACK_WIDTH_THRESHOLD && owner->specialPathIcon != nullptr;
+    return owner->specialPathIcon != nullptr && _lineWidth <= owner->specialPathIcon->width() + 3.0f;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
