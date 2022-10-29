@@ -32,7 +32,9 @@ namespace OsmAnd
 
         bool supportsObtainDataAsync() const override;
         bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController) override;
-        void obtainDataAsync(ObtainDataAsyncCallback callback, const std::shared_ptr<const IQueryController>& queryController) override;
+        void obtainDataAsync(ObtainDataAsyncCallback callback,
+            const std::shared_ptr<const IQueryController>& queryController,
+            const bool cacheOnly = false) override;
 
         bool uploadToGPU() override;
         void unloadFromGPU() override;

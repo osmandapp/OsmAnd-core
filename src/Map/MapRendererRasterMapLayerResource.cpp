@@ -81,7 +81,8 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
 
 void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
     const ObtainDataAsyncCallback callback,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const bool cacheOnly /*=false*/)
 {
     bool ok = false;
 
@@ -103,6 +104,7 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
     IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
+    request.cacheOnly = cacheOnly;
     request.queryController = queryController;
     provider->obtainDataAsync(request,
         [this, callback]

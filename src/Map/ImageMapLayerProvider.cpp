@@ -16,18 +16,34 @@
 #include "IQueryController.h"
 #include "SkiaUtilities.h"
 #include "MapDataProviderHelpers.h"
+#include "Utilities.h"
 
 OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
     : _priority(0)
     , _lastRequestedZoom(ZoomLevel0)
     , _threadPool(new QThreadPool())
+    , _cacheThreadPool(new QThreadPool())
 {
+    const auto maxThreadCount = _threadPool->maxThreadCount();
+    if (maxThreadCount > 4)
+    {
+        _threadPool->setMaxThreadCount(maxThreadCount - 2);
+        _cacheThreadPool->setMaxThreadCount(2);
+    }
+    else if (maxThreadCount > 1)
+    {
+        _threadPool->setMaxThreadCount(maxThreadCount - 1);
+        _cacheThreadPool->setMaxThreadCount(1);
+    }
 }
 
 OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 {
+    QMutexLocker scopedLocker(&_threadPoolMutex);
     _threadPool->clear();
     delete _threadPool;
+    _cacheThreadPool->clear();
+    delete _cacheThreadPool;
 }
 
 bool OsmAnd::ImageMapLayerProvider::supportsObtainImage() const
@@ -70,6 +86,8 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         return false;
 
     sk_sp<const SkImage> image;
+    ZoomLevel zoom = request.zoom;
+    TileId tileId = request.tileId;
     if (supportsObtainImage())
     {
         image = obtainImage(request);
@@ -77,18 +95,58 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         if (request.queryController != nullptr && request.queryController->isAborted())
             return false;
 
+        const auto maxZoomShift = getMaxMissingDataZoomShift();
+        const auto minZoom = getMinZoom();
+        const auto zoomCount = request.zoom - minZoom > maxZoomShift ? maxZoomShift : request.zoom - minZoom;
+        Request r;
+        Request::copy(r, request);
+        if (!image && request.cacheOnly)
+        {
+            // Search for overscale images in cache for the first requests (cache only)
+            for (int zoomShift = 1; zoomShift <= zoomCount; zoomShift++)
+            {
+                zoom = static_cast<ZoomLevel>(request.zoom - zoomShift);
+                tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
+                r.zoom = zoom;
+                r.tileId = tileId;
+                image = obtainImage(r);
+                if (request.queryController != nullptr && request.queryController->isAborted())
+                    return false;
+                if (image)
+                    break;
+            }
+        }
         if (!image)
         {
             const auto emptyImage = getEmptyImage();
-            if (emptyImage)
+            if (emptyImage && !request.cacheOnly)
             {
-                // Return empty tile
-                outData.reset(new IRasterMapLayerProvider::Data(
-                    request.tileId,
-                    request.zoom,
-                    getAlphaChannelPresence(),
-                    getTileDensityFactor(),
-                    emptyImage));
+                // Check for overscale images to avoid rendering blank image instead
+                r.cacheOnly = true;
+                for (int zoomShift = 1; zoomShift <= zoomCount; zoomShift++)
+                {
+                    r.zoom = static_cast<ZoomLevel>(request.zoom - zoomShift);
+                    r.tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
+                    image = obtainImage(r);
+                    if (request.queryController != nullptr && request.queryController->isAborted())
+                        return false;
+                    if (image)
+                        break;
+                }
+                if (!image)
+                {
+                    // Return empty tile
+                    outData.reset(new IRasterMapLayerProvider::Data(
+                        request.tileId,
+                        request.zoom,
+                        getAlphaChannelPresence(),
+                        getTileDensityFactor(),
+                        emptyImage));
+                }
+                else
+                {
+                    outData.reset();
+                }                
             }
             else
             {
@@ -137,8 +195,8 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
 
     // Return tile
     outData.reset(new IRasterMapLayerProvider::Data(
-        request.tileId,
-        request.zoom,
+        tileId,
+        zoom,
         getAlphaChannelPresence(),
         getTileDensityFactor(),
         image));
@@ -176,7 +234,17 @@ void OsmAnd::ImageMapLayerProvider::obtainDataAsync(
     const auto taskRunnable = new QRunnableFunctor(task);
     taskRunnable->setAutoDelete(true);
     int priority = getAndDecreasePriority();
-    _threadPool->start(taskRunnable, priority);
+    QMutexLocker scopedLocker(&_threadPoolMutex);
+    if (request.cacheOnly)
+    {
+        if (_cacheThreadPool)
+            _cacheThreadPool->start(taskRunnable, priority);
+    }
+    else
+    {
+        if (_threadPool)
+            _threadPool->start(taskRunnable, priority);
+    }
 }
 
 OsmAnd::ZoomLevel OsmAnd::ImageMapLayerProvider::getLastRequestedZoom() const

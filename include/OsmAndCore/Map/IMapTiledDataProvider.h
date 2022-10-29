@@ -42,6 +42,7 @@ namespace OsmAnd
 
             TileId tileId;
             ZoomLevel zoom;
+            bool cacheOnly;
 
             static void copy(Request& dst, const IMapDataProvider::Request& src);
             virtual std::shared_ptr<IMapDataProvider::Request> clone() const Q_DECL_OVERRIDE;

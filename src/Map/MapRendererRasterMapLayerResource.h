@@ -35,7 +35,8 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
         virtual void obtainDataAsync(
             const ObtainDataAsyncCallback callback,
-            const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
+            const std::shared_ptr<const IQueryController>& queryController,
+            const bool cacheOnly = false) Q_DECL_OVERRIDE;
 
         virtual bool uploadToGPU() Q_DECL_OVERRIDE;
         virtual void unloadFromGPU() Q_DECL_OVERRIDE;

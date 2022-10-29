@@ -74,7 +74,8 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(
 
 void OsmAnd::MapRendererElevationDataResource::obtainDataAsync(
     const ObtainDataAsyncCallback callback,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const bool cacheOnly /*=false*/)
 {
     bool ok = false;
 
