@@ -135,6 +135,7 @@
 #include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
 #include <OsmAndCore/Map/WeatherTileResourceProvider.h>
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
+#include <OsmAndCore/Map/GeoTileObjectsProvider.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -325,6 +326,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::TileRequest)
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest)
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
+	%shared_ptr(OsmAnd::GeoTileObjectsProvider)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -390,6 +392,7 @@ using namespace OsmAnd;
 	%template(QListPointI) QList<OsmAnd::Point<int32_t>>;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
 	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
+	%template(QListDouble) QList<double>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -529,6 +532,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/WeatherRasterLayerProvider.h>
 %include <OsmAndCore/Map/WeatherTileResourceProvider.h>
 %include <OsmAndCore/Map/WeatherTileResourcesManager.h>
+%include <OsmAndCore/Map/GeoTileObjectsProvider.h>
 	%template(BandIndexGeoBandSettingsHash) QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>>;
 	%template(BandIndexList) QList<OsmAnd::BandIndex>;
 	%template(TileIdList) QList<OsmAnd::TileId>;
@@ -536,7 +540,7 @@ using namespace OsmAnd;
 	%template(GeoContourList) QList<std::shared_ptr<OsmAnd::GeoContour>>;
 	%template(BandIndexGeoContourSettingsHash) QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>>;
 	%template(ZoomLevelDoubleListHash) QHash<OsmAnd::ZoomLevel, QList<double>>;
-	%template(ZoomLevelStringListHash) QHash<OsmAnd::ZoomLevel, QStringList>;
+	%template(ZoomLevelStringListHash) QHash<OsmAnd::ZoomLevel, QList<QString>>;
 
 %include <OsmAndCore/Map/PolygonBuilder.h>
 	%template(SplitLabelList) QList<OsmAnd::GpxAdditionalIconsProvider::SplitLabel>;

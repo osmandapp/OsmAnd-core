@@ -9,7 +9,7 @@ OsmAnd::GeoBandSettings::GeoBandSettings(
     const QString& colorProfilePath_,
     const QString& contourStyleName_,
     const QHash<ZoomLevel, QList<double>>& contourLevels_,
-    const QHash<ZoomLevel, QStringList>& contourTypes_)
+    const QHash<ZoomLevel, QList<QString>>& contourTypes_)
     : unit(unit_)
     , unitFormatGeneral(unitFormatGeneral_)
     , unitFormatPrecise(unitFormatPrecise_)
