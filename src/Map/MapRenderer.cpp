@@ -2047,6 +2047,17 @@ float OsmAnd::MapRenderer::getSymbolsOpacity() const
     return _requestedState.symbolsOpacity;
 }
 
+bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
+        location31 = _requestedState.target31;
+    else
+        location31 = _requestedState.fixedLocation31;
+    return true;
+}
+
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
 {
     return MinZoomLevel;

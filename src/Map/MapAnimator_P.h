@@ -61,6 +61,13 @@ namespace OsmAnd
             const float value,
             const float duration,
             const TimingFunction timingFunction);
+        void constructZoomAnimationToValueAndPan(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const float value,
+            const PointI& panValue,
+            const float duration,
+            const TimingFunction timingFunction);
 
         void constructTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
@@ -202,6 +209,12 @@ namespace OsmAnd
         void animateZoomWith(
             const float velocity,
             const float deceleration,
+            const Key key);
+        void animateZoomToAndPan(
+            const float value,
+            const PointI& panValue,
+            const float duration,
+            const TimingFunction timingFunction,
             const Key key);
 
         void animateTargetBy(

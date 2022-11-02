@@ -153,6 +153,7 @@ namespace OsmAnd
         virtual bool setFogColor(const FColorRGB& color, bool forcedUpdate = false) = 0;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
+        virtual bool getMapTargetLocation(PointI& location31) const = 0;
 
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;

@@ -74,6 +74,12 @@ namespace OsmAnd
             const float velocity,
             const float deceleration,
             const Key key = nullptr);
+        void animateZoomToAndPan(
+            const float value,
+            const PointI& panValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
 
         void animateTargetBy(
             const PointI64& deltaValue,
