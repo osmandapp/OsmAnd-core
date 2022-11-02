@@ -1122,6 +1122,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         }
         startTileId =
             PointD(std::floor(std::min(startPoint.x, midPoint.x)), std::floor(std::min(startPoint.y, midPoint.y)));
+        const double maxInt = std::numeric_limits<int32_t>::max();
+        if (startTileId.x > maxInt)
+            startTileId.x -= maxInt;
+        if (startTileId.y > maxInt)
+            startTileId.y -= maxInt;
         const auto tileId = Utilities::normalizeTileId(
             TileId::fromXY(static_cast<int32_t>(startTileId.x), static_cast<int32_t>(startTileId.y)), state.zoomLevel);
         std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
@@ -1141,9 +1146,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
                 static_cast<float>(midMetersPerUnit / elevationScaleFactor),
                 startPointOffset, startPointZ, midPointOffset, midPointZ, exactLocation, &exactHeight))
             {
-                location31 = PointI(
-                    static_cast<int32_t>((static_cast<double>(exactLocation.x) + startTileId.x) * tileSize31),
-                    static_cast<int32_t>((static_cast<double>(exactLocation.y) + startTileId.y) * tileSize31));
+                location31 = Utilities::normalizeCoordinates(PointI64(
+                    static_cast<int64_t>((static_cast<double>(exactLocation.x) + startTileId.x) * tileSize31),
+                    static_cast<int64_t>((static_cast<double>(exactLocation.y) + startTileId.y) * tileSize31)),
+                    ZoomLevel31);
                 if (heightInMeters)
                     *heightInMeters = exactHeight;
                 return true;

@@ -132,6 +132,16 @@ void OsmAnd::MapAnimator::animateZoomWith(
     _p->animateZoomWith(velocity, deceleration, key);
 }
 
+void OsmAnd::MapAnimator::animateZoomToAndPan(
+    const float value,
+    const PointI& panValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key /*= nullptr*/)
+{
+    _p->animateZoomToAndPan(value, panValue, duration, timingFunction, key);
+}
+
 void OsmAnd::MapAnimator::animateTargetBy(
     const PointI64& deltaValue,
     const float duration,

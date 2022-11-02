@@ -57,6 +57,8 @@ namespace OsmAnd
         static double properCast(const int32_t value);
         static double properCast(const int64_t value);
 
+        static double relativeZoomFactor(const float currentZoom, const float finalZoom);
+
         template <typename T>
         static void calculateValue(const float t, const T initial, const T delta, const float duration, const TimingFunction timingFunction, T& value)
         {
@@ -292,6 +294,9 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         typedef std::function<void (const Key key, const T newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> ApplierMethod;
         typedef std::function<T (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetInitialValueMethod;
         typedef std::function<T (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetDeltaValueMethod;
+        typedef std::function<PointI64 (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetPanInitialValueMethod;
+        typedef std::function<PointI64 (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetPanDeltaValueMethod;
+        typedef std::function<void (const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> PanApplierMethod;
     private:
     protected:
         T _initialValue;
@@ -300,6 +305,8 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         bool _deltaValueCaptured;
         T _currentValue;
         bool _currentValueCalculatedOnce;
+        PointI64 _panInitialValue;
+        PointI64 _panDelta;
     public:
         Animation(
             const Key key_,
@@ -318,8 +325,11 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             , _currentValueCalculatedOnce(false)
             , deltaValue(_deltaValue)
             , deltaValueObtainer(nullptr)
+            , panDeltaValueObtainer(nullptr)
             , obtainer(obtainer_)
             , applier(applier_)
+            , panObtainer(nullptr)
+            , panApplier(nullptr)
         {
             assert(obtainer != nullptr);
             assert(applier != nullptr);
@@ -340,8 +350,39 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             , _deltaValueCaptured(false)
             , deltaValue(_deltaValue)
             , deltaValueObtainer(deltaValueObtainer_)
+            , panDeltaValueObtainer(nullptr)
             , obtainer(obtainer_)
             , applier(applier_)
+            , panObtainer(nullptr)
+            , panApplier(nullptr)
+        {
+            assert(obtainer != nullptr);
+            assert(applier != nullptr);
+        }
+
+        Animation(
+            const Key key_,
+            const AnimatedValue animatedValue_,            
+            const GetDeltaValueMethod deltaValueObtainer_,
+            const GetPanDeltaValueMethod panDeltaValueObtainer_,
+            const float duration_,
+            const float delay_,            
+            const TimingFunction timingFunction_,
+            const GetInitialValueMethod obtainer_,
+            const ApplierMethod applier_,
+            const GetPanInitialValueMethod panObtainer_,
+            const PanApplierMethod panApplier_,
+            const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
+            : GenericAnimation(key_, animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
+            , _initialValueCaptured(false)
+            , _deltaValueCaptured(false)
+            , deltaValue(_deltaValue)
+            , deltaValueObtainer(deltaValueObtainer_)
+            , panDeltaValueObtainer(panDeltaValueObtainer_)
+            , obtainer(obtainer_)
+            , applier(applier_)
+            , panObtainer(panObtainer_)
+            , panApplier(panApplier_)
         {
             assert(obtainer != nullptr);
             assert(applier != nullptr);
@@ -372,6 +413,11 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
                     _deltaValue = deltaValueObtainer(key, _ownContext, _sharedContext);
                     _deltaValueCaptured = true;
                 }
+                if (panObtainer && panDeltaValueObtainer)
+                {
+                    _panInitialValue = panObtainer(key, _ownContext, _sharedContext);
+                    _panDelta = panDeltaValueObtainer(key, _ownContext, _sharedContext);
+                }
                 if (isZero(_deltaValue))
                     return true;
 
@@ -388,14 +434,34 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             // Apply new value
             applier(key, _currentValue, _ownContext, _sharedContext);
 
+            // Do panning scaled by zoom if needed
+            if (std::is_same<T, float>::value && _initialValueCaptured && panObtainer && panDeltaValueObtainer)
+            {
+                const auto finalZoom = static_cast<double>(
+                    *reinterpret_cast<const float*>(&_initialValue) + *reinterpret_cast<const float*>(&_deltaValue));
+                const auto currentZoom = static_cast<double>(*reinterpret_cast<const float*>(&_currentValue));
+                const auto deltaFactor = relativeZoomFactor(currentZoom, finalZoom);
+                PointI64 currentPoint;
+                calculateValue(currentTime, _panInitialValue.x,
+                    static_cast<int64_t>(static_cast<double>(_panDelta.x) * deltaFactor),
+                    duration, timingFunction, currentPoint.x);
+                calculateValue(currentTime, _panInitialValue.y,
+                    static_cast<int64_t>(static_cast<double>(_panDelta.y) * deltaFactor),
+                    duration, timingFunction, currentPoint.y);
+                panApplier(key, currentPoint, _ownContext, _sharedContext);
+            }
+
             // Return false to indicate that processing has not yet finished
             return ((_timePassed - delay) >= duration);
         }
 
         const T& deltaValue;
         const GetDeltaValueMethod deltaValueObtainer;
+        const GetPanDeltaValueMethod panDeltaValueObtainer;
         const GetInitialValueMethod obtainer;
         const ApplierMethod applier;
+        const GetPanInitialValueMethod panObtainer;
+        const PanApplierMethod panApplier;
 
         virtual bool obtainInitialValueAsFloat(float& outValue) const
         {

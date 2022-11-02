@@ -329,6 +329,21 @@ void OsmAnd::MapAnimator_P::animateZoomWith(
     animateZoomBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
+void OsmAnd::MapAnimator_P::animateZoomToAndPan(
+    const float value,
+    const PointI& panValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructZoomAnimationToValueAndPan(newAnimations, key, value, panValue, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
 void OsmAnd::MapAnimator_P::animateTargetBy(
     const PointI64& deltaValue,
     const float duration,
@@ -580,7 +595,9 @@ void OsmAnd::MapAnimator_P::elevationAngleSetter(const Key key, const float newV
 
 OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->getState().fixedLocation31;
+    PointI location31;
+    _renderer->getMapTargetLocation(location31);
+    return location31;
 }
 
 void OsmAnd::MapAnimator_P::targetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -629,6 +646,36 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
         },
         duration, 0.0f, timingFunction,
         _zoomGetter, _zoomSetter));
+
+    outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructZoomAnimationToValueAndPan(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const float value,
+    const PointI& panValue,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    if (qFuzzyIsNull(duration))
+        return;
+
+    std::shared_ptr<GenericAnimation> newAnimation(new Animation<float>(
+        key,
+        AnimatedValue::Zoom,
+        [this, value]
+        (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
+        {
+            return value - zoomGetter(key, context, sharedContext);
+        },
+        [this, panValue]
+        (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> PointI64
+        {
+            return PointI64(panValue) - PointI64(targetGetter(key, context, sharedContext));
+        },
+        duration, 0.0f, timingFunction,
+        _zoomGetter, _zoomSetter, _targetGetter, _targetSetter));
 
     outAnimation.push_back(qMove(newAnimation));
 }
