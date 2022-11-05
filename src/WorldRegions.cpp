@@ -4,7 +4,7 @@
 const QString OsmAnd::WorldRegions::AntarcticaRegionId(QLatin1String("antarctica"));
 const QString OsmAnd::WorldRegions::AfricaRegionId(QLatin1String("africa"));
 const QString OsmAnd::WorldRegions::AsiaRegionId(QLatin1String("asia"));
-const QString OsmAnd::WorldRegions::AustraliaAndOceaniaRegionId(QLatin1String("australia-oceania"));
+const QString OsmAnd::WorldRegions::AustraliaAndOceaniaRegionId(QLatin1String("australia-oceania-all"));
 const QString OsmAnd::WorldRegions::CentralAmericaRegionId(QLatin1String("centralamerica"));
 const QString OsmAnd::WorldRegions::EuropeRegionId(QLatin1String("europe"));
 const QString OsmAnd::WorldRegions::NorthAmericaRegionId(QLatin1String("northamerica"));
