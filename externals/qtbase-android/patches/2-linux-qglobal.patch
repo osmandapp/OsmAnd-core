@@ -1,0 +1,10 @@
+--- upstream.original/src/corelib/global/qglobal.h	2022-11-03 22:26:27.949189391 +0600
++++ upstream.patched/src/corelib/global/qglobal.h	2022-11-04 20:19:04.594811623 +0600
+@@ -45,6 +45,7 @@
+ #  include <type_traits>
+ #  include <cstddef>
+ #  include <utility>
++#  include <limits>
+ #endif
+ #ifndef __ASSEMBLER__
+ #  include <assert.h>
