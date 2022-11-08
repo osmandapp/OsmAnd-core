@@ -709,37 +709,52 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    std::shared_ptr<const OsmAnd::Amenity> foundAmenityById;
-    std::shared_ptr<const OsmAnd::Amenity> foundAmenityByName;
-
-    uint64_t obfId = obfMapObject->id.id >> 7;
-    const auto visitor =
-        [obfId, &foundAmenityById, &foundAmenityByName, obfMapObject]
+    OsmAnd::ObfObjectId shiftedID = OsmAnd::ObfObjectId::fromRawId(obfMapObject->id >> 1);
+    uint64_t obfId = shiftedID.getOsmId();
+    std::shared_ptr<const OsmAnd::Amenity> res;
+    
+    const auto visitorById =
+    [obfId, &res, obfMapObject, this]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
-            if (foundAmenityById)
-                return false;
-
-            // todo: wrong IF since mapObject->id != amenity->id
-            if (amenity->id >> 1 == obfId)
-                foundAmenityById = amenity;
-            else
+            if (res == nullptr)
+            {
+                ObfObjectId initAmenityId = amenity->id;
+                uint64_t amenityId;
+                if (initAmenityId.isShiftedID())
+                    amenityId = initAmenityId.getOsmId();
+                else
+                    amenityId = initAmenityId.makeAmenityRightShift();
+                
+                if (amenityId == obfId)
+                    res = amenity;
+            }
+            return false;
+        };
+    
+    const auto visitorByName =
+    [&res, obfMapObject]
+        (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
+        {
+            QHash<uint32_t, QString> names = obfMapObject->captions;
+            if (res == nullptr && obfMapObject->captions.values().size() > 0)
+            {
                 for (const auto& caption : obfMapObject->captions.values())
                 {
                     if (amenity->nativeName == caption || amenity->localizedNames.values().contains(caption)) {
-                        foundAmenityByName = amenity;
+                        res = amenity;
                         break;
                     }
                 }
-
+            }
             return false;
         };
 
     const auto subQueryController = std::make_shared<FunctorQueryController>(
-        [&foundAmenityById]
+        [&res]
         (const FunctorQueryController* const queryController) -> bool
         {
-            return static_cast<bool>(foundAmenityById);
+            return static_cast<bool>(res);
         });
 
     for (const auto& obfReader : constOf(obfReaders))
@@ -772,19 +787,27 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 tileFilter,
                 zoomFilter,
                 nullptr,
-                visitor,
+                visitorById,
                 subQueryController);
 
-            if (foundAmenityById)
+            if (res == nullptr)
             {
-                if (outAmenity)
-                    *outAmenity = foundAmenityById;
-                return true;
+                OsmAnd::ObfPoiSectionReader::loadAmenities(
+                    obfReader,
+                    poiSection,
+                    nullptr,
+                    pBbox31,
+                    tileFilter,
+                    zoomFilter,
+                    nullptr,
+                    visitorByName,
+                    subQueryController);
             }
-            else if (foundAmenityByName)
+            
+            if (res)
             {
                 if (outAmenity)
-                    *outAmenity = foundAmenityByName;
+                    *outAmenity = res;
                 return true;
             }
         }

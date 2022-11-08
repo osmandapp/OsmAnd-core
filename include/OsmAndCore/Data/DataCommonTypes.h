@@ -79,13 +79,12 @@ namespace OsmAnd
         {
             return (static_cast<int64_t>(id) > 0);
         }
-
-        inline int64_t getOsmId() const
-        {
-            if (!isOsmId())
-                return -1;
-            return static_cast<int64_t>(id >> 1);
-        }
+        
+        int64_t getOsmId() const;
+        bool isShiftedID() const;
+        bool isIdFromRelation() const;
+        bool isIdFromSplit() const;
+        int64_t makeAmenityRightShift() const;
 
         QString toString() const;
 
