@@ -789,7 +789,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 nullptr,
                 visitorById,
                 subQueryController);
-            
+
             if (res == nullptr)
             {
                 OsmAnd::ObfPoiSectionReader::loadAmenities(

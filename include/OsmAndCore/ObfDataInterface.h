@@ -36,7 +36,7 @@ namespace OsmAnd
         virtual ~ObfDataInterface();
 
         const QList< std::shared_ptr<const ObfReader> > obfReaders;
-        
+
         bool loadObfFiles(
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
@@ -109,7 +109,7 @@ namespace OsmAnd
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
-    
+
         bool findAmenityByObfMapObject(
             const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
             std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
