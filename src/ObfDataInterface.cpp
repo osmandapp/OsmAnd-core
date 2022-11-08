@@ -709,8 +709,8 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    uint64_t obfId = obfMapObject->id.id;
-    obfId = obfMapObject->id.getOsmId();
+    OsmAnd::ObfObjectId shiftedID = OsmAnd::ObfObjectId::fromRawId(obfMapObject->id >> 1);
+    uint64_t obfId = shiftedID.getOsmId();
     std::shared_ptr<const OsmAnd::Amenity> res;
     
     const auto visitorById =

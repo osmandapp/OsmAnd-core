@@ -2,14 +2,14 @@
 
 #include "ObfSectionInfo.h"
 
-const int SHIFT_MULTIPOLYGON_IDS = 43;
-const int SHIFT_NON_SPLIT_EXISTING_IDS = 41;
-const uint64_t RELATION_BIT = 1L << (SHIFT_MULTIPOLYGON_IDS - 1); //According IndexPoiCreator SHIFT_MULTIPOLYGON_IDS
-const uint64_t SPLIT_BIT = 1L << (SHIFT_NON_SPLIT_EXISTING_IDS - 1); //According IndexVectorMapCreator
-const uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
-const int DUPLICATE_SPLIT = 5; //According IndexPoiCreator DUPLICATE_SPLIT
-const int SHIFT_ID = 6;
-const int AMENITY_ID_RIGHT_SHIFT = 1;
+static const int SHIFT_MULTIPOLYGON_IDS = 43;
+static const int SHIFT_NON_SPLIT_EXISTING_IDS = 41;
+static const uint64_t RELATION_BIT = 1L << (SHIFT_MULTIPOLYGON_IDS - 1); //According IndexPoiCreator SHIFT_MULTIPOLYGON_IDS
+static const uint64_t SPLIT_BIT = 1L << (SHIFT_NON_SPLIT_EXISTING_IDS - 1); //According IndexVectorMapCreator
+static const uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
+static const int DUPLICATE_SPLIT = 5; //According IndexPoiCreator DUPLICATE_SPLIT
+static const int SHIFT_ID = 6;
+static const int AMENITY_ID_RIGHT_SHIFT = 1;
 
 OsmAnd::ObfObjectId OsmAnd::ObfObjectId::generateUniqueId(
     const uint64_t rawId,
@@ -69,12 +69,8 @@ OsmAnd::ObfObjectId OsmAnd::ObfObjectId::fromRawId(const uint64_t rawId)
 
 int64_t OsmAnd::ObfObjectId::getOsmId() const
 {
-    if (!isOsmId())
-        return -1;
-    
-    int64_t shiftedId = static_cast<int64_t>(id >> 1);
-    int64_t clearBits = RELATION_BIT | SPLIT_BIT;
-    int64_t newId = isShiftedID() ? (shiftedId & ~clearBits) >> DUPLICATE_SPLIT : shiftedId;
+    uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
+    int64_t newId = isShiftedID() ? (id & ~clearBits) >> DUPLICATE_SPLIT : id;
     return newId >> SHIFT_ID;
 }
 
