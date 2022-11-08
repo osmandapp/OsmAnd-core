@@ -76,8 +76,6 @@ int64_t OsmAnd::ObfObjectId::getOsmId(int64_t id)
 
 bool OsmAnd::ObfObjectId::isShiftedID(int64_t id)
 {
-    bool a = isIdFromRelation(id);
-    bool b = isIdFromSplit(id);
     return isIdFromRelation(id) || isIdFromSplit(id);
 }
 
