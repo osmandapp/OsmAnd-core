@@ -67,29 +67,33 @@ OsmAnd::ObfObjectId OsmAnd::ObfObjectId::fromRawId(const uint64_t rawId)
     return obfObjectId;
 }
 
-int64_t OsmAnd::ObfObjectId::getOsmId(int64_t id)
+int64_t OsmAnd::ObfObjectId::getOsmId() const
 {
+    if (!isOsmId())
+        return -1;
+    
+    int64_t shiftedId = static_cast<int64_t>(id >> 1);
     int64_t clearBits = RELATION_BIT | SPLIT_BIT;
-    int64_t newId = OsmAnd::ObfObjectId::isShiftedID(id) ? (id & ~clearBits) >> DUPLICATE_SPLIT : id;
+    int64_t newId = isShiftedID() ? (shiftedId & ~clearBits) >> DUPLICATE_SPLIT : shiftedId;
     return newId >> SHIFT_ID;
 }
 
-bool OsmAnd::ObfObjectId::isShiftedID(int64_t id)
+bool OsmAnd::ObfObjectId::isShiftedID() const
 {
-    return isIdFromRelation(id) || isIdFromSplit(id);
+    return isIdFromRelation() || isIdFromSplit();
 }
 
-bool OsmAnd::ObfObjectId::isIdFromRelation(int64_t id)
+bool OsmAnd::ObfObjectId::isIdFromRelation() const
 {
     return id > 0 && (id & RELATION_BIT) == RELATION_BIT;
 }
 
-bool OsmAnd::ObfObjectId::isIdFromSplit(int64_t id)
+bool OsmAnd::ObfObjectId::isIdFromSplit() const
 {
     return id > 0 && (id & SPLIT_BIT) == SPLIT_BIT;
 }
 
-int64_t OsmAnd::ObfObjectId::makeAmenityTightShift(int64_t id)
+int64_t OsmAnd::ObfObjectId::makeAmenityRightShift() const
 {
     return id >> AMENITY_ID_RIGHT_SHIFT;
 }

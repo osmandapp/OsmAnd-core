@@ -710,7 +710,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     uint64_t obfId = obfMapObject->id.id;
-    obfId = ObfObjectId::getOsmId(obfId >> 1);
+    obfId = obfMapObject->id.getOsmId();
     std::shared_ptr<const OsmAnd::Amenity> res;
     
     const auto visitorById =
@@ -719,12 +719,12 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
         {
             if (res == nullptr)
             {
-                uint64_t initAmenityId = amenity->id;
+                ObfObjectId initAmenityId = amenity->id;
                 uint64_t amenityId;
-                if (ObfObjectId::isShiftedID(initAmenityId))
-                    amenityId = ObfObjectId::getOsmId(initAmenityId);
+                if (initAmenityId.isShiftedID())
+                    amenityId = initAmenityId.getOsmId();
                 else
-                    amenityId = ObfObjectId::makeAmenityTightShift(initAmenityId);
+                    amenityId = initAmenityId.makeAmenityRightShift();
                 
                 if (amenityId == obfId)
                     res = amenity;

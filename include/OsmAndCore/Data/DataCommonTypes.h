@@ -80,11 +80,11 @@ namespace OsmAnd
             return (static_cast<int64_t>(id) > 0);
         }
         
-        static int64_t getOsmId(int64_t id);
-        static bool isShiftedID(int64_t id);
-        static bool isIdFromRelation(int64_t id);
-        static bool isIdFromSplit(int64_t id);
-        static int64_t makeAmenityTightShift(int64_t id);
+        int64_t getOsmId() const;
+        bool isShiftedID() const;
+        bool isIdFromRelation() const;
+        bool isIdFromSplit() const;
+        int64_t makeAmenityRightShift() const;
 
         QString toString() const;
 
