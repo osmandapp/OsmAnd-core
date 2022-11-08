@@ -37,15 +37,6 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const ObfReader> > obfReaders;
         
-        const int SHIFT_MULTIPOLYGON_IDS = 43;
-        const int SHIFT_NON_SPLIT_EXISTING_IDS = 41;
-        const uint64_t RELATION_BIT = 1L << (SHIFT_MULTIPOLYGON_IDS - 1); //According IndexPoiCreator SHIFT_MULTIPOLYGON_IDS
-        const uint64_t SPLIT_BIT = 1L << (SHIFT_NON_SPLIT_EXISTING_IDS - 1); //According IndexVectorMapCreator
-        const uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
-        const int DUPLICATE_SPLIT = 5; //According IndexPoiCreator DUPLICATE_SPLIT
-        const int SHIFT_ID = 6;
-        const int AMENITY_ID_RIGHT_SHIFT = 1;
-
         bool loadObfFiles(
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);

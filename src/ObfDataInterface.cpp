@@ -701,28 +701,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     return true;
 }
 
-uint64_t OsmAnd::ObfDataInterface::getOsmId(uint64_t id)
-{
-    uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
-    id = isShiftedID(id) ? (id & ~clearBits) >> DUPLICATE_SPLIT : id;
-    return id >> SHIFT_ID;
-}
-
-bool OsmAnd::ObfDataInterface::isShiftedID(uint64_t id)
-{
-    return isIdFromRelation(id) || isIdFromSplit(id);
-}
-
-bool OsmAnd::ObfDataInterface::isIdFromRelation(uint64_t id)
-{
-    return id > 0 && (id & RELATION_BIT) == RELATION_BIT;
-}
-
-bool OsmAnd::ObfDataInterface::isIdFromSplit(uint64_t id)
-{
-    return id > 0 && (id & SPLIT_BIT) == SPLIT_BIT;
-}
-
 bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
     std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
@@ -732,7 +710,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     uint64_t obfId = obfMapObject->id.id;
-    obfId = getOsmId(obfId >> 1);
+    obfId = ObfObjectId::getOsmId(obfId >> 1);
     std::shared_ptr<const OsmAnd::Amenity> res;
     
     const auto visitorById =
@@ -743,10 +721,10 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
             {
                 uint64_t initAmenityId = amenity->id;
                 uint64_t amenityId;
-                if (isShiftedID(initAmenityId))
-                    amenityId = getOsmId(initAmenityId);
+                if (ObfObjectId::isShiftedID(initAmenityId))
+                    amenityId = ObfObjectId::getOsmId(initAmenityId);
                 else
-                    amenityId = initAmenityId >> AMENITY_ID_RIGHT_SHIFT;
+                    amenityId = ObfObjectId::makeAmenityTightShift(initAmenityId);
                 
                 if (amenityId == obfId)
                     res = amenity;

@@ -2,6 +2,15 @@
 
 #include "ObfSectionInfo.h"
 
+const int SHIFT_MULTIPOLYGON_IDS = 43;
+const int SHIFT_NON_SPLIT_EXISTING_IDS = 41;
+const uint64_t RELATION_BIT = 1L << (SHIFT_MULTIPOLYGON_IDS - 1); //According IndexPoiCreator SHIFT_MULTIPOLYGON_IDS
+const uint64_t SPLIT_BIT = 1L << (SHIFT_NON_SPLIT_EXISTING_IDS - 1); //According IndexVectorMapCreator
+const uint64_t clearBits = RELATION_BIT | SPLIT_BIT;
+const int DUPLICATE_SPLIT = 5; //According IndexPoiCreator DUPLICATE_SPLIT
+const int SHIFT_ID = 6;
+const int AMENITY_ID_RIGHT_SHIFT = 1;
+
 OsmAnd::ObfObjectId OsmAnd::ObfObjectId::generateUniqueId(
     const uint64_t rawId,
     const uint32_t offsetInObf,
@@ -56,4 +65,33 @@ OsmAnd::ObfObjectId OsmAnd::ObfObjectId::fromRawId(const uint64_t rawId)
     ObfObjectId obfObjectId;
     obfObjectId.id = rawId;
     return obfObjectId;
+}
+
+int64_t OsmAnd::ObfObjectId::getOsmId(int64_t id)
+{
+    int64_t clearBits = RELATION_BIT | SPLIT_BIT;
+    int64_t newId = OsmAnd::ObfObjectId::isShiftedID(id) ? (id & ~clearBits) >> DUPLICATE_SPLIT : id;
+    return newId >> SHIFT_ID;
+}
+
+bool OsmAnd::ObfObjectId::isShiftedID(int64_t id)
+{
+    bool a = isIdFromRelation(id);
+    bool b = isIdFromSplit(id);
+    return isIdFromRelation(id) || isIdFromSplit(id);
+}
+
+bool OsmAnd::ObfObjectId::isIdFromRelation(int64_t id)
+{
+    return id > 0 && (id & RELATION_BIT) == RELATION_BIT;
+}
+
+bool OsmAnd::ObfObjectId::isIdFromSplit(int64_t id)
+{
+    return id > 0 && (id & SPLIT_BIT) == SPLIT_BIT;
+}
+
+int64_t OsmAnd::ObfObjectId::makeAmenityTightShift(int64_t id)
+{
+    return id >> AMENITY_ID_RIGHT_SHIFT;
 }
