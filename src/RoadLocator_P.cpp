@@ -6,6 +6,8 @@
 #include "ObfDataInterface.h"
 #include "Utilities.h"
 
+static const double GPS_POSSIBLE_ERROR = 7;
+
 OsmAnd::RoadLocator_P::RoadLocator_P(RoadLocator* const owner_)
     : owner(owner_)
 {
@@ -244,8 +246,7 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
             const auto& ppx31 = points31[idx - 1].x;
             const auto& ppy31 = points31[idx - 1].y;
 
-            auto sqDistance = Utilities::squareDistance31(cpx31, cpy31, ppx31, ppy31);
-
+            auto mDist = measuredDist31(cpx31, cpy31, ppx31, ppy31);
             uint32_t rx31;
             uint32_t ry31;
             auto projection = Utilities::projection31(ppx31, ppy31, cpx31, cpy31, position31.x, position31.y);
@@ -254,27 +255,30 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
                 rx31 = ppx31;
                 ry31 = ppy31;
             }
-            else if (projection >= sqDistance)
+            else if (projection >= (mDist * mDist))
             {
                 rx31 = cpx31;
                 ry31 = cpy31;
             }
             else
             {
-                const auto& factor = projection / sqDistance;
+                const auto& factor = projection / (mDist * mDist);
                 rx31 = ppx31 + (cpx31 - ppx31) * factor;
                 ry31 = ppy31 + (cpy31 - ppy31) * factor;
             }
-            sqDistance = Utilities::squareDistance31(rx31, ry31, position31.x, position31.y);
+            double currentsDistSquare = Utilities::squareDistance31(rx31, ry31, position31.x, position31.y);
 
-            if (sqDistance < minSqDistance)
+            if (currentsDistSquare < minSqDistance)
             {
-                minSqDistance = sqDistance;
+                minSqDistance = currentsDistSquare;
                 roadInfo->preciseX = rx31;
                 roadInfo->preciseY = ry31;
                 roadInfo->distSquare = minSqDistance;
             }
         }
+        
+        float prio = 1.f;
+        roadInfo->distSquare = (roadInfo->distSquare + GPS_POSSIBLE_ERROR * GPS_POSSIBLE_ERROR) / (prio * prio);
     };
     
     for (auto road : collection)

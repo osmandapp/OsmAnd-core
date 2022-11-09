@@ -26,6 +26,7 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Bitmask.h>
+#include "commonOsmAndCore.h"
 
 namespace OsmAnd
 {
@@ -211,11 +212,21 @@ namespace OsmAnd
         {
             return static_cast<int64_t>(meters / 0.01863);
         }
+        
+        inline static double x31ToMeters(int x1, int x2, int y)
+        {
+            return convert31XToMeters(x1, x2, y);
+        }
+        
+        inline static double y31ToMeters(int y1, int y2, int x)
+        {
+            return convert31YToMeters(y1, y2, x);
+        }
 
         inline static double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
         {
-            const auto dx = Utilities::x31toMeters(x31a - x31b);
-            const auto dy = Utilities::y31toMeters(y31a - y31b);
+            auto dx = Utilities::x31ToMeters(x31a, x31b, y31a);
+            auto dy = Utilities::y31ToMeters(y31a, y31b, x31a);
             return dx * dx + dy * dy;
         }
 
@@ -262,9 +273,8 @@ namespace OsmAnd
         inline static double projection31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b, const int32_t x31c, const int32_t y31c)
         {
             // Scalar multiplication between (AB, AC)
-            auto p =
-                Utilities::x31toMeters(x31b - x31a) * Utilities::x31toMeters(x31c - x31a) +
-                Utilities::y31toMeters(y31b - y31a) * Utilities::y31toMeters(y31c - y31a);
+            auto p = Utilities::x31ToMeters(x31b, x31a, y31a) * Utilities::x31ToMeters(x31c, x31a, y31a) + Utilities::y31ToMeters(y31b, y31a, y31a) * Utilities::y31ToMeters(y31c, y31a, y31a);
+            
             return p;
         }
 
