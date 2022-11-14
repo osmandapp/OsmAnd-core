@@ -37,6 +37,9 @@ namespace OsmAnd
         bool removeFile(const QString& filePath);
         bool remove(const SourceOriginId entryId);
 
+        virtual ZoomLevel getMinZoom() const;
+        virtual ZoomLevel getMaxZoom() const;
+
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases() const;
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases(
             TileId tileId, ZoomLevel zoom) const;

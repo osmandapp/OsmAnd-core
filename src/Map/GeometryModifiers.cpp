@@ -6,11 +6,11 @@ OsmAnd::GeometryModifiers::~GeometryModifiers() {}
 
 // Cut the mesh by tiles and grid lines (+ optional mesh optimization)
 bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
-										 const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
-										 const VectorMapSymbol::PrimitiveType& primitiveType,
-										 std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
-										 const double& tileSize, const PointD& tilePosN, const float& minDistance,
-										 const float& maxBreakTangent, const bool diagonals, const bool simplify)
+		const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
+		const VectorMapSymbol::PrimitiveType& primitiveType,
+		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
+		const double& tileSize, const PointD& tilePosN, const int32_t& cellsPerTileSize,
+		const float& minDistance, const float& maxBreakTangent, const bool diagonals, const bool simplify)
 {
 	if (!partSizes)
         return false;
@@ -21,7 +21,7 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
         return false;
 	auto indicesCount = indices != nullptr ? indices->size() : 0;
 	float minDist = minDistance;
-	float gridStepXY = tileSize / static_cast<double>(AtlasMapRenderer::HeixelsPerTileSide - 1);
+	float gridStepXY = tileSize / static_cast<double>(cellsPerTileSize);
 	float gridPosX = -(tilePosN.x - std::floor(tilePosN.x)) * tileSize;
 	float gridPosY = -(tilePosN.y - std::floor(tilePosN.y)) * tileSize;
 	int32_t i, j, v;

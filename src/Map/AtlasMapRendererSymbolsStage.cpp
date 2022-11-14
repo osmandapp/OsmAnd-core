@@ -919,9 +919,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     // Get elevation data
     float elevationInMeters = 0.0f;
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel &&
+        elevationData)
     {
-        if (elevationData->getValue(offsetInTileN, elevationInMeters))
+        if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
         {
             const auto scaledElevationInMeters = elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
 
@@ -1108,13 +1110,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         PointF offsetInTileN;
 		const auto tileId = Utilities::normalizeTileId(
 			Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-		float elevationInMeters = 0.0f;
-		std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-        if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
-        {
-            if (elevationData->getValue(offsetInTileN, elevationInMeters))
-                return;
-        }
+        if (getElevationData(tileId, currentState.zoomLevel, offsetInTileN) != InvalidZoomLevel)
+            return;
     }
 
     // Don't render fully transparent symbols
@@ -2354,9 +2351,11 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
             Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
         float elevationInMeters = 0.0f;
         std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-        if (captureElevationDataResource(tileId, currentState.zoomLevel, &elevationData) && elevationData)
+        PointF offsetInScaledTileN = offsetInTileN;
+        if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel &&
+            elevationData)
         {
-            if (elevationData->getValue(offsetInTileN, elevationInMeters))
+            if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
             {
                 elevate = true;
                 if (is2D)

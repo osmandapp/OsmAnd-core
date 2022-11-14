@@ -22,6 +22,7 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::VerticesAndIndices()
 , indices(nullptr)
 , indicesCount(0)
 , partSizes(nullptr)
+, zoomLevel(InvalidZoomLevel)
 {
 }
 
@@ -48,6 +49,8 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::~VerticesAndIndices()
 
     if (partSizes != nullptr)
         partSizes = nullptr;
+    
+    zoomLevel = InvalidZoomLevel;
 }
 
 const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndices> OsmAnd::VectorMapSymbol::getVerticesAndIndices() const

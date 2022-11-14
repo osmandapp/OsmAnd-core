@@ -820,18 +820,22 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     // Tesselate the line for the surface
 	auto partSizes =
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
-	bool tesselated = _hasElevationDataProvider
+    const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
+	const auto cellsPerTileSize = (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << zoomLevel - _mapZoomLevel);
+    bool tesselated = _hasElevationDataProvider
         ? GeometryModifiers::overGrid(
             vertices,
             nullptr,
             vectorLine->primitiveType,
             partSizes,
-            Utilities::getPowZoom(31 - _mapZoomLevel),
-            Utilities::convert31toFloat(*(verticesAndIndices->position31), _mapZoomLevel),
+            Utilities::getPowZoom(31 - zoomLevel),
+            Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
+            cellsPerTileSize,
             1.0f, 0.01f,
             false, false)
         : false;
 	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+    verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
 
     //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndices->verticesCount = (unsigned int) vertices.size();

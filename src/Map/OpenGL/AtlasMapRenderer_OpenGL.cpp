@@ -885,9 +885,9 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getRealDistanceToHorizon(
     auto delta = farthestPos - groundPosition;
     const auto tileCount = static_cast<double>(1u << state.zoomLevel);
     const auto absAzimuth = std::fabs(state.azimuth);
-    if (absAzimuth > 89.99f && absAzimuth < 90.01f && std::fabs(delta.y) > tileCount / 2.0 ||
-        (state.azimuth < -90.0f || state.azimuth > 90.0f) && delta.y < 0.0 ||
-        state.azimuth > -90.0f && state.azimuth < 90.0f && delta.y > 0.0)
+    if ((absAzimuth > 89.99f && absAzimuth < 90.01f && std::fabs(delta.y) > tileCount / 2.0) ||
+        ((state.azimuth < -90.0f || state.azimuth > 90.0f) && delta.y < 0.0) ||
+        (state.azimuth > -90.0f && state.azimuth < 90.0f && delta.y > 0.0))
         delta.y = tileCount - std::fabs(delta.y);
     const auto shortestDistance = qSqrt(delta.x * delta.x + delta.y * delta.y) * TileSize3D;
     delta.x = tileCount - std::fabs(delta.x);
@@ -987,6 +987,76 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_Op
     }
 
     return nullptr;
+}
+
+OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getElevationData(const MapRendererState& state,
+    TileId normalizedTileId, ZoomLevel zoomLevel, PointF& offsetInTileN, bool noUnderscaled,
+    std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
+{
+    if (!currentState.elevationDataProvider)
+        return ZoomLevel::InvalidZoomLevel;
+
+    if (captureElevationDataResource(state, normalizedTileId, zoomLevel, pOutSource))
+        return zoomLevel;
+
+    const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
+    const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
+    const auto minZoom = currentState.elevationDataProvider->getMinZoom();
+    const auto maxZoom = currentState.elevationDataProvider->getMaxZoom();
+    for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
+    {
+        // Look for underscaled first. Only full match is accepted.
+        // Don't replace tiles of absent zoom levels by the unserscaled ones
+        const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
+        if (!noUnderscaled && underscaledZoom >= minZoom && underscaledZoom <= maxZoom &&
+            absZoomShift <= maxUnderZoomShift && zoomLevel >= minZoom)
+        {
+            auto underscaledTileIdN =
+                TileId::fromXY(normalizedTileId.x << absZoomShift, normalizedTileId.y << absZoomShift);
+            PointF offsetN;
+            if (absZoomShift < 20)
+                offsetN = offsetInTileN * static_cast<float>(1u << absZoomShift);
+            else
+            {
+                const double tileSize = 1ull << absZoomShift;
+                offsetN.x = static_cast<double>(offsetInTileN.x) * tileSize;
+                offsetN.y = static_cast<double>(offsetInTileN.y) * tileSize;
+            }
+            const auto innerOffset =
+                PointI(static_cast<int32_t>(std::floor(offsetN.x)), static_cast<int32_t>(std::floor(offsetN.y)));
+            underscaledTileIdN.x += innerOffset.x;
+            underscaledTileIdN.y += innerOffset.y;
+            const auto underscaledZoomLevel = static_cast<ZoomLevel>(underscaledZoom);
+            if (captureElevationDataResource(state, underscaledTileIdN, underscaledZoomLevel, pOutSource))
+            {
+                offsetInTileN.x = offsetN.x - static_cast<float>(innerOffset.x);
+                offsetInTileN.y = offsetN.y - static_cast<float>(innerOffset.y);
+                return underscaledZoomLevel;
+            }
+        }
+
+        // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
+        const auto overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
+        if (overscaledZoom >= minZoom && overscaledZoom <= maxZoom)
+        {
+            PointF texCoordsOffset;
+            PointF texCoordsScale;
+            const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
+                normalizedTileId,
+                absZoomShift,
+                &texCoordsOffset,
+                &texCoordsScale);
+            const auto overscaledZoomLevel = static_cast<ZoomLevel>(overscaledZoom);
+            if (captureElevationDataResource(state, overscaledTileIdN, overscaledZoomLevel, pOutSource))
+            {
+                offsetInTileN.x = texCoordsOffset.x + offsetInTileN.x * texCoordsScale.x;
+                offsetInTileN.y = texCoordsOffset.y + offsetInTileN.y * texCoordsScale.y;
+                return overscaledZoomLevel;
+            }
+        }
+    }
+
+    return ZoomLevel::InvalidZoomLevel;
 }
 
 OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
@@ -1129,13 +1199,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
             startTileId.y -= maxInt;
         const auto tileId = Utilities::normalizeTileId(
             TileId::fromXY(static_cast<int32_t>(startTileId.x), static_cast<int32_t>(startTileId.y)), state.zoomLevel);
+        const PointD startPointOffset(startPoint.x - startTileId.x,startPoint.y - startTileId.y);
         std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-        if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
+        PointF scaledStart(startPointOffset.x, startPointOffset.y);
+        const auto scaledZoom = getElevationData(state, tileId, state.zoomLevel, scaledStart, true, &elevationData);
+        if (scaledZoom != InvalidZoomLevel && elevationData)
         {
-            const auto startPointOffset = PointF(static_cast<float>(startPoint.x - startTileId.x),
-                static_cast<float>(startPoint.y - startTileId.y));
-            const auto midPointOffset = PointF(static_cast<float>(midPoint.x - startTileId.x),
-                static_cast<float>(midPoint.y - startTileId.y));
+            const PointD midPointOffset(midPoint.x - startTileId.x, midPoint.y - startTileId.y);
+            const double tileSize = 1ull << state.zoomLevel - scaledZoom;
+            const auto elevatedDistance = (midPointOffset - startPointOffset) / tileSize;
+            PointF scaledEnd(scaledStart.x + elevatedDistance.x, scaledStart.y + elevatedDistance.y);
             const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
             const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
             const auto startMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, startPointOffset.y);
@@ -1144,7 +1217,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
             float exactHeight = 0.0f;
             if (elevationData->getClosestPoint(static_cast<float>(startMetersPerUnit / elevationScaleFactor),
                 static_cast<float>(midMetersPerUnit / elevationScaleFactor),
-                startPointOffset, startPointZ, midPointOffset, midPointZ, exactLocation, &exactHeight))
+                scaledStart, startPointZ, scaledEnd, midPointZ, exactLocation, &exactHeight))
             {
                 location31 = Utilities::normalizeCoordinates(PointI64(
                     static_cast<int64_t>((static_cast<double>(exactLocation.x) + startTileId.x) * tileSize31),
@@ -1177,8 +1250,12 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRender
     PointF offsetInTileN;
     TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
-        elevationData->getValue(offsetInTileN, elevationInMeters);
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(state, tileId, state.zoomLevel, offsetInScaledTileN, false, &elevationData) != InvalidZoomLevel &&
+        elevationData)
+    {
+        elevationData->getValue(offsetInScaledTileN, elevationInMeters);
+    }
     
     return elevationInMeters;
 }
@@ -1234,10 +1311,12 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const MapRendererStat
     PointF offsetInTileN;
     TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    if (captureElevationDataResource(state, tileId, state.zoomLevel, &elevationData) && elevationData)
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(state, tileId, state.zoomLevel, offsetInScaledTileN, false, &elevationData) != InvalidZoomLevel &&
+        elevationData)
     {
         float elevationInMeters = 0.0f;
-        if (elevationData->getValue(offsetInTileN, elevationInMeters))
+        if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
         {
             const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
 
@@ -1428,7 +1507,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getCameraHeightInMeters() const
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
 
-    return internalState.distanceFromCameraToGroundInMeters;
+    return ok ? internalState.distanceFromCameraToGroundInMeters : 0.0f;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeInMeters() const

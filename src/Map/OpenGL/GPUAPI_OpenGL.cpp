@@ -1352,10 +1352,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
 
     std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
     if (verticesAndIndices->partSizes != nullptr)
-        partSizes = std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>(*verticesAndIndices->partSizes));
+    {
+        partSizes = std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(
+            new std::vector<std::pair<TileId, int32_t>>(*verticesAndIndices->partSizes));
+    }
     
     // Create mesh resource
-    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes, position31));
+    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes,
+        verticesAndIndices->zoomLevel, position31));
 
     return true;
 }

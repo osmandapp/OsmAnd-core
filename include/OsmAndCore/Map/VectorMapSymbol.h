@@ -45,6 +45,7 @@ namespace OsmAnd
             unsigned int indicesCount;
 
             std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
+            ZoomLevel zoomLevel;
         };
         
         enum class PrimitiveType

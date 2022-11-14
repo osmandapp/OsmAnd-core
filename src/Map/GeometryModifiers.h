@@ -204,11 +204,11 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 
 	// Cut the mesh by tiles and grid lines (+ optional mesh optimization)
 	static bool overGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
-						 const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
-						 const VectorMapSymbol::PrimitiveType& primitiveType,
-						 std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes, const double& tileSize,
-						 const PointD& tilePosN, const float& minDistance, const float& maxBreakTangent,
-						 const bool diagonals, const bool simplify);
+						const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
+						const VectorMapSymbol::PrimitiveType& primitiveType,
+						std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes, const double& tileSize,
+						const PointD& tilePosN, const int32_t& cellsPerTileSize, const float& minDistance,
+						const float& maxBreakTangent, const bool diagonals, const bool simplify);
 
    private:
 	GeometryModifiers();

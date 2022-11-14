@@ -37,6 +37,23 @@ namespace OsmAnd
             Other
         };
 
+        struct ElevationResource Q_DECL_FINAL
+        {
+            ElevationResource(
+                const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU,
+                const TileId tileIdN,
+                const PointF texCoordsOffset = PointF(0.0f, 0.0f),
+                const PointF texCoordsScale = PointF(1.0f, 1.0f));
+
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+            TileId tileIdN;
+            PointF texCoordsOffset;
+            PointF texCoordsScale;
+
+        private:
+            Q_DISABLE_COPY(ElevationResource);
+        };
+
         struct BatchedLayerResource Q_DECL_FINAL
         {
             BatchedLayerResource(
@@ -169,12 +186,20 @@ namespace OsmAnd
             const bool withElevation,
             const bool blendingEnabled,
             const ZoomLevel zoomLevel);
-        bool configureElevationData(
+        void configureElevationData(
+            const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
             const RasterLayerTileProgram& program,
-            const TileId tileId,
+            const TileId tileIdN,
+            const ZoomLevel zoomLevel,
+            const PointF& texCoordsOffsetN,
+            const PointF& texCoordsScaleN,
+            const double tileSize,
             const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray,
-            const ZoomLevel zoomLevel);
+            GLlocation& activeElevationVertexAttribArray);
+        void cancelElevation(
+            const RasterLayerTileProgram& program,
+            const int elevationDataSamplerIndex,
+            GLlocation& activeElevationVertexAttribArray);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,

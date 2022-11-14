@@ -284,11 +284,19 @@ namespace OsmAnd
         bool applyTerrainVisibilityFiltering(
             const glm::vec3& positionOnScreen,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
-
         void configureElevationData(
+            const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
             const OnSurfaceVectorProgram& program,
-            const TileId tileId,
+            const TileId tileIdN,
+            const ZoomLevel zoomLevel,
+            const PointF& texCoordsOffsetN,
+            const PointF& texCoordsScaleN,
+            const double tileSize,
             const int elevationDataSamplerIndex);
+        void cancelElevation(
+            const OnSurfaceVectorProgram& program,
+            const int elevationDataSamplerIndex,
+            GLlocation& activeElevationVertexAttribArray);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererSymbolsStage_OpenGL() override;

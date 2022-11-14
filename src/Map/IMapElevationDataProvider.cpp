@@ -71,7 +71,7 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
     const auto deltaX = endHeixelN.x - startHeixelN.x;
     const auto deltaY = endHeixelN.y - startHeixelN.y;
     const auto maxDelta = std::max(std::fabs(deltaX), std::fabs(deltaY));
-    const auto heixelCount = static_cast<int>(std::round(maxDelta * static_cast<float>(size)));
+    const auto heixelCount = static_cast<int>(std::ceil(maxDelta * static_cast<float>(size - 3)));
     const auto rateX = deltaX / maxDelta;
     const auto rateY = deltaY / maxDelta;
     const auto rateZ = (endElevation - startElevation) / static_cast<float>(heixelCount);
