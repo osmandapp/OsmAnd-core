@@ -21,6 +21,8 @@ OsmAnd::TileSqliteDatabasesCollection_P::TileSqliteDatabasesCollection_P(
     , _collectedSourcesInvalidated(1)
     , owner(owner_)
 {
+    _cachedMinZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
+    _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     if (_fileSystemWatcher)
     {
         _fileSystemWatcher->moveToThread(gMainThread);
@@ -47,6 +49,8 @@ OsmAnd::TileSqliteDatabasesCollection_P::~TileSqliteDatabasesCollection_P()
 
 void OsmAnd::TileSqliteDatabasesCollection_P::invalidateCollectedSources()
 {
+    _cachedMinZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
+    _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _collectedSourcesInvalidated.fetchAndAddOrdered(1);
 }
 
@@ -320,6 +324,40 @@ bool OsmAnd::TileSqliteDatabasesCollection_P::remove(const TileSqliteDatabasesCo
 
     invalidateCollectedSources();
     return true;
+}
+
+OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection_P::getMinZoom() const
+{
+    ZoomLevel minZoom;
+    if ((minZoom = static_cast<ZoomLevel>(_cachedMinZoom.loadAcquire())) != ZoomLevel::InvalidZoomLevel)
+    {
+        return minZoom;
+    }
+
+    minZoom = ZoomLevel::MinZoomLevel;
+    for (const auto& database : getTileSqliteDatabases())
+    {
+        minZoom = qMax(minZoom, database->getMinZoom());
+    }
+
+    return minZoom;
+}
+
+OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection_P::getMaxZoom() const
+{
+    ZoomLevel maxZoom;
+    if ((maxZoom = static_cast<ZoomLevel>(_cachedMaxZoom.loadAcquire())) != ZoomLevel::InvalidZoomLevel)
+    {
+        return maxZoom;
+    }
+
+    maxZoom = ZoomLevel::MaxZoomLevel;
+    for (const auto& database : getTileSqliteDatabases())
+    {
+        maxZoom = qMin(maxZoom, database->getMaxZoom());
+    }
+
+    return maxZoom;
 }
 
 QList< std::shared_ptr<const OsmAnd::TileSqliteDatabase> > OsmAnd::TileSqliteDatabasesCollection_P::getTileSqliteDatabases() const

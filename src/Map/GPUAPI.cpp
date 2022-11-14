@@ -349,11 +349,13 @@ OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     const std::shared_ptr<ArrayBufferInGPU>& vertexBuffer_,
     const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer_,
     const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes_,
+    const ZoomLevel zoomLevel_,
     const PointI* position31_/* = nullptr*/)
     : MetaResourceInGPU(Type::Mesh, api_)
     , vertexBuffer(vertexBuffer_)
     , indexBuffer(indexBuffer_)
     , partSizes(partSizes_)
+    , zoomLevel(zoomLevel_)
     , position31(position31_)
 {
 }

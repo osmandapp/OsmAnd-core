@@ -26,12 +26,12 @@ OsmAnd::SqliteHeightmapTileProvider_P::~SqliteHeightmapTileProvider_P()
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMinZoom() const
 {
-    return ZoomLevel::MinZoomLevel; // TODO: incorrect
+    return owner->sourcesCollection->getMinZoom();
 }
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
 {
-    return ZoomLevel::MaxZoomLevel; // TODO: incorrect
+    return owner->sourcesCollection->getMaxZoom();
 }
 
 bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(

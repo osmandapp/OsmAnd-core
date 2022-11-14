@@ -733,9 +733,10 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     int maxMissingDataZoomShift = MapRenderer::MaxMissingDataZoomShift;
     int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
-    bool isMapLayer = resourcesCollection->getType() == MapRendererResourceType::MapLayer;
+    bool isMapLayer = resourceType == MapRendererResourceType::MapLayer;
+    bool isElevationData = resourceType == MapRendererResourceType::ElevationData;
 
-    if (isMapLayer)
+    if (isMapLayer || isElevationData)
     {
         std::shared_ptr<IMapDataProvider> provider_;
         obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
@@ -769,8 +770,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     }
 
     // Request all other zoom levels that cover unavailable tile, in case all scaled tiles are not unavailable
-    if (isMapLayer/* ||
-        resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
+    if (isMapLayer || isElevationData)
     {
         const auto debugSettings = renderer->getDebugSettings();
 
@@ -1601,8 +1601,12 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<IMapRendererTiledResourcesCollection>(resourcesCollection))
         {
             std::shared_ptr<IMapTiledDataProvider> tiledProvider = nullptr;
-            if (dataProvider != nullptr && resourcesCollection->getType() == MapRendererResourceType::MapLayer)
+            const auto resourcesType = resourcesCollection->getType();
+            if (dataProvider != nullptr && (resourcesType == MapRendererResourceType::MapLayer ||
+                resourcesType == MapRendererResourceType::ElevationData))
+            {
                 tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
+            }
 
             auto minZoom = MinZoomLevel;
             auto maxZoom = MaxZoomLevel;
@@ -1694,8 +1698,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                         continue;
 
-                    if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||
-                        resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
+                    if (resourcesType == MapRendererResourceType::MapLayer ||
+                        resourcesType == MapRendererResourceType::ElevationData)
                     {
                         if (activeZoom < minZoom)
                         {

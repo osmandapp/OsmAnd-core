@@ -78,6 +78,8 @@ namespace OsmAnd
         bool _buildIndexes;
         void invalidateCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
+        mutable QAtomicInteger<int32_t> _cachedMinZoom;
+        mutable QAtomicInteger<int32_t> _cachedMaxZoom;
         mutable QHash< TileSqliteDatabasesCollection::SourceOriginId, QHash<QString, std::shared_ptr<TileSqliteDatabase> > > _collectedSources;
         mutable TileSqliteDatabasesIndex _collectedSourcesIndex;
         mutable QReadWriteLock _collectedSourcesLock;
@@ -92,6 +94,9 @@ namespace OsmAnd
         TileSqliteDatabasesCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         bool removeFile(const QFileInfo& fileInfo);
         bool remove(const TileSqliteDatabasesCollection::SourceOriginId entryId);
+
+        ZoomLevel getMinZoom() const;
+        ZoomLevel getMaxZoom() const;
 
         QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases() const;
         QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases(

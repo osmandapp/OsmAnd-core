@@ -683,16 +683,20 @@ namespace OsmAnd
             TileId shiftedTileId = tileId;
             PointF nOffsetInTile;
             PointF nSizeInTile;
-            auto appliedAbsZoomShift = 0u;
-            while (appliedAbsZoomShift < absZoomShift)
+            shiftedTileId.x >>= absZoomShift;
+            shiftedTileId.y >>= absZoomShift;
+            if (absZoomShift < 20)
             {
-                nOffsetInTile.x = 0.5f * (static_cast<float>(shiftedTileId.x % 2) + nOffsetInTile.x);
-                nOffsetInTile.y = 0.5f * (static_cast<float>(shiftedTileId.y % 2) + nOffsetInTile.y);
-                shiftedTileId.x >>= 1;
-                shiftedTileId.y >>= 1;
-                appliedAbsZoomShift++;
+                nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
+                nOffsetInTile.x = static_cast<float>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                nOffsetInTile.y = static_cast<float>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
             }
-            nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
+            else
+            {
+                nSizeInTile.x = nSizeInTile.y = 1.0 / static_cast<double>(1ull << absZoomShift);
+                nOffsetInTile.x = static_cast<double>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                nOffsetInTile.y = static_cast<double>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+            }
             if (outNOffsetInTile)
                 *outNOffsetInTile = nOffsetInTile;
             if (outNSizeInTile)

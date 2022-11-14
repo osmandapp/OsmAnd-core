@@ -25,6 +25,9 @@ namespace OsmAnd
     public:
         virtual ~ITileSqliteDatabasesCollection();
 
+        virtual ZoomLevel getMinZoom() const = 0;
+        virtual ZoomLevel getMaxZoom() const = 0;
+
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases() const = 0;
         virtual QList< std::shared_ptr<const TileSqliteDatabase> > getTileSqliteDatabases(
             TileId tileId, ZoomLevel zoom) const = 0;

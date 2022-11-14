@@ -51,6 +51,16 @@ bool OsmAnd::TileSqliteDatabasesCollection::remove(const SourceOriginId entryId)
     return _p->remove(entryId);
 }
 
+OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection::getMinZoom() const
+{
+    return _p->getMinZoom();
+}
+
+OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection::getMaxZoom() const
+{
+    return _p->getMaxZoom();
+}
+
 QList< std::shared_ptr<const OsmAnd::TileSqliteDatabase> >OsmAnd::TileSqliteDatabasesCollection::getTileSqliteDatabases() const
 {
     return _p->getTileSqliteDatabases();

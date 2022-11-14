@@ -1066,6 +1066,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
     const auto batchedLayersCount = batch->layers.size();
     const auto elevationDataSamplerIndex = gpuAPI->isSupported_vertexShaderTextureLookup ? batchedLayersCount : -1;
+    auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
 
     GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(zoomLevel));
 
@@ -1086,11 +1087,140 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         batch->tileId.y - tileId.y);
     GL_CHECK_RESULT;
 
+    // Subtile factors to apply raster/elevation resources of different size
+    int subtileRasterFactor = 1;
+    int subtileElevationFactor = 1;
+
     // Configure elevation data
+    QList<Ref<ElevationResource>> elevationResources;
+    ZoomLevel elevationZoom = zoomLevel;
+    auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+        static_cast<double>(1ull << currentState.zoomLevel - zoomLevel);
     if (withElevation && currentState.elevationDataProvider)
     {
-        if (configureElevationData(program, batch->tileId, elevationDataSamplerIndex,
-            activeElevationVertexAttribArray, zoomLevel))
+        const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
+        auto elevationResource = captureElevationDataResource(tileIdN, zoomLevel);
+        if (elevationResource)
+        {
+            configureElevationData(elevationResource, program,
+                tileIdN,
+                zoomLevel,
+                PointF(0.0f, 0.0f),
+                PointF(1.0f, 1.0f),
+                tileSize,
+                elevationDataSamplerIndex, activeElevationVertexAttribArray);
+        }
+        else if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {            
+            const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
+            const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
+            const auto minZoom = currentState.elevationDataProvider->getMinZoom();
+            const auto maxZoom = currentState.elevationDataProvider->getMaxZoom();
+            for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
+            {
+                // Look for underscaled first. Only full match is accepted.
+                // Don't replace tiles of absent zoom levels by the unserscaled ones
+                const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
+                if (underscaledZoom >= minZoom && underscaledZoom <= maxZoom && absZoomShift <= maxUnderZoomShift &&
+                    zoomLevel >= minZoom)
+                {
+                    const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                        tileIdN,
+                        absZoomShift);
+                    const auto subtilesCount = underscaledTileIdsN.size();
+                    bool atLeastOnePresent = false;
+                    QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> > gpuResources(subtilesCount);
+                    auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                    auto pGpuResource = gpuResources.data();
+                    for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
+                    {
+                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                        auto& gpuResource = *(pGpuResource++);
+                        gpuResource = captureElevationDataResource(
+                            underscaledTileId,
+                            static_cast<ZoomLevel>(underscaledZoom));
+                        if (gpuResource)
+                            atLeastOnePresent = true;
+                    }
+
+                    if (atLeastOnePresent)
+                    {
+                        const auto subtilesPerSide = (1u << absZoomShift);
+                        const PointF texCoordsScale(subtilesPerSide, subtilesPerSide);
+                        auto pGpuResource = gpuResources.constData();
+                        pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                        for (auto subtileIdx = 0; subtileIdx < subtilesCount; subtileIdx++)
+                        {
+                            const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                            const auto& gpuResource = *(pGpuResource++);
+                            if (gpuResource)
+                            {
+                                uint16_t xSubtile;
+                                uint16_t ySubtile;
+                                Utilities::decodeMortonCode(subtileIdx, xSubtile, ySubtile);
+                                elevationResources.push_back(Ref<ElevationResource>::New(
+                                    gpuResource,
+                                    underscaledTileId,
+                                    PointF(-xSubtile, -ySubtile),
+                                    texCoordsScale));
+                            }
+                            else
+                            {
+                                // Stub texture requires no texture offset or scaling
+                                elevationResources.push_back(Ref<ElevationResource>::New(
+                                    nullptr,
+                                    underscaledTileId));
+                            }
+                        }
+                        if (subtilesCount > subtilesPerTile)
+                        {
+                            subtileRasterFactor = subtilesCount / subtilesPerTile;
+                            subtilesPerTile = subtilesCount;
+                        }
+                        else if (subtilesCount < subtilesPerTile)
+                            subtileElevationFactor = subtilesPerTile / subtilesCount;
+                        elevationZoom = static_cast<ZoomLevel>(underscaledZoom);
+                        tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+                            (elevationZoom > currentState.zoomLevel ?
+                            1.0 / static_cast<double>(1ull << elevationZoom - currentState.zoomLevel) :
+                            static_cast<double>(1ull << currentState.zoomLevel - elevationZoom));
+                        break;
+                    }
+                }
+
+                // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
+                const auto overscaledZoom = static_cast<int>(zoomLevel) - absZoomShift;
+                if (overscaledZoom >= minZoom && overscaledZoom <= maxZoom)
+                {
+                    PointF texCoordsOffset;
+                    PointF texCoordsScale;
+                    const auto overscaledTileIdN = Utilities::getTileIdOverscaledByZoomShift(
+                        tileIdN,
+                        absZoomShift,
+                        &texCoordsOffset,
+                        &texCoordsScale);
+                    elevationZoom = static_cast<ZoomLevel>(overscaledZoom);
+                    if (elevationResource = captureElevationDataResource(
+                        overscaledTileIdN,
+                        elevationZoom))
+                    {
+                        tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+                            static_cast<double>(1ull << currentState.zoomLevel - elevationZoom);
+                        configureElevationData(elevationResource, program,
+                            overscaledTileIdN,
+                            elevationZoom,
+                            texCoordsOffset,
+                            texCoordsScale,
+                            tileSize,
+                            elevationDataSamplerIndex, activeElevationVertexAttribArray);
+                        break;
+                    }
+                }
+            }
+        }
+        if (!elevationResource && elevationResources.isEmpty())
+            cancelElevation(program, elevationDataSamplerIndex, activeElevationVertexAttribArray);
+        else
             haveElevation = true;
     }
 
@@ -1112,10 +1242,25 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_RESULT;
 
     // Perform rendering of exact-scale, overscale and underscale cases. All cases support batching
-    const auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
     const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesPerTile;
     for (auto subtileIndex = 0; subtileIndex < subtilesPerTile; subtileIndex++)
     {
+        if (!elevationResources.isEmpty())
+        {
+            const auto& elevationResource = elevationResources[subtileIndex / subtileElevationFactor];
+            if (elevationResource->resourceInGPU)
+            {
+                configureElevationData(elevationResource->resourceInGPU, program,
+                    elevationResource->tileIdN,
+                    elevationZoom,
+                    elevationResource->texCoordsOffset,
+                    elevationResource->texCoordsScale,
+                    tileSize,
+                    elevationDataSamplerIndex, activeElevationVertexAttribArray);
+                haveElevation = true;
+            }
+        }       
+
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
             const auto& layer = batch->layers[layerIndexInBatch];
@@ -1141,7 +1286,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
-            const auto& batchedResourceInGPU = layer->resourcesInGPU[subtileIndex];
+            const auto& batchedResourceInGPU = layer->resourcesInGPU[subtileIndex / subtileRasterFactor];
             switch (gpuAPI->getGpuResourceAlphaChannelType(batchedResourceInGPU->resourceInGPU))
             {
                 case AlphaChannelType::Premultiplied:
@@ -1285,7 +1430,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
 
     // Set center offset
     PointF offsetInTileN;
-    TileId tileId = Utilities::getTileId(currentState.target31, zoomLevel, &offsetInTileN);
+    Utilities::getTileId(currentState.target31, zoomLevel, &offsetInTileN);
     glUniform2f(program.vs.param.targetInTilePosN, offsetInTileN.x, offsetInTileN.y);
     GL_CHECK_RESULT;
 
@@ -1661,12 +1806,16 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(bool gpuCo
     _rasterTileIndicesCount = -1;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
+    const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
     const RasterLayerTileProgram& program,
-    const TileId tileId,
+    const TileId tileIdN,
+    const ZoomLevel zoomLevel,
+    const PointF& texCoordsOffsetN,
+    const PointF& texCoordsScaleN,
+    const double tileSize,
     const int elevationDataSamplerIndex,
-    GLlocation& activeElevationVertexAttribArray,
-    const ZoomLevel zoomLevel)
+    GLlocation& activeElevationVertexAttribArray)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1677,46 +1826,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
-    const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
-
-    // In case there's no elevation data provider or if there's no data for this tile,
-    // deactivate elevation data
-    const auto elevationDataResource = captureElevationDataResource(tileIdN, zoomLevel);
-    if (!elevationDataResource)
-    {
-        glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
-        GL_CHECK_RESULT;
-
-        if (gpuAPI->isSupported_vertexShaderTextureLookup)
-        {
-            glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
-            GL_CHECK_RESULT;
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-            GL_CHECK_RESULT;
-        }
-        else
-        {
-            if (activeElevationVertexAttribArray.isValid())
-            {
-                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 0);
-                GL_CHECK_RESULT;
-
-                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 1);
-                GL_CHECK_RESULT;
-
-                glDisableVertexAttribArray(*activeElevationVertexAttribArray + 2);
-                GL_CHECK_RESULT;
-
-                activeElevationVertexAttribArray.reset();
-            }
-        }
-
-        return false;
-    }
-
     // Per-tile elevation data configuration
-    const auto tileSize = AtlasMapRenderer::TileSize3D * (1 << currentState.zoomLevel - zoomLevel);
     const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
         zoomLevel,
         tileIdN.y,
@@ -1755,10 +1865,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
 
             // NOTE: Must be in sync with IMapElevationDataProvider::Data::getValue
-            const PointF texCoordsScale(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
+            const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
                 texture->tileSizeN - 3.0f * texture->vTexelSizeN);
-            const PointF texCoordsOffset(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
+            const PointF texCoordsOffset(colIndex * texture->tileSizeN + innerSize.x * texCoordsOffsetN.x +
+                texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                rowIndex * texture->tileSizeN + innerSize.y * texCoordsOffsetN.y +
+                texture->vHalfTexelSizeN + texture->vTexelSizeN);
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -1767,23 +1880,24 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
                 texCoordsScale.y);
             GL_CHECK_RESULT;
             glUniform4f(program.vs.param.elevationLayerTexelSize,
-                texture->uTexelSizeN,
-                texture->vTexelSizeN,
-                texture->uHalfTexelSizeN,
-                texture->vHalfTexelSizeN);
+                texture->uTexelSizeN * texCoordsScaleN.x,
+                texture->vTexelSizeN * texCoordsScaleN.y,
+                texture->uHalfTexelSizeN * texCoordsScaleN.x,
+                texture->vHalfTexelSizeN * texCoordsScaleN.y);
             GL_CHECK_RESULT;
         }
         else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
         {
             const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
 
-            const PointF texCoordsScale(
+            const PointF innerSize(
                 1.0f - 3.0f * texture->uTexelSizeN,
                 1.0f - 3.0f * texture->vTexelSizeN
             );
+            const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
             const PointF texCoordsOffset(
-                texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                texture->vHalfTexelSizeN + texture->vTexelSizeN
+                innerSize.x * texCoordsOffsetN.x + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                innerSize.y * texCoordsOffsetN.y + texture->vHalfTexelSizeN + texture->vTexelSizeN
             );
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
@@ -1793,10 +1907,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
                 texCoordsScale.y);
             GL_CHECK_RESULT;
             glUniform4f(program.vs.param.elevationLayerTexelSize,
-                texture->uTexelSizeN,
-                texture->vTexelSizeN,
-                texture->uHalfTexelSizeN,
-                texture->vHalfTexelSizeN);
+                texture->uTexelSizeN * texCoordsScaleN.x,
+                texture->vTexelSizeN * texCoordsScaleN.y,
+                texture->uHalfTexelSizeN * texCoordsScaleN.x,
+                texture->vHalfTexelSizeN * texCoordsScaleN.y);
             GL_CHECK_RESULT;
         }
     }
@@ -1851,7 +1965,48 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GL_CHECK_RESULT;
     }
-    return true;
+}
+
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::cancelElevation(
+    const RasterLayerTileProgram& program,
+    const int elevationDataSamplerIndex,
+    GLlocation& activeElevationVertexAttribArray)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+
+    glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+    GL_CHECK_RESULT;
+
+    if (gpuAPI->isSupported_vertexShaderTextureLookup)
+    {
+        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+        GL_CHECK_RESULT;
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        if (activeElevationVertexAttribArray.isValid())
+        {
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 0);
+            GL_CHECK_RESULT;
+
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 1);
+            GL_CHECK_RESULT;
+
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray + 2);
+            GL_CHECK_RESULT;
+
+            activeElevationVertexAttribArray.reset();
+        }
+    }
 }
 
 QList< OsmAnd::Ref<OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers> >
@@ -2104,6 +2259,18 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<
         });
 
     return perTileBatchedLayers;
+}
+
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::ElevationResource::ElevationResource(
+    const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU_,
+    const TileId tileIdN_,
+    const PointF texCoordsOffset_ /*= PointF(0.0f, 0.0f)*/,
+    const PointF texCoordsScale_ /*= PointF(1.0f, 1.0f)*/)
+    : resourceInGPU(resourceInGPU_)
+    , tileIdN(tileIdN_)
+    , texCoordsOffset(texCoordsOffset_)
+    , texCoordsScale(texCoordsScale_)
+{
 }
 
 OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayerResource::BatchedLayerResource(
