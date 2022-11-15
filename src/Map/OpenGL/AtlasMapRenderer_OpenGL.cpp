@@ -1206,9 +1206,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
         if (scaledZoom != InvalidZoomLevel && elevationData)
         {
             const PointD midPointOffset(midPoint.x - startTileId.x, midPoint.y - startTileId.y);
-            const double tileSize = 1ull << state.zoomLevel - scaledZoom;
-            const auto elevatedDistance = (midPointOffset - startPointOffset) / tileSize;
-            PointF scaledEnd(scaledStart.x + elevatedDistance.x, scaledStart.y + elevatedDistance.y);
+            const double tileSize = 1ull << (state.zoomLevel - scaledZoom);
+            const auto scaledDistance = (midPointOffset - startPointOffset) / tileSize;
+            PointF scaledEnd(scaledStart.x + scaledDistance.x, scaledStart.y + scaledDistance.y);
             const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
             const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
             const auto startMetersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, startPointOffset.y);
@@ -1219,9 +1219,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
                 static_cast<float>(midMetersPerUnit / elevationScaleFactor),
                 scaledStart, startPointZ, scaledEnd, midPointZ, exactLocation, &exactHeight))
             {
+                const PointD finalLocation(startPointOffset.x + tileSize * (exactLocation.x - scaledStart.x),
+                    startPointOffset.y + tileSize * (exactLocation.y - scaledStart.y));
                 location31 = Utilities::normalizeCoordinates(PointI64(
-                    static_cast<int64_t>((static_cast<double>(exactLocation.x) + startTileId.x) * tileSize31),
-                    static_cast<int64_t>((static_cast<double>(exactLocation.y) + startTileId.y) * tileSize31)),
+                    static_cast<int64_t>((static_cast<double>(finalLocation.x) + startTileId.x) * tileSize31),
+                    static_cast<int64_t>((static_cast<double>(finalLocation.y) + startTileId.y) * tileSize31)),
                     ZoomLevel31);
                 if (heightInMeters)
                     *heightInMeters = exactHeight;
@@ -1256,7 +1258,6 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRender
     {
         elevationData->getValue(offsetInScaledTileN, elevationInMeters);
     }
-    
     return elevationInMeters;
 }
 
