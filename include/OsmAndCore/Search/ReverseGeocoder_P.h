@@ -65,6 +65,8 @@ namespace OsmAnd
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
         
         virtual void filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res) const;
+        
+        QVector<std::shared_ptr<const ResultEntry>>  sortGeocodingResults(QVector<std::shared_ptr<const ResultEntry>> res) const;
 
         friend class OsmAnd::ReverseGeocoder;
     };

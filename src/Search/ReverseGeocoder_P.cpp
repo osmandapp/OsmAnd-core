@@ -439,9 +439,7 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
     }
     
     OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(complete);
-    std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
-    //utilities.sortGeocodingResults(readers, complete);
-    
+    complete = OsmAnd::ReverseGeocoder_P::sortGeocodingResults(complete);
     return !complete.isEmpty() ? complete[0] : std::make_shared<ResultEntry>();
 }
 
@@ -507,4 +505,40 @@ int OsmAnd::ReverseGeocoder_P::cmpResult(std::shared_ptr<const ResultEntry> gr1,
         }
     }
     return 0;
+}
+
+QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>>  OsmAnd::ReverseGeocoder_P::sortGeocodingResults(QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> res) const
+{
+    QVector<std::shared_ptr<const ResultEntry>> complete;
+    double minBuildingDistance = 0;
+    for (shared_ptr<const ResultEntry> r : res)
+    {
+        QVector<std::shared_ptr<const ResultEntry>> justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
+        if (!justified.isEmpty())
+        {
+            double md = justified[0]->getDistance();
+            if (minBuildingDistance == 0) {
+                minBuildingDistance = md;
+            } else {
+                minBuildingDistance = std::min(md, minBuildingDistance);
+            }
+            complete.append(justified);
+        }
+    }
+    
+    filterDuplicateRegionResults(complete);
+    
+    auto it = mutableIteratorOf(complete);
+    while (it.hasNext())
+    {
+        const auto& r = it.next();
+        if (r->building != nullptr && r->getDistance() > minBuildingDistance * THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER)
+        {
+            it.remove();
+        }
+    }
+    
+    std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
+    
+    return complete;
 }
