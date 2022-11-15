@@ -159,14 +159,16 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                     if (road->searchPoint31().isSet())
                     {
                         double d = Utilities::distance(Utilities::convert31ToLatLon(street->position31), *road->searchPoint);
+                        // double check to suport old format
                         if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
                             const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
                             rs->road = road->road;
                             rs->street = street;
-                            rs->streetGroup = street->streetGroup;
-                            rs->searchPoint = road->searchPoint;
-                            rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
                             rs->point = road->point;
+                            rs->searchPoint = road->searchPoint;
+                            // set connection point to sort
+                            rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
+                            rs->streetGroup = street->streetGroup;
                             streetList.append(rs);
                         }
                     }
@@ -435,11 +437,15 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
             complete.append(justified);
         }
     }
+    
+    OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(complete);
     std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
+    //utilities.sortGeocodingResults(readers, complete);
+    
     return !complete.isEmpty() ? complete[0] : std::make_shared<ResultEntry>();
 }
 
-void OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res)
+void OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res) const
 {
     std::sort(res.begin(), res.end(), DISTANCE_COMPARATOR);
     // filter duplicate city results (when building is in both regions on boundary)
@@ -462,9 +468,12 @@ void OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(QVector<std::shared
     }
 }
 
-int OsmAnd::ReverseGeocoder_P::cmpResult(std::shared_ptr<const ResultEntry> gr1, std::shared_ptr<const ResultEntry> gr2)
+int OsmAnd::ReverseGeocoder_P::cmpResult(std::shared_ptr<const ResultEntry> gr1, std::shared_ptr<const ResultEntry> gr2) const
 {
-    bool eqStreet= gr1->streetName.compare( gr2->streetName) == 0;
+    QString name1 = gr1->streetName.isEmpty() ? gr1->street->getName("", false) : gr1->streetName;
+    QString name2 = gr2->streetName.isEmpty() ? gr2->street->getName("", false) : gr2->streetName;
+    bool eqStreet= name1.compare(name2) == 0;
+    
     if (eqStreet)
     {
         bool sameObj = false;
