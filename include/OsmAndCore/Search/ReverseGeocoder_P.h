@@ -49,6 +49,7 @@ namespace OsmAnd
         QVector<std::shared_ptr<const ResultEntry>> reverseGeocodeToRoads(
                 const LatLon searchPoint,
                 const std::shared_ptr<RoutingContext>& ctx, const bool allowEmptyNames) const;
+        int cmpResult(std::shared_ptr<const ResultEntry> gr1, std::shared_ptr<const ResultEntry> gr2);
     protected:
         ImplementationInterface<ReverseGeocoder> owner;
     public:
@@ -62,6 +63,8 @@ namespace OsmAnd
                 const std::shared_ptr<RoutingContext>& ctx,
                 const ISearch::NewResultEntryCallback newResultEntryCallback,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+        
+        virtual void filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res);
 
         friend class OsmAnd::ReverseGeocoder;
     };

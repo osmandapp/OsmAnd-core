@@ -438,3 +438,64 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
     std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
     return !complete.isEmpty() ? complete[0] : std::make_shared<ResultEntry>();
 }
+
+void OsmAnd::ReverseGeocoder_P::filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res)
+{
+    std::sort(res.begin(), res.end(), DISTANCE_COMPARATOR);
+    // filter duplicate city results (when building is in both regions on boundary)
+    for (int i = 0; i < res.size() - 1;)
+    {
+        int cmp = cmpResult(res[i], res[i+1]);
+        if (cmp > 0)
+        {
+            res.remove(i);
+        }
+        else if (cmp < 0)
+        {
+            res.remove(i+1);
+        }
+        else
+        {
+            // nothing to delete
+            i++;
+        }
+    }
+}
+
+int OsmAnd::ReverseGeocoder_P::cmpResult(std::shared_ptr<const ResultEntry> gr1, std::shared_ptr<const ResultEntry> gr2)
+{
+    bool eqStreet= gr1->streetName.compare( gr2->streetName) == 0;
+    if (eqStreet)
+    {
+        bool sameObj = false;
+        if (gr1->streetGroup != nullptr && gr2->streetGroup != nullptr)
+        {
+            if (gr1->building != nullptr && gr2->building != nullptr)
+            {
+                QString gr1BuildingName = gr1->building->getName("", false);
+                QString gr2BuildingName = gr2->building->getName("", false);
+                if (gr1BuildingName.compare(gr2BuildingName) == 0)
+                {
+                    // same building
+                    sameObj = true;
+                }
+            }
+            else if (gr1->building == nullptr && gr2->building == nullptr)
+            {
+                // same street
+                sameObj = true;
+            }
+        }
+        if (sameObj)
+        {
+            double cityDist1 = Utilities::distance31(gr1->searchPoint31()->x, gr1->searchPoint31()->y, gr1->streetGroup->position31.x, gr1->streetGroup->position31.y);
+            double cityDist2 = Utilities::distance31(gr2->searchPoint31()->x, gr2->searchPoint31()->y, gr2->streetGroup->position31.x, gr2->streetGroup->position31.y);
+            if (cityDist1 < cityDist2) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
