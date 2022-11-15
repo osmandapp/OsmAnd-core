@@ -246,7 +246,7 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
             const auto& ppx31 = points31[idx - 1].x;
             const auto& ppy31 = points31[idx - 1].y;
 
-            auto mDist = measuredDist31(cpx31, cpy31, ppx31, ppy31);
+            auto mDist = Utilities::measuredDist31(cpx31, cpy31, ppx31, ppy31);
             uint32_t rx31;
             uint32_t ry31;
             auto projection = Utilities::projection31(ppx31, ppy31, cpx31, cpy31, position31.x, position31.y);

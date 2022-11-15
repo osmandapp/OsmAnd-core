@@ -21,6 +21,7 @@
 #include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Search/BaseSearch.h>
+#include "routingContext.h"
 
 namespace OsmAnd
 {
@@ -56,7 +57,9 @@ namespace OsmAnd
             QString buildingInterpolation;
             std::shared_ptr<const Street> street;
             std::shared_ptr<const StreetGroup> streetGroup;
+            std::shared_ptr<const RouteSegmentPoint> point;
 
+            double getSortDistance() const;
             double getDistance() const;
             Nullable<PointI> searchPoint31() const;
             void setDistance(double dist);
@@ -75,7 +78,9 @@ namespace OsmAnd
                 const ISearch::Criteria& criteria,
                 const NewResultEntryCallback newResultEntryCallback,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
-        std::shared_ptr<const ResultEntry> performSearch(const Criteria &criteria) const;
+        std::shared_ptr<const ResultEntry> performSearch(
+                const Criteria &criteria,
+                const std::shared_ptr<RoutingContext>& ctx) const;
     };
 }
 

@@ -26,7 +26,6 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Bitmask.h>
-#include "commonOsmAndCore.h"
 
 namespace OsmAnd
 {
@@ -213,16 +212,10 @@ namespace OsmAnd
             return static_cast<int64_t>(meters / 0.01863);
         }
         
-        inline static double x31ToMeters(int x1, int x2, int y)
-        {
-            return convert31XToMeters(x1, x2, y);
-        }
+        static double x31ToMeters(int x1, int x2, int y);
         
-        inline static double y31ToMeters(int y1, int y2, int x)
-        {
-            return convert31YToMeters(y1, y2, x);
-        }
-
+        static double y31ToMeters(int y1, int y2, int x);
+        
         inline static double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
         {
             auto dx = Utilities::x31ToMeters(x31a, x31b, y31a);
@@ -295,6 +288,52 @@ namespace OsmAnd
             } else {
                 return (projection / mDist);
             }
+        }
+        
+        inline static std::pair<int, int> getProjectionPoint31(int px, int py, int st31x, int st31y, int end31x, int end31y)
+        {
+            auto projection = Utilities::projection31(st31x, st31y, end31x, end31y, px, py);
+            auto mDist = measuredDist31(st31x, st31y, end31x, end31y);
+            int pry = end31y;
+            int prx = end31x;
+            if (projection < 0)
+            {
+                prx = st31x;
+                pry = st31y;
+            }
+            else if (projection >= (mDist * mDist))
+            {
+                prx = end31x;
+                pry = end31y;
+            }
+            else
+            {
+                prx = st31x + (end31x - st31x) * (projection / (mDist * mDist));
+                pry = st31y + (end31y - st31y) * (projection / (mDist * mDist));
+            }
+            return std::make_pair(prx, pry);
+        }
+        
+        inline static double measuredDist31(int x1, int y1, int x2, int y2) {
+            return getDistance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
+        }
+
+        inline static double dabs(double d) {
+            if (d < 0) {
+                return -d;
+            } else {
+                return d;
+            }
+        }
+
+        inline static double getDistance(double lat1, double lon1, double lat2, double lon2) {
+            double R = 6372.8;  // km
+            double dLat = toRadians(lat2 - lat1);
+            double dLon = toRadians(lon2 - lon1);
+            double a =
+                sin(dLat / 2) * sin(dLat / 2) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+            double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+            return R * c * 1000;
         }
 
         inline static double normalizedAngleRadians(double angle)
