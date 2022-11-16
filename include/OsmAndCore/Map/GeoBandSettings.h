@@ -34,8 +34,8 @@ namespace OsmAnd
         virtual ~GeoBandSettings();
 
         const QString unit;
-        const QString unitFormatGeneral;
-        const QString unitFormatPrecise;
+        const QString unitFormatGeneral = "%d";
+        const QString unitFormatPrecise = "%d";
         const QString internalUnit;
         const float opacity;
         const QString colorProfilePath;
