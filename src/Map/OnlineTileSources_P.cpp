@@ -46,6 +46,13 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     
     std::shared_ptr<Source> source(new Source(name));
     
+    const auto referer = attributes.value(QStringLiteral("referer")).toString();
+    if (!referer.isEmpty())
+        source->referer = referer;
+    const auto userAgent = attributes.value(QStringLiteral("user_agent")).toString();
+    if (!userAgent.isEmpty())
+        source->userAgent = userAgent;
+    
     source->maxZoom = ZoomLevel(parseInt(attributes, QStringLiteral("max_zoom"), 18));
     source->minZoom = ZoomLevel(parseInt(attributes, QStringLiteral("min_zoom"), 5));
     source->tileSize = parseInt(attributes, QStringLiteral("tile_size"), 256);
@@ -76,6 +83,13 @@ std::shared_ptr<OsmAnd::OnlineTileSources::Source> OsmAnd::OnlineTileSources_P::
     urlTemplate = OnlineTileSources::normalizeUrl(urlTemplate);
     
     std::shared_ptr<Source> source(new Source(name));
+    
+    const auto referer = attributes.value(QStringLiteral("referer")).toString();
+    if (!referer.isEmpty())
+        source->referer = referer;
+    const auto userAgent = attributes.value(QStringLiteral("user_agent")).toString();
+    if (!userAgent.isEmpty())
+        source->userAgent = userAgent;
     
     source->urlToLoad = urlTemplate;
     source->maxZoom = ZoomLevel(parseInt(attributes, QStringLiteral("max_zoom"), 18));
@@ -332,6 +346,8 @@ bool OsmAnd::OnlineTileSources_P::createTileSourceTemplate(const QString& metaIn
             newSource->expirationTimeMillis = newSource->expirationTimeMillis * 60 * 1000;
         newSource->randoms = metaInfo.value(QStringLiteral("randoms"), QStringLiteral(""));
         newSource->randomsArray = OnlineTileSources_P::parseRandoms(newSource->randoms);
+        newSource->referer = metaInfo.value(QStringLiteral("referer"), QString());
+        newSource->userAgent = metaInfo.value(QStringLiteral("user_agent"), QString());
         source.reset(newSource);
         return true;
     }
@@ -356,6 +372,10 @@ void OsmAnd::OnlineTileSources_P::installTileSource(const std::shared_ptr<const 
         long expirationTimeMinutes = toInstall->expirationTimeMillis / 60000;
         params.insert(QStringLiteral("expiration_time_minutes"), QString::number(expirationTimeMinutes));
     }
+    if (!toInstall->referer.isNull() && !toInstall->referer.isEmpty())
+        params.insert(QStringLiteral("referer"), toInstall->referer);
+    if (!toInstall->userAgent.isNull() && !toInstall->userAgent.isEmpty())
+        params.insert(QStringLiteral("user_agent"), toInstall->userAgent);
     
     QString name = toInstall->name;
     QString path = cachePath + QDir::separator() + name;

@@ -78,7 +78,8 @@ void OsmAnd::WebClient_P::setFollowRedirects(const bool followRedirects)
 QByteArray OsmAnd::WebClient_P::downloadData(
     const QNetworkRequest& networkRequest,
     std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-    const IWebClient::RequestProgressCallbackSignature progressCallback) const
+    const IWebClient::RequestProgressCallbackSignature progressCallback,
+    const QString& userAgent) const
 {
     QByteArray data;
 
@@ -98,7 +99,7 @@ QByteArray OsmAnd::WebClient_P::downloadData(
 
     Request request(
         networkRequest,
-        getUserAgent(),
+        userAgent.isEmpty() ? getUserAgent() : userAgent,
         getRetriesLimit(),
         getFollowRedirects(),
         dataConsumer,

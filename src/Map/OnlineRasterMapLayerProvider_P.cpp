@@ -147,7 +147,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     // Perform synchronous download
     const auto tileUrl = getUrlToLoad(tileId.x, tileId.y, zoom);
     std::shared_ptr<const IWebClient::IRequestResult> requestResult;
-    const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult, nullptr, request.queryController);
+    const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult, nullptr, request.queryController, source->userAgent);
 
     // Ensure that all directories are created in path to local tile
     localFile.dir().mkpath(QLatin1String("."));
