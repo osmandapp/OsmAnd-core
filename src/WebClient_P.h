@@ -115,7 +115,8 @@ namespace OsmAnd
         QByteArray downloadData(
             const QNetworkRequest& networkRequest,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
+            const IWebClient::RequestProgressCallbackSignature progressCallback,
+            const QString& userAgent) const;
         QString downloadString(
             const QNetworkRequest& networkRequest,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,

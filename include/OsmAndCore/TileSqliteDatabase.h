@@ -39,6 +39,10 @@ namespace OsmAnd
             static const QString REFERER;
             QString getReferer(bool* outOk = nullptr) const;
             void setReferer(QString referer);
+            
+            static const QString USER_AGENT;
+            QString getUserAgent(bool* outOk = nullptr) const;
+            void setUserAgent(QString userAgent);
 
             static const QString RANDOMS;
             QString getRandoms(bool* outOk = nullptr) const;

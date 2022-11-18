@@ -260,6 +260,27 @@ void OsmAnd::TileSqliteDatabase::Meta::setReferer(QString referer)
     values.insert(REFERER, QVariant(qMove(referer)));
 }
 
+const QString OsmAnd::TileSqliteDatabase::Meta::USER_AGENT(QStringLiteral("useragent"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getUserAgent(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itReferer = values.constFind(USER_AGENT);
+    if (itReferer == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itReferer->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setUserAgent(QString userAgent)
+{
+    values.insert(USER_AGENT, QVariant(qMove(userAgent)));
+}
+
 const QString OsmAnd::TileSqliteDatabase::Meta::RANDOMS(QStringLiteral("randoms"));
 
 QString OsmAnd::TileSqliteDatabase::Meta::getRandoms(bool* outOk /* = nullptr*/) const

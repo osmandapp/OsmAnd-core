@@ -35,6 +35,8 @@ namespace OsmAnd
             unsigned int tileSize;
             QString urlToLoad;
             QString ext;
+            QString referer;
+            QString userAgent;
             unsigned int avgSize;
             unsigned int bitDensity;
             // -1 never expires,

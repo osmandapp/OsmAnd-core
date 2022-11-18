@@ -62,7 +62,8 @@ namespace OsmAnd
             const QString& url,
             std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
             const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const QString& userAgent = QString()) const = 0;
         virtual QString downloadString(
             const QString& url,
             std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,

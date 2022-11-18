@@ -84,7 +84,8 @@ namespace OsmAnd
             const QNetworkRequest& networkRequest,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
             const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const QString& userAgent = QString()) const;
         QString downloadString(
             const QNetworkRequest& networkRequest,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
@@ -101,7 +102,8 @@ namespace OsmAnd
             const QString& url,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
             const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const QString& userAgent = QString()) const;
         virtual QString downloadString(
             const QString& url,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
