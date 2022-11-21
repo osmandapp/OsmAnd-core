@@ -31,7 +31,6 @@ namespace OsmAnd
     private:
         const std::shared_ptr<const IRoadLocator> roadLocator;
         const std::shared_ptr<const AddressesByNameSearch> addressByNameSearch;
-        mutable QHash<std::shared_ptr<RouteSegmentPoint>, QString> regionsCache;
 
         static bool DISTANCE_COMPARATOR(
                 const std::shared_ptr<const ResultEntry> &a,
@@ -45,11 +44,8 @@ namespace OsmAnd
         QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
                 const std::shared_ptr<const ResultEntry> road,
                 const std::shared_ptr<const ResultEntry> street) const;
-        std::shared_ptr<RouteSegmentPoint> findRouteSegment(const LatLon searchPoint, const std::shared_ptr<RoutingContext>& ctx, std::vector<std::shared_ptr<RouteSegmentPoint>>& list) const;
         QVector<std::shared_ptr<const ResultEntry>> reverseGeocodeToRoads(
-                const LatLon searchPoint,
-                const std::shared_ptr<RoutingContext>& ctx, const bool allowEmptyNames) const;
-        int cmpResult(std::shared_ptr<const ResultEntry> gr1, std::shared_ptr<const ResultEntry> gr2) const;
+                const LatLon searchPoint) const;
     protected:
         ImplementationInterface<ReverseGeocoder> owner;
     public:
@@ -60,13 +56,8 @@ namespace OsmAnd
 
         virtual void performSearch(
                 const ISearch::Criteria& criteria,
-                const std::shared_ptr<RoutingContext>& ctx,
                 const ISearch::NewResultEntryCallback newResultEntryCallback,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
-        
-        virtual void filterDuplicateRegionResults(QVector<std::shared_ptr<const ResultEntry>>& res) const;
-        
-        QVector<std::shared_ptr<const ResultEntry>>  sortGeocodingResults(QVector<std::shared_ptr<const ResultEntry>> res) const;
 
         friend class OsmAnd::ReverseGeocoder;
     };

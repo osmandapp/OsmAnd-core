@@ -71,7 +71,7 @@ double OsmAnd::Utilities::x31ToMeters(int x1, int x2, int y)
         if (md < 10 || x1 == x2) {
             return md;
         }
-        coefficientsX[ind] = md / dabs((double)x1 - (double)x2);
+        coefficientsX[ind] = md / fabs((double)x1 - (double)x2);
     }
     // translate into meters
     return ((double)x1 - x2) * coefficientsX[ind];

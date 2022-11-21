@@ -23,16 +23,15 @@ void OsmAnd::ReverseGeocoder::performSearch(
     const NewResultEntryCallback newResultEntryCallback,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    return _p->performSearch(criteria_, nullptr, newResultEntryCallback, queryController);
+    return _p->performSearch(criteria_, newResultEntryCallback, queryController);
 }
 
 std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder::performSearch(
-    const Criteria& criteria, const std::shared_ptr<RoutingContext>& ctx) const
+    const Criteria& criteria) const
 {
     std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> result;
     _p->performSearch(
                 criteria,
-                ctx,
                 [&result](const OsmAnd::ISearch::Criteria& criteria, const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
                     result = std::make_shared<const OsmAnd::ReverseGeocoder::ResultEntry>(static_cast<const OsmAnd::ReverseGeocoder::ResultEntry&>(resultEntry));
     });
@@ -52,29 +51,18 @@ OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoi
     return searchPoint.isSet() ? Nullable<PointI>(Utilities::convertLatLonTo31(*searchPoint)) : Nullable<PointI>();
 }
 
-double OsmAnd::ReverseGeocoder::ResultEntry::getSortDistance() const
-{
-    double dist = getDistance();
-    if (dist > 0 && building == nullptr)
-    {
-        // add extra distance to match buildings first
-        return dist + 50;
-    }
-    return dist;
-}
-
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
-    if ((std::isnan(dist) || dist == -1) && searchPoint.isSet())
+    if (std::isnan(dist))
     {
-        if (building == nullptr && point != nullptr)
-        {
-            // Need distance between searchPoint and nearest RouteSegmentPoint here, to approximate distance from neareest named road
-            dist = point->dist;
-        }
-        else if (connectionPoint.isSet() && searchPoint.isSet())
+        if (connectionPoint.isSet() && searchPoint.isSet())
         {
             dist = Utilities::distance(connectionPoint, searchPoint);
+            return dist;
+        }
+        else
+        {
+            return -1;
         }
     }
     return dist;
@@ -92,7 +80,7 @@ QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
             (street ?                QStringLiteral(" ") % street->toString() : QString()) %
             (!streetName.isEmpty() ? QStringLiteral(" str. ") % streetName : QString()) %
             (streetGroup ?           QStringLiteral(" ") % streetGroup->toString() : QString()) %
-            ((!std::isnan(getDistance()) && getDistance() > 0) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
+            (!std::isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
 }
 
 OsmAnd::ReverseGeocoder::Criteria::Criteria()
