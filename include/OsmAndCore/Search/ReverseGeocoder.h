@@ -60,6 +60,7 @@ namespace OsmAnd
             double getDistance() const;
             Nullable<PointI> searchPoint31() const;
             void setDistance(double dist);
+            Nullable<LatLon> getLocation() const;
             QString toString() const;
 
         private:

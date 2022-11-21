@@ -58,10 +58,14 @@ void OsmAnd::ReverseGeocoder_P::performSearch(
 }
 
 bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
-        const std::shared_ptr<const ResultEntry>& a,
-        const std::shared_ptr<const ResultEntry>& b)
+        const std::shared_ptr<const ResultEntry>& o1,
+        const std::shared_ptr<const ResultEntry>& o2)
 {
-    return Utilities::distance(a->connectionPoint, a->searchPoint) < Utilities::distance(b->connectionPoint, b->searchPoint);
+    auto l1 = o1->getLocation();
+    auto l2 = o2->getLocation();
+    if (l1 == nullptr || l2 == nullptr)
+        return l2 == l1 ? 0 : (l1 == nullptr ? -1 : 1);
+    return Utilities::distance(l1, o1->searchPoint) < Utilities::distance(l2, o2->searchPoint);
 }
 
 void addWord(QStringList &ls, QString word, bool addCommonWords)
@@ -151,6 +155,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (address->addressType == OsmAnd::AddressType::Street)
             {
                 auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
+                
                 if (prepareStreetName(street->nativeName, addCommonWords) == streetNamesUsed)
                 {
                     if (road->searchPoint31().isSet())
