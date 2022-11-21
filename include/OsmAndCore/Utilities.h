@@ -290,30 +290,6 @@ namespace OsmAnd
             }
         }
         
-        inline static std::pair<int, int> getProjectionPoint31(int px, int py, int st31x, int st31y, int end31x, int end31y)
-        {
-            auto projection = Utilities::projection31(st31x, st31y, end31x, end31y, px, py);
-            auto mDist = measuredDist31(st31x, st31y, end31x, end31y);
-            int pry = end31y;
-            int prx = end31x;
-            if (projection < 0)
-            {
-                prx = st31x;
-                pry = st31y;
-            }
-            else if (projection >= (mDist * mDist))
-            {
-                prx = end31x;
-                pry = end31y;
-            }
-            else
-            {
-                prx = st31x + (end31x - st31x) * (projection / (mDist * mDist));
-                pry = st31y + (end31y - st31y) * (projection / (mDist * mDist));
-            }
-            return std::make_pair(prx, pry);
-        }
-        
         inline static double measuredDist31(int x1, int y1, int x2, int y2) {
             return distance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
         }
