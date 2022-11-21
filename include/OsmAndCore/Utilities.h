@@ -211,11 +211,15 @@ namespace OsmAnd
         {
             return static_cast<int64_t>(meters / 0.01863);
         }
+        
+        static double x31ToMeters(int x1, int x2, int y);
 
+        static double y31ToMeters(int y1, int y2, int x);
+        
         inline static double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
         {
-            const auto dx = Utilities::x31toMeters(x31a - x31b);
-            const auto dy = Utilities::y31toMeters(y31a - y31b);
+            const auto dx = Utilities::x31ToMeters(x31a, x31b, y31a);
+            const auto dy = Utilities::y31ToMeters(y31a, y31b, x31a);
             return dx * dx + dy * dy;
         }
 
@@ -263,8 +267,7 @@ namespace OsmAnd
         {
             // Scalar multiplication between (AB, AC)
             auto p =
-                Utilities::x31toMeters(x31b - x31a) * Utilities::x31toMeters(x31c - x31a) +
-                Utilities::y31toMeters(y31b - y31a) * Utilities::y31toMeters(y31c - y31a);
+            Utilities::x31ToMeters(x31b, x31a, y31a) * Utilities::x31ToMeters(x31c, x31a, y31a) + Utilities::y31ToMeters(y31b, y31a, y31a) * Utilities::y31ToMeters(y31c, y31a, y31a);
             return p;
         }
 
@@ -285,6 +288,10 @@ namespace OsmAnd
             } else {
                 return (projection / mDist);
             }
+        }
+        
+        inline static double measuredDist31(int x1, int y1, int x2, int y2) {
+            return distance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
         }
 
         inline static double normalizedAngleRadians(double angle)

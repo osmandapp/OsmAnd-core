@@ -61,7 +61,7 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
         const std::shared_ptr<const ResultEntry>& a,
         const std::shared_ptr<const ResultEntry>& b)
 {
-    return a->getDistance() < b->getDistance();
+    return Utilities::distance(a->connectionPoint, a->searchPoint) < Utilities::distance(b->connectionPoint, b->searchPoint);
 }
 
 void addWord(QStringList &ls, QString word, bool addCommonWords)
