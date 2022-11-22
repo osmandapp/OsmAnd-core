@@ -68,11 +68,6 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
     return dist;
 }
 
-void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double dist)
-{
-    this->dist = dist;
-}
-
 OsmAnd::Nullable<OsmAnd::LatLon> OsmAnd::ReverseGeocoder::ResultEntry::getLocation() const
 {
     return connectionPoint;

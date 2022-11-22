@@ -58,14 +58,10 @@ void OsmAnd::ReverseGeocoder_P::performSearch(
 }
 
 bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
-        const std::shared_ptr<const ResultEntry>& o1,
-        const std::shared_ptr<const ResultEntry>& o2)
+        const std::shared_ptr<const ResultEntry>& a,
+        const std::shared_ptr<const ResultEntry>& b)
 {
-    auto l1 = o1->getLocation();
-    auto l2 = o2->getLocation();
-    if (l1 == nullptr || l2 == nullptr)
-        return l2 == l1 ? 0 : (l1 == nullptr ? -1 : 1);
-    return Utilities::distance(l1, o1->searchPoint) < Utilities::distance(l2, o2->searchPoint);
+    return a->getDistance() < b->getDistance();
 }
 
 void addWord(QStringList &ls, QString word, bool addCommonWords)
@@ -337,6 +333,7 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         {
             double md = justified[0]->getDistance();
             minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
+            justified[0]->setDistance(NAN);//clear intermediate cached distance
             complete.append(justified);
         }
     }
