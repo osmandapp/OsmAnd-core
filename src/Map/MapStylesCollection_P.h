@@ -30,6 +30,7 @@ namespace OsmAnd
         mutable QReadWriteLock _stylesLock;
 
         std::shared_ptr<UnresolvedMapStyle> getEditableStyleByName_noSync(const QString& name) const;
+        QList<std::shared_ptr<UnresolvedMapStyle>> getEditableStyleAddons_noSync() const;
 
         mutable QHash< QString, std::shared_ptr<const ResolvedMapStyle> > _resolvedStyles;
         mutable QMutex _resolvedStylesLock;

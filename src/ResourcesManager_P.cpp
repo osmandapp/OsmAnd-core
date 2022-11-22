@@ -2176,6 +2176,44 @@ OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getCollection() const
     return result;
 }
 
+QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getEditableStyleAddons() const
+{
+    QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> res;
+    {
+        QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+        // Unmanaged resources override installed resources
+        for (const auto& localResource : constOf(owner->_localResources))
+        {
+            if (localResource->type != ResourceType::MapStyle)
+                continue;
+
+            if (!localResource->id.endsWith(QStringLiteral(".addon.render.xml")))
+                continue;
+
+            if (std::dynamic_pointer_cast<const UnmanagedResource>(localResource))
+                res << std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+
+            if (std::dynamic_pointer_cast<const InstalledResource>(localResource))
+                res << std::static_pointer_cast<const MapStyleMetadata>(localResource->_metadata)->mapStyle;
+        }
+    }
+
+    // Builtin resources are treated as fallback
+    for (const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if (builtinResource->type != ResourceType::MapStyle)
+            continue;
+
+        if (!builtinResource->id.endsWith(QStringLiteral(".addon.render.xml")))
+            continue;
+
+        res << std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+    }
+
+    return res;
+}
+
 std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getEditableStyleByName(
     const QString& styleName) const
 {
@@ -2249,6 +2287,11 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapS
     auto style = getEditableStyleByName(name);
     if (!style)
         return nullptr;
+
+    // Put style addons in chain first
+    auto styleAddons = getEditableStyleAddons();
+    stylesChain << styleAddons;
+
     while (style)
     {
         stylesChain.push_back(style);

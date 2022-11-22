@@ -39,6 +39,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parseTagStart_RenderingStyle(QXmlStreamReader
 
     _title = attribs.value(QStringLiteral("name")).toString();
     _parentName = attribs.value(QStringLiteral("depends")).toString();
+    _addon = attribs.value(QStringLiteral("addon")).toString();
 
     return true;
 }
@@ -482,6 +483,11 @@ bool OsmAnd::UnresolvedMapStyle_P::insertNodeIntoTopLevelTagValueRule(
 bool OsmAnd::UnresolvedMapStyle_P::isStandalone() const
 {
     return _parentName.isEmpty();
+}
+
+bool OsmAnd::UnresolvedMapStyle_P::isAddon() const
+{
+    return _addon == QStringLiteral("yes");
 }
 
 bool OsmAnd::UnresolvedMapStyle_P::isMetadataLoaded() const

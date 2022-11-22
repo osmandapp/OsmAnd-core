@@ -38,6 +38,16 @@ std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getEd
     return *citStyle;
 }
 
+QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> OsmAnd::MapStylesCollection_P::getEditableStyleAddons_noSync() const
+{
+    QList<std::shared_ptr<OsmAnd::UnresolvedMapStyle>> res;
+    for (auto style : constOf(_styles))
+        if (style->isAddon())
+            res << style;
+
+    return res;
+}
+
 bool OsmAnd::MapStylesCollection_P::addStyleFromCoreResource(const QString& resourceName)
 {
     QWriteLocker scopedLocker(&_stylesLock);
@@ -129,6 +139,10 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::g
     QList< std::shared_ptr<UnresolvedMapStyle> > stylesChain;
     {
         QReadLocker scopedLocker(&_stylesLock);
+
+        // Put style addons in chain first
+        auto styleAddons = getEditableStyleAddons_noSync();
+        stylesChain << styleAddons;
 
         auto style = getEditableStyleByName_noSync(name);
         while (style)

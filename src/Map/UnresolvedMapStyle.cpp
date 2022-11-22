@@ -37,6 +37,11 @@ bool OsmAnd::UnresolvedMapStyle::isStandalone() const
     return _p->isStandalone();
 }
 
+bool OsmAnd::UnresolvedMapStyle::isAddon() const
+{
+    return _p->isAddon();
+}
+
 bool OsmAnd::UnresolvedMapStyle::isMetadataLoaded() const
 {
     return _p->isMetadataLoaded();

@@ -131,6 +131,7 @@ namespace OsmAnd
 #endif // !defined(SWIG)
 
         bool isStandalone() const;
+        bool isAddon() const;
 
         bool isLoaded() const;
         bool load();

@@ -90,6 +90,7 @@ namespace OsmAnd
 
         const QString _name;
         QString _parentName;
+        QString _addon;
 
         QHash<QString, QString> _constants;
         QList< std::shared_ptr<const Parameter> > _parameters;
@@ -104,6 +105,7 @@ namespace OsmAnd
         bool loadMetadata();
 
         bool isStandalone() const;
+        bool isAddon() const;
 
         bool isLoaded() const;
         bool load();
