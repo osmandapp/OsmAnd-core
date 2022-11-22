@@ -29,8 +29,7 @@ namespace OsmAnd
             const float opacity,
             const QString& colorProfilePath,
             const QString& contourStyleName,
-            const QHash<ZoomLevel, QList<double>>& contourLevels,
-            const QHash<ZoomLevel, QList<QString>>& contourTypes);
+            const QHash<ZoomLevel, QList<double>>& contourLevels);
         virtual ~GeoBandSettings();
 
         const QString unit;
@@ -41,7 +40,6 @@ namespace OsmAnd
         const QString colorProfilePath;
         const QString contourStyleName;
         const QHash<ZoomLevel, QList<double>> contourLevels;
-        const QHash<ZoomLevel, QList<QString>> contourTypes;
     };
 }
 

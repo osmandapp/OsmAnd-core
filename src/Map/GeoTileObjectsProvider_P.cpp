@@ -116,7 +116,8 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
         outData.reset();
     }
     auto contourStyleName = settings->contourStyleName;
-    auto contourTypes = settings->contourTypes.value(request.zoom);
+    auto contourUnit = settings->unit;
+    contourUnit = contourUnit.remove(QStringLiteral("°"));
 
     auto band = owner->band;
     QList<BandIndex> bands;
@@ -132,7 +133,7 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     _request.localData = owner->localData;
 
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
-        [this, band, &contourStyleName, &contourTypes, &request, &outData, &tileEntry, &result]
+    [this, band, &contourStyleName, &contourUnit, &request, &outData, &tileEntry, &result]
         (const bool requestSucceeded,
             const std::shared_ptr<WeatherTileResourcesManager::Data>& data,
             const std::shared_ptr<Metric>& metric)
@@ -147,6 +148,9 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                     if (contour->points.empty())
                         continue;
                     
+                    auto value = owner->_resourcesManager->getConvertedBandValue(band, contour->value);
+                    auto valueStr = owner->_resourcesManager->getFormattedBandValue(band, value, false);
+
                     auto mapObj = std::make_shared<OsmAnd::MapObject>();
                     mapObj->points31 = contour->points;
                     //mapObj->computeBBox31();
@@ -158,16 +162,12 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                     mapObj->attributeIds.push_back(idx);
                     attributeMapping->registerMapping(idx++, QStringLiteral("contour"), contourStyleName);
                     attributeMapping->registerMapping(idx++, contourStyleName, QStringLiteral(""));
-                    for (const auto& contourType : constOf(contourTypes))
-                    {
-                        mapObj->additionalAttributeIds.push_back(idx);
-                        attributeMapping->registerMapping(idx++, QStringLiteral("contourtype"), contourType);
-                    }
+                    mapObj->additionalAttributeIds.push_back(idx);
+                    auto contourTypeValue = valueStr + contourUnit;
+                    attributeMapping->registerMapping(idx++, QStringLiteral("contourtype"), contourTypeValue);
                     attributeMapping->verifyRequiredMappingRegistered();
                     mapObj->attributeMapping = attributeMapping;
 
-                    auto value = owner->_resourcesManager->getConvertedBandValue(band, contour->value);
-                    auto valueStr = owner->_resourcesManager->getFormattedBandValue(band, value, false);
                     mapObj->captions.insert(2, valueStr);
                     mapObj->captionsOrder << 2;
 

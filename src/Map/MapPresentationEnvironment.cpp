@@ -132,11 +132,6 @@ QString OsmAnd::MapPresentationEnvironment::getWeatherContourLevels(const QStrin
     return _p->getWeatherContourLevels(weatherType, zoom);
 }
 
-QString OsmAnd::MapPresentationEnvironment::getWeatherContourTypes(const QString& weatherType, const ZoomLevel zoom) const
-{
-    return _p->getWeatherContourTypes(weatherType, zoom);
-}
-
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getTransportRouteColor(const bool nightMode, const QString& renderAttrName) const
 {
     return _p->getTransportRouteColor(nightMode, renderAttrName);

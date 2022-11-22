@@ -8,8 +8,7 @@ OsmAnd::GeoBandSettings::GeoBandSettings(
     const float opacity_,
     const QString& colorProfilePath_,
     const QString& contourStyleName_,
-    const QHash<ZoomLevel, QList<double>>& contourLevels_,
-    const QHash<ZoomLevel, QList<QString>>& contourTypes_)
+    const QHash<ZoomLevel, QList<double>>& contourLevels_)
     : unit(unit_)
     , unitFormatGeneral(unitFormatGeneral_)
     , unitFormatPrecise(unitFormatPrecise_)
@@ -18,7 +17,6 @@ OsmAnd::GeoBandSettings::GeoBandSettings(
     , colorProfilePath(colorProfilePath_)
     , contourStyleName(contourStyleName_)
     , contourLevels(contourLevels_)
-    , contourTypes(contourTypes_)
 {
 }
 

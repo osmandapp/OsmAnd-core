@@ -60,7 +60,6 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _globalPathPadding = 0.0f;
 
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
-    _weatherContourTypesAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourTypes"));
 
     _desiredStubsStyle = MapStubStyle::Unspecified;
 }
@@ -497,24 +496,6 @@ QString OsmAnd::MapPresentationEnvironment_P::getWeatherContourLevels(const QStr
 
         MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_weatherContourLevelsAttribute, &evalResult))
-            evalResult.getStringValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_STRING_VALUE, result);
-    }
-    return result;
-}
-
-QString OsmAnd::MapPresentationEnvironment_P::getWeatherContourTypes(const QString& weatherType, const ZoomLevel zoom) const
-{
-    QString result;
-    if (_weatherContourTypesAttribute)
-    {
-        MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
-        applyTo(evaluator);
-        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
-        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
-        evaluator.setStringValue(owner->styleBuiltinValueDefs->id_INPUT_ADDITIONAL, QString::asprintf("weatherType=%s", qPrintable(weatherType)));
-
-        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
-        if (evaluator.evaluate(_weatherContourTypesAttribute, &evalResult))
             evalResult.getStringValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_STRING_VALUE, result);
     }
     return result;
