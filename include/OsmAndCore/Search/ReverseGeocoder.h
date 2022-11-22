@@ -56,10 +56,11 @@ namespace OsmAnd
             QString buildingInterpolation;
             std::shared_ptr<const Street> street;
             std::shared_ptr<const StreetGroup> streetGroup;
+            std::shared_ptr<const OsmAnd::RoadInfo> point;
 
             double getDistance() const;
             Nullable<PointI> searchPoint31() const;
-            void setDistance(double dist);
+            void setDistance(double distance) const;
             QString toString() const;
 
         private:
