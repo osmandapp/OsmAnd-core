@@ -68,9 +68,9 @@ double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
     return dist;
 }
 
-OsmAnd::Nullable<OsmAnd::LatLon> OsmAnd::ReverseGeocoder::ResultEntry::getLocation() const
+void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double distance) const
 {
-    return connectionPoint;
+    dist = distance;
 }
 
 QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
