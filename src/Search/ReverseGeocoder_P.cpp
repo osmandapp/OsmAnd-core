@@ -161,6 +161,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                             const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
                             rs->road = road->road;
                             rs->street = street;
+                            rs->point = road->point;
                             rs->streetGroup = street->streetGroup;
                             rs->searchPoint = road->searchPoint;
                             rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
@@ -229,6 +230,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             bld->road = street->road;
             bld->searchPoint = street->searchPoint;
             bld->street = street->street;
+            bld->point = street->point;
             bld->streetGroup = street->streetGroup;
             bld->building = b;
             bld->connectionPoint = Utilities::convert31ToLatLon(b->position31);
@@ -301,7 +303,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 if (!road->captions.isEmpty())
                     entry->streetName = road->captions.values().last();
             }
-                
+            entry->point = p.second;
             entry->searchPoint = searchPoint;
             entry->connectionPoint = LatLon(Utilities::get31LatitudeY(p.second->preciseY), Utilities::get31LongitudeX(p.second->preciseX));
             

@@ -53,16 +53,16 @@ OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoi
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
-    if (std::isnan(dist))
+    if (std::isnan(dist) && searchPoint.isSet())
     {
-        if (connectionPoint.isSet() && searchPoint.isSet())
+        if (building == nullptr && point != nullptr)
+        {
+            // Need distance between searchPoint and nearest RouteSegmentPoint here, to approximate distance from neareest named road
+            dist = sqrt(point->distSquare);
+        }
+        else if (connectionPoint.isSet())
         {
             dist = Utilities::distance(connectionPoint, searchPoint);
-            return dist;
-        }
-        else
-        {
-            return -1;
         }
     }
     return dist;
