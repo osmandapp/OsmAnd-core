@@ -72,6 +72,9 @@ namespace OsmAnd
 
         std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(int64_t dateTime);
 
+        bool isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime);
+        bool isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime);
+
         void obtainValue(
             const WeatherTileResourcesManager::ValueRequest& request,
             const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
