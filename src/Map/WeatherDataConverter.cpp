@@ -67,7 +67,7 @@ double OsmAnd::WeatherDataConverter::Speed::toUnit(const Unit& unit_) const
 
 OsmAnd::WeatherDataConverter::Speed::Unit OsmAnd::WeatherDataConverter::Speed::unitFromString(const QString& unitString)
 {
-    if (unitString.toLower() == QStringLiteral("kt"))
+    if (unitString.toLower() == QStringLiteral("kn"))
         return Unit::KNOTS;
     else if (unitString.toLower() == QStringLiteral("m/s"))
         return Unit::METERS_PER_SECOND;
