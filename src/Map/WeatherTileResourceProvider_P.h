@@ -111,8 +111,6 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         int _obtainValuePriority;
-        int _currentDownloadingsCountToObtainValue;
-        int _currentEvaluationsCountToObtainValue;
 
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
@@ -156,9 +154,6 @@ namespace OsmAnd
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
             const ZoomLevel zoom);
-
-        void updateCurrentDownloadingsCountToObtainValue(const int delta);
-        void updateCurrentEvaluationsCountToObtainValue(const int delta);
 
     protected:
         WeatherTileResourceProvider_P(
@@ -220,16 +215,12 @@ namespace OsmAnd
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
 
-        bool isDownloadingTilesToObtainValue() const;
-        bool isEvaluatingTilesToObtainValue() const;
-
         bool obtainGeoTile(
             const TileId tileId,
             const ZoomLevel zoom,
             QByteArray& outData,
             bool forceDownload = false,
             bool localData = false,
-            bool forObtainingValue = false,
             std::shared_ptr<const IQueryController> queryController = nullptr);
 
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
