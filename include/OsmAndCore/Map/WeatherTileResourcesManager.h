@@ -119,7 +119,6 @@ namespace OsmAnd
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
             void,
             bool succeeded,
-            long long requestedTime,
             double value,
             const std::shared_ptr<Metric>& metric);
 
@@ -165,9 +164,6 @@ namespace OsmAnd
         ZoomLevel getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
-
-        bool isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime);
-        bool isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime);
 
         static QVector<TileId> generateGeoTileIds(
                 const LatLon topLeft,

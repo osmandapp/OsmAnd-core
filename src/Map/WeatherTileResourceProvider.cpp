@@ -153,17 +153,6 @@ bool OsmAnd::WeatherTileResourceProvider::isEmpty()
     return _p->isEmpty();
 
 }
-
-bool OsmAnd::WeatherTileResourceProvider::isDownloadingTilesToObtainValue() const
-{
-    return _p->isDownloadingTilesToObtainValue();
-}
-
-bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTilesToObtainValue() const
-{
-    return _p->isEvaluatingTilesToObtainValue();
-}
-
 uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,

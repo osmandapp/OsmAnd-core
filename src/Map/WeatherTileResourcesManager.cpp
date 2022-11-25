@@ -86,16 +86,6 @@ int OsmAnd::WeatherTileResourcesManager::getMaxMissingDataUnderZoomShift(const W
     return _p->getMaxMissingDataUnderZoomShift(type, layer);
 }
 
-bool OsmAnd::WeatherTileResourcesManager::isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime)
-{
-    return _p->isTileProviderDownloadingTilesToObtainValue(dateTime);
-}
-
-bool OsmAnd::WeatherTileResourcesManager::isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime)
-{
-    return _p->isTileProviderEvaluatingTilesToObtainValue(dateTime);
-}
-
 QVector<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::generateGeoTileIds(
         const LatLon topLeft,
         const LatLon bottomRight,
