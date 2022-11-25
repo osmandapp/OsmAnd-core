@@ -219,6 +219,18 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const
     }
 }
 
+bool OsmAnd::WeatherTileResourcesManager_P::isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider && resourceProvider->isDownloadingTilesToObtainValue();
+}
+
+bool OsmAnd::WeatherTileResourcesManager_P::isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider && resourceProvider->isEvaluatingTilesToObtainValue();
+}
+
 void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
     const WeatherTileResourcesManager::ValueRequest& request,
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
@@ -236,19 +248,19 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
         
         auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, band]
+            [callback, request, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, values[band], nullptr);
+                callback(requestSucceeded, request.dateTime, values[band], nullptr);
             };
         
         resourceProvider->obtainValue(rr, rc);
     }
     else
     {
-        callback(false, 0, nullptr);
+        callback(false, request.dateTime, 0, nullptr);
     }
 }
 
@@ -269,22 +281,22 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
      
         auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, band]
+            [callback, request, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
                 if (requestSucceeded)
-                    callback(true, values[band], nullptr);
+                    callback(true, request.dateTime, values[band], nullptr);
                 else
-                    callback(false, 0, nullptr);
+                    callback(false, request.dateTime, 0, nullptr);
             };
         
         resourceProvider->obtainValueAsync(rr, rc);
     }
     else
     {
-        callback(false, 0, nullptr);
+        callback(false, request.dateTime, 0, nullptr);
     }
 }
 
