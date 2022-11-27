@@ -190,6 +190,7 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths(bool rescanAll /*= 
     QWriteLocker scopedLocker(&_localResourcesLock);
 
     QHash< QString, std::shared_ptr<const LocalResource> > unmanagedResources;
+    QHash< QString, std::shared_ptr<const LocalResource> > unmanagedReadonlyResources;
     if (!owner->userStoragePath.isNull())
     {
         if (!loadLocalResourcesFromPath(owner->userStoragePath, true, unmanagedResources))
@@ -197,9 +198,20 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths(bool rescanAll /*= 
     }
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
     {
-        if (!loadLocalResourcesFromPath(readonlyExternalStoragePath, true, unmanagedResources))
+        if (!loadLocalResourcesFromPath(readonlyExternalStoragePath, true, unmanagedReadonlyResources))
             return false;
     }
+    // Exclude user addons from readonly resources with same names
+    for (const auto& readonlyResource : constOf(unmanagedReadonlyResources))
+    {
+        const auto& id = readonlyResource->id;
+        if (!unmanagedResources.contains(id) || !id.endsWith(QStringLiteral(".addon.render.xml")))
+            unmanagedResources.insert(id, readonlyResource);
+        else
+            LogPrintf(LogSeverityLevel::Debug, "Ignoring duplicate addon '%s'", qPrintable(id));
+
+    }
+
     if (rescanAll)
     {
         if (!loadLocalResourcesFromPath(owner->localStoragePath, false, unmanagedResources))
