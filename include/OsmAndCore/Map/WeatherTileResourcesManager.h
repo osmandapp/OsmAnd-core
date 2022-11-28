@@ -166,8 +166,10 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
-        bool isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime);
-        bool isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime);
+        bool isDownloadingTiles(const int64_t dateTime);
+        bool isEvaluatingTiles(const int64_t dateTime);
+        QList<TileId> getCurrentDownloadingTileIds(const int64_t dateTime);
+        QList<TileId> getCurrentEvaluatingTileIds(const int64_t dateTime);
 
         static QVector<TileId> generateGeoTileIds(
                 const LatLon topLeft,

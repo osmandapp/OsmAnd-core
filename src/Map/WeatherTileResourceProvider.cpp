@@ -154,14 +154,24 @@ bool OsmAnd::WeatherTileResourceProvider::isEmpty()
 
 }
 
-bool OsmAnd::WeatherTileResourceProvider::isDownloadingTilesToObtainValue() const
+bool OsmAnd::WeatherTileResourceProvider::isDownloadingTiles() const
 {
-    return _p->isDownloadingTilesToObtainValue();
+    return _p->isDownloadingTiles();
 }
 
-bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTilesToObtainValue() const
+bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTiles() const
 {
-    return _p->isEvaluatingTilesToObtainValue();
+    return _p->isEvaluatingTiles();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentDownloadingTileIds() const
+{
+    return _p->getCurrentDownloadingTileIds();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingTileIds() const
+{
+    return _p->getCurrentEvaluatingTileIds();
 }
 
 uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(

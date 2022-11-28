@@ -130,18 +130,32 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndUpdateRequestVersion(
     return _requestVersion;
 }
 
-bool OsmAnd::WeatherTileResourceProvider_P::isDownloadingTilesToObtainValue() const
+bool OsmAnd::WeatherTileResourceProvider_P::isDownloadingTiles() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentDownloadingsToObtainValue.size() > 0;
+    return _currentDownloadingTileIds.size() > 0;
 }
 
-bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTilesToObtainValue() const
+bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTiles() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentEvaluationsToObtainValue.size() > 0;
+    return _currentEvaluatingTileIds.size() > 0;
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentDownloadingTileIds() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentDownloadingTileIds;
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatingTileIds() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentEvaluatingTileIds;
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)
@@ -211,7 +225,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
             {
                 QWriteLocker scopedLocker(&_lock);
 
-                _currentDownloadingsToObtainValue << tileId;
+                _currentDownloadingTileIds << tileId;
             }
 
             if (webClient->downloadFile(geoTileUrl, filePathGz, nullptr, nullptr, queryController))
@@ -251,7 +265,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
             {
                 QWriteLocker scopedLocker(&_lock);
 
-                _currentDownloadingsToObtainValue.removeOne(tileId);
+                _currentDownloadingTileIds.removeOne(tileId);
             }
         }
         else
@@ -701,7 +715,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
         {
             QWriteLocker scopedLocker(&_provider->_lock);
 
-            _provider->_currentEvaluationsToObtainValue << geoTileId;
+            _provider->_currentEvaluatingTileIds << geoTileId;
         }
 
         if (evaluator->evaluate(latLon, values))
@@ -718,7 +732,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
         {
             QWriteLocker scopedLocker(&_provider->_lock);
 
-            _provider->_currentEvaluationsToObtainValue.removeOne(geoTileId);
+            _provider->_currentEvaluatingTileIds.removeOne(geoTileId);
         }
     }
     else

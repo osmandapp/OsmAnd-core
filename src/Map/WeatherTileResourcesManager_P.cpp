@@ -219,16 +219,28 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const
     }
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::isTileProviderDownloadingTilesToObtainValue(const int64_t dateTime)
+bool OsmAnd::WeatherTileResourcesManager_P::isDownloadingTiles(const int64_t dateTime)
 {
     auto resourceProvider = getResourceProvider(dateTime);
-    return resourceProvider && resourceProvider->isDownloadingTilesToObtainValue();
+    return resourceProvider && resourceProvider->isDownloadingTiles();
 }
 
-bool OsmAnd::WeatherTileResourcesManager_P::isTileProviderEvaluatingTilesToObtainValue(const int64_t dateTime)
+bool OsmAnd::WeatherTileResourcesManager_P::isEvaluatingTiles(const int64_t dateTime)
 {
     auto resourceProvider = getResourceProvider(dateTime);
-    return resourceProvider && resourceProvider->isEvaluatingTilesToObtainValue();
+    return resourceProvider && resourceProvider->isEvaluatingTiles();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentDownloadingTileIds(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider ? resourceProvider->getCurrentDownloadingTileIds() : QList<OsmAnd::TileId>();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentEvaluatingTileIds(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider ? resourceProvider->getCurrentEvaluatingTileIds() : QList<OsmAnd::TileId>();
 }
 
 void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
