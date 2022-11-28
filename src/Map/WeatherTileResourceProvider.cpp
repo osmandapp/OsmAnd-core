@@ -153,6 +153,27 @@ bool OsmAnd::WeatherTileResourceProvider::isEmpty()
     return _p->isEmpty();
 
 }
+
+bool OsmAnd::WeatherTileResourceProvider::isDownloadingTiles() const
+{
+    return _p->isDownloadingTiles();
+}
+
+bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTiles() const
+{
+    return _p->isEvaluatingTiles();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentDownloadingTileIds() const
+{
+    return _p->getCurrentDownloadingTileIds();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingTileIds() const
+{
+    return _p->getCurrentEvaluatingTileIds();
+}
+
 uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,

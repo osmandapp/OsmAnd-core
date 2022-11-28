@@ -219,6 +219,30 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const
     }
 }
 
+bool OsmAnd::WeatherTileResourcesManager_P::isDownloadingTiles(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider && resourceProvider->isDownloadingTiles();
+}
+
+bool OsmAnd::WeatherTileResourcesManager_P::isEvaluatingTiles(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider && resourceProvider->isEvaluatingTiles();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentDownloadingTileIds(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider ? resourceProvider->getCurrentDownloadingTileIds() : QList<OsmAnd::TileId>();
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentEvaluatingTileIds(const int64_t dateTime)
+{
+    auto resourceProvider = getResourceProvider(dateTime);
+    return resourceProvider ? resourceProvider->getCurrentEvaluatingTileIds() : QList<OsmAnd::TileId>();
+}
+
 void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
     const WeatherTileResourcesManager::ValueRequest& request,
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
@@ -234,21 +258,22 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
         rr.localData = request.localData;
         rr.queryController = request.queryController;
         
+        auto dateTime = request.dateTime;
         auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, band]
+            [callback, dateTime, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, values[band], nullptr);
+                callback(requestSucceeded, dateTime, values[band], nullptr);
             };
         
         resourceProvider->obtainValue(rr, rc);
     }
     else
     {
-        callback(false, 0, nullptr);
+        callback(false, request.dateTime, 0, nullptr);
     }
 }
 
@@ -267,24 +292,25 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
         rr.localData = request.localData;
         rr.queryController = request.queryController;
      
+        auto dateTime = request.dateTime;
         auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, band]
+            [callback, dateTime, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
                 if (requestSucceeded)
-                    callback(true, values[band], nullptr);
+                    callback(true, dateTime, values[band], nullptr);
                 else
-                    callback(false, 0, nullptr);
+                    callback(false, dateTime, 0, nullptr);
             };
         
         resourceProvider->obtainValueAsync(rr, rc);
     }
     else
     {
-        callback(false, 0, nullptr);
+        callback(false, request.dateTime, 0, nullptr);
     }
 }
 

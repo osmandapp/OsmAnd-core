@@ -112,6 +112,9 @@ namespace OsmAnd
         int _priority;
         int _obtainValuePriority;
 
+        QList<TileId> _currentDownloadingTileIds;
+        QList<TileId> _currentEvaluatingTileIds;
+
         ZoomLevel _lastRequestedZoom;
         QList<BandIndex> _lastRequestedBands;
         bool _lastRequestedLocalData;
@@ -214,6 +217,11 @@ namespace OsmAnd
         int getCurrentRequestVersion() const;
         int getAndUpdateRequestVersion(
             const std::shared_ptr<WeatherTileResourceProvider::TileRequest>& request = nullptr);
+
+        bool isDownloadingTiles() const;
+        bool isEvaluatingTiles() const;
+        QList<TileId> getCurrentDownloadingTileIds() const;
+        QList<TileId> getCurrentEvaluatingTileIds() const;
 
         bool obtainGeoTile(
             const TileId tileId,

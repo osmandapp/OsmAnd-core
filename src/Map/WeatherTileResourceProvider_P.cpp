@@ -130,6 +130,34 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndUpdateRequestVersion(
     return _requestVersion;
 }
 
+bool OsmAnd::WeatherTileResourceProvider_P::isDownloadingTiles() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentDownloadingTileIds.size() > 0;
+}
+
+bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTiles() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentEvaluatingTileIds.size() > 0;
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentDownloadingTileIds() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentDownloadingTileIds;
+}
+
+QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatingTileIds() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _currentEvaluatingTileIds;
+}
+
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)
 {
     auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
@@ -194,6 +222,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
 
             auto filePathGz = filePath + QStringLiteral(".gz");
 
+            {
+                QWriteLocker scopedLocker(&_lock);
+
+                _currentDownloadingTileIds << tileId;
+            }
+
             if (webClient->downloadFile(geoTileUrl, filePathGz, nullptr, nullptr, queryController))
             {
                 ArchiveReader archive(filePathGz);
@@ -226,6 +260,12 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 }
                 QFile(filePathGz).remove();
                 QFile(filePath).remove();
+            }
+
+            {
+                QWriteLocker scopedLocker(&_lock);
+
+                _currentDownloadingTileIds.removeOne(tileId);
             }
         }
         else
@@ -671,6 +711,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
             zoom,
             _provider->projResourcesPath
         );
+
+        {
+            QWriteLocker scopedLocker(&_provider->_lock);
+
+            _provider->_currentEvaluatingTileIds << geoTileId;
+        }
+
         if (evaluator->evaluate(latLon, values))
         {
             _provider->setCachedValues(point31, zoom, values);
@@ -681,6 +728,12 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
             callback(false, QList<double>(), nullptr);
         }
         delete evaluator;
+
+        {
+            QWriteLocker scopedLocker(&_provider->_lock);
+
+            _provider->_currentEvaluatingTileIds.removeOne(geoTileId);
+        }
     }
     else
     {
