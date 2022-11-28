@@ -28,8 +28,6 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , _bandSettings(bandSettings_)
     , _priority(0)
     , _obtainValuePriority(0)
-    , _currentDownloadingsCountToObtainValue(0)
-    , _currentEvaluationsCountToObtainValue(0)
     , _lastRequestedZoom(ZoomLevel::InvalidZoomLevel)
     , _requestVersion(0)
     , webClient(webClient_)
@@ -136,28 +134,14 @@ bool OsmAnd::WeatherTileResourceProvider_P::isDownloadingTilesToObtainValue() co
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentDownloadingsCountToObtainValue > 0;
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::updateCurrentDownloadingsCountToObtainValue(const int delta)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    _currentDownloadingsCountToObtainValue += delta;
+    return _currentDownloadingsToObtainValue.size() > 0;
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTilesToObtainValue() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentEvaluationsCountToObtainValue > 0;
-}
-
-void OsmAnd::WeatherTileResourceProvider_P::updateCurrentEvaluationsCountToObtainValue(const int delta)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    _currentEvaluationsCountToObtainValue += delta;
+    return _currentEvaluationsToObtainValue.size() > 0;
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)
@@ -192,7 +176,6 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         QByteArray& outData,
         bool forceDownload /*= false*/,
         bool localData /*= false*/,
-        bool forObtainingValue /*= false*/,
         std::shared_ptr<const IQueryController> queryController /*= nullptr*/)
 {
     bool res = false;
@@ -225,8 +208,11 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
 
             auto filePathGz = filePath + QStringLiteral(".gz");
 
-            if (forObtainingValue)
-                updateCurrentDownloadingsCountToObtainValue(1);
+            {
+                QWriteLocker scopedLocker(&_lock);
+
+                _currentDownloadingsToObtainValue << tileId;
+            }
 
             if (webClient->downloadFile(geoTileUrl, filePathGz, nullptr, nullptr, queryController))
             {
@@ -262,8 +248,11 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 QFile(filePath).remove();
             }
 
-            if (forObtainingValue)
-                updateCurrentDownloadingsCountToObtainValue(-1);
+            {
+                QWriteLocker scopedLocker(&_lock);
+
+                _currentDownloadingsToObtainValue.removeOne(tileId);
+            }
         }
         else
         {
@@ -700,7 +689,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     );
 
     QByteArray geoTileData;
-    if (_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData, false, localData, true))
+    if (_provider->obtainGeoTile(geoTileId, geoTileZoom, geoTileData, false, localData))
     {
         GeoTileEvaluator *evaluator = new GeoTileEvaluator(
             geoTileId,
@@ -709,7 +698,11 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
             _provider->projResourcesPath
         );
 
-        _provider->updateCurrentEvaluationsCountToObtainValue(1);
+        {
+            QWriteLocker scopedLocker(&_provider->_lock);
+
+            _provider->_currentEvaluationsToObtainValue << geoTileId;
+        }
 
         if (evaluator->evaluate(latLon, values))
         {
@@ -722,7 +715,11 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
         }
         delete evaluator;
 
-        _provider->updateCurrentEvaluationsCountToObtainValue(-1);
+        {
+            QWriteLocker scopedLocker(&_provider->_lock);
+
+            _provider->_currentEvaluationsToObtainValue.removeOne(geoTileId);
+        }
     }
     else
     {
@@ -1172,7 +1169,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
         }
 
         QByteArray data;
-        bool res = _provider->obtainGeoTile(tileId, geoTileZoom, data, request->forceDownload, localData, false, request->queryController);
+        bool res = _provider->obtainGeoTile(tileId, geoTileZoom, data, request->forceDownload, localData, request->queryController);
 
         callback(res, ++downloadedTiles, tilesCount, nullptr);
     }
