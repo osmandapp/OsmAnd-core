@@ -164,12 +164,12 @@ bool OsmAnd::WeatherTileResourceProvider::isEvaluatingTiles() const
     return _p->isEvaluatingTiles();
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentDownloadingTileIds() const
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentDownloadingTileIds() const
 {
     return _p->getCurrentDownloadingTileIds();
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingTileIds() const
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingTileIds() const
 {
     return _p->getCurrentEvaluatingTileIds();
 }

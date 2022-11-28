@@ -144,18 +144,18 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEvaluatingTiles() const
     return _currentEvaluatingTileIds.size() > 0;
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentDownloadingTileIds() const
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentDownloadingTileIds() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentDownloadingTileIds;
+    return detachedOf(_currentDownloadingTileIds);
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatingTileIds() const
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatingTileIds() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _currentEvaluatingTileIds;
+    return detachedOf(_currentEvaluatingTileIds);
 }
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)

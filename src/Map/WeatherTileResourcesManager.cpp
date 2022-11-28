@@ -96,12 +96,12 @@ bool OsmAnd::WeatherTileResourcesManager::isEvaluatingTiles(const int64_t dateTi
     return _p->isEvaluatingTiles(dateTime);
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::getCurrentDownloadingTileIds(const int64_t dateTime)
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::getCurrentDownloadingTileIds(const int64_t dateTime)
 {
     return _p->getCurrentDownloadingTileIds(dateTime);
 }
 
-QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::getCurrentEvaluatingTileIds(const int64_t dateTime)
+const QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager::getCurrentEvaluatingTileIds(const int64_t dateTime)
 {
     return _p->getCurrentEvaluatingTileIds(dateTime);
 }

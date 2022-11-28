@@ -220,8 +220,8 @@ namespace OsmAnd
 
         bool isDownloadingTiles() const;
         bool isEvaluatingTiles() const;
-        QList<TileId> getCurrentDownloadingTileIds() const;
-        QList<TileId> getCurrentEvaluatingTileIds() const;
+        const QList<TileId> getCurrentDownloadingTileIds() const;
+        const QList<TileId> getCurrentEvaluatingTileIds() const;
 
         bool obtainGeoTile(
             const TileId tileId,
