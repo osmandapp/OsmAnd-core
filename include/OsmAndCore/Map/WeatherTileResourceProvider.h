@@ -191,6 +191,9 @@ namespace OsmAnd
 
         bool isEmpty();
 
+        bool isDownloadingTilesToObtainValue() const;
+        bool isEvaluatingTilesToObtainValue() const;
+
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
