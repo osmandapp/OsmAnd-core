@@ -8,6 +8,18 @@ OsmAnd::SqliteHeightmapTileProvider::SqliteHeightmapTileProvider(
     uint32_t outputTileSize_)
     : _p(new SqliteHeightmapTileProvider_P(this))
     , sourcesCollection(sourcesCollection_)
+    , filesCollection(nullptr)
+    , outputTileSize(outputTileSize_)
+{
+}
+
+OsmAnd::SqliteHeightmapTileProvider::SqliteHeightmapTileProvider(
+    const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection_,
+    const std::shared_ptr<const IGeoTiffCollection>& filesCollection_,
+    uint32_t outputTileSize_)
+    : _p(new SqliteHeightmapTileProvider_P(this))
+    , sourcesCollection(sourcesCollection_)
+    , filesCollection(filesCollection_)
     , outputTileSize(outputTileSize_)
 {
 }

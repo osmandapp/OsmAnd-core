@@ -12,6 +12,7 @@
 #include "Logging.h"
 #include "MapDataProviderHelpers.h"
 #include "TileSqliteDatabasesCollection.h"
+#include "GeoTiffCollection.h"
 #include "TileSqliteDatabase.h"
 
 OsmAnd::SqliteHeightmapTileProvider_P::SqliteHeightmapTileProvider_P(
@@ -26,12 +27,12 @@ OsmAnd::SqliteHeightmapTileProvider_P::~SqliteHeightmapTileProvider_P()
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMinZoom() const
 {
-    return owner->sourcesCollection->getMinZoom();
+    return owner->filesCollection ? owner->filesCollection->getMinZoom() : owner->sourcesCollection->getMinZoom();
 }
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
 {
-    return owner->sourcesCollection->getMaxZoom();
+    return owner->filesCollection ? owner->filesCollection->getMaxZoom() : owner->sourcesCollection->getMaxZoom();
 }
 
 bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
@@ -50,6 +51,26 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
         if (database->obtainTileData(request.tileId, request.zoom, data) && !data.isEmpty())
         {
             break;
+        }
+    }
+    if (data.isEmpty() && owner->filesCollection)
+    {
+        // There was no data in db, so try to get it from GeoTIFF file
+        QString filename =
+            owner->filesCollection->getGeoTiffFilename(request.tileId, request.zoom, owner->outputTileSize);
+        if (!filename.isEmpty())
+        {
+            const auto pBuffer = new float[owner->outputTileSize*owner->outputTileSize];
+            if (!owner->filesCollection->getGeoTiffData(
+                filename, request.tileId, request.zoom, owner->outputTileSize, pBuffer))
+                delete[] pBuffer;
+            outData = std::make_shared<IMapElevationDataProvider::Data>(
+                request.tileId,
+                request.zoom,
+                sizeof(float)*owner->outputTileSize,
+                owner->outputTileSize,
+                pBuffer);
+            return true;
         }
     }
     if (data.isEmpty())
