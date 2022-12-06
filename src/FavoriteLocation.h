@@ -29,7 +29,7 @@ namespace OsmAnd
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const PointI position31,
-            const QString& elevation,
+            const double elevation,
             const QString& time,
             const QString& creationTime,
             const QString& title,
@@ -45,7 +45,7 @@ namespace OsmAnd
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const LatLon latLon,
-            const QString& elevation,
+            const double elevation,
             const QString& time,
             const QString& creationTime,
             const QString& title,
@@ -77,8 +77,8 @@ namespace OsmAnd
         virtual bool isHidden() const;
         virtual void setIsHidden(const bool isHidden);
         
-        virtual QString getElevation() const;
-        virtual void setElevation(const QString& newElevation);
+        virtual double getElevation() const;
+        virtual void setElevation(const double newElevation);
         
         virtual QString getTime() const;
         virtual void setTime(const QString& newTime);

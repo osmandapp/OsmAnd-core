@@ -6,7 +6,7 @@
 OsmAnd::FavoriteLocation::FavoriteLocation(
     const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
     const PointI position31_,
-    const QString& elevation_,
+    const double elevation_,
     const QString& time_,
     const QString& pickupTime_,
     const QString& title_,
@@ -41,7 +41,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 OsmAnd::FavoriteLocation::FavoriteLocation(
     const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
     const LatLon latLon_,
-    const QString& elevation_,
+    const double elevation_,
     const QString& time_,
     const QString& pickupTime_,
     const QString& title_,
@@ -119,12 +119,12 @@ void OsmAnd::FavoriteLocation::setIsHidden(const bool isHidden)
     _p->setIsHidden(isHidden);
 }
 
-QString OsmAnd::FavoriteLocation::getElevation() const
+double OsmAnd::FavoriteLocation::getElevation() const
 {
     return _p->getElevation();
 }
 
-void OsmAnd::FavoriteLocation::setElevation(const QString& newElevation)
+void OsmAnd::FavoriteLocation::setElevation(const double newElevation)
 {
     _p->setElevation(newElevation);
 }
