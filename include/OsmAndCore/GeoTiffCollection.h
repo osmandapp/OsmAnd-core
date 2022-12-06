@@ -37,13 +37,12 @@ namespace OsmAnd
         bool removeFile(const QString& filePath);
         bool remove(const SourceOriginId entryId);
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom() const;
+        virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        virtual QString getGeoTiffFilename(
-            const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize) const;
+        virtual QString getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom,
+            const uint32_t tileSize, const uint32_t overlap, const ZoomLevel minZoom = MinZoomLevel) const;
         virtual bool getGeoTiffData(const QString& filename, const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t tileSize, void *pBuffer) const;
+            const uint32_t tileSize, const uint32_t overlap, void *pBuffer) const;
     };
 }
 

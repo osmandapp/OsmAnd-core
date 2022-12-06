@@ -70,7 +70,32 @@ namespace OsmAnd
 
             QFileInfo fileInfo;
         };
-        
+
+        struct GeoTiffProperties
+        {
+            GeoTiffProperties()
+                : region31(AreaD(1.0, 1.0, 0.0, 0.0))
+                , pixelSize31(1)
+                , rasterBandCount(0)
+                , bandDataType(0)
+            {
+            }
+
+            GeoTiffProperties(const PointD& upperLeft31_, const PointD& lowerRight31_,
+                int32_t pixelSize31_, int rasterBandCount_, int bandDataType_)
+                : region31(AreaD(upperLeft31_, lowerRight31_))
+                , pixelSize31(pixelSize31_)
+                , rasterBandCount(rasterBandCount_)
+                , bandDataType(bandDataType_)
+            {
+            }
+
+            AreaD region31;
+            int32_t pixelSize31;
+            int rasterBandCount;
+            int bandDataType;
+        };
+
         QHash<GeoTiffCollection::SourceOriginId, std::shared_ptr<const SourceOrigin>> _sourcesOrigins;
         mutable QReadWriteLock _sourcesOriginsLock;
         int _lastUnusedSourceOriginId;
@@ -80,14 +105,16 @@ namespace OsmAnd
 
         void invalidateCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
-        mutable QHash<GeoTiffCollection::SourceOriginId, QHash<QString, AreaD>> _collectedSources;
+        mutable QAtomicInteger<int32_t> _pixelSize31;
+        mutable QHash<GeoTiffCollection::SourceOriginId, QHash<QString, GeoTiffProperties>> _collectedSources;
         mutable QReadWriteLock _collectedSourcesLock;
         void collectSources() const;
         double metersTo31(const double positionInMeters) const;
         PointD metersTo31(const PointD& locationInMeters) const;
         double metersFrom31(const double position31) const;
         PointD metersFrom31(const PointD& location31) const;
-        AreaD getGeoTiffRegion31(const QString& filename) const;
+        ZoomLevel calcMaxZoom(const int32_t pixelSize31, const uint32_t tileSize) const;
+        GeoTiffProperties getGeoTiffProperties(const QString& filename) const;
     public:
         virtual ~GeoTiffCollection_P();
 
@@ -99,12 +126,12 @@ namespace OsmAnd
         bool removeFile(const QFileInfo& fileInfo);
         bool remove(const GeoTiffCollection::SourceOriginId entryId);
 
-        ZoomLevel getMinZoom() const;
-        ZoomLevel getMaxZoom() const;
+        ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        QString getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize) const;
+        QString getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom,
+            const uint32_t overlap, const uint32_t tileSize, const ZoomLevel minZoom = MinZoomLevel) const;
         bool getGeoTiffData(const QString& filename, const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t tileSize, void *pBuffer) const;
+            const uint32_t tileSize, const uint32_t overlap, void *pBuffer) const;
 
     friend class OsmAnd::GeoTiffCollection;
     friend class OsmAnd::GeoTiffCollection_P__SignalProxy;

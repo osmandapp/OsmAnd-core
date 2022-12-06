@@ -21,13 +21,12 @@ namespace OsmAnd
     public:
         virtual ~IGeoTiffCollection();
 
-        virtual ZoomLevel getMinZoom() const = 0;
-        virtual ZoomLevel getMaxZoom() const = 0;
+        virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const = 0;
 
-        virtual QString getGeoTiffFilename(
-            const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize) const = 0;
+        virtual QString getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom,
+            const uint32_t tileSize, const uint32_t overlap, const ZoomLevel minzoom = MinZoomLevel) const = 0;
         virtual bool getGeoTiffData(const QString& filename, const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t tileSize, void *pBuffer) const = 0;
+            const uint32_t tileSize, const uint32_t overlap, void *pBuffer) const = 0;
     };
 }
 
