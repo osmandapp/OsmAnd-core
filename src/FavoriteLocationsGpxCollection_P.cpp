@@ -131,7 +131,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 7));
         writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 7));
 
-        if (item->getElevation() > 0.)
+        if (!isnan(item->getElevation()))
         {
             // <ele>
             writer.writeTextElement(QLatin1String("ele"), QString::number(item->getElevation(), 'f', 1));

@@ -32,7 +32,7 @@ namespace OsmAnd
 
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const PointI position31,
-            const double elevation = 0,
+            const double elevation = NAN,
             const QString& time = QString(),
             const QString& creationTime = QString(),
             const QString& title = QString(),
@@ -46,7 +46,7 @@ namespace OsmAnd
             const bool calendarEvent = false) = 0;
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
-            const double elevation = 0,
+            const double elevation = NAN,
             const QString& time = QString(),
             const QString& creationTime = QString(),
             const QString& title = QString(),
