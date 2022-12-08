@@ -56,14 +56,15 @@ OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection::getMaxZoom(const uint32_t tileSize)
     return _p->getMaxZoom(tileSize);
 }
 
-QString OsmAnd::GeoTiffCollection::getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom,
+QList<QString> OsmAnd::GeoTiffCollection::getGeoTiffFilenames(const TileId& tileId, const ZoomLevel zoom,
     const uint32_t tileSize, const uint32_t overlap, const ZoomLevel minZoom /*= MinZoomLevel*/) const
 {
-    return _p->getGeoTiffFilename(tileId, zoom, tileSize, overlap, minZoom);
+    return _p->getGeoTiffFilenames(tileId, zoom, tileSize, overlap, minZoom);
 }
 
-bool OsmAnd::GeoTiffCollection::getGeoTiffData(const QString& filename, const TileId& tileId, const ZoomLevel zoom,
-    const uint32_t tileSize, const uint32_t overlap, void *pBuffer) const
+bool OsmAnd::GeoTiffCollection::getGeoTiffData(const QList<QString>& filenames,
+    const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize, const uint32_t overlap,
+    void *pBuffer, const ZoomLevel minZoom /*= MinZoomLevel*/) const
 {
-    return _p->getGeoTiffData(filename, tileId, zoom, tileSize, overlap, pBuffer);
+    return _p->getGeoTiffData(filenames, tileId, zoom, tileSize, overlap, pBuffer, minZoom);
 }

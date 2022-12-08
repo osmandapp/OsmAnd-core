@@ -17,6 +17,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "GeoTiffCollection.h"
+#include "TileSqliteDatabase.h"
 #include <OsmAndCore/PointsAndAreas.h>
 
 namespace OsmAnd
@@ -128,10 +129,11 @@ namespace OsmAnd
 
         ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        QString getGeoTiffFilename(const TileId& tileId, const ZoomLevel zoom,
+        QList<QString> getGeoTiffFilenames(const TileId& tileId, const ZoomLevel zoom,
             const uint32_t overlap, const uint32_t tileSize, const ZoomLevel minZoom = MinZoomLevel) const;
-        bool getGeoTiffData(const QString& filename, const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t tileSize, const uint32_t overlap, void *pBuffer) const;
+        bool getGeoTiffData(const QList<QString>& filenames,
+            const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize, const uint32_t overlap,
+            void *pBuffer, const ZoomLevel minZoom = MinZoomLevel) const;
 
     friend class OsmAnd::GeoTiffCollection;
     friend class OsmAnd::GeoTiffCollection_P__SignalProxy;

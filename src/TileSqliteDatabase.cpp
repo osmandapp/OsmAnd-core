@@ -54,6 +54,21 @@ bool OsmAnd::TileSqliteDatabase::enableTileTimeSupport(bool force /* = false */)
     return _p->enableTileTimeSupport(force);
 }
 
+bool OsmAnd::TileSqliteDatabase::isTileSpecificationSupported() const
+{
+    return _p->isTileSpecificationSupported();
+}
+
+bool OsmAnd::TileSqliteDatabase::hasSpecificationColumn() const
+{
+    return _p->hasSpecificationColumn();
+}
+
+bool OsmAnd::TileSqliteDatabase::enableTileSpecificationSupport(bool force /* = false */)
+{
+    return _p->enableTileSpecificationSupport(force);
+}
+
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase::getMinZoom() const
 {
     return _p->getMinZoom();
@@ -126,17 +141,19 @@ bool OsmAnd::TileSqliteDatabase::getTilesSize(QList<TileId> tileIds, uint64_t& s
     return _p->getTilesSize(tileIds, size, zoom);
 }
 
-bool OsmAnd::TileSqliteDatabase::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom) const
+bool OsmAnd::TileSqliteDatabase::containsTileData(OsmAnd::TileId tileId, OsmAnd::ZoomLevel zoom,
+    int specification /*= 0*/) const
 {
-    return _p->containsTileData(tileId, zoom);
+    return _p->containsTileData(tileId, zoom, specification);
 }
 
 bool OsmAnd::TileSqliteDatabase::obtainTileTime(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
-    int64_t& outTime) const
+    int64_t& outTime,
+    int specification /*= 0*/) const
 {
-    return _p->obtainTileTime(tileId, zoom, outTime);
+    return _p->obtainTileTime(tileId, zoom, outTime, specification);
 }
 
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
@@ -148,6 +165,16 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
     return _p->obtainTileData(tileId, zoom, outData, pOutTime);
 }
 
+bool OsmAnd::TileSqliteDatabase::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
+    int specification,
+    QByteArray& outData,
+    int64_t* pOutTime /* = nullptr*/) const
+{
+    return _p->obtainTileData(tileId, zoom, specification, outData, pOutTime);
+}
+
 bool OsmAnd::TileSqliteDatabase::storeTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
@@ -157,11 +184,22 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     return _p->storeTileData(tileId, zoom, data, time);
 }
 
+bool OsmAnd::TileSqliteDatabase::storeTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
+    int specification,
+    const QByteArray& data,
+    int64_t time /* = 0*/)
+{
+    return _p->storeTileData(tileId, zoom, specification, data, time);
+}
+
 bool OsmAnd::TileSqliteDatabase::removeTileData(
     OsmAnd::TileId tileId,
-    OsmAnd::ZoomLevel zoom)
+    OsmAnd::ZoomLevel zoom,
+    int specification /* = 0 */)
 {
-    return _p->removeTileData(tileId, zoom);
+    return _p->removeTileData(tileId, zoom, specification);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeTilesData()
@@ -450,6 +488,27 @@ QString OsmAnd::TileSqliteDatabase::Meta::getTimeColumn(bool* outOk /* = nullptr
 void OsmAnd::TileSqliteDatabase::Meta::setTimeColumn(QString timeColumn)
 {
     values.insert(TIME_COLUMN, QVariant(qMove(timeColumn)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::SPECIFICATION_COLUMN(QStringLiteral("specificationcolumn"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getSpecificationColumn(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itSpecificationColumn = values.constFind(SPECIFICATION_COLUMN);
+    if (itSpecificationColumn == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itSpecificationColumn->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setSpecificationColumn(QString specificationColumn)
+{
+    values.insert(SPECIFICATION_COLUMN, QVariant(qMove(specificationColumn)));
 }
 
 const QString OsmAnd::TileSqliteDatabase::Meta::EXPIRE_MINUTES(QStringLiteral("expireminutes"));
