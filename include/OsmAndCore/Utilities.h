@@ -291,7 +291,7 @@ namespace OsmAnd
         }
         
         inline static double measuredDist31(int x1, int y1, int x2, int y2) {
-            return distance(get31LongitudeX(x1), get31LatitudeY(y1), get31LongitudeX(x2), get31LatitudeY(y2));
+            return distance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
         }
 
         inline static double normalizedAngleRadians(double angle)
