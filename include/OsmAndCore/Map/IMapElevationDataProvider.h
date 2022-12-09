@@ -19,6 +19,7 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(Data);
         private:
+            inline float getInterpolatedValue(const float x, const float y) const;
         protected:
         public:
             Data(TileId tileId, ZoomLevel zoom, size_t rowLength, uint32_t size, const float* pRawData);
