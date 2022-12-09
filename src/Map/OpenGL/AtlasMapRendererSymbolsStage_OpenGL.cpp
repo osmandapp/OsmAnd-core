@@ -2106,6 +2106,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
         "uniform mediump vec4 param_vs_texCoordsOffsetAndScale;                                                             ""\n"
         "                                                                                                                   ""\n"
+        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
+        "{                                                                                                                  ""\n"
+        "    float heixelSize = 1.0 / (%HeixelsPerTileSide%.0 + 3.0);                                                       ""\n"
+        "    float halfHeixelSize = 0.5 * heixelSize;                                                                       ""\n"
+        "    vec2 texCoords = (inTexCoords - halfHeixelSize) / heixelSize;                                                  ""\n"
+        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
+        "    vec2 heixCoords = floor(texCoords) * heixelSize + halfHeixelSize;                                              ""\n"
+        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
+        "    heixCoords.x += heixelSize;                                                                                    ""\n"
+        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
+        "    heixCoords.y += heixelSize;                                                                                    ""\n"
+        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
+        "    heixCoords.x -= heixelSize;                                                                                    ""\n"
+        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
+        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
+        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
+        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         // Get vertex coordinates in world
@@ -2120,7 +2139,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
         "        mediump vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                   ""\n"
         "        elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                 ""\n"
-        "        float heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoords).r;            ""\n"
+        "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
         "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 1.0;                                ""\n"
@@ -2136,6 +2155,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+    preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+        QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));

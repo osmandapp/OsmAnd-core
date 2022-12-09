@@ -454,9 +454,9 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::initialize()
         GL_CHECK_RESULT;
         glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         GL_CHECK_RESULT;
-        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         GL_CHECK_RESULT;
 
         // BitmapTile_Bilinear sampler
@@ -1619,9 +1619,9 @@ void OsmAnd::GPUAPI_OpenGLES2plus::applyTextureBlockToTexture(GLenum texture, GL
             GL_CHECK_RESULT;
             glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             GL_CHECK_RESULT;
-            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             GL_CHECK_RESULT;
         }
         else if (samplerType == SamplerType::BitmapTile_Bilinear)
