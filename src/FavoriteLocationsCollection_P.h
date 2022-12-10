@@ -83,6 +83,7 @@ namespace OsmAnd
         QList< std::shared_ptr<IFavoriteLocation> > getFavoriteLocations() const;
 
         QSet<QString> getGroups() const;
+        QHash<QString, QList<std::shared_ptr<OsmAnd::IFavoriteLocation>>> getGroupsLocations() const;
 
         void copyFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection);
         void copyFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection);

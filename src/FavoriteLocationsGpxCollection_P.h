@@ -29,12 +29,14 @@ namespace OsmAnd
 
         ImplementationInterface<FavoriteLocationsGpxCollection> owner;
 
-        bool saveTo(const QString& filename) const;
+        bool saveTo(const QString& fileName) const;
+        bool saveTo(const QString& fileName, const QString& groupName) const;
         bool extracted(const QHash<QString, QString>::const_iterator &extension, QXmlStreamWriter &writer) const;
         
         bool saveTo(QXmlStreamWriter& writer) const;
-        bool loadFrom(const QString& filename);
-        bool loadFrom(QXmlStreamReader& reader);
+        bool saveTo(QXmlStreamWriter& writer, const QString& groupName) const;
+        bool loadFrom(const QString& fileName, bool append = false);
+        bool loadFrom(QXmlStreamReader& reader, bool append = false);
         
         void backup(const QString& backupFile, const QString& externalFile) const;
         void clearOldBackups(const QString& basePath) const;
