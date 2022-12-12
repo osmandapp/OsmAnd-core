@@ -122,6 +122,11 @@ QSet<QString> OsmAnd::FavoriteLocationsCollection::getGroups() const
     return _p->getGroups();
 }
 
+QHash<QString, QList<std::shared_ptr<OsmAnd::IFavoriteLocation>>> OsmAnd::FavoriteLocationsCollection::getGroupsLocations() const
+{
+    return _p->getGroupsLocations();
+}
+
 void OsmAnd::FavoriteLocationsCollection::copyFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection)
 {
     _p->copyFrom(otherCollection->getFavoriteLocations());

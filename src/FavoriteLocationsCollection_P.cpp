@@ -148,6 +148,20 @@ QSet<QString> OsmAnd::FavoriteLocationsCollection_P::getGroups() const
     return result;
 }
 
+QHash<QString, QList<std::shared_ptr<OsmAnd::IFavoriteLocation>>> OsmAnd::FavoriteLocationsCollection_P::getGroupsLocations() const
+{
+    QReadLocker scopedLocker(&_collectionLock);
+
+    QHash<QString, QList<std::shared_ptr<IFavoriteLocation>>> result;
+    for (const auto& item : constOf(_collection))
+    {
+        const auto& group = item->getGroup();
+        auto& locations = result[group];
+        locations << item;
+    }
+    return result;
+}
+
 void OsmAnd::FavoriteLocationsCollection_P::doClearFavoriteLocations()
 {
     // Detach all items from this collection to avoid invalid notifications

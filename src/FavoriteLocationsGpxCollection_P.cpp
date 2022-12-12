@@ -14,9 +14,6 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-#define BACKUP_MAX_COUNT 10
-#define BACKUP_MAX_PER_DAY 3
-
 OsmAnd::FavoriteLocationsGpxCollection_P::FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner_)
     : FavoriteLocationsCollection_P(owner_)
     , owner(owner_)
@@ -27,70 +24,33 @@ OsmAnd::FavoriteLocationsGpxCollection_P::~FavoriteLocationsGpxCollection_P()
 {
 }
 
-bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& filename) const
+bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& fileName) const
 {
-    QFile file(filename);
+    return saveTo(fileName, QString());
+}
+
+bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(const QString& fileName, const QString& groupName) const
+{
+    QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
         return false;
 
     QXmlStreamWriter writer(&file);
     writer.setAutoFormatting(true);
-    const bool ok = saveTo(writer);
+    const bool ok = saveTo(writer, groupName);
     file.close();
-    if (ok)
-        backup(getBackupFile(QFileInfo(filename).absolutePath()), filename);
 
     return ok;
 }
 
-void OsmAnd::FavoriteLocationsGpxCollection_P::backup(const QString& backupFile, const QString& externalFile) const
+bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(const QString& fileName, bool append /*= false*/)
 {
-    bool ok = true;
-    const auto basePath = QFileInfo(externalFile).absolutePath();
-    OsmAnd::ArchiveWriter archiveWriter;
-    archiveWriter.createArchive(&ok, backupFile, {externalFile}, basePath);
-    if (!ok)
-        LogPrintf(LogSeverityLevel::Error, "Favorites backup failed");
-    clearOldBackups(basePath);
-}
-
-void OsmAnd::FavoriteLocationsGpxCollection_P::clearOldBackups(const QString& basePath) const
-{
-    QString fld = basePath + QDir::separator() + QStringLiteral("favourites_backup");
-    QDir dir(fld);
-    QFileInfoList fileInfos = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
-    for (int index = fileInfos.size(); index > BACKUP_MAX_COUNT; --index)
-    {
-         const QFileInfo& info = fileInfos[index - 1];
-         QFile::remove(info.absoluteFilePath());
-    }
-}
-
-QString OsmAnd::FavoriteLocationsGpxCollection_P::getBackupFile(const QString& basePath) const
-{
-    QString fld = basePath + QDir::separator() + QStringLiteral("favourites_backup");
-    QDir dir(fld);
-    if (!dir.exists())
-        dir.mkpath(QStringLiteral("."));
-    const auto fileName = QDateTime::currentDateTime().toString(QStringLiteral("yyyy_MM_dd_hh_mm_ss"));
-    const auto date = fileName.mid(0, 10);
-    QFileInfoList fileInfos = dir.entryInfoList(QStringList() << (date + QStringLiteral("*")), QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
-    for (int index = fileInfos.size(); index > BACKUP_MAX_PER_DAY; --index)
-    {
-         const QFileInfo& info = fileInfos[index - 1];
-         QFile::remove(info.absoluteFilePath());
-    }
-    return fld + QDir::separator() + fileName + QStringLiteral(".gpx.zip");
-}
-
-bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(const QString& filename)
-{
-    QFile file(filename);
+    QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;
 
     QXmlStreamReader reader(&file);
-    const bool ok = loadFrom(reader);
+    const bool ok = loadFrom(reader, append);
     file.close();
 
     return ok;
@@ -104,6 +64,11 @@ void OsmAnd::FavoriteLocationsGpxCollection_P::writeExtension(const QString &key
 }
 
 bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) const
+{
+    return saveTo(writer, QString());
+}
+
+bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer, const QString& groupName) const
 {
     QReadLocker scopedLocker(&_collectionLock);
 
@@ -126,10 +91,15 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 
     for (const auto& item : constOf(_collection))
     {
+        const auto group = item->getGroup();
+        if (!groupName.isNull() && group != groupName)
+            continue;
+
         // <wpt>
         writer.writeStartElement(QLatin1String("wpt"));
-        writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 7));
-        writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 7));
+        const auto& latLon = item->getLatLonPrecised();
+        writer.writeAttribute(QLatin1String("lat"), QString::number(latLon.latitude, 'f', kFavoriteLatLonPrecision));
+        writer.writeAttribute(QLatin1String("lon"), QString::number(latLon.longitude, 'f', kFavoriteLatLonPrecision));
 
         if (!item->getElevation().isNull() && item->getElevation().toDouble() > 0.)
         {
@@ -157,7 +127,6 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         if (!description.isEmpty())
             writer.writeTextElement(QLatin1String("desc"), description);
 
-        const auto group = item->getGroup();
         if (!group.isEmpty())
         {
             // <type>
@@ -228,7 +197,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
     return true;
 }
 
-bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlReader)
+bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlReader, bool append /*= false*/)
 {
     std::shared_ptr< FavoriteLocation > newItem;
     QList< std::shared_ptr< FavoriteLocation > > newItems;
@@ -275,6 +244,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 }
 
                 newItem.reset(new FavoriteLocation(LatLon(lat, lon)));
+                newItem->setGroup(QStringLiteral(""));
             }
             else if (tagName == QLatin1String("ele"))
             {
@@ -467,7 +437,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
     {
         QWriteLocker scopedLocker(&_collectionLock);
 
-        doClearFavoriteLocations();
+        if (!append)
+            doClearFavoriteLocations();
+
         appendFrom(newItems);
 
         notifyCollectionChanged();

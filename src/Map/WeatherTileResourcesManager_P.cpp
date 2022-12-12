@@ -152,11 +152,18 @@ QString OsmAnd::WeatherTileResourcesManager_P::getFormattedBandValue(const BandI
     {
         const auto settings = bandSettings[band];
         const auto& format = precise ? settings->unitFormatPrecise : settings->unitFormatGeneral;
-        // d i u o x X - int 
+        int roundValue = (int)(value + 0.5);
+        // d i u o x X - int
         if (format.contains('d') || format.contains('i') || format.contains('u') || format.contains('o') || format.contains('x') || format.contains('X'))
-            return QString::asprintf(qPrintable(format), (int)value);
+        {
+            return QString::asprintf(qPrintable(format), roundValue);
+        }
         else
-            return QString::asprintf(qPrintable(format), value);
+        {
+            auto intStr = QString::asprintf(qPrintable(format), (double)roundValue);
+            auto floatStr = QString::asprintf(qPrintable(format), value);
+            return intStr == floatStr ? QString::number(roundValue) : floatStr;
+        }
     }
     return QString::number(value);
 }
