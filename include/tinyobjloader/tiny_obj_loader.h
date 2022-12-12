@@ -2803,7 +2803,11 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
     // use mtl
     if ((0 == strncmp(token, "usemtl", 6))) {
       token += 6;
-      std::string namebuf = parseString(&token);
+
+      token += strspn(token, " \t");
+      size_t length = strcspn(token, "\0");
+      std::string namebuf = std::string(token, &token[length]);
+      token += length;
 
       int newMaterialId = -1;
       std::map<std::string, int>::const_iterator it =
