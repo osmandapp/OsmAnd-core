@@ -65,7 +65,8 @@ namespace OsmAnd
         FIELD_ACTION(unsigned int, onPathSymbolsRendered, "");                                                  \
         FIELD_ACTION(float, elapsedTimeForOnSurfaceSymbolsRendering, "s");                                      \
         FIELD_ACTION(unsigned int, onSurfaceSymbolsRendered, "");                                               \
-                                                                                                                \
+        /* Time elapsed for 3D models stage */                                                                  \
+        FIELD_ACTION(float, elapsedTimeFor3DModelsStage, "s");                                                  \
         /* Time elapsed for debug stage */                                                                      \
         FIELD_ACTION(float, elapsedTimeForDebugStage, "s");                                                     \
         FIELD_ACTION(float, elapsedTimeForDebugRects2D, "s");                                                   \

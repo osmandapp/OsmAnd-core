@@ -14,6 +14,7 @@
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 #include "AtlasMapRendererMapLayersStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
+#include "AtlasMapRenderer3DModelsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "OpenGL/GPUAPI_OpenGL.h"
 
@@ -83,6 +84,7 @@ namespace OsmAnd
         AtlasMapRendererSkyStage* createSkyStage() override;
         AtlasMapRendererMapLayersStage* createMapLayersStage() override;
         AtlasMapRendererSymbolsStage* createSymbolsStage() override;
+        AtlasMapRenderer3DModelsStage* create3DModelsStage() override;
         AtlasMapRendererDebugStage* createDebugStage() override;
 
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;

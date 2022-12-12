@@ -17,6 +17,7 @@ namespace OsmAnd
     class AtlasMapRendererSkyStage;
     class AtlasMapRendererMapLayersStage;
     class AtlasMapRendererSymbolsStage;
+    class AtlasMapRenderer3DModelsStage;
     class AtlasMapRendererDebugStage;
 
     class AtlasMapRenderer
@@ -78,6 +79,8 @@ namespace OsmAnd
         virtual AtlasMapRendererMapLayersStage* createMapLayersStage() = 0;
         std::shared_ptr<AtlasMapRendererSymbolsStage> _symbolsStage;
         virtual AtlasMapRendererSymbolsStage* createSymbolsStage() = 0;
+        std::shared_ptr<AtlasMapRenderer3DModelsStage> _3DModelsStage;
+        virtual AtlasMapRenderer3DModelsStage* create3DModelsStage() = 0;
         std::shared_ptr<AtlasMapRendererDebugStage> _debugStage;
         virtual AtlasMapRendererDebugStage* createDebugStage() = 0;
     public:
@@ -87,6 +90,7 @@ namespace OsmAnd
         const std::shared_ptr<AtlasMapRendererSkyStage>& skyStage;
         const std::shared_ptr<AtlasMapRendererMapLayersStage>& mapLayersStage;
         const std::shared_ptr<AtlasMapRendererSymbolsStage>& symbolsStage;
+        const std::shared_ptr<AtlasMapRenderer3DModelsStage>& modelsStage;
         const std::shared_ptr<AtlasMapRendererDebugStage>& debugStage;
 
         virtual QVector<TileId> getVisibleTiles() const Q_DECL_OVERRIDE;

@@ -23,6 +23,7 @@
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 #include "AtlasMapRendererMapLayersStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
+#include "AtlasMapRenderer3DModelsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
@@ -229,6 +230,23 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     // Restore straight color blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
+
+    if (!currentDebugSettings->disable3DModelsStage)
+    {
+        Stopwatch modelsStageStopwatch(metric != nullptr);
+
+        glDisable(GL_BLEND);
+        GL_CHECK_RESULT;
+
+        if (!_3DModelsStage->render(metric))
+            ok = false;
+
+        glEnable(GL_BLEND);
+        GL_CHECK_RESULT;
+
+        if (metric)
+            metric->elapsedTimeFor3DModelsStage = modelsStageStopwatch.elapsed();
+    }
 
     //TODO: render special fog object some day
 
@@ -1557,6 +1575,11 @@ OsmAnd::AtlasMapRendererMapLayersStage* OsmAnd::AtlasMapRenderer_OpenGL::createM
 OsmAnd::AtlasMapRendererSymbolsStage* OsmAnd::AtlasMapRenderer_OpenGL::createSymbolsStage()
 {
     return new AtlasMapRendererSymbolsStage_OpenGL(this);
+}
+
+OsmAnd::AtlasMapRenderer3DModelsStage* OsmAnd::AtlasMapRenderer_OpenGL::create3DModelsStage()
+{
+    return new AtlasMapRenderer3DModelsStage_OpenGL(this);
 }
 
 OsmAnd::AtlasMapRendererDebugStage* OsmAnd::AtlasMapRenderer_OpenGL::createDebugStage()
