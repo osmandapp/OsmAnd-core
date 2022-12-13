@@ -437,7 +437,7 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
             index = i;
         }
     }
-    if (dmax >= epsilon)
+    if (dmax >= epsilon && index > -1)
     {
         int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
         int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
