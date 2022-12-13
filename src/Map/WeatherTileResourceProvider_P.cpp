@@ -56,6 +56,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
             meta.setTileNumbering(QStringLiteral(""));
             _geoTilesDb->storeMeta(meta);
         }
+        _geoTilesDb->enableTileTimeSupport();
     }
 }
 
@@ -179,6 +180,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
             meta.setTileSize(tileSize);
             db->storeMeta(meta);
         }
+        db->enableTileTimeSupport();
         return db;
     }
     return nullptr;
@@ -204,11 +206,14 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
     {
+        auto currentTime = QDateTime::currentMSecsSinceEpoch();
         bool needToDownload = forceDownload;
         if (!forceDownload)
         {
-            bool hasData = _geoTilesDb->obtainTileData(tileId, zoom, outData) && !outData.isEmpty();
-            needToDownload = !hasData && !localData;
+            int64_t obtainedTime = 0;
+            bool hasData = geoDb->obtainTileData(tileId, zoom, outData, &obtainedTime) && !outData.isEmpty();
+            bool expired = obtainedTime > 0 && currentTime - obtainedTime > kGeoTileExpireTime;
+            needToDownload = (!hasData || expired) && !localData;
         }
         if (needToDownload)
         {
@@ -252,7 +257,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                             outData = tileFile.readAll();
                             tileFile.close();
                             if (!outData.isEmpty())
-                                geoDb->storeTileData(tileId, zoom, outData);
+                                geoDb->storeTileData(tileId, zoom, outData, currentTime);
 
                             res = true;
                         }
@@ -828,6 +833,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
 
     QList<BandIndex> missingBands;
     QHash<BandIndex, sk_sp<const SkImage>> images;
+    auto currentTime = QDateTime::currentMSecsSinceEpoch();
 
     for (auto band : bands)
     {
@@ -835,13 +841,21 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         if (db && db->isOpened())
         {
             QByteArray data;
-            if (db->obtainTileData(tileId, zoom, data) && !data.isEmpty())
+            int64_t rasterizedTime = 0;
+            if (db->obtainTileData(tileId, zoom, data, &rasterizedTime) && !data.isEmpty())
             {
-                const auto image = SkiaUtilities::createImageFromData(data);
-                if (image)
-                    images.insert(band, image);
-                else
+                if (rasterizedTime > 0 && currentTime - rasterizedTime > kGeoTileExpireTime)
+                {
                     missingBands << band;
+                }
+                else
+                {
+                    const auto image = SkiaUtilities::createImageFromData(data);
+                    if (image)
+                        images.insert(band, image);
+                    else
+                        missingBands << band;
+                }
             }
             else
             {
@@ -959,7 +973,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto db = _provider->getRasterTilesDatabase(band);
         if (db && db->isOpened())
         {
-            if (!db->storeTileData(tileId, zoom, data))
+            if (!db->storeTileData(tileId, zoom, data, currentTime))
             {
                 LogPrintf(LogSeverityLevel::Error,
                     "Failed to store tile image of rasterized weather tile %dx%dx%d in sqlitedb %s",
