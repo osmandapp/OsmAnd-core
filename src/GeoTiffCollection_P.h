@@ -108,10 +108,11 @@ namespace OsmAnd
         double earthInMeters;
         double earthIn31;
 
-        mutable QMutex _localCachePathMutex;
-        mutable QString _localCachePath;
+        mutable QMutex _localCacheDirMutex;
+        mutable QDir _localCacheDir;
 
         void invalidateCollectedSources();
+        void clearCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
         mutable QAtomicInteger<int32_t> _pixelSize31;
         mutable QHash<GeoTiffCollection::SourceOriginId, QHash<QString, GeoTiffProperties>> _collectedSources;
@@ -133,15 +134,13 @@ namespace OsmAnd
         GeoTiffCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         bool removeFile(const QFileInfo& fileInfo);
         bool remove(const GeoTiffCollection::SourceOriginId entryId);
-        void setLocalCachePath(const QString& localCachePath);
+        void setLocalCache(const QDir& localCacheDir);
         
         ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        QList<QString> getGeoTiffFilePaths(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
-            const uint32_t overlap, const uint32_t bandCount, const ZoomLevel minZoom = MinZoomLevel) const;
-        bool getGeoTiffData(const QList<QString>& filePaths, const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t tileSize, const uint32_t overlap, const uint32_t bandCount, const bool toBytes,
-            void *pBuffer, const ZoomLevel minZoom = MinZoomLevel) const;
+        bool getGeoTiffData(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
+            const uint32_t overlap, const uint32_t bandCount, const bool toBytes, void *pBuffer,
+            const ZoomLevel minZoom = MinZoomLevel) const;
 
     friend class OsmAnd::GeoTiffCollection;
     friend class OsmAnd::GeoTiffCollection_P__SignalProxy;

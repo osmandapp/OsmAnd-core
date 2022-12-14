@@ -47,12 +47,36 @@ OsmAnd::GeoTiffCollection_P::~GeoTiffCollection_P()
 
         _fileSystemWatcher->deleteLater();
     }
+    clearCollectedSources();
 }
 
 void OsmAnd::GeoTiffCollection_P::invalidateCollectedSources()
 {
     _pixelSize31.storeRelease(0);
     _collectedSourcesInvalidated.fetchAndAddOrdered(1);
+}
+
+void OsmAnd::GeoTiffCollection_P::clearCollectedSources()
+{
+    QWriteLocker scopedLocker(&_collectedSourcesLock);
+
+    // Check all previously collected sources
+    auto itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
+    while(itCollectedSourcesEntry.hasNext())
+    {
+        const auto& collectedSourcesEntry = itCollectedSourcesEntry.next();
+        auto& collectedSources = collectedSourcesEntry.value();
+        for(const auto& itCollectedSource : rangeOf(collectedSources))
+        {
+            if (auto& database = itCollectedSource.value().cacheDatabase)
+            {
+                database->close();
+                database.reset();
+            }
+        }
+        itCollectedSourcesEntry.remove();
+    }
+    invalidateCollectedSources();
 }
 
 void OsmAnd::GeoTiffCollection_P::collectSources() const
@@ -239,11 +263,11 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
         if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
             geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
         {
-            QMutexLocker scopedLocker(&_localCachePathMutex);
+            QMutexLocker scopedLocker(&_localCacheDirMutex);
 
             QFileInfo sourceFile(filePath);
-            const auto dbFilePath = (_localCachePath.isEmpty() ? filePath :
-                _localCachePath + QDir::separator() + sourceFile.fileName()) + QStringLiteral(".sqlite");
+            const auto dbFilePath = (_localCacheDir.path().isEmpty() ? filePath :
+                _localCacheDir.path() + QDir::separator() + sourceFile.fileName()) + QStringLiteral(".sqlite");
             const auto cacheDb = std::make_shared<TileSqliteDatabase>(dbFilePath);
             if (cacheDb->open(true))
             {
@@ -374,11 +398,14 @@ bool OsmAnd::GeoTiffCollection_P::remove(const GeoTiffCollection::SourceOriginId
     return true;
 }
 
-void OsmAnd::GeoTiffCollection_P::setLocalCachePath(const QString& localCachePath)
+void OsmAnd::GeoTiffCollection_P::setLocalCache(const QDir& localCacheDir)
 {
-    QWriteLocker scopedLocker1(&_collectedSourcesLock);
-    QMutexLocker scopedLocker2(&_localCachePathMutex);
-    _localCachePath = localCachePath;
+    {
+        QWriteLocker scopedLocker1(&_collectedSourcesLock);
+        QMutexLocker scopedLocker2(&_localCacheDirMutex);
+        _localCacheDir = localCacheDir;
+    }
+    clearCollectedSources();
 }
 
 OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::getMaxZoom(const uint32_t tileSize) const
@@ -411,18 +438,18 @@ OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::getMaxZoom(const uint32_t tileSiz
     return maxZoom;
 }
 
-QList<QString> OsmAnd::GeoTiffCollection_P::getGeoTiffFilePaths(const TileId& tileId, const ZoomLevel zoom,
-    const uint32_t tileSize, const uint32_t overlap, const uint32_t bandCount,
-    const ZoomLevel minZoom /*= MinZoomLevel*/) const
+bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
+    const uint32_t overlap, const uint32_t bandCount, const bool toBytes, void *pBuffer,
+    const ZoomLevel minZoom /* = MinZoomLevel */) const
 {
     // Check if sources were invalidated
     if (_collectedSourcesInvalidated.loadAcquire() > 0)
         collectSources();
     
-    QList<QString> result;
+    // Calculate tile edges to find corresponding data
     const auto maxZoom = getMaxZoom(tileSize - overlap);
     if (zoom < minZoom || zoom > maxZoom)
-        return result;
+        return false;
     const auto intMax = static_cast<double>(INT32_MAX);
     auto zoomDelta = MaxZoomLevel - zoom;
     int maxIndex = ~(-1u << zoomDelta);
@@ -436,165 +463,151 @@ QList<QString> OsmAnd::GeoTiffCollection_P::getGeoTiffFilePaths(const TileId& ti
     PointD lowerRight(
         qMin(intMax, static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset),
         qMin(intMax, static_cast<double>(lowerRight31.y) + 1.0 + overlapOffset));
-    {
-        QReadLocker scopedLocker(&_collectedSourcesLock);
 
-        for (const auto& collectedSources : constOf(_collectedSources))
-        {
-            for (const auto& itEntry : rangeOf(constOf(collectedSources)))
-            {
-                const auto& filePath = itEntry.key();
-                const auto& tiffProperties = itEntry.value();
-                if (bandCount <= tiffProperties.rasterBandCount &&
-                    tiffProperties.region31.contains(AreaD(upperLeft, lowerRight)))
-                {
-                    const int zoomShift = zoom - minZoom;
-                    if (zoomShift > 0 && minZoom > MinZoomLevel)
-                    {
-                        auto zoomDelta = MaxZoomLevel - minZoom;
-                        maxIndex = ~(-1u << zoomDelta);
-                        auto overlapOffset = (static_cast<double>(maxIndex) + 1.0) * 0.5 *
-                            static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
-                        upperLeft31.x = tileId.x >> zoomShift << zoomDelta;
-                        upperLeft31.y = tileId.y >> zoomShift << zoomDelta;
-                        lowerRight31.x = upperLeft31.x | maxIndex;
-                        lowerRight31.y = upperLeft31.y | maxIndex;
-                        upperLeft.x = qMax(0.0, static_cast<double>(upperLeft31.x) - overlapOffset);
-                        upperLeft.y = qMax(0.0, static_cast<double>(upperLeft31.y) - overlapOffset);
-                        lowerRight.x = qMin(intMax, static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset);
-                        lowerRight.y = qMin(intMax, static_cast<double>(lowerRight31.y) + 1.0 + overlapOffset);
-                        if (tiffProperties.region31.contains(AreaD(upperLeft, lowerRight)))
-                            result.append(filePath);
-                    }
-                    else
-                        result.append(filePath);
-                }
-            }
-        }
-    }
-    return result;
-}
-
-bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const QList<QString>& filePaths,
-    const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize, const uint32_t overlap,
-    const uint32_t bandCount, const bool toBytes, void *pBuffer, const ZoomLevel minZoom /* = MinZoomLevel */) const
-{
-    // Check if sources were invalidated
-    if (_collectedSourcesInvalidated.loadAcquire() > 0)
-        collectSources();
-    
-    const auto maxZoom = getMaxZoom(tileSize - overlap);
-    if (zoom > maxZoom)
-        return false;
+    // Calculate data properties
     const auto specification = tileSize * 100 + overlap * 10 + (toBytes ? bandCount : bandCount + 4);
     const auto destDataType = toBytes ? GDT_Byte : GDT_Float32;
     const auto pixelSizeInBytes = destDataType == GDT_Byte ? 1 : 4;
     const auto bufferSize = bandCount * tileSize * tileSize * pixelSizeInBytes;
-    for (const auto& filePath : filePaths)
-    {
-        std::shared_ptr<OsmAnd::TileSqliteDatabase> cacheDatabase;
-        {
-            QReadLocker scopedLocker(&_collectedSourcesLock);
-            
-            // Check if data is available in cache file
-            for (const auto& collectedSources : constOf(_collectedSources))
-            {
-                const auto tiffProperties = collectedSources.constFind(filePath);
-                if (tiffProperties != collectedSources.cend())
-                {
-                    cacheDatabase = tiffProperties->cacheDatabase;
-                    if (cacheDatabase->isOpened())
-                    {
-                        TileSqliteDatabase::Meta meta;
-                        if (!cacheDatabase->obtainMeta(meta))
-                        {
-                            meta.setMinZoom(minZoom);
-                            meta.setMaxZoom(maxZoom);
-                            meta.setTileNumbering(QStringLiteral(""));
-                            meta.setSpecificated(QStringLiteral("yes"));
-                            cacheDatabase->storeMeta(meta);
-                        }
-                        else if (cacheDatabase->obtainTileData(tileId, zoom, specification, pBuffer))
-                            return true;
-                    }
-                }
-            }
-        }    
-        
-        bool result = false;
-        if (const auto dataset = (GDALDataset *) GDALOpen(qPrintable(filePath), GA_ReadOnly))
-        {
-            // Read raster data from source Geotiff file
-            const auto rasterBandCount = dataset->GetRasterCount();
-            GDALRasterBand* band;
-            result = rasterBandCount > 0 && rasterBandCount < 5 && rasterBandCount >= bandCount;
-            double geoTransform[6];
-            if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
-                geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
-            {
-                const auto zoomDelta = MaxZoomLevel - zoom;
-                const int maxIndex = ~(-1u << zoomDelta);
-                auto overlapOffset = (static_cast<double>(maxIndex) + 1.0) * 0.5 *
-                    static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
-                const PointI upperLeft31(tileId.x << zoomDelta, tileId.y << zoomDelta);
-                const PointI lowerRight31(upperLeft31.x | maxIndex, upperLeft31.y | maxIndex);
-                PointD upperLeft(static_cast<double>(upperLeft31.x) - overlapOffset,
-                    static_cast<double>(INT32_MAX) - static_cast<double>(upperLeft31.y) + overlapOffset);
-                PointD lowerRight(static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset,
-                    static_cast<double>(INT32_MAX) - static_cast<double>(lowerRight31.y) - 1.0 - overlapOffset);
-                upperLeft = metersFrom31(upperLeft);
-                lowerRight = metersFrom31(lowerRight);
-                upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
-                upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
-                lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
-                lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
-                GDALRasterIOExtraArg extraArg;
-                extraArg.nVersion = RASTERIO_EXTRA_ARG_CURRENT_VERSION;
-                extraArg.eResampleAlg = GRIORA_Average;
-                extraArg.pfnProgress = CPL_NULLPTR;
-                extraArg.pProgressData = CPL_NULLPTR;
-                extraArg.bFloatingPointWindowValidity = TRUE;
-                extraArg.dfXOff = upperLeft.x;
-                extraArg.dfYOff = upperLeft.y;
-                extraArg.dfXSize = lowerRight.x - upperLeft.x;
-                extraArg.dfYSize = lowerRight.y - upperLeft.y;
-                const auto pByteBuffer = static_cast<char*>(pBuffer);
-                auto pData = pByteBuffer;
-                for (int bandIndex = 1; bandIndex <= bandCount; bandIndex++)
-                {
-                    result = result && (band = dataset->GetRasterBand(bandIndex));
-                    result = result && band->GetRasterDataType() != GDT_Unknown;
-                    result = result && !band->GetColorTable();
-                    result = result && band->RasterIO(GF_Read,
-                        std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                        std::ceil(extraArg.dfXSize), std::ceil(extraArg.dfYSize),
-                        pData, tileSize, tileSize,
-                        destDataType, 0, 0, &extraArg) == CE_None;
-                    if (!result) break;
-                    pData += tileSize * tileSize * pixelSizeInBytes;
-                }
-                if (result && destDataType == GDT_Float32 && bufferSize >= 8)
-                {
-                    const auto noData = static_cast<float>(band->GetNoDataValue());
-                    pData = pByteBuffer + bufferSize / 8 * 4;
-                    result = *(reinterpret_cast<const float*>(pData)) != noData;
-                }
-                if (result && cacheDatabase)
-                {                       
-                    QReadLocker scopedLocker(&_collectedSourcesLock);
 
-                    // Keep raster data in cache file
-                    if (cacheDatabase->isOpened())
+    QReadLocker scopedLocker(&_collectedSourcesLock);
+
+    for (const auto& collectedSources : constOf(_collectedSources))
+    {
+        for (const auto& itEntry : rangeOf(constOf(collectedSources)))
+        {
+            const auto& filePath = itEntry.key();
+            const auto& tiffProperties = itEntry.value();
+            if (bandCount <= tiffProperties.rasterBandCount &&
+                tiffProperties.region31.contains(AreaD(upperLeft, lowerRight)))
+            {
+                const int zoomShift = zoom - minZoom;
+                bool tileFound = true;
+                if (zoomShift > 0 && minZoom > MinZoomLevel)
+                {
+                    auto zoomDelta = MaxZoomLevel - minZoom;
+                    maxIndex = ~(-1u << zoomDelta);
+                    auto overlapOffset = (static_cast<double>(maxIndex) + 1.0) * 0.5 *
+                        static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
+                    upperLeft31.x = tileId.x >> zoomShift << zoomDelta;
+                    upperLeft31.y = tileId.y >> zoomShift << zoomDelta;
+                    lowerRight31.x = upperLeft31.x | maxIndex;
+                    lowerRight31.y = upperLeft31.y | maxIndex;
+                    upperLeft.x = qMax(0.0, static_cast<double>(upperLeft31.x) - overlapOffset);
+                    upperLeft.y = qMax(0.0, static_cast<double>(upperLeft31.y) - overlapOffset);
+                    lowerRight.x = qMin(intMax, static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset);
+                    lowerRight.y = qMin(intMax, static_cast<double>(lowerRight31.y) + 1.0 + overlapOffset);
+                    if (!tiffProperties.region31.contains(AreaD(upperLeft, lowerRight)))
+                        tileFound = false;
+                }
+
+                if (tileFound)
+                {
+                    std::shared_ptr<OsmAnd::TileSqliteDatabase> cacheDatabase;
+                        
+                    // Check if data is available in cache file
+                    for (const auto& collectedSources : constOf(_collectedSources))
                     {
-                        cacheDatabase->storeTileData(tileId, zoom, specification,
-                            QByteArray::fromRawData(pByteBuffer, bufferSize));
+                        const auto tiffProperties = collectedSources.constFind(filePath);
+                        if (tiffProperties != collectedSources.cend())
+                        {
+                            cacheDatabase = tiffProperties->cacheDatabase;
+                            if (cacheDatabase->isOpened())
+                            {
+                                TileSqliteDatabase::Meta meta;
+                                if (!cacheDatabase->obtainMeta(meta))
+                                {
+                                    meta.setMinZoom(minZoom);
+                                    meta.setMaxZoom(maxZoom);
+                                    meta.setTileNumbering(QStringLiteral(""));
+                                    meta.setSpecificated(QStringLiteral("yes"));
+                                    cacheDatabase->storeMeta(meta);
+                                }
+                                else if (cacheDatabase->obtainTileData(tileId, zoom, specification, pBuffer))
+                                    return true;
+                            }
+                        }
                     }
+                    
+                    bool result = false;
+                    if (const auto dataset = (GDALDataset *) GDALOpen(qPrintable(filePath), GA_ReadOnly))
+                    {
+                        // Read raster data from source Geotiff file
+                        const auto rasterBandCount = dataset->GetRasterCount();
+                        GDALRasterBand* band;
+                        result = rasterBandCount > 0 && rasterBandCount < 5 && rasterBandCount >= bandCount;
+                        double geoTransform[6];
+                        if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
+                            geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
+                        {
+                            const auto zoomDelta = MaxZoomLevel - zoom;
+                            const int maxIndex = ~(-1u << zoomDelta);
+                            auto overlapOffset = (static_cast<double>(maxIndex) + 1.0) * 0.5 *
+                                static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
+                            const PointI upperLeft31(tileId.x << zoomDelta, tileId.y << zoomDelta);
+                            const PointI lowerRight31(upperLeft31.x | maxIndex, upperLeft31.y | maxIndex);
+                            PointD upperLeft(static_cast<double>(upperLeft31.x) - overlapOffset,
+                                static_cast<double>(INT32_MAX) -
+                                static_cast<double>(upperLeft31.y) + overlapOffset);
+                            PointD lowerRight(static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset,
+                                static_cast<double>(INT32_MAX) -
+                                static_cast<double>(lowerRight31.y) - 1.0 - overlapOffset);
+                            upperLeft = metersFrom31(upperLeft);
+                            lowerRight = metersFrom31(lowerRight);
+                            upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
+                            upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
+                            lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
+                            lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
+                            GDALRasterIOExtraArg extraArg;
+                            extraArg.nVersion = RASTERIO_EXTRA_ARG_CURRENT_VERSION;
+                            extraArg.eResampleAlg = GRIORA_Average;
+                            extraArg.pfnProgress = CPL_NULLPTR;
+                            extraArg.pProgressData = CPL_NULLPTR;
+                            extraArg.bFloatingPointWindowValidity = TRUE;
+                            extraArg.dfXOff = upperLeft.x;
+                            extraArg.dfYOff = upperLeft.y;
+                            extraArg.dfXSize = lowerRight.x - upperLeft.x;
+                            extraArg.dfYSize = lowerRight.y - upperLeft.y;
+                            const auto pByteBuffer = static_cast<char*>(pBuffer);
+                            auto pData = pByteBuffer;
+                            for (int bandIndex = 1; bandIndex <= bandCount; bandIndex++)
+                            {
+                                result = result && (band = dataset->GetRasterBand(bandIndex));
+                                result = result && band->GetRasterDataType() != GDT_Unknown;
+                                result = result && !band->GetColorTable();
+                                result = result && band->RasterIO(GF_Read,
+                                    std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
+                                    std::ceil(extraArg.dfXSize), std::ceil(extraArg.dfYSize),
+                                    pData, tileSize, tileSize,
+                                    destDataType, 0, 0, &extraArg) == CE_None;
+                                if (!result) break;
+                                pData += tileSize * tileSize * pixelSizeInBytes;
+                            }
+                            if (result && destDataType == GDT_Float32 && bufferSize >= 8)
+                            {
+                                // Check the value in the middle to know the data is valid
+                                const auto noData = static_cast<float>(band->GetNoDataValue());
+                                pData = pByteBuffer + bufferSize / 8 * 4;
+                                result = *(reinterpret_cast<const float*>(pData)) != noData;
+                            }
+                            if (result && cacheDatabase)
+                            {
+                                // Put raster data in cache file
+                                if (cacheDatabase->isOpened())
+                                    cacheDatabase->storeTileData(tileId, zoom, specification,
+                                        QByteArray::fromRawData(pByteBuffer, bufferSize));
+                            }
+                        }
+                        GDALClose(dataset);
+                    }
+                    if (result)
+                        return true;
                 }
             }
-            GDALClose(dataset);
         }
-        return result;
     }
+
+    return false;
 }
 
 void OsmAnd::GeoTiffCollection_P::onDirectoryChanged(const QString& path)
