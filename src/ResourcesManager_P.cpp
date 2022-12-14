@@ -378,11 +378,11 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QLatin1String("Slope *.sqlitedb"),
             ResourceType::SlopeRegion);
 
-        // Find ResourceType::HeightmapRegion -> "*.heightmap.sqlitedb" files
+        // Find ResourceType::HeightmapRegion -> "*.heightmap.sqlite" files
         loadLocalResourcesFromPath_SQLiteDB(
             storagePath,
             outResult,
-            QLatin1String("*.heightmap.sqlitedb"),
+            QLatin1String("*.heightmap.sqlite"),
             ResourceType::HeightmapRegion);
         
         // Find ResourceType::OnlineTileSources -> ".metainfo" files
@@ -540,6 +540,10 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             .replace(QStringLiteral(".sqlitedb"), QStringLiteral(".slope.sqlitedb"))
             .replace(' ', '_');
         }
+        else
+        {
+            resourceId = resourceId.toLower();
+        }
         const auto pLocalResource = new InstalledResource(
             resourceId,
             resourceType,
@@ -581,7 +585,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             resourceId = resourceId
                 .replace("_", " ");
         }
-        else if (fileName.endsWith(".heightmap.sqlitedb"))
+        else if (fileName.endsWith(".heightmap.sqlite"))
         {
             resourceType = ResourceType::HeightmapRegion;
         }
@@ -590,7 +594,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             resourceType = ResourceType::HeightmapRegion;
             resourceId = resourceId
                 .remove("Heightmap_")
-                .replace(".sqlitedb", ".heightmap.sqlitedb");
+                .replace(".sqlite", ".heightmap.sqlite");
         }
 
         if (resourceType == ResourceType::Unknown)
@@ -1007,12 +1011,10 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::HeightmapRegion:
-                // 'Heightmap_[region].sqlitedb' -> '[region].heightmap.sqlitedb'
+                // 'Heightmap_[region].heightmap.sqlite' -> '[region].heightmap.sqlite'
                 resourceId = QString(name)
                     .remove(QLatin1String("Heightmap_"))
-                    .remove(QLatin1String(".sqlitedb"))
-                    .toLower()
-                    .append(QLatin1String(".heightmap.sqlitedb"));
+                    .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?heightmap=yes&file=") +
@@ -1594,7 +1596,7 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
     std::shared_ptr<const InstalledResource>& outResource,
     const QString& localPath_ /*= QString::null*/)
 {
-    assert(id.endsWith(".sqlitedb"));
+    assert(id.endsWith(".sqlitedb") || id.endsWith(".sqlite"));
 
     // Copy that file
     QString fileName(id);
