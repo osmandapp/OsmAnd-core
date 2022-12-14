@@ -25,6 +25,8 @@
 #include <OsmAndCore/Map/GeoBandSettings.h>
 #include <OsmAndCore/Map/WeatherCommonTypes.h>
 
+static const int64_t kGeoTileExpireTime = 1000 * 60 * 60 * 6; // 6 hours
+
 namespace OsmAnd
 {
     class WeatherTileResourceProvider_P;

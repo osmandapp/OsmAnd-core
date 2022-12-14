@@ -115,7 +115,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     auto projSearchPath = owner->projSearchPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
     OSRSetPROJSearchPaths(projPaths);
-    
+
     // Decode data as GeoTIFF
     std::shared_ptr<void> hSourceDS(
         GDALOpen(qPrintable(filename), GA_ReadOnly),
@@ -229,7 +229,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
             "-t_srs", "epsg:3857",
             "-r", "cubic",
             "-multi",
-            "-wo", "NUM_THREADS=ALL_CPUS",
+            //"-wo", "NUM_THREADS=ALL_CPUS",
+            "-wo", "NUM_THREADS=2",
             "-te",
             interBoundsMinXStr.constData(),
             interBoundsMinYStr.constData(),
@@ -507,7 +508,7 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
     auto projSearchPath = owner->projSearchPath.toUtf8();
     const char* projPaths[] = { projSearchPath.constData(), NULL };
     OSRSetPROJSearchPaths(projPaths);
-    
+
     // Decode data as GeoTIFF
     std::shared_ptr<void> hSourceDS(
         GDALOpen(qPrintable(filename), GA_ReadOnly),

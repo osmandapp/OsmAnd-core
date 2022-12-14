@@ -115,35 +115,37 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
 
         outData.reset();
     }
-    auto contourStyleName = settings->contourStyleName;
+    const auto contourStyleName = settings->contourStyleName;
     auto contourUnit = settings->unit;
     contourUnit = contourUnit.remove(QStringLiteral("°"));
 
-    auto band = owner->band;
+    const auto tileId = request.tileId;
+    const auto zoom = request.zoom;
+    const auto band = owner->band;
     QList<BandIndex> bands;
     bands << band;
-        
+
     WeatherTileResourcesManager::TileRequest _request;
     _request.weatherType = WeatherType::Contour;
     _request.dateTime = owner->dateTime;
-    _request.tileId = request.tileId;
-    _request.zoom = request.zoom;
+    _request.tileId = tileId;
+    _request.zoom = zoom;
     _request.bands = bands;
     _request.queryController = request.queryController;
     _request.localData = owner->localData;
 
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
-    [this, band, &contourStyleName, &contourUnit, &request, &outData, &tileEntry, &result]
+    [this, band, &contourStyleName, &contourUnit, &tileId, &zoom, &outData, &tileEntry, &result]
         (const bool requestSucceeded,
             const std::shared_ptr<WeatherTileResourcesManager::Data>& data,
             const std::shared_ptr<Metric>& metric)
         {
-            if (data && !data->contourMap.empty())
+            if (data && data->contourMap.contains(band) && !data->contourMap[band].isEmpty())
             {
                 QList<std::shared_ptr<const MapObject>> mapObjects;
                 
-                const auto& contours = data->contourMap.values().first();
-                for (auto& contour : contours)
+                const auto& contours = data->contourMap[band];
+                for (const auto& contour : contours)
                 {
                     if (contour->points.empty())
                         continue;
@@ -154,7 +156,7 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                     auto mapObj = std::make_shared<OsmAnd::MapObject>();
                     mapObj->points31 = contour->points;
                     //mapObj->computeBBox31();
-                    mapObj->bbox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
+                    mapObj->bbox31 = Utilities::tileBoundingBox31(tileId, zoom);
                     
                     auto attributeMapping = std::make_shared<OsmAnd::MapObject::AttributeMapping>();
                     
@@ -172,17 +174,11 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                     mapObj->captionsOrder << 2;
 
                     mapObjects << mapObj;
-
-//                    LogPrintf(LogSeverityLevel::Debug, "Weather contour line: %.2f (%d) tile %dx%d@%d",
-//                              contour->value, contour->points.length(), request.tileId.x, request.tileId.y, request.zoom);
                 }
 
-//                LogPrintf(LogSeverityLevel::Debug, "Weather contour line tile %dx%d@%d",
-//                          request.tileId.x, request.tileId.y, request.zoom);
-
                 const auto newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
-                    request.tileId,
-                    request.zoom,
+                    tileId,
+                    zoom,
                     MapSurfaceType::Undefined,
                     mapObjects);
 
@@ -200,7 +196,7 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                 // Create empty tile to avoid rendering artefacts while zooming
                 QList<std::shared_ptr<const MapObject>> mapObjects;
                 auto mapObj = std::make_shared<OsmAnd::MapObject>();
-                mapObj->bbox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
+                mapObj->bbox31 = Utilities::tileBoundingBox31(tileId, zoom);
                 mapObj->points31.push_back(mapObj->bbox31.topLeft);
                 mapObj->points31.push_back(mapObj->bbox31.topLeft);
                 auto attributeMapping = std::make_shared<OsmAnd::MapObject::AttributeMapping>();
@@ -211,8 +207,8 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
                 mapObjects << mapObj;
                 
                 const auto newTiledData = std::make_shared<GeoTileObjectsProvider::Data>(
-                    request.tileId,
-                    request.zoom,
+                    tileId,
+                    zoom,
                     MapSurfaceType::Undefined,
                     mapObjects);
 
