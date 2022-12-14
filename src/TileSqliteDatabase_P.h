@@ -58,7 +58,7 @@ namespace OsmAnd
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, ZoomLevel zoom) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
-        static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement, int index);
+        static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement, int index, void* data = nullptr);
         static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement, QString name, QVariant value);
         static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement, int index, QVariant value);
         static int stepStatement(const std::shared_ptr<sqlite3_stmt>& statement);
@@ -77,7 +77,7 @@ namespace OsmAnd
         ImplementationInterface<TileSqliteDatabase> owner;
 
         bool isOpened() const;
-        bool open();
+        bool open(const bool withSpecification = false);
         bool close(bool compact = true);
 
         bool isTileTimeSupported() const;
@@ -86,7 +86,6 @@ namespace OsmAnd
 
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
-        bool enableTileSpecificationSupport(bool force = false);
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
@@ -115,7 +114,7 @@ namespace OsmAnd
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
-            QByteArray& outData, int64_t* pOutTime = nullptr) const;
+            void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
         bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
             const QByteArray& data, int64_t time = 0);

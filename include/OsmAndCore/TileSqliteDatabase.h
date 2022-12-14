@@ -72,9 +72,9 @@ namespace OsmAnd
             QString getTimeColumn(bool* outOk = nullptr) const;
             void setTimeColumn(QString timeColumn);
 
-            static const QString SPECIFICATION_COLUMN;
-            QString getSpecificationColumn(bool* outOk = nullptr) const;
-            void setSpecificationColumn(QString specificationColumn);
+            static const QString SPECIFICATED;
+            QString getSpecificated(bool* outOk = nullptr) const;
+            void setSpecificated(QString specificated);
 
             static const QString EXPIRE_MINUTES;
             int64_t getExpireMinutes(bool* outOk = nullptr) const;
@@ -99,7 +99,7 @@ namespace OsmAnd
         const QString filename;
 
         bool isOpened() const;
-        bool open();
+        bool open(const bool withSpecification = false);
         bool close(bool compact = true);
         bool isOnlineTileSource() const;
 
@@ -109,7 +109,6 @@ namespace OsmAnd
 
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
-        bool enableTileSpecificationSupport(bool force = false);
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
@@ -137,7 +136,7 @@ namespace OsmAnd
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
-            QByteArray& outData, int64_t* pOutTime = nullptr) const;
+            void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
         bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
             const QByteArray& data, int64_t time = 0);

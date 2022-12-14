@@ -79,15 +79,18 @@ namespace OsmAnd
                 , pixelSize31(1)
                 , rasterBandCount(0)
                 , bandDataType(0)
+                , cacheDatabase(nullptr)
             {
             }
 
             GeoTiffProperties(const PointD& upperLeft31_, const PointD& lowerRight31_,
-                int32_t pixelSize31_, int rasterBandCount_, int bandDataType_)
+                int32_t pixelSize31_, int rasterBandCount_, int bandDataType_,
+                std::shared_ptr<TileSqliteDatabase> cacheDatabase_)
                 : region31(AreaD(upperLeft31_, lowerRight31_))
                 , pixelSize31(pixelSize31_)
                 , rasterBandCount(rasterBandCount_)
                 , bandDataType(bandDataType_)
+                , cacheDatabase(cacheDatabase_)
             {
             }
 
@@ -95,6 +98,7 @@ namespace OsmAnd
             int32_t pixelSize31;
             int rasterBandCount;
             int bandDataType;
+            std::shared_ptr<TileSqliteDatabase> cacheDatabase;
         };
 
         QHash<GeoTiffCollection::SourceOriginId, std::shared_ptr<const SourceOrigin>> _sourcesOrigins;
@@ -103,6 +107,9 @@ namespace OsmAnd
 
         double earthInMeters;
         double earthIn31;
+
+        mutable QMutex _localCachePathMutex;
+        mutable QString _localCachePath;
 
         void invalidateCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
@@ -115,7 +122,7 @@ namespace OsmAnd
         double metersFrom31(const double position31) const;
         PointD metersFrom31(const PointD& location31) const;
         ZoomLevel calcMaxZoom(const int32_t pixelSize31, const uint32_t tileSize) const;
-        GeoTiffProperties getGeoTiffProperties(const QString& filename) const;
+        GeoTiffProperties getGeoTiffProperties(const QString& filePath) const;
     public:
         virtual ~GeoTiffCollection_P();
 
@@ -126,13 +133,14 @@ namespace OsmAnd
         GeoTiffCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         bool removeFile(const QFileInfo& fileInfo);
         bool remove(const GeoTiffCollection::SourceOriginId entryId);
-
+        void setLocalCachePath(const QString& localCachePath);
+        
         ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        QList<QString> getGeoTiffFilenames(const TileId& tileId, const ZoomLevel zoom,
-            const uint32_t overlap, const uint32_t tileSize, const ZoomLevel minZoom = MinZoomLevel) const;
-        bool getGeoTiffData(const QList<QString>& filenames,
-            const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize, const uint32_t overlap,
+        QList<QString> getGeoTiffFilePaths(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
+            const uint32_t overlap, const uint32_t bandCount, const ZoomLevel minZoom = MinZoomLevel) const;
+        bool getGeoTiffData(const QList<QString>& filePaths, const TileId& tileId, const ZoomLevel zoom,
+            const uint32_t tileSize, const uint32_t overlap, const uint32_t bandCount, const bool toBytes,
             void *pBuffer, const ZoomLevel minZoom = MinZoomLevel) const;
 
     friend class OsmAnd::GeoTiffCollection;

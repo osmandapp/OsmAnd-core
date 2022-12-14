@@ -24,9 +24,9 @@ bool OsmAnd::TileSqliteDatabase::isOpened() const
     return _p->isOpened();
 }
 
-bool OsmAnd::TileSqliteDatabase::open()
+bool OsmAnd::TileSqliteDatabase::open(const bool withSpecification /* = false */)
 {
-    return _p->open();
+    return _p->open(withSpecification);
 }
 
 bool OsmAnd::TileSqliteDatabase::close(bool compact /* = true */)
@@ -62,11 +62,6 @@ bool OsmAnd::TileSqliteDatabase::isTileSpecificationSupported() const
 bool OsmAnd::TileSqliteDatabase::hasSpecificationColumn() const
 {
     return _p->hasSpecificationColumn();
-}
-
-bool OsmAnd::TileSqliteDatabase::enableTileSpecificationSupport(bool force /* = false */)
-{
-    return _p->enableTileSpecificationSupport(force);
 }
 
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase::getMinZoom() const
@@ -169,7 +164,7 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     int specification,
-    QByteArray& outData,
+    void* outData,
     int64_t* pOutTime /* = nullptr*/) const
 {
     return _p->obtainTileData(tileId, zoom, specification, outData, pOutTime);
@@ -490,25 +485,25 @@ void OsmAnd::TileSqliteDatabase::Meta::setTimeColumn(QString timeColumn)
     values.insert(TIME_COLUMN, QVariant(qMove(timeColumn)));
 }
 
-const QString OsmAnd::TileSqliteDatabase::Meta::SPECIFICATION_COLUMN(QStringLiteral("specificationcolumn"));
+const QString OsmAnd::TileSqliteDatabase::Meta::SPECIFICATED(QStringLiteral("specificated"));
 
-QString OsmAnd::TileSqliteDatabase::Meta::getSpecificationColumn(bool* outOk /* = nullptr*/) const
+QString OsmAnd::TileSqliteDatabase::Meta::getSpecificated(bool* outOk /* = nullptr*/) const
 {
     if (outOk)
         *outOk = false;
 
-    const auto itSpecificationColumn = values.constFind(SPECIFICATION_COLUMN);
-    if (itSpecificationColumn == values.cend())
+    const auto itSpecificated = values.constFind(SPECIFICATED);
+    if (itSpecificated == values.cend())
         return QString();
 
     if (outOk)
         *outOk = true;
-    return itSpecificationColumn->toString();
+    return itSpecificated->toString();
 }
 
-void OsmAnd::TileSqliteDatabase::Meta::setSpecificationColumn(QString specificationColumn)
+void OsmAnd::TileSqliteDatabase::Meta::setSpecificated(QString specificated)
 {
-    values.insert(SPECIFICATION_COLUMN, QVariant(qMove(specificationColumn)));
+    values.insert(SPECIFICATED, QVariant(qMove(specificated)));
 }
 
 const QString OsmAnd::TileSqliteDatabase::Meta::EXPIRE_MINUTES(QStringLiteral("expireminutes"));

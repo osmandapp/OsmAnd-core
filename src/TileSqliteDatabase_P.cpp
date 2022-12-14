@@ -42,7 +42,7 @@ bool OsmAnd::TileSqliteDatabase_P::isOpened() const
     return _isOpened.loadAcquire() != 0;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::open()
+bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false */)
 {
     if (!isOpened())
     {
@@ -84,14 +84,20 @@ bool OsmAnd::TileSqliteDatabase_P::open()
 
         const auto meta = readMeta(database);
 
-        if (!execStatement(database, QStringLiteral(
+        const auto sqlHead = QStringLiteral(
             "CREATE TABLE IF NOT EXISTS tiles("
             "   x INTEGER NOT NULL,"
             "   y INTEGER NOT NULL,"
-            "   z INTEGER NOT NULL,"
+            "   z INTEGER NOT NULL,");
+        const auto sqlTail = withSpecification ? QStringLiteral(
+            "   s INTEGER NOT NULL,"
+            "   image BLOB,"
+            "   PRIMARY KEY (x, y, z, s)"
+            ")") : QStringLiteral(
             "   image BLOB,"
             "   PRIMARY KEY (x, y, z)"
-            ")")))
+            ")");
+        if (!execStatement(database, sqlHead + sqlTail))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -112,7 +118,7 @@ bool OsmAnd::TileSqliteDatabase_P::open()
             return false;
         }
 
-        if (res == 0)
+        if (res <= 1)
         {
 
             if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
@@ -140,6 +146,17 @@ bool OsmAnd::TileSqliteDatabase_P::open()
                 LogPrintf(
                     LogSeverityLevel::Error,
                     "Failed to create index on tiles(z): %s",
+                    sqlite3_errmsg(database.get()));
+
+                return false;
+            }
+
+            if (withSpecification &&
+                !execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_s_index ON tiles(s)")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to create index on tiles(s): %s",
                     sqlite3_errmsg(database.get()));
 
                 return false;
@@ -280,6 +297,8 @@ bool OsmAnd::TileSqliteDatabase_P::isTileTimeSupported() const
         return false;
     }
 
+    QReadLocker scopedLocker(&_lock);
+
     isSupported = QString::compare(timeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
     isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
     
@@ -293,6 +312,9 @@ bool OsmAnd::TileSqliteDatabase_P::hasTimeColumn() const
     {
         return false;
     }
+
+    QReadLocker scopedLocker(&_lock);
+
     return execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1"));
  }
 
@@ -309,7 +331,7 @@ bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false *
     }
 
     {
-        QReadLocker scopedLocker(&_lock);
+        QWriteLocker scopedLocker(&_lock);
 
         if (!execStatement(_database, QStringLiteral("SELECT time FROM tiles LIMIT 1")))
         {
@@ -363,12 +385,14 @@ bool OsmAnd::TileSqliteDatabase_P::isTileSpecificationSupported() const
     }
 
     bool ok = false;
-    const auto specificationColumn = meta.getSpecificationColumn(&ok);
+    const auto specificationColumn = meta.getSpecificated(&ok);
     if (!ok)
     {
         _cachedIsTileSpecificationSupported.storeRelease(0);
         return false;
     }
+
+    QReadLocker scopedLocker(&_lock);
 
     isSupported = QString::compare(specificationColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
     isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"));
@@ -383,54 +407,11 @@ bool OsmAnd::TileSqliteDatabase_P::hasSpecificationColumn() const
     {
         return false;
     }
+
+    QReadLocker scopedLocker(&_lock);
+
     return execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"));
  }
-
-bool OsmAnd::TileSqliteDatabase_P::enableTileSpecificationSupport(bool force /* = false */)
-{
-    if (!isOpened())
-    {
-        return false;
-    }
-
-    if (isTileSpecificationSupported() && !force)
-    {
-        return true;
-    }
-
-    {
-        QReadLocker scopedLocker(&_lock);
-
-        if (!execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1")))
-        {
-            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN s INTEGER")))
-            {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to add specification column: %s",
-                    sqlite3_errmsg(_database.get()));
-                return false;
-            }
-        }
-    }
-
-    Meta meta;
-    if (!obtainMeta(meta))
-    {
-        return false;
-    }
-
-    meta.setSpecificationColumn(QStringLiteral("yes"));
-
-    if (!storeMeta(meta))
-    {
-        return false;
-    }
-
-    _cachedIsTileSpecificationSupported.storeRelease(1);
-
-    return true;
-}
 
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMinZoom() const
 {
@@ -808,6 +789,8 @@ bool OsmAnd::TileSqliteDatabase_P::obtainMeta(OsmAnd::TileSqliteDatabase_P::Meta
 
         if (!_meta)
         {
+            QReadLocker scopedLocker2(&_lock);
+
             _meta = readMeta(_database);
         }
         if (!_meta)
@@ -832,6 +815,8 @@ bool OsmAnd::TileSqliteDatabase_P::storeMeta(const OsmAnd::TileSqliteDatabase_P:
         QMutexLocker scopedLocker(&_metaLock);
 
         _meta = std::make_shared<Meta>(meta);
+
+        QWriteLocker scopedLocker2(&_lock);
 
         if (!writeMeta(_database, meta))
         {
@@ -1224,7 +1209,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     int specification,
-    QByteArray& outData,
+    void* outData,
     int64_t* pOutTime /* = nullptr */) const
 {
     if (!isOpened())
@@ -1272,7 +1257,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
 
         if (res > 0)
         {
-            outData = readStatementValue(statement, 0).toByteArray();
+            readStatementValue(statement, 0, outData);
 
             if (timeSupported && pOutTime)
             {
@@ -1295,7 +1280,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
         }
     }
 
-    return true;
+    return false;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::storeTileData(
@@ -1762,7 +1747,7 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
     return configureStatement(statement, zoom)
         && bindStatementParameter(statement, QStringLiteral(":x"), tileId.x)
         && bindStatementParameter(statement, QStringLiteral(":y"), tileId.y)
-        && specification > 0 && bindStatementParameter(statement, QStringLiteral(":s"), specification);
+        && (specification == 0 || bindStatementParameter(statement, QStringLiteral(":s"), specification));
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
@@ -1824,14 +1809,23 @@ std::shared_ptr<sqlite3_stmt> OsmAnd::TileSqliteDatabase_P::prepareStatement(
 
 QVariant OsmAnd::TileSqliteDatabase_P::readStatementValue(
     const std::shared_ptr<sqlite3_stmt>& statement,
-    int index)
+    int index,
+    void* data /* = nullptr */)
 {
     switch (sqlite3_column_type(statement.get(), index))
     {
         case SQLITE_BLOB:
-            return QByteArray(
-                static_cast<const char *>(sqlite3_column_blob(statement.get(), index)),
-                sqlite3_column_bytes(statement.get(), index));
+            if (data)
+            {
+                memcpy(data,
+                    static_cast<const char *>(sqlite3_column_blob(statement.get(), index)),
+                    sqlite3_column_bytes(statement.get(), index));
+                return QVariant(true);
+            }
+            else
+                return QByteArray(
+                    static_cast<const char *>(sqlite3_column_blob(statement.get(), index)),
+                    sqlite3_column_bytes(statement.get(), index));
         case SQLITE_INTEGER:
             return sqlite3_column_int64(statement.get(), index);
         case SQLITE_FLOAT:
