@@ -139,6 +139,7 @@ namespace OsmAnd
 
             QString id;
             QString length;
+            QString startTrackPointIndex;
             QString segmentTime;
             QString speed;
             QString turnType;
