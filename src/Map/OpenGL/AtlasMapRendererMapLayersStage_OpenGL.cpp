@@ -176,7 +176,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (!gpuAPI->isSupported_vertexShaderTextureLookup
             ? 0
             : vsUniformsPerLayer /*param_vs_elevationLayer*/ +
-              1 /*param_vs_elevationLayerTexelSize*/);
+              1 /*param_vs_elevationLayerTexelSize*/ +
+              1 /*param_vs_elevationLayerDataPlace*/);
     const auto fsOtherUniforms =
         1 /*param_fs_lastBatch*/ +
         1 /*param_fs_blendingEnabled*/ + 
@@ -333,6 +334,27 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
         "    uniform VsRasterLayerTile param_vs_elevationLayer;                                                             ""\n"
         "    uniform highp vec4 param_vs_elevationLayerTexelSize;                                                           ""\n"
+        "    uniform highp vec4 param_vs_elevationLayerDataPlace;                                                           ""\n"
+        "                                                                                                                   ""\n"
+        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
+        "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
+        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
+        "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
+        "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
+        "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
+        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.x += heixelSize.x;                                                                                   ""\n"
+        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.y += heixelSize.y;                                                                                   ""\n"
+        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
+        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
+        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
+        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
+        "}                                                                                                                  ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
         "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
@@ -340,25 +362,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    vec2 texCoords = in_vs_vertexTexCoords;                                                                        ""\n"
         "    texCoords = texCoords * tileLayer.texCoordsOffsetAndScale.zw + tileLayer.texCoordsOffsetAndScale.xy;           ""\n"
         "    outTexCoords = texCoords;                                                                                      ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
-        "{                                                                                                                  ""\n"
-        "    float heixelSize = 1.0 / (%HeixelsPerTileSide%.0 + 3.0);                                                       ""\n"
-        "    float halfHeixelSize = 0.5 * heixelSize;                                                                       ""\n"
-        "    vec2 texCoords = (inTexCoords - halfHeixelSize) / heixelSize;                                                  ""\n"
-        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
-        "    vec2 heixCoords = floor(texCoords) * heixelSize + halfHeixelSize;                                              ""\n"
-        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
-        "    heixCoords.x += heixelSize;                                                                                    ""\n"
-        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
-        "    heixCoords.y += heixelSize;                                                                                    ""\n"
-        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
-        "    heixCoords.x -= heixelSize;                                                                                    ""\n"
-        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, heixCoords).r;                              ""\n"
-        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
-        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
-        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -991,6 +994,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         ok = ok && lookup->lookupLocation(
             outRasterLayerTileProgram.vs.param.elevationLayerTexelSize,
             "param_vs_elevationLayerTexelSize",
+            GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(
+            outRasterLayerTileProgram.vs.param.elevationLayerDataPlace,
+            "param_vs_elevationLayerDataPlace",
             GlslVariableType::Uniform);
     }
     ok = ok && lookup->lookupLocation(
@@ -1887,10 +1894,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
                 texture->tileSizeN - 3.0f * texture->vTexelSizeN);
             const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texCoordsOffset(colIndex * texture->tileSizeN + innerSize.x * texCoordsOffsetN.x +
-                texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                rowIndex * texture->tileSizeN + innerSize.y * texCoordsOffsetN.y +
-                texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texPlace(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+                texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -1903,6 +1910,12 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
                 texture->vTexelSizeN * texCoordsScaleN.y,
                 texture->uHalfTexelSizeN * texCoordsScaleN.x,
                 texture->vHalfTexelSizeN * texCoordsScaleN.y);
+            GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.elevationLayerDataPlace,
+                texPlace.x,
+                texPlace.y,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
         else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
@@ -1914,10 +1927,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
                 1.0f - 3.0f * texture->vTexelSizeN
             );
             const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texCoordsOffset(
-                innerSize.x * texCoordsOffsetN.x + texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                innerSize.y * texCoordsOffsetN.y + texture->vHalfTexelSizeN + texture->vTexelSizeN
-            );
+            const PointF texPlace(texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+                texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
             glUniform4f(perTile_vs.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -1930,6 +1943,12 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
                 texture->vTexelSizeN * texCoordsScaleN.y,
                 texture->uHalfTexelSizeN * texCoordsScaleN.x,
                 texture->vHalfTexelSizeN * texCoordsScaleN.y);
+            GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.elevationLayerDataPlace,
+                texPlace.x,
+                texPlace.y,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
     }
