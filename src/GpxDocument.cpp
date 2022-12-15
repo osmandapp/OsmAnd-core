@@ -639,6 +639,7 @@ std::shared_ptr<OsmAnd::GpxDocument::RouteSegment> OsmAnd::GpxDocument::parseRou
     const auto segment = std::make_shared<RouteSegment>();
     segment->id = parser.attributes().value(QStringLiteral(""), QStringLiteral("id")).toString();
     segment->length = parser.attributes().value(QStringLiteral(""), QStringLiteral("length")).toString();
+    segment->startTrackPointIndex = parser.attributes().value(QStringLiteral(""), QStringLiteral("startTrkptIdx")).toString();
     segment->segmentTime = parser.attributes().value(QStringLiteral(""), QStringLiteral("segmentTime")).toString();
     segment->speed = parser.attributes().value(QStringLiteral(""), QStringLiteral("speed")).toString();
     segment->turnType = parser.attributes().value(QStringLiteral(""), QStringLiteral("turnType")).toString();
