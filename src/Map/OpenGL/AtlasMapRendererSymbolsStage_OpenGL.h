@@ -261,6 +261,7 @@ namespace OsmAnd
                     GLlocation elevation_scale;
                     GLlocation elevation_dataSampler;
                     GLlocation texCoordsOffsetAndScale;
+                    GLlocation elevationLayerDataPlace;
                 } param;
             } vs;
 
