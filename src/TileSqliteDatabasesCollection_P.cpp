@@ -329,16 +329,20 @@ bool OsmAnd::TileSqliteDatabasesCollection_P::remove(const TileSqliteDatabasesCo
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection_P::getMinZoom() const
 {
     ZoomLevel minZoom;
-    if ((minZoom = static_cast<ZoomLevel>(_cachedMinZoom.loadAcquire())) != ZoomLevel::InvalidZoomLevel)
+    if ((minZoom = static_cast<ZoomLevel>(_cachedMinZoom.loadAcquire())) != InvalidZoomLevel)
     {
         return minZoom;
     }
 
-    minZoom = ZoomLevel::MinZoomLevel;
+    minZoom = InvalidZoomLevel;
     for (const auto& database : getTileSqliteDatabases())
     {
+        if (minZoom == InvalidZoomLevel)
+            minZoom = MinZoomLevel;
         minZoom = qMax(minZoom, database->getMinZoom());
     }
+    if (minZoom != InvalidZoomLevel)
+        _cachedMinZoom.storeRelease(minZoom);
 
     return minZoom;
 }
@@ -346,16 +350,20 @@ OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection_P::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabasesCollection_P::getMaxZoom() const
 {
     ZoomLevel maxZoom;
-    if ((maxZoom = static_cast<ZoomLevel>(_cachedMaxZoom.loadAcquire())) != ZoomLevel::InvalidZoomLevel)
+    if ((maxZoom = static_cast<ZoomLevel>(_cachedMaxZoom.loadAcquire())) != InvalidZoomLevel)
     {
         return maxZoom;
     }
 
-    maxZoom = ZoomLevel::MaxZoomLevel;
+    maxZoom = InvalidZoomLevel;
     for (const auto& database : getTileSqliteDatabases())
     {
+        if (maxZoom == InvalidZoomLevel)
+            maxZoom = MaxZoomLevel;
         maxZoom = qMin(maxZoom, database->getMaxZoom());
     }
+    if (maxZoom != InvalidZoomLevel)
+        _cachedMaxZoom.storeRelease(maxZoom);
 
     return maxZoom;
 }

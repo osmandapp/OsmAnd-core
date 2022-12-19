@@ -120,6 +120,8 @@
 #include <OsmAndCore/Map/PolygonBuilder.h>
 #include <OsmAndCore/ITileSqliteDatabasesCollection.h>
 #include <OsmAndCore/TileSqliteDatabasesCollection.h>
+#include <OsmAndCore/IGeoTiffCollection.h>
+#include <OsmAndCore/GeoTiffCollection.h>
 #include <OsmAndCore/TileSqliteDatabase.h>
 #include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
 #include <OsmAndCore/Map/Animation.h>
@@ -312,6 +314,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::GpxAdditionalIconsProvider::SplitLabel)
 	%shared_ptr(OsmAnd::ITileSqliteDatabasesCollection)
 	%shared_ptr(OsmAnd::TileSqliteDatabasesCollection)
+	%shared_ptr(OsmAnd::IGeoTiffCollection)
+	%shared_ptr(OsmAnd::GeoTiffCollection)
 	%shared_ptr(OsmAnd::TileSqliteDatabase)
 	%shared_ptr(OsmAnd::SqliteHeightmapTileProvider)
 	%shared_ptr(OsmAnd::MapAnimator)
@@ -517,6 +521,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/PolygonsCollection.h>
 %include <OsmAndCore/ITileSqliteDatabasesCollection.h>
 %include <OsmAndCore/TileSqliteDatabasesCollection.h>
+%include <OsmAndCore/IGeoTiffCollection.h>
+%include <OsmAndCore/GeoTiffCollection.h>
 %include <OsmAndCore/TileSqliteDatabase.h>
 %include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
 %include <OsmAndCore/Map/Animation.h>
