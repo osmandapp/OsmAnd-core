@@ -243,7 +243,7 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
         const auto rasterBandCount = dataset->GetRasterCount();
         auto bandDataType = GDT_Unknown;
         GDALRasterBand* band;
-        bool result = rasterBandCount > 0 && rasterBandCount < 5 && (band = dataset->GetRasterBand(1));
+        bool result = rasterBandCount > 0 && rasterBandCount < 10 && (band = dataset->GetRasterBand(1));
         result = result && (bandDataType = band->GetRasterDataType()) != GDT_Unknown;
         result = result && !band->GetColorTable();
         double geoTransform[6];
@@ -484,7 +484,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
     extraArg.bFloatingPointWindowValidity = TRUE;
 
     // Calculate data properties
-    const auto specification = tileSize * 100 + overlap * 10 + (toBytes ? bandCount : bandCount + 4);
+    const auto specification = tileSize * 1000 + overlap * 100 + bandCount * 10 + (toBytes ? 1 : 4);
     const auto destDataType = toBytes ? GDT_Byte : GDT_Float32;
     const auto pixelSizeInBytes = destDataType == GDT_Byte ? 1 : 4;
     const auto bufferSize = bandCount * tileSize * tileSize * pixelSizeInBytes;
@@ -550,7 +550,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                         // Read raster data from source Geotiff file
                         const auto rasterBandCount = dataset->GetRasterCount();
                         GDALRasterBand* band;
-                        result = rasterBandCount > 0 && rasterBandCount < 5 && rasterBandCount >= bandCount;
+                        result = rasterBandCount > 0 && rasterBandCount < 10 && rasterBandCount >= bandCount;
                         double geoTransform[6];
                         if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
                             geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
