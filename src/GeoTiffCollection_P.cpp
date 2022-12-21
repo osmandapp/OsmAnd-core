@@ -22,7 +22,7 @@ OsmAnd::GeoTiffCollection_P::GeoTiffCollection_P(
     , _collectedSourcesInvalidated(1)
     , owner(owner_)
 {
-    _minZoom.storeRelease(ZoomLevel10);
+    _minZoom.storeRelease(ZoomLevel9);
     _pixelSize31.storeRelease(0);
     if (_fileSystemWatcher)
     {
@@ -612,20 +612,16 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                     const auto cornerValue = new float[1];
                                     result = band->RasterIO(GF_Read,
                                         std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                        1, 1,
-                                        cornerValue, 1, 1,
-                                        destDataType, 0, 0, &extraArg) == CE_None;
-                                    result = cornerValue[0] != noData;
+                                        1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
+                                    result = result && cornerValue[0] != noData;
                                     if (result)
                                     {
                                         extraArg.dfXOff = lowerRight.x - 1.0;
                                         extraArg.dfYOff = upperLeft.y;
                                         result = band->RasterIO(GF_Read,
                                             std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1,
-                                            cornerValue, 1, 1,
-                                            destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = cornerValue[0] != noData;
+                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
+                                        result = result && cornerValue[0] != noData;
                                     }
                                     if (result)
                                     {
@@ -633,10 +629,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                         extraArg.dfYOff = lowerRight.y - 1.0;
                                         result = band->RasterIO(GF_Read,
                                             std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1,
-                                            cornerValue, 1, 1,
-                                            destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = cornerValue[0] != noData;
+                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
+                                        result = result && cornerValue[0] != noData;
                                     }
                                     if (result)
                                     {
@@ -644,10 +638,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                         extraArg.dfYOff = lowerRight.y - 1.0;
                                         result = band->RasterIO(GF_Read,
                                             std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1,
-                                            cornerValue, 1, 1,
-                                            destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = cornerValue[0] != noData;
+                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
+                                        result = result && cornerValue[0] != noData;
                                     }
                                     delete[] cornerValue;
                                 }                                

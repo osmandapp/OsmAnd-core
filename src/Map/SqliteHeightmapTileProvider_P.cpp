@@ -38,7 +38,7 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMinZoom() const
     else if (minZoomTiff == InvalidZoomLevel)
         return minZoomDatabase;
     else
-        return std::min(minZoomDatabase, minZoomTiff);
+        return std::max(minZoomDatabase, minZoomTiff);
 }
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
@@ -54,7 +54,7 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
     else if (maxZoomTiff == InvalidZoomLevel)
         return maxZoomDatabase;
     else
-        return std::max(maxZoomDatabase, maxZoomTiff);
+        return std::min(maxZoomDatabase, maxZoomTiff);
 }
 
 bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
