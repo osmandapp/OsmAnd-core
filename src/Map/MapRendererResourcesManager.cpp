@@ -809,7 +809,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 continue;
             }
 
-            if (activeZoom < minZoom)
+            if (activeZoom < minZoom && !isElevationData)
             {
                 ZoomLevel underscaledZoom = minZoom;
                 int zoomShift = underscaledZoom - activeZoom;

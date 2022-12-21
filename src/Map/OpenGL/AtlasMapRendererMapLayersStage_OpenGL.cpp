@@ -1285,6 +1285,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     elevationDataSamplerIndex, activeElevationVertexAttribArray);
                 haveElevation = true;
             }
+            else
+                cancelElevation(program, elevationDataSamplerIndex, activeElevationVertexAttribArray);
         }       
 
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
