@@ -72,6 +72,10 @@ namespace OsmAnd
             QString getTimeColumn(bool* outOk = nullptr) const;
             void setTimeColumn(QString timeColumn);
 
+            static const QString SPECIFICATED;
+            QString getSpecificated(bool* outOk = nullptr) const;
+            void setSpecificated(QString specificated);
+
             static const QString EXPIRE_MINUTES;
             int64_t getExpireMinutes(bool* outOk = nullptr) const;
             void setExpireMinutes(int64_t expireMinutes);
@@ -95,13 +99,16 @@ namespace OsmAnd
         const QString filename;
 
         bool isOpened() const;
-        bool open();
+        bool open(const bool withSpecification = false);
         bool close(bool compact = true);
         bool isOnlineTileSource() const;
 
         bool isTileTimeSupported() const;
         bool hasTimeColumn() const;
         bool enableTileTimeSupport(bool force = false);
+
+        bool isTileSpecificationSupported() const;
+        bool hasSpecificationColumn() const;
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
@@ -125,11 +132,15 @@ namespace OsmAnd
         bool isEmpty() const;
         bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom);
         bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom);
-        bool containsTileData(TileId tileId, ZoomLevel zoom) const;
-        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime) const;
+        bool containsTileData(TileId tileId, ZoomLevel zoom, int specification = 0) const;
+        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
+            void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
-        bool removeTileData(TileId tileId, ZoomLevel zoom);
+        bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
+            const QByteArray& data, int64_t time = 0);
+        bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeTilesData(AreaI bbox31, bool strict = true);
