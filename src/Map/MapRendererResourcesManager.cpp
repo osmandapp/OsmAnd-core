@@ -809,7 +809,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 continue;
             }
 
-            if (activeZoom < minZoom)
+            if (activeZoom < minZoom && !isElevationData)
             {
                 ZoomLevel underscaledZoom = minZoom;
                 int zoomShift = underscaledZoom - activeZoom;
@@ -1643,12 +1643,29 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     bool isJunk = false;
 
                     // If this tiled entry is part of current zoom, it's treated as junk only if it's not a part
-                    // of active tiles set
+                    // of active tiles set and can't be used underscaled
                     if (tiledEntry->zoom == currentZoom)
                     {
-                        const auto tilesOfZoom = tiles.constFind(tiledEntry->zoom);
-                        if (tilesOfZoom != tiles.cend())
-                            isJunk = isJunk || !tilesOfZoom->contains(tiledEntry->tileId);
+                        bool usefulTile = false;
+                        for (int zoomShift = 0; zoomShift <= maxMissingDataUnderZoomShift; zoomShift++)
+                        {
+                            const auto tilesOfZoom =
+                                tiles.constFind(static_cast<ZoomLevel>(tiledEntry->zoom - zoomShift));
+                            if (tilesOfZoom != tiles.cend())
+                            {
+                                const auto tileId = TileId::fromXY(
+                                    tiledEntry->tileId.x >> zoomShift,
+                                    tiledEntry->tileId.y >> zoomShift);
+                                if (tilesOfZoom->contains(tileId))
+                                {
+                                    usefulTile = true;
+                                    break;
+                                }
+                            }
+                            if (tiledEntry->zoom - zoomShift == MinZoomLevel)
+                                break;
+                        }
+                        isJunk = isJunk || !usefulTile;
                     }
                     // If zoom delta is larger than provider's maxMissingDataUnderZoomShift, it means than this underscaled
                     // tile is not usable. If it's less than zero (overscaled tile), keep it.

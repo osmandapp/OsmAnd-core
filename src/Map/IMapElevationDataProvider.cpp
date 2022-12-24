@@ -35,16 +35,41 @@ OsmAnd::IMapElevationDataProvider::Data::~Data()
     release();
 }
 
+inline float OsmAnd::IMapElevationDataProvider::Data::getInterpolatedValue(const float x, const float y) const
+{
+    const auto tSize = static_cast<float>(size);
+    float xCoord;
+    float yCoord;
+    const auto xOffset = std::max(0.0f, std::modf(x * tSize, &xCoord));
+    const auto yOffset = std::max(0.0f, std::modf(y * tSize, &yCoord));
+
+    auto row = std::max(0, static_cast<int>(yCoord));
+    auto col = std::max(0, static_cast<int>(xCoord));
+
+    row *= rowLength;
+    const auto tlHeixel =
+        *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row) + col++);
+    const auto trHeixel =
+        *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row) + col);
+    row += rowLength;
+    const auto brHeixel =
+        *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row) + col--);
+    const auto blHeixel =
+        *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row) + col);
+
+    const auto avtPixel = glm::mix(tlHeixel, trHeixel, xOffset);
+    const auto avbPixel = glm::mix(blHeixel, brHeixel, xOffset);
+
+    return glm::mix(avtPixel, avbPixel, yOffset);
+}
+
 bool OsmAnd::IMapElevationDataProvider::Data::getValue(const OsmAnd::PointF& coordinates, float& outValue) const
 {
     // NOTE: Must be in sync with how renderer computes UV coordinates for elevation data
     const auto x = heixelSizeN + halfHeixelSizeN + std::clamp(coordinates.x, 0.0f, 1.0f) * (1.0f - 3.0f * heixelSizeN);
     const auto y = heixelSizeN + halfHeixelSizeN + std::clamp(coordinates.y, 0.0f, 1.0f) * (1.0f - 3.0f * heixelSizeN);
 
-    const auto row = std::max(0, static_cast<int>(std::round(y * static_cast<float>(size))));
-    const auto col = std::max(0, static_cast<int>(std::round(x * static_cast<float>(size))));
-
-    outValue = *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row * rowLength) + col);
+    outValue = getInterpolatedValue(x, y);
 
     return true;
 }
@@ -66,8 +91,9 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
         std::max(0.0f, heixelOffset + std::clamp(endCoordinates.x, 0.0f, 1.0f) * heixelScale),
         std::max(0.0f, heixelOffset + std::clamp(endCoordinates.y, 0.0f, 1.0f) * heixelScale));
     
-    const auto startHeixel = PointI(static_cast<int>(std::round(startHeixelN.x * static_cast<float>(size))),
-        static_cast<int>(std::round(startHeixelN.y * static_cast<float>(size))));
+    const auto tSize = static_cast<float>(size);
+    const auto startHeixel = PointI(static_cast<int>(std::round(startHeixelN.x * tSize)),
+        static_cast<int>(std::round(startHeixelN.y * tSize)));
     const auto deltaX = endHeixelN.x - startHeixelN.x;
     const auto deltaY = endHeixelN.y - startHeixelN.y;
     const auto maxDelta = std::max(std::fabs(deltaX), std::fabs(deltaY));
@@ -85,8 +111,8 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
             *(reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(pRawData) + row * rowLength) + col);
         if (height >= rayHeight)
         {
-            outCoordinates = PointF((static_cast<float>(col) / static_cast<float>(size) - heixelOffset) / heixelScale,
-                (static_cast<float>(row) / static_cast<float>(size) - heixelOffset) / heixelScale);
+            outCoordinates = PointF((static_cast<float>(col) / tSize - heixelOffset) / heixelScale,
+                (static_cast<float>(row) / tSize - heixelOffset) / heixelScale);
             if (outHeightInMeters)
                 *outHeightInMeters = height;
             return true;

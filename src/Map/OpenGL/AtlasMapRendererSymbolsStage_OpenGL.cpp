@@ -2104,7 +2104,28 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
         "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
         "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
-        "uniform mediump vec4 param_vs_texCoordsOffsetAndScale;                                                             ""\n"
+        "uniform highp vec4 param_vs_texCoordsOffsetAndScale;                                                               ""\n"
+        "uniform highp vec4 param_vs_elevationLayerDataPlace;                                                               ""\n"
+        "                                                                                                                   ""\n"
+        "float interpolatedHeight(in vec2 inTexCoords)                                                                      ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 heixelSize = param_vs_elevationLayerDataPlace.zw * 2.0;                                                   ""\n"
+        "    vec2 texCoords = (inTexCoords - param_vs_elevationLayerDataPlace.zw) / heixelSize;                             ""\n"
+        "    vec2 pixOffset = fract(texCoords);                                                                             ""\n"
+        "    texCoords = floor(texCoords) * heixelSize + param_vs_elevationLayerDataPlace.zw;                               ""\n"
+        "    vec2 minCoords = param_vs_elevationLayerDataPlace.xy - heixelSize;                                             ""\n"
+        "    vec2 maxCoords = minCoords + heixelSize * (%HeixelsPerTileSide%.0 + 2.0);                                      ""\n"
+        "    float blHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.x += heixelSize.x;                                                                                   ""\n"
+        "    float brHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.y += heixelSize.y;                                                                                   ""\n"
+        "    float trHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    texCoords.x -= heixelSize.x;                                                                                   ""\n"
+        "    float tlHeixel = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, clamp(texCoords, minCoords, maxCoords)).r;  ""\n"
+        "    float avbPixel = mix(blHeixel, brHeixel, pixOffset.x);                                                         ""\n"
+        "    float avtPixel = mix(tlHeixel, trHeixel, pixOffset.x);                                                         ""\n"
+        "    return mix(avbPixel, avtPixel, pixOffset.y);                                                                   ""\n"
+        "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -2118,9 +2139,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    {                                                                                                              ""\n"
         "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
         "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
-        "        mediump vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                   ""\n"
+        "        vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                           ""\n"
         "        elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                 ""\n"
-        "        float heightInMeters = SAMPLE_TEXTURE_2D(param_vs_elevation_dataSampler, elevationTexCoords).r;            ""\n"
+        "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
         "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 1.0;                                ""\n"
@@ -2136,6 +2157,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
+    preprocessedVertexShader.replace("%HeixelsPerTileSide%",
+        QString::number(AtlasMapRenderer::HeixelsPerTileSide - 1));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -2196,6 +2219,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_dataSampler, "param_vs_elevation_dataSampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.texCoordsOffsetAndScale, "param_vs_texCoordsOffsetAndScale", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationLayerDataPlace, "param_vs_elevationLayerDataPlace", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_onSurfaceVectorProgram.id);
@@ -2675,10 +2699,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
             const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
                 texture->tileSizeN - 3.0f * texture->vTexelSizeN);
             const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texCoordsOffset(colIndex * texture->tileSizeN + innerSize.x * texCoordsOffsetN.x +
-                texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                rowIndex * texture->tileSizeN + innerSize.y * texCoordsOffsetN.y +
-                texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texPlace(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+                texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
             glUniform4f(program.vs.param.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
@@ -2686,6 +2710,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
                 texCoordsScale.x,
                 texCoordsScale.y);
             GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.elevationLayerDataPlace,
+                texPlace.x,
+                texPlace.y,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
+            GL_CHECK_RESULT;
+
         }
         else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
         {
@@ -2696,16 +2727,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
                 1.0f - 3.0f * texture->vTexelSizeN
             );
             const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texCoordsOffset(
-                innerSize.x * texCoordsOffsetN.x + texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                innerSize.y * texCoordsOffsetN.y + texture->vHalfTexelSizeN + texture->vTexelSizeN
-            );
+            const PointF texPlace(texture->uHalfTexelSizeN + texture->uTexelSizeN,
+                texture->vHalfTexelSizeN + texture->vTexelSizeN);
+            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+                texPlace.y + innerSize.y * texCoordsOffsetN.y);
 
             glUniform4f(program.vs.param.texCoordsOffsetAndScale,
                 texCoordsOffset.x,
                 texCoordsOffset.y,
                 texCoordsScale.x,
                 texCoordsScale.y);
+            GL_CHECK_RESULT;
+            glUniform4f(program.vs.param.elevationLayerDataPlace,
+                texPlace.x,
+                texPlace.y,
+                texture->uHalfTexelSizeN,
+                texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
     }

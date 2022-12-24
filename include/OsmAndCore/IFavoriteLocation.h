@@ -13,6 +13,8 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 
+static const int kFavoriteLatLonPrecision = 7;
+
 namespace OsmAnd
 {
     class OSMAND_CORE_API IFavoriteLocation
@@ -85,6 +87,8 @@ namespace OsmAnd
 
         virtual uint32_t hash() const;
         virtual bool isEqual(IFavoriteLocation* favoriteLocation) const;
+
+        virtual LatLon getLatLonPrecised() const;
     };
 }
 

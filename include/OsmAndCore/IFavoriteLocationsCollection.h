@@ -26,10 +26,6 @@ namespace OsmAnd
 
     private:
     protected:
-        IFavoriteLocationsCollection();
-    public:
-        virtual ~IFavoriteLocationsCollection();
-
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const PointI position31,
             const QString& elevation = QString(),
@@ -44,6 +40,11 @@ namespace OsmAnd
             const ColorRGB color = ColorRGB(),
             const QHash<QString, QString>& extensions = QHash<QString, QString>(),
             const bool calendarEvent = false) = 0;
+
+        IFavoriteLocationsCollection();
+    public:
+        virtual ~IFavoriteLocationsCollection();
+
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
             const QString& elevation = QString(),
@@ -68,6 +69,7 @@ namespace OsmAnd
         virtual QList< std::shared_ptr<IFavoriteLocation> > getFavoriteLocations() const = 0;
 
         virtual QSet<QString> getGroups() const = 0;
+        virtual QHash<QString, QList<std::shared_ptr<IFavoriteLocation>>> getGroupsLocations() const = 0;
 
         virtual void copyFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection) = 0;
         virtual void copyFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection) = 0;

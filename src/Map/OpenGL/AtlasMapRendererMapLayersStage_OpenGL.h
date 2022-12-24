@@ -148,6 +148,7 @@ namespace OsmAnd
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
                     VsPerTilePerLayerParameters elevationLayer;
                     GLlocation elevationLayerTexelSize;
+                    GLlocation elevationLayerDataPlace;
                 } param;
             } vs;
 

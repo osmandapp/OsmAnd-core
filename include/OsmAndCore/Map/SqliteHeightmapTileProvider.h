@@ -15,6 +15,7 @@
 namespace OsmAnd
 {
     class ITileSqliteDatabasesCollection;
+    class IGeoTiffCollection;
 
     class SqliteHeightmapTileProvider_P;
     class OSMAND_CORE_API SqliteHeightmapTileProvider : public IMapElevationDataProvider
@@ -29,9 +30,19 @@ namespace OsmAnd
             const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection,
             uint32_t outputTileSize
         );
+        SqliteHeightmapTileProvider(
+            const std::shared_ptr<const IGeoTiffCollection>& filesCollection,
+            uint32_t outputTileSize
+        );
+        SqliteHeightmapTileProvider(
+            const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection,
+            const std::shared_ptr<const IGeoTiffCollection>& filesCollection,
+            uint32_t outputTileSize
+        );
         virtual ~SqliteHeightmapTileProvider();
 
         const std::shared_ptr<const ITileSqliteDatabasesCollection> sourcesCollection;
+        const std::shared_ptr<const IGeoTiffCollection> filesCollection;
         const uint32_t outputTileSize;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;

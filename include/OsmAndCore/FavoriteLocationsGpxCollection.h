@@ -29,10 +29,12 @@ namespace OsmAnd
         FavoriteLocationsGpxCollection();
         virtual ~FavoriteLocationsGpxCollection();
 
-        bool saveTo(const QString& filename) const;
+        bool saveTo(const QString& fileName) const;
+        bool saveTo(const QString& fileName, const QString& groupName) const;
         bool saveTo(QXmlStreamWriter& writer) const;
-        bool loadFrom(const QString& filename);
-        bool loadFrom(QXmlStreamReader& reader);
+        bool saveTo(QXmlStreamWriter& writer, const QString& groupName) const;
+        bool loadFrom(const QString& fileName, bool append = false);
+        bool loadFrom(QXmlStreamReader& reader, bool append = false);
 
         static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(const QString& filename);
         static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(QXmlStreamReader& reader);
