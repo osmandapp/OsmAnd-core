@@ -60,6 +60,14 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
     }
 
     QVector<Model3D::VertexInfo> vertices;
+    Model3D::BBox bbox = {
+        .minX = attrib.vertices[0],
+        .maxX = bbox.minX,
+        .minY = attrib.vertices[1],
+        .maxY = bbox.minY,
+        .minZ = attrib.vertices[2],
+        .maxZ = bbox.minZ
+    };
     for (auto shape : shapes)
     {
         auto mesh = shape.mesh;
@@ -83,11 +91,28 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
                     break;
                 
                 auto vertexIdx = vertexOrder * vertexNumberPerFace;
-                Model3D::VertexInfo vertex = Model3D::VertexInfo {};
+                Model3D::VertexInfo vertex = Model3D::VertexInfo {}; // or no?
 
-                vertex.xyz[0] = attrib.vertices[vertexIdx + 0];
-                vertex.xyz[1] = attrib.vertices[vertexIdx + 1];
-                vertex.xyz[2] = attrib.vertices[vertexIdx + 2];
+                float x = attrib.vertices[vertexIdx + 0];
+                float y = attrib.vertices[vertexIdx + 1];
+                float z = attrib.vertices[vertexIdx + 2];
+
+                vertex.xyz[0] = x;
+                vertex.xyz[1] = y;
+                vertex.xyz[2] = z;
+
+                if (x < bbox.minX)
+                    bbox.minX = x;
+                if (x > bbox.maxX)
+                    bbox.maxX = x;
+                if (y < bbox.minY)
+                    bbox.minY = y;
+                if (y > bbox.maxY)
+                    bbox.maxY = y;
+                if (z < bbox.minZ)
+                    bbox.minZ = z;
+                if (z > bbox.maxZ)
+                    bbox.maxZ = z;
 
                 if (faceMaterial)
                 {
@@ -114,7 +139,7 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
         }
     }
 
-    outModel.reset(new Model3D(vertices));
+    outModel.reset(new Model3D(vertices, bbox));
 
     return true;
 }

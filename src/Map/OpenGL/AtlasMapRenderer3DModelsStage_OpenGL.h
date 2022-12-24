@@ -40,8 +40,11 @@ namespace OsmAnd
                 // Params
                 struct
                 {
-                    GLlocation mModel;
+                    // Common data
                     GLlocation mPerspectiveProjectionView;
+
+                    // Per-model data
+                    GLlocation mModel;
                 } params;
             } vs;
 

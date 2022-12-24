@@ -1,7 +1,8 @@
 #include "Model3D.h"
 
-OsmAnd::Model3D::Model3D(const QVector<VertexInfo> vertexInfos_)
+OsmAnd::Model3D::Model3D(const QVector<VertexInfo>& vertexInfos_, const BBox& bbox_)
     : _vertexInfos(vertexInfos_)
+    , _bbox(bbox_)
 {
 }
 
@@ -63,4 +64,19 @@ const QVector<OsmAnd::Model3D::Vertex> OsmAnd::Model3D::getVertices() const
     }
 
     return vertices;
+}
+
+const QList<OsmAnd::PointF> OsmAnd::Model3D::getHorizontalBBox() const
+{
+    QList<PointF> horizontalBBox;
+    horizontalBBox.push_back(PointF(_bbox.minX, _bbox.minZ));
+    horizontalBBox.push_back(PointF(_bbox.minX, _bbox.maxZ));
+    horizontalBBox.push_back(PointF(_bbox.maxX, _bbox.minZ));
+    horizontalBBox.push_back(PointF(_bbox.maxX, _bbox.maxZ));
+    return horizontalBBox;
+}
+
+const OsmAnd::Model3D::BBox OsmAnd::Model3D::getBBox() const
+{
+    return _bbox;
 }

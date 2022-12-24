@@ -77,12 +77,15 @@ bool OsmAnd::AtlasMapRenderer3DModelsStage_OpenGL::initialize()
         "PARAM_OUTPUT vec4 v2f_color;                                                                                       ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform mat4 param_vs_mModel;                                                                                      ""\n"
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-model data
+        "uniform mat4 param_vs_mModel;                                                                                      ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * param_vs_mModel * vec4(in_vs_vertexPosition, 1.0);         ""\n"
+        "    vec4 v = vec4(in_vs_vertexPosition, 1.0);                                                                      ""\n"
+        "    gl_Position = param_vs_mPerspectiveProjectionView * param_vs_mModel * v;                                       ""\n"
         "    v2f_color = in_vs_vertexColor;                                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
@@ -135,8 +138,8 @@ bool OsmAnd::AtlasMapRenderer3DModelsStage_OpenGL::initialize()
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id, variablesMap);
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);    
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_program.vs.params.mModel, "param_vs_mModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.params.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.params.mModel, "param_vs_mModel", GlslVariableType::Uniform);
     if (!ok)
     {
         glDeleteProgram(_program.id);
@@ -206,6 +209,15 @@ bool OsmAnd::AtlasMapRenderer3DModelsStage_OpenGL::render(IMapRenderer_Metrics::
     glUseProgram(_program.id);
     GL_CHECK_RESULT;
 
+    // Common data
+    glUniformMatrix4fv(
+        _program.vs.params.mPerspectiveProjectionView,
+        1,
+        GL_FALSE,
+        glm::value_ptr(internalState.mPerspectiveProjectionView));
+    GL_CHECK_RESULT;
+
+    // Per-model data
     float modelScale = 1 / currentState.visualZoom;
     const auto zoomLevel = currentState.zoomLevel;
     const auto visualZoom = currentState.visualZoom;
@@ -236,21 +248,45 @@ bool OsmAnd::AtlasMapRenderer3DModelsStage_OpenGL::render(IMapRenderer_Metrics::
         }
     }
 
-    const auto scaleMatrix = glm::scale(glm::vec3(modelScale, modelScale, modelScale));
-    const auto translateMatrix = glm::translate(glm::vec3(0, 0.6f, 0));
-    const auto modelMatrix = scaleMatrix * translateMatrix;
+    const auto mModelScale = glm::scale(glm::vec3(modelScale));
+
+    const QList<PointF> modelHorizontalBBox = _model->getHorizontalBBox();
+    QList<float> bboxElevationsOnRelief;
+    for (auto point : modelHorizontalBBox)
+    {
+        const auto bboxPoint = glm::vec4(point.x, 0.0f, point.y, 1.0f);
+        const auto bboxPointWorld = internalState.mAzimuth * mModelScale * bboxPoint;
+
+        const auto tileSize31 = Utilities::getPowZoom(ZoomLevel::MaxZoomLevel - zoomLevel);
+        const auto offsetFromTargetX31 = bboxPointWorld.x * tileSize31 / AtlasMapRenderer::TileSize3D;
+        const auto offsetFromTargetY31 = bboxPointWorld.z * tileSize31 / AtlasMapRenderer::TileSize3D;
+
+        const auto bboxPointX31 = currentState.target31.x + offsetFromTargetX31;
+        const auto bboxPointY31 = currentState.target31.y + offsetFromTargetY31;
+        const PointI bboxPoint31 = PointI(static_cast<int32_t>(bboxPointX31), static_cast<int32_t>(bboxPointY31));
+
+        float elevation = AtlasMapRendererStageHelper_OpenGL::getRenderer()->getHeightOfLocation(bboxPoint31);
+        bboxElevationsOnRelief.push_back(elevation);
+    }
+
+    float modelElevationOnRelief = 0.0f;
+    if (bboxElevationsOnRelief.size() == 4)
+    {
+        float elevationSum = 0.0f;
+        for (auto elevation : bboxElevationsOnRelief)
+            elevationSum += elevation;
+        modelElevationOnRelief = elevationSum / 4;
+    }
+
+    const auto baseModelOffsetY = _model->getBBox().minY * modelScale;
+    const auto modelTranslateY = modelElevationOnRelief - baseModelOffsetY;
+    const auto mModelTranslate = glm::translate(glm::vec3(0, modelTranslateY, 0));
+    const auto mFinalModel = mModelTranslate * mModelScale;
     glUniformMatrix4fv(
         _program.vs.params.mModel,
         1,
         GL_FALSE,
-        glm::value_ptr(modelMatrix));
-    GL_CHECK_RESULT;
-
-    glUniformMatrix4fv(
-        _program.vs.params.mPerspectiveProjectionView,
-        1,
-        GL_FALSE,
-        glm::value_ptr(internalState.mPerspectiveProjectionView));
+        glm::value_ptr(mFinalModel));
     GL_CHECK_RESULT;
 
     // Draw models actually
