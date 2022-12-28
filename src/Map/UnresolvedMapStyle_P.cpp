@@ -263,7 +263,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
         const auto switchNode = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
             ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(switchNode);
-        else
+        else if (currentRulesetType != MapStyleRulesetType::Invalid)
         {
             // Several cases:
             //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be copied inside every <case>-child
@@ -280,6 +280,13 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                           columnNum);
                 return false;
             }
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "Style parsing error. Undefined ruleset type at line %" PRIi64 " column:%" PRIi64,
+                      lineNum,
+                      columnNum);
         }
     }
     else if (tagName == QStringLiteral("case") || tagName == QStringLiteral("filter"))
