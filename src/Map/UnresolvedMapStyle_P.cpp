@@ -558,7 +558,7 @@ void OsmAnd::XmlTreeSequence::process(
                                     OsmAnd::UnresolvedMapStyle_P *parserObj,
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
                                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
-    
+    QXmlStreamAttributes attrsMapCopy = attrsMap;
     for (int i = 0; i < attrsMap.size(); i++)
     {
         if (attrsMap[i].value().contains(SEQ_PLACEHOLDER))
@@ -567,11 +567,11 @@ void OsmAnd::XmlTreeSequence::process(
             QString key = attrsMap[i].name().toString();
             seqVal.replace(SEQ_PLACEHOLDER, QString::number(index));
             const QXmlStreamAttribute seqAttr(key, seqVal);
-            attrsMap.replace(i, seqAttr);
+            attrsMapCopy.replace(i, seqAttr);
         }
     };
 
-    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
+    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMapCopy, lineNum, columnNum);
     for (const auto& child : children) {
         child.lock()->process(index, parserObj, currentRulesetType, ruleNodesStack);
         
