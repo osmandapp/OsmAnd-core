@@ -75,7 +75,7 @@ namespace OsmAnd
         struct GeoTiffProperties
         {
             GeoTiffProperties()
-                : region31(AreaD(1.0, 1.0, 0.0, 0.0))
+                : region31(AreaI())
                 , pixelSize31(1)
                 , rasterBandCount(0)
                 , bandDataType(0)
@@ -83,10 +83,10 @@ namespace OsmAnd
             {
             }
 
-            GeoTiffProperties(const PointD& upperLeft31_, const PointD& lowerRight31_,
+            GeoTiffProperties(const PointI& upperLeft31_, const PointI& lowerRight31_,
                 int32_t pixelSize31_, int rasterBandCount_, int bandDataType_,
                 std::shared_ptr<TileSqliteDatabase> cacheDatabase_)
-                : region31(AreaD(upperLeft31_, lowerRight31_))
+                : region31(AreaI(upperLeft31_, lowerRight31_))
                 , pixelSize31(pixelSize31_)
                 , rasterBandCount(rasterBandCount_)
                 , bandDataType(bandDataType_)
@@ -94,7 +94,7 @@ namespace OsmAnd
             {
             }
 
-            AreaD region31;
+            AreaI region31;
             int32_t pixelSize31;
             int rasterBandCount;
             int bandDataType;
@@ -119,10 +119,10 @@ namespace OsmAnd
         mutable QHash<GeoTiffCollection::SourceOriginId, QHash<QString, GeoTiffProperties>> _collectedSources;
         mutable QReadWriteLock _collectedSourcesLock;
         void collectSources() const;
-        double metersTo31(const double positionInMeters) const;
-        PointD metersTo31(const PointD& locationInMeters) const;
+        int32_t metersTo31(const double positionInMeters) const;
+        PointI metersTo31(const PointD& locationInMeters) const;
         double metersFrom31(const double position31) const;
-        PointD metersFrom31(const PointD& location31) const;
+        PointD metersFrom31(const double positionX, const double positionY) const;
         ZoomLevel calcMaxZoom(const int32_t pixelSize31, const uint32_t tileSize) const;
         GeoTiffProperties getGeoTiffProperties(const QString& filePath) const;
     public:
