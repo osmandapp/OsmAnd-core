@@ -207,32 +207,41 @@ QList<OsmAnd::GeoTiffCollection::SourceOriginId> OsmAnd::GeoTiffCollection_P::ge
     return _sourcesOrigins.keys();
 }
 
-inline double OsmAnd::GeoTiffCollection_P::metersTo31(const double positionInMeters) const
+inline int32_t OsmAnd::GeoTiffCollection_P::metersTo31(const double positionInMeters) const
 {
-    return qBound(0.0, (positionInMeters / earthInMeters + 0.5) * earthIn31, static_cast<double>(INT32_MAX));
+    auto positionIn31 = static_cast<int64_t>(std::floor((positionInMeters / earthInMeters + 0.5) * earthIn31));
+    if (positionIn31 > INT32_MAX)
+        positionIn31 = positionIn31 - INT32_MAX - 1;
+    else if (positionIn31 < 0)
+        positionIn31 = positionIn31 + INT32_MAX + 1;
+    return static_cast<int32_t>(positionIn31);
 }
 
-inline OsmAnd::PointD OsmAnd::GeoTiffCollection_P::metersTo31(const PointD& locationInMeters) const
+inline OsmAnd::PointI OsmAnd::GeoTiffCollection_P::metersTo31(const PointD& locationInMeters) const
 {
-    return PointD(metersTo31(locationInMeters.x), metersTo31(locationInMeters.y));
+    return PointI(metersTo31(locationInMeters.x), INT32_MAX - metersTo31(locationInMeters.y));
 }
 
 inline double OsmAnd::GeoTiffCollection_P::metersFrom31(const double position31) const
 {
-    return (qBound(0.0, position31, static_cast<double>(INT32_MAX)) / earthIn31 - 0.5) * earthInMeters;
+    auto position = position31;
+    if (position >= earthIn31)
+        position -= earthIn31;
+    else if (position < 0.0)
+        position += earthIn31;
+    return (position / earthIn31 - 0.5) * earthInMeters;
 }
 
-inline OsmAnd::PointD OsmAnd::GeoTiffCollection_P::metersFrom31(const PointD& location31) const
+inline OsmAnd::PointD OsmAnd::GeoTiffCollection_P::metersFrom31(const double positionX, const double positionY) const
 {
-    return PointD(metersFrom31(location31.x), metersFrom31(location31.y));
+    return PointD(metersFrom31(positionX), metersFrom31(earthIn31 - positionY));
 }
 
 inline OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::calcMaxZoom(
     const int32_t pixelSize31, const uint32_t tileSize) const
 {
-    const auto tileSize31 =
-        log2(qBound(1.0, (static_cast<double>(pixelSize31) + 1.0) * tileSize, static_cast<double>(INT32_MAX) + 1.0));
-    return static_cast<ZoomLevel>(MaxZoomLevel - std::ceil(tileSize31));
+    const auto tileSize31 = qBound(1.0, static_cast<double>(pixelSize31) * tileSize, earthIn31);
+    return static_cast<ZoomLevel>(MaxZoomLevel - std::ceil(log2(tileSize31)));
 }
 
 inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_P::getGeoTiffProperties(
@@ -259,14 +268,16 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
             if (cacheDb->open(true))
             {
                 GDALClose(dataset);
-                PointD upperLeft = metersTo31(PointD(geoTransform[0], geoTransform[3]));
-                PointD lowerRight = metersTo31(PointD(
-                    geoTransform[0] + geoTransform[1] * (dataset->GetRasterXSize() - 1),
-                    geoTransform[3] + geoTransform[5] * (dataset->GetRasterYSize() - 1)));
-                upperLeft.y = static_cast<double>(INT32_MAX) - upperLeft.y;
-                lowerRight.y = static_cast<double>(INT32_MAX) - lowerRight.y;
-                const auto pixelSize31 =
-                    qBound(0.0, earthIn31 / earthInMeters * geoTransform[1], static_cast<double>(INT32_MAX));
+                auto upperLeft31 = metersTo31(PointD(geoTransform[0], geoTransform[3]));
+                auto lowerRight31 = metersTo31(PointD(
+                    geoTransform[0] + geoTransform[1] * dataset->GetRasterXSize(),
+                    geoTransform[3] + geoTransform[5] * dataset->GetRasterYSize()));
+                if (upperLeft31.x > lowerRight31.x)
+                    upperLeft31.x = upperLeft31.x - INT32_MAX - 1;
+                if (upperLeft31.y > lowerRight31.y)
+                    upperLeft31.y = upperLeft31.y - INT32_MAX - 1;
+                const int32_t pixelSize31 =
+                    std::ceil(qBound(0.0, geoTransform[1] * earthIn31 / earthInMeters, earthIn31 - 1.0));
                 TileSqliteDatabase::Meta meta;
                 if (!cacheDb->obtainMeta(meta))
                 {
@@ -276,7 +287,7 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
                     meta.setSpecificated(QStringLiteral("yes"));
                     cacheDb->storeMeta(meta);
                 }
-                return GeoTiffProperties(upperLeft, lowerRight, pixelSize31, rasterBandCount, bandDataType, cacheDb);
+                return GeoTiffProperties(upperLeft31, lowerRight31, pixelSize31, rasterBandCount, bandDataType, cacheDb);
             }
         }
         GDALClose(dataset);
@@ -459,19 +470,36 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
     const auto maxZoom = getMaxZoom(tileSize - overlap);
     if (zoom < minZoom || zoom > maxZoom)
         return false;
-    const auto intMax = static_cast<double>(INT32_MAX);
     const auto zoomDelta = MaxZoomLevel - zoom;
-    const int maxIndex = ~(-1u << zoomDelta);
-    const auto overlapOffset = (static_cast<double>(maxIndex) + 1.0) * 0.5 *
+    const auto overlapOffset = static_cast<double>(1u << zoomDelta) * 0.5 *
         static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
-    const PointI upperLeft31(tileId.x << zoomDelta, tileId.y << zoomDelta);
-    const PointI lowerRight31(upperLeft31.x | maxIndex, upperLeft31.y | maxIndex);
-    const PointD upperLeftNative(
-        qMax(0.0, static_cast<double>(upperLeft31.x) - overlapOffset),
-        qMax(0.0, static_cast<double>(upperLeft31.y) - overlapOffset));
-    const PointD lowerRightNative(
-        qMin(intMax, static_cast<double>(lowerRight31.x) + 1.0 + overlapOffset),
-        qMin(intMax, static_cast<double>(lowerRight31.y) + 1.0 + overlapOffset));
+    PointI upperLeft31(tileId.x << zoomDelta, tileId.y << zoomDelta);
+    PointI lowerRight31;
+    PointI64 lowerRight64(tileId.x, tileId.y);
+    lowerRight64.x = (lowerRight64.x + 1) << zoomDelta;
+    lowerRight64.y = (lowerRight64.y + 1) << zoomDelta;
+    PointD upperLeftNative(
+        static_cast<double>(upperLeft31.x) - overlapOffset,
+        static_cast<double>(upperLeft31.y) - overlapOffset);
+    PointD lowerRightNative(
+        static_cast<double>(lowerRight64.x) + overlapOffset,
+        static_cast<double>(lowerRight64.y) + overlapOffset);
+    upperLeft31.x = std::floor(upperLeftNative.x);
+    upperLeft31.y = std::floor(upperLeftNative.y);
+    lowerRight64.x = std::floor(lowerRightNative.x);
+    lowerRight64.y = std::floor(lowerRightNative.y);
+    if (lowerRight64.x > INT32_MAX)
+    {
+        upperLeft31.x = upperLeft31.x - INT32_MAX - 1;
+        lowerRight64.x = lowerRight64.x - INT32_MAX - 1;
+    }
+    if (lowerRight64.y > INT32_MAX)
+    {
+        upperLeft31.y = upperLeft31.y - INT32_MAX - 1;
+        lowerRight64.y = lowerRight64.y - INT32_MAX - 1;
+    }
+    lowerRight31.x = lowerRight64.x;
+    lowerRight31.y = lowerRight64.y;
 
     PointD upperLeftOverscaled;
     PointD lowerRightOverscaled;
@@ -498,7 +526,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
             const auto& filePath = itEntry.key();
             const auto& tiffProperties = itEntry.value();
             if (bandCount <= tiffProperties.rasterBandCount &&
-                tiffProperties.region31.contains(AreaD(upperLeftNative, lowerRightNative)))
+                tiffProperties.region31.contains(AreaI(upperLeft31, lowerRight31)))
             {
                 const int zoomShift = zoom - minZoom;
                 bool tileFound = true;
@@ -506,24 +534,37 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                 {
                     // Make sure if tile can be represented by any overscaled one
                     const auto zoomDeltaOverscaled = MaxZoomLevel - minZoom;
-                    const int maxIndexOverscaled = ~(-1u << zoomDeltaOverscaled);
-                    const auto overlapOffsetOverscaled = (static_cast<double>(maxIndexOverscaled) + 1.0) * 0.5 *
+                    const auto overlapOffsetOverscaled = static_cast<double>(1u << zoomDeltaOverscaled) * 0.5 *
                         static_cast<double>(overlap) / static_cast<double>(tileSize - overlap);
-                    const PointI upperLeft31Overscaled(
-                        tileId.x >> zoomShift << zoomDeltaOverscaled,
-                        tileId.y >> zoomShift << zoomDeltaOverscaled);
-                    const PointI lowerRight31Overscaled(
-                        upperLeft31Overscaled.x | maxIndexOverscaled,
-                        upperLeft31Overscaled.y | maxIndexOverscaled);
-                    upperLeftOverscaled.x =
-                        qMax(0.0, static_cast<double>(upperLeft31Overscaled.x) - overlapOffsetOverscaled);
-                    upperLeftOverscaled.y =
-                        qMax(0.0, static_cast<double>(upperLeft31Overscaled.y) - overlapOffsetOverscaled);
-                    lowerRightOverscaled.x =
-                        qMin(intMax, static_cast<double>(lowerRight31Overscaled.x) + 1.0 + overlapOffsetOverscaled);
-                    lowerRightOverscaled.y =
-                        qMin(intMax, static_cast<double>(lowerRight31Overscaled.y) + 1.0 + overlapOffsetOverscaled);
-                    if (!tiffProperties.region31.contains(AreaD(upperLeftOverscaled, lowerRightOverscaled)))
+                    PointI lowerRight31Overscaled(tileId.x >> zoomShift, tileId.y >> zoomShift);
+                    lowerRight64.x = lowerRight31Overscaled.x;
+                    lowerRight64.y = lowerRight31Overscaled.y;
+                    lowerRight64.x = (lowerRight64.x + 1) << zoomDeltaOverscaled;
+                    lowerRight64.y = (lowerRight64.y + 1) << zoomDeltaOverscaled;
+                    PointI upperLeft31Overscaled(
+                        lowerRight31Overscaled.x << zoomDeltaOverscaled,
+                        lowerRight31Overscaled.y << zoomDeltaOverscaled);
+                    upperLeftOverscaled.x = static_cast<double>(upperLeft31Overscaled.x) - overlapOffsetOverscaled;
+                    upperLeftOverscaled.y = static_cast<double>(upperLeft31Overscaled.y) - overlapOffsetOverscaled;
+                    lowerRightOverscaled.x = static_cast<double>(lowerRight64.x) + overlapOffsetOverscaled;
+                    lowerRightOverscaled.y = static_cast<double>(lowerRight64.y) + overlapOffsetOverscaled;
+                    upperLeft31Overscaled.x = std::floor(upperLeftOverscaled.x);
+                    upperLeft31Overscaled.y = std::floor(upperLeftOverscaled.y);
+                    lowerRight64.x = std::floor(lowerRightOverscaled.x);
+                    lowerRight64.y = std::floor(lowerRightOverscaled.y);
+                    if (lowerRight64.x > INT32_MAX)
+                    {
+                        upperLeft31Overscaled.x = upperLeft31Overscaled.x - INT32_MAX - 1;
+                        lowerRight64.x = lowerRight64.x - INT32_MAX - 1;
+                    }
+                    if (lowerRight64.y > INT32_MAX)
+                    {
+                        upperLeft31Overscaled.y = upperLeft31Overscaled.y - INT32_MAX - 1;
+                        lowerRight64.y = lowerRight64.y - INT32_MAX - 1;
+                    }
+                    lowerRight31Overscaled.x = lowerRight64.x;
+                    lowerRight31Overscaled.y = lowerRight64.y;
+                    if (!tiffProperties.region31.contains(AreaI(upperLeft31Overscaled, lowerRight31Overscaled)))
                         tileFound = false;
                 }
 
@@ -555,12 +596,20 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                         if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
                             geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
                         {
-                            PointD upperLeft = metersFrom31(PointD(upperLeftNative.x, intMax - upperLeftNative.y));
-                            PointD lowerRight = metersFrom31(PointD(lowerRightNative.x, intMax - lowerRightNative.y));
+                            auto upperLeft = metersFrom31(upperLeftNative.x, upperLeftNative.y);
+                            auto lowerRight = metersFrom31(lowerRightNative.x, lowerRightNative.y);
+                            if (lowerRight.x < upperLeft.x)
+                                lowerRight.x += earthInMeters;
+                            if (lowerRight.y > upperLeft.y)
+                                lowerRight.y -= earthInMeters;
                             upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
                             upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
                             lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
                             lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
+                            PointI dataOffset(std::floor(upperLeft.x), std::floor(upperLeft.y));
+                            PointI dataSize(
+                                static_cast<int32_t>(std::ceil(lowerRight.x)) - dataOffset.x,
+                                static_cast<int32_t>(std::ceil(lowerRight.y)) - dataOffset.y);
                             extraArg.dfXOff = upperLeft.x;
                             extraArg.dfYOff = upperLeft.y;
                             extraArg.dfXSize = lowerRight.x - upperLeft.x;
@@ -573,8 +622,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                 result = result && band->GetRasterDataType() != GDT_Unknown;
                                 result = result && !band->GetColorTable();
                                 result = result && band->RasterIO(GF_Read,
-                                    std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                    std::ceil(extraArg.dfXSize), std::ceil(extraArg.dfYSize),
+                                    dataOffset.x, dataOffset.y,
+                                    dataSize.x, dataSize.y,
                                     pData, tileSize, tileSize,
                                     destDataType, 0, 0, &extraArg) == CE_None;
                                 if (!result) break;
@@ -596,10 +645,12 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                 // Check values in the corners of top overscaled tile
                                 if (result && zoomShift > 0 && minZoom > MinZoomLevel)
                                 {
-                                    upperLeft =
-                                        metersFrom31(PointD(upperLeftOverscaled.x, intMax - upperLeftOverscaled.y));
-                                    lowerRight =
-                                        metersFrom31(PointD(lowerRightOverscaled.x, intMax - lowerRightOverscaled.y));
+                                    upperLeft = metersFrom31(upperLeftOverscaled.x, upperLeftOverscaled.y);
+                                    lowerRight = metersFrom31(lowerRightOverscaled.x, lowerRightOverscaled.y);
+                                    if (lowerRight.x < upperLeft.x)
+                                        lowerRight.x += earthInMeters;
+                                    if (lowerRight.y > upperLeft.y)
+                                        lowerRight.y -= earthInMeters;
                                     upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
                                     upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
                                     lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
