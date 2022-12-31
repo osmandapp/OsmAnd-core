@@ -559,14 +559,15 @@ void OsmAnd::XmlTreeSequence::process(
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
                                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
     QXmlStreamAttributes attrsMapCopy = attrsMap;
-    for (int i = 0; i < attrsMap.size(); i++)
+    for (int i = 0; i < attrsMapCopy.size(); i++)
     {
-        if (attrsMap[i].value().contains(SEQ_PLACEHOLDER))
+        if (attrsMapCopy[i].value().contains(SEQ_PLACEHOLDER))
         {
-            QString seqVal = attrsMap[i].value().toString();
-            QString key = attrsMap[i].name().toString();
+            QString namespaceUri = attrsMapCopy[i].namespaceUri().toString();
+            QString name = attrsMapCopy[i].name().toString();
+            QString seqVal = attrsMapCopy[i].value().toString();
             seqVal.replace(SEQ_PLACEHOLDER, QString::number(index));
-            const QXmlStreamAttribute seqAttr(key, seqVal);
+            const QXmlStreamAttribute seqAttr(namespaceUri, name, seqVal);
             attrsMapCopy.replace(i, seqAttr);
         }
     };
