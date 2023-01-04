@@ -151,7 +151,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::unloadFromGPU()
 
 void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
 {
-    _resourceInGPU->lostRefInGPU();
+    if (_resourceInGPU)
+        _resourceInGPU->lostRefInGPU();
     _resourceInGPU.reset();
 }
 
