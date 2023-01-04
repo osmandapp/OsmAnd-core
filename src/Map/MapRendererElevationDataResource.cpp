@@ -133,7 +133,8 @@ void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 
 void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()
 {
-    _resourceInGPU->lostRefInGPU();
+    if (_resourceInGPU)
+        _resourceInGPU->lostRefInGPU();
     _resourceInGPU.reset();
 }
 
