@@ -10,6 +10,7 @@
 #include <QReadWriteLock>
 #include <QFileSystemWatcher>
 #include <QEventLoop>
+#include <QMutex>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -75,6 +76,9 @@ namespace OsmAnd
         mutable QReadWriteLock _sourcesOriginsLock;
         int _lastUnusedSourceOriginId;
 
+        mutable QMutex _indexCacheFileMutex;
+        mutable QFileInfo _indexCacheFile;
+
         void invalidateCollectedSources();
         mutable QAtomicInt _collectedSourcesInvalidated;
         mutable QHash< ObfsCollection::SourceOriginId, QHash<QString, std::shared_ptr<ObfFile> > > _collectedSources;
@@ -88,6 +92,7 @@ namespace OsmAnd
         QList<ObfsCollection::SourceOriginId> getSourceOriginIds() const;
         ObfsCollection::SourceOriginId addDirectory(const QDir& dir, bool recursive);
         ObfsCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
+        void setIndexCacheFile(const QFileInfo& indexCacheFile);
         bool remove(const ObfsCollection::SourceOriginId entryId);
 
         QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
