@@ -65,7 +65,9 @@ void OsmAnd::ObfsCollection_P::collectSources() const
         if (origin->type == SourceOriginType::Directory)
         {
             const auto& directory = std::static_pointer_cast<const DirectoryAsSourceOrigin>(origin);
-            indCache = new QFile(directory->directory.absoluteFilePath(QLatin1String("ind_core.cache")));
+            indCache = _indexCacheFile.path().isEmpty() ?
+                new QFile(directory->directory.absoluteFilePath(QLatin1String("ind_core.cache"))) :
+                new QFile(_indexCacheFile.absoluteFilePath());
         }
     }
     if (indCache)
@@ -262,6 +264,16 @@ OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addFile(const Q
     invalidateCollectedSources();
 
     return allocatedId;
+}
+
+void OsmAnd::ObfsCollection_P::setIndexCacheFile(const QFileInfo& indexCacheFile)
+{
+    {
+        QWriteLocker scopedLocker1(&_collectedSourcesLock);
+        QMutexLocker scopedLocker2(&_indexCacheFileMutex);
+        _indexCacheFile = indexCacheFile;
+    }
+    invalidateCollectedSources();
 }
 
 bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entryId)
