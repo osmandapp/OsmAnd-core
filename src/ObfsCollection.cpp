@@ -35,6 +35,16 @@ OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addFile(const QFi
     return _p->addFile(fileInfo);
 }
 
+void OsmAnd::ObfsCollection::setIndexCacheFile(const QString& filePath)
+{
+    _p->setIndexCacheFile(QFileInfo(filePath));
+}
+
+void OsmAnd::ObfsCollection::setIndexCacheFile(const QFileInfo& fileInfo)
+{
+    _p->setIndexCacheFile(fileInfo);
+}
+
 bool OsmAnd::ObfsCollection::remove(const SourceOriginId entryId)
 {
     return _p->remove(entryId);
