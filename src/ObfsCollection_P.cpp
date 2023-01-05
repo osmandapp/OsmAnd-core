@@ -154,9 +154,13 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             for(const auto& obfFileInfo : constOf(obfFilesInfo))
             {
                 const auto& obfFilePath = obfFileInfo.canonicalFilePath();
-                if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
-                    continue;
-                
+                auto itCollectedObfFile = collectedSources.find(obfFilePath);
+                if (itCollectedObfFile != collectedSources.end())
+                {
+                    if (obfFileInfo.size() == (*itCollectedObfFile)->fileSize)
+                        continue;
+                }
+
                 auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
                 collectedSources.insert(obfFilePath, obfFile);
             }
@@ -183,9 +187,15 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
             if (!fileAsSourceOrigin->fileInfo.exists())
                 continue;
+
             const auto& obfFilePath = fileAsSourceOrigin->fileInfo.canonicalFilePath();
-            if (collectedSources.constFind(obfFilePath) != collectedSources.cend())
-                continue;
+            auto itCollectedObfFile = collectedSources.find(obfFilePath);
+            if (itCollectedObfFile != collectedSources.end())
+            {
+                QFileInfo obfFileInfo(obfFilePath);
+                if (obfFileInfo.size() == (*itCollectedObfFile)->fileSize)
+                    continue;
+            }
 
             auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
             collectedSources.insert(obfFilePath, obfFile);
