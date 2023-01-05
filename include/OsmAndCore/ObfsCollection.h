@@ -38,6 +38,8 @@ namespace OsmAnd
         SourceOriginId addDirectory(const QString& dirPath, bool recursive = true);
         SourceOriginId addFile(const QFileInfo& fileInfo);
         SourceOriginId addFile(const QString& filePath);
+        void setIndexCacheFile(const QFileInfo& fileInfo);
+        void setIndexCacheFile(const QString& filePath);
         bool remove(const SourceOriginId entryId);
 
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
