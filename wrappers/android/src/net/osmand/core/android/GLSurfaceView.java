@@ -240,7 +240,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
     @Override
     protected void finalize() throws Throwable {
         try {
-            if (mGLThread != null) {
+            if (mGLThread != null && mGLThread.isAlive()) {
                 // GLThread may still be running if this view was never
                 // attached to a window.
                 mGLThread.requestExitAndWait();
@@ -614,7 +614,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
         if (LOG_ATTACH_DETACH) {
             Log.d(TAG, "onDetachedFromWindow");
         }
-        if (mGLThread != null) {
+        if (mGLThread != null && mGLThread.isAlive()) {
             mGLThread.requestExitAndWait();
         }
         mDetached = true;
@@ -1766,9 +1766,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             synchronized(sGLThreadManager) {
                 mShouldExit = true;
                 sGLThreadManager.notifyAll();
-                while (! mExited) {
+                while (!mExited && this.isAlive()) {
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(100);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
