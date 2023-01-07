@@ -20,7 +20,9 @@ namespace OsmAnd
     class PolygonBuilder_P;
 
     class PolygonsCollection_P;
-    class OSMAND_CORE_API PolygonsCollection : public IMapKeyedSymbolsProvider
+    class OSMAND_CORE_API PolygonsCollection
+        : public std::enable_shared_from_this<PolygonsCollection>
+        , public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(PolygonsCollection);
 

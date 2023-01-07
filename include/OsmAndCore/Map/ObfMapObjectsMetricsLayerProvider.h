@@ -24,7 +24,9 @@
 namespace OsmAnd
 {
     class ObfMapObjectsMetricsLayerProvider_P;
-    class OSMAND_CORE_API ObfMapObjectsMetricsLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API ObfMapObjectsMetricsLayerProvider
+        : public std::enable_shared_from_this<ObfMapObjectsMetricsLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider);
     public:

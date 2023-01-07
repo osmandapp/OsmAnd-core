@@ -19,7 +19,9 @@ namespace OsmAnd
     class MapMarkerBuilder_P;
 
     class MapMarkersCollection_P;
-    class OSMAND_CORE_API MapMarkersCollection : public IMapKeyedSymbolsProvider
+    class OSMAND_CORE_API MapMarkersCollection
+        : public std::enable_shared_from_this<MapMarkersCollection>
+        , public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapMarkersCollection);
 

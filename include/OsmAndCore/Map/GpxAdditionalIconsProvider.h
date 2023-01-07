@@ -25,7 +25,9 @@
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API GpxAdditionalIconsProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API GpxAdditionalIconsProvider
+        : public std::enable_shared_from_this<GpxAdditionalIconsProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(GpxAdditionalIconsProvider);
     public:
