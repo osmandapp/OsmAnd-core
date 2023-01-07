@@ -44,7 +44,7 @@ namespace OsmAnd
             std::shared_ptr<Metric>* const pOutMetric = nullptr);
 
         static void nonNaturalObtainDataAsync(
-            IMapDataProvider* const provider,
+            const std::shared_ptr<IMapDataProvider>& provider,
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
             const bool collectMetric = false);

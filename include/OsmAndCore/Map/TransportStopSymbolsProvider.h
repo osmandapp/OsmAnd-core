@@ -26,7 +26,9 @@ namespace OsmAnd
     class TransportRoute;
 
     class TransportStopSymbolsProvider_P;
-    class OSMAND_CORE_API TransportStopSymbolsProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API TransportStopSymbolsProvider
+        : public std::enable_shared_from_this<TransportStopSymbolsProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(TransportStopSymbolsProvider);
     public:

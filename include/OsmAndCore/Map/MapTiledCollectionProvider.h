@@ -23,7 +23,9 @@
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API MapTiledCollectionProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API MapTiledCollectionProvider
+        : public std::enable_shared_from_this<MapTiledCollectionProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapTiledCollectionProvider);
         public:

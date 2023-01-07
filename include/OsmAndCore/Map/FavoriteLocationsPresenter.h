@@ -25,7 +25,9 @@ namespace OsmAnd
     class IFavoriteLocationsCollection;
 
     class FavoriteLocationsPresenter_P;
-    class OSMAND_CORE_API FavoriteLocationsPresenter : public IMapKeyedSymbolsProvider
+    class OSMAND_CORE_API FavoriteLocationsPresenter
+        : public std::enable_shared_from_this<FavoriteLocationsPresenter>
+        , public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsPresenter);
 

@@ -17,7 +17,9 @@ namespace OsmAnd
     class ITileSqliteDatabasesCollection;
 
     class SqliteHeightmapTileProvider_P;
-    class OSMAND_CORE_API SqliteHeightmapTileProvider : public IMapElevationDataProvider
+    class OSMAND_CORE_API SqliteHeightmapTileProvider
+        : public std::enable_shared_from_this<SqliteHeightmapTileProvider>
+        , public IMapElevationDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(SqliteHeightmapTileProvider);
 
