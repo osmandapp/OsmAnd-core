@@ -25,7 +25,9 @@ namespace OsmAnd
     class Amenity;
 
     class AmenitySymbolsProvider_P;
-    class OSMAND_CORE_API AmenitySymbolsProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API AmenitySymbolsProvider
+        : public std::enable_shared_from_this<AmenitySymbolsProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsProvider);
     public:

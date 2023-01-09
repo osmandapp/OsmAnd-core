@@ -40,7 +40,7 @@ void OsmAnd::ObfMapObjectsProvider::obtainDataAsync(
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
 bool OsmAnd::ObfMapObjectsProvider::obtainTiledObfMapObjects(

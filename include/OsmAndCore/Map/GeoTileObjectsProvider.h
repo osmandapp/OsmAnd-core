@@ -19,7 +19,9 @@ namespace OsmAnd
     class MapObject;
 
     class GeoTileObjectsProvider_P;
-    class OSMAND_CORE_API GeoTileObjectsProvider Q_DECL_FINAL : public IMapObjectsProvider
+    class OSMAND_CORE_API GeoTileObjectsProvider Q_DECL_FINAL
+        : public std::enable_shared_from_this<GeoTileObjectsProvider>
+        , public IMapObjectsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(GeoTileObjectsProvider);
 

@@ -25,7 +25,9 @@
 namespace OsmAnd
 {
     class MapRasterLayerProvider_P;
-    class OSMAND_CORE_API MapRasterLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API MapRasterLayerProvider
+        : public std::enable_shared_from_this<MapRasterLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider);
     public:

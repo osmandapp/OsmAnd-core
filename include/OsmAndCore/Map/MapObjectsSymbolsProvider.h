@@ -20,7 +20,9 @@ namespace OsmAnd
     class MapObject;
     
     class MapObjectsSymbolsProvider_P;
-    class OSMAND_CORE_API MapObjectsSymbolsProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API MapObjectsSymbolsProvider
+        : public std::enable_shared_from_this<MapObjectsSymbolsProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapObjectsSymbolsProvider);
     public:

@@ -60,23 +60,28 @@ bool OsmAnd::MapDataProviderHelpers::nonNaturalObtainData(
 }
 
 void OsmAnd::MapDataProviderHelpers::nonNaturalObtainDataAsync(
-    IMapDataProvider* const provider,
+    const std::shared_ptr<IMapDataProvider>& provider,
     const IMapDataProvider::Request& request,
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
     assert(provider->supportsNaturalObtainData());
 
+    const auto weakProvider = std::weak_ptr<IMapDataProvider>(provider);
     const auto requestClone = request.clone();
     const QRunnableFunctor::Callback task =
-        [provider, requestClone, callback, collectMetric]
+        [weakProvider, requestClone, callback, collectMetric]
         (const QRunnableFunctor* const runnable)
         {
-            std::shared_ptr<IMapDataProvider::Data> data;
-            std::shared_ptr<Metric> metric;
-            const bool requestSucceeded = provider->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
-
-            callback(provider, requestSucceeded, data, metric);
+            const auto provider = weakProvider.lock();
+            if (provider)
+            {
+                std::shared_ptr<IMapDataProvider::Data> data;
+                std::shared_ptr<Metric> metric;
+                const bool requestSucceeded =
+                    provider->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
+                callback(provider.get(), requestSucceeded, data, metric);
+            }
         };
 
     const auto taskRunnable = new QRunnableFunctor(task);
