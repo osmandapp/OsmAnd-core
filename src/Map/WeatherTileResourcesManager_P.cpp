@@ -43,7 +43,8 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
 
 std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider(int64_t dateTime)
 {
-    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
+    QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
+    auto dateTimeStr =  locale.toString(QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
     {
         QReadLocker scopedLocker(&_resourceProvidersLock);
 
@@ -582,7 +583,8 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
             bool checkBefore = beforeDateTime > dateTime;
             if (!clearBefore || checkBefore)
             {
-                QString dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
+                QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
+                auto dateTimeStr =  locale.toString(QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
                 provider->closeProvider();
                 _resourceProviders.remove(dateTimeStr);
             }
