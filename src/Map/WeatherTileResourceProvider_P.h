@@ -253,8 +253,6 @@ namespace OsmAnd
             const ZoomLevel zoom);
 
         bool closeProvider();
-        
-        QString getDateTimeString();
 
     friend class OsmAnd::WeatherTileResourceProvider;
     };

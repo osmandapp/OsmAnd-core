@@ -39,7 +39,7 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
 {
     _obtainValueThreadPool->setMaxThreadCount(1);
     
-    auto dateTimeStr = getDateTimeString();
+    auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     auto geoDbCachePath = localCachePath
     + QDir::separator()
     + dateTimeStr
@@ -67,12 +67,6 @@ OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
     
     _threadPool->clear();
     delete _threadPool;
-}
-
-QString OsmAnd::WeatherTileResourceProvider_P::getDateTimeString()
-{
-    QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
-    return locale.toString(QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
 }
 
 int OsmAnd::WeatherTileResourceProvider_P::getAndDecreasePriority()
@@ -167,7 +161,7 @@ QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider_P::getCurrentEvaluatin
 
 std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_P::createRasterTilesDatabase(BandIndex band)
 {
-    auto dateTimeStr = getDateTimeString();
+    auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     auto rasterDbCachePath = localCachePath
         + QDir::separator()
         + dateTimeStr + QStringLiteral("_")
@@ -200,7 +194,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         bool localData /*= false*/,
         std::shared_ptr<const IQueryController> queryController /*= nullptr*/)
 {
-    auto dateTimeStr = getDateTimeString();
+    auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     auto geoTileUrl = WEATHER_TILES_URL_PREFIX + dateTimeStr + "/"
         + QString::number(zoom) + QStringLiteral("_")
         + QString::number(tileId.x) + QStringLiteral("_")
@@ -483,7 +477,7 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
 
             auto geoDbCachePath = localCachePath
                     + QDir::separator()
-                    + getDateTimeString()
+                    + Utilities::getDateTimeString(dateTime)
                     + QStringLiteral(".tiff.db");
 
             QList<TileId> geoDBbTileIds;
@@ -507,7 +501,7 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
     }
 
     WeatherBand values[] = { WeatherBand::Cloud, WeatherBand::Temperature, WeatherBand::Pressure, WeatherBand::WindSpeed, WeatherBand::Precipitation };
-    auto dateTiemStr = getDateTimeString();
+    auto dateTiemStr = Utilities::getDateTimeString(dateTime);
     for (WeatherBand band : values)
     {
         auto rasterDbCachePath = localCachePath
@@ -576,7 +570,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
     }
 
     WeatherBand values[] = { WeatherBand::Cloud, WeatherBand::Temperature, WeatherBand::Pressure, WeatherBand::WindSpeed, WeatherBand::Precipitation };
-    auto dateTiemStr = getDateTimeString();
+    auto dateTiemStr = Utilities::getDateTimeString(dateTime);
     for (WeatherBand band : values)
     {
         auto rasterDbCachePath = localCachePath
@@ -1170,8 +1164,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
     LatLon topLeft = request->topLeft;
     LatLon bottomRight = request->bottomRight;
     bool localData = request->localData;
-    QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
-    auto dateTimeStr = locale.toString(QDateTime::fromMSecsSinceEpoch(_provider->dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = Utilities::getDateTimeString(_provider->dateTime);
 
     if (request->queryController && request->queryController->isAborted())
     {
