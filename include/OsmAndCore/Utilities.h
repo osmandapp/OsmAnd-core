@@ -17,6 +17,8 @@
 #include <QVector>
 #include <QSet>
 #include <QByteArray>
+#include <QLocale>
+#include <QDateTime>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -40,6 +42,12 @@ namespace OsmAnd
             localtime_r(&time, &tm_snapshot); // POSIX
 #endif
             return tm_snapshot;
+        }
+        
+        inline static QString getDateTimeString(int64_t dateTime)
+        {
+            QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
+            return locale.toString(QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
         }
 
         inline static double toRadians(const double angle)
