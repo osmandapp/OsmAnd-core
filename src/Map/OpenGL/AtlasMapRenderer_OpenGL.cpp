@@ -1401,6 +1401,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31
     return internalState.globalFrustum2D31.test(position31);
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path31) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
+    if (!ok)
+        return false;
+
+    if (!internalState.globalFrustum2D31.test(path31))
+        return false;
+
+    // TODO: Check pixelsize of path
+
+    return true;
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int tileY, const int zoom) const
 {
     InternalState internalState;
