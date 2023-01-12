@@ -22,6 +22,7 @@ import net.osmand.core.jni.MapRendererSetupOptions;
 import net.osmand.core.jni.MapRendererState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
+import net.osmand.core.jni.QVectorPointI;
 import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.jni.MapSymbolInformationList;
 import net.osmand.core.jni.MapAnimator;
@@ -850,6 +851,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.isPositionVisible(position31);
+    }
+
+    public final boolean isPathVisible(QVectorPointI path31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isPathVisible(path31);
     }
 
     public final boolean isTileVisible(int tileX, int tileY, int zoom) {
