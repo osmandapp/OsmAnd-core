@@ -173,6 +173,12 @@ public abstract class MapRendererView extends FrameLayout {
         _mapMarkersAnimator.setMapRenderer(_mapRenderer);
     }
 
+    @Override
+    public void setVisibility(int visibility) {
+        _glSurfaceView.setVisibility(visibility);
+        super.setVisibility(visibility);
+    }
+    
     public void addListener(MapRendererViewListener listener) {
         if (!this.listeners.contains(listener)) {
             List<MapRendererViewListener> listeners = new ArrayList<>();
