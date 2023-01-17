@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.os.SystemClock;
+import android.view.View;
 
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.FColorRGB;
@@ -52,6 +53,7 @@ public abstract class MapRendererView extends FrameLayout {
      * Main GLSurfaceView
      */
     private final GLSurfaceView _glSurfaceView;
+    private boolean _surfaceShown;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
@@ -155,6 +157,7 @@ public abstract class MapRendererView extends FrameLayout {
         addView(_glSurfaceView, new LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT));
+        _surfaceShown = true;
 
         // Configure GLSurfaceView
         _glSurfaceView.setPreserveEGLContextOnPause(true);
@@ -171,6 +174,22 @@ public abstract class MapRendererView extends FrameLayout {
         // Create map markers animator
         _mapMarkersAnimator = new MapMarkersAnimator();
         _mapMarkersAnimator.setMapRenderer(_mapRenderer);
+    }
+
+    public void show() {
+        if (!_surfaceShown) {
+            //addView(_glSurfaceView);
+            _glSurfaceView.setVisibility(View.VISIBLE);
+            _surfaceShown = true;
+        }
+    }
+
+    public void hide() {
+        if (_surfaceShown) {
+            //removeView(_glSurfaceView);
+            _glSurfaceView.setVisibility(View.GONE);
+            _surfaceShown = false;
+        }
     }
 
     public void addListener(MapRendererViewListener listener) {
