@@ -99,16 +99,15 @@ namespace OsmAnd
 
         bool test(const AreaT& area) const
         {
+            // Check if frustum is partially inside area.
+            if (area.contains(p0) || area.contains(p1) || area.contains(p2) || area.contains(p3))
+                return true;
+
             // Check if area is contained or intersects frustum
             if (areaContainedInOrIntersectsArea(area, p0, p1, p2, p3))
                 return true;
 
-            // Check if frustum is partially inside area.
-            return
-                area.contains(p0) ||
-                area.contains(p1) ||
-                area.contains(p2) ||
-                area.contains(p3);
+            return false;
         }
 
         Frustum2DT operator+(const PointT& shift) const

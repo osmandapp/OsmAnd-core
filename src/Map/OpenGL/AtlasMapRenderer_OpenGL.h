@@ -114,6 +114,7 @@ namespace OsmAnd
         bool isPositionVisible(const PointI64& position) const override;
         bool isPositionVisible(const PointI& position31) const override;
         bool isPathVisible(const QVector<PointI>& path31) const override;
+        bool isAreaVisible(const AreaI& area31) const override;
         bool isTileVisible(const int tileX, const int tileY, const int zoom) const override;
         bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const override;
         bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
