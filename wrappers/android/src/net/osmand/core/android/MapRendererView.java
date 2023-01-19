@@ -865,6 +865,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.isPathVisible(path31);
     }
 
+    public final boolean isAreaVisible(AreaI area31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isAreaVisible(area31);
+    }
+
     public final boolean isTileVisible(int tileX, int tileY, int zoom) {
         NativeCore.checkIfLoaded();
 

@@ -1416,6 +1416,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path3
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::isAreaVisible(const AreaI& area31) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
+    if (!ok)
+        return false;
+
+    return internalState.globalFrustum2D31.test(area31);
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int tileY, const int zoom) const
 {
     InternalState internalState;
