@@ -176,6 +176,8 @@ import android.view.SurfaceView;
  */
 public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     private final static String TAG = "GLSurfaceView";
+    private final static long THREAD_STOP_TIMEOUT = 4000;
+    private final static long THREAD_WAIT_TIMEOUT = 400;
     private final static boolean LOG_ATTACH_DETACH = false;
     private final static boolean LOG_THREADS = false;
     private final static boolean LOG_PAUSE_RESUME = false;
@@ -1667,9 +1669,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 sGLThreadManager.notifyAll();
                 while (mWaitingForSurface
                         && !mFinishedCreatingEglSurface
-                        && !mExited) {
+                        && !mExited && this.isAlive()) {
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -1684,9 +1686,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 }
                 mHasSurface = false;
                 sGLThreadManager.notifyAll();
-                while((!mWaitingForSurface) && (!mExited)) {
+                while(!mWaitingForSurface && !mExited && this.isAlive()) {
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -1701,12 +1703,12 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 }
                 mRequestPaused = true;
                 sGLThreadManager.notifyAll();
-                while ((! mExited) && (! mPaused)) {
+                while (!mExited && !mPaused && this.isAlive()) {
                     if (LOG_PAUSE_RESUME) {
                         Log.i("Main thread", "onPause waiting for mPaused.");
                     }
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
@@ -1723,12 +1725,12 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 mRequestRender = true;
                 mRenderComplete = false;
                 sGLThreadManager.notifyAll();
-                while ((! mExited) && mPaused && (!mRenderComplete)) {
+                while (!mExited && mPaused && !mRenderComplete && this.isAlive()) {
                     if (LOG_PAUSE_RESUME) {
                         Log.i("Main thread", "onResume waiting for !mPaused.");
                     }
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
@@ -1746,13 +1748,13 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 sGLThreadManager.notifyAll();
 
                 // Wait for thread to react to resize and render a frame
-                while (! mExited && !mPaused && !mRenderComplete
+                while (!mExited && !mPaused && !mRenderComplete && this.isAlive()
                         && ableToDraw()) {
                     if (LOG_SURFACE) {
                         Log.i("Main thread", "onWindowResize waiting for render complete from tid=" + getId());
                     }
                     try {
-                        sGLThreadManager.wait();
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
@@ -1764,11 +1766,17 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             // don't call this from GLThread thread or it is a guaranteed
             // deadlock!
             synchronized(sGLThreadManager) {
-                mShouldExit = true;
+                long stopTime = System.currentTimeMillis();
+                mShouldExit = true;                
                 sGLThreadManager.notifyAll();
                 while (!mExited && this.isAlive()) {
+                    if (System.currentTimeMillis() > stopTime + THREAD_STOP_TIMEOUT)
+                    {
+                        this.interrupt();
+                        return;
+                    }
                     try {
-                        sGLThreadManager.wait(100);
+                        sGLThreadManager.wait(THREAD_WAIT_TIMEOUT);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                     }
