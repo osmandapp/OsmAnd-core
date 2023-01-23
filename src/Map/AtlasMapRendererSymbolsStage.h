@@ -17,6 +17,7 @@
 #include "QuadTree.h"
 #include "AtlasMapRendererStage.h"
 #include "GPUAPI.h"
+#include "SkPath.h"
 
 namespace OsmAnd
 {
@@ -296,21 +297,7 @@ namespace OsmAnd
 
         static bool segmentValidFor2D(const glm::vec2& vSegment);
 
-        static glm::vec2 computePathDirection(
-            const QVector<glm::vec2>& path,
-            const unsigned int startPathPointIndex,
-            const glm::vec2& exactStartPoint,
-            const unsigned int endPathPointIndex,
-            const glm::vec2& exactEndPoint);
-
-        double computeDistanceBetweenCameraToPath(
-            const QVector<glm::vec2>& pathInWorld,
-            const unsigned int startPathPointIndex,
-            const glm::vec2& exactStartPointInWorld,
-            const unsigned int endPathPointIndex,
-            const glm::vec2& exactEndPointInWorld) const;
-
-        QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
+        SkPath computePathForGlyphsPlacement(
             const bool is2D,
             const QVector<glm::vec2>& pathOnScreen,
             const QVector<float>& pathSegmentsLengthsOnScreen,
@@ -321,6 +308,27 @@ namespace OsmAnd
             const unsigned int endPathPointIndex,
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths) const;
+
+        glm::vec2 computePathDirection(const SkPath& path) const;
+
+        double computeDistanceFromCameraToPath(const SkPath& pathInWorld) const;
+
+        SkPath convertPathOnScreenToWorld(const SkPath& pathOnScreen, bool& outOk) const;
+
+        SkPath projectPathInWorldToScreen(const SkPath& pathInWorld) const;
+
+        QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
+            const SkPath& path,
+            const bool is2D,
+            const glm::vec2& directionOnScreen,
+            const QVector<float>& glyphsWidths) const;
+
+        bool computeGlyphPlacementOnPath(
+            const glm::vec2& anchorPoint,
+            const bool is2D,
+            glm::vec2& outAnchorPoint,
+            float& outGlyphDepth,
+            bool& outHasElevationData) const;
 
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
 

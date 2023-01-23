@@ -100,6 +100,7 @@ namespace OsmAnd
 
         float getTileSizeOnScreenInPixels() const override;
 
+        bool getWorldPointFromScreenPoint(const PointI& screenPoint, PointF& outWorldPoint) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
         bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
