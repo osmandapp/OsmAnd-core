@@ -1,4 +1,5 @@
 #include "TransportStop.h"
+#include "TransportStopExit.h"
 #include <ICU.h>
 
 OsmAnd::TransportStop::TransportStop(const std::shared_ptr<const ObfTransportSectionInfo>& obfSection_)
@@ -33,4 +34,9 @@ QString OsmAnd::TransportStop::getName(const QString lang, bool transliterate) c
         name = enName;
     }
     return name;
+}
+
+void OsmAnd::TransportStop::addExit(std::shared_ptr<OsmAnd::TransportStopExit> &exit)
+{
+    exits.append(exit);
 }
