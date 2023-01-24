@@ -8,6 +8,7 @@
 #include "ObfReader_P.h"
 #include "ObfTransportSectionInfo.h"
 #include "TransportStop.h"
+#include "TransportStopExit.h"
 #include "TransportRoute.h"
 #include "ObfReaderUtilities.h"
 #include "Utilities.h"
@@ -390,13 +391,17 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
         switch (tag)
         {
             case 0:
+            {
                 outTransportStop->id = id;
                 outTransportStop->referencesToRoutes = referencesToRoutes;
                 
                 return outTransportStop;
+            }
             case OBF::TransportStop::kRoutesFieldNumber:
+            {
                 referencesToRoutes.push_back(stopOffset - ObfReaderUtilities::readLength(cis));
                 break;
+            }
             case OBF::TransportStop::kNameEnFieldNumber:
             {
                 if (stringTable)
@@ -415,15 +420,77 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
 
                 break;
             }
+            case OBF::TransportStop::kExitsFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                const auto oldLimit = cis->PushLimit(length);
+                
+                auto transportStopExit = readTransportStopExit(reader, section, cbbox31, stringTable);
+                outTransportStop->addExit(transportStopExit);
+                cis->PopLimit(oldLimit);
+                break;
+            }
             case OBF::TransportStop::kIdFieldNumber:
+            {
                 cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&id));
                 break;
+            }
             default:
+            {
                 ObfReaderUtilities::skipUnknownField(cis, t);
                 break;
+            }
         }
     }
     return nullptr;
+}
+
+std::shared_ptr<OsmAnd::TransportStopExit> OsmAnd::ObfTransportSectionReader_P::readTransportStopExit(const ObfReader_P& reader,
+                                                         const std::shared_ptr<const ObfTransportSectionInfo>& section,
+                                                         const AreaI& cbbox31,
+                                                         ObfSectionInfo::StringTable* const stringTable)
+{
+    const auto cis = reader.getCodedInputStream().get();
+    auto dataObject = std::make_shared<TransportStopExit>();
+    int32_t x = 0;
+    int32_t y = 0;
+    
+    while (true) {
+        const auto t = cis->ReadTag();
+        int tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
+        
+        switch (tag) {
+            case 0:
+                if (dataObject->enName.length() == 0)
+                {
+                    if (stringTable)
+                        dataObject->enName = regStr(reader, stringTable);
+                    else
+                        ObfReaderUtilities::skipUnknownField(cis, tag);
+                }
+                if (x != 0 || y != 0)
+                {
+                    dataObject->setLocation(TRANSPORT_STOP_ZOOM, x, y);
+                }
+                return dataObject;
+            case OBF::TransportStopExit::kRefFieldNumber:
+                if (stringTable)
+                    dataObject->ref = regStr(reader, stringTable);
+                else
+                    ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+            case OBF::TransportStopExit::kDxFieldNumber:
+                x = ObfReaderUtilities::readSInt32(cis) + cbbox31.left();
+                break;
+            case OBF::TransportStopExit::kDyFieldNumber:
+                y = ObfReaderUtilities::readSInt32(cis) + cbbox31.top();
+                break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
 }
 
 std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::getTransportRoute(
