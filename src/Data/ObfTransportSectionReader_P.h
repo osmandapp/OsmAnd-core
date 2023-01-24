@@ -17,6 +17,7 @@ namespace OsmAnd {
     class ObfReader_P;
     class ObfTransportSectionInfo;
     class IQueryController;
+    class TransportStopExit;
 
     class ObfTransportSectionReader_P Q_DECL_FINAL
     {
@@ -57,6 +58,11 @@ namespace OsmAnd {
             const AreaI* const bbox31,
             ObfSectionInfo::StringTable* const stringTable,
             const std::shared_ptr<const IQueryController>& queryController);
+        
+        static std::shared_ptr<TransportStopExit> readTransportStopExit(const ObfReader_P& reader,
+            const std::shared_ptr<const ObfTransportSectionInfo>& section,
+            const AreaI& cbbox31,
+            ObfSectionInfo::StringTable* const stringTable);
         
         static void initializeStringTable(
             const ObfReader_P& reader,
