@@ -15,6 +15,7 @@
 namespace OsmAnd
 {
     class ObfTransportSectionInfo;
+    class TransportStopExit;
     
     class OSMAND_CORE_API TransportStop
     {
@@ -32,11 +33,14 @@ namespace OsmAnd
 
         uint32_t offset;
         QVector<uint32_t> referencesToRoutes;
+        QList<std::shared_ptr<TransportStopExit>> exits;
 
         ObfObjectId id;
         LatLon location;
         QString enName;
         QString localizedName;
+        
+        void addExit(std::shared_ptr<TransportStopExit> &exit);
     };
 }
 
