@@ -76,7 +76,8 @@ namespace OsmAnd
             const float symbolsScaleFactor = 1.0f,
             const QString& localeLanguageId = QLatin1String("en"),
             const LanguagePreference languagePreference = LanguagePreference::LocalizedOrNative,
-            const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider = nullptr);
+            const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider = nullptr,
+            const QList<QString> forbiddenAttributes = QList<QString>());
         virtual ~MapPresentationEnvironment();
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
@@ -88,6 +89,7 @@ namespace OsmAnd
         const QString localeLanguageId;
         const LanguagePreference languagePreference;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
+        const QList<QString> forbiddenAttributes;
 
         QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);

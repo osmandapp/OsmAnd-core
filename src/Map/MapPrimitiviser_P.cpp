@@ -2100,14 +2100,20 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
         }
         else if (type == PrimitivesType::Points)
         {
-            obtainSymbolsFromPoint(
-                context,
-                primitivisedObjects,
-                primitive,
-                evaluationResult,
-                textEvaluator,
-                outSymbols,
-                metric);
+            const auto& attributeMapping = primitive->sourceObject->attributeMapping;
+            const auto attributeId = primitive->sourceObject->attributeIds[primitive->attributeIdIndex];
+            const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
+            if (!context.env->forbiddenAttributes.contains(decodedAttribute.value))
+            {
+                obtainSymbolsFromPoint(
+                    context,
+                    primitivisedObjects,
+                    primitive,
+                    evaluationResult,
+                    textEvaluator,
+                    outSymbols,
+                    metric);
+            }
         }
     }
 }

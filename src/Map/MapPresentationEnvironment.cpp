@@ -10,7 +10,8 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const float symbolsScaleFactor_ /*= 1.0f*/,
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
     const LanguagePreference languagePreference_ /*= LanguagePreference::LocalizedOrNative*/,
-    const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
+    const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/,
+    const QList<QString> forbiddenAttributes /*= QList<QString>*/)
     : _p(new MapPresentationEnvironment_P(this))
     , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
     , mapStyle(mapStyle_)
@@ -20,6 +21,7 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , localeLanguageId(localeLanguageId_)
     , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)
+    , forbiddenAttributes(forbiddenAttributes)
 {
     _p->initialize();
 }
