@@ -943,9 +943,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                         !queryController->isAborted())
                     {
                         // Create a complete resource for received data that has different zoom level
-                        if (dataAvailable && cachedResource->zoom != cachedResource->_sourceData->zoom)
+                        const auto link_ = cachedResource->link.lock();
+                        if (link_ && dataAvailable && cachedResource->zoom != cachedResource->_sourceData->zoom)
                         {
-                            const auto link_ = cachedResource->link.lock();
                             const auto tiledResources =
                                 static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
                             if (!tiledResources->containsResource(
