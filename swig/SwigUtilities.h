@@ -82,6 +82,14 @@ namespace OsmAnd
             return QByteArray();
         }
 
+#ifdef SWIG
+        %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
+#endif // SWIG
+        inline static void appendToQByteArray(QByteArray& array, const char* const pBuffer, const size_t bufferSize)
+        {
+            array.append(reinterpret_cast<const char*>(pBuffer), bufferSize);
+        }
+
         inline static QByteArray qDecompress(const QByteArray& compressedData)
         {
             return qUncompress(compressedData);
