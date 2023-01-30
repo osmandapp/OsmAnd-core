@@ -33,6 +33,28 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data
     ));
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
+    const QByteArray& byteArray,
+    long long imageDimensions)
+{
+    SkBitmap bitmap;
+   
+    if (!bitmap.tryAllocPixels(SkImageInfo::Make(
+        imageDimensions & UINT_MAX,
+        imageDimensions >> 32,
+        SkColorType::kRGBA_8888_SkColorType,
+        SkAlphaType::kPremul_SkAlphaType)))
+    {
+        return nullptr;
+    }
+    if (bitmap.computeByteSize() < byteArray.size())
+        return nullptr;
+    memcpy(bitmap.getPixels(), byteArray.data(), byteArray.size());
+
+    bitmap.setImmutable(); // Don't copy when we create an image.
+    return bitmap.asImage();
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(
     const sk_sp<const SkImage>& original,
     float xScale,

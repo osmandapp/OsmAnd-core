@@ -72,8 +72,9 @@ namespace OsmAnd
         virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
 
         virtual bool supportsObtainImage() const;
-        virtual QByteArray obtainImageData(
-            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request) = 0;
+        virtual long long obtainImageData(
+            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
+            const QByteArray& byteArray) = 0;
         virtual sk_sp<const SkImage> obtainImage(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request) = 0;
 
@@ -106,9 +107,10 @@ namespace OsmAnd
             bool,
             supportsObtainImage);
         SWIG_EMIT_DIRECTOR_METHOD(
-            QByteArray,
+            long long,
             obtainImageData,
-            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request);
+            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
+            const QByteArray& byteArray);
         SWIG_EMIT_DIRECTOR_METHOD(
             sk_sp<const SkImage>,
             obtainImage,
