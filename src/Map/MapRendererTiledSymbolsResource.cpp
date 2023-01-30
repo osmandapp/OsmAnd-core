@@ -308,6 +308,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     bool anyUploadFailed = false;
 
     const auto link_ = link.lock();
+    if (!link_)
+        return false;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Unique
@@ -463,6 +465,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
     const auto link_ = link.lock();
+    if (!link_)
+        return;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Remove quick references
@@ -557,6 +561,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::lostDataInGPU()
 void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 {
     const auto link_ = link.lock();
+    if (!link_)
+        return;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
     const auto& self = shared_from_this();
 
