@@ -631,18 +631,22 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                             }
                             if (result && destDataType == GDT_Float32 && bufferSize >= 16)
                             {
-                                // Check values in the corners to know, that data is present
+                                // Check values ​​in the center and corners to know that data is present
                                 const auto noData = static_cast<float>(band->GetNoDataValue());
                                 const auto side = tileSize * pixelSizeInBytes;
-                                result = *(reinterpret_cast<const float*>(pByteBuffer)) != noData;
-                                result = result && 
+                                const auto halfSize = tileSize >> 1;
+                                const auto middle = halfSize * halfSize * pixelSizeInBytes;
+                                result = *(reinterpret_cast<const float*>(pByteBuffer + middle)) != noData;
+                                result = result &&
+                                    *(reinterpret_cast<const float*>(pByteBuffer)) != noData;
+                                result = result &&
                                     *(reinterpret_cast<const float*>(pByteBuffer + side - 4)) != noData;
                                 result = result &&
                                     *(reinterpret_cast<const float*>(pByteBuffer + bufferSize - 4)) != noData;
                                 result = result &&
                                     *(reinterpret_cast<const float*>(pByteBuffer + bufferSize - side)) != noData;
 
-                                // Check values in the corners of top overscaled tile
+                                // Check value in the center of top overscaled tile
                                 if (result && zoomShift > 0 && minZoom > MinZoomLevel)
                                 {
                                     upperLeft = metersFrom31(upperLeftOverscaled.x, upperLeftOverscaled.y);
@@ -655,8 +659,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                     upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
                                     lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
                                     lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
-                                    extraArg.dfXOff = upperLeft.x;
-                                    extraArg.dfYOff = upperLeft.y;
+                                    extraArg.dfXOff = (upperLeft.x + lowerRight.x) * 0.5;
+                                    extraArg.dfYOff = (upperLeft.y + lowerRight.y) * 0.5;
                                     extraArg.dfXSize = 1.0;
                                     extraArg.dfYSize = 1.0;
                                     band = dataset->GetRasterBand(1);
@@ -665,33 +669,6 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                         std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
                                         1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
                                     result = result && cornerValue[0] != noData;
-                                    if (result)
-                                    {
-                                        extraArg.dfXOff = lowerRight.x - 1.0;
-                                        extraArg.dfYOff = upperLeft.y;
-                                        result = band->RasterIO(GF_Read,
-                                            std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = result && cornerValue[0] != noData;
-                                    }
-                                    if (result)
-                                    {
-                                        extraArg.dfXOff = lowerRight.x - 1.0;
-                                        extraArg.dfYOff = lowerRight.y - 1.0;
-                                        result = band->RasterIO(GF_Read,
-                                            std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = result && cornerValue[0] != noData;
-                                    }
-                                    if (result)
-                                    {
-                                        extraArg.dfXOff = upperLeft.x;
-                                        extraArg.dfYOff = lowerRight.y - 1.0;
-                                        result = band->RasterIO(GF_Read,
-                                            std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
-                                            1, 1, cornerValue, 1, 1, destDataType, 0, 0, &extraArg) == CE_None;
-                                        result = result && cornerValue[0] != noData;
-                                    }
                                     delete[] cornerValue;
                                 }                                
                             }
