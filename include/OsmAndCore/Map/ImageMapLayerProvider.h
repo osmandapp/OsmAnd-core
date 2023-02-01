@@ -53,6 +53,9 @@ namespace OsmAnd
 
     private:
         sk_sp<const SkImage> getEmptyImage() const;
+        sk_sp<const SkImage> getImageWithData(
+            const IMapDataProvider::Request& request,
+            const QByteArray& imageData);
         
         mutable QReadWriteLock _lock;
         int _priority;
