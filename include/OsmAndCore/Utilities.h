@@ -130,6 +130,14 @@ namespace OsmAnd
             return { (static_cast<double>(p.x) / tileSize31), (static_cast<double>(p.y) / tileSize31) };
         }
 
+        inline static PointI convertFloatTo31(const PointF& point, const PointI& target31, const ZoomLevel zoom)
+        {
+            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
+            const auto offsetFromTarget31 = static_cast<PointD>(point) * static_cast<double>(tileSize31);
+            const PointI64 location = static_cast<PointI64>(target31) + static_cast<PointI64>(offsetFromTarget31);
+            return Utilities::normalizeCoordinates(location, ZoomLevel::ZoomLevel31);
+        }
+
         inline static double normalizeLatitude(double latitude)
         {
             while (latitude < -90.0 || latitude > 90.0)

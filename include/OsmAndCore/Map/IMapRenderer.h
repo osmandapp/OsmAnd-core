@@ -173,6 +173,7 @@ namespace OsmAnd
         const ObservableAs<IMapRenderer::StateChanged> stateChangeObservable;
 
         //NOTE: screen points origin from top-left
+        virtual bool getWorldPointFromScreenPoint(const PointI& screenPoint, PointF& outWorldPoint) const = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
         virtual bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
