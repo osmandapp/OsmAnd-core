@@ -63,12 +63,21 @@ sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getEmptyImage() const
     return nullptr;
 }
 
-sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getImageWithData(
-    const IMapDataProvider::Request& request,
-    const QByteArray& imageData)
+sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::obtainImageWithData(
+    const IMapDataProvider::Request& request)
 {
+    QByteArray imageData = QByteArray();
     const auto imageDimensions = obtainImageData(request, imageData);
-    return imageDimensions > 0 ? SkiaUtilities::createSkImageARGB888With(imageData, imageDimensions) : nullptr;
+    if (imageDimensions > 0)
+    {
+        int width = imageDimensions & UINT_MAX;
+        int height = imageDimensions >> 32;
+        return SkiaUtilities::createSkImageARGB888With(imageData, width, height);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 bool OsmAnd::ImageMapLayerProvider::obtainData(
@@ -91,7 +100,6 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         return MapDataProviderHelpers::nonNaturalObtainData(this, request, outData, pOutMetric);
 
     sk_sp<const SkImage> image = nullptr;
-    QByteArray imageData = QByteArray();
     ZoomLevel zoom = request.zoom;
     TileId tileId = request.tileId;
     if (request.queryController != nullptr && request.queryController->isAborted())
@@ -103,7 +111,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         const auto supportsImage = supportsObtainImage();
 
         // Obtain image
-        image = supportsImage ? obtainImage(request) : getImageWithData(request, imageData);
+        image = supportsImage ? obtainImage(request) : obtainImageWithData(request);
 
         if (request.queryController != nullptr && request.queryController->isAborted())
             return false;
@@ -122,7 +130,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
                 tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
                 r.zoom = zoom;
                 r.tileId = tileId;
-                image = supportsImage ? obtainImage(r) : getImageWithData(r, imageData);
+                image = supportsImage ? obtainImage(r) : obtainImageWithData(r);
                 if (request.queryController != nullptr && request.queryController->isAborted())
                     return false;
                 if (image)
@@ -140,7 +148,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
                 {
                     r.zoom = static_cast<ZoomLevel>(request.zoom - zoomShift);
                     r.tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
-                    image = supportsImage ? obtainImage(r) : getImageWithData(r, imageData);
+                    image = supportsImage ? obtainImage(r) : obtainImageWithData(r);
                     if (request.queryController != nullptr && request.queryController->isAborted())
                         return false;
                     if (image)

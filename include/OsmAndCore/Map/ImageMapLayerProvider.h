@@ -53,9 +53,8 @@ namespace OsmAnd
 
     private:
         sk_sp<const SkImage> getEmptyImage() const;
-        sk_sp<const SkImage> getImageWithData(
-            const IMapDataProvider::Request& request,
-            const QByteArray& imageData);
+        sk_sp<const SkImage> obtainImageWithData(
+            const IMapDataProvider::Request& request);
         
         mutable QReadWriteLock _lock;
         int _priority;
@@ -75,9 +74,10 @@ namespace OsmAnd
         virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
 
         virtual bool supportsObtainImage() const;
+        // Return image dimensions: height << 32 | width;
         virtual long long obtainImageData(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const QByteArray& byteArray) = 0;
+            QByteArray& byteArray) = 0;
         virtual sk_sp<const SkImage> obtainImage(
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request) = 0;
 
@@ -86,9 +86,6 @@ namespace OsmAnd
             std::shared_ptr<IMapDataProvider::Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE Q_DECL_FINAL;
 
-        virtual void obtainImageAsync(
-            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImageData)* const asyncImage) = 0;
         virtual void obtainDataAsync(
             const IMapDataProvider::Request& request,
             const IMapDataProvider::ObtainDataAsyncCallback callback,
@@ -113,7 +110,7 @@ namespace OsmAnd
             long long,
             obtainImageData,
             const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const QByteArray& byteArray);
+            QByteArray& byteArray);
         SWIG_EMIT_DIRECTOR_METHOD(
             sk_sp<const SkImage>,
             obtainImage,
@@ -121,11 +118,6 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
             supportsNaturalObtainDataAsync);
-        SWIG_EMIT_DIRECTOR_METHOD(
-            void,
-            obtainImageAsync,
-            const SWIG_CLARIFY(ImageMapLayerProvider, Request)& request,
-            const SWIG_CLARIFY(ImageMapLayerProvider, AsyncImageData)* const asyncImage);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,
             getTileSize);

@@ -28,7 +28,8 @@ namespace OsmAnd
         
         static sk_sp<SkImage> createSkImageARGB888With(
             const QByteArray& byteArray,
-            long long imageDimensions);
+            int width,
+            int height);
 
         static sk_sp<SkImage> scaleImage(
             const sk_sp<const SkImage>& original,
