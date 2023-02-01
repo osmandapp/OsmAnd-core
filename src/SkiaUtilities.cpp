@@ -34,14 +34,13 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
-    const QByteArray& byteArray,
-    long long imageDimensions)
+    const QByteArray& byteArray, int width, int height)
 {
     SkBitmap bitmap;
    
     if (!bitmap.tryAllocPixels(SkImageInfo::Make(
-        imageDimensions & UINT_MAX,
-        imageDimensions >> 32,
+        width,
+        height,
         SkColorType::kRGBA_8888_SkColorType,
         SkAlphaType::kPremul_SkAlphaType)))
     {
