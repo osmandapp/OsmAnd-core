@@ -848,6 +848,7 @@ namespace OsmAnd
         }
 
         static int extractFirstInteger(const QString& s);
+        static int extractIntegerNumber(const QString& s);
         static bool extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
         static double parseSpeed(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static double parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
