@@ -224,17 +224,38 @@ inline OsmAnd::PointI OsmAnd::GeoTiffCollection_P::metersTo31(const PointD& loca
 
 inline double OsmAnd::GeoTiffCollection_P::metersFrom31(const double position31) const
 {
-    auto position = position31;
-    if (position >= earthIn31)
-        position -= earthIn31;
-    else if (position < 0.0)
-        position += earthIn31;
-    return (position / earthIn31 - 0.5) * earthInMeters;
+    return (position31 / earthIn31 - 0.5) * earthInMeters;
 }
 
 inline OsmAnd::PointD OsmAnd::GeoTiffCollection_P::metersFrom31(const double positionX, const double positionY) const
 {
     return PointD(metersFrom31(positionX), metersFrom31(earthIn31 - positionY));
+}
+
+inline bool OsmAnd::GeoTiffCollection_P::containsTile(
+    const AreaI& region31, const AreaI& area31) const
+{
+    if (region31.contains(area31))
+        return true;
+    if (area31.left() >= 0 && region31.contains(AreaI(
+        area31.top(),
+        area31.left() - INT32_MAX - 1,
+        area31.bottom(),
+        area31.right() - INT32_MAX - 1)))
+        return true;
+    if (area31.top() >= 0 && region31.contains(AreaI(
+        area31.top() - INT32_MAX - 1,
+        area31.left(),
+        area31.bottom() - INT32_MAX - 1,
+        area31.right())))
+        return true;
+    if (area31.left() >= 0 && area31.top() >= 0 && region31.contains(AreaI(
+        area31.top() - INT32_MAX - 1,
+        area31.left() - INT32_MAX - 1,
+        area31.bottom() - INT32_MAX - 1,
+        area31.right() - INT32_MAX - 1)))
+        return true;
+    return false;
 }
 
 inline OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::calcMaxZoom(
@@ -526,7 +547,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
             const auto& filePath = itEntry.key();
             const auto& tiffProperties = itEntry.value();
             if (bandCount <= tiffProperties.rasterBandCount &&
-                tiffProperties.region31.contains(AreaI(upperLeft31, lowerRight31)))
+                containsTile(tiffProperties.region31, AreaI(upperLeft31, lowerRight31)))
             {
                 const int zoomShift = zoom - minZoom;
                 bool tileFound = true;
@@ -564,7 +585,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                     }
                     lowerRight31Overscaled.x = lowerRight64.x;
                     lowerRight31Overscaled.y = lowerRight64.y;
-                    if (!tiffProperties.region31.contains(AreaI(upperLeft31Overscaled, lowerRight31Overscaled)))
+                    if (!containsTile(tiffProperties.region31, AreaI(upperLeft31Overscaled, lowerRight31Overscaled)))
                         tileFound = false;
                 }
 
@@ -598,10 +619,6 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                         {
                             auto upperLeft = metersFrom31(upperLeftNative.x, upperLeftNative.y);
                             auto lowerRight = metersFrom31(lowerRightNative.x, lowerRightNative.y);
-                            if (lowerRight.x < upperLeft.x)
-                                lowerRight.x += earthInMeters;
-                            if (lowerRight.y > upperLeft.y)
-                                lowerRight.y -= earthInMeters;
                             upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
                             upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
                             lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
@@ -651,10 +668,6 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(const TileId& tileId, const Zoo
                                 {
                                     upperLeft = metersFrom31(upperLeftOverscaled.x, upperLeftOverscaled.y);
                                     lowerRight = metersFrom31(lowerRightOverscaled.x, lowerRightOverscaled.y);
-                                    if (lowerRight.x < upperLeft.x)
-                                        lowerRight.x += earthInMeters;
-                                    if (lowerRight.y > upperLeft.y)
-                                        lowerRight.y -= earthInMeters;
                                     upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
                                     upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
                                     lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
