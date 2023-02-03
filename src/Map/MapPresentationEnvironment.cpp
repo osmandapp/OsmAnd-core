@@ -11,7 +11,7 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
     const LanguagePreference languagePreference_ /*= LanguagePreference::LocalizedOrNative*/,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/,
-    const QList<QString> forbiddenAttributes /*= QList<QString>*/)
+    const QSet<QString> disabledAttributes /*= QSet<QString>()*/)
     : _p(new MapPresentationEnvironment_P(this))
     , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
     , mapStyle(mapStyle_)
@@ -21,7 +21,7 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , localeLanguageId(localeLanguageId_)
     , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)
-    , forbiddenAttributes(forbiddenAttributes)
+    , disabledAttributes(disabledAttributes)
 {
     _p->initialize();
 }

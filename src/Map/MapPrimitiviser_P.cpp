@@ -2103,7 +2103,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
             const auto& attributeMapping = primitive->sourceObject->attributeMapping;
             const auto attributeId = primitive->sourceObject->attributeIds[primitive->attributeIdIndex];
             const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
-            if (!context.env->forbiddenAttributes.contains(decodedAttribute.value))
+            if (!context.env->disabledAttributes.contains(decodedAttribute.value))
             {
                 obtainSymbolsFromPoint(
                     context,
