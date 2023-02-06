@@ -22,7 +22,9 @@ namespace OsmAnd
         HIKING,
         BICYCLE,
         MTB,
-        HORSE
+        HORSE,
+        
+        Count
     };
 
     struct OSMAND_CORE_API NetworkRouteKey
@@ -71,7 +73,7 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API NetworkRouteSelectorFilter
     {
-        QSet<NetworkRouteKey> keyFilter;
+        QSet<NetworkRouteKey> keyFilter;//clone && copy
         QSet<RouteType> typeFilter;
     };
 
@@ -104,14 +106,18 @@ namespace OsmAnd
         NetworkRouteSelectorFilter filter;
         
         QMap<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
-        QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> tags);
-        int64_t getTileId(int32_t x31, int32_t y31);
-        int64_t getTileId(int32_t x31, int32_t y31, int shiftR);
+        QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> tags) const;
+        int64_t getTileId(int32_t x31, int32_t y31) const;
+        int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
         void loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
-                                                                                QMap<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
-        int32_t getXFromTileId(int64_t tileId);
-        int32_t getYFromTileId(int64_t tileId);
-        int64_t convertPointToLong(int x31, int y31);
+                                  QMap<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
+        int32_t getXFromTileId(int64_t tileId) const;
+        int32_t getYFromTileId(int64_t tileId) const;
+        PointI getPointFromLong(int64_t l) const;
+        int64_t convertPointToLong(int x31, int y31) const;
+        int64_t convertPointToLong(PointI point) const;
+        QMap<QString, QString> tagsToGpx(const NetworkRouteKey & key) const;
+        NetworkRouteKey * fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const;
     };
 }
 

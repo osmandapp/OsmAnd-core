@@ -30,21 +30,22 @@ OsmAnd::NetworkRouteKey::~NetworkRouteKey()
 {
 }
 
-QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::getRouteKeys(QHash<QString, QString> tags)
+QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::getRouteKeys(QHash<QString, QString> tags) const
 {
     return _p->getRouteKeys(tags);
 }
 
-int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31)
+int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31) const
 {
     return _p->getTileId(x31, y31);
 }
 
-int32_t OsmAnd::NetworkRouteContext::getXFromTileId(int64_t tileId)
+int32_t OsmAnd::NetworkRouteContext::getXFromTileId(int64_t tileId) const
 {
     return 0;
 }
-int32_t OsmAnd::NetworkRouteContext::getYFromTileId(int64_t tileId)
+
+int32_t OsmAnd::NetworkRouteContext::getYFromTileId(int64_t tileId) const
 {
     return 0;
 }
@@ -55,12 +56,32 @@ void OsmAnd::NetworkRouteContext::loadRouteSegmentTile(int32_t x, int32_t y, Net
     return _p->loadRouteSegmentTile(x, y, routeKey, map);
 }
 
-int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31, int shiftR)
+int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31, int shiftR) const
 {
     return _p->getTileId(x31, y31, shiftR);
 }
 
-int64_t OsmAnd::NetworkRouteContext::convertPointToLong(int x31, int y31)
+int64_t OsmAnd::NetworkRouteContext::convertPointToLong(int x31, int y31) const
 {
     return _p->convertPointToLong(x31, y31);
+}
+
+int64_t OsmAnd::NetworkRouteContext::convertPointToLong(PointI point) const
+{
+    return _p->convertPointToLong(point.x, point.y);
+}
+
+OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
+{
+    return _p->getPointFromLong(l);
+}
+
+QMap<QString, QString> OsmAnd::NetworkRouteContext::tagsToGpx(const NetworkRouteKey & key) const
+{
+    return _p->tagsToGpx(key);
+}
+
+OsmAnd::NetworkRouteKey * OsmAnd::NetworkRouteContext::fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const
+{
+    return _p->fromGpx(networkRouteKeyTags);
 }
