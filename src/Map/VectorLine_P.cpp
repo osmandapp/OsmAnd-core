@@ -554,7 +554,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
     double radius = _lineWidth * scale * visualShiftCoef;
-    bool approximate = _isApproximationEnabled && !hasColorizationMapping();
+    bool approximate = _isApproximationEnabled
+        && (_colorizationSceme == COLORIZATION_NONE || _colorizationSceme == COLORIZATION_SOLID);
     double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
 
     vectorLine->order = order++;
