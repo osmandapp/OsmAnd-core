@@ -18,6 +18,10 @@ OsmAnd::NetworkRouteSelector_P::~NetworkRouteSelector_P()
 {
 }
 
+OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::NetworkRouteSegmentChain()
+{
+}
+
 QMap<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::NetworkRouteSelector_P::getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * selected) const
 {
     QMap<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> routeSegmentTile = owner->rCtx->loadRouteSegmentsBbox(area31, selected);
@@ -39,7 +43,7 @@ QMap<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::Netw
             else
             {
                 NetworkRouteSegment firstSegment = routeSegments.at(0);
-                //connectAlgorithm
+                connectAlgorithm(firstSegment, resultMap);
             }
         }
     }
@@ -52,8 +56,8 @@ void OsmAnd::NetworkRouteSelector_P::connectAlgorithm(OsmAnd::NetworkRouteSegmen
     NetworkRouteKey & rkey = segment.routeKey;
     debug("START ", 0, segment);
     const auto loaded = loadData(segment, rkey);
-    //QList<NetworkRouteSegmentChain> lst = getNetworkRouteSegmentChains(segment.routeKey, res, loaded);
-    //debug("FINISH " + QString::number(lst.size()), 0, segment);
+    QList<NetworkRouteSegmentChain> lst = getNetworkRouteSegmentChains(segment.routeKey, res, loaded);
+    debug("FINISH " + QString::number(lst.size()), 0, segment);
 }
 
 void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, NetworkRouteSegment & segment) const

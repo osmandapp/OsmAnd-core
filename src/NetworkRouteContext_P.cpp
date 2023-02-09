@@ -43,23 +43,25 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentTile(int32_t x, int32_t y, N
         {
             if (routeKey != nullptr && segment.routeKey != *routeKey)
             {
-                //TODO move filter to visitor function
                 continue;
             }
           
             auto i = map.find(segment.routeKey);
-            if (i == map.end())
+            QList<OsmAnd::NetworkRouteSegment> routeSegments;
+            if (i != map.end())
             {
-                QList<OsmAnd::NetworkRouteSegment> routeSegments;
+                routeSegments = i.value();
+            }
+
+            if (segment.start == 0 || routeKey == nullptr) {
+                routeSegments.append(segment);
                 map.insert(segment.routeKey, routeSegments);
             }
-            
-            if (segment.start == 0 || routeKey == nullptr) {
-                i = map.find(segment.routeKey);
-                auto & routeSegments = i.value();
-                routeSegments.append(segment);
-            }
         }
+    }
+    for (auto i = map.begin(); i != map.end(); ++i)
+    {
+        OsmAnd::LogPrintf(LogSeverityLevel::Info, "key %s size %d", qPrintable((QString)i.key()), i.value().size());
     }
     return map;
 }
@@ -139,7 +141,7 @@ OsmAnd::NetworkRouteContext_P::NetworkRoutesTile OsmAnd::NetworkRouteContext_P::
     auto it = roads.begin();
     while (it != roads.end())
     {
-        std::shared_ptr<const Road> road = *it;
+        auto & road = *it;
         if (road == nullptr)
             continue;
         QVector<NetworkRouteKey> keys = convert(road);
@@ -147,13 +149,14 @@ OsmAnd::NetworkRouteContext_P::NetworkRoutesTile OsmAnd::NetworkRouteContext_P::
         {
             addToTile(osmcRoutesTile, road, rk);
         }
+        it++;
     }
     return osmcRoutesTile;
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::convert(std::shared_ptr<const Road> & road) const
 {
-    return filterKeys(getRouteKeys(road->getResolvedAttributes()));
+    return filterKeys(getRouteKeys(road));
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::filterKeys(QVector<OsmAnd::NetworkRouteKey> keys) const
@@ -194,7 +197,7 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::getRouteKeys(QHa
                 const QString tag = e.key();
                 if (tag.startsWith(prefix) && tag.length() > prefix.length())
                 {
-                    QString key = tag.left(prefix.length() + 1);
+                    QString key = tag.right(tag.length() - (prefix.length() + 1));
                     addTag(routeKey, key, e.value());
                 }
             }
@@ -202,6 +205,18 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::getRouteKeys(QHa
         }
     }
     return lst;
+}
+
+QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::getRouteKeys(std::shared_ptr<const Road> & road) const
+{
+    QHash<QString, QString> tags = road->getResolvedAttributes();
+    for (auto i = road->captions.begin(); i != road->captions.end(); ++i)
+    {
+        int attributeId = i.key();
+        const auto& decodedAttribute = road->attributeMapping->decodeMap[attributeId];
+        tags.insert(decodedAttribute.tag, i.value());
+    }
+    return getRouteKeys(tags);
 }
 
 int OsmAnd::NetworkRouteContext_P::getRouteQuantity(QHash<QString, QString> & tags, const QString tagPrefix) const
@@ -259,7 +274,7 @@ void OsmAnd::NetworkRouteContext_P::addToTile(NetworkRoutesTile & tile, std::sha
             NetworkRoutePoint point(x31, y31, id);
             tile.routes.insert(id, point);
         }
-        NetworkRoutePoint point = *(tile.routes.find(id));
+        NetworkRoutePoint & point = *(tile.routes.find(id));
         if (i > 0)
         {
             addObjectToPoint(point, road, routeKey, i, 0);
@@ -337,7 +352,7 @@ QString OsmAnd::NetworkRouteContext_P::getKeyFromTag(const NetworkRouteKey & key
     if (tag.startsWith(prefix) && tag.length() > prefix.length())
     {
         int endIdx = tag.indexOf(ROUTE_KEY_VALUE_SEPARATOR, prefix.length());
-        return tag.mid(prefix.length(), endIdx);
+        return tag.mid(prefix.length(), prefix.length() + endIdx);
     }
     return "";
 }
@@ -350,7 +365,7 @@ QString OsmAnd::NetworkRouteContext_P::getValue(const NetworkRouteKey & routeKey
         int i = tag.indexOf(key);
         if (i > 0)
         {
-            return tag.left(i + key.length());
+            return tag.right(tag.length() - (i + key.length()));
         }
     }
     return "";

@@ -60,6 +60,7 @@ private:
     void addToTile(NetworkRoutesTile & tile, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey);
     
     QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> tags) const;
+    QVector<NetworkRouteKey> getRouteKeys(std::shared_ptr<const Road> & road) const;
     int getRouteQuantity(QHash<QString, QString> & tags, const QString tagPrefix) const;
     int64_t getTileId(int32_t x31, int32_t y31) const;
     int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;

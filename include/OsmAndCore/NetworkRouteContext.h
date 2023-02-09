@@ -29,6 +29,9 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API NetworkRouteKey
     {
+        NetworkRouteKey();
+        NetworkRouteKey(NetworkRouteKey & other);
+        NetworkRouteKey(const NetworkRouteKey & other);
         NetworkRouteKey(int index);
         virtual ~NetworkRouteKey();
         RouteType type;
@@ -62,7 +65,10 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API NetworkRouteSegment
     {
-        NetworkRouteSegment(std::shared_ptr<const Road> road, NetworkRouteKey rKey, int start_, int end_):start(start_), end(end_), robj(road), routeKey(rKey){};
+        NetworkRouteSegment();
+        NetworkRouteSegment(NetworkRouteSegment & other);
+        NetworkRouteSegment(const NetworkRouteSegment & other);
+        NetworkRouteSegment(std::shared_ptr<const Road> road, NetworkRouteKey rKey, int start_, int end_);
         virtual ~NetworkRouteSegment();
         int start;
         int end;
@@ -73,7 +79,10 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API NetworkRouteSelectorFilter
     {
-        QSet<NetworkRouteKey> keyFilter;//clone && copy
+        NetworkRouteSelectorFilter();
+        NetworkRouteSelectorFilter(NetworkRouteSelectorFilter & other);
+        virtual ~NetworkRouteSelectorFilter();
+        QSet<NetworkRouteKey> keyFilter;
         QSet<RouteType> typeFilter;
     };
 

@@ -31,7 +31,7 @@ namespace OsmAnd
             const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache = nullptr);
         virtual ~NetworkRouteSelector();
 
-        const std::shared_ptr<NetworkRouteContext> rCtx;
+        std::shared_ptr<NetworkRouteContext> rCtx;
         NetworkRouteSelectorFilter filter;
         
         QList<std::shared_ptr<const Road>> getRoutes(

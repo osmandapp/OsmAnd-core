@@ -5,8 +5,8 @@ OsmAnd::NetworkRouteSelector::NetworkRouteSelector(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
     const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache_ /*= nullptr*/)
     : _p(new NetworkRouteSelector_P(this))
-    , rCtx(std::make_shared<NetworkRouteContext>(obfsCollection_, this->filter, cache_))
 {
+    rCtx = std::make_shared<NetworkRouteContext>(obfsCollection_, this->filter, cache_);
 }
 
 OsmAnd::NetworkRouteSelector::~NetworkRouteSelector()
