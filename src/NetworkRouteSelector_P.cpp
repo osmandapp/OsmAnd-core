@@ -62,12 +62,6 @@ QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::Net
             else
             {
                 NetworkRouteSegment firstSegment = routeSegments.at(0);
-                for (auto & s : routeSegments)
-                {
-                    if (s.start == 29 && s.end == 0)
-                        firstSegment = s;
-                }
-                //NetworkRouteSegment firstSegment = routeSegments.at(0);
                 connectAlgorithm(firstSegment, resultMap);
             }
         }
