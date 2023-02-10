@@ -6,7 +6,7 @@ OsmAnd::NetworkRouteSelector::NetworkRouteSelector(
     const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache_ /*= nullptr*/)
     : _p(new NetworkRouteSelector_P(this))
 {
-    rCtx = std::make_shared<NetworkRouteContext>(obfsCollection_, this->filter, cache_);
+    rCtx = std::make_shared<NetworkRouteContext>(obfsCollection_, cache_);
 }
 
 OsmAnd::NetworkRouteSelector::~NetworkRouteSelector()
@@ -21,7 +21,12 @@ QList<std::shared_ptr<const OsmAnd::Road>> OsmAnd::NetworkRouteSelector::getRout
     return _p->getRoutes(area31, routeKey, dataLevel, outReferencedCacheEntries);
 }
 
-QMap<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::NetworkRouteSelector::getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey) const
+QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::NetworkRouteSelector::getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey) const
 {
     return _p->getRoutes(area31, loadRoutes, routeKey);
+}
+
+void OsmAnd::NetworkRouteSelector::setNetworkRouteKeyFilter(NetworkRouteKey & routeKey)
+{
+    rCtx->setNetworkRouteKeyFilter(routeKey);
 }

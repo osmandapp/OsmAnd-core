@@ -52,9 +52,9 @@ private:
     
     QHash<int64_t, NetworkRoutesTile> indexedTiles;
     
-    QMap<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
+    QHash<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
     void loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
-                              QMap<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
+                              QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
     NetworkRoutesTile getMapRouteTile(int32_t x31, int32_t y31);
     NetworkRoutesTile loadTile(int32_t x, int32_t y, int64_t tileId);
     void addToTile(NetworkRoutesTile & tile, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey);

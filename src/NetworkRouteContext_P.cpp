@@ -16,9 +16,9 @@ OsmAnd::NetworkRouteContext_P::~NetworkRouteContext_P()
 {
 }
 
-QMap<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext_P::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
+QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext_P::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
 {
-    QMap<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> map;
+    QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> map;
     int32_t left = area31.left() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
     int32_t right = area31.right() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
     int32_t top = area31.top() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
@@ -34,7 +34,7 @@ QMap<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::Networ
 }
 
 void OsmAnd::NetworkRouteContext_P::loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
-                                                         QMap<NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> & map)
+                                                         QHash<NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> & map)
 {
     NetworkRoutesTile osmcRoutesTile = getMapRouteTile(x << ZOOM_TO_LOAD_TILES_SHIFT_L, y << ZOOM_TO_LOAD_TILES_SHIFT_L);
     for (auto & pnt : osmcRoutesTile.routes)
@@ -48,7 +48,11 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentTile(int32_t x, int32_t y, N
           
             auto i = map.find(segment.routeKey);
             QList<OsmAnd::NetworkRouteSegment> routeSegments;
-            if (i != map.end())
+            if (i == map.end())
+            {
+                map.insert(segment.routeKey, routeSegments);
+            }
+            else
             {
                 routeSegments = i.value();
             }
@@ -59,11 +63,6 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentTile(int32_t x, int32_t y, N
             }
         }
     }
-    for (auto i = map.begin(); i != map.end(); ++i)
-    {
-        OsmAnd::LogPrintf(LogSeverityLevel::Info, "key %s size %d", qPrintable((QString)i.key()), i.value().size());
-    }
-    return map;
 }
 
 OsmAnd::NetworkRouteContext_P::NetworkRoutesTile OsmAnd::NetworkRouteContext_P::getMapRouteTile(int32_t x31, int32_t y31)
@@ -161,7 +160,7 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::convert(std::sha
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::filterKeys(QVector<OsmAnd::NetworkRouteKey> keys) const
 {
-    if (owner->filter.keyFilter.empty() && owner->filter.typeFilter.empty())
+    if (keys.size() == 0 || (owner->filter.keyFilter.empty() && owner->filter.typeFilter.empty()))
     {
         return  keys;
     }

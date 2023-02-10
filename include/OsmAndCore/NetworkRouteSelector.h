@@ -32,7 +32,6 @@ namespace OsmAnd
         virtual ~NetworkRouteSelector();
 
         std::shared_ptr<NetworkRouteContext> rCtx;
-        NetworkRouteSelectorFilter filter;
         
         QList<std::shared_ptr<const Road>> getRoutes(
             const AreaI area31,
@@ -40,7 +39,9 @@ namespace OsmAnd
             const RoutingDataLevel dataLevel = RoutingDataLevel::Detailed,
             QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>> * const outReferencedCacheEntries = nullptr) const;
         
-        QMap<NetworkRouteKey, std::shared_ptr<GpxDocument>> getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey = nullptr) const;
+        QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey = nullptr) const;
+        
+        void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
     };
 }
 

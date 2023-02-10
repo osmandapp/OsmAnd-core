@@ -3,17 +3,21 @@
 
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
-    NetworkRouteSelectorFilter filter_,
     const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache_)
     : _p(new NetworkRouteContext_P(this))
     , obfsCollection(obfsCollection_)
     , cache(cache_)
-    , filter(filter_)
 {
 }
 
 OsmAnd::NetworkRouteContext::~NetworkRouteContext()
 {
+}
+
+void OsmAnd::NetworkRouteContext::setNetworkRouteKeyFilter(NetworkRouteKey & routeKey)
+{
+    filter.keyFilter.clear();
+    filter.keyFilter.insert(routeKey);
 }
 
 OsmAnd::NetworkRouteSelectorFilter::NetworkRouteSelectorFilter()
@@ -29,7 +33,7 @@ OsmAnd::NetworkRouteSelectorFilter::~NetworkRouteSelectorFilter()
 {    
 }
 
-QMap<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
+QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
 {
     return _p->loadRouteSegmentsBbox(area31, rKey);
 }
@@ -97,16 +101,16 @@ int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31) const
 
 int32_t OsmAnd::NetworkRouteContext::getXFromTileId(int64_t tileId) const
 {
-    return 0;
+    return _p->getXFromTileId(tileId);
 }
 
 int32_t OsmAnd::NetworkRouteContext::getYFromTileId(int64_t tileId) const
 {
-    return 0;
+    return _p->getYFromTileId(tileId);
 }
 
 void OsmAnd::NetworkRouteContext::loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
-                                                                        QMap<NetworkRouteKey, QList<NetworkRouteSegment>> & map)
+                                                                        QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map)
 {
     return _p->loadRouteSegmentTile(x, y, routeKey, map);
 }

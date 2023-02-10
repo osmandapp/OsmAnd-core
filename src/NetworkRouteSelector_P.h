@@ -45,7 +45,7 @@ public:
                                                   const RoutingDataLevel dataLevel,
                                                   QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>> * const outReferencedCacheEntries) const;
     
-    QMap<NetworkRouteKey, std::shared_ptr<GpxDocument>> getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey) const;
+    QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * routeKey) const;
     friend class OsmAnd::NetworkRouteSelector;
     
 private:
@@ -82,13 +82,13 @@ private:
         }
     };
     
-    void connectAlgorithm(NetworkRouteSegment & segment, QMap<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
+    void connectAlgorithm(NetworkRouteSegment & segment, QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
     QList<NetworkRouteSegment> loadData(NetworkRouteSegment & segment, NetworkRouteKey & rkey) const;
     void addEnclosedTiles(QList<int64_t> & queue, int64_t tileid) const;
     void debug(QString msg, short reverse, NetworkRouteSegment & segment) const;
     
     QList<NetworkRouteSegmentChain> getNetworkRouteSegmentChains(NetworkRouteKey & routeKey,
-                                                                 QMap<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
+                                                                 QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
                                                                  const QList<NetworkRouteSegment> & loaded) const;
     QMap<int64_t, QList<NetworkRouteSegmentChain>> createChainStructure(const QList<NetworkRouteSegment> & lst) const;
     QMap<int64_t, QList<NetworkRouteSegmentChain>> prepareEndChain(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;

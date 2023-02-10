@@ -38,21 +38,60 @@ namespace OsmAnd
         QSet<QString> tags;
         inline bool operator == (const NetworkRouteKey & other) const
         {
-            return (type == other.type && tags == other.tags);
+            if (type != other.type)
+                return false;
+            if (tags.size() != other.tags.size())
+                return false;
+            bool tagsEqual = true;
+            for (auto & tag : tags)
+            {
+                if (!other.tags.contains(tag))
+                {
+                    tagsEqual = false;
+                    break;
+                }
+            }
+            return tagsEqual;
         }
         inline bool operator != (const NetworkRouteKey & other) const
         {
-            return (type != other.type || tags != other.tags);
+            if (type != other.type)
+                return false;
+            if (tags.size() != other.tags.size())
+                return false;
+            bool tagsNotEqual = false;
+            for (auto & tag : tags)
+            {
+                if (!other.tags.contains(tag))
+                {
+                    tagsNotEqual = true;
+                    break;
+                }
+            }
+            return tagsNotEqual;
         }
         inline bool operator > (const NetworkRouteKey & other) const
         {
-            return (tags.size() > other.tags.size());
+            return (type > other.type || tags.size() > other.tags.size());
         }
         inline bool operator < (const NetworkRouteKey & other) const
         {
-            return (tags.size() < other.tags.size());
+            return (type < other.type || tags.size() < other.tags.size());
         }
-        inline operator const QString() const
+        inline operator int() const
+        {
+            const int prime = 31;
+            int result = 1;
+            int s = 0;
+            for (const QString & tag : constOf(tags))
+            {
+                s += qHash(tag);
+            }
+            result = prime * result + s;
+            result = prime * result + qHash(static_cast<int>(type));
+            return result;
+        }
+        /*inline operator const QString() const
         {
             QString hash = QString::number(static_cast<int>(type));
             for (auto & s : tags)
@@ -60,7 +99,7 @@ namespace OsmAnd
                 hash += s;
             }
             return hash;
-        }
+        }*/
     };
 
     struct OSMAND_CORE_API NetworkRouteSegment
@@ -105,7 +144,6 @@ namespace OsmAnd
     public:
         NetworkRouteContext(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
-            NetworkRouteSelectorFilter filter,
             const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache = nullptr
             );
         virtual ~NetworkRouteContext();
@@ -114,12 +152,13 @@ namespace OsmAnd
         const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache> cache;
         NetworkRouteSelectorFilter filter;
         
-        QMap<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
+        void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
+        QHash<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
         QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> tags) const;
         int64_t getTileId(int32_t x31, int32_t y31) const;
         int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
         void loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
-                                  QMap<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
+                                  QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
         int32_t getXFromTileId(int64_t tileId) const;
         int32_t getYFromTileId(int64_t tileId) const;
         PointI getPointFromLong(int64_t l) const;
