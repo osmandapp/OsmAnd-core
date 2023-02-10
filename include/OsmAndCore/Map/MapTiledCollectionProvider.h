@@ -56,6 +56,7 @@ namespace OsmAnd
             virtual ~MapTiledCollectionProvider();
 
             virtual int getBaseOrder() const = 0;
+            virtual QList<OsmAnd::PointI> getPoints31() const = 0;
             virtual QList<OsmAnd::PointI> getHiddenPoints() const = 0;
             virtual bool shouldShowCaptions() const = 0;
             virtual OsmAnd::TextRasterizer::Style getCaptionStyle() const = 0;
@@ -63,10 +64,8 @@ namespace OsmAnd
             virtual float getReferenceTileSizeOnScreenInPixels() const = 0;
             virtual double getScale() const = 0;
             
-            virtual OsmAnd::PointI getPoint31(const int index) const = 0;
             virtual sk_sp<const SkImage> getImageBitmap(const int index, bool isFullSize = true) const = 0;
             virtual QString getCaption(const int index) const = 0;
-            virtual int getPointsCount() const = 0;
 
             virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const OsmAnd::TileId& tileId, const OsmAnd::ZoomLevel zoom) const = 0;
 
@@ -96,6 +95,9 @@ namespace OsmAnd
             getBaseOrder);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             QList<OsmAnd::PointI>,
+            getPoints31);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            QList<OsmAnd::PointI>,
             getHiddenPoints);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
@@ -112,13 +114,6 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             double,
             getScale);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            OsmAnd::PointI,
-            getPoint31,
-            const int index);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            int,
-            getPointsCount);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             sk_sp<const SkImage>,
             getImageBitmap,
