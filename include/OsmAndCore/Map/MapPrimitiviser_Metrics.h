@@ -108,9 +108,6 @@ namespace OsmAnd
         /* Time spent on processing text symbols */                                                 \
         FIELD_ACTION(float, elapsedTimeForTextSymbolsProcessing, "s");                              \
                                                                                                     \
-        /* Number of rejected text symbols */                                                       \
-        FIELD_ACTION(unsigned int, rejectedTextSymbols, "");                                        \
-                                                                                                    \
         /* Number of obtained text symbols */                                                       \
         FIELD_ACTION(unsigned int, obtainedTextSymbols, "");                                        \
                                                                                                     \

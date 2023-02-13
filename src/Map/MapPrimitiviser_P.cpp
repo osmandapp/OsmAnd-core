@@ -2523,20 +2523,17 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         }
     }
 
-    // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
+    // Find first valid caption in captions. Captions' order is set in OBF source and controlled by 'rendering_types.xml'
     bool ok;
-    bool extraCaptionTextAdded = false;
-    uint32_t extraCaptionRuleId = std::numeric_limits<uint32_t>::max();
+    uint32_t selectedCaptionAttributeId;
+    QString selectedCaption;
+    int selectedTextSize = 0;
     for (const auto& captionAttributeId : constOf(captionsOrder))
     {
         const auto& caption = constOf(captions)[captionAttributeId];
 
         // If it's empty, it can not be primitivised
         if (caption.isEmpty())
-            continue;
-
-        // In case this tag was already processed as extra caption, no need to duplicate it
-        if (extraCaptionTextAdded && captionAttributeId == extraCaptionRuleId)
             continue;
 
         // Skip captions that are from 'name[:*]'-tags but not of 'native' or 'localized' language
@@ -2573,174 +2570,156 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         // Skip text that doesn't have valid size
         int textSize = 0;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SIZE, textSize);
-        if (!ok || textSize == 0)
-            continue;
 
-        const Stopwatch textProcessingStopwatch(metric != nullptr);
-
-        // Determine language of this text
-        auto languageId = LanguageId::Invariant;
-        if (hasNativeName && captionAttributeId == attributeMapping->nativeNameAttributeId)
-            languageId = LanguageId::Native;
-        else if (hasLocalizedName && captionAttributeId == localizedNameRuleId)
-            languageId = LanguageId::Localized;
-
-        // Create primitive
-        const std::shared_ptr<TextSymbol> text(new TextSymbol(primitive));
-        text->location31 = location;
-        text->languageId = languageId;
-        text->value = caption;
-        text->scaleFactor = env->symbolsScaleFactor;
-
-        // Get additional text from nameTag2 if present (and not yet added)
-        if (!extraCaptionTextAdded)
+        if (ok && textSize > 0)
         {
-            QString nameTag2;
-            ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_NAME_TAG2, nameTag2);
-            if (ok && !nameTag2.isEmpty())
+            selectedCaptionAttributeId = captionAttributeId;
+            selectedCaption = caption;
+            selectedTextSize = textSize;
+            break;
+        }
+    }
+
+    // No valid captions were found
+    if (!ok)
+        return;
+
+    const Stopwatch textProcessingStopwatch(metric != nullptr);
+
+    // Determine language of this text
+    auto languageId = LanguageId::Invariant;
+    if (hasNativeName && selectedCaptionAttributeId == attributeMapping->nativeNameAttributeId)
+        languageId = LanguageId::Native;
+    else if (hasLocalizedName && selectedCaptionAttributeId == localizedNameRuleId)
+        languageId = LanguageId::Localized;
+
+    // Create primitive
+    const std::shared_ptr<TextSymbol> text(new TextSymbol(primitive));
+    text->location31 = location;
+    text->languageId = languageId;
+    text->value = selectedCaption;
+    text->scaleFactor = env->symbolsScaleFactor;
+
+    // Get additional text from nameTag2 if present
+    QString nameTag2;
+    ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_NAME_TAG2, nameTag2);
+    if (ok && !nameTag2.isEmpty())
+    {
+        const auto citNameTag2AttributesGroup = attributeMapping->encodeMap.constFind(&nameTag2);
+        if (citNameTag2AttributesGroup != attributeMapping->encodeMap.constEnd())
+        {
+            const auto& nameTag2AttributesGroup = *citNameTag2AttributesGroup;
+            for (const auto& nameTag2AttributeEntry : rangeOf(constOf(nameTag2AttributesGroup)))
             {
-                const auto citNameTag2AttributesGroup = attributeMapping->encodeMap.constFind(&nameTag2);
-                if (citNameTag2AttributesGroup != attributeMapping->encodeMap.constEnd())
-                {
-                    const auto& nameTag2AttributesGroup = *citNameTag2AttributesGroup;
-                    for (const auto& nameTag2AttributeEntry : rangeOf(constOf(nameTag2AttributesGroup)))
-                    {
-                        const auto attributeId = nameTag2AttributeEntry.value();
-                        const auto citExtraCaption = mapObject->captions.constFind(attributeId);
+                const auto attributeId = nameTag2AttributeEntry.value();
+                const auto citExtraCaption = mapObject->captions.constFind(attributeId);
 
-                        if (citExtraCaption == mapObject->captions.constEnd())
-                            continue;
-                        const auto& extraCaption = *citExtraCaption;
-                        if (extraCaption.isEmpty())
-                            continue;
+                if (citExtraCaption == mapObject->captions.constEnd())
+                    continue;
+                const auto& extraCaption = *citExtraCaption;
+                if (extraCaption.isEmpty())
+                    continue;
 
-                        // Skip extra caption in case it's same as caption, to avoid "X (X)" cases
-                        if (extraCaption == caption)
-                            continue;
+                // Skip extra caption in case it's same as caption, to avoid "X (X)" cases
+                if (extraCaption == selectedCaption)
+                    continue;
 
-                        text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
+                text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
 
-                        extraCaptionTextAdded = true;
-                        extraCaptionRuleId = attributeId;
-                        break;
-                    }
-                }
+                break;
             }
         }
+    }
 
-        // In case text is from polyline primitive, it's drawn along-path if not on-path
-        if (primitive->type == PrimitiveType::Polyline)
-        {
-            evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
-            text->drawAlongPath = !text->drawOnPath;
-        }
+    // In case text is from polyline primitive, it's drawn along-path if not on-path
+    if (primitive->type == PrimitiveType::Polyline)
+    {
+        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+        text->drawAlongPath = !text->drawOnPath;
+    }
 
-        // By default, text order is treated as 100
-        text->order = 100;
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
+    // By default, text order is treated as 100
+    text->order = 100;
+    ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 
-        if (primitive->type == PrimitiveType::Point ||
-            primitive->type == PrimitiveType::Polygon)
-        {
-            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
-        }
+    if (primitive->type == PrimitiveType::Point ||
+        primitive->type == PrimitiveType::Polygon)
+    {
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
+    }
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
-        if (!ok || text->color == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
-            text->color = ColorARGB::fromSkColor(SK_ColorBLACK);
+    ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
+    if (!ok || text->color == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
+        text->color = ColorARGB::fromSkColor(SK_ColorBLACK);
 
-        text->size = textSize;
+    text->size = selectedTextSize;
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
-        if (ok && text->shadowRadius > 0)
-        {
-            text->shadowRadius += 2; // + 2px
-            //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
-        }
+    ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
+    if (ok && text->shadowRadius > 0)
+    {
+        text->shadowRadius += 2; // + 2px
+        //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
+    }
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor.argb);
-        if (!ok || text->shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
-            text->shadowColor = ColorARGB::fromSkColor(SK_ColorWHITE);
+    ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor.argb);
+    if (!ok || text->shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
+        text->shadowColor = ColorARGB::fromSkColor(SK_ColorWHITE);
 
-        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
-        if (!text->drawOnPath && text->wrapWidth == 0)
-        {
-            // Default wrapping width (in characters)
-            text->wrapWidth = MapPrimitiviser::DefaultTextLabelWrappingLengthInCharacters;
-        }
+    evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
+    if (!text->drawOnPath && text->wrapWidth == 0)
+    {
+        // Default wrapping width (in characters)
+        text->wrapWidth = MapPrimitiviser::DefaultTextLabelWrappingLengthInCharacters;
+    }
 
-        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
-        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ITALIC, text->isItalic);
+    evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
+    evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ITALIC, text->isItalic);
 
-        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
+    evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
 
-        evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
+    evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
-        evaluationResult.getStringValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_ICON,
-            text->underlayIconResourceName);
-        
-        text->shieldResourceName = prepareIconValue(primitive->sourceObject,text->shieldResourceName);
-        text->underlayIconResourceName = prepareIconValue(primitive->sourceObject,text->underlayIconResourceName);
-        
-        QString intersectsWith;
-        ok = evaluationResult.getStringValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
-            intersectsWith);
-        if (!ok)
-            intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
-        text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+    evaluationResult.getStringValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_ICON,
+        text->underlayIconResourceName);
+    
+    text->shieldResourceName = prepareIconValue(primitive->sourceObject,text->shieldResourceName);
+    text->underlayIconResourceName = prepareIconValue(primitive->sourceObject,text->underlayIconResourceName);
+    
+    QString intersectsWith;
+    ok = evaluationResult.getStringValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
+        intersectsWith);
+    if (!ok)
+        intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
+    text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
-        float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
-        ok = evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE_FACTOR,
-            intersectionSizeFactor);
-        if (ok)
-            text->intersectionSizeFactor = intersectionSizeFactor;
+    float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
+    ok = evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE_FACTOR,
+        intersectionSizeFactor);
+    if (ok)
+        text->intersectionSizeFactor = intersectionSizeFactor;
 
-        float intersectionSize = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE,
-            intersectionSize);
-        if (ok)
-            text->intersectionSize = intersectionSize;
+    float intersectionSize = std::numeric_limits<float>::quiet_NaN();
+    ok = !ok && evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE,
+        intersectionSize);
+    if (ok)
+        text->intersectionSize = intersectionSize;
 
-        float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_MARGIN,
-            intersectionMargin);
-        if (ok)
-            text->intersectionMargin = intersectionMargin;
+    float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
+    ok = !ok && evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_MARGIN,
+        intersectionMargin);
+    if (ok)
+        text->intersectionMargin = intersectionMargin;
 
-        // In case new text symbol has a twin that was already added, ignore this one
-        const auto hasTwin = std::any_of(outSymbols,
-            [text]
-            (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
-            {
-                if (const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
-                {
-                    return text->hasSameContentAs(*otherText);
-                }
-
-                return false;
-            });
-        if (hasTwin)
-        {
-            if (metric)
-            {
-                metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
-                metric->rejectedTextSymbols++;
-            }
-
-            continue;
-        }
-
-        outSymbols.push_back(qMove(text));
-        if (metric)
-        {
-            metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
-            metric->obtainedTextSymbols++;
-        }
+    outSymbols.push_back(qMove(text));
+    if (metric)
+    {
+        metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
+        metric->obtainedTextSymbols++;
     }
 }
 
