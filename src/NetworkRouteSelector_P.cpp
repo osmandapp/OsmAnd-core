@@ -26,24 +26,6 @@ OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::NetworkRouteSegmentCha
 QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::NetworkRouteSelector_P::getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * selected) const
 {
     QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> routeSegmentTile = owner->rCtx->loadRouteSegmentsBbox(area31, nullptr);
-    
-    /*for (auto i = routeSegmentTile.begin(); i != routeSegmentTile.end(); ++i)
-    {
-        auto & key = i.key();
-        QString tags;
-        for (const QString & tag : key.tags)
-        {
-            tags += " " + tag + "\n";
-        }
-        auto & v = i.value();
-        QString s;
-        for (auto & seg : v)
-        {
-            s += QString::number(seg.robj->id.id / 64) + ": " + QString::number(seg.start) + " " + QString::number(seg.end) + "\n";
-        }
-        OsmAnd::LogPrintf(LogSeverityLevel::Info, "Tags: \n %s Segments: \n %s", qPrintable(tags), qPrintable(s));
-    }*/
-    
     QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> resultMap;
     for (auto i = routeSegmentTile.begin(); i != routeSegmentTile.end(); ++i)
     {
@@ -148,9 +130,9 @@ QList<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::loadData(Netw
         // stop exploring if no route key even intersects tile (dont check loaded.size() == 0 special case)]
         for (NetworkRouteSegment & s : loaded)
         {
-            if (!objIds.contains(s.robj->id))
+            if (!objIds.contains(s.robj->id.id))
             {
-                objIds.insert(s.robj->id);
+                objIds.insert(s.robj->id.id);
                 result.append(s);
             }
         }
@@ -200,7 +182,7 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
 QMap<int64_t, QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain>> OsmAnd::NetworkRouteSelector_P::createChainStructure(const QList<NetworkRouteSegment> & lst) const
 {
     QMap<int64_t, QList<NetworkRouteSegmentChain>> chains;
-    for (NetworkRouteSegment s : lst)
+    for (const auto & s : lst)
     {
         NetworkRouteSegmentChain chain;
         chain.start = s;
@@ -256,8 +238,15 @@ int OsmAnd::NetworkRouteSelector_P::connectSimpleStraight(QMap<int64_t, QList<Ne
     while (changed /*&& !isCancelled()*/)
     {
         changed = false;
-        mainLoop : for (auto & lst : chains.values())
+        QList<int64_t> longPoints(chains.keys());//copy of chains keys
+        for (int64_t startPnt : longPoints)
         {
+            if (changed)
+            {
+                break;
+            }
+            auto iterator = chains.find(startPnt);
+            auto & lst = iterator.value();
             for (NetworkRouteSegmentChain & it : lst)
             {
                 auto endPoint = it.getEndPoint();
@@ -276,11 +265,11 @@ int OsmAnd::NetworkRouteSelector_P::connectSimpleStraight(QMap<int64_t, QList<Ne
                 // no alternative join
                 if (connectNextLst.size() == 1 && connectToEndLst.size() == 0)
                 {
-                    //OsmAnd::LogPrintf(LogSeverityLevel::Info, " Merged: %d -> %d", it.getLast().robj->id / 128, connectNextLst.at(0).start.getId() / 128);
-                    chainAdd(chains, endChains, it, connectNextLst[0]);
+                    NetworkRouteSegmentChain toAdd = connectNextLst.at(0);
+                    chainAdd(chains, endChains, it, toAdd);
                     changed = true;
                     merged++;
-                    goto mainLoop;
+                    break;
                 }
             }
         }
@@ -310,7 +299,6 @@ int OsmAnd::NetworkRouteSelector_P::reverseToConnectMore(QMap<int64_t, QList<Net
             reverse |= i == vls.begin() && filterChains(endLst, it, rad, false).size() > 1 && noStartFromEnd;
             if (reverse)
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Info, "PNT: %ld", startPnt);
                 chainReverse(chains, endChains, it);
                 reversed++;
                 break;
@@ -364,18 +352,14 @@ int OsmAnd::NetworkRouteSelector_P::connectToLongestChain(QMap<int64_t, QList<Ne
         for (int j = i + 1; j < chainsFlat.size() && !merged /*&& !isCancelled()*/; j++)
         {
             auto & second = chainsFlat[j];
-            PointI firstStartPoint = first.getStartPoint();
-            PointI firstEndPoint = first.getEndPoint();
-            PointI secondStartPoint = second.getStartPoint();
-            PointI secondEndPoint = second.getEndPoint();
-            if (squareRootDist31(firstEndPoint.x, firstEndPoint.y, secondEndPoint.x, firstEndPoint.y) < rad)
+            if (squareRootDist31(first.getEndPoint().x, first.getEndPoint().y, second.getEndPoint().x, second.getEndPoint().y) < rad)
             {
                 auto secondReversed = chainReverse(chains, endChains, second);
                 chainAdd(chains, endChains, first, secondReversed);
                 chainsFlat.removeAt(j);
                 merged = true;
             }
-            else if (squareRootDist31(firstStartPoint.x, firstStartPoint.y, secondStartPoint.x, secondStartPoint.y) < rad)
+            else if (squareRootDist31(first.getStartPoint().x, first.getStartPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
             {
                 auto firstReversed = chainReverse(chains, endChains, first);
                 chainAdd(chains, endChains, firstReversed, second);
@@ -383,13 +367,13 @@ int OsmAnd::NetworkRouteSelector_P::connectToLongestChain(QMap<int64_t, QList<Ne
                 chainsFlat[i] = firstReversed;//chainsFlat.set(i, firstReversed);
                 merged = true;
             }
-            else if (squareRootDist31(firstEndPoint.x, firstEndPoint.y, secondStartPoint.x, secondStartPoint.y) < rad)
+            else if (squareRootDist31(first.getEndPoint().x, first.getEndPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
             {
                 chainAdd(chains, endChains, first, second);
                 chainsFlat.removeAt(j);
                 merged = true;
             }
-            else if (squareRootDist31(secondEndPoint.x, secondEndPoint.y, firstStartPoint.x, firstStartPoint.y) < rad)
+            else if (squareRootDist31(second.getEndPoint().x, second.getEndPoint().y, first.getStartPoint().x, first.getStartPoint().y) < rad)
             {
                 chainAdd(chains, endChains, second, first);
                 chainsFlat.removeAt(i);
@@ -518,18 +502,21 @@ void OsmAnd::NetworkRouteSelector_P::remove(QMap<int64_t, QList<NetworkRouteSegm
     auto it = chains.find(pnt);
     if (it == chains.end())
     {
-        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Point %d can not be remove from chains map", pnt);
+        OsmAnd::LogPrintf(LogSeverityLevel::Error, "Can not remove point %ld from chains map", pnt);
     }
     else
     {
+        QString debug = QString::number(toRemove.start.robj->id.id)
+                        + " s:" + QString::number(toRemove.start.start)
+                        + " e:" + QString::number(toRemove.start.end);
         QList<NetworkRouteSegmentChain> & lch = it.value();
-        if (lch.removeOne(toRemove))
+        if (!lch.removeOne(toRemove))
+        {
+            OsmAnd::LogPrintf(LogSeverityLevel::Error, "Remove segment chain from list. Point %ld, seg %s", pnt, qPrintable(debug));
+        }
+        if (lch.isEmpty())
         {
             chains.remove(pnt);
-        }
-        else
-        {
-            OsmAnd::LogPrintf(LogSeverityLevel::Error, "Point %d can not be remove from chains map", pnt);
         }
     }
 }
@@ -545,16 +532,13 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     remove(chains, owner->rCtx->convertPointToLong(toAdd.getStartPoint()), toAdd);
     remove(endChains, owner->rCtx->convertPointToLong(toAdd.getEndPoint()), toAdd);
     remove(endChains, owner->rCtx->convertPointToLong(it.getEndPoint()), it);
-    PointI currentEnd = it.getEndPoint();
-    PointI toAddStart = toAdd.getStartPoint();
-    double minStartDist = squareRootDist31(currentEnd.x, currentEnd.y, toAddStart.x, toAddStart.y);
+    double minStartDist = squareRootDist31(it.getEndPoint().x, it.getEndPoint().y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
     double minLastDist = minStartDist;
     int minStartInd = toAdd.start.start;
     auto & points31 = toAdd.start.robj->points31;
     for (int i = 0; i < points31.size(); i++)
     {
-        PointI point = points31.at(i);
-        double m = squareRootDist31(currentEnd.x, currentEnd.y, point.x, point.y);
+        double m = squareRootDist31(it.getEndPoint().x, it.getEndPoint().y, points31.at(i).x, points31.at(i).y);
         if (m < minStartDist && minStartInd != i)
         {
             minStartInd = i;
@@ -567,7 +551,7 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     for (int i = 0; i < lastItPoints31.size(); i++)
     {
         PointI point = lastItPoints31.at(i);
-        double m = squareRootDist31(point.x, point.y, toAddStart.x, toAddStart.y);
+        double m = squareRootDist31(point.x, point.y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
         if (m < minLastDist && minLastInd != i)
         {
             minLastInd = i;
@@ -591,7 +575,7 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
         }
     }
     it.addChain(toAdd);
-    add(endChains, owner->rCtx->convertPointToLong(currentEnd), it);
+    add(endChains, owner->rCtx->convertPointToLong(it.getEndPoint()), it);
 }
 
 std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFile(QList<NetworkRouteSegmentChain> & chains, NetworkRouteKey & routeKey) const
@@ -713,7 +697,8 @@ OsmAnd::PointI OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getEndP
     const NetworkRouteSegment & seg = getLast();
     if (seg.robj && seg.robj->points31.size() > seg.end)
     {
-        return seg.robj->points31[seg.end];
+        PointI p = seg.robj->points31.at(seg.end);
+        return p;
     }
     PointI def(0, 0);
     return def;

@@ -66,19 +66,27 @@ private:
         void setEnd(NetworkRouteSegment & newEnd);
         inline bool operator == (const NetworkRouteSegmentChain & other) const
         {
+            int64_t robjId = start.robj ? start.robj->id.id : 0;
+            int64_t otherRobjId = other.start.robj ? other.start.robj->id.id : 0;
             return connected.size() == other.connected.size()
-                && start.routeKey == other.start.routeKey
-                && start.start == other.start.start
-                && start.end == other.start.end
-                && getEndPoint() == other.getEndPoint();
+            && robjId == otherRobjId
+            && start.start == other.start.start
+            && start.end == other.start.end                
+            && getEndPoint() == other.getEndPoint()
+            && getStartPoint() == other.getStartPoint()
+            && start.routeKey == other.start.routeKey;
         };
         inline bool operator != (const NetworkRouteSegmentChain & other) const
         {
+            int64_t robjId = start.robj ? start.robj->id.id : 0;
+            int64_t otherRobjId = other.start.robj ? other.start.robj->id.id : 0;
             return connected.size() != other.connected.size()
+            || robjId != otherRobjId
             || start.routeKey != other.start.routeKey
             || start.start != other.start.start
             || start.end != other.start.end
-            || getEndPoint() != other.getEndPoint();
+            || getEndPoint() != other.getEndPoint()
+            || getStartPoint() != other.getStartPoint();
         }
     };
     
