@@ -89,7 +89,7 @@ OsmAnd::NetworkRoutePoint::~NetworkRoutePoint()
 {    
 }
 
-QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::getRouteKeys(QHash<QString, QString> tags) const
+QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::getRouteKeys(QHash<QString, QString> & tags) const
 {
     return _p->getRouteKeys(tags);
 }
@@ -109,10 +109,10 @@ int32_t OsmAnd::NetworkRouteContext::getYFromTileId(int64_t tileId) const
     return _p->getYFromTileId(tileId);
 }
 
-void OsmAnd::NetworkRouteContext::loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
+void OsmAnd::NetworkRouteContext::loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
                                                                         QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map)
 {
-    return _p->loadRouteSegmentTile(x, y, routeKey, map);
+    return _p->loadRouteSegmentIntersectingTile(x, y, routeKey, map);
 }
 
 int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31, int shiftR) const
@@ -140,7 +140,17 @@ QMap<QString, QString> OsmAnd::NetworkRouteContext::tagsToGpx(const NetworkRoute
     return _p->tagsToGpx(key);
 }
 
-OsmAnd::NetworkRouteKey * OsmAnd::NetworkRouteContext::fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const
+OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const
 {
     return _p->fromGpx(networkRouteKeyTags);
+}
+
+QString OsmAnd::NetworkRouteKey::toString() const
+{
+    QString hash = QString::number(static_cast<int>(type));
+    for (auto & s : tags)
+    {
+        hash += s;
+    }
+    return hash;
 }

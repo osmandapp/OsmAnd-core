@@ -15,7 +15,6 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    //class Road;
 
     enum class RouteType
     {
@@ -36,6 +35,7 @@ namespace OsmAnd
         virtual ~NetworkRouteKey();
         RouteType type;
         QSet<QString> tags;
+        QString toString() const;
         inline bool operator == (const NetworkRouteKey & other) const
         {
             if (type != other.type)
@@ -91,15 +91,6 @@ namespace OsmAnd
             result = prime * result + qHash(static_cast<int>(type));
             return result;
         }
-        /*inline operator const QString() const
-        {
-            QString hash = QString::number(static_cast<int>(type));
-            for (auto & s : tags)
-            {
-                hash += s;
-            }
-            return hash;
-        }*/
     };
 
     struct OSMAND_CORE_API NetworkRouteSegment
@@ -154,10 +145,10 @@ namespace OsmAnd
         
         void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
         QHash<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
-        QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> tags) const;
+        QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> & tags) const;
         int64_t getTileId(int32_t x31, int32_t y31) const;
         int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
-        void loadRouteSegmentTile(int32_t x, int32_t y, NetworkRouteKey * routeKey,
+        void loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
                                   QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
         int32_t getXFromTileId(int64_t tileId) const;
         int32_t getYFromTileId(int64_t tileId) const;
@@ -165,7 +156,7 @@ namespace OsmAnd
         int64_t convertPointToLong(int x31, int y31) const;
         int64_t convertPointToLong(PointI point) const;
         QMap<QString, QString> tagsToGpx(const NetworkRouteKey & key) const;
-        NetworkRouteKey * fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const;
+        OsmAnd::Nullable<NetworkRouteKey> fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const;
     };
 }
 

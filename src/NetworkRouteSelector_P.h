@@ -27,11 +27,6 @@ class NetworkRouteSelector_P Q_DECL_FINAL
 public:
     typedef OsmAnd::NetworkRouteKey NetworkRouteKey;
     
-private:
-    
-    
-    
-    
 protected:
     NetworkRouteSelector_P(NetworkRouteSelector* const owner);
 public:
@@ -71,7 +66,7 @@ private:
             return connected.size() == other.connected.size()
             && robjId == otherRobjId
             && start.start == other.start.start
-            && start.end == other.start.end                
+            && start.end == other.start.end
             && getEndPoint() == other.getEndPoint()
             && getStartPoint() == other.getStartPoint()
             && start.routeKey == other.start.routeKey;
@@ -90,12 +85,13 @@ private:
         }
     };
     
-    void connectAlgorithm(NetworkRouteSegment & segment, QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
-    QList<NetworkRouteSegment> loadData(NetworkRouteSegment & segment, NetworkRouteKey & rkey) const;
+    void connectAlgorithm(const NetworkRouteSegment & segment, QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
+    QList<NetworkRouteSegment> loadData(const NetworkRouteSegment & segment, const NetworkRouteKey & rkey) const;
     void addEnclosedTiles(QList<int64_t> & queue, int64_t tileid) const;
-    void debug(QString msg, short reverse, NetworkRouteSegment & segment) const;
+    void debug(QString msg, short reverse, const NetworkRouteSegment & segment) const;
+    bool isCancelled() const;
     
-    QList<NetworkRouteSegmentChain> getNetworkRouteSegmentChains(NetworkRouteKey & routeKey,
+    const QList<NetworkRouteSegmentChain> getNetworkRouteSegmentChains(const NetworkRouteKey & routeKey,
                                                                  QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
                                                                  const QList<NetworkRouteSegment> & loaded) const;
     QMap<int64_t, QList<NetworkRouteSegmentChain>> createChainStructure(const QList<NetworkRouteSegment> & lst) const;
@@ -113,14 +109,14 @@ private:
     int reverseToConnectMore(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
                              QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad, int radE) const;
     QList<NetworkRouteSegmentChain> filterChains(QList<NetworkRouteSegmentChain> & lst, NetworkRouteSegmentChain & ch, int rad, bool start) const;
-    QList<NetworkRouteSegmentChain> flattenChainStructure(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;
+    const QList<NetworkRouteSegmentChain> flattenChainStructure(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;
     QList<NetworkRouteSegmentChain> getByPoint(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt,
                                                int radius, NetworkRouteSegmentChain * exclude) const;
     NetworkRouteSegmentChain chainReverse(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
                                           QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains,
                                           NetworkRouteSegmentChain & it) const;
     NetworkRouteSegment inverse(NetworkRouteSegment & seg) const;
-    std::shared_ptr<GpxDocument> createGpxFile(QList<NetworkRouteSegmentChain> & chains, NetworkRouteKey & routeKey) const;
+    std::shared_ptr<GpxDocument> createGpxFile(const QList<NetworkRouteSegmentChain> & chains, const NetworkRouteKey & routeKey) const;
 };
 }
 

@@ -28,10 +28,12 @@ namespace OsmAnd
     public:
         NetworkRouteSelector(
             const std::shared_ptr<const IObfsCollection>& obfsCollection,
-            const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache = nullptr);
+            const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
         virtual ~NetworkRouteSelector();
 
         std::shared_ptr<NetworkRouteContext> rCtx;
+        const std::shared_ptr<const IQueryController>& queryController;
         
         QList<std::shared_ptr<const Road>> getRoutes(
             const AreaI area31,
