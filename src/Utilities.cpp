@@ -4,6 +4,7 @@
 #include <limits>
 #include <cmath>
 #include <stdexcept>
+#include <sstream>
 
 #include "QtExtensions.h"
 #include <QtNumeric>
@@ -337,6 +338,15 @@ bool OsmAnd::Utilities::parseArbitraryBool(const QString& value, bool defValue, 
 
     if (wasParsed)
         *wasParsed = true;
+    return result;
+}
+
+double OsmAnd::Utilities::strtod_li(QString s)
+{
+    std::istringstream text(s.toStdString());
+    text.imbue(std::locale::classic());
+    double result;
+    text >> result;
     return result;
 }
 

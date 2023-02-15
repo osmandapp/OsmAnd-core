@@ -862,6 +862,7 @@ namespace OsmAnd
         static unsigned long parseArbitraryULong(const QString& value, const unsigned long defValue, bool* wasParsed = nullptr);
         static float parseArbitraryFloat(const QString& value, const float defValue, bool* wasParsed = nullptr);
         static bool parseArbitraryBool(const QString& value, const bool defValue, bool* wasParsed = nullptr);
+        static double strtod_li(QString s);
 
         static int javaDoubleCompare(const double l, const double r);
         static void findFiles(

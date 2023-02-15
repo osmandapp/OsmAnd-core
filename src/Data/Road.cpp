@@ -6,7 +6,6 @@
 
 #include <ICU.h>
 #include <OsmAndCore/Utilities.h>
-#include "commonOsmAndCore.h"
 
 const QHash<QString, QStringList> GEOCODING_ACCESS {
     {
@@ -96,7 +95,7 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
         double lat = OsmAnd::Utilities::get31LatitudeY(points31[k].y);
         if (k > 0)
         {
-            double dd = getDistance(plat, plon, lat, lon);
+            double dd = Utilities::distance(plon, plat, lon, lat);
             double height = HEIGHT_UNDEFINED;
             if (k == points31.size() - 1)
             {
@@ -106,11 +105,11 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
             {
                 QString asc = getValue(k, QStringLiteral("osmand_ele_asc"));
                 if (!asc.isEmpty()) {
-                    height = (prevHeight + strtod_li(asc.toStdString()));
+                    height = (prevHeight + OsmAnd::Utilities::strtod_li(asc));
                 } else {
                     QString desc = getValue(k, QStringLiteral("osmand_ele_desc"));
                     if (!desc.isEmpty()) {
-                        height = (prevHeight - strtod_li(desc.toStdString()));
+                        height = (prevHeight - OsmAnd::Utilities::strtod_li(desc));
                     }
                 }
             }

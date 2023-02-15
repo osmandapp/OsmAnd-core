@@ -7,7 +7,6 @@
 #include "ObfDataInterface.h"
 #include "Utilities.h"
 #include <OsmAndCore/Logging.h>
-#include "commonOsmAndCore.h"
 
 OsmAnd::NetworkRouteSelector_P::NetworkRouteSelector_P(NetworkRouteSelector* const owner_)
     : owner(owner_)
@@ -357,14 +356,14 @@ int OsmAnd::NetworkRouteSelector_P::connectToLongestChain(QMap<int64_t, QList<Ne
         for (int j = i + 1; j < chainsFlat.size() && !merged && !isCancelled(); j++)
         {
             auto & second = chainsFlat[j];
-            if (squareRootDist31(first.getEndPoint().x, first.getEndPoint().y, second.getEndPoint().x, second.getEndPoint().y) < rad)
+            if (OsmAnd::Utilities::distance31(first.getEndPoint().x, first.getEndPoint().y, second.getEndPoint().x, second.getEndPoint().y) < rad)
             {
                 auto secondReversed = chainReverse(chains, endChains, second);
                 chainAdd(chains, endChains, first, secondReversed);
                 chainsFlat.removeAt(j);
                 merged = true;
             }
-            else if (squareRootDist31(first.getStartPoint().x, first.getStartPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
+            else if (OsmAnd::Utilities::distance31(first.getStartPoint().x, first.getStartPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
             {
                 auto firstReversed = chainReverse(chains, endChains, first);
                 chainAdd(chains, endChains, firstReversed, second);
@@ -372,13 +371,13 @@ int OsmAnd::NetworkRouteSelector_P::connectToLongestChain(QMap<int64_t, QList<Ne
                 chainsFlat[i] = firstReversed;//chainsFlat.set(i, firstReversed);
                 merged = true;
             }
-            else if (squareRootDist31(first.getEndPoint().x, first.getEndPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
+            else if (OsmAnd::Utilities::distance31(first.getEndPoint().x, first.getEndPoint().y, second.getStartPoint().x, second.getStartPoint().y) < rad)
             {
                 chainAdd(chains, endChains, first, second);
                 chainsFlat.removeAt(j);
                 merged = true;
             }
-            else if (squareRootDist31(second.getEndPoint().x, second.getEndPoint().y, first.getStartPoint().x, first.getStartPoint().y) < rad)
+            else if (OsmAnd::Utilities::distance31(second.getEndPoint().x, second.getEndPoint().y, first.getStartPoint().x, first.getStartPoint().y) < rad)
             {
                 chainAdd(chains, endChains, second, first);
                 chainsFlat.removeAt(i);
@@ -418,7 +417,7 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
             {
                 const PointI & p1 = last.robj->points31.at(j);
                 const PointI & p2 = s.robj->points31.at(i);
-                double m = squareRootDist31(p1.x, p1.y, p2.x, p2.y);
+                double m = OsmAnd::Utilities::distance31(p1.x, p1.y, p2.x, p2.y);
                 if (m < min)
                 {
                     min = m;
@@ -481,7 +480,7 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
         {
             auto e = it.next();
             PointI point2 = owner->rCtx->getPointFromLong(e.key());
-            if (squareRootDist31(point.x, point.y, point2.x, point2.y) < radius)
+            if (OsmAnd::Utilities::distance31(point.x, point.y, point2.x, point2.y) < radius)
             {
                 for (const NetworkRouteSegmentChain & c : e.value())
                 {
@@ -537,13 +536,13 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     remove(chains, owner->rCtx->convertPointToLong(toAdd.getStartPoint()), toAdd);
     remove(endChains, owner->rCtx->convertPointToLong(toAdd.getEndPoint()), toAdd);
     remove(endChains, owner->rCtx->convertPointToLong(it.getEndPoint()), it);
-    double minStartDist = squareRootDist31(it.getEndPoint().x, it.getEndPoint().y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
+    double minStartDist = OsmAnd::Utilities::distance31(it.getEndPoint().x, it.getEndPoint().y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
     double minLastDist = minStartDist;
     int minStartInd = toAdd.start.start;
     auto & points31 = toAdd.start.robj->points31;
     for (int i = 0; i < points31.size(); i++)
     {
-        double m = squareRootDist31(it.getEndPoint().x, it.getEndPoint().y, points31.at(i).x, points31.at(i).y);
+        double m = OsmAnd::Utilities::distance31(it.getEndPoint().x, it.getEndPoint().y, points31.at(i).x, points31.at(i).y);
         if (m < minStartDist && minStartInd != i)
         {
             minStartInd = i;
@@ -556,7 +555,7 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     for (int i = 0; i < lastItPoints31.size(); i++)
     {
         const PointI & point = lastItPoints31.at(i);
-        double m = squareRootDist31(point.x, point.y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
+        double m = OsmAnd::Utilities::distance31(point.x, point.y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
         if (m < minLastDist && minLastInd != i)
         {
             minLastInd = i;
@@ -596,7 +595,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
             segmentList.append(c.connected);
         }
         
-        std::shared_ptr<GpxDocument::TrkSegment> trkSegment = make_shared<GpxDocument::TrkSegment>();
+        std::shared_ptr<GpxDocument::TrkSegment> trkSegment = std::make_shared<GpxDocument::TrkSegment>();
         track->segments.append(trkSegment);
         int l = 0;
         std::shared_ptr<GpxDocument::WptPt> prev;
@@ -616,7 +615,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
             int inc = segment.start < segment.end ? 1 : -1;
             for (int i = segment.start; ; i += inc)
             {
-                std::shared_ptr<GpxDocument::WptPt> point = make_shared<GpxDocument::WptPt>();
+                std::shared_ptr<GpxDocument::WptPt> point = std::make_shared<GpxDocument::WptPt>();
                 const PointI & p = segment.robj->points31.at(i);
                 point->position.latitude = OsmAnd::Utilities::get31LatitudeY(p.y);
                 point->position.longitude = OsmAnd::Utilities::get31LongitudeX(p.x);
@@ -627,7 +626,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
                 trkSegment->points.append(point);
                 if (prev)
                 {
-                    l += getDistance(prev->position.latitude, prev->position.longitude, point->position.latitude, point->position.longitude);
+                    l += Utilities::distance(prev->position.longitude, prev->position.latitude, point->position.longitude, point->position.latitude);
                 }
                 prev = point;
                 if (i == segment.end) {

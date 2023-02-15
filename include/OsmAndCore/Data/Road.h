@@ -44,7 +44,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(Road);
     private:
-        const static int HEIGHT_UNDEFINED = -80000;
+        static const int HEIGHT_UNDEFINED = -80000;
         QString getValue(uint32_t pnt, const QString & tag) const;
     protected:
         Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section);
