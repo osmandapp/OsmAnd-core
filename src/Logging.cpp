@@ -71,8 +71,14 @@ void OsmAnd::Logger::log(const LogSeverityLevel level, const char* format, va_li
     QReadLocker scopedLocker1(&_sinksLock);
     QMutexLocker scopedLocker2(&_logMutex); // To avoid mixing of lines
 
+    va_list args_;
     for(const auto& sink : constOf(_sinks))
-        sink->log(level, format, args);
+    {
+        va_copy(args_, args);
+        sink->log(level, format, args_);
+        va_end(args_);
+    }
+        
 }
 
 void OsmAnd::Logger::log(const LogSeverityLevel level, const char* format, ...)
