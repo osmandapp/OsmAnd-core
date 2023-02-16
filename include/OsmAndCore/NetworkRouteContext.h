@@ -98,7 +98,7 @@ namespace OsmAnd
         NetworkRouteSegment();
         NetworkRouteSegment(NetworkRouteSegment & other);
         NetworkRouteSegment(const NetworkRouteSegment & other);
-        NetworkRouteSegment(std::shared_ptr<const Road> road, NetworkRouteKey rKey, int start_, int end_);
+        NetworkRouteSegment(const std::shared_ptr<const Road> & road, const NetworkRouteKey & rKey, int start_, int end_);
         virtual ~NetworkRouteSegment();
         const int start;
         const int end;
