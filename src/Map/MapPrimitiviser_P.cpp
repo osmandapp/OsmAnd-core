@@ -2741,6 +2741,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
             metric->obtainedTextSymbols++;
         }
+                
+        // Only the highest priority caption needed, so don't process less priority captions and break
+        break;
     }
 }
 
