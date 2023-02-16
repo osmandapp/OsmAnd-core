@@ -49,52 +49,52 @@ private:
     struct NetworkRouteSegmentChain
     {
         NetworkRouteSegmentChain();
-        NetworkRouteSegment start;
-        QList<NetworkRouteSegment> connected;
+        std::shared_ptr<NetworkRouteSegment> start;
+        QList<std::shared_ptr<NetworkRouteSegment>> connected;
         
         int getSize() const;
-        NetworkRouteSegment getLast() const;
+        std::shared_ptr<NetworkRouteSegment> getLast() const;
         PointI getStartPoint() const;
         PointI getEndPoint() const;
         void addChain(NetworkRouteSegmentChain & toAdd);
-        void setStart(NetworkRouteSegment & newStart);
-        void setEnd(NetworkRouteSegment & newEnd);
+        void setStart(std::shared_ptr<NetworkRouteSegment> & newStart);
+        void setEnd(std::shared_ptr<NetworkRouteSegment> & newEnd);
         inline bool operator == (const NetworkRouteSegmentChain & other) const
         {
-            int64_t robjId = start.robj ? start.robj->id.id : 0;
-            int64_t otherRobjId = other.start.robj ? other.start.robj->id.id : 0;
+            int64_t robjId = start->robj ? start->robj->id.id : 0;
+            int64_t otherRobjId = other.start->robj ? other.start->robj->id.id : 0;
             return connected.size() == other.connected.size()
             && robjId == otherRobjId
-            && start.start == other.start.start
-            && start.end == other.start.end
+            && start->start == other.start->start
+            && start->end == other.start->end
             && getEndPoint() == other.getEndPoint()
             && getStartPoint() == other.getStartPoint()
-            && start.routeKey == other.start.routeKey;
+            && start->routeKey == other.start->routeKey;
         };
         inline bool operator != (const NetworkRouteSegmentChain & other) const
         {
-            int64_t robjId = start.robj ? start.robj->id.id : 0;
-            int64_t otherRobjId = other.start.robj ? other.start.robj->id.id : 0;
+            int64_t robjId = start->robj ? start->robj->id.id : 0;
+            int64_t otherRobjId = other.start->robj ? other.start->robj->id.id : 0;
             return connected.size() != other.connected.size()
             || robjId != otherRobjId
-            || start.routeKey != other.start.routeKey
-            || start.start != other.start.start
-            || start.end != other.start.end
+            || start->routeKey != other.start->routeKey
+            || start->start != other.start->start
+            || start->end != other.start->end
             || getEndPoint() != other.getEndPoint()
             || getStartPoint() != other.getStartPoint();
         }
     };
     
-    void connectAlgorithm(const NetworkRouteSegment & segment, QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
-    QList<NetworkRouteSegment> loadData(const NetworkRouteSegment & segment, const NetworkRouteKey & rkey) const;
+    void connectAlgorithm(const std::shared_ptr<NetworkRouteSegment> & segment, QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res) const;
+    QList<std::shared_ptr<NetworkRouteSegment>> loadData(const std::shared_ptr<NetworkRouteSegment> & segment, const NetworkRouteKey & rkey) const;
     void addEnclosedTiles(QList<int64_t> & queue, int64_t tileid) const;
-    void debug(QString msg, short reverse, const NetworkRouteSegment & segment) const;
+    void debug(QString msg, short reverse, const std::shared_ptr<NetworkRouteSegment> & segment) const;
     bool isCancelled() const;
     
     const QList<NetworkRouteSegmentChain> getNetworkRouteSegmentChains(const NetworkRouteKey & routeKey,
                                                                  QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
-                                                                 const QList<NetworkRouteSegment> & loaded) const;
-    QMap<int64_t, QList<NetworkRouteSegmentChain>> createChainStructure(const QList<NetworkRouteSegment> & lst) const;
+                                                                 const QList<std::shared_ptr<NetworkRouteSegment>> & loaded) const;
+    QMap<int64_t, QList<NetworkRouteSegmentChain>> createChainStructure(const QList<std::shared_ptr<NetworkRouteSegment>> & lst) const;
     QMap<int64_t, QList<NetworkRouteSegmentChain>> prepareEndChain(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;
     void add(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt, NetworkRouteSegmentChain & chain) const;
     void remove(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt, NetworkRouteSegmentChain & toRemove) const;
@@ -115,7 +115,7 @@ private:
     NetworkRouteSegmentChain chainReverse(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
                                           QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains,
                                           NetworkRouteSegmentChain & it) const;
-    NetworkRouteSegment inverse(NetworkRouteSegment & seg) const;
+    std::shared_ptr<NetworkRouteSegment> inverse(std::shared_ptr<NetworkRouteSegment> & seg) const;
     std::shared_ptr<GpxDocument> createGpxFile(const QList<NetworkRouteSegmentChain> & chains, const NetworkRouteKey & routeKey) const;
 };
 }

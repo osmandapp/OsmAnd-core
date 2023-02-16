@@ -16,9 +16,9 @@ OsmAnd::NetworkRouteContext_P::~NetworkRouteContext_P()
 {
 }
 
-QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext_P::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
+QHash<OsmAnd::NetworkRouteKey, QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>>> OsmAnd::NetworkRouteContext_P::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
 {
-    QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> map;
+    QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> map;
     int32_t left = area31.left() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
     int32_t right = area31.right() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
     int32_t top = area31.top() >> ZOOM_TO_LOAD_TILES_SHIFT_R;
@@ -34,20 +34,21 @@ QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::Netwo
 }
 
 void OsmAnd::NetworkRouteContext_P::loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
-                                                         QHash<NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> & map)
+                                                         QHash<NetworkRouteKey, QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>>> & map)
 {
     NetworkRoutesTile osmcRoutesTile = getMapRouteTile(x << ZOOM_TO_LOAD_TILES_SHIFT_L, y << ZOOM_TO_LOAD_TILES_SHIFT_L);
-    for (const auto & segment : osmcRoutesTile.uniqueSegments.values())
+    for (auto u_it = osmcRoutesTile.uniqueSegments.begin(); u_it != osmcRoutesTile.uniqueSegments.end(); ++u_it)
     {
-        if (routeKey != nullptr && segment.routeKey != *routeKey)
+        auto & segment = u_it.value();
+        if (routeKey != nullptr && segment->routeKey != *routeKey)
         {
             continue;
         }
-        auto i = map.find(segment.routeKey);
+        auto i = map.find(segment->routeKey);
         if (i == map.end())
         {
-            QList<OsmAnd::NetworkRouteSegment> empty;
-            i = map.insert(segment.routeKey, empty);
+            QList<std::shared_ptr<NetworkRouteSegment>> empty;
+            i = map.insert(segment->routeKey, empty);
         }
         auto & routeSegments = i.value();
         routeSegments.append(segment);
@@ -249,10 +250,10 @@ void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(std::shared_ptr<const
         auto it = routes.find(id);
         if (it == routes.end())
         {
-            NetworkRoutePoint point(x31, y31, id);
+        std::shared_ptr<NetworkRoutePoint> point = std::make_shared<NetworkRoutePoint>(x31, y31, id);
             it = routes.insert(id, point);
         }
-        NetworkRoutePoint & point = *it;
+        auto & point = *it;
         if (i > 0)
         {
             addObjectToPoint(point, road, routeKey, i, 0);
@@ -266,7 +267,7 @@ void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(std::shared_ptr<const
     }
     if (inter)
     {
-        NetworkRouteSegment segment(road, routeKey, 0, len - 1);
+        auto segment = std::make_shared<NetworkRouteSegment>(road, routeKey, 0, len - 1);
         addUnique(segment);
     }
 }
@@ -309,26 +310,26 @@ bool OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::intersects(int x31, int y
     return false;
 }
 
-void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::addUnique(NetworkRouteSegment & networkRouteSegment)
+void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::addUnique(std::shared_ptr<NetworkRouteSegment> & networkRouteSegment)
 {
-    const QString & key = networkRouteSegment.routeKey.toString() + QStringLiteral("_") + QString::number(networkRouteSegment.robj->id.id);
+    const QString & key = networkRouteSegment->routeKey.toString() + QStringLiteral("_") + QString::number(networkRouteSegment->robj->id.id);
     uniqueSegments.insert(key, networkRouteSegment);
 }
 
-void OsmAnd::NetworkRouteContext_P::addObjectToPoint(NetworkRoutePoint & point, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end)
+void OsmAnd::NetworkRouteContext_P::addObjectToPoint(std::shared_ptr<NetworkRoutePoint> & point, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end)
 {
-    OsmAnd::NetworkRouteSegment seg(road, routeKey, start, end);
+    std::shared_ptr<NetworkRouteSegment> seg = std::make_shared<NetworkRouteSegment>(road, routeKey, start, end);
     if (road->id > 0)
     {
-        for (NetworkRouteSegment & seg2 : point.objects)
+        for (auto & seg2 : point->objects)
         {
-            if (seg.robj->id == seg2.robj->id && seg.direction() == seg2.direction() && seg.routeKey == seg2.routeKey)
+            if (seg->robj->id == seg2->robj->id && seg->direction() == seg2->direction() && seg->routeKey == seg2->routeKey)
             {
                 return;
             }
         }
     }
-    point.objects.append(seg);
+    point->objects.append(seg);
 }
 
 OsmAnd::PointI OsmAnd::NetworkRouteContext_P::getPointFromLong(int64_t l) const

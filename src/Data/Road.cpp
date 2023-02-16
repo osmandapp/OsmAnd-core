@@ -70,7 +70,7 @@ const bool OsmAnd::Road::hasGeocodingAccess() const
 QVector<double> OsmAnd::Road::calculateHeightArray() const
 {
     QVector<double> heightDistanceArray;
-    QHash<QString, QString> tags = getResolvedAttributes();
+    const QHash<QString, QString> & tags = getResolvedAttributes();
     auto itStrStart = tags.find(QStringLiteral("osmand_ele_start"));
     auto itStrEnd = tags.find(QStringLiteral("osmand_ele_end"));
     if (itStrStart == tags.end() || itStrEnd == tags.end())
@@ -78,11 +78,11 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
         return heightDistanceArray;
     }
     QString strStart = *itStrStart;
-    int startHeight = (int) std::atof(strStart.toStdString().c_str());
+    int startHeight = strStart.toInt();
     int endHeight = startHeight;
     if (itStrEnd != tags.end()) {
         QString strEnd = *itStrEnd;
-        endHeight = (int) std::atof(strEnd.toStdString().c_str());
+        endHeight = strEnd.toInt();
     }
     
     heightDistanceArray.resize(2 * points31.size());
@@ -105,11 +105,11 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
             {
                 QString asc = getValue(k, QStringLiteral("osmand_ele_asc"));
                 if (!asc.isEmpty()) {
-                    height = (prevHeight + OsmAnd::Utilities::strtod_li(asc));
+                    height = (prevHeight + asc.toDouble());
                 } else {
                     QString desc = getValue(k, QStringLiteral("osmand_ele_desc"));
                     if (!desc.isEmpty()) {
-                        height = (prevHeight - OsmAnd::Utilities::strtod_li(desc));
+                        height = (prevHeight - desc.toDouble());
                     }
                 }
             }

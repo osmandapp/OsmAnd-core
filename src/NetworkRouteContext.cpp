@@ -33,12 +33,13 @@ OsmAnd::NetworkRouteSelectorFilter::~NetworkRouteSelectorFilter()
 {    
 }
 
-QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteContext::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
+QHash<OsmAnd::NetworkRouteKey, QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>>> OsmAnd::NetworkRouteContext::loadRouteSegmentsBbox(AreaI area31, NetworkRouteKey * rKey)
 {
     return _p->loadRouteSegmentsBbox(area31, rKey);
 }
 
 OsmAnd::NetworkRouteSegment::NetworkRouteSegment()
+: start(0), end(0)
 {
 }
 
@@ -63,6 +64,7 @@ OsmAnd::NetworkRouteSegment::~NetworkRouteSegment()
 }
 
 OsmAnd::NetworkRouteKey::NetworkRouteKey()
+: type(static_cast<RouteType>(RouteType::Count))
 {
 }
 
@@ -110,7 +112,7 @@ int32_t OsmAnd::NetworkRouteContext::getYFromTileId(int64_t tileId) const
 }
 
 void OsmAnd::NetworkRouteContext::loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
-                                                                        QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map)
+                                                                        QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> & map)
 {
     return _p->loadRouteSegmentIntersectingTile(x, y, routeKey, map);
 }

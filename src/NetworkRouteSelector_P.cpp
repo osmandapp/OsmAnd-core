@@ -24,7 +24,7 @@ OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::NetworkRouteSegmentCha
 
 QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::NetworkRouteSelector_P::getRoutes(const AreaI area31, bool loadRoutes, NetworkRouteKey * selected) const
 {
-    QHash<OsmAnd::NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> routeSegmentTile = owner->rCtx->loadRouteSegmentsBbox(area31, nullptr);
+    QHash<OsmAnd::NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> routeSegmentTile = owner->rCtx->loadRouteSegmentsBbox(area31, nullptr);
     QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> resultMap;
     for (auto i = routeSegmentTile.begin(); i != routeSegmentTile.end(); ++i)
     {
@@ -42,7 +42,7 @@ QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::Net
             }
             else
             {
-                const NetworkRouteSegment & firstSegment = routeSegments.at(0);
+                const auto & firstSegment = routeSegments.at(0);
                 connectAlgorithm(firstSegment, resultMap);
             }
         }
@@ -50,20 +50,20 @@ QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> OsmAnd::Net
     return resultMap;
 }
 
-void OsmAnd::NetworkRouteSelector_P::connectAlgorithm(const OsmAnd::NetworkRouteSegment & segment,
+void OsmAnd::NetworkRouteSelector_P::connectAlgorithm(const std::shared_ptr<OsmAnd::NetworkRouteSegment> & segment,
                                                       QHash<OsmAnd::NetworkRouteKey, std::shared_ptr<OsmAnd::GpxDocument>> & res) const
 {
-    const NetworkRouteKey & rkey = segment.routeKey;
+    const auto & rkey = segment->routeKey;
     debug(QStringLiteral("START "), 0, segment);
     const auto loaded = loadData(segment, rkey);
-    const QList<NetworkRouteSegmentChain> & lst = getNetworkRouteSegmentChains(segment.routeKey, res, loaded);
+    const QList<NetworkRouteSegmentChain> & lst = getNetworkRouteSegmentChains(segment->routeKey, res, loaded);
     debug(QStringLiteral("FINISH ") + QString::number(lst.size()), 0, segment);
 }
 
-void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const NetworkRouteSegment & segment) const
+void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const std::shared_ptr<OsmAnd::NetworkRouteSegment> & segment) const
 {
     QString routeKeyString;
-    switch (segment.routeKey.type) {
+    switch (segment->routeKey.type) {
         case RouteType::HORSE:
             routeKeyString = QStringLiteral("HORSE");
             break;
@@ -79,14 +79,14 @@ void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const N
         default:
             routeKeyString = QStringLiteral("UNKNOWN");
     }
-    for (const QString & tag : segment.routeKey.tags)
+    for (const QString & tag : segment->routeKey.tags)
     {
         routeKeyString += QStringLiteral(" ") + tag;
     }
-    QString nrs = QStringLiteral("NetworkRouteObject [start=") + QString::number(segment.start)
-        + QStringLiteral(", end=") + QString::number(segment.end)
-        + QStringLiteral(", obj=") + segment.robj->toString()
-        + QStringLiteral(", routeKeyHash=") + (int)segment.routeKey
+    QString nrs = QStringLiteral("NetworkRouteObject [start=") + QString::number(segment->start)
+        + QStringLiteral(", end=") + QString::number(segment->end)
+        + QStringLiteral(", obj=") + segment->robj->toString()
+        + QStringLiteral(", routeKeyHash=") + (int)segment->routeKey
         + QStringLiteral(", routeKeyString=") + routeKeyString + "]";
     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s %s %s",
                       qPrintable(msg),
@@ -99,19 +99,19 @@ bool OsmAnd::NetworkRouteSelector_P::isCancelled() const
     return owner->queryController && owner->queryController->isAborted();
 }
 
-QList<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::loadData(const NetworkRouteSegment & segment, const NetworkRouteKey & rkey) const
+QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteSelector_P::loadData(const std::shared_ptr<NetworkRouteSegment> & segment, const NetworkRouteKey & rkey) const
 {
     
-    QList<OsmAnd::NetworkRouteSegment> result;
-    if (!segment.robj)
+    QList<std::shared_ptr<NetworkRouteSegment>> result;
+    if (!segment->robj)
     {
         return result;
     }
     QList<int64_t> queue;
     QSet<int64_t> visitedTiles;
     QSet<int64_t> objIds;
-    int64_t start = owner->rCtx->getTileId(segment.robj->points31[segment.start].x, segment.robj->points31[segment.start].y);
-    int64_t end = owner->rCtx->getTileId(segment.robj->points31[segment.end].x, segment.robj->points31[segment.end].y);
+    int64_t start = owner->rCtx->getTileId(segment->robj->points31[segment->start].x, segment->robj->points31[segment->start].y);
+    int64_t end = owner->rCtx->getTileId(segment->robj->points31[segment->end].x, segment->robj->points31[segment->end].y);
     queue.append(start);
     queue.append(end);
     while (!queue.isEmpty() && !isCancelled())
@@ -123,7 +123,7 @@ QList<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::loadData(cons
             continue;
         }
         visitedTiles.insert(tileID);
-        QHash<NetworkRouteKey, QList<OsmAnd::NetworkRouteSegment>> tiles;
+        QHash<NetworkRouteKey, QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>>> tiles;
         int32_t xTile = owner->rCtx->getXFromTileId(tileID);
         int32_t yTile = owner->rCtx->getYFromTileId(tileID);
         owner->rCtx->loadRouteSegmentIntersectingTile(xTile, yTile, &rkey, tiles);
@@ -134,11 +134,11 @@ QList<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::loadData(cons
         }
         auto loaded = *it;
         // stop exploring if no route key even intersects tile (dont check loaded.size() == 0 special case)]
-        for (NetworkRouteSegment & loadedSegment : loaded)
+        for (auto & loadedSegment : loaded)
         {
-            if (!objIds.contains(loadedSegment.robj->id.id))
+            if (!objIds.contains(loadedSegment->robj->id.id))
             {
-                objIds.insert(loadedSegment.robj->id.id);
+                objIds.insert(loadedSegment->robj->id.id);
                 result.append(loadedSegment);
             }
         }
@@ -165,7 +165,7 @@ void OsmAnd::NetworkRouteSelector_P::addEnclosedTiles(QList<int64_t> & queue, in
 
 const QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkRouteSelector_P::getNetworkRouteSegmentChains(const NetworkRouteKey & routeKey,
                                                                                                      QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
-                                                                                                     const QList<NetworkRouteSegment> & loaded) const
+                                                                                                     const QList<std::shared_ptr<NetworkRouteSegment>> & loaded) const
 {
     OsmAnd::LogPrintf(LogSeverityLevel::Debug, "About to merge: %d", loaded.size());
     QMap<int64_t, QList<NetworkRouteSegmentChain>> chains = createChainStructure(loaded);
@@ -181,18 +181,23 @@ const QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::Ne
     connectSimpleMerge(chains, endChains, CONNECT_POINTS_DISTANCE_MAX / 2, CONNECT_POINTS_DISTANCE_MAX);
     const QList<NetworkRouteSegmentChain> & lst = flattenChainStructure(chains);
     const std::shared_ptr<GpxDocument> & gpxFile = createGpxFile(lst, routeKey);
+    
+    QHash<std::shared_ptr<NetworkRouteKey>, std::shared_ptr<GpxDocument>> res2;
+    std::shared_ptr<NetworkRouteKey> ttt;
+    res2.find(ttt);
+    
     res.insert(routeKey, gpxFile);
     return lst;
 }
 
-QMap<int64_t, QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain>> OsmAnd::NetworkRouteSelector_P::createChainStructure(const QList<NetworkRouteSegment> & lst) const
+QMap<int64_t, QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain>> OsmAnd::NetworkRouteSelector_P::createChainStructure(const QList<std::shared_ptr<NetworkRouteSegment>> & lst) const
 {
     QMap<int64_t, QList<NetworkRouteSegmentChain>> chains;
     for (const auto & s : lst)
     {
         NetworkRouteSegmentChain chain;
         chain.start = s;
-        int64_t pnt = owner->rCtx->convertPointToLong(s.robj->points31[s.start].x, s.robj->points31[s.start].y);
+        int64_t pnt = owner->rCtx->convertPointToLong(s->robj->points31[s->start].x, s->robj->points31[s->start].y);
         add(chains, pnt, chain);
     }
     return chains;
@@ -318,11 +323,11 @@ OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain OsmAnd::NetworkRouteSel
 {
     int64_t startPnt = owner->rCtx->convertPointToLong(it.getStartPoint());
     int64_t pnt = owner->rCtx->convertPointToLong(it.getEndPoint());
-    QList<NetworkRouteSegment> lst;
+    QList<std::shared_ptr<NetworkRouteSegment>> lst;
     lst.insert(0, inverse(it.start));
     if (it.connected.size() > 0)
     {
-        for (NetworkRouteSegment s : it.connected) {
+        for (auto & s : it.connected) {//added &
             lst.insert(0, inverse(s));
         }
     }
@@ -341,8 +346,9 @@ int OsmAnd::NetworkRouteSelector_P::connectToLongestChain(QMap<int64_t, QList<Ne
                           QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad) const
 {
     QList<NetworkRouteSegmentChain> chainsFlat;
-    for (QList<NetworkRouteSegmentChain> ch : chains.values())
+    for (auto i = chains.begin(); i != chains.end(); ++i)
     {
+        auto & ch = i.value();
         chainsFlat.append(ch);
     }
     std::sort(chainsFlat.begin(), chainsFlat.end(), [] (const NetworkRouteSegmentChain o1, const NetworkRouteSegmentChain o2) {
@@ -409,14 +415,14 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
     {
         NetworkRouteSegmentChain & chain = it.next();
         double min = rad + 1;
-        const NetworkRouteSegment & s = start ? chain.start : chain.getLast();
-        const NetworkRouteSegment & last = ch.getLast();
-        for (int i = 0; i < s.robj->points31.size(); i++)
+        const auto & s = start ? chain.start : chain.getLast();
+        const auto & last = ch.getLast();
+        for (int i = 0; i < s->robj->points31.size(); i++)
         {
-            for (int j = 0; j < last.robj->points31.size(); j++)
+            for (int j = 0; j < last->robj->points31.size(); j++)
             {
-                const PointI & p1 = last.robj->points31.at(j);
-                const PointI & p2 = s.robj->points31.at(i);
+                const PointI & p1 = last->robj->points31.at(j);
+                const PointI & p2 = s->robj->points31.at(i);
                 double m = OsmAnd::Utilities::distance31(p1.x, p1.y, p2.x, p2.y);
                 if (m < min)
                 {
@@ -435,8 +441,9 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
 const QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkRouteSelector_P::flattenChainStructure(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const
 {
     QList<NetworkRouteSegmentChain> chainsFlat;
-    for (auto & ch : chains.values())
+    for (auto i = chains.begin(); i != chains.end(); ++i)
     {
+        auto & ch = i.value();
         chainsFlat.append(ch);
     }
     std::sort(chainsFlat.begin(), chainsFlat.end(), [] (const NetworkRouteSegmentChain o1, const NetworkRouteSegmentChain o2) {
@@ -495,9 +502,9 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
     return list;
 }
 
-OsmAnd::NetworkRouteSegment OsmAnd::NetworkRouteSelector_P::inverse(NetworkRouteSegment & seg) const
+std::shared_ptr<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::inverse(std::shared_ptr<NetworkRouteSegment> & seg) const
 {
-    NetworkRouteSegment inversed(seg.robj, seg.routeKey, seg.end, seg.start);
+    std::shared_ptr<NetworkRouteSegment> inversed = std::make_shared<NetworkRouteSegment>(seg->robj, seg->routeKey, seg->end, seg->start);
     return inversed;
 }
 
@@ -510,9 +517,9 @@ void OsmAnd::NetworkRouteSelector_P::remove(QMap<int64_t, QList<NetworkRouteSegm
     }
     else
     {
-        QString debug = QString::number(toRemove.start.robj->id.id)
-                        + QStringLiteral(" s:") + QString::number(toRemove.start.start)
-                        + QStringLiteral(" e:") + QString::number(toRemove.start.end);
+        QString debug = QString::number(toRemove.start->robj->id.id)
+                        + QStringLiteral(" s:") + QString::number(toRemove.start->start)
+                        + QStringLiteral(" e:") + QString::number(toRemove.start->end);
         QList<NetworkRouteSegmentChain> & lch = it.value();
         if (!lch.removeOne(toRemove))
         {
@@ -538,8 +545,8 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     remove(endChains, owner->rCtx->convertPointToLong(it.getEndPoint()), it);
     double minStartDist = OsmAnd::Utilities::distance31(it.getEndPoint().x, it.getEndPoint().y, toAdd.getStartPoint().x, toAdd.getStartPoint().y);
     double minLastDist = minStartDist;
-    int minStartInd = toAdd.start.start;
-    auto & points31 = toAdd.start.robj->points31;
+    int minStartInd = toAdd.start->start;
+    auto & points31 = toAdd.start->robj->points31;
     for (int i = 0; i < points31.size(); i++)
     {
         double m = OsmAnd::Utilities::distance31(it.getEndPoint().x, it.getEndPoint().y, points31.at(i).x, points31.at(i).y);
@@ -549,9 +556,9 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
             minStartDist = m;
         }
     }
-    const NetworkRouteSegment & lastIt = it.getLast();
-    int minLastInd = lastIt.end;
-    auto & lastItPoints31 = lastIt.robj->points31;
+    const auto & lastIt = it.getLast();
+    int minLastInd = lastIt->end;
+    auto & lastItPoints31 = lastIt->robj->points31;
     for (int i = 0; i < lastItPoints31.size(); i++)
     {
         const PointI & point = lastItPoints31.at(i);
@@ -564,17 +571,17 @@ void OsmAnd::NetworkRouteSelector_P::chainAdd(QMap<int64_t, QList<NetworkRouteSe
     }
     if (minLastDist > minStartDist)
     {
-        if (minStartInd != toAdd.start.start)
+        if (minStartInd != toAdd.start->start)
         {
-            NetworkRouteSegment newSeg(toAdd.start.robj, toAdd.start.routeKey, minStartInd, toAdd.start.end);
+            std::shared_ptr<NetworkRouteSegment> newSeg = std::make_shared<NetworkRouteSegment>(toAdd.start->robj, toAdd.start->routeKey, minStartInd, toAdd.start->end);
             toAdd.setStart(newSeg);
         }
     }
     else
     {
-        if (minLastInd != lastIt.end)
+        if (minLastInd != lastIt->end)
         {
-            NetworkRouteSegment newSeg(lastIt.robj, lastIt.routeKey, lastIt.start, minLastInd);
+            std::shared_ptr<NetworkRouteSegment> newSeg = std::make_shared<NetworkRouteSegment>(lastIt->robj, lastIt->routeKey, lastIt->start, minLastInd);
             it.setEnd(newSeg);
         }
     }
@@ -589,7 +596,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
     QList<int> sizes;
     QHash<int64_t, QVector<double>> heightArrayCache;
     for (const auto & c : constOf(chains)) {
-        QList<NetworkRouteSegment> segmentList;
+        QList<std::shared_ptr<NetworkRouteSegment>> segmentList;
         segmentList.append(c.start);
         if (c.connected.size() > 0) {
             segmentList.append(c.connected);
@@ -599,24 +606,24 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
         track->segments.append(trkSegment);
         int l = 0;
         std::shared_ptr<GpxDocument::WptPt> prev;
-        for (NetworkRouteSegment & segment : segmentList)
+        for (auto & segment : segmentList)
         {
             QVector<double> heightArray;
-            if (segment.robj)
+            if (segment->robj)
             {
-                auto it = heightArrayCache.find(segment.robj->id.id);
+                auto it = heightArrayCache.find(segment->robj->id.id);
                 if (it == heightArrayCache.end())
                 {
-                    it = heightArrayCache.insert(segment.robj->id.id, segment.robj->calculateHeightArray());
+                    it = heightArrayCache.insert(segment->robj->id.id, segment->robj->calculateHeightArray());
                 }
                 heightArray = *it;
                 
             }
-            int inc = segment.start < segment.end ? 1 : -1;
-            for (int i = segment.start; ; i += inc)
+            int inc = segment->start < segment->end ? 1 : -1;
+            for (int i = segment->start; ; i += inc)
             {
                 std::shared_ptr<GpxDocument::WptPt> point = std::make_shared<GpxDocument::WptPt>();
-                const PointI & p = segment.robj->points31.at(i);
+                const PointI & p = segment->robj->points31.at(i);
                 point->position.latitude = OsmAnd::Utilities::get31LatitudeY(p.y);
                 point->position.longitude = OsmAnd::Utilities::get31LongitudeX(p.x);
                 if (heightArray.size() > i * 2 + 1)
@@ -629,7 +636,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
                     l += Utilities::distance(prev->position.longitude, prev->position.latitude, point->position.longitude, point->position.latitude);
                 }
                 prev = point;
-                if (i == segment.end) {
+                if (i == segment->end) {
                     break;
                 }
             }
@@ -693,7 +700,7 @@ int OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getSize() const
     return 1 + connected.size();
 }
 
-OsmAnd::NetworkRouteSegment OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getLast() const
+std::shared_ptr<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getLast() const
 {
     if (connected.size() > 0)
     {
@@ -704,10 +711,10 @@ OsmAnd::NetworkRouteSegment OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentC
 
 OsmAnd::PointI OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getEndPoint() const
 {
-    const NetworkRouteSegment & seg = getLast();
-    if (seg.robj && seg.robj->points31.size() > seg.end)
+    const auto & seg = getLast();
+    if (seg->robj && seg->robj->points31.size() > seg->end)
     {
-        const PointI & p = seg.robj->points31.at(seg.end);
+        const PointI & p = seg->robj->points31.at(seg->end);
         return p;
     }
     PointI def(0, 0);
@@ -716,7 +723,7 @@ OsmAnd::PointI OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getEndP
 
 OsmAnd::PointI OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getStartPoint() const
 {
-    return start.robj->points31[start.start];
+    return start->robj->points31[start->start];
 }
 
 void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::addChain(NetworkRouteSegmentChain & toAdd)
@@ -725,12 +732,12 @@ void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::addChain(NetworkR
     connected.append(toAdd.connected);
 }
 
-void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::setStart(NetworkRouteSegment & newStart)
+void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::setStart(std::shared_ptr<NetworkRouteSegment> & newStart)
 {
     start = newStart;
 }
 
-void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::setEnd(NetworkRouteSegment & newEnd)
+void OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::setEnd(std::shared_ptr<NetworkRouteSegment> & newEnd)
 {
     if (connected.size() > 0)
     {

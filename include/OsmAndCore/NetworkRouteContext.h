@@ -100,10 +100,10 @@ namespace OsmAnd
         NetworkRouteSegment(const NetworkRouteSegment & other);
         NetworkRouteSegment(std::shared_ptr<const Road> road, NetworkRouteKey rKey, int start_, int end_);
         virtual ~NetworkRouteSegment();
-        int start;
-        int end;
-        std::shared_ptr<const Road> robj;
-        NetworkRouteKey routeKey;
+        const int start;
+        const int end;
+        const std::shared_ptr<const Road> robj;
+        const NetworkRouteKey routeKey;
         bool direction() { return end > start; };
     };
 
@@ -120,9 +120,9 @@ namespace OsmAnd
     {
         NetworkRoutePoint(int32_t x31, int32_t y31, int64_t id_): point(x31, y31), id(id_) {};
         virtual ~NetworkRoutePoint();
-        PointI point;
-        int64_t id;
-        QVector<NetworkRouteSegment> objects;
+        const PointI point;
+        const int64_t id;
+        QVector<std::shared_ptr<NetworkRouteSegment>> objects;
         double localVar;
     };
 
@@ -144,12 +144,12 @@ namespace OsmAnd
         NetworkRouteSelectorFilter filter;
         
         void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
-        QHash<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
+        QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
         QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> & tags) const;
         int64_t getTileId(int32_t x31, int32_t y31) const;
         int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
         void loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
-                                  QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
+                                  QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> & map);
         int32_t getXFromTileId(int64_t tileId) const;
         int32_t getYFromTileId(int64_t tileId) const;
         PointI getPointFromLong(int64_t l) const;

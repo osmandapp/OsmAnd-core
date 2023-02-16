@@ -46,19 +46,19 @@ private:
     struct NetworkRoutesTile
     {
         NetworkRoutesTile(int64_t tileId_):tileId(tileId_){};
-        QMap<uint64_t, NetworkRoutePoint> routes;
+        QMap<uint64_t, std::shared_ptr<NetworkRoutePoint>> routes;
         int64_t tileId;
-        QHash<QString, NetworkRouteSegment> uniqueSegments;
+        QHash<QString, std::shared_ptr<NetworkRouteSegment>> uniqueSegments;
         void add(std::shared_ptr<const Road> road, NetworkRouteKey & routeKey);
         bool intersects(int x31, int y31, int px, int py) const;
-        void addUnique(NetworkRouteSegment & networkRouteSegment);
+        void addUnique(std::shared_ptr<NetworkRouteSegment> & networkRouteSegment);
     };
     
     QHash<int64_t, NetworkRoutesTile> indexedTiles;
     
-    QHash<NetworkRouteKey, QList<NetworkRouteSegment>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
+    QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
     void loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
-                              QHash<NetworkRouteKey, QList<NetworkRouteSegment>> & map);
+                              QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> & map);
     NetworkRoutesTile getMapRouteTile(int32_t x31, int32_t y31);
     NetworkRoutesTile loadTile(int32_t x, int32_t y, int64_t tileId);
     
@@ -73,7 +73,7 @@ private:
     static int64_t convertPointToLong(int x31, int y31);
     OsmAnd::PointI getPointFromLong(int64_t l) const;
     
-    static void addObjectToPoint(NetworkRoutePoint & point, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end);
+    static void addObjectToPoint(std::shared_ptr<NetworkRoutePoint> & point, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end);
     
     QVector<NetworkRouteKey> filterKeys(QVector<NetworkRouteKey> keys) const;
     QVector<NetworkRouteKey> convert(std::shared_ptr<const Road> & road) const;
