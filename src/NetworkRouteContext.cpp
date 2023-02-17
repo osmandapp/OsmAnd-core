@@ -54,7 +54,7 @@ OsmAnd::NetworkRouteSegment::NetworkRouteSegment(const NetworkRouteSegment & oth
 }
 
 
-OsmAnd::NetworkRouteSegment::NetworkRouteSegment(std::shared_ptr<const Road> road, NetworkRouteKey rKey, int start_, int end_)
+OsmAnd::NetworkRouteSegment::NetworkRouteSegment(const std::shared_ptr<const Road> & road, const NetworkRouteKey & rKey, int start_, int end_)
 : start(start_), end(end_), robj(road), routeKey(rKey)
 {
 }
