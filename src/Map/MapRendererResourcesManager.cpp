@@ -97,9 +97,6 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
     }
     REPEAT_UNTIL(_workerThread->wait());
 
-    // Release default resources
-    releaseDefaultResources();
-
     // Wait for all tasks to complete
     _taskHostBridge.onOwnerIsBeingDestructed();
 }
@@ -149,13 +146,21 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
     return true;
 }
 
-bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
+bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources(bool gpuContextLost)
 {
     // Release stubs
     for (auto& resource : _processingTileStubs)
+    {
+        if (gpuContextLost)
+            resource->lostRefInGPU();
         resource.reset();
-    for (auto& resource : _processingTileStubs)
+    }
+    for (auto& resource : _unavailableTileStubs)
+    {
+        if (gpuContextLost)
+            resource->lostRefInGPU();
         resource.reset();
+    }
 
     return true;
 }

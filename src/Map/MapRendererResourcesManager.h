@@ -210,7 +210,7 @@ namespace OsmAnd
         std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapStubStylesCount> _unavailableTileStubs;
         bool initializeDefaultResources();
         bool initializeTileStub(const QString& resourceName, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
-        bool releaseDefaultResources();
+        bool releaseDefaultResources(bool gpuContextLost);
     protected:
         MapRendererResourcesManager(MapRenderer* const owner);
 
