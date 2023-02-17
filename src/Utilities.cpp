@@ -88,6 +88,27 @@ int OsmAnd::Utilities::extractFirstInteger(const QString& s)
     return i;
 }
 
+int OsmAnd::Utilities::extractIntegerNumber(const QString& s)
+{
+    int i = 0;
+    int k;
+    for (k = 0; k < s.length(); k++)
+    {
+        const QChar & c = s.at(k);
+        if (c.isDigit())
+            break;
+    }
+    for (; k < s.length(); k++)
+    {
+        const QChar & c = s.at(k);
+        if (c.isDigit())
+            i = i * 10 + c.digitValue();
+        else
+            break;
+    }
+    return i;
+}
+
 bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot)
 {
     first = -1;

@@ -216,6 +216,7 @@ namespace OsmAnd
         QList< Ref<Track> > tracks;
         QList< Ref<WptPt> > points;
         QList< Ref<Route> > routes;
+        QMap<QString, QString> networkRouteKeyTags;
 
         bool hasRtePt() const;
         bool hasWptPt() const;
