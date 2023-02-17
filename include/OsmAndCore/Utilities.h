@@ -200,6 +200,11 @@ namespace OsmAnd
             return result;
         }
 
+        inline static ZoomLevel clipZoomLevel(ZoomLevel zoom)
+        {
+            return qBound(MinZoomLevel, zoom, MaxZoomLevel);
+        }
+
         inline static double x31toMeters(const int32_t x31)
         {
             return static_cast<double>(x31) * 0.011;

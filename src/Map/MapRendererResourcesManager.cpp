@@ -748,11 +748,11 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
         if (tiledProvider)
         {
-            minZoom = tiledProvider->getMinZoom();
-            maxZoom = tiledProvider->getMaxZoom();
+            minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
+            maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());
 
-            minVisibleZoom = tiledProvider->getMinVisibleZoom();
-            maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
+            minVisibleZoom = Utilities::clipZoomLevel(tiledProvider->getMinVisibleZoom());
+            maxVisibleZoom = Utilities::clipZoomLevel(tiledProvider->getMaxVisibleZoom());
 
             maxMissingDataZoomShift = tiledProvider->getMaxMissingDataZoomShift();
             maxMissingDataUnderZoomShift = tiledProvider->getMaxMissingDataUnderZoomShift();
@@ -1623,11 +1623,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
             if (tiledProvider)
             {
-                minZoom = tiledProvider->getMinZoom();
-                maxZoom = tiledProvider->getMaxZoom();
+                minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
+                maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());
 
-                minVisibleZoom = tiledProvider->getMinVisibleZoom();
-                maxVisibleZoom = tiledProvider->getMaxVisibleZoom();
+                minVisibleZoom = Utilities::clipZoomLevel(tiledProvider->getMinVisibleZoom());
+                maxVisibleZoom = Utilities::clipZoomLevel(tiledProvider->getMaxVisibleZoom());
 
                 maxMissingDataUnderZoomShift = tiledProvider->getMaxMissingDataUnderZoomShift();
             }
