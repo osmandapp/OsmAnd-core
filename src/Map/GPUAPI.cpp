@@ -368,3 +368,12 @@ OsmAnd::GPUAPI::MeshInGPU::~MeshInGPU()
         position31 = nullptr;
     }
 }
+
+void OsmAnd::GPUAPI::MeshInGPU::lostRefInGPU() const
+{
+    if (vertexBuffer)
+        vertexBuffer->lostRefInGPU();
+    if (indexBuffer)
+        indexBuffer->lostRefInGPU();
+    _refInGPU = nullptr;
+}

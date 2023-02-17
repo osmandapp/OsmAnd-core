@@ -630,10 +630,13 @@ bool OsmAnd::MapRenderer::doReleaseRendering(const bool gpuContextLost)
 
 bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 {
+    if (gpuContextLost)
+        _gpuWorkerIsSuspended = true;
+
     // Release resources (to let all resources be released)
     _resources->releaseAllResources(gpuContextLost);
 
-    // GPU worker should not be suspected afterwards
+    // GPU worker should not be suspended afterwards
     _gpuWorkerIsSuspended = false;
 
     // Stop GPU worker if it exists
@@ -655,6 +658,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
         _gpuWorkerThread.reset();
     }
 
+    _resources->releaseDefaultResources(gpuContextLost);
     _resources.reset();
 
     _isRenderingInitialized = false;
