@@ -221,16 +221,8 @@ public abstract class MapRendererView extends FrameLayout {
                     return;
                 }
 
-                EGL10 egl = (EGL10) EGLContext.getEGL();
-                if (egl == null ||
-                        egl.eglGetCurrentContext() == null ||
-                        egl.eglGetCurrentContext() == EGL10.EGL_NO_CONTEXT) {
-                    Log.v(TAG, "Forcibly releasing rendering by schedule");
-                    _mapRenderer.releaseRendering(true);
-                } else {
-                    Log.v(TAG, "Releasing rendering by schedule");
-                    _mapRenderer.releaseRendering();
-                }
+                Log.v(TAG, "Forcibly releasing rendering by schedule");
+                _mapRenderer.releaseRendering(true);
             }
         });
     }
@@ -1106,8 +1098,8 @@ public abstract class MapRendererView extends FrameLayout {
                         "force releasing it!");
 
                 // Since there's no more context, where previous resources were created,
-                // they are lost. Forcibly release rendering
-                _mapRenderer.releaseRendering(true);
+                // they are lost. Just stop rendering. Resources will be released afterwards.
+                _mapRenderer.suspendGpuWorker();
             }
 
             // Destroy GPU-worker EGL surface (if present)

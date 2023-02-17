@@ -259,6 +259,8 @@ namespace OsmAnd
             const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             const ZoomLevel zoomLevel;
             const PointI* position31;
+
+            void lostRefInGPU() const override;
         };
 
     private:
