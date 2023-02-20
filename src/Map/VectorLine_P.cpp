@@ -29,6 +29,11 @@
 #define COLORIZATION_GRADIENT 1
 #define COLORIZATION_SOLID 2
 
+
+// The smaller delta, the less line is simplified and the more time it takes to generate primitives
+#define MIN_ALPHA_DELTA 0.1f
+#define MIN_RGB_DELTA 0.075f
+
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     : _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
@@ -190,6 +195,26 @@ void OsmAnd::VectorLine_P::setOutlineWidth(const double width)
     if (_outlineWidth != width)
     {
         _outlineWidth = width;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::getOutlineColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _outlineColor;
+}
+
+void OsmAnd::VectorLine_P::setOutlineColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_outlineColor != color)
+    {
+        _outlineColor = color;
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -421,13 +446,21 @@ double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double x
     return (xB - xA) * (xC - xA) + (yB - yA) * (yC - yA);
 }
 
-int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, uint start, uint end, double epsilon, std::vector<bool>& include) const
+int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
+    const std::vector<PointI>& points,
+    const uint start,
+    const uint end,
+    const double epsilon,
+    std::vector<bool>& include) const
 {
     double dmax = -1;
     int index = -1;
     for (int i = start + 1; i <= end - 1; i++)
     {
-        PointD proj = getProjection(points[i], points[start], points[end]);
+        PointD pointToProject = static_cast<PointD>(points[i]);
+        PointD startPoint = static_cast<PointD>(points[start]);
+        PointD endPoint = static_cast<PointD>(points[end]);
+        PointD proj = getProjection(pointToProject, startPoint, endPoint);
         double d = qSqrt((points[i].x - proj.x) * (points[i].x - proj.x) +
                          (points[i].y - proj.y) * (points[i].y - proj.y));
         // calculate distance from line
@@ -448,6 +481,32 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
         include[end] = true;
         return 1;
     }
+}
+
+bool OsmAnd::VectorLine_P::forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const
+{
+    if (!hasColorizationMapping())
+        return false;
+
+    const auto currColor = pointsColors[pointIndex];
+
+    const auto pPrevColor = pointIndex == 0 ? nullptr : &pointsColors[pointIndex - 1];
+    const auto pNextColor = pointIndex + 1 == pointsColors.size() ? nullptr : &pointsColors[pointIndex + 1];
+
+    if (_colorizationSceme == COLORIZATION_SOLID)
+        return !pPrevColor || *pPrevColor != currColor;
+
+    if (_colorizationSceme == COLORIZATION_GRADIENT)
+    {
+        bool highColorDiff = false;
+        highColorDiff |= pPrevColor && qAbs(pPrevColor->a - currColor.a) > MIN_ALPHA_DELTA;
+        highColorDiff |= pNextColor && qAbs(pNextColor->a - currColor.a) > MIN_ALPHA_DELTA;
+        highColorDiff |= pPrevColor && currColor.getRGBDelta(*pPrevColor) > MIN_RGB_DELTA;
+        highColorDiff |= pNextColor && currColor.getRGBDelta(*pNextColor) > MIN_RGB_DELTA;
+        return highColorDiff;
+    }
+
+    return false;
 }
 
 void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
@@ -554,8 +613,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
     double radius = _lineWidth * scale * visualShiftCoef;
-    bool approximate = _isApproximationEnabled && !hasColorizationMapping();
-    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
+    double outlineRadius = _outlineWidth * scale * visualShiftCoef;
+    bool approximate = _isApproximationEnabled;
+    double simplificationRadius = _lineWidth * scale * visualShiftCoef;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -568,14 +628,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndices->indices = nullptr;
     verticesAndIndices->indicesCount = 0;
 
+    _arrowsOnPath.clear();
+
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
 
     std::vector<std::vector<PointI>> segments;
     QList<QList<FColorARGB>> colors;
     calculateVisibleSegments(segments, colors);
-    // Generate new arrow paths for visible segments
-    generateArrowsOnPath(segments, approximate, simplificationRadius);
 
     PointI startPos;
     bool startPosDefined = false;
@@ -594,10 +654,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             verticesAndIndices->position31 = new PointI(startPos);
         }
         int pointsCount = (int) points.size();
-        // generate array of points
+
+        std::vector<bool> include(pointsCount, !approximate);
+        if (approximate)
+        {
+            include[0] = true;
+            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
+        }
+
         std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
         QSet<uint> colorChangeIndexes;
         uint prevPointIdx = 0;
+        int includedPointsCount = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
             pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
@@ -611,16 +679,23 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 }
                 prevPointIdx = pointIdx;
             }
+
+            // If color is lost after approximation, restore it
+            if (approximate && !include[pointIdx])
+                include[pointIdx] = forceIncludePoint(colorsForSegment, pointIdx);
+
+            if (include[pointIdx])
+                includedPointsCount++;
         }
-        // Do not simplify colorization
-        std::vector<bool> include(pointsCount, !approximate);
-        include[0] = true;
-        int pointsSimpleCount = approximate
-            ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, simplificationRadius / 3, include) + 1
-            : pointsCount;
+
+        if (_showArrows && owner->pathIcon)
+        {
+            const auto arrowsOrigin = segments.back().back();
+            addArrowsOnSegmentPath(points, include, arrowsOrigin);
+        }
 
         // generate base points for connecting lines with triangles
-        std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
+        std::vector<OsmAnd::PointD> b1(includedPointsCount), b2(includedPointsCount), e1(includedPointsCount), e2(includedPointsCount), original(includedPointsCount);
         double ntan = 0, nx1 = 0, ny1 = 0;
         prevPointIdx = 0;
         uint insertIdx = 0;
@@ -662,7 +737,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
 
         //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndices->verticesCount,
-        //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
+        //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, includedPointsCount,pointsCount);
         //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
         FColorARGB fillColor = _fillColor;
         int patternLength = (int) _dashPattern.size();
@@ -691,7 +766,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             double dashPhase = 0;
             int patternIndex = 0;
             bool firstDash = true;
-            for (auto pointIdx = 1u; pointIdx < pointsSimpleCount; pointIdx++)
+            for (auto pointIdx = 1u; pointIdx < includedPointsCount; pointIdx++)
             {
                 OsmAnd::PointD pnt = original[pointIdx];
                 double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
@@ -800,6 +875,17 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         else
         {
+            // Drawing outline on relief is not supported 
+            bool drawOutline = !qFuzzyIsNull(_outlineWidth) && !_hasElevationDataProvider;
+            if (drawOutline)
+                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                    vertex,
+                    vertices,
+                    original, outlineRadius * 2,
+                    _outlineColor, QList<FColorARGB>(),
+                    crushedpixel::Polyline2D::JointStyle::ROUND,
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
+
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                 vertex,
                 vertices,
@@ -837,7 +923,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
 
-    //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
+    //verticesAndIndices->verticesCount = (includedPointsCount - 2) * 2 + 2 * 2;
     verticesAndIndices->verticesCount = (unsigned int) vertices.size();
     verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
     std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
@@ -867,94 +953,54 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
 }
 
-QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
-    const std::vector<std::vector<PointI>>& visibleSegments,
-    bool approximate /*= false*/,
-    double simplificationRadius /*= 0*/) const
-{
-    QVector<SkPath> paths;
-    if (!visibleSegments.empty())
-    {
-        PointI origin(visibleSegments.back().back());
-        for (const auto& segment : visibleSegments)
-        {
-            int pointsCount = (int) segment.size();
-            std::vector<bool> include(pointsCount, !approximate);
-            if (approximate)
-            {
-                std::vector<PointD> points;
-                for (auto& p : constOf(segment))
-                    points.push_back(PointD(p.x, p.y));
-
-                include[0] = true;
-                if (points.size() > 1)
-                    simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
-            }
-
-            SkPath path;
-            const auto& start = segment.back();
-            path.moveTo(start.x - origin.x, start.y - origin.y);
-            for (int i = (int) segment.size() - 2; i >= 0; i--)
-            {
-                if (!include[i])
-                    continue;
-
-                const auto& p = segment[i];
-                path.lineTo(p.x - origin.x, p.y - origin.y);
-            }
-            paths.push_back(path);
-        }
-    }
-    return paths;
-}
-
 const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrowsOnPath() const
 {
-    QReadLocker scopedLocker(&_arrowsOnPathLock);
+    QReadLocker scopedLocker(&_lock);
 
     return detachedOf(_arrowsOnPath);
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(
-    const std::vector<std::vector<PointI>>& visibleSegments,
-    bool approximate /*= false*/,
-    double simplificationRadius /*= 0*/)
+void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
+    const std::vector<PointI>& segmentPoints,
+    const std::vector<bool>& includedPoints,
+    const PointI& origin)
 {
-    QWriteLocker scopedLocker(&_arrowsOnPathLock);
-
-    _arrowsOnPath.clear();
-    if (_showArrows && owner->pathIcon)
+    SkPath path;
+    const auto& start = segmentPoints.back();
+    path.moveTo(start.x - origin.x, start.y - origin.y);
+    for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
     {
-        const auto paths = calculateLinePath(visibleSegments, approximate, simplificationRadius);
-        for (const auto& path : paths)
+        if (!includedPoints[i])
+            continue;
+
+        const auto& p = segmentPoints[i];
+        path.lineTo(p.x - origin.x, p.y - origin.y);
+    }
+
+    SkPathMeasure pathMeasure(path, false);
+    bool ok = false;
+    const auto length = pathMeasure.getLength();
+
+    float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
+
+    float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
+    auto iconOffset = 0.5f * step;
+    const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
+    if (iconInstancesCount > 0)
+    {
+        for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
         {
-            PointI origin(visibleSegments.back().back());
-            SkPathMeasure pathMeasure(path, false);
-            bool ok = false;
-            const auto length = pathMeasure.getLength();
+            SkPoint p;
+            SkVector t;
+            ok = pathMeasure.getPosTan(iconOffset, &p, &t);
+            if (!ok)
+                break;
 
-            float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
-
-            float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
-            auto iconOffset = 0.5f * step;
-            const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
-            if (iconInstancesCount > 0)
-            {
-                for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
-                {
-                    SkPoint p;
-                    SkVector t;
-                    ok = pathMeasure.getPosTan(iconOffset, &p, &t);
-                    if (!ok)
-                        break;
-
-                    const auto position = PointI((double)p.x() + origin.x, (double)p.y() + origin.y);
-                    // Get mirrored direction
-                    float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
-                    const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
-                    _arrowsOnPath.push_back(arrowSymbol);
-                }
-            }
+            const auto position = PointI((double)p.x() + origin.x, (double)p.y() + origin.y);
+            // Get mirrored direction
+            float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
+            const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
+            _arrowsOnPath.push_back(arrowSymbol);
         }
     }
 }

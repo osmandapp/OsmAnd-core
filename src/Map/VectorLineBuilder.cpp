@@ -228,6 +228,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setOutlineWidth(const doub
     return *this;
 }
 
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder::getOutlineColor() const
+{
+    return _p->getOutlineColor();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setOutlineColor(const FColorARGB color)
+{
+    _p->setOutlineColor(color);
+
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

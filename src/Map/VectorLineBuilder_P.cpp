@@ -129,6 +129,20 @@ void OsmAnd::VectorLineBuilder_P::setOutlineWidth(const double width)
     _outlineWidth = width;
 }
 
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder_P::getOutlineColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _outlineColor;
+}
+
+void OsmAnd::VectorLineBuilder_P::setOutlineColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _outlineColor = color;
+}
+
 double OsmAnd::VectorLineBuilder_P::getLineWidth() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -314,6 +328,7 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setColorizationMapping(_colorizationMapping);
     line->setLineDash(_dashPattern);
     line->setOutlineWidth(_outlineWidth);
+    line->setOutlineColor(_outlineColor);
     line->setColorizationScheme(_colorizationScheme);
     line->applyChanges();
     

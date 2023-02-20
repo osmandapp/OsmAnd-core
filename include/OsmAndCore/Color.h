@@ -78,6 +78,8 @@ namespace OsmAnd
         {
             return qFuzzyIsNull(a);
         }
+
+        float getRGBDelta(const FColorARGB& other) const;
     };
 
     union FColorRGBA
@@ -147,6 +149,8 @@ namespace OsmAnd
         {
             return qFuzzyIsNull(a);
         }
+
+        float getRGBDelta(const FColorRGBA& other) const;
     };
 
     union FColorRGB
@@ -166,6 +170,13 @@ namespace OsmAnd
         }
 
         explicit inline FColorRGB(const FColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
+
+        explicit inline FColorRGB(const FColorRGBA& other)
             : r(other.r)
             , g(other.g)
             , b(other.b)
@@ -216,6 +227,24 @@ namespace OsmAnd
         inline FColorARGB withAlpha(const float alpha) const
         {
             return FColorARGB(alpha, r, g, b);
+        }
+
+        inline float getRGBDelta(const FColorRGB& other) const
+        {
+            const auto redmean = (r + other.r) * 0.5f;
+            const auto rDiff = r - other.r;
+            const auto gDiff = g - other.g;
+            const auto bDiff = b - other.b;
+
+            const auto rCoeff = 2.0f + redmean;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (1.0f - redmean);
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
         }
     };
 
@@ -310,6 +339,8 @@ namespace OsmAnd
         {
             return (a == 0);
         }
+
+        float getRGBDelta(const ColorARGB& other) const;
 
         inline QString toString() const
         {
@@ -407,6 +438,8 @@ namespace OsmAnd
             return (a == 0);
         }
 
+        float getRGBDelta(const ColorRGBA& other) const;
+        
         inline QString toString() const
         {
             if (a == 0)
@@ -444,6 +477,13 @@ namespace OsmAnd
         }
 
         explicit inline ColorRGB(const ColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
+
+        explicit inline ColorRGB(const ColorRGBA& other)
             : r(other.r)
             , g(other.g)
             , b(other.b)
@@ -506,6 +546,24 @@ namespace OsmAnd
         inline ColorARGB withAlpha(const uint8_t alpha) const
         {
             return ColorARGB(alpha, r, g, b);
+        }
+
+        inline float getRGBDelta(const ColorRGB& other) const
+        {
+            const auto redmean = (r + other.r) * 0.5f;
+            const auto rDiff = r - other.r;
+            const auto gDiff = g - other.g;
+            const auto bDiff = b - other.b;
+
+            const auto rCoeff = 2.0f + redmean / 255.0f;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (255.0f - redmean) / 255.0f;
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
         }
 
         inline QString toString() const
