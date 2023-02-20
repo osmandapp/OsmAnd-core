@@ -41,6 +41,7 @@ namespace OsmAnd
         VectorLine::EndCapStyle _endCapStyle;
         
         double _outlineWidth;
+        FColorARGB _outlineColor;
         double _lineWidth;
         FColorARGB _fillColor;
         std::vector<double> _dashPattern;
@@ -81,6 +82,9 @@ namespace OsmAnd
         
         double getOutlineWidth() const;
         void setOutlineWidth(const double width);
+
+        FColorARGB getOutlineColor() const;
+        void setOutlineColor(const FColorARGB color);
 
         double getLineWidth() const;
         void setLineWidth(const double width);

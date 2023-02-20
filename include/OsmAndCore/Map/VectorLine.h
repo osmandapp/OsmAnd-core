@@ -122,6 +122,9 @@ namespace OsmAnd
         double getOutlineWidth() const;
         void setOutlineWidth(const double width);
 
+        FColorARGB getOutlineColor() const;
+        void setOutlineColor(const FColorARGB color);
+
         void setColorizationScheme(const int colorizationScheme);
 
         FColorARGB getFillColor() const;

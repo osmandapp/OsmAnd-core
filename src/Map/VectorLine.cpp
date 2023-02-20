@@ -96,6 +96,16 @@ void OsmAnd::VectorLine::setOutlineWidth(const double width)
     _p->setOutlineWidth(width);
 }
 
+OsmAnd::FColorARGB OsmAnd::VectorLine::getOutlineColor() const
+{
+    return _p->getOutlineColor();
+}
+
+void OsmAnd::VectorLine::setOutlineColor(const FColorARGB color)
+{
+    _p->setOutlineColor(color);
+}
+
 void OsmAnd::VectorLine::setColorizationScheme(const int colorizationScheme)
 {
     _p->setColorizationScheme(colorizationScheme);
