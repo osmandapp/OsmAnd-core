@@ -877,6 +877,14 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
         if (contentSizeValue.isNull())
             continue;
+        const auto& freeValue = attribs.value(QLatin1String("free"));
+        bool free = false;
+        if (!freeValue.isNull())
+            free = freeValue.toString() == QStringLiteral("true");
+        QString message;
+        const auto& messageValue = attribs.value(QLatin1String("freeMessage"));
+        if (!messageValue.isNull())
+            message = messageValue.toString();
 
         const auto name = nameValue.toString();
 
@@ -1055,7 +1063,9 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             downloadUrl,
             contentSize,
             timestamp,
-            containerSize));
+            containerSize,
+            free,
+            message));
         repository.push_back(qMove(resource));
 
 #if OSMAND_DEBUG
