@@ -11,6 +11,49 @@
 
 namespace OsmAnd
 {
+    struct ColorUtilities
+    {
+        inline static float getRGBDelta(float r1, float g1, float b1, float r2, float g2, float b2)
+        {
+            const auto redmean = (r1 + r2) * 0.5f;
+            const auto rDiff = r1 - r2;
+            const auto gDiff = g1 - g2;
+            const auto bDiff = b1 - b2;
+
+            const auto rCoeff = 2.0f + redmean;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (1.0f - redmean);
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
+        }
+
+        inline static float getRGBDelta(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2)
+        {
+            const auto redmean = (r1 + r2) * 0.5f;
+            const auto rDiff = r1 - r2;
+            const auto gDiff = g1 - g2;
+            const auto bDiff = b1 - b2;
+
+            const auto rCoeff = 2.0f + redmean / 255.0f;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (255.0f - redmean) / 255.0f;
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
+        }
+
+        private:
+            ColorUtilities();
+            ~ColorUtilities();
+    };
+
     union FColorARGB
     {
         inline FColorARGB()
@@ -79,7 +122,10 @@ namespace OsmAnd
             return qFuzzyIsNull(a);
         }
 
-        float getRGBDelta(const FColorARGB& other) const;
+        inline float getRGBDelta(const FColorARGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
     };
 
     union FColorRGBA
@@ -150,7 +196,10 @@ namespace OsmAnd
             return qFuzzyIsNull(a);
         }
 
-        float getRGBDelta(const FColorRGBA& other) const;
+        inline float getRGBDelta(const FColorRGBA& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
     };
 
     union FColorRGB
@@ -231,20 +280,7 @@ namespace OsmAnd
 
         inline float getRGBDelta(const FColorRGB& other) const
         {
-            const auto redmean = (r + other.r) * 0.5f;
-            const auto rDiff = r - other.r;
-            const auto gDiff = g - other.g;
-            const auto bDiff = b - other.b;
-
-            const auto rCoeff = 2.0f + redmean;
-            const auto gCoeff = 4.0f;
-            const auto bCoeff = 2.0f + (1.0f - redmean);
-
-            const auto rDelta = rCoeff * rDiff * rDiff;
-            const auto gDelta = gCoeff * gDiff * gDiff;
-            const auto bDelta = bCoeff * bDiff * bDiff;
-
-            return rDelta + gDelta + bDelta;
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
     };
 
@@ -340,7 +376,10 @@ namespace OsmAnd
             return (a == 0);
         }
 
-        float getRGBDelta(const ColorARGB& other) const;
+        inline float getRGBDelta(const ColorARGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
 
         inline QString toString() const
         {
@@ -438,7 +477,10 @@ namespace OsmAnd
             return (a == 0);
         }
 
-        float getRGBDelta(const ColorRGBA& other) const;
+        inline float getRGBDelta(const ColorRGBA& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
         
         inline QString toString() const
         {
@@ -550,20 +592,7 @@ namespace OsmAnd
 
         inline float getRGBDelta(const ColorRGB& other) const
         {
-            const auto redmean = (r + other.r) * 0.5f;
-            const auto rDiff = r - other.r;
-            const auto gDiff = g - other.g;
-            const auto bDiff = b - other.b;
-
-            const auto rCoeff = 2.0f + redmean / 255.0f;
-            const auto gCoeff = 4.0f;
-            const auto bCoeff = 2.0f + (255.0f - redmean) / 255.0f;
-
-            const auto rDelta = rCoeff * rDiff * rDiff;
-            const auto gDelta = gCoeff * gDiff * gDiff;
-            const auto bDelta = bCoeff * bDiff * bDiff;
-
-            return rDelta + gDelta + bDelta;
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
 
         inline QString toString() const
