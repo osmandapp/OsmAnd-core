@@ -185,7 +185,9 @@ namespace OsmAnd
                 const QUrl& url,
                 const uint64_t size,
                 const uint64_t timestamp,
-                const uint64_t packageSize);
+                const uint64_t packageSize,
+                const bool free,
+                const QString& message);
         public:
             virtual ~ResourceInRepository();
 
@@ -193,6 +195,8 @@ namespace OsmAnd
             const uint64_t size;
             const uint64_t timestamp;
             const uint64_t packageSize;
+            const bool free;
+            const QString message;
 
         friend class OsmAnd::ResourcesManager_P;
         };
