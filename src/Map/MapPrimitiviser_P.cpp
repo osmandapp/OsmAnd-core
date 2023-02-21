@@ -2298,7 +2298,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         legacyCoastlineObjects.push_back(legacyObj);
     }
     std::vector<FoundMapDataObject> legacyCoastlineObjectsResult;
-    //get polygons of coastlines circumcised by sides of area31 or isolated islands/lakes
+    // Get polygons of coastlines circumcised by sides of area31 or isolated islands/lakes
     bool processed = processCoastlines(legacyCoastlineObjects, (int) area31.topLeft.x, (int) area31.bottomRight.x, (int) area31.bottomRight.y,
                       (int) area31.topLeft.y, static_cast<int>(zoom), false, false, legacyCoastlineObjectsResult);
     if (processed)
@@ -2312,8 +2312,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         }
         if (size < 3)
         {
-            //for polygon need mimimum 3 points
-            //avoid bug with part of coastline on the border of tile, location 36.6713 30.6727, zoom 11
+            // Polygon needs mimimum 3 points (bug with part of coastline on the border of tile)
             processed = false;
         }
     }
