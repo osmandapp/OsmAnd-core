@@ -40,6 +40,8 @@ namespace OsmAnd
         typedef MapPrimitiviser::Cache Cache;
 
     private:
+        void debugCoastline(const AreaI & area31, const QList< std::shared_ptr<const MapObject>> & coastlines) const;
+        const AreaI getWidenArea(const AreaI & area31, const ZoomLevel & zoom) const;
     protected:
         MapPrimitiviser_P(MapPrimitiviser* const owner);
 
@@ -70,16 +72,6 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
-        static AreaI alignAreaForCoastlines(const AreaI& area31);
-
-        static bool polygonizeCoastlines(
-            const AreaI area31,
-            const ZoomLevel zoom,
-            const QList< std::shared_ptr<const MapObject> >& coastlines,
-            QList< std::shared_ptr<const MapObject> >& outVectorized,
-            bool abortIfBrokenCoastlinesExist,
-            bool includeBrokenCoastlines);
-        
         static bool polygonizeCoastlines(
             const AreaI area31,
             const ZoomLevel zoom,
@@ -88,32 +80,6 @@ namespace OsmAnd
         
         static MapDataObject convertToLegacy(const MapObject & coreObj);
         static const std::shared_ptr<MapObject> convertFromLegacy(const MapDataObject * legacyObj);
-
-        static bool buildCoastlinePolygonSegment(
-            const AreaI area31,
-            bool currentInside,
-            const PointI& currentPoint31,
-            bool prevInside,
-            const PointI& previousPoint31,
-            QVector< PointI >& segmentPoints);
-
-        static bool calculateIntersection(
-            const PointI& p1,
-            const PointI& p0,
-            const AreaI& bbox,
-            PointI& pX);
-
-        static void appendCoastlinePolygons
-            (QList< QVector< PointI > >& closedPolygons,
-            QList< QVector< PointI > >& coastlinePolylines,
-            QVector< PointI >& polyline);
-
-        static void convertCoastlinePolylinesToPolygons(
-            const AreaI area31,
-            QList< QVector< PointI > >& coastlinePolylines,
-            QList< QVector< PointI > >& coastlinePolygons);
-
-        static bool isClockwiseCoastlinePolygon(const QVector< PointI > & polygon);
 
         static void obtainPrimitives(
             const Context& context,

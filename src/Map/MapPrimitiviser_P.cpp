@@ -223,12 +223,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     if (detailedmapCoastlinesPresent && zoom >= MapPrimitiviser::DetailedLandDataMinZoom)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
-            area31,
+            getWidenArea(area31, zoom),
             zoom,
             detailedmapCoastlineObjects,
-            polygonizedCoastlineObjects,
-            basemapCoastlinesPresent,
-            true);
+            polygonizedCoastlineObjects);
         fillEntireArea = !coastlinesWereAdded;
         
         if (!coastlinesWereAdded)
@@ -271,9 +269,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             area31,
             zoom,
             basemapCoastlineObjects,
-            polygonizedCoastlineObjects,
-            false,
-            true);
+            polygonizedCoastlineObjects);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
     }
 
@@ -423,6 +419,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
 
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
+    debugCoastline(area31, polygonizedCoastlineObjects);
+#endif
+    
     const Stopwatch obtainPrimitivesFromCoastlinesStopwatch(metric != nullptr);
     obtainPrimitives(
         context,
@@ -562,649 +562,6 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         metric->elapsedTime += totalStopwatch.elapsed();
 
     return primitivisedObjects;
-}
-
-OsmAnd::AreaI OsmAnd::MapPrimitiviser_P::alignAreaForCoastlines(const AreaI& area31)
-{
-    const auto tilesCount = static_cast<int32_t>(1u << static_cast<unsigned int>(ZoomLevel5));
-    const auto alignMask = static_cast<uint32_t>(tilesCount - 1);
-
-    // Align area to 32: this fixes coastlines and specifically Antarctica
-    AreaI alignedArea31;
-    alignedArea31.top() = area31.top() & ~alignMask;
-    alignedArea31.left() = area31.left() & ~alignMask;
-    alignedArea31.bottom() = area31.bottom() & ~alignMask;
-    alignedArea31.right() = area31.right() & ~alignMask;
-
-    return alignedArea31;
-}
-
-bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
-    const AreaI area31,
-    const ZoomLevel zoom,
-    const QList< std::shared_ptr<const MapObject> >& coastlines,
-    QList< std::shared_ptr<const MapObject> >& outVectorized,
-    bool abortIfBrokenCoastlinesExist,
-    bool includeBrokenCoastlines)
-{
-    QList< QVector< PointI > > closedPolygons;
-    QList< QVector< PointI > > coastlinePolylines; // Broken == not closed in this case
-
-    // Align area to 32: this fixes coastlines and specifically Antarctica
-    const auto alignedArea31 = alignAreaForCoastlines(area31);
-
-    QVector< PointI > linePoints31;
-    for (const auto& coastline : constOf(coastlines))
-    {
-        if (coastline->points31.size() < 2)
-        {
-#if OSMAND_VERBOSE_MAP_PRIMITIVISER
-            LogPrintf(LogSeverityLevel::Warning,
-                "MapObject %s is primitivised as coastline, but has %d vertices",
-                qPrintable(coastline->toString()),
-                coastline->points31.size());
-#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-            continue;
-        }
-
-        linePoints31.clear();
-        auto itPoint = coastline->points31.cbegin();
-        auto pp = *itPoint;
-        auto cp = pp;
-        auto prevInside = alignedArea31.contains(cp);
-        if (prevInside)
-            linePoints31.push_back(cp);
-        const auto itEnd = coastline->points31.cend();
-        for (++itPoint; itPoint != itEnd; ++itPoint)
-        {
-            cp = *itPoint;
-
-            const auto inside = alignedArea31.contains(cp);
-            const auto lineEnded = buildCoastlinePolygonSegment(area31, inside, cp, prevInside, pp, linePoints31);
-            if (lineEnded)
-            {
-                appendCoastlinePolygons(closedPolygons, coastlinePolylines, linePoints31);
-
-                // Create new line if it goes outside
-                linePoints31.clear();
-            }
-
-            pp = cp;
-            prevInside = inside;
-        }
-
-        appendCoastlinePolygons(closedPolygons, coastlinePolylines, linePoints31);
-    }
-
-    if (closedPolygons.isEmpty() && coastlinePolylines.isEmpty())
-        return false;
-
-    // Draw coastlines
-    for (const auto& polyline : constOf(coastlinePolylines))
-    {
-        const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-        mapObject->isArea = false;
-        mapObject->points31 = polyline;
-        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineLineAttributeId);
-
-        outVectorized.push_back(qMove(mapObject));
-    }
-
-    const bool coastlineCrossesBounds = !coastlinePolylines.isEmpty();
-    if (!coastlinePolylines.isEmpty())
-    {
-        // Add complete water tile with holes
-        const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-        mapObject->points31.push_back(qMove(PointI(area31.left(), area31.top())));
-        mapObject->points31.push_back(qMove(PointI(area31.right(), area31.top())));
-        mapObject->points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
-        mapObject->points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
-        mapObject->points31.push_back(mapObject->points31.first());
-        mapObject->bbox31 = area31;
-        convertCoastlinePolylinesToPolygons(area31, coastlinePolylines, mapObject->innerPolygonsPoints31);
-
-        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
-        mapObject->isArea = true;
-
-        assert(mapObject->isClosedFigure());
-        assert(mapObject->isClosedFigure(true));
-        outVectorized.push_back(qMove(mapObject));
-    }
-
-    if (!coastlinePolylines.isEmpty())
-    {
-#if OSMAND_VERBOSE_MAP_PRIMITIVISER
-        LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
-            area31.top(),
-            area31.left(),
-            area31.bottom(),
-            area31.right(),
-            zoom);
-#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-    }
-
-    if (includeBrokenCoastlines)
-    {
-        for (const auto& polygon : constOf(coastlinePolylines))
-        {
-            const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-            mapObject->isArea = false;
-            mapObject->points31 = polygon;
-            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineBrokenAttributeId);
-
-            outVectorized.push_back(qMove(mapObject));
-        }
-    }
-
-    // Draw coastlines
-    for (const auto& polygon : constOf(closedPolygons))
-    {
-        const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-        mapObject->isArea = false;
-        mapObject->points31 = polygon;
-        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineLineAttributeId);
-
-        outVectorized.push_back(qMove(mapObject));
-    }
-
-    if (abortIfBrokenCoastlinesExist && !coastlinePolylines.isEmpty())
-        return false;
-
-    auto fullWaterObjects = 0u;
-    auto fullLandObjects = 0u;
-    for (const auto& polygon : constOf(closedPolygons))
-    {
-        bool clockwise = isClockwiseCoastlinePolygon(polygon);
-
-        const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-        mapObject->points31 = qMove(polygon);
-        if (clockwise)
-        {
-            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
-            fullWaterObjects++;
-        }
-        else
-        {
-            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
-            fullLandObjects++;
-        }
-        mapObject->isArea = true;
-
-        assert(mapObject->isClosedFigure());
-        outVectorized.push_back(qMove(mapObject));
-    }
-
-    if (fullWaterObjects == 0u && !coastlineCrossesBounds)
-    {
-#if OSMAND_VERBOSE_MAP_PRIMITIVISER
-        LogPrintf(LogSeverityLevel::Warning, "Isolated islands found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
-            area31.top(),
-            area31.left(),
-            area31.bottom(),
-            area31.right(),
-            zoom);
-#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
-
-        // Add complete water tile
-        const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
-        mapObject->points31.push_back(qMove(PointI(area31.left(), area31.top())));
-        mapObject->points31.push_back(qMove(PointI(area31.right(), area31.top())));
-        mapObject->points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
-        mapObject->points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
-        mapObject->points31.push_back(mapObject->points31.first());
-        mapObject->bbox31 = area31;
-
-        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
-        mapObject->isArea = true;
-
-        assert(mapObject->isClosedFigure());
-        outVectorized.push_back(qMove(mapObject));
-    }
-
-    return true;
-}
-
-bool OsmAnd::MapPrimitiviser_P::buildCoastlinePolygonSegment(
-    const AreaI area31,
-    bool currentInside,
-    const PointI& currentPoint31,
-    bool prevInside,
-    const PointI& previousPoint31,
-    QVector< PointI >& segmentPoints)
-{
-    bool lineEnded = false;
-
-    const auto alignedArea31 = alignAreaForCoastlines(area31);
-
-    auto point = currentPoint31;
-    if (prevInside)
-    {
-        if (!currentInside)
-        {
-            bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, alignedArea31, point);
-            if (!hasIntersection)
-                point = previousPoint31;
-            segmentPoints.push_back(point);
-            lineEnded = true;
-        }
-        else
-        {
-            segmentPoints.push_back(point);
-        }
-    }
-    else
-    {
-        bool hasIntersection = calculateIntersection(currentPoint31, previousPoint31, alignedArea31, point);
-        if (currentInside)
-        {
-            assert(hasIntersection);
-            segmentPoints.push_back(point);
-            segmentPoints.push_back(currentPoint31);
-        }
-        else if (hasIntersection)
-        {
-            segmentPoints.push_back(point);
-            calculateIntersection(currentPoint31, point, alignedArea31, point);
-            segmentPoints.push_back(point);
-            lineEnded = true;
-        }
-    }
-
-    return lineEnded;
-}
-
-bool OsmAnd::MapPrimitiviser_P::calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX)
-{
-    // Calculates intersection between line and bbox in clockwise manner.
-
-    // Well, since Victor said not to touch this thing, I will replace only output writing,
-    // and will even retain old variable names.
-    const auto& px = p0.x;
-    const auto& py = p0.y;
-    const auto& x = p1.x;
-    const auto& y = p1.y;
-    const auto& leftX = bbox.left();
-    const auto& rightX = bbox.right();
-    const auto& topY = bbox.top();
-    const auto& bottomY = bbox.bottom();
-
-    // firstly try to search if the line goes in
-    if (py < topY && y >= topY) {
-        int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;//b.first = tx;
-            pX.y = topY;//b.second = topY;
-            return true;
-        }
-    }
-    if (py > bottomY && y <= bottomY) {
-        int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;//b.first = tx;
-            pX.y = bottomY;//b.second = bottomY;
-            return true;
-        }
-    }
-    if (px < leftX && x >= leftX) {
-        int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = leftX;//b.first = leftX;
-            pX.y = ty;//b.second = ty;
-            return true;
-        }
-
-    }
-    if (px > rightX && x <= rightX) {
-        int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = rightX;//b.first = rightX;
-            pX.y = ty;//b.second = ty;
-            return true;
-        }
-
-    }
-
-    // try to search if point goes out
-    if (py > topY && y <= topY) {
-        int tx = (int)(px + ((double)(x - px) * (topY - py)) / (y - py));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;//b.first = tx;
-            pX.y = topY;//b.second = topY;
-            return true;
-        }
-    }
-    if (py < bottomY && y >= bottomY) {
-        int tx = (int)(px + ((double)(x - px) * (py - bottomY)) / (py - y));
-        if (leftX <= tx && tx <= rightX) {
-            pX.x = tx;//b.first = tx;
-            pX.y = bottomY;//b.second = bottomY;
-            return true;
-        }
-    }
-    if (px > leftX && x <= leftX) {
-        int ty = (int)(py + ((double)(y - py) * (leftX - px)) / (x - px));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = leftX;//b.first = leftX;
-            pX.y = ty;//b.second = ty;
-            return true;
-        }
-
-    }
-    if (px < rightX && x >= rightX) {
-        int ty = (int)(py + ((double)(y - py) * (px - rightX)) / (px - x));
-        if (ty >= topY && ty <= bottomY) {
-            pX.x = rightX;//b.first = rightX;
-            pX.y = ty;//b.second = ty;
-            return true;
-        }
-
-    }
-
-    if (px == rightX || px == leftX || py == topY || py == bottomY) {
-        pX = p0;//b.first = px; b.second = py;
-        //        return true;
-        // Is it right? to not return anything?
-    }
-    return false;
-}
-
-void OsmAnd::MapPrimitiviser_P::appendCoastlinePolygons(
-    QList< QVector< PointI > >& closedPolygons,
-    QList< QVector< PointI > >& coastlinePolylines,
-    QVector< PointI >& polyline)
-{
-    if (polyline.isEmpty())
-        return;
-
-    if (polyline.first() == polyline.last() && polyline.size() > 2)
-    {
-        closedPolygons.push_back(polyline);
-        return;
-    }
-
-    bool add = true;
-
-    for (auto itPolygon = cachingIteratorOf(coastlinePolylines); itPolygon;)
-    {
-        auto& polygon = *itPolygon;
-
-        bool remove = false;
-
-        if (polyline.first() == polygon.last())
-        {
-            polygon.reserve(polygon.size() + polyline.size() - 1);
-            polygon.pop_back();
-            polygon += polyline;
-            remove = true;
-            polyline = polygon;
-        }
-        else if (polyline.last() == polygon.first())
-        {
-            polyline.reserve(polyline.size() + polygon.size() - 1);
-            polyline.pop_back();
-            polyline += polygon;
-            remove = true;
-        }
-
-        if (remove)
-        {
-            itPolygon.set(coastlinePolylines.erase(itPolygon.current));
-            itPolygon.update(coastlinePolylines);
-        }
-        else
-        {
-            ++itPolygon;
-        }
-
-        if (polyline.first() == polyline.last())
-        {
-            closedPolygons.push_back(polyline);
-            add = false;
-            break;
-        }
-    }
-
-    if (add)
-    {
-        coastlinePolylines.push_back(polyline);
-    }
-}
-
-void OsmAnd::MapPrimitiviser_P::convertCoastlinePolylinesToPolygons(
-    const AreaI area31,
-    QList< QVector< PointI > >& coastlinePolylines,
-    QList< QVector< PointI > >& coastlinePolygons)
-{
-    const auto alignedArea31 = alignAreaForCoastlines(area31);
-
-    QList< QVector< PointI > > validPolylines;
-
-    // Check if polylines has been cut by primitivisation area
-    auto itPolyline = mutableIteratorOf(coastlinePolylines);
-    while (itPolyline.hasNext())
-    {
-        const auto& polyline = itPolyline.next();
-        assert(!polyline.isEmpty());
-
-        const auto& head = polyline.first();
-        const auto& tail = polyline.last();
-
-        // This curve has not been cut by primitivisation area, so it's
-        // impossible to fix it
-        if (!alignedArea31.isOnEdge(head) || !alignedArea31.isOnEdge(tail))
-            continue;
-
-        validPolylines.push_back(polyline);
-        itPolyline.remove();
-    }
-
-    std::set< QList< QVector< PointI > >::iterator > processedPolylines;
-    while (processedPolylines.size() != validPolylines.size())
-    {
-        for (auto itPolyline = cachingIteratorOf(validPolylines); itPolyline; ++itPolyline)
-        {
-            // If this polyline was already processed, skip it
-            if (processedPolylines.find(itPolyline.current) != processedPolylines.end())
-                continue;
-
-            // Start from tail of the polyline and search for it's continuation in CCV order
-            auto& polyline = *itPolyline;
-            const auto& tail = polyline.last();
-            auto tailEdge = Edge::Invalid;
-            alignedArea31.isOnEdge(tail, &tailEdge);
-            auto itNearestPolyline = itPolyline.getEnd();
-            auto firstIteration = true;
-            for (int idx = static_cast<int>(tailEdge)+4; (idx >= static_cast<int>(tailEdge)) && (!itNearestPolyline); idx--, firstIteration = false)
-            {
-                const auto currentEdge = static_cast<Edge>(idx % 4);
-
-                for (auto itOtherPolyline = cachingIteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
-                {
-                    // If this polyline was already processed, skip it
-                    if (processedPolylines.find(itOtherPolyline.current) != processedPolylines.end())
-                        continue;
-
-                    // Skip polylines that are on other edges
-                    const auto& otherHead = itOtherPolyline->first();
-                    auto otherHeadEdge = Edge::Invalid;
-                    alignedArea31.isOnEdge(otherHead, &otherHeadEdge);
-                    if (otherHeadEdge != currentEdge)
-                        continue;
-
-                    // Skip polyline that is not next in CCV order
-                    if (firstIteration)
-                    {
-                        bool isNextByCCV = false;
-                        if (currentEdge == Edge::Top)
-                            isNextByCCV = (otherHead.x <= tail.x);
-                        else if (currentEdge == Edge::Right)
-                            isNextByCCV = (otherHead.y <= tail.y);
-                        else if (currentEdge == Edge::Bottom)
-                            isNextByCCV = (tail.x <= otherHead.x);
-                        else if (currentEdge == Edge::Left)
-                            isNextByCCV = (tail.y <= otherHead.y);
-                        if (!isNextByCCV)
-                            continue;
-                    }
-
-                    // If nearest was not yet set, set this
-                    if (!itNearestPolyline)
-                    {
-                        itNearestPolyline = itOtherPolyline;
-                        continue;
-                    }
-
-                    // Check if current polyline's head is closer (by CCV) that previously selected
-                    const auto& previouslySelectedHead = itNearestPolyline->first();
-                    bool isCloserByCCV = false;
-                    if (currentEdge == Edge::Top)
-                        isCloserByCCV = (otherHead.x > previouslySelectedHead.x);
-                    else if (currentEdge == Edge::Right)
-                        isCloserByCCV = (otherHead.y > previouslySelectedHead.y);
-                    else if (currentEdge == Edge::Bottom)
-                        isCloserByCCV = (otherHead.x < previouslySelectedHead.x);
-                    else if (currentEdge == Edge::Left)
-                        isCloserByCCV = (otherHead.y < previouslySelectedHead.y);
-
-                    // If closer-by-CCV, then select this
-                    if (isCloserByCCV)
-                        itNearestPolyline = itOtherPolyline;
-                }
-            }
-            assert(itNearestPolyline /* means '!= end' */);
-
-            // Get edge of nearest-by-CCV head
-            auto nearestHeadEdge = Edge::Invalid;
-            const auto& nearestHead = itNearestPolyline->first();
-            alignedArea31.isOnEdge(nearestHead, &nearestHeadEdge);
-
-            // Fill by edges of area, if required
-            int loopShift = 0;
-            if (static_cast<int>(tailEdge)-static_cast<int>(nearestHeadEdge) < 0)
-                loopShift = 4;
-            else if (tailEdge == nearestHeadEdge)
-            {
-                bool skipAddingSides = false;
-                if (tailEdge == Edge::Top)
-                    skipAddingSides = (tail.x >= nearestHead.x);
-                else if (tailEdge == Edge::Right)
-                    skipAddingSides = (tail.y >= nearestHead.y);
-                else if (tailEdge == Edge::Bottom)
-                    skipAddingSides = (tail.x <= nearestHead.x);
-                else if (tailEdge == Edge::Left)
-                    skipAddingSides = (tail.y <= nearestHead.y);
-
-                if (!skipAddingSides)
-                    loopShift = 4;
-            }
-            for (int idx = static_cast<int>(tailEdge)+loopShift; idx > static_cast<int>(nearestHeadEdge); idx--)
-            {
-                const auto side = static_cast<Edge>(idx % 4);
-                PointI p;
-
-                if (side == Edge::Top)
-                {
-                    p.y = alignedArea31.top();
-                    p.x = alignedArea31.left();
-                }
-                else if (side == Edge::Right)
-                {
-                    p.y = alignedArea31.top();
-                    p.x = alignedArea31.right();
-                }
-                else if (side == Edge::Bottom)
-                {
-                    p.y = alignedArea31.bottom();
-                    p.x = alignedArea31.right();
-                }
-                else if (side == Edge::Left)
-                {
-                    p.y = alignedArea31.bottom();
-                    p.x = alignedArea31.left();
-                }
-
-                polyline.push_back(qMove(p));
-            }
-
-            // If nearest-by-CCV is head of current polyline, cap it and add to polygons, ...
-            if (itNearestPolyline == itPolyline)
-            {
-                polyline.push_back(polyline.first());
-                coastlinePolygons.push_back(polyline);
-            }
-            // ... otherwise join them. Joined will never be visited, and current will remain unmarked as processed
-            else
-            {
-                const auto& otherPolyline = *itNearestPolyline;
-                polyline << otherPolyline;
-            }
-
-            // After we've selected nearest-by-CCV polyline, mark it as processed
-            processedPolylines.insert(itNearestPolyline.current);
-        }
-    }
-}
-
-bool OsmAnd::MapPrimitiviser_P::isClockwiseCoastlinePolygon(const QVector< PointI > & polygon)
-{
-    if (polygon.isEmpty())
-        return true;
-
-    // calculate middle Y
-    int64_t middleY = 0;
-    for (const auto& vertex : constOf(polygon))
-        middleY += vertex.y;
-    middleY /= polygon.size();
-
-    double clockwiseSum = 0;
-
-    bool firstDirectionUp = false;
-    int previousX = INT_MIN;
-    int firstX = INT_MIN;
-
-    auto itPrevVertex = polygon.cbegin();
-    auto itVertex = itPrevVertex + 1;
-    for (const auto itEnd = polygon.cend(); itVertex != itEnd; itPrevVertex = itVertex, ++itVertex)
-    {
-        const auto& vertex0 = *itPrevVertex;
-        const auto& vertex1 = *itVertex;
-
-        int32_t rX;
-        if (!Utilities::rayIntersectX(vertex0, vertex1, middleY, rX))
-            continue;
-
-        bool skipSameSide = (vertex1.y <= middleY) == (vertex0.y <= middleY);
-        if (skipSameSide)
-            continue;
-
-        bool directionUp = vertex0.y >= middleY;
-        if (firstX == INT_MIN) {
-            firstDirectionUp = directionUp;
-            firstX = rX;
-        }
-        else {
-            bool clockwise = (!directionUp) == (previousX < rX);
-            if (clockwise) {
-                clockwiseSum += abs(previousX - rX);
-            }
-            else {
-                clockwiseSum -= abs(previousX - rX);
-            }
-        }
-        previousX = rX;
-    }
-
-    if (firstX != INT_MIN) {
-        bool clockwise = (!firstDirectionUp) == (previousX < firstX);
-        if (clockwise) {
-            clockwiseSum += qAbs(previousX - firstX);
-        }
-        else {
-            clockwiseSum -= qAbs(previousX - firstX);
-        }
-    }
-
-    return clockwiseSum >= 0;
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
@@ -2941,13 +2298,22 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         legacyCoastlineObjects.push_back(legacyObj);
     }
     std::vector<FoundMapDataObject> legacyCoastlineObjectsResult;
+    // Get polygons of coastlines circumcised by sides of area31 or isolated islands/lakes
     bool processed = processCoastlines(legacyCoastlineObjects, (int) area31.topLeft.x, (int) area31.bottomRight.x, (int) area31.bottomRight.y,
                       (int) area31.topLeft.y, static_cast<int>(zoom), false, false, legacyCoastlineObjectsResult);
     if (processed)
     {
+        int size = 0;
         for (const auto & legacyCoastline : constOf(legacyCoastlineObjectsResult))
         {
-            outVectorized.push_back(convertFromLegacy(legacyCoastline.obj));
+            const auto & mapObj = convertFromLegacy(legacyCoastline.obj);
+            size += mapObj->points31.size();
+            outVectorized.push_back(mapObj);
+        }
+        if (size < 3)
+        {
+            // Polygon needs mimimum 3 points (bug with part of coastline on the border of tile)
+            processed = false;
         }
     }
     return processed;
@@ -3061,4 +2427,36 @@ OsmAnd::MapSurfaceType OsmAnd::MapPrimitiviser_P::determineSurfaceType(AreaI are
         }
     }
     return surfaceType;
+}
+
+// Increase area on few points for avoid lines on the borders of tile
+const OsmAnd::AreaI OsmAnd::MapPrimitiviser_P::getWidenArea(const AreaI & area31, const ZoomLevel & zoom) const
+{
+    if (zoom > ZoomLevel::ZoomLevel14)
+    {
+        int widen = zoom - ZoomLevel14;
+        const AreaI & area = area31.getEnlargedBy(widen);
+        return area;
+    }
+    return area31;
+}
+
+void OsmAnd::MapPrimitiviser_P::debugCoastline(const AreaI & area31, const QList< std::shared_ptr<const MapObject>> & coastlines) const
+{
+    LogPrintf(LogSeverityLevel::Debug, "area \n topLeft: [%d %d] [%f %f] \n bottomRight: [%d %d] [%f %f]",
+              area31.top(), area31.left(),
+              Utilities::get31LatitudeY(area31.topLeft.y),
+              Utilities::get31LongitudeX(area31.topLeft.x),
+              area31.bottom(), area31.right(),
+              Utilities::get31LatitudeY(area31.bottomRight.y),
+              Utilities::get31LongitudeX(area31.bottomRight.x));
+    
+    for (auto & c : coastlines)
+    {
+        LogPrintf(LogSeverityLevel::Debug, "LATITUDE, LONGITUDE");
+        for (auto & p : c->points31)
+        {
+            LogPrintf(LogSeverityLevel::Debug, "%f, %f", Utilities::get31LatitudeY(p.y), Utilities::get31LongitudeX(p.x));
+        }
+    }
 }
