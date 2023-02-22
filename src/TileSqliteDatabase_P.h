@@ -56,6 +56,8 @@ namespace OsmAnd
             const int specification = 0) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, QList<TileId> tileIds, ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, ZoomLevel zoom) const;
+        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int specification) const;
+        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int64_t time) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
         static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement, int index, void* data = nullptr);
@@ -121,6 +123,8 @@ namespace OsmAnd
         bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
+        bool removeSpecificTilesData(int specification);
+        bool removeOlderTilesData(int64_t time);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);
         

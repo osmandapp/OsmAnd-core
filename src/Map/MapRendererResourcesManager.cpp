@@ -24,6 +24,7 @@
 #include "QConditionalWriteLocker.h"
 #include "QConditionalMutexLocker.h"
 #include "Utilities.h"
+#include "SkiaUtilities.h"
 #include "Logging.h"
 
 //#define OSMAND_LOG_RESOURCE_STATE_CHANGE 1
@@ -118,6 +119,8 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/unavailable_tile_dark.png"),
         _unavailableTileStubs[static_cast<int>(MapStubStyle::Dark)]);
+    ok = ok && initializeEmptyStub(
+        _unavailableTileStubs[static_cast<int>(MapStubStyle::Empty)]);
 
     return ok;
 }
@@ -137,6 +140,28 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
         TileId::zero(),
         InvalidZoomLevel,
         AlphaChannelPresence::Unknown,
+        1.0f,
+        image));
+    if (!uploadTiledDataToGPU(tile, resource))
+        return false;
+
+    outResource = resource;
+    return true;
+}
+
+bool OsmAnd::MapRendererResourcesManager::initializeEmptyStub(
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource)
+{
+    const auto image = SkiaUtilities::getEmptyImage(1, 1);
+
+    if (!image)
+        return false;
+
+    std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
+    std::shared_ptr<const IRasterMapLayerProvider::Data> tile(new IRasterMapLayerProvider::Data(
+        TileId::zero(),
+        InvalidZoomLevel,
+        AlphaChannelPresence::Present,
         1.0f,
         image));
     if (!uploadTiledDataToGPU(tile, resource))
