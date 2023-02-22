@@ -354,7 +354,7 @@ inline void OsmAnd::GeoTiffCollection_P::blendHillshade(
             const auto columnCount = raw + tileSize;
             for (uint32_t idx = raw; idx < columnCount; idx++)
                 blend[idx] =
-                    qBound(0.0f, static_cast<float>(shade[idx]) * static_cast<float>(slope[idx]) / 255.0f * 2.38095238f - 170.0f, 255.0f);
+                    qBound(0.0f, static_cast<float>(shade[idx]) * static_cast<float>(slope[idx]) / 255.0f, 255.0f);
         }
     }
     else
