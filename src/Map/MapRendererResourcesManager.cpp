@@ -2064,7 +2064,13 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                     needsResourcesUploadOrUnload = true;
                 }
 
-                if (const auto tiledEntry = std::dynamic_pointer_cast<const MapRendererBaseTiledResource>(entry))
+                // In case GPU context is lost, nothing can be done with this resource, so just remove it
+                if (gpuContextLost)
+                {
+                    entry->lostDataInGPU();
+                    return true;
+                }
+                else if (const auto tiledEntry = std::dynamic_pointer_cast<const MapRendererBaseTiledResource>(entry))
                 {
                     LogPrintf(LogSeverityLevel::Debug,
                         "Tile resource %p %dx%d@%d has state %d which can not be processed, need to wait",

@@ -129,6 +129,7 @@ public abstract class MapRendererView extends FrameLayout {
 
     private int frameId;
 
+    private boolean isPresent;
     private volatile Runnable releaseTask;
     private volatile boolean waitRelease;
 
@@ -250,14 +251,25 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Log.v(TAG, "onAttachedToWindow()");
+        isPresent = true;
+    }
+
+    @Override
     protected void onDetachedFromWindow() {
         Log.v(TAG, "onDetachedFromWindow()");
         NativeCore.checkIfLoaded();
 
-        // Surface and context are going to be destroyed, thus try to release rendering
-        // before that will happen
-        Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
-        releaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Surface and context are going to be destroyed, thus try to release rendering
+            // before that will happen
+            Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
+            releaseRendering();
+        }
 
         super.onDetachedFromWindow();
     }
@@ -265,8 +277,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final void handleOnCreate(Bundle savedInstanceState) {
         Log.v(TAG, "handleOnCreate()");
         NativeCore.checkIfLoaded();
-
-        //TODO: do something here
+        isPresent = true;
     }
 
     public final void handleOnSaveInstanceState(Bundle outState) {
@@ -280,11 +291,15 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "handleOnDestroy()");
         NativeCore.checkIfLoaded();
 
-        // Don't delete map renderer here, since context destruction will happen later.
-        // Map renderer will be automatically deleted by GC anyways. But queue
-        // action to release rendering
-        Log.v(TAG, "Rendering release due to handleOnDestroy()");
-        releaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Don't delete map renderer here, since context destruction will happen later.
+            // Map renderer will be automatically deleted by GC anyways. But queue
+            // action to release rendering
+            Log.v(TAG, "Rendering release due to handleOnDestroy()");
+            releaseRendering();
+        }
     }
 
     public final void handleOnLowMemory() {
