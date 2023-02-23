@@ -48,6 +48,9 @@ import java.util.List;
 public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
 
+    private final static long RELEASE_STOP_TIMEOUT = 4000;
+    private final static long RELEASE_WAIT_TIMEOUT = 400;
+
     /**
      * Main GLSurfaceView
      */
@@ -125,6 +128,10 @@ public abstract class MapRendererView extends FrameLayout {
     private int _windowHeight;
 
     private int frameId;
+
+    private boolean isPresent;
+    private volatile Runnable releaseTask;
+    private volatile boolean waitRelease;
 
     private List<MapRendererViewListener> listeners = new ArrayList<>();
 
@@ -213,18 +220,41 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
-    private void scheduleReleaseRendering() {
-        _glSurfaceView.queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                if (!_mapRenderer.isRenderingInitialized()) {
-                    return;
+    private void releaseRendering() {
+        if(releaseTask == null) {
+            waitRelease = true;
+            releaseTask = new Runnable() {
+                @Override
+                public void run() {
+                    if (_mapRenderer.isRenderingInitialized()) {
+                        Log.v(TAG, "Forcibly releasing rendering by schedule");
+                        _mapRenderer.releaseRendering(true);
+                    }
+                    synchronized (this) {
+                        waitRelease = false;
+                        this.notifyAll();
+                    }                
                 }
-
-                Log.v(TAG, "Forcibly releasing rendering by schedule");
-                _mapRenderer.releaseRendering(true);
+            };
+            _glSurfaceView.queueEvent(releaseTask);
+        }
+        synchronized (releaseTask) {
+            long stopTime = System.currentTimeMillis();
+            while(waitRelease){
+                if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT)
+                    return;
+                try {
+                    releaseTask.wait(RELEASE_WAIT_TIMEOUT);
+                } catch (InterruptedException ex) {}
             }
-        });
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Log.v(TAG, "onAttachedToWindow()");
+        isPresent = true;
     }
 
     @Override
@@ -232,10 +262,14 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "onDetachedFromWindow()");
         NativeCore.checkIfLoaded();
 
-        // Surface and context are going to be destroyed, thus try to release rendering
-        // before that will happen
-        Log.v(TAG, "Scheduling rendering release due to onDetachedFromWindow()");
-        scheduleReleaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Surface and context are going to be destroyed, thus try to release rendering
+            // before that will happen
+            Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
+            releaseRendering();
+        }
 
         super.onDetachedFromWindow();
     }
@@ -243,8 +277,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final void handleOnCreate(Bundle savedInstanceState) {
         Log.v(TAG, "handleOnCreate()");
         NativeCore.checkIfLoaded();
-
-        //TODO: do something here
+        isPresent = true;
     }
 
     public final void handleOnSaveInstanceState(Bundle outState) {
@@ -258,11 +291,15 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "handleOnDestroy()");
         NativeCore.checkIfLoaded();
 
-        // Don't delete map renderer here, since context destruction will happen later.
-        // Map renderer will be automatically deleted by GC anyways. But queue
-        // action to release rendering
-        Log.v(TAG, "Scheduling rendering release due to handleOnDestroy()");
-        scheduleReleaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Don't delete map renderer here, since context destruction will happen later.
+            // Map renderer will be automatically deleted by GC anyways. But queue
+            // action to release rendering
+            Log.v(TAG, "Rendering release due to handleOnDestroy()");
+            releaseRendering();
+        }
     }
 
     public final void handleOnLowMemory() {
@@ -1098,8 +1135,8 @@ public abstract class MapRendererView extends FrameLayout {
                         "force releasing it!");
 
                 // Since there's no more context, where previous resources were created,
-                // they are lost. Just stop rendering. Resources will be released afterwards.
-                _mapRenderer.suspendGpuWorker();
+                // they are lost. Forcibly release rendering
+                _mapRenderer.releaseRendering(true);
             }
 
             // Destroy GPU-worker EGL surface (if present)
