@@ -143,6 +143,8 @@ namespace OsmAnd
         bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
+        bool removeSpecificTilesData(int specification);
+        bool removeOlderTilesData(int64_t time);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);
 

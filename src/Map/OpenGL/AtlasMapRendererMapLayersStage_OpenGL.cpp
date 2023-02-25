@@ -2149,9 +2149,13 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<
                                 const auto subtilesPerSide = (1u << absZoomShift);
                                 const PointF texCoordsScale(subtilesPerSide, subtilesPerSide);
 
-                                const auto& stubResource = atLeastOneNotUnavailable
+                                const bool isFirst = batch->containsOriginLayer &&
+                                    layerIndex == currentState.mapLayersProviders.firstKey();
+
+                                const auto& stubResource = isFirst ? (atLeastOneNotUnavailable
                                     ? getResources().processingTileStubs[static_cast<int>(stubsStyle)]
-                                    : getResources().unavailableTileStubs[static_cast<int>(stubsStyle)];
+                                    : getResources().unavailableTileStubs[static_cast<int>(stubsStyle)])
+                                    : getResources().unavailableTileStubs[static_cast<int>(MapStubStyle::Empty)];
 
                                 auto pGpuResource = gpuResources.constData();
                                 for (auto subtileIdx = 0; subtileIdx < subtilesCount; subtileIdx++)
