@@ -268,7 +268,6 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
         if (result && dataset->GetGeoTransform(geoTransform) == CE_None &&
             geoTransform[2] == 0.0 && geoTransform[4] == 0.0)
         {
-            GDALClose(dataset);
             auto upperLeft31 = metersTo31(PointD(geoTransform[0], geoTransform[3]));
             auto lowerRight31 = metersTo31(PointD(
                 geoTransform[0] + geoTransform[1] * dataset->GetRasterXSize(),
@@ -279,6 +278,7 @@ inline OsmAnd::GeoTiffCollection_P::GeoTiffProperties OsmAnd::GeoTiffCollection_
                 upperLeft31.y = upperLeft31.y - INT32_MAX - 1;
             const int32_t pixelSize31 =
                 std::ceil(qBound(0.0, geoTransform[1] * earthIn31 / earthInMeters, earthIn31 - 1.0));
+            GDALClose(dataset);
             return GeoTiffProperties(upperLeft31, lowerRight31, pixelSize31, rasterBandCount, bandDataType);
         }
         GDALClose(dataset);
