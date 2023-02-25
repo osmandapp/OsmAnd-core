@@ -113,6 +113,8 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/processing_tile_dark.png"),
         _processingTileStubs[static_cast<int>(MapStubStyle::Dark)]);
+    ok = ok && initializeEmptyStub(
+        _processingTileStubs[static_cast<int>(MapStubStyle::Empty)]);
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/unavailable_tile_light.png"),
         _unavailableTileStubs[static_cast<int>(MapStubStyle::Light)]);
