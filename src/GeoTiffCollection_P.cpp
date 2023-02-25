@@ -724,6 +724,10 @@ OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::getMaxZoom(const uint32_t tileSiz
         return calcMaxZoom(pixelSize31, tileSize);
     }
 
+    // Check if sources were invalidated
+    if (_collectedSourcesInvalidated.loadAcquire() > 0)
+        collectSources();
+
     auto maxZoom = InvalidZoomLevel;
     QReadLocker scopedLocker(&_collectedSourcesLock);
     
