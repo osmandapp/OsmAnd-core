@@ -221,7 +221,14 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
+            // Remove excessive width from first glyph
             *pWidth += -textPaint.bounds.left();
+
+            // Remove excessive width from last glyph
+            const auto pWidthEnd = pWidth + glyphsCount;
+            const auto glyphsWidth = std::accumulate(pWidth, pWidthEnd, 0.0f);
+            const auto pLastWidth = pWidthEnd - 1;
+            *pLastWidth -= qMax(0.0f, glyphsWidth - textPaint.bounds.width());
 
             ///////
             /*
@@ -322,7 +329,14 @@ void OsmAnd::TextRasterizer_P::measureHaloGlyphs(
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
+            // Remove excessive width from first glyph
             *pWidth += -haloTextPaint.bounds.left();
+
+            // Remove excessive width from last glyph
+            const auto pWidthEnd = pWidth + glyphsCount;
+            const auto glyphsWidth = std::accumulate(pWidth, pWidthEnd, 0.0f);
+            const auto pLastWidth = pWidthEnd - 1;
+            *pLastWidth -= qMax(0.0f, glyphsWidth - textPaint.bounds.width());
         }
     }
 }
@@ -673,6 +687,26 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             (bitmapWidth - style.backgroundImage->width()) / 2.0f,
             (bitmapHeight - style.backgroundImage->height()) / 2.0f
         );
+    }
+
+    // Enable to draw background for each glyph
+    bool visualizeGlyphWidths = false;
+    if (outGlyphWidths && visualizeGlyphWidths)
+    {
+        SkPaint glyphPaint;
+        auto start = 0.0f;
+        auto i = 0;
+        for (auto& width : *outGlyphWidths)
+        {
+            const auto left = start;
+            const auto right = start + width;
+            const auto glyphRect = SkRect::MakeLTRB(left, 0, right, bitmapHeight);
+
+            glyphPaint.setColor(i++ % 2 == 0 ? SK_ColorGREEN : SK_ColorRED);
+            canvas.drawRect(glyphRect, glyphPaint);
+            
+            start = right;
+        }
     }
 
     bool success = true;
