@@ -877,7 +877,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
-    const auto& position31 =
+    auto position31 =
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
@@ -914,7 +914,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         return;
 
     // Calculate location of symbol in world coordinates.
-    const auto offsetFromTarget = Utilities::convert31toFloat(position31 - currentState.target31, currentState.zoomLevel);
+
+    PointI offset31;
+    const auto offsetBase = position31 - currentState.target31;
+    const auto offsetNegative = PointI(position31.x - std::numeric_limits<int>::max(), position31.y) - currentState.target31;
+    const auto offsetPositive = position31 - PointI(currentState.target31.x - std::numeric_limits<int>::max(), currentState.target31.y);
+    if (std::abs(offsetBase.x) < std::abs(offsetNegative.x) && std::abs(offsetBase.x) < std::abs(offsetPositive.x))
+        offset31 = offsetBase;
+    else if (std::abs(offsetNegative.x) < std::abs(offsetPositive.x))
+        offset31 = offsetNegative;
+    else
+        offset31 = offsetPositive;
+
+    const auto offsetFromTarget = Utilities::convert31toFloat(offset31, currentState.zoomLevel);
     auto positionInWorld = glm::vec3(offsetFromTarget.x * AtlasMapRenderer::TileSize3D, 0.0f, offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
     // Get elevation data
