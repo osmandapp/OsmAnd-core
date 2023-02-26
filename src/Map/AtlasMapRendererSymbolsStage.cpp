@@ -877,7 +877,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
-    auto position31 =
+    const auto& position31 =
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
