@@ -383,7 +383,13 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             storagePath,
             outResult,
             QLatin1String("*.heightmap.sqlite"),
-            ResourceType::HeightmapRegion);
+            ResourceType::HeightmapRegionLegacy);
+        
+        // Find ResourceType::GeoTiffRegion -> "Heightmap *.tif" files
+        loadLocalResourcesFromPath_GeoTiff(storagePath,
+            outResult,
+            QStringLiteral("Heightmap *.tif"),
+            ResourceType::GeoTiffRegion);
         
         // Find ResourceType::OnlineTileSources -> ".metainfo" files
         loadLocalResourcesFromPath_OnlineTileSourcesResource(owner->localCachePath, outResult);
@@ -392,6 +398,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     {
         // In unmanaged storage, "*.sqlitedb" files can contain anything
         loadLocalResourcesFromPath_SQLiteDB(storagePath, outResult);
+        loadLocalResourcesFromPath_GeoTiff(storagePath, outResult);
     }
 
     // Find ResourceType::VoicePack -> "*.voice" directories
@@ -571,27 +578,31 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
         auto resourceType = ResourceType::Unknown;
         if (fileName.endsWith(".hillshade.sqlitedb"))
             resourceType = ResourceType::HillshadeRegion;
-        else if (fileName.startsWith("Hillshade_"))
+        else if (fileName.startsWith("Hillshade "))
         {
             resourceType = ResourceType::HillshadeRegion;
             resourceId = resourceId
-                .replace("_", " ");
+                            .remove("Hillshade ")
+                            .replace(".sqlitedb", ".hillshade.sqlitedb")
+                            .replace(' ', '_');
         }
         else if (fileName.endsWith(".slope.sqlitedb"))
             resourceType = ResourceType::SlopeRegion;
-        else if (fileName.startsWith("Slope_"))
+        else if (fileName.startsWith("Slope "))
         {
-            resourceType = ResourceType::HillshadeRegion;
+            resourceType = ResourceType::SlopeRegion;
             resourceId = resourceId
-                .replace("_", " ");
+                            .remove("Slope ")
+                            .replace(".sqlitedb", ".slope.sqlitedb")
+                            .replace(' ', '_');
         }
         else if (fileName.endsWith(".heightmap.sqlite"))
         {
-            resourceType = ResourceType::HeightmapRegion;
+            resourceType = ResourceType::HeightmapRegionLegacy;
         }
         else if (fileName.startsWith("Heightmap_"))
         {
-            resourceType = ResourceType::HeightmapRegion;
+            resourceType = ResourceType::HeightmapRegionLegacy;
             resourceId = resourceId
                 .remove("Heightmap_")
                 .replace(".sqlite", ".heightmap.sqlite");
@@ -610,6 +621,79 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             filePath,
             sqlitedbFileInfo.size(),
             std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
+        std::shared_ptr<const LocalResource> localResource(pLocalResource);
+        outResult.insert(resourceId, qMove(localResource));
+    }
+}
+
+void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_GeoTiff(
+    const QString& storagePath,
+    QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
+    const QString& filenameMask,
+    const ResourceType resourceType) const
+{
+    QFileInfoList geoTiffFileInfos;
+    Utilities::findFiles(storagePath, QStringList() << filenameMask, geoTiffFileInfos, false);
+    for (const auto& geoTiffFileInfo : constOf(geoTiffFileInfos))
+    {
+        const auto filePath = geoTiffFileInfo.absoluteFilePath();
+
+        // Create local resource entry
+        const auto fileName = geoTiffFileInfo.fileName();
+        QString resourceId(fileName);
+        if (resourceId.startsWith(QStringLiteral("Heightmap ")))
+        {
+            resourceId = resourceId.toLower()
+            .remove(QStringLiteral("heightmap "))
+            .replace(QStringLiteral(".tif"), QStringLiteral(".heightmap.tif"))
+            .replace(' ', '_');
+        }
+        const auto pLocalResource = new InstalledResource(
+            resourceId,
+            resourceType,
+            filePath,
+            geoTiffFileInfo.size(),
+            geoTiffFileInfo.lastModified().toUTC().toMSecsSinceEpoch());
+        std::shared_ptr<const LocalResource> localResource(pLocalResource);
+        outResult.insert(resourceId, qMove(localResource));
+    }
+}
+
+void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_GeoTiff(
+    const QString& storagePath,
+    QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const
+{
+    QFileInfoList geoTiffFileInfos;
+    Utilities::findFiles(storagePath, QStringList() << QLatin1String("*.tif"), geoTiffFileInfos, false);
+    for (const auto& geoTiffFileInfo : constOf(geoTiffFileInfos))
+    {
+        const auto filePath = geoTiffFileInfo.absoluteFilePath();
+        const auto fileName = geoTiffFileInfo.fileName();
+
+        // Determine resource type and id
+        QString resourceId = fileName.toLower();
+        auto resourceType = ResourceType::Unknown;
+        if (resourceId.startsWith(QStringLiteral("heightmap ")))
+        {
+            resourceId = resourceId.toLower()
+            .remove(QStringLiteral("heightmap "))
+            .replace(QStringLiteral(".tif"), QStringLiteral(".heightmap.tif"))
+            .replace(' ', '_');
+        }
+
+        if (resourceType == ResourceType::Unknown)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Failed to determine type of GeoTiff '%s'", qPrintable(filePath));
+            continue;
+        }
+
+        // Create local resource entry
+        const auto pLocalResource = new InstalledResource(
+            resourceId,
+            resourceType,
+            filePath,
+            geoTiffFileInfo.size(),
+            geoTiffFileInfo.lastModified().toUTC().toMSecsSinceEpoch());
         std::shared_ptr<const LocalResource> localResource(pLocalResource);
         outResult.insert(resourceId, qMove(localResource));
     }
@@ -834,7 +918,9 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
     else if (resourceTypeValue == QLatin1String("slope"))
         resourceType = ResourceType::SlopeRegion;
     else if (resourceTypeValue == QLatin1String("heightmap"))
-        resourceType = ResourceType::HeightmapRegion;
+        resourceType = ResourceType::HeightmapRegionLegacy;
+    else if (resourceTypeValue == QLatin1String("geotiff"))
+        resourceType = ResourceType::GeoTiffRegion;
     else if (resourceTypeValue == QLatin1String("voice"))
         resourceType = ResourceType::VoicePack;
     else if (resourceTypeValue == QLatin1String("depth"))
@@ -1018,10 +1104,21 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 QLatin1String("/download.php?slope=yes&file=") +
                 QUrl::toPercentEncoding(name);
                 break;
-            case ResourceType::HeightmapRegion:
+            case ResourceType::HeightmapRegionLegacy:
                 // 'Heightmap_[region].heightmap.sqlite' -> '[region].heightmap.sqlite'
                 resourceId = QString(name)
                     .remove(QLatin1String("Heightmap_"))
+                    .toLower();
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?heightmap=yes&file=") +
+                    QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::GeoTiffRegion:
+                // 'Heightmap_[region].tif' -> 'Heightmap [region].tif'
+                resourceId = QString(name)
+                    .remove(QLatin1String("Heightmap_"))
+                    .replace(QLatin1String(".tif"), QLatin1String(".heightmap.tif"))
                     .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
@@ -1279,12 +1376,15 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
             ok = uninstallObf(installedResource);
             break;
         case ResourceType::HillshadeRegion:
-        case ResourceType::HeightmapRegion:
+        case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = uninstallSQLiteDB(installedResource);
             break;
         case ResourceType::VoicePack:
             ok = uninstallVoicePack(installedResource);
+            break;
+        case ResourceType::GeoTiffRegion:
+            ok = uninstallGeoTiff(installedResource);
             break;
         default:
             return false;
@@ -1355,6 +1455,11 @@ bool OsmAnd::ResourcesManager_P::uninstallObf(const std::shared_ptr<const Instal
 }
 
 bool OsmAnd::ResourcesManager_P::uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource)
+{
+    return QFile(resource->localPath).remove();
+}
+
+bool OsmAnd::ResourcesManager_P::uninstallGeoTiff(const std::shared_ptr<const InstalledResource>& resource)
 {
     return QFile(resource->localPath).remove();
 }
@@ -1444,12 +1549,15 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
             ok = installUnzippedObfFromFile(newName, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
-        case ResourceType::HeightmapRegion:
+        case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = installSQLiteDBFromFile(newName, filePath, resourceType, resource);
             break;
         case ResourceType::VoicePack:
             ok = installVoicePackFromFile(newName, filePath, resource);
+            break;
+        case ResourceType::GeoTiffRegion:
+            ok = installGeoTiffFromFile(newName, filePath, resourceType, resource);
             break;
         default:
             break;
@@ -1500,12 +1608,15 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
             ok = installObfFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
-        case ResourceType::HeightmapRegion:
+        case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = installSQLiteDBFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::VoicePack:
             ok = installVoicePackFromFile(id, filePath, resource);
+            break;
+        case ResourceType::GeoTiffRegion:
+            ok = installGeoTiffFromFile(id, filePath, resourceType, resource);
             break;
     }
 
@@ -1635,6 +1746,42 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
 
     return true;
 }
+
+bool OsmAnd::ResourcesManager_P::installGeoTiffFromFile(
+    const QString& id,
+    const QString& filePath,
+    const ResourceType resourceType,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString& localPath_ /*= QString::null*/)
+{
+    assert(id.endsWith(".tif"));
+
+    // Copy that file
+    QString fileName(id);
+    fileName.replace(0, 1, fileName[0].toUpper());
+    if (fileName.endsWith(".heightmap.tif"))
+        fileName = QStringLiteral("Heightmap ").append(fileName).remove(QStringLiteral(".heightmap")).replace('_', ' ');
+    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(fileName) : localPath_;
+    bool shouldCopy = filePath.compare(localFileName) != 0;
+    if (shouldCopy && !QFile::copy(filePath, localFileName))
+    {
+        QFile(localFileName).remove();
+        return false;
+    }
+
+    // Create local resource entry
+    const auto pLocalResource = new InstalledResource(
+        id,
+        resourceType,
+        localFileName,
+        QFile(localFileName).size(),
+        QFileInfo(localFileName).lastModified().toUTC().toMSecsSinceEpoch());
+    outResource.reset(pLocalResource);
+    _localResources.insert(id, outResource);
+
+    return true;
+}
+
 
 bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(
     const QString& id,
@@ -1819,6 +1966,20 @@ bool OsmAnd::ResourcesManager_P::updateSQLiteDBFromFile(
     return ok;
 }
 
+bool OsmAnd::ResourcesManager_P::updateGeoTiffFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
+{
+    if (!resource->_lock.lockForWriting())
+        return false;
+
+    bool ok;
+    ok = uninstallGeoTiff(resource);
+    ok = installGeoTiffFromFile(resource->id, filePath, resource->type, resource, resource->localPath);
+
+    return ok;
+}
+
 bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(
     std::shared_ptr<const InstalledResource>& resource,
     const QString& filePath)
@@ -1860,12 +2021,15 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
             ok = updateObfFromFile(installedResource, filePath);
             break;
         case ResourceType::HillshadeRegion:
-        case ResourceType::HeightmapRegion:
+        case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = updateSQLiteDBFromFile(installedResource, filePath);
             break;
         case ResourceType::VoicePack:
             ok = updateVoicePackFromFile(installedResource, filePath);
+            break;
+        case ResourceType::GeoTiffRegion:
+            ok = updateGeoTiffFromFile(installedResource, filePath);
             break;
     }
     if (!ok)
