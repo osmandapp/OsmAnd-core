@@ -1574,6 +1574,98 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
     return true;
 }
 
+bool OsmAnd::TileSqliteDatabase_P::removeSpecificTilesData(int specification)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE s=:s")
+        );
+        if (!statement || !configureStatement(statement, specification))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                specification);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                specification,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    if (!recomputeMinMaxZoom())
+    {
+        return false;
+    }
+    if (!recomputeBBoxes31())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE time<:time")
+        );
+        if (!statement || !configureStatement(statement, time))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                time);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                time,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    if (!recomputeMinMaxZoom())
+    {
+        return false;
+    }
+    if (!recomputeBBoxes31())
+    {
+        return false;
+    }
+
+    return true;
+}
+
 bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, bool strict /* = true */ )
 {
     if (!isOpened())
@@ -1783,6 +1875,20 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
     }
 
     return bindStatementParameter(statement, QStringLiteral(":z"), static_cast<int>(zoom));
+}
+
+bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        int specification) const
+{
+    return bindStatementParameter(statement, QStringLiteral(":s"), specification);
+}
+
+bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        int64_t time) const
+{
+    return bindStatementParameter(statement, QStringLiteral(":time"), static_cast<qlonglong>(time));
 }
 
 std::shared_ptr<sqlite3_stmt> OsmAnd::TileSqliteDatabase_P::prepareStatement(

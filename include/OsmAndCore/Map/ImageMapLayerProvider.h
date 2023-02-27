@@ -52,7 +52,6 @@ namespace OsmAnd
         };
 
     private:
-        sk_sp<const SkImage> getEmptyImage() const;
         sk_sp<const SkImage> obtainImageWithData(
             const IMapDataProvider::Request& request);
         

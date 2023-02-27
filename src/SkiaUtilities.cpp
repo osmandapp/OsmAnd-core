@@ -18,6 +18,17 @@ OsmAnd::SkiaUtilities::~SkiaUtilities()
 {
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getEmptyImage(int width, int height)
+{
+    SkBitmap bitmap;
+    if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(width, height)))
+    {
+        bitmap.eraseColor(SK_ColorTRANSPARENT);
+        return bitmap.asImage();
+    }
+    return nullptr;
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileInfo)
 {
     return SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
@@ -34,7 +45,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
-    const QByteArray& byteArray, int width, int height)
+    const QByteArray& byteArray, int width, int height, SkAlphaType alphaType /* = SkAlphaType::kPremul_SkAlphaType */)
 {
     SkBitmap bitmap;
    
@@ -42,7 +53,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
         width,
         height,
         SkColorType::kRGBA_8888_SkColorType,
-        SkAlphaType::kPremul_SkAlphaType)))
+        alphaType)))
     {
         return nullptr;
     }

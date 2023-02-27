@@ -207,6 +207,16 @@ bool OsmAnd::TileSqliteDatabase::removeTilesData(ZoomLevel zoom)
     return _p->removeTilesData(zoom);
 }
 
+bool OsmAnd::TileSqliteDatabase::removeSpecificTilesData(int specification)
+{
+    return _p->removeSpecificTilesData(specification);
+}
+
+bool OsmAnd::TileSqliteDatabase::removeOlderTilesData(int64_t time)
+{
+    return _p->removeOlderTilesData(time);
+}
+
 bool OsmAnd::TileSqliteDatabase::removeTilesData(AreaI bbox31, bool strict /* = true */ )
 {
     return _p->removeTilesData(bbox31, strict);

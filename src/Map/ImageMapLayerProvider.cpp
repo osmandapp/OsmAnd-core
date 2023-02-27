@@ -51,18 +51,6 @@ bool OsmAnd::ImageMapLayerProvider::supportsObtainImage() const
     return false;
 }
 
-sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getEmptyImage() const
-{
-    SkBitmap bitmap;
-    const auto tileSize = getTileSize();
-    if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
-    {
-        bitmap.eraseColor(SK_ColorTRANSPARENT);
-        return bitmap.asImage();
-    }
-    return nullptr;
-}
-
 sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::obtainImageWithData(
     const IMapDataProvider::Request& request)
 {
@@ -139,7 +127,8 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         if (!image)
         {
-            const auto emptyImage = getEmptyImage();
+            int tileSize = getTileSize();
+            const auto emptyImage = SkiaUtilities::getEmptyImage(tileSize, tileSize);
             if (emptyImage && !request.cacheOnly)
             {
                 // Check for overscale images to avoid rendering blank image instead

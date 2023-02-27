@@ -66,6 +66,7 @@ namespace OsmAnd
         Unspecified = -1,
         Light = 0,
         Dark,
+        Empty,
 
         __LAST
     };
