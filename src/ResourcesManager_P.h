@@ -81,6 +81,14 @@ namespace OsmAnd
         void loadLocalResourcesFromPath_SQLiteDB(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_GeoTiff(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
+            const QString& filenameMask,
+            const ResourceType resourceType) const;
+        void loadLocalResourcesFromPath_GeoTiff(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
         void loadLocalResourcesFromPath_OnlineTileSourcesResource(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
@@ -108,6 +116,7 @@ namespace OsmAnd
 
         bool uninstallObf(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallGeoTiff(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallTilesResource(const QString& name);
 
@@ -124,27 +133,35 @@ namespace OsmAnd
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath_ = QString::null);
+            const QString& localPath_ = QString());
         bool installObfFromFile(
             const QString& id,
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = QString());
         bool installSQLiteDBFromFile(
             const QString& id,
             const QString& filePath,
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = QString());
         bool installVoicePackFromFile(
             const QString& id,
             const QString& filePath,
             std::shared_ptr<const InstalledResource>& outResource,
-            const QString& localPath = QString::null);
+            const QString& localPath = QString());
+        
+        bool installGeoTiffFromFile(
+            const QString& id,
+            const QString& filePath,
+            const ResourceType resourceType,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath_ = QString());
 
         bool updateObfFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateGeoTiffFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
         class OnlineTileSourcesProxy : public IOnlineTileSources
