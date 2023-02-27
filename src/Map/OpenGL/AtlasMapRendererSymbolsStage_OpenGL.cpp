@@ -232,6 +232,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         "{                                                                                                                  ""\n"
         // Calculate position of symbol in world coordinate system.
         "    highp ivec2 offsetFromTarget31 = param_vs_position31 - param_vs_target31.xy;                                   ""\n"
+        "    highp ivec2 correctOverlap;                                                                                    ""\n"
+        "    correctOverlap.x = offsetFromTarget31.x >= 1073741824 ? -1 : (offsetFromTarget31.x < -1073741824 ? 1 : 0);     ""\n"
+        "    correctOverlap.y = offsetFromTarget31.y >= 1073741824 ? -1 : (offsetFromTarget31.y < -1073741824 ? 1 : 0);     ""\n"
+        "    offsetFromTarget31 += correctOverlap * 2147483647 + correctOverlap;                                            ""\n"
         "    highp vec2 offsetFromTarget = vec2(0.0);                                                                       ""\n"
         "#if INTEGER_OPERATIONS_SUPPORTED                                                                                   ""\n"
         "    {                                                                                                              ""\n"
