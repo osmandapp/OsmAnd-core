@@ -693,10 +693,10 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline AreaT& enlargeBy(const PointT& delta)
         {
-            top() -= delta.y;
-            left() -= delta.x;
-            bottom() += delta.y;
-            right() += delta.x;
+            top() = safeEnlarge(top(), -delta.y),
+            left() = safeEnlarge(left(), -delta.x),
+            bottom() = safeEnlarge(bottom(), delta.y),
+            right() = safeEnlarge(right(), delta.x);
 
             return *this;
         }
@@ -705,19 +705,19 @@ namespace OsmAnd
         inline AreaT getEnlargedBy(const PointT& delta) const
         {
             return AreaT(
-                top() - delta.y,
-                left() - delta.x,
-                bottom() + delta.y,
-                right() + delta.x);
+                safeEnlarge(top(), -delta.y),
+                safeEnlarge(left(), -delta.x),
+                safeEnlarge(bottom(), delta.y),
+                safeEnlarge(right(), delta.x));
         }
 
 #if !defined(SWIG)
         inline AreaT& enlargeBy(const T& delta)
         {
-            top() -= delta;
-            left() -= delta;
-            bottom() += delta;
-            right() += delta;
+            top() = safeEnlarge(top(), -delta),
+            left() = safeEnlarge(left(), -delta),
+            bottom() = safeEnlarge(bottom(), delta),
+            right() = safeEnlarge(right(), delta);
 
             return *this;
         }
@@ -726,19 +726,19 @@ namespace OsmAnd
         inline AreaT getEnlargedBy(const T& delta) const
         {
             return AreaT(
-                top() - delta,
-                left() - delta,
-                bottom() + delta,
-                right() + delta);
+                safeEnlarge(top(), -delta),
+                safeEnlarge(left(), -delta),
+                safeEnlarge(bottom(), delta),
+                safeEnlarge(right(), delta));
         }
 
 #if !defined(SWIG)
         inline AreaT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
         {
-            top() -= dt;
-            left() -= dl;
-            bottom() += db;
-            right() += dr;
+            top() = safeEnlarge(top(), -dt),
+            left() = safeEnlarge(left(), -dl),
+            bottom() = safeEnlarge(bottom(), db),
+            right() = safeEnlarge(right(), dr);
 
             return *this;
         }
@@ -747,10 +747,20 @@ namespace OsmAnd
         inline AreaT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
         {
             return AreaT(
-                top() - dt,
-                left() - dl,
-                bottom() + db,
-                right() + dr);
+                safeEnlarge(top(), -dt),
+                safeEnlarge(left(), -dl),
+                safeEnlarge(bottom(), db),
+                safeEnlarge(right(), dr));
+        }
+
+        static T safeEnlarge(const T& a, const T& b)
+        {
+            if (b > 0 && a > std::numeric_limits<T>::max() - b)
+                return std::numeric_limits<T>::max(); // overflow occurred, return max value
+            else if (b < 0 && a < std::numeric_limits<T>::min() - b)
+                return std::numeric_limits<T>::min(); // overflow occurred, return min value
+            else
+                return a + b; // no overflow, return sum
         }
 
         static AreaT negative()
