@@ -1138,3 +1138,13 @@ bool OsmAnd::GPUAPI_OpenGL2plus::pickFramebufferDepthValue(
     outValue = static_cast<float>(value);
     return true;
 }
+
+void OsmAnd::GPUAPI_OpenGL2plus::enableOffscreenRendering(const GLsizei bufferWidth, const GLsizei bufferHeight)
+{
+    // Not implemented
+}
+
+void OsmAnd::GPUAPI_OpenGL2plus::disableOffscreenRendering()
+{
+    // Not implemented
+}

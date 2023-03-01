@@ -131,12 +131,15 @@ uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
 {
     const bool colorDepthForcingChanged = (current->limitTextureColorDepthBy16bits != updated->limitTextureColorDepthBy16bits);
     const bool texturesFilteringChanged = (current->texturesFilteringQuality != updated->texturesFilteringQuality);
+    const bool renderTargetChanged = (current->renderToOffscreenFramebuffer != updated->renderToOffscreenFramebuffer);
 
     uint32_t mask = 0;
     if (colorDepthForcingChanged)
         mask |= enumToBit(ConfigurationChange::ColorDepthForcing);
     if (texturesFilteringChanged)
         mask |= enumToBit(ConfigurationChange::TexturesFilteringMode);
+    if (renderTargetChanged)
+        mask |= enumToBit(ConfigurationChange::RenderToOffscreenFramebuffer);
 
     return mask;
 }

@@ -90,6 +90,22 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::postPrepareFrame()
+{
+    if (!AtlasMapRenderer::postPrepareFrame())
+        return false;
+
+    const auto gpuAPI = getGPUAPI();
+    const auto configuration = getConfiguration();
+
+    if (configuration->renderToOffscreenFramebuffer)
+        gpuAPI->enableOffscreenRendering(currentState.windowSize.x, currentState.windowSize.y);
+    else
+        gpuAPI->disableOffscreenRendering();
+
+    return true;
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
     const auto gpuAPI = getGPUAPI();

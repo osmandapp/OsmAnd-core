@@ -73,6 +73,7 @@ namespace OsmAnd
 
         // Customization points:
         bool doInitializeRendering() override;
+        bool postPrepareFrame() override;
         bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool doReleaseRendering(bool gpuContextLost) override;
         bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask) override;

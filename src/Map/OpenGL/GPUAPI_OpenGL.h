@@ -433,6 +433,9 @@ namespace OsmAnd
 
         virtual void readFramebufferDepth(GLint x, GLint y, GLsizei width, GLsizei height, std::vector<std::byte>& outData) = 0;
         virtual bool pickFramebufferDepthValue(const std::vector<std::byte>& data, GLint x, GLint y, GLsizei width, GLsizei height, GLfloat& outValue) = 0;
+
+        virtual void enableOffscreenRendering(const GLsizei bufferWidth, const GLsizei bufferHeight) = 0;
+        virtual void disableOffscreenRendering() = 0;
     };
 }
 

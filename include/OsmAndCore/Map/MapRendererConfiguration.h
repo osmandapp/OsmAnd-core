@@ -24,6 +24,7 @@ namespace OsmAnd
 
         TextureFilteringQuality texturesFilteringQuality;
         bool limitTextureColorDepthBy16bits;
+        bool renderToOffscreenFramebuffer;
 
         virtual void copyTo(MapRendererConfiguration& other) const;
         virtual std::shared_ptr<MapRendererConfiguration> createCopy() const;
