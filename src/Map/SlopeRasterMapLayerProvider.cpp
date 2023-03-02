@@ -45,11 +45,6 @@ OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
-int OsmAnd::SlopeRasterMapLayerProvider::getMaxMissingDataUnderZoomShift() const
-{
-    return _p->getMaxMissingDataUnderZoomShift();
-}
-
 uint32_t OsmAnd::SlopeRasterMapLayerProvider::getTileSize() const
 {
     return _p->tileSize;
