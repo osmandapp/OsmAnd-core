@@ -902,8 +902,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                             auto lowerRight = metersFrom31(lowerRightNative.x, lowerRightNative.y);
                             const auto tileOrigin = upperLeft;
                             const auto tileResolution = (lowerRight - upperLeft) / tileSize;
-                            upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
-                            upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
+                            upperLeft.x = qMax((upperLeft.x - geoTransform[0]) / geoTransform[1], 0.0);
+                            upperLeft.y = qMax((upperLeft.y - geoTransform[3]) / geoTransform[5], 0.0);
                             lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
                             lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
                             PointI dataOffset(std::floor(upperLeft.x), std::floor(upperLeft.y));
@@ -960,8 +960,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                 {
                                     upperLeft = metersFrom31(upperLeftOverscaled.x, upperLeftOverscaled.y);
                                     lowerRight = metersFrom31(lowerRightOverscaled.x, lowerRightOverscaled.y);
-                                    upperLeft.x = (upperLeft.x - geoTransform[0]) / geoTransform[1];
-                                    upperLeft.y = (upperLeft.y - geoTransform[3]) / geoTransform[5];
+                                    upperLeft.x = qMax((upperLeft.x - geoTransform[0]) / geoTransform[1], 0.0);
+                                    upperLeft.y = qMax((upperLeft.y - geoTransform[3]) / geoTransform[5], 0.0);
                                     lowerRight.x = (lowerRight.x - geoTransform[0]) / geoTransform[1];
                                     lowerRight.y = (lowerRight.y - geoTransform[3]) / geoTransform[5];
                                     extraArg.dfXOff = (upperLeft.x + lowerRight.x) * 0.5;

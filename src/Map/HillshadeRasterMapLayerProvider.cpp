@@ -47,11 +47,6 @@ OsmAnd::ZoomLevel OsmAnd::HillshadeRasterMapLayerProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
-int OsmAnd::HillshadeRasterMapLayerProvider::getMaxMissingDataUnderZoomShift() const
-{
-    return _p->getMaxMissingDataUnderZoomShift();
-}
-
 uint32_t OsmAnd::HillshadeRasterMapLayerProvider::getTileSize() const
 {
     return _p->tileSize;

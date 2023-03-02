@@ -61,11 +61,6 @@ OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider_P::getMaxZoom() const
     return owner->filesCollection->getMaxZoom(tileSize);
 }
 
-int OsmAnd::SlopeRasterMapLayerProvider_P::getMaxMissingDataUnderZoomShift() const
-{
-    return MapRenderer::MaxMissingDataZoomShift;
-}
-
 bool OsmAnd::SlopeRasterMapLayerProvider_P::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData,
