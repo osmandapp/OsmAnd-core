@@ -13,9 +13,11 @@
 OsmAnd::SlopeRasterMapLayerProvider::SlopeRasterMapLayerProvider(
     const std::shared_ptr<const IGeoTiffCollection>& filesCollection_,
     const QString& slopeColorsFilename,
-    const uint32_t tileSize /*= 256*/,
-    const float densityFactor /*= 1.0f*/)
-    : _p(new SlopeRasterMapLayerProvider_P(this, slopeColorsFilename, tileSize, densityFactor))
+    const ZoomLevel minZoom /* ZoomLevel6 */,
+    const ZoomLevel maxZoom /* ZoomLevel14 */,
+    const uint32_t tileSize /* = 256 */,
+    const float densityFactor /* = 1.0f */)
+    : _p(new SlopeRasterMapLayerProvider_P(this, slopeColorsFilename, minZoom, maxZoom, tileSize, densityFactor))
     , filesCollection(filesCollection_)
     , _threadPool(new QThreadPool())
     , _lastRequestedZoom(ZoomLevel::ZoomLevel0)

@@ -32,6 +32,8 @@ namespace OsmAnd
         SlopeRasterMapLayerProvider_P(
             SlopeRasterMapLayerProvider* owner,
             const QString& slopeColorsFilename,
+            const ZoomLevel minZoom,
+            const ZoomLevel maxZoom,
             const uint32_t tileSize,
             const float densityFactor);
     public:
@@ -39,6 +41,8 @@ namespace OsmAnd
 
         ImplementationInterface<SlopeRasterMapLayerProvider> owner;
 
+        const ZoomLevel minZoom;
+        const ZoomLevel maxZoom;
         const uint32_t tileSize;
         const float densityFactor;
 

@@ -14,10 +14,12 @@ OsmAnd::HillshadeRasterMapLayerProvider::HillshadeRasterMapLayerProvider(
     const std::shared_ptr<const IGeoTiffCollection>& filesCollection_,
     const QString& hillshadeColorsFilename,
     const QString& slopeColorsFilename,
-    const uint32_t tileSize /*= 256*/,
-    const float densityFactor /*= 1.0f*/)
+    const ZoomLevel minZoom /* ZoomLevel6 */,
+    const ZoomLevel maxZoom /* ZoomLevel14 */,
+    const uint32_t tileSize /* = 256 */,
+    const float densityFactor /* = 1.0f */)
     : _p(new HillshadeRasterMapLayerProvider_P(this,
-        hillshadeColorsFilename, slopeColorsFilename, tileSize, densityFactor))
+        hillshadeColorsFilename, slopeColorsFilename, minZoom, maxZoom, tileSize, densityFactor))
     , filesCollection(filesCollection_)
     , _threadPool(new QThreadPool())
     , _lastRequestedZoom(ZoomLevel::ZoomLevel0)

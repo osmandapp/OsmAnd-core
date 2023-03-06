@@ -39,6 +39,7 @@ namespace OsmAnd
         bool remove(const SourceOriginId entryId);
         void setLocalCache(const QDir& dir);
         void setLocalCache(const QString& dirPath);
+        bool refreshTilesInCache(const RasterType cache);
         bool removeFileTilesFromCache(const RasterType cache, const QString& filePath);
         bool removeOlderTilesFromCache(const RasterType cache, int64_t time);
 

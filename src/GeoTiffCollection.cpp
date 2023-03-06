@@ -61,6 +61,11 @@ void OsmAnd::GeoTiffCollection::setLocalCache(const QDir& dir)
     _p->setLocalCache(dir);
 }
 
+bool OsmAnd::GeoTiffCollection::refreshTilesInCache(const RasterType cache)
+{
+    return _p->refreshTilesInCache(cache);
+}
+
 bool OsmAnd::GeoTiffCollection::removeFileTilesFromCache(const RasterType cache, const QString& filePath)
 {
     return _p->removeFileTilesFromCache(cache, filePath);

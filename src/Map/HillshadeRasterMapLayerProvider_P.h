@@ -33,6 +33,8 @@ namespace OsmAnd
             HillshadeRasterMapLayerProvider* owner,
             const QString& hillshadeColorsFilename,
             const QString& slopeColorsFilename,
+            const ZoomLevel minZoom,
+            const ZoomLevel maxZoom,
             const uint32_t tileSize,
             const float densityFactor);
     public:
@@ -40,6 +42,8 @@ namespace OsmAnd
 
         ImplementationInterface<HillshadeRasterMapLayerProvider> owner;
 
+        const ZoomLevel minZoom;
+        const ZoomLevel maxZoom;
         const uint32_t tileSize;
         const float densityFactor;
 
