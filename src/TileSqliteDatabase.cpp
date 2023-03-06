@@ -163,6 +163,15 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    int64_t* pOutTime /* = nullptr*/) const
+{
+    return _p->obtainTileData(tileId, zoom, outData, pOutTime);
+}
+
+bool OsmAnd::TileSqliteDatabase::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int specification,
     void* outData,
     int64_t* pOutTime /* = nullptr*/) const
@@ -205,6 +214,11 @@ bool OsmAnd::TileSqliteDatabase::removeTilesData()
 bool OsmAnd::TileSqliteDatabase::removeTilesData(ZoomLevel zoom)
 {
     return _p->removeTilesData(zoom);
+}
+
+bool OsmAnd::TileSqliteDatabase::removeBiggerTilesData(ZoomLevel zoom)
+{
+    return _p->removeBiggerTilesData(zoom);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeSpecificTilesData(int specification)

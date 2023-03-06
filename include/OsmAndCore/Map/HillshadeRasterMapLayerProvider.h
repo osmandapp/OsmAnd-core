@@ -42,6 +42,8 @@ namespace OsmAnd
             const std::shared_ptr<const IGeoTiffCollection>& filesCollection,
             const QString& hillshadeColorsFilename,
             const QString& slopeColorsFilename,
+            const ZoomLevel minZoom = ZoomLevel6,
+            const ZoomLevel maxZoom = ZoomLevel14,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f            
         );

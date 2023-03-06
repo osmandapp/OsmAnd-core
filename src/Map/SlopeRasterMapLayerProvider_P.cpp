@@ -21,9 +21,13 @@
 OsmAnd::SlopeRasterMapLayerProvider_P::SlopeRasterMapLayerProvider_P(
     SlopeRasterMapLayerProvider* owner_,
     const QString& slopeColorsFilename_,
+    const ZoomLevel minZoom_,
+    const ZoomLevel maxZoom_,
     const uint32_t tileSize_,
     const float densityFactor_)
     : owner(owner_)
+    , minZoom(minZoom_)
+    , maxZoom(maxZoom_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
@@ -53,12 +57,12 @@ OsmAnd::SlopeRasterMapLayerProvider_P::~SlopeRasterMapLayerProvider_P()
 
 OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider_P::getMinZoom() const
 {
-    return owner->filesCollection->getMinZoom();
+    return minZoom;
 }
 
 OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider_P::getMaxZoom() const
 {
-    return owner->filesCollection->getMaxZoom(tileSize);
+    return maxZoom;
 }
 
 bool OsmAnd::SlopeRasterMapLayerProvider_P::obtainData(
@@ -81,7 +85,7 @@ bool OsmAnd::SlopeRasterMapLayerProvider_P::obtainData(
     // Produce slope RGBA values from height values
     const int bandCount = 4;
     // Extra pixels on both edges give more accurate slope calculations
-    const int overlap = 2;
+    const int overlap = 4;
     const auto bufferSize = tileSize * tileSize * bandCount;
     const auto pBuffer = new char[bufferSize];
     if (owner->filesCollection->getGeoTiffData(

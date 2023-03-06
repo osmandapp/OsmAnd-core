@@ -1230,6 +1230,86 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    int64_t* pOutTime /* = nullptr */) const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    {
+        return false;
+    }
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
+    const auto timeSupported = isTileTimeSupported();
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        int res;
+
+        const auto statement = prepareStatement(_database, timeSupported
+            ? QStringLiteral("SELECT image, time FROM tiles WHERE x=:x AND y=:y AND z=:z")
+            : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z")
+        );
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for %dx%d@%d",
+                tileId.x,
+                tileId.y,
+                zoom);
+            return false;
+        }
+        if ((res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to query for %dx%d@%d data: %s",
+                tileId.x,
+                tileId.y,
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (res > 0)
+        {
+            readStatementValue(statement, 0, outData);
+
+            if (timeSupported && pOutTime)
+            {
+                int64_t time = 0;
+                const auto timeValue = readStatementValue(statement, 1);
+                if (!timeValue.isNull())
+                {
+                    bool ok = false;
+                    const auto timeLL = timeValue.toLongLong(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    time = static_cast<int64_t>(timeLL);
+                }
+                *pOutTime = time;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int specification,
     void* outData,
     int64_t* pOutTime /* = nullptr */) const
@@ -1577,6 +1657,54 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
         const auto statement = prepareStatement(
             _database,
             QStringLiteral("DELETE FROM tiles WHERE z=:z")
+        );
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                zoom);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    if (!recomputeMinMaxZoom())
+    {
+        return false;
+    }
+    if (!recomputeBBox31(zoom))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeBiggerTilesData(ZoomLevel zoom)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    int invertedZoomValue = getInvertedZoomValue();
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE z<:z")
         );
         if (!statement || !configureStatement(invertedZoomValue, statement, zoom))
         {

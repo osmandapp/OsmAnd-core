@@ -120,6 +120,7 @@ namespace OsmAnd
         bool containsTileData(TileId tileId, ZoomLevel zoom, int specification = 0) const;
         bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
@@ -128,6 +129,7 @@ namespace OsmAnd
         bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
+        bool removeBiggerTilesData(ZoomLevel zoom);
         bool removeSpecificTilesData(int specification);
         bool removeOlderTilesData(int64_t time);
         bool removeTilesData(AreaI bbox31, bool strict = true);
