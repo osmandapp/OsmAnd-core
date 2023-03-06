@@ -51,17 +51,22 @@ namespace OsmAnd
     protected:
         TileSqliteDatabase_P(TileSqliteDatabase* owner);
 
-        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, AreaI bbox, ZoomLevel zoom) const;
-        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, TileId tileId, ZoomLevel zoom,
-            const int specification = 0) const;
-        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, QList<TileId> tileIds, ZoomLevel zoom) const;
-        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, ZoomLevel zoom) const;
+        bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
+            AreaI bbox, ZoomLevel zoom) const;
+        bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
+            TileId tileId, ZoomLevel zoom, const int specification = 0) const;
+        bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
+            QList<TileId> tileIds, ZoomLevel zoom) const;
+        bool configureStatement(int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
+            ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int specification) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int64_t time) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
-        static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement, int index, void* data = nullptr);
-        static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement, QString name, QVariant value);
+        static QVariant readStatementValue(const std::shared_ptr<sqlite3_stmt>& statement,
+            int index, void* data = nullptr);
+        static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement,
+            QString name, QVariant value);
         static bool bindStatementParameter(const std::shared_ptr<sqlite3_stmt>& statement, int index, QVariant value);
         static int stepStatement(const std::shared_ptr<sqlite3_stmt>& statement);
         static bool execStatement(const std::shared_ptr<sqlite3>& db, QString sql);
