@@ -49,6 +49,7 @@ namespace OsmAnd
             ZoomLevel zoom;
             BandIndex band;
             bool localData;
+            bool readOnly;
 
             std::shared_ptr<const IQueryController> queryController;
 
@@ -67,6 +68,7 @@ namespace OsmAnd
             ZoomLevel zoom;
             QList<BandIndex> bands;
             bool localData;
+            bool readOnly;
 
             int version;
             bool ignoreVersion;
@@ -87,6 +89,7 @@ namespace OsmAnd
             LatLon bottomRight;
             bool forceDownload;
             bool localData;
+            bool readOnly;
 
             std::shared_ptr<const IQueryController> queryController;
 

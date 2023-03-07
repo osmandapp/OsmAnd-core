@@ -229,6 +229,7 @@ namespace OsmAnd
             QByteArray& outData,
             bool forceDownload = false,
             bool localData = false,
+            bool readOnly = false,
             std::shared_ptr<const IQueryController> queryController = nullptr);
 
         void lockGeoTile(const TileId tileId, const ZoomLevel zoom);
