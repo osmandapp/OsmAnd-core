@@ -455,7 +455,7 @@ QList<OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain> OsmAnd::NetworkR
         auto it = chains.find(pnt);
         if (it != chains.end())
         {
-            list = QList(it.value());
+            list = it.value();
             if (!exclude || !list.contains(*exclude))
             {
                 QList copy(constOf(list));
@@ -704,7 +704,7 @@ std::shared_ptr<OsmAnd::NetworkRouteSegment> OsmAnd::NetworkRouteSelector_P::Net
 
 OsmAnd::PointI OsmAnd::NetworkRouteSelector_P::NetworkRouteSegmentChain::getEndPoint() const
 {
-    const auto seg = getLast();
+    const auto &seg = getLast();
     if (seg->robj && seg->robj->points31.size() > seg->end)
     {
         const PointI & p = seg->robj->points31.at(seg->end);

@@ -39,7 +39,7 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentIntersectingTile(int32_t x, 
     NetworkRoutesTile osmcRoutesTile = getMapRouteTile(x << ZOOM_TO_LOAD_TILES_SHIFT_L, y << ZOOM_TO_LOAD_TILES_SHIFT_L);
     for (auto u_it = osmcRoutesTile.uniqueSegments.begin(); u_it != osmcRoutesTile.uniqueSegments.end(); ++u_it)
     {
-        const auto segment = u_it.value();
+        const auto &segment = u_it.value();
         if (routeKey != nullptr && segment->routeKey != *routeKey)
         {
             continue;
