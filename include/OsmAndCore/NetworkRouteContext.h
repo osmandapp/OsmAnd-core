@@ -36,6 +36,20 @@ namespace OsmAnd
         RouteType type;
         QSet<QString> tags;
         QString toString() const;
+        
+        static QVector<NetworkRouteKey> getRouteKeys(const QHash<QString, QString>& tags);
+        static QVector<NetworkRouteKey> getRouteKeys(const std::shared_ptr<const Road> &road);
+        
+        static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
+        QString getTag() const;
+        QMap<QString, QString> tagsToGpx() const;
+        static Nullable<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
+        QString getKeyFromTag(const QString& tag) const;
+        QString getValue(const QString& key) const;
+        QString getRouteName() const;
+        
+        void addTag(const QString& key, const QString& value);
+        
         inline bool operator == (const NetworkRouteKey & other) const
         {
             if (type != other.type)
@@ -91,6 +105,8 @@ namespace OsmAnd
             result = prime * result + qHash(static_cast<int>(type));
             return result;
         }
+    private:
+        static const QString NETWORK_ROUTE_TYPE;
     };
 
     struct OSMAND_CORE_API NetworkRouteSegment
@@ -138,6 +154,8 @@ namespace OsmAnd
             const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache = nullptr
             );
         virtual ~NetworkRouteContext();
+        
+        static const QString ROUTE_KEY_VALUE_SEPARATOR;
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache> cache;
@@ -145,7 +163,6 @@ namespace OsmAnd
         
         void setNetworkRouteKeyFilter(NetworkRouteKey & routeKey);
         QHash<NetworkRouteKey, QList<std::shared_ptr<NetworkRouteSegment>>> loadRouteSegmentsBbox(AreaI area, NetworkRouteKey * rKey);
-        QVector<NetworkRouteKey> getRouteKeys(QHash<QString, QString> & tags) const;
         int64_t getTileId(int32_t x31, int32_t y31) const;
         int64_t getTileId(int32_t x31, int32_t y31, int shiftR) const;
         void loadRouteSegmentIntersectingTile(int32_t x, int32_t y, const NetworkRouteKey * routeKey,
@@ -155,8 +172,6 @@ namespace OsmAnd
         PointI getPointFromLong(int64_t l) const;
         int64_t convertPointToLong(int x31, int y31) const;
         int64_t convertPointToLong(PointI point) const;
-        QMap<QString, QString> tagsToGpx(const NetworkRouteKey & key) const;
-        OsmAnd::Nullable<NetworkRouteKey> fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const;
     };
 }
 

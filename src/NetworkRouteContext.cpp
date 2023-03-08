@@ -14,6 +14,8 @@ OsmAnd::NetworkRouteContext::~NetworkRouteContext()
 {
 }
 
+const QString OsmAnd::NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR = QStringLiteral("__");
+
 void OsmAnd::NetworkRouteContext::setNetworkRouteKeyFilter(NetworkRouteKey & routeKey)
 {
     filter.keyFilter.clear();
@@ -61,6 +63,7 @@ OsmAnd::NetworkRouteSegment::NetworkRouteSegment(const std::shared_ptr<const Roa
 
 OsmAnd::NetworkRouteSegment::~NetworkRouteSegment()
 {
+    robj.get();
 }
 
 OsmAnd::NetworkRouteKey::NetworkRouteKey()
@@ -87,13 +90,150 @@ OsmAnd::NetworkRouteKey::~NetworkRouteKey()
 {
 }
 
-OsmAnd::NetworkRoutePoint::~NetworkRoutePoint()
-{    
+static const QVector<QString> ROUTE_TYPES_PREFIX { "route_hiking_", "route_bicycle_", "route_mtb_", "route_horse_"};
+static const QVector<QString> ROUTE_TYPES_TAGS { "hiking", "bicycle", "mtb", "horse" };
+const QString OsmAnd::NetworkRouteKey::NETWORK_ROUTE_TYPE = QStringLiteral("type");
+
+QString OsmAnd::NetworkRouteKey::getTag() const
+{
+    return ROUTE_TYPES_TAGS[static_cast<int>(type)];
 }
 
-QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::getRouteKeys(QHash<QString, QString> & tags) const
+void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 {
-    return _p->getRouteKeys(tags);
+    QString val = value.isEmpty() ? QStringLiteral("") : NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR + value;
+    const QString tag = QStringLiteral("route_") + getTag() + NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR + key + val;
+    tags.insert(tag);
+}
+
+QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHash<QString, QString> &tags)
+{
+    QVector<NetworkRouteKey> lst;
+    for (const auto& tagPrefix : ROUTE_TYPES_PREFIX)
+    {
+        int rq = getRouteQuantity(tags, tagPrefix);
+        for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
+        {
+            const QString & prefix = tagPrefix + QString::number(routeIdx);
+            NetworkRouteKey routeKey(ROUTE_TYPES_PREFIX.indexOf(tagPrefix));
+            for (auto e = tags.begin(); e != tags.end(); ++e)
+            {
+                const QString & tag = e.key();
+                if (tag.startsWith(prefix) && tag.length() > prefix.length())
+                {
+                    QString key = tag.right(tag.length() - (prefix.length() + 1));
+                    routeKey.addTag(key, e.value());
+                }
+            }
+            lst.append(routeKey);
+        }
+    }
+    return lst;
+}
+
+QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const std::shared_ptr<const Road> &road)
+{
+    QHash<QString, QString> tags = road->getResolvedAttributes();
+    for (auto i = road->captions.begin(); i != road->captions.end(); ++i)
+    {
+        int attributeId = i.key();
+        const auto & decodedAttribute = road->attributeMapping->decodeMap[attributeId];
+        tags.insert(decodedAttribute.tag, i.value());
+    }
+    return getRouteKeys(tags);
+}
+
+int OsmAnd::NetworkRouteKey::getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix)
+{
+    int q = 0;
+    for (auto e = tags.begin(); e != tags.end(); ++e)
+    {
+        QString tag = e.key();
+        if (tag.startsWith(tagPrefix))
+        {
+            int num = OsmAnd::Utilities::extractIntegerNumber(tag);
+            if (num > 0 && tag == (tagPrefix + QString::number(num)))
+            {
+                q = std::max(q, num);
+            }
+        }
+        
+    }
+    return q;
+}
+
+QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsToGpx() const
+{
+    QMap<QString, QString> networkRouteKey;
+    networkRouteKey.insert(NETWORK_ROUTE_TYPE, getTag());
+    for (auto & tag : tags)
+    {
+        QString key = getKeyFromTag(tag);
+        QString value = getValue(key);
+        if (!value.isEmpty())
+        {
+            networkRouteKey.insert(key, value);
+        }
+    }
+    return networkRouteKey;
+}
+
+OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QString> & networkRouteKeyTags)
+{
+    auto it = networkRouteKeyTags.find(NETWORK_ROUTE_TYPE);
+    if (it != networkRouteKeyTags.end())
+    {
+        QString type = *it;
+        int rtype = ROUTE_TYPES_TAGS.indexOf(type);
+        if (rtype < static_cast<int>(RouteType::Count))
+        {
+            NetworkRouteKey routeKey(rtype);
+            for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
+            {
+                routeKey.addTag(i.key(), i.value());
+            }
+            return Nullable<NetworkRouteKey>(routeKey);
+        }
+    }
+    return Nullable<NetworkRouteKey>();
+}
+
+QString OsmAnd::NetworkRouteKey::getKeyFromTag(const QString& tag) const
+{
+    QString prefix = QStringLiteral("route_") + getTag() + NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR;
+    if (tag.startsWith(prefix) && tag.length() > prefix.length())
+    {
+        int endIdx = tag.indexOf(NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR, prefix.length());
+        return tag.mid(prefix.length(), prefix.length() + endIdx);
+    }
+    return QStringLiteral("");
+}
+
+QString OsmAnd::NetworkRouteKey::getValue(const QString& key) const
+{
+    QString k = NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR + key + NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR;
+    for (auto & tag : tags)
+    {
+        int i = tag.indexOf(k);
+        if (i > 0)
+        {
+            return tag.right(tag.length() - (i + k.length()));
+        }
+    }
+    return QStringLiteral("");
+}
+
+QString OsmAnd::NetworkRouteKey::getRouteName() const
+{
+    QString name = getValue(QStringLiteral("name"));
+    if (name.isEmpty())
+        name = getValue(QStringLiteral("ref"));
+
+    return name;
+}
+
+OsmAnd::NetworkRoutePoint::~NetworkRoutePoint()
+{    
 }
 
 int64_t OsmAnd::NetworkRouteContext::getTileId(int32_t x31, int32_t y31) const
@@ -135,16 +275,6 @@ int64_t OsmAnd::NetworkRouteContext::convertPointToLong(PointI point) const
 OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
 {
     return _p->getPointFromLong(l);
-}
-
-QMap<QString, QString> OsmAnd::NetworkRouteContext::tagsToGpx(const NetworkRouteKey & key) const
-{
-    return _p->tagsToGpx(key);
-}
-
-OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext::fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const
-{
-    return _p->fromGpx(networkRouteKeyTags);
 }
 
 QString OsmAnd::NetworkRouteKey::toString() const
