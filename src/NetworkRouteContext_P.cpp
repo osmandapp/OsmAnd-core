@@ -39,7 +39,7 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentIntersectingTile(int32_t x, 
     NetworkRoutesTile osmcRoutesTile = getMapRouteTile(x << ZOOM_TO_LOAD_TILES_SHIFT_L, y << ZOOM_TO_LOAD_TILES_SHIFT_L);
     for (auto u_it = osmcRoutesTile.uniqueSegments.begin(); u_it != osmcRoutesTile.uniqueSegments.end(); ++u_it)
     {
-        auto & segment = u_it.value();
+        const auto &segment = u_it.value();
         if (routeKey != nullptr && segment->routeKey != *routeKey)
         {
             continue;
@@ -50,8 +50,7 @@ void OsmAnd::NetworkRouteContext_P::loadRouteSegmentIntersectingTile(int32_t x, 
             QList<std::shared_ptr<NetworkRouteSegment>> empty;
             i = map.insert(segment->routeKey, empty);
         }
-        auto & routeSegments = i.value();
-        routeSegments.append(segment);
+        i.value().append(segment);
     }
 }
 
@@ -61,7 +60,7 @@ OsmAnd::NetworkRouteContext_P::NetworkRoutesTile OsmAnd::NetworkRouteContext_P::
     auto iterator = indexedTiles.find(tileId);
     if (iterator == indexedTiles.end())
     {
-        const auto & t = loadTile(x31 >> ZOOM_TO_LOAD_TILES_SHIFT_R, y31 >> ZOOM_TO_LOAD_TILES_SHIFT_R, tileId);
+        const auto t = loadTile(x31 >> ZOOM_TO_LOAD_TILES_SHIFT_R, y31 >> ZOOM_TO_LOAD_TILES_SHIFT_R, tileId);
         iterator = indexedTiles.insert(tileId, t);
     }
     return *iterator;
@@ -131,7 +130,7 @@ OsmAnd::NetworkRouteContext_P::NetworkRoutesTile OsmAnd::NetworkRouteContext_P::
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::convert(std::shared_ptr<const Road> & road) const
 {
-    return filterKeys(getRouteKeys(road));
+    return filterKeys(NetworkRouteKey::getRouteKeys(road));
 }
 
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::filterKeys(QVector<OsmAnd::NetworkRouteKey> keys) const
@@ -156,82 +155,12 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::filterKeys(QVect
     return result;
 }
 
-QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::getRouteKeys(QHash<QString, QString> tags) const
-{
-    QVector<NetworkRouteKey> lst;
-    for (const QString & tagPrefix : ROUTE_TYPES_PREFIX)
-    {
-        int rq = getRouteQuantity(tags, tagPrefix);
-        for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
-        {
-            const QString & prefix = tagPrefix + QString::number(routeIdx);
-            NetworkRouteKey routeKey(ROUTE_TYPES_PREFIX.indexOf(tagPrefix));
-            QHash<QString, QString>::iterator e;
-            for (e = tags.begin(); e != tags.end(); ++e)
-            {
-                const QString & tag = e.key();
-                if (tag.startsWith(prefix) && tag.length() > prefix.length())
-                {
-                    QString key = tag.right(tag.length() - (prefix.length() + 1));
-                    addTag(routeKey, key, e.value());
-                }
-            }
-            lst.append(routeKey);
-        }
-    }
-    return lst;
-}
-
-QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::getRouteKeys(std::shared_ptr<const Road> & road) const
-{
-    QHash<QString, QString> tags = road->getResolvedAttributes();
-    for (auto i = road->captions.begin(); i != road->captions.end(); ++i)
-    {
-        int attributeId = i.key();
-        const auto & decodedAttribute = road->attributeMapping->decodeMap[attributeId];
-        tags.insert(decodedAttribute.tag, i.value());
-    }
-    return getRouteKeys(tags);
-}
-
-int OsmAnd::NetworkRouteContext_P::getRouteQuantity(QHash<QString, QString> & tags, const QString tagPrefix) const
-{
-    int q = 0;
-    QHash<QString, QString>::iterator e;
-    for (e = tags.begin(); e != tags.end(); ++e)
-    {
-        QString tag = e.key();
-        if (tag.startsWith(tagPrefix))
-        {
-            int num = OsmAnd::Utilities::extractIntegerNumber(tag);
-            if (num > 0 && tag == (tagPrefix + QString::number(num)))
-            {
-                q = std::max(q, num);
-            }
-        }
-        
-    }
-    return q;
-}
-
-void OsmAnd::NetworkRouteContext_P::addTag(NetworkRouteKey & routeKey, QString key, QString value) const
-{
-    value = value.isEmpty() ? QStringLiteral("") : ROUTE_KEY_VALUE_SEPARATOR + value;
-    const QString tag = QStringLiteral("route_") + getTag(routeKey) + ROUTE_KEY_VALUE_SEPARATOR + key + value;
-    routeKey.tags.insert(tag);
-}
-
-QString OsmAnd::NetworkRouteContext_P::getTag(NetworkRouteKey & routeKey) const
-{
-    return ROUTE_TYPES_TAGS[static_cast<int>(routeKey.type)];
-}
-
 int64_t OsmAnd::NetworkRouteContext_P::convertPointToLong(int x31, int y31)
 {
     return (((int64_t) x31) << 32) + y31;
 }
 
-void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(std::shared_ptr<const Road> road, NetworkRouteKey & routeKey)
+void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(const std::shared_ptr<const Road> road, NetworkRouteKey &routeKey)
 {
     int len = road->points31.size();
     bool inter = false;
@@ -310,15 +239,15 @@ bool OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::intersects(int x31, int y
     return false;
 }
 
-void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::addUnique(std::shared_ptr<NetworkRouteSegment> & networkRouteSegment)
+void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::addUnique(const std::shared_ptr<NetworkRouteSegment> & networkRouteSegment)
 {
-    const QString & key = networkRouteSegment->routeKey.toString() + QStringLiteral("_") + QString::number(networkRouteSegment->robj->id.id);
+    const QString key = networkRouteSegment->routeKey.toString() + QStringLiteral("_") + QString::number(networkRouteSegment->robj->id.id);
     uniqueSegments.insert(key, networkRouteSegment);
 }
 
-void OsmAnd::NetworkRouteContext_P::addObjectToPoint(std::shared_ptr<NetworkRoutePoint> & point, std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end)
+void OsmAnd::NetworkRouteContext_P::addObjectToPoint(const std::shared_ptr<NetworkRoutePoint> &point, const std::shared_ptr<const Road> road, NetworkRouteKey & routeKey, int start, int end)
 {
-    std::shared_ptr<NetworkRouteSegment> seg = std::make_shared<NetworkRouteSegment>(road, routeKey, start, end);
+    const auto seg = std::make_shared<NetworkRouteSegment>(road, routeKey, start, end);
     if (road->id > 0)
     {
         for (auto & seg2 : point->objects)
@@ -338,65 +267,4 @@ OsmAnd::PointI OsmAnd::NetworkRouteContext_P::getPointFromLong(int64_t l) const
     int32_t y = (int32_t) (l - ((l >> 32) << 32));
     PointI point(x, y);
     return point;
-}
-
-QMap<QString, QString> OsmAnd::NetworkRouteContext_P::tagsToGpx(const NetworkRouteKey & routeKey) const
-{
-    QMap<QString, QString> networkRouteKey;
-    networkRouteKey.insert(NETWORK_ROUTE_TYPE, ROUTE_TYPES_TAGS[static_cast<int>(routeKey.type)]);
-    for (auto & tag : routeKey.tags)
-    {
-        QString key = getKeyFromTag(routeKey, tag);
-        QString value = getValue(routeKey, key);
-        if (!value.isEmpty())
-        {
-            networkRouteKey.insert(key, value);
-        }
-    }
-    return networkRouteKey;
-}
-
-OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::fromGpx(const QMap<QString, QString> & networkRouteKeyTags) const
-{
-    auto it = networkRouteKeyTags.find(NETWORK_ROUTE_TYPE);
-    if (it != networkRouteKeyTags.end())
-    {
-        QString type = *it;
-        int rtype = ROUTE_TYPES_TAGS.indexOf(type);
-        if (rtype < static_cast<int>(RouteType::Count))
-        {
-            NetworkRouteKey routeKey(rtype);
-            for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
-            {
-                addTag(routeKey, i.key(), i.value());
-            }
-            return Nullable<NetworkRouteKey>(routeKey);
-        }
-    }
-    return Nullable<NetworkRouteKey>();
-}
-
-QString OsmAnd::NetworkRouteContext_P::getKeyFromTag(const NetworkRouteKey & key, QString tag) const
-{
-    QString prefix = QStringLiteral("route_") + ROUTE_TYPES_TAGS[static_cast<int>(key.type)] + ROUTE_KEY_VALUE_SEPARATOR;
-    if (tag.startsWith(prefix) && tag.length() > prefix.length())
-    {
-        int endIdx = tag.indexOf(ROUTE_KEY_VALUE_SEPARATOR, prefix.length());
-        return tag.mid(prefix.length(), prefix.length() + endIdx);
-    }
-    return QStringLiteral("");
-}
-
-QString OsmAnd::NetworkRouteContext_P::getValue(const NetworkRouteKey & routeKey, QString key) const
-{
-    key = ROUTE_KEY_VALUE_SEPARATOR + key + ROUTE_KEY_VALUE_SEPARATOR;
-    for (auto & tag : routeKey.tags)
-    {
-        int i = tag.indexOf(key);
-        if (i > 0)
-        {
-            return tag.right(tag.length() - (i + key.length()));
-        }
-    }
-    return QStringLiteral("");
 }
