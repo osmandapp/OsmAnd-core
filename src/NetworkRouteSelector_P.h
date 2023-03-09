@@ -56,7 +56,7 @@ private:
         std::shared_ptr<NetworkRouteSegment> getLast() const;
         PointI getStartPoint() const;
         PointI getEndPoint() const;
-        void addChain(NetworkRouteSegmentChain & toAdd);
+        void addChain(std::shared_ptr<NetworkRouteSegmentChain> & toAdd);
         void setStart(std::shared_ptr<NetworkRouteSegment> & newStart);
         void setEnd(std::shared_ptr<NetworkRouteSegment> & newEnd);
         inline bool operator == (const NetworkRouteSegmentChain & other) const
@@ -91,32 +91,32 @@ private:
     void debug(QString msg, short reverse, const std::shared_ptr<NetworkRouteSegment> & segment) const;
     bool isCancelled() const;
     
-    const QList<NetworkRouteSegmentChain> getNetworkRouteSegmentChains(const NetworkRouteKey & routeKey,
+    const QList<std::shared_ptr<NetworkRouteSegmentChain>> getNetworkRouteSegmentChains(const NetworkRouteKey & routeKey,
                                                                  QHash<NetworkRouteKey, std::shared_ptr<GpxDocument>> & res,
                                                                  const QList<std::shared_ptr<NetworkRouteSegment>> & loaded) const;
-    QMap<int64_t, QList<NetworkRouteSegmentChain>> createChainStructure(const QList<std::shared_ptr<NetworkRouteSegment>> & lst) const;
-    QMap<int64_t, QList<NetworkRouteSegmentChain>> prepareEndChain(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;
-    void add(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt, NetworkRouteSegmentChain & chain) const;
-    void remove(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt, NetworkRouteSegmentChain & toRemove) const;
-    void chainAdd(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                  QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, NetworkRouteSegmentChain & it, NetworkRouteSegmentChain & toAdd) const;
-    int connectSimpleMerge(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                           QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad, int radE) const;
-    int connectSimpleStraight(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                              QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad, int radE) const;
-    int connectToLongestChain(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                              QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad) const;
-    int reverseToConnectMore(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                             QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains, int rad, int radE) const;
-    QList<NetworkRouteSegmentChain> filterChains(QList<NetworkRouteSegmentChain> & lst, NetworkRouteSegmentChain & ch, int rad, bool start) const;
-    const QList<NetworkRouteSegmentChain> flattenChainStructure(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains) const;
-    QList<NetworkRouteSegmentChain> getByPoint(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains, int64_t pnt,
-                                               int radius, NetworkRouteSegmentChain * exclude) const;
-    NetworkRouteSegmentChain chainReverse(QMap<int64_t, QList<NetworkRouteSegmentChain>> & chains,
-                                          QMap<int64_t, QList<NetworkRouteSegmentChain>> & endChains,
-                                          NetworkRouteSegmentChain & it) const;
+    QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> createChainStructure(const QList<std::shared_ptr<NetworkRouteSegment>> & lst) const;
+    QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> prepareEndChain(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains) const;
+    void add(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains, int64_t pnt, std::shared_ptr<NetworkRouteSegmentChain> & chain) const;
+    void remove(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains, int64_t pnt, std::shared_ptr<NetworkRouteSegmentChain> & toRemove) const;
+    void chainAdd(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                  QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains, std::shared_ptr<NetworkRouteSegmentChain> & it, std::shared_ptr<NetworkRouteSegmentChain> & toAdd) const;
+    int connectSimpleMerge(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                           QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains, int rad, int radE) const;
+    int connectSimpleStraight(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                              QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains, int rad, int radE) const;
+    int connectToLongestChain(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                              QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains, int rad) const;
+    int reverseToConnectMore(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                             QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains, int rad, int radE) const;
+    QList<std::shared_ptr<NetworkRouteSegmentChain>> filterChains(QList<std::shared_ptr<NetworkRouteSegmentChain>> & lst, std::shared_ptr<NetworkRouteSegmentChain> & ch, int rad, bool start) const;
+    const QList<std::shared_ptr<NetworkRouteSegmentChain>> flattenChainStructure(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains) const;
+    QList<std::shared_ptr<NetworkRouteSegmentChain>> getByPoint(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains, int64_t pnt,
+                                               int radius, const std::shared_ptr<NetworkRouteSegmentChain> &exclude) const;
+    std::shared_ptr<NetworkRouteSegmentChain> chainReverse(QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & chains,
+                                          QMap<int64_t, QList<std::shared_ptr<NetworkRouteSegmentChain>>> & endChains,
+                                          std::shared_ptr<NetworkRouteSegmentChain> & it) const;
     std::shared_ptr<NetworkRouteSegment> inverse(std::shared_ptr<NetworkRouteSegment> & seg) const;
-    std::shared_ptr<GpxDocument> createGpxFile(const QList<NetworkRouteSegmentChain> & chains, const NetworkRouteKey & routeKey) const;
+    std::shared_ptr<GpxDocument> createGpxFile(const QList<std::shared_ptr<NetworkRouteSegmentChain>> & chains, const NetworkRouteKey & routeKey) const;
 };
 }
 
