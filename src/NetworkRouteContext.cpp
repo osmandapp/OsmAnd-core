@@ -204,7 +204,7 @@ QString OsmAnd::NetworkRouteKey::getKeyFromTag(const QString& tag) const
     if (tag.startsWith(prefix) && tag.length() > prefix.length())
     {
         int endIdx = tag.indexOf(NetworkRouteContext::ROUTE_KEY_VALUE_SEPARATOR, prefix.length());
-        return tag.mid(prefix.length(), prefix.length() + endIdx);
+        return tag.mid(prefix.length(), endIdx - prefix.length());
     }
     return QStringLiteral("");
 }
