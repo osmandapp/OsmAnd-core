@@ -23,7 +23,8 @@ namespace OsmAnd
     public:
         MapRasterLayerProvider_Software(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
-            const bool fillBackground = true);
+            const bool fillBackground = true,
+            const bool online = false);
         virtual ~MapRasterLayerProvider_Software();
     };
 }

@@ -660,6 +660,8 @@ bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 
     _resources->releaseDefaultResources(gpuContextLost);
     _resources.reset();
+    if (resourcesAreInUse.try_lock_for(std::chrono::seconds(2)))
+        resourcesAreInUse.unlock();
 
     _isRenderingInitialized = false;
 
@@ -805,6 +807,11 @@ const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources() c
 OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources()
 {
     return *_resources.get();
+}
+
+std::shared_ptr<OsmAnd::MapRendererResourcesManager>& OsmAnd::MapRenderer::getResourcesSharedPtr()
+{
+    return _resources;
 }
 
 void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourceType type)
