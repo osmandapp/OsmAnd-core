@@ -89,6 +89,7 @@ namespace OsmAnd
 
         typedef std::function < bool(
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const DataBlockId& blockId,
             const ObfObjectId mapObjectId,
             const AreaI& bbox,
             const ZoomLevel firstZoomLevel,
@@ -97,6 +98,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+            const DataBlockId& blockId,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
             const FilterReadingByIdFunction filterById,

@@ -42,6 +42,7 @@ const QHash<QString, QStringList> GEOCODING_ACCESS {
 OsmAnd::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : ObfMapObject(section_)
     , section(section_)
+    , blockId(ObfRoutingSectionDataBlockId::invalidId())
 {
     attributeMapping = section->getAttributeMapping();
 }

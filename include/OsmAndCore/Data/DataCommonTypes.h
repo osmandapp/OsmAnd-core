@@ -139,6 +139,13 @@ namespace OsmAnd
             return this->id != that;
         }
 #endif // !defined(SWIG)
+
+        inline static ObfMapSectionDataBlockId invalidId()
+        {
+            ObfMapSectionDataBlockId invalidId;
+            invalidId.id = std::numeric_limits<uint64_t>::max();
+            return invalidId;
+        }
     };
 
 #if !defined(SWIG)
@@ -191,6 +198,13 @@ namespace OsmAnd
             return this->id != that;
         }
 #endif // !defined(SWIG)
+
+        inline static ObfRoutingSectionDataBlockId invalidId()
+        {
+            ObfRoutingSectionDataBlockId invalidId;
+            invalidId == std::numeric_limits<uint64_t>::max();
+            return invalidId;
+        }
     };
 
 #if !defined(SWIG)
@@ -200,6 +214,7 @@ namespace OsmAnd
     class ObfRoutingSectionInfo;
     typedef std::function < bool(
         const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+        const ObfRoutingSectionDataBlockId& blockId,
         const ObfObjectId roadId,
         const AreaI& bbox) > FilterRoadsByIdFunction;
 

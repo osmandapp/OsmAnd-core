@@ -53,6 +53,7 @@ namespace OsmAnd
 
         // General information
         const std::shared_ptr<const ObfRoutingSectionInfo> section;
+        ObfRoutingSectionDataBlockId blockId;
 
         // Road information
         QHash< uint32_t, QVector<uint32_t> > pointsTypes;

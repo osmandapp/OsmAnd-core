@@ -97,6 +97,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         const auto mapObjectsFilterById =
             [this]
             (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
+                const OsmAnd::ObfMapSectionReader::DataBlockId& blockId,
                 const uint64_t mapObjectId,
                 const OsmAnd::AreaI& bbox,
                 const OsmAnd::ZoomLevel firstZoomLevel,

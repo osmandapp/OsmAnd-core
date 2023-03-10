@@ -32,6 +32,8 @@ namespace OsmAnd
         // General information
         const std::shared_ptr<const ObfMapSectionInfo> section;
         const std::shared_ptr<const ObfMapSectionLevel> level;
+        ObfMapSectionDataBlockId blockId;
+        
         virtual QString toString() const;
         virtual bool obtainSharingKey(SharingKey& outKey) const;
         virtual bool obtainSortingKey(SortingKey& outKey) const;
