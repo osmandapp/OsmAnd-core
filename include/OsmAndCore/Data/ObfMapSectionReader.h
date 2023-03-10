@@ -29,15 +29,16 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfMapSectionReader
     {
     public:
+        typedef ObfMapSectionDataBlockId DataBlockId;
         typedef std::function < bool(
             const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const DataBlockId& blockId,
             const ObfObjectId mapObjectId,
             const AreaI& bbox,
             const ZoomLevel firstZoomLevel,
             const ZoomLevel lastZoomLevel,
             const ZoomLevel requestedZoomLevel) > FilterByIdFunction;
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::BinaryMapObject>&)> VisitorFunction;
-        typedef ObfMapSectionDataBlockId DataBlockId;
 
         class OSMAND_CORE_API DataBlock Q_DECL_FINAL
         {

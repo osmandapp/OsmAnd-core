@@ -486,6 +486,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
+    const DataBlockId& blockId,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     const AreaI* bbox31,
     const FilterReadingByIdFunction filterById,
@@ -583,6 +584,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     break;
                 }
                 
+                mapObject->blockId = blockId;
                 if (coastlineOnly)
                 {
                     if (isCoastline(mapObject))
@@ -609,6 +611,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 // Check if map object is desired
                 const auto shouldReject = filterById && !filterById(
                     section,
+                    blockId,
                     mapObject->id,
                     mapObject->bbox31,
                     mapObject->level->minZoom,
@@ -977,12 +980,13 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const auto filterReadById =
         [filterById, zoom]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
+        const DataBlockId& blockId,
         const ObfObjectId mapObjectId,
         const AreaI& bbox,
         const ZoomLevel firstZoomLevel,
         const ZoomLevel lastZoomLevel) -> bool
         {
-            return filterById(section, mapObjectId, bbox, firstZoomLevel, lastZoomLevel, zoom);
+            return filterById(section, blockId, mapObjectId, bbox, firstZoomLevel, lastZoomLevel, zoom);
         };
 
     // Ensure encoding/decoding rules are read
@@ -1183,6 +1187,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         reader,
                         section,
                         treeNode,
+                        blockId,
                         &mapObjects,
                         nullptr,
                         nullptr,
@@ -1229,6 +1234,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     // Check if map object is desired
                     const auto shouldReject = filterById && !filterById(
                         section,
+                        blockId,
                         mapObject->id,
                         mapObject->bbox31,
                         mapObject->level->minZoom,
@@ -1258,6 +1264,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 readMapObjectsBlock(reader,
                                     section,
                                     treeNode,
+                                    blockId,
                                     resultOut,
                                     bbox31,
                                     filterById != nullptr ? filterReadById : FilterReadingByIdFunction(),

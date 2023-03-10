@@ -449,6 +449,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
+    const DataBlockId& blockId,
     QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
     const AreaI* bbox31,
     const FilterRoadsByIdFunction filterById,
@@ -540,6 +541,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
 
                     break;
                 }
+
+                road->blockId = blockId;
 
                 // Update metric
                 if (metric)
@@ -1044,6 +1047,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                     reader,
                     section,
                     treeNode,
+                    blockId,
                     &roads,
                     nullptr,
                     nullptr,
@@ -1085,7 +1089,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 }
 
                 // Check if map object is desired
-                if (filterById && !filterById(section, road->id, road->bbox31))
+                if (filterById && !filterById(section, blockId, road->id, road->bbox31))
                     continue;
 
                 if (!visitor || visitor(road))
@@ -1112,6 +1116,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 reader,
                 section,
                 treeNode,
+                blockId,
                 resultOut,
                 bbox31,
                 filterById,
