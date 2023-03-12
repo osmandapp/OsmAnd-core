@@ -67,6 +67,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     , processingTileStubs(_processingTileStubs)
     , unavailableTileStubs(_unavailableTileStubs)
 {
+    renderer->resourcesAreInUse.lock();
     resetResourceWorkerThreadsLimit();
 
     _requestedResourcesTasks.reserve(1024);
@@ -100,6 +101,7 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 
     // Wait for all tasks to complete
     _taskHostBridge.onOwnerIsBeingDestructed();
+    renderer->resourcesAreInUse.unlock();
 }
 
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()

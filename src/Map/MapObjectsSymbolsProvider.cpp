@@ -8,11 +8,13 @@
 OsmAnd::MapObjectsSymbolsProvider::MapObjectsSymbolsProvider(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const float referenceTileSizeOnScreenInPixels_,
-    const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer_ /*= std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer())*/)
+    const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer_ /*= std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer())*/,
+    const bool forceObtainDataAsync_ /* = false */)
     : _p(new MapObjectsSymbolsProvider_P(this))
     , primitivesProvider(primitivesProvider_)
     , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
-    , symbolRasterizer(symbolRasterizer_)
+    , symbolRasterizer(symbolRasterizer_ ? symbolRasterizer_ : std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()))
+    , forceObtainDataAsync(forceObtainDataAsync_)
 {
 }
 
@@ -46,7 +48,7 @@ bool OsmAnd::MapObjectsSymbolsProvider::obtainData(
 
 bool OsmAnd::MapObjectsSymbolsProvider::supportsNaturalObtainDataAsync() const
 {
-    return false;
+    return forceObtainDataAsync;
 }
 
 void OsmAnd::MapObjectsSymbolsProvider::obtainDataAsync(

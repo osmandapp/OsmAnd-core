@@ -76,7 +76,7 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false);
 
         // Resources-related:
-        std::unique_ptr<MapRendererResourcesManager> _resources;
+        std::shared_ptr<MapRendererResourcesManager> _resources;
         QAtomicInt _resourcesGpuSyncRequestsCounter;
 
         // Symbols-related:
@@ -133,6 +133,7 @@ namespace OsmAnd
             const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // General:
+        mutable QMutex resourcesAreInUse;
         const std::unique_ptr<GPUAPI> gpuAPI;
         const MapRendererSetupOptions& setupOptions;
         bool hasGpuWorkerThread() const;
@@ -173,6 +174,7 @@ namespace OsmAnd
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
         MapRendererResourcesManager& getResources();
+        std::shared_ptr<MapRendererResourcesManager>& getResourcesSharedPtr();
         virtual void onValidateResourcesOfType(const MapRendererResourceType type);
         void requestResourcesUploadOrUnload();
         bool adjustImageToConfiguration(
@@ -352,6 +354,8 @@ namespace OsmAnd
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
     friend class OsmAnd::MapRendererResourcesManager;
+    friend class OsmAnd::MapRendererTiledSymbolsResource;
+    friend class OsmAnd::MapRendererRasterMapLayerResource;
     };
 }
 
