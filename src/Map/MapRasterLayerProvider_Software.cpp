@@ -4,9 +4,9 @@
 OsmAnd::MapRasterLayerProvider_Software::MapRasterLayerProvider_Software(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const bool fillBackground_ /* = true */,
-    const bool online_ /* = false */)
+    const bool forceObtainDataAsync_ /* = false */)
     : MapRasterLayerProvider(
-        new MapRasterLayerProvider_Software_P(this), primitivesProvider_, fillBackground_, online_)
+        new MapRasterLayerProvider_Software_P(this), primitivesProvider_, fillBackground_, forceObtainDataAsync_)
 {
 }
 

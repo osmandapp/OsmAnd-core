@@ -57,13 +57,13 @@ namespace OsmAnd
             MapRasterLayerProvider_P* const p,
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const bool fillBackground,
-            const bool online);
+            const bool forceObtainDataAsync);
     public:
         virtual ~MapRasterLayerProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const bool fillBackground;
-        const bool online;
+        const bool forceObtainDataAsync;
 
         virtual MapStubStyle getDesiredStubsStyle() const;
 

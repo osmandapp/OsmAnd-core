@@ -68,13 +68,13 @@ namespace OsmAnd
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const float referenceTileSizeOnScreenInPixels,
             const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer = std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()),
-            const bool online = false);
+            const bool forceObtainDataAsync = false);
         virtual ~MapObjectsSymbolsProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const float referenceTileSizeOnScreenInPixels;
         const std::shared_ptr<const SymbolRasterizer> symbolRasterizer;
-        const bool online;
+        const bool forceObtainDataAsync;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
