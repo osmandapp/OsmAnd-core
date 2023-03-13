@@ -21,6 +21,8 @@ OsmAnd::SlopeRasterMapLayerProvider::SlopeRasterMapLayerProvider(
     , filesCollection(filesCollection_)
     , _threadPool(new QThreadPool())
     , _lastRequestedZoom(ZoomLevel::ZoomLevel0)
+    , _minVisibleZoom(minZoom)
+    , _maxVisibleZoom(maxZoom)
     , _priority(0)
 {
 }
@@ -126,6 +128,34 @@ void OsmAnd::SlopeRasterMapLayerProvider::setLastRequestedZoom(const ZoomLevel z
         _priority = 0;
     
     _lastRequestedZoom = zoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider::getMinVisibleZoom() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _minVisibleZoom;
+}
+
+OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider::getMaxVisibleZoom() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _maxVisibleZoom;
+}
+
+void OsmAnd::SlopeRasterMapLayerProvider::setMinVisibleZoom(const ZoomLevel zoomLevel)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _minVisibleZoom = zoomLevel;
+}
+
+void OsmAnd::SlopeRasterMapLayerProvider::setMaxVisibleZoom(const ZoomLevel zoomLevel)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _maxVisibleZoom = zoomLevel;
 }
 
 int OsmAnd::SlopeRasterMapLayerProvider::getAndDecreasePriority()
