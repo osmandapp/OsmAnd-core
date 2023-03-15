@@ -202,7 +202,7 @@ namespace OsmAnd
         inline static ObfRoutingSectionDataBlockId invalidId()
         {
             ObfRoutingSectionDataBlockId invalidId;
-            invalidId == std::numeric_limits<uint64_t>::max();
+            invalidId.id = std::numeric_limits<uint64_t>::max();
             return invalidId;
         }
     };
