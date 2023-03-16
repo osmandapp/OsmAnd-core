@@ -1384,6 +1384,47 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
     return distance;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getProjectedLocation(const MapRendererInternalState& internalState_,
+    const MapRendererState& state, const PointI& location31, const float height, PointI& outLocation31) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    const auto offsetFromTarget = Utilities::convert31toFloat(location31 - state.target31, state.zoomLevel);
+    const auto positionInWorld = glm::vec3(
+        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        height,
+        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+
+    const auto rayD = glm::normalize(positionInWorld - internalState->worldCameraPosition);
+
+    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
+    float length;
+    const auto intersects =
+        Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, internalState->worldCameraPosition, length);
+    if (!intersects)
+        return false;
+
+    auto intersection = internalState->worldCameraPosition + length * rayD;
+    auto pointOnPlane = intersection.xz();
+
+    PointD position;
+    position.x = pointOnPlane.x / static_cast<float>(TileSize3D);
+    position.y = pointOnPlane.y / static_cast<float>(TileSize3D);
+    position += internalState->targetInTileOffsetN;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
+    position *= tileSize31;
+
+    PointI64 location(static_cast<int64_t>(position.x)+(internalState->targetTileId.x << zoomLevelDiff),
+        static_cast<int64_t>(position.y)+(internalState->targetTileId.y << zoomLevelDiff));
+
+    outLocation31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+
+    return true;
+}
+
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
 {
     InternalState internalState;

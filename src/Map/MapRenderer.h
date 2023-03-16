@@ -32,6 +32,7 @@ namespace OsmAnd
     class MapRendererTiledResources;
     class MapSymbol;
     class MapRendererStage;
+    class AtlasMapRendererSymbolsStage;
     struct MapRendererInternalState;
 
     class MapRenderer : public IMapRenderer
@@ -72,7 +73,7 @@ namespace OsmAnd
         MapRendererState _currentState;
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        bool setMapTarget(MapRendererState& state,
+        bool setMapTarget(MapRendererState& state, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false);
 
         // Resources-related:
@@ -122,10 +123,12 @@ namespace OsmAnd
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
-        virtual bool getNewTargetByScreenPoint(const MapRendererState& state,
-            const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
+        virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
+            const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
+        virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
+            const PointI& location31, const float height, PointI& outLocation31) const = 0;
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
@@ -353,6 +356,7 @@ namespace OsmAnd
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
+    friend class OsmAnd::AtlasMapRendererSymbolsStage;
     friend class OsmAnd::MapRendererResourcesManager;
     friend class OsmAnd::MapRendererTiledSymbolsResource;
     friend class OsmAnd::MapRendererRasterMapLayerResource;
