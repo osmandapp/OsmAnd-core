@@ -91,6 +91,8 @@ namespace OsmAnd
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
         float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const override;
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
+        bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
+            const PointI& location31, const float height, PointI& outLocation31) const override;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
