@@ -512,7 +512,8 @@ bool OsmAnd::VectorLine_P::forceIncludePoint(const QList<FColorARGB>& pointsColo
 void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
 {
     bool segmentStarted = false;
-    auto visibleArea = _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3));
+    // Use the largest area on low zoom levls to prevent integer overflow
+    auto visibleArea = _mapZoomLevel > ZoomLevel3 ? _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3)) : AreaI::largest();
     PointI curr, drawFrom, drawTo, inter1, inter2;
     auto prev = drawFrom = _points[0];
     int drawFromIdx = 0, drawToIdx = 0;
