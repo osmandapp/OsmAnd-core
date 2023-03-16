@@ -31,6 +31,8 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         ZoomLevel _lastRequestedZoom;
+        ZoomLevel _minVisibleZoom;
+        ZoomLevel _maxVisibleZoom;
         mutable QMutex _threadPoolMutex;
         QThreadPool* _threadPool;
 
@@ -55,6 +57,12 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+
+        virtual ZoomLevel getMinVisibleZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxVisibleZoom() const Q_DECL_OVERRIDE;
+
+        void setMinVisibleZoom(const ZoomLevel zoomLevel);
+        void setMaxVisibleZoom(const ZoomLevel zoomLevel);
 
         virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
         virtual float getTileDensityFactor() const Q_DECL_OVERRIDE;
