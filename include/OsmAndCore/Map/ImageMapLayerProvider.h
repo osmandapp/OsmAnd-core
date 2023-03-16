@@ -100,6 +100,12 @@ namespace OsmAnd
             ZoomLevel,
             getMaxZoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            ZoomLevel,
+            getMinVisibleZoom);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            ZoomLevel,
+            getMaxVisibleZoom);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             bool,
             supportsNaturalObtainData);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
