@@ -93,6 +93,11 @@ namespace OsmAnd
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
         bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const override;
+        bool getWorldPointFromScreenPoint(
+            const MapRendererInternalState& internalState,
+            const MapRendererState& state,
+            const PointI& screenPoint,
+            PointF& outWorldPoint) const override;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
@@ -102,7 +107,6 @@ namespace OsmAnd
 
         float getTileSizeOnScreenInPixels() const override;
 
-        bool getWorldPointFromScreenPoint(const PointI& screenPoint, PointF& outWorldPoint) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
         bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,

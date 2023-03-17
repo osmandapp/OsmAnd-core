@@ -2341,6 +2341,7 @@ double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceFromCameraToPath(con
 
 SkPath OsmAnd::AtlasMapRendererSymbolsStage::convertPathOnScreenToWorld(const SkPath& pathOnScreen, bool& outOk) const
 {
+    const auto& internalState = getInternalState();
     SkPath pathInWorld;
 
     for (auto i = 0; i < pathOnScreen.countPoints(); i++)
@@ -2348,7 +2349,7 @@ SkPath OsmAnd::AtlasMapRendererSymbolsStage::convertPathOnScreenToWorld(const Sk
         const auto skPoint = pathOnScreen.getPoint(i);
         const PointI point(skPoint.x(), currentState.windowSize.y - skPoint.y());
         PointF worldPoint;
-        const auto ok = getRenderer()->getWorldPointFromScreenPoint(point, worldPoint);
+        const auto ok = getRenderer()->getWorldPointFromScreenPoint(internalState, currentState, point, worldPoint);
 
         if (!ok)
         {
@@ -2515,7 +2516,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computeGlyphPlacementOnPath(
     {
         // If point is projected from world to screen, convert it back to world
         const PointI anchorOnScreenNoElevation(anchorPoint.x, currentState.windowSize.y - anchorPoint.y);
-        auto ok = getRenderer()->getWorldPointFromScreenPoint(anchorOnScreenNoElevation, anchorInWorldNoElevation);
+        auto ok = getRenderer()->getWorldPointFromScreenPoint(
+            internalState,
+            currentState,
+            anchorOnScreenNoElevation,
+            anchorInWorldNoElevation);
 
         if (!ok)
             return false;

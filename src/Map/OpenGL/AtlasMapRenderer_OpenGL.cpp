@@ -1072,17 +1072,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeOnScreenInPixels() const
     return ok ? internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor : 0.0;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(const PointI& screenPoint, PointF& outWorldPoint) const
+bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(
+    const MapRendererInternalState& internalState_,
+    const MapRendererState& state,
+    const PointI& screenPoint,
+    PointF& outWorldPoint) const
 {
-    const auto state = getState();
+    const auto& internalState = static_cast<const InternalState&>(internalState_);
 
-    InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
-    if (!ok)
-        return false;
-    
     PointD position;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
+    bool ok = getPositionFromScreenPoint(internalState, state, screenPoint, position);
     if (!ok)
         return false;
     position *= AtlasMapRenderer::TileSize3D;
