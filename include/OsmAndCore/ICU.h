@@ -17,6 +17,7 @@ namespace OsmAnd
     namespace ICU
     {
         OSMAND_CORE_API QString OSMAND_CORE_CALL convertToVisualOrder(const QString& input);
+        OSMAND_CORE_API bool OSMAND_CORE_CALL isRightToLeft(const QString& input);
         OSMAND_CORE_API QString OSMAND_CORE_CALL transliterateToLatin(
             const QString& input,
             const bool keepAccentsAndDiacriticsInInput = true,
