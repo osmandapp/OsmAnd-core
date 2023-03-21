@@ -140,8 +140,6 @@ QSet<QString> OsmAnd::FavoriteLocationsCollection_P::getGroups() const
     for (const auto& item : constOf(_collection))
     {
         const auto& group = item->getGroup();
-        if (group.isEmpty())
-            continue;
         result.insert(group);
     }
 
