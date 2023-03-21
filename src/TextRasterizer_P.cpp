@@ -469,11 +469,10 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
 
 bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
 {
-    const auto text = ICU::convertToVisualOrder(textPaint.text.toString());
+    const auto text = textPaint.text.toString();
+    const auto rightToLeft = ICU::isRightToLeft(text);
     if (text.isEmpty())
-    {
         return true;
-    }
 
     const auto pHbBuffer = hb_buffer_create();
     if (pHbBuffer == hb_buffer_get_empty())
@@ -487,7 +486,7 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     }
 
     hb_buffer_add_utf16(hbBuffer.get(), reinterpret_cast<const uint16_t*>(text.constData()), text.size(), 0, -1);
-    hb_buffer_set_direction(hbBuffer.get(), HB_DIRECTION_LTR);
+    hb_buffer_set_direction(hbBuffer.get(), rightToLeft ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hbBuffer.get());
 
     hb_shape(textPaint.hbFont.get(), hbBuffer.get(), nullptr, 0);

@@ -185,6 +185,40 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     return output;
 }
 
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::isRightToLeft(const QString& input)
+{
+    bool result = false;
+    const auto len = input.length();
+    UErrorCode icuError = U_ZERO_ERROR;
+    bool ok = true;
+
+    // Allocate ICU BiDi context
+    const auto pContext = ubidi_openSized(len, 0, &icuError);
+    if (pContext == nullptr || U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        return false;
+    }
+
+    // Configure context to reorder from logical to visual
+    ubidi_setReorderingMode(pContext, UBIDI_REORDER_DEFAULT);
+
+    ubidi_setPara(pContext, reinterpret_cast<const UChar*>(input.unicode()), len, UBIDI_DEFAULT_LTR, nullptr, &icuError);
+    ok = U_SUCCESS(icuError);
+    if (ok)
+    {
+        auto const direction = ubidi_getDirection(pContext);
+        result = direction != UBIDI_LTR;
+    }
+    else
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+
+    // Release context
+    ubidi_close(pContext);
+
+    return result;
+}
+
 OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
     const QString& input,
     const bool keepAccentsAndDiacriticsInInput /*= true*/,
