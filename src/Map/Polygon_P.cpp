@@ -270,11 +270,28 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     // Create array
     using EPoint = std::array<Coord, 2>;
     
+    // Check if polygon was oversimplified into one dot
+    bool oversimplified = true;
+    for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
+    {
+        if (include[pointIdx])
+        {
+            const auto pointToPlot = pointsToPlot[pointIdx];
+            bool startPoint = qFuzzyCompare(pointToPlot.x, 0) && qFuzzyCompare(pointToPlot.y, 0);
+            if (!startPoint)
+            {
+                oversimplified = false;
+                break;
+            }
+        }
+    }
+    
     // generate base points for connecting lines with triangles
-    std::vector<EPoint> original(pointsSimpleCount);
+    const auto originalSize = oversimplified ? pointsToPlot.size() : pointsSimpleCount;
+    std::vector<EPoint> original(originalSize);
     uint insertIdx = 0;
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
-        if (include[pointIdx])
+        if (include[pointIdx] || oversimplified)
             original[insertIdx++] = { pointsToPlot[pointIdx].x, pointsToPlot[pointIdx].y };
     
     verticesAndIndices->position31 = new PointI(polygon->position31.x, polygon->position31.y);

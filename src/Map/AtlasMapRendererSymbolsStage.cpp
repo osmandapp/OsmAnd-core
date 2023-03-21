@@ -1072,9 +1072,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     if (!debugSettings->disableSymbolsFastCheckByFrustum &&
         allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
+        const auto height = getRenderer()->getHeightOfLocation(currentState, position31);
         if (const auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol))
         {
+            int64_t mapSize31 = INT32_MAX;
+            mapSize31++;
             AreaI symbolArea;
+            AreaI64 symbolArea64;
+            PointI64 topLeft;
+            PointI64 bottomRight;
             QVector<PointI> symbolRect;
             switch (vectorMapSymbol->scaleType)
             {
@@ -1082,13 +1088,50 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                     symbolRect << position31;
                     break;
                 case VectorMapSymbol::ScaleType::In31:
-                    symbolArea = AreaI(position31.y - vectorMapSymbol->scale, position31.x - vectorMapSymbol->scale, position31.y + vectorMapSymbol->scale, position31.x + vectorMapSymbol->scale);
+                    topLeft = PointI64(static_cast<int64_t>(position31.x) - vectorMapSymbol->scale,
+                        static_cast<int64_t>(position31.y) - vectorMapSymbol->scale);
+                    bottomRight = PointI64(static_cast<int64_t>(position31.x) + vectorMapSymbol->scale,
+                        static_cast<int64_t>(position31.y) + vectorMapSymbol->scale);
+                    if (bottomRight.x >= mapSize31)
+                    {
+                        topLeft.x -= mapSize31;
+                        bottomRight.x -= mapSize31;
+                    }
+                    if (bottomRight.y >= mapSize31)
+                    {
+                        topLeft.y -= mapSize31;
+                        bottomRight.y -= mapSize31;
+                    }
+                    symbolArea = AreaI(topLeft.y, topLeft.x, bottomRight.y, bottomRight.x);
                     symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
                     break;
                 case VectorMapSymbol::ScaleType::InMeters:
-                    symbolArea = (AreaI)Utilities::boundingBox31FromAreaInMeters(vectorMapSymbol->scale, position31);
+                    symbolArea64 = Utilities::boundingBox31FromAreaInMeters(vectorMapSymbol->scale, position31);
+                    if (symbolArea64.right() >= mapSize31)
+                    {
+                        symbolArea64.left() -= mapSize31;
+                        symbolArea64.right() -= mapSize31;
+                    }
+                    if (symbolArea64.bottom() >= mapSize31)
+                    {
+                        symbolArea64.top() -= mapSize31;
+                        symbolArea64.bottom() -= mapSize31;
+                    }
+                    symbolArea = (AreaI)symbolArea64;
                     symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
                     break;
+            }
+            if (height != 0.0f)
+            {
+                PointI elevatedPoint;
+                for (auto& symbolPoint : symbolRect)
+                {
+                    if (getRenderer()->getProjectedLocation(
+                        internalState, currentState, symbolPoint, height, elevatedPoint))
+                    {
+                        symbolPoint = elevatedPoint;
+                    }
+                }
             }
             if (!internalState.globalFrustum2D31.test(symbolRect))
             {
@@ -1097,11 +1140,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                 return;
             }
         }
-        else if (!internalState.globalFrustum2D31.test(position31))
+        else
         {
-            if (metric)
-                metric->onSurfaceSymbolsRejectedByFrustum++;
-            return;
+            PointI testPoint;
+            testPoint = position31;
+            if (height != 0.0f)
+                getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
+            if (!internalState.globalFrustum2D31.test(testPoint))
+            {
+                if (metric)
+                    metric->onSurfaceSymbolsRejectedByFrustum++;
+                return;
+            }
         }
     }
 
@@ -1116,14 +1166,32 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             position31 = PointI(gpuMeshResource->position31->x, gpuMeshResource->position31->y);
     }
 
-    // Check and hide the symbol if put under 3D-terrain
-    if (std::dynamic_pointer_cast<const RasterMapSymbol>(onSurfaceMapSymbol))
+    PointF offsetInTileN;
+    const auto tileId = Utilities::normalizeTileId(
+        Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+
+    // Get elevation data
+    float elevationInMeters = 0.0f;
+    float elevationInWorld = 0.0f;
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel &&
+        elevationData)
     {
-        PointF offsetInTileN;
-		const auto tileId = Utilities::normalizeTileId(
-			Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-        if (getElevationData(tileId, currentState.zoomLevel, offsetInTileN) != InvalidZoomLevel)
-            return;
+        if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
+        {
+            const auto scaledElevationInMeters =
+                elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
+
+            const auto upperMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+            const auto lowerMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+            const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+
+            elevationInWorld =
+                (scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor;
+        }
     }
 
     // Don't render fully transparent symbols
@@ -1136,6 +1204,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->genericInstanceParameters = instanceParameters;
         renderable->instanceParameters = instanceParameters;
         renderable->gpuResource = gpuResource;
+        renderable->elevationInMeters = elevationInMeters;
+        renderable->tileId = tileId;
+        renderable->offsetInTileN = offsetInTileN;        
         renderable->opacityFactor = opacityFactor;
         outRenderableSymbols.push_back(renderable);
 
@@ -1145,7 +1216,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-            0.0f,
+            elevationInWorld,
             renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
         // Get direction
@@ -2270,6 +2341,7 @@ double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceFromCameraToPath(con
 
 SkPath OsmAnd::AtlasMapRendererSymbolsStage::convertPathOnScreenToWorld(const SkPath& pathOnScreen, bool& outOk) const
 {
+    const auto& internalState = getInternalState();
     SkPath pathInWorld;
 
     for (auto i = 0; i < pathOnScreen.countPoints(); i++)
@@ -2277,7 +2349,7 @@ SkPath OsmAnd::AtlasMapRendererSymbolsStage::convertPathOnScreenToWorld(const Sk
         const auto skPoint = pathOnScreen.getPoint(i);
         const PointI point(skPoint.x(), currentState.windowSize.y - skPoint.y());
         PointF worldPoint;
-        const auto ok = getRenderer()->getWorldPointFromScreenPoint(point, worldPoint);
+        const auto ok = getRenderer()->getWorldPointFromScreenPoint(internalState, currentState, point, worldPoint);
 
         if (!ok)
         {
@@ -2444,7 +2516,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computeGlyphPlacementOnPath(
     {
         // If point is projected from world to screen, convert it back to world
         const PointI anchorOnScreenNoElevation(anchorPoint.x, currentState.windowSize.y - anchorPoint.y);
-        auto ok = getRenderer()->getWorldPointFromScreenPoint(anchorOnScreenNoElevation, anchorInWorldNoElevation);
+        auto ok = getRenderer()->getWorldPointFromScreenPoint(
+            internalState,
+            currentState,
+            anchorOnScreenNoElevation,
+            anchorInWorldNoElevation);
 
         if (!ok)
             return false;
