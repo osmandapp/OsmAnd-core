@@ -85,12 +85,12 @@ public class NativeCore {
      * @param coreResourcesProvider Core resources provider, implemented in Java
      * @return True if native core was successfully loaded, false otherwise
      */
-    public static boolean load(interface_ICoreResourcesProvider coreResourcesProvider) {
+    public static boolean load(interface_ICoreResourcesProvider coreResourcesProvider, String appFontsPath) {
         if (!s_loadedNativeLibraries)
             return false;
 
         synchronized (s_initSync) {
-            if (!load(coreResourcesProvider.instantiateProxy(true)))
+            if (!load(coreResourcesProvider.instantiateProxy(true), appFontsPath))
                 return false;
 
             // Since core resources provider (created in Java), was passed via SWIG,
@@ -105,9 +105,10 @@ public class NativeCore {
      * Load native core using specified core resources provider
      *
      * @param coreResourcesProvider Core resources provider
+     * @param appFontsPath Path to fonts directory
      * @return True if native core was successfully loaded, false otherwise
      */
-    public static boolean load(ICoreResourcesProvider coreResourcesProvider) {
+    public static boolean load(ICoreResourcesProvider coreResourcesProvider, String appFontsPath) {
         if (!s_loadedNativeLibraries)
             return false;
 
@@ -118,7 +119,7 @@ public class NativeCore {
             }
 
             // Initialize core
-            s_isLoaded = OsmAndCore.InitializeCore(coreResourcesProvider);
+            s_isLoaded = OsmAndCore.InitializeCore(coreResourcesProvider, appFontsPath);
             if (!s_isLoaded)
                 return false;
 

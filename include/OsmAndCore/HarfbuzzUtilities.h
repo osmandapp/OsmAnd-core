@@ -16,6 +16,7 @@ namespace OsmAnd
         ~HarfbuzzUtilities() = delete;
 
         static std::shared_ptr<hb_face_t> createFaceFromData(const QByteArray& data);
+        static std::shared_ptr<hb_face_t> createFaceFromFile(const char* filePath);
     };
 }
 

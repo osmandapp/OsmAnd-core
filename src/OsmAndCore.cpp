@@ -53,6 +53,7 @@ namespace OsmAnd
     std::shared_ptr<QObject> gMainThreadRootObject;
 
     std::shared_ptr<const ICoreResourcesProvider> gCoreResourcesProvider;
+    QString fontPath;
 }
 
 int _dummyArgc = 1;
@@ -87,7 +88,9 @@ struct QCoreApplicationThread : public QThread
 };
 std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider)
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
+    const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider,
+    const char* appFontsPath /* = nullptr */)
 {
     if (!coreResourcesProvider)
     {
@@ -96,6 +99,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     }
     
     gCoreResourcesProvider = coreResourcesProvider;
+
+    fontPath = QString(appFontsPath);
 
     Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
 
@@ -142,6 +147,11 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
 OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()
 {
     return gCoreResourcesProvider;
+}
+
+OSMAND_CORE_API const QString& OSMAND_CORE_CALL OsmAnd::getFontDirectory()
+{
+    return fontPath;
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
