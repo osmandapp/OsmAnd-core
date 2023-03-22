@@ -89,3 +89,24 @@ std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Type
 
     return std::make_shared<Typeface>(skTypeface, hbFace);
 }
+
+std::shared_ptr<OsmAnd::ITypefaceFinder::Typeface> OsmAnd::ITypefaceFinder::Typeface::fromFile(const char* filePath)
+{
+    const auto skTypeface = SkTypeface::MakeFromFile(filePath);
+    if (!skTypeface)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to create SkTypeface from file");
+        return nullptr;
+    }
+
+    const auto hbFace = HarfbuzzUtilities::createFaceFromFile(filePath);
+    if (!hbFace)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to create hb_face_t from file");
+        return nullptr;
+    }
+
+    return std::make_shared<Typeface>(skTypeface, hbFace);
+}
