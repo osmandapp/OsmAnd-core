@@ -28,3 +28,20 @@ std::shared_ptr<hb_face_t> OsmAnd::HarfbuzzUtilities::createFaceFromData(const Q
 
     return std::shared_ptr<hb_face_t>(pHbFace, hb_face_destroy);
 }
+
+std::shared_ptr<hb_face_t> OsmAnd::HarfbuzzUtilities::createFaceFromFile(const char* filePath)
+{
+    const auto hbBlob = std::shared_ptr<hb_blob_t>(
+        hb_blob_create_from_file_or_fail(filePath),
+        hb_blob_destroy);
+
+    if (!hbBlob)
+        return nullptr;
+
+    const auto pHbFace = hb_face_create(hbBlob.get(), 0);
+
+    if (pHbFace == hb_face_get_empty())
+        return nullptr;
+
+    return std::shared_ptr<hb_face_t>(pHbFace, hb_face_destroy);
+}
