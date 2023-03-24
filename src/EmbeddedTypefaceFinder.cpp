@@ -42,8 +42,9 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
 
         _typefaces.push_back(std::move(typeface));
     }
-    auto fontDir = QDir(getFontDirectory());
-    if(!fontDir.path().isEmpty())
+    const auto& fontPath = getFontDirectory();
+    auto fontDir = QDir(fontPath);
+    if (!fontPath.isEmpty() && !fontDir.path().isEmpty())
     {
         QFileInfoList filesInfo;
         Utilities::findFiles(
