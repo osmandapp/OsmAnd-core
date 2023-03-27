@@ -57,10 +57,14 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         auto leftHandDrivingAttributeId = std::numeric_limits<uint32_t>::max();
         auto wikiLinkAttributeId = std::numeric_limits<uint32_t>::max();
         auto populationAttributeId = std::numeric_limits<uint32_t>::max();
+        
+        QHash<QString, std::shared_ptr<WorldRegion>> fullNamesToRegionData;
+        QHash<QString, QList<std::shared_ptr<const OsmAnd::BinaryMapObject>>> unattachedBoundaryMapObjectsByRegions;
 
         bool attributesLocated = false;
         const auto worldRegionsCollector =
-            [outRegions,
+            [this,
+                outRegions,
                 keepMapObjects,
                 visitor,
                 &attributesLocated,
@@ -69,7 +73,8 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 &regionFullNameAttributeId,
                 &osmandRegionId,
                 &regionParentNameAttributeId,
-             
+                &fullNamesToRegionData,
+                &unattachedBoundaryMapObjectsByRegions,
                 &langAttributeId,
                 &metricAttributeId,
                 &roadSignsAttributeId,
@@ -134,6 +139,27 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                 auto worldRegion = std::make_shared<WorldRegion>();
                 worldRegion->boundary = mapObject->containsAttribute("osmand_region", "boundary");
+                if (worldRegion->boundary)
+                {
+                    const auto &fullRegionName = mapObject->captions[regionFullNameAttributeId];
+                    const auto it = fullNamesToRegionData.find(fullRegionName);
+                    if (it != fullNamesToRegionData.end())
+                    {
+                        addPolygonToRegionIfValid(mapObject, it.value());
+                    }
+                    else
+                    {
+                        const auto it = unattachedBoundaryMapObjectsByRegions.find(fullRegionName);
+                        QList<std::shared_ptr<const OsmAnd::BinaryMapObject>> unattachedMapObjects;
+                        if (it == unattachedBoundaryMapObjectsByRegions.end())
+                            unattachedBoundaryMapObjectsByRegions[fullRegionName] = unattachedMapObjects;
+                        else
+                            unattachedMapObjects = it.value();
+                        
+                        unattachedMapObjects << mapObject;
+                    }
+                    return false;
+                }
                 for (const auto& captionEntry : rangeOf(constOf(mapObject->captions)))
                 {
                     const auto& attributeId = captionEntry.key();
@@ -194,12 +220,28 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     cx /= points31.size();
                     cy /= points31.size();
                     worldRegion->regionCenter = LatLon(OsmAnd::Utilities::get31LatitudeY(cy), OsmAnd::Utilities::get31LongitudeX(cx));
+                    worldRegion->polygon = mapObject->points31;
                 }
                 if (keepMapObjects)
                     worldRegion->mapObject = mapObject;
+                
+                if (worldRegion->fullRegionName.isEmpty())
+                    return false;
+                
+                const auto it = unattachedBoundaryMapObjectsByRegions.find(worldRegion->fullRegionName);
+                if (it != unattachedBoundaryMapObjectsByRegions.end())
+                {
+                    auto &unattachedMapObjects = it.value();
+                    for (const auto &mapObject : unattachedMapObjects)
+                    {
+                        addPolygonToRegionIfValid(mapObject, worldRegion);
+                    }
+                    unattachedBoundaryMapObjectsByRegions.remove(worldRegion->fullRegionName);
+                }
 
                 if (!visitor || visitor(worldRegion))
                 {
+                    fullNamesToRegionData.insert(worldRegion->fullRegionName, worldRegion);
                     if (outRegions)
                         outRegions->push_back(qMove(worldRegion));
                 }
@@ -227,4 +269,24 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
     if (queryController && queryController->isAborted())
         return false;
     return true;
+}
+
+void OsmAnd::WorldRegions_P::addPolygonToRegionIfValid(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject, const std::shared_ptr<WorldRegion> &worldRegion) const
+{
+    if (mapObject->points31.count() < 3)
+        return;
+    
+    QVector<PointI> polygon = mapObject->points31;
+    
+    bool outside = true;
+    for (const auto &point : polygon)
+    {
+        if (Utilities::isPointInsidePolygon(point, worldRegion->polygon)) {
+            outside = false;
+            break;
+        }
+    }
+    
+    if (outside)
+        worldRegion->additionalPolygons << polygon;
 }
