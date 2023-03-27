@@ -539,29 +539,32 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     // Detect parts that have different text directions
     const auto rightToLeft = ICU::isRightToLeft(text);
     const auto len = text.length();
-    int count = 0;
-    for (count = 0; count < len - 1; count++)
+    int countLeft = 0;
+    int countRight = 0;
+    if (rightToLeft)
     {
-        if (ICU::isRightToLeft(text.left(count + 1)) == rightToLeft)
-            break;
+        for (countLeft = 0; countLeft < len - 1; countLeft++)
+        {
+            if (ICU::isRightToLeft(text.left(countLeft + 1)))
+                break;
+        }
+        for (countRight = 0; countRight < len - 1; countRight++)
+        {
+            if (ICU::isRightToLeft(text.right(countRight + 1)))
+                break;
+        }
     }
 
     // Draw parts
     auto origin = SkPoint::Make(0.0f, 0.0f);
     bool result = true;
-    if (count > 0)
-    {
-        QString leftPart = text.left(count).remove("\u200e").remove("\u200f");
-        result = drawPart(canvas, textPaint, leftPart, !rightToLeft, origin);
-        if (result)
-        {
-            QString rightPart = text.right(len - count).remove("\u200e").remove("\u200f");
-            result = drawPart(canvas, textPaint, rightPart, rightToLeft, origin);
-        }
-    }
-    else
-        result = drawPart(canvas, textPaint, text, rightToLeft, origin);
-        
+    if (countLeft > 0)
+        result = drawPart(canvas, textPaint, text.left(countLeft), !rightToLeft, origin);
+    if (result)
+        result = drawPart(canvas, textPaint, text.mid(countLeft, len - countLeft - countRight), rightToLeft, origin);
+    if (result && countRight > 0)
+        result = drawPart(canvas, textPaint, text.right(countRight), !rightToLeft, origin);
+
     return result;
 }
 
