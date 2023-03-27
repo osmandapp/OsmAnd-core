@@ -15,6 +15,7 @@
 
 namespace OsmAnd
 {
+    class BinaryMapObject;
     class WorldRegions;
     class WorldRegions_P Q_DECL_FINAL
     {
@@ -24,12 +25,15 @@ namespace OsmAnd
         typedef WorldRegions::VisitorFunction VisitorFunction;
 
     private:
+        void addPolygonToRegionIfValid(const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject, const std::shared_ptr<WorldRegion> &worldRegion) const;
     protected:
         WorldRegions_P(WorldRegions* const owner);
     public:
         ~WorldRegions_P();
 
         ImplementationInterface<WorldRegions> owner;
+        
+        void extracted(unsigned int downloadNameAttributeId, bool keepMapObjects, unsigned int keyNameAttributeId, unsigned int langAttributeId, unsigned int leftHandDrivingAttributeId, const std::shared_ptr<const OsmAnd::BinaryMapObject> &mapObject, unsigned int metricAttributeId, unsigned int populationAttributeId, unsigned int regionFullNameAttributeId, unsigned int regionParentNameAttributeId, unsigned int roadSignsAttributeId, unsigned int wikiLinkAttributeId, const std::shared_ptr<OsmAnd::WorldRegion> &worldRegion) const;
         
         bool loadWorldRegions(
             QList< std::shared_ptr<const WorldRegion> >* const outRegions,

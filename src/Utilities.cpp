@@ -954,3 +954,32 @@ bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0
      */
     return false;
 }
+
+/**
+ * @see <a href="http://alienryderflex.com/polygon/">Determining Whether A Point Is Inside A Complex Polygon</a>
+ * @param point
+ * @param polygon
+ * @return true if the point is in the area of the polygon
+ */
+bool OsmAnd::Utilities::isPointInsidePolygon(const OsmAnd::PointI point,
+                                           const QVector<OsmAnd::PointI> &polygon)
+{
+    int px = point.x;
+    int py = point.y;
+    bool oddNodes = false;
+    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++)
+    {
+        int x1 = polygon[i].x;
+        int y1 = polygon[i].y;
+        int x2 = polygon[j].x;
+        int y2 = polygon[j].y;
+        if (((y1 < py && y2 >= py)
+             || (y2 < py && y1 >= py))
+            && (x1 <= px || x2 <= px)) {
+            if (x1 + (py - y1) / (y2 - y1) * (x2 - x1) < px) {
+                oddNodes = !oddNodes;
+            }
+        }
+    }
+    return oddNodes;
+}
