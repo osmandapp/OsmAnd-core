@@ -917,6 +917,8 @@ namespace OsmAnd
         static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
+        static bool isPointInsidePolygon(const PointI point,
+                                                        const QVector<PointI> &polygon);
 
         inline static void resizeVector(const PointF& start, PointF& end, float sizeIncrement)
         {
