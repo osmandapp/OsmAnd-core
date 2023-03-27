@@ -38,6 +38,8 @@ namespace OsmAnd
         QString population;
         
         LatLon regionCenter;
+        QVector<PointI> polygon;
+        QVector<QVector<PointI>> additionalPolygons;
         
         std::shared_ptr<const OsmAnd::BinaryMapObject> mapObject;
     };
