@@ -536,8 +536,8 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     if (text.isEmpty())
         return true;
 
-    // Detect parts having different text directions
-    const auto rightToLeft = ICU::isRightToLeft(text.right(1));
+    // Detect parts that have different text directions
+    const auto rightToLeft = ICU::isRightToLeft(text);
     const auto len = text.length();
     int count = 0;
     for (count = 0; count < len - 1; count++)
