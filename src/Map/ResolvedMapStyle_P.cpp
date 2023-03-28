@@ -398,6 +398,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
                         return false;
                     }
                     topLevelRule->rootNode->oneOfConditionalSubnodes.append(resolvedRuleNode->oneOfConditionalSubnodes);
+                    topLevelRule->rootNode->applySubnodes.append(resolvedRuleNode->applySubnodes);
                 }
             }
 

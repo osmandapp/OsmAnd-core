@@ -488,7 +488,10 @@ bool OsmAnd::UnresolvedMapStyle_P::insertNodeIntoTopLevelTagValueRule(
             topLevelRule->rootNode->values[QStringLiteral("value")] = valueAttrib;
         }
 
-        topLevelRule->rootNode->oneOfConditionalSubnodes.push_back(ruleNode);
+        if (ruleNode->values.isEmpty() && ruleNode->oneOfConditionalSubnodes.isEmpty())
+            topLevelRule->rootNode->applySubnodes.push_back(ruleNode);
+        else
+            topLevelRule->rootNode->oneOfConditionalSubnodes.push_back(ruleNode);
     }
 
     return true;
