@@ -665,6 +665,12 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     mIconTransform.setTranslate(-0.5f * pathIcon->width(), -0.5f * pathIcon->height());
     mIconTransform.postRotate(90.0f);
 
+    auto legacyScale = context.env->displayDensityFactor > 1.0f
+            ? 2.0f / 3.0f
+            : 1.0f;
+    const auto iconScale = context.env->mapScaleFactor * legacyScale;
+    mIconTransform.postScale(iconScale, iconScale);
+
     SkPathMeasure pathMeasure(path, false);
 
     const auto length = pathMeasure.getLength();
