@@ -1636,8 +1636,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         {
             std::shared_ptr<IMapTiledDataProvider> tiledProvider = nullptr;
             const auto resourcesType = resourcesCollection->getType();
-            if (dataProvider != nullptr && (resourcesType == MapRendererResourceType::MapLayer ||
-                resourcesType == MapRendererResourceType::ElevationData))
+            if (dataProvider != nullptr && (resourcesType == MapRendererResourceType::MapLayer
+                || resourcesType == MapRendererResourceType::ElevationData
+                || resourcesType == MapRendererResourceType::Symbols))
             {
                 tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
             }
@@ -1662,6 +1663,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             }
 
             bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
+            bool strictZoomBounds = resourcesType == MapRendererResourceType::Symbols;
 
             resourcesCollection->removeResources(
                 [this, currentZoom, tiles, maxMissingDataUnderZoomShift, &needsResourcesUploadOrUnload]
@@ -1746,11 +1748,13 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         continue;
                     }
 
-                    if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
+                    bool scaleBeyoundZoomBounds = !isCustomVisibility && !strictZoomBounds;
+                    if (!scaleBeyoundZoomBounds && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                         continue;
 
-                    if (resourcesType == MapRendererResourceType::MapLayer ||
-                        resourcesType == MapRendererResourceType::ElevationData)
+                    if (resourcesType == MapRendererResourceType::MapLayer
+                        || resourcesType == MapRendererResourceType::ElevationData
+                        || resourcesType == MapRendererResourceType::Symbols)
                     {
                         if (activeZoom < minZoom)
                         {
