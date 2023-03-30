@@ -467,13 +467,9 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     return target.asImage();
 }
 
-bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
+bool OsmAnd::TextRasterizer_P::drawPart(SkCanvas& canvas, const TextPaint& textPaint,
+    QString text, bool rtl, SkPoint& origin) const
 {
-    const auto text = textPaint.text.toString();
-    const auto rightToLeft = ICU::isRightToLeft(text);
-    if (text.isEmpty())
-        return true;
-
     const auto pHbBuffer = hb_buffer_create();
     if (pHbBuffer == hb_buffer_get_empty())
     {
@@ -486,7 +482,7 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     }
 
     hb_buffer_add_utf16(hbBuffer.get(), reinterpret_cast<const uint16_t*>(text.constData()), text.size(), 0, -1);
-    hb_buffer_set_direction(hbBuffer.get(), rightToLeft ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+    hb_buffer_set_direction(hbBuffer.get(), rtl ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hbBuffer.get());
 
     hb_shape(textPaint.hbFont.get(), hbBuffer.get(), nullptr, 0);
@@ -500,7 +496,6 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     const auto pGlyphPositions = hb_buffer_get_glyph_positions(hbBuffer.get(), nullptr);
 
     SkTextBlobBuilder textBlobBuilder;
-    auto origin = SkPoint::Make(0.0f, 0.0f);
     const auto textBlobRunBuffer = textBlobBuilder.allocRunPos(textPaint.skFont, glyphsCount);
     for (auto glyphIdx = 0u; glyphIdx < glyphsCount; glyphIdx++)
     {
@@ -533,6 +528,44 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     );
 
     return true;
+}
+
+bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
+{
+    auto text = textPaint.text.toString();
+    if (text.isEmpty())
+        return true;
+
+    // Detect parts that have different text directions
+    const auto rightToLeft = ICU::isRightToLeft(text);
+    const auto len = text.length();
+    int countLeft = 0;
+    int countRight = 0;
+    if (rightToLeft)
+    {
+        for (countLeft = 0; countLeft < len - 1; countLeft++)
+        {
+            if (ICU::isRightToLeft(text.left(countLeft + 1)))
+                break;
+        }
+        for (countRight = 0; countRight < len - 1; countRight++)
+        {
+            if (ICU::isRightToLeft(text.right(countRight + 1)))
+                break;
+        }
+    }
+
+    // Draw parts
+    auto origin = SkPoint::Make(0.0f, 0.0f);
+    bool result = true;
+    if (countLeft > 0)
+        result = drawPart(canvas, textPaint, text.left(countLeft), !rightToLeft, origin);
+    if (result)
+        result = drawPart(canvas, textPaint, text.mid(countLeft, len - countLeft - countRight), rightToLeft, origin);
+    if (result && countRight > 0)
+        result = drawPart(canvas, textPaint, text.right(countRight), !rightToLeft, origin);
+
+    return result;
 }
 
 bool OsmAnd::TextRasterizer_P::rasterize(
