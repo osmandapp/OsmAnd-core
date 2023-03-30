@@ -137,7 +137,7 @@ namespace OsmAnd
         uint64_t multiplyParts(const uint64_t shade, const uint64_t slope) const;
         void blendHillshade(const uint32_t tileSize, uchar* shade, uchar* slope, uchar* blend) const;
         void mergeHeights(const uint32_t tileSize, const float scaleFactor, const bool forceReplace,
-            QByteArray& destination, ushort* source) const;
+            QByteArray& destination, float* source) const;
         bool postProcess(
             const char* pByteBuffer,
             const GeoTiffCollection::ProcessingParameters& procParameters,
