@@ -416,59 +416,17 @@ inline void OsmAnd::GeoTiffCollection_P::mergeHeights(
     const float scaleFactor,
     const bool forceReplace,
     QByteArray& destination,
-    ushort* source) const
+    float* source) const
 {
-    const auto sNoData = static_cast<short>(TIFF_NODATA);
-    const auto noData = *reinterpret_cast<const ushort*>(&sNoData);
-    auto result = reinterpret_cast<ushort*>(destination.data());
-    if ((tileSize & 3) > 0)
+    const auto noData = static_cast<float>(TIFF_NODATA);
+    auto result = reinterpret_cast<float*>(destination.data());
+    const auto valueCount = tileSize * tileSize;
+    for (uint32_t idx = 0; idx < valueCount; idx++)
     {
-        // Simple value-by-value merge
-        const auto valueCount = tileSize * tileSize;
-        for (uint32_t idx = 0; idx < valueCount; idx++)
+        if (forceReplace || result[idx] == noData)
         {
-            if (forceReplace || result[idx] == noData)
-            {
-                const auto src = source[idx];
-                result[idx] = src == noData ? noData : static_cast<uint64_t>(static_cast<float>(src) * scaleFactor);
-            }
-        }
-    }
-    else
-    {
-        // Optimized merge
-        const uint64_t mask0 = 0xFFFFULL;
-        const uint64_t mask1 = 0xFFFF0000ULL;
-        const uint64_t mask2 = 0xFFFF00000000ULL;
-        const uint64_t mask3 = 0xFFFF000000000000ULL;
-        const auto none0 = static_cast<uint64_t>(noData);
-        const auto none1 = none0 << 16;
-        const auto none2 = none1 << 16;
-        const auto none3 = none2 << 16;
-        const auto quadCount = tileSize * tileSize / 4;
-        auto pSource = reinterpret_cast<uint64_t*>(source);
-        auto pResult = reinterpret_cast<uint64_t*>(result);
-        for (int i = 0; i < quadCount; i++)
-        {
-            auto src = *pSource++;
-            auto dst = *pResult;
-            const auto src0 = src & mask0;
-            const auto src1 = src & mask1;
-            const auto src2 = src & mask2;
-            const auto src3 = src & mask3;
-            const auto dst0 = dst & mask0;
-            const auto dst1 = dst & mask1;
-            const auto dst2 = dst & mask2;
-            const auto dst3 = dst & mask3;
-            *pResult = (forceReplace || dst0 == none0 ? (src0 == none0 ? none0 :
-                static_cast<uint64_t>(static_cast<float>(src0) * scaleFactor)) : dst0) |
-                (forceReplace || dst1 == none1 ? (src1 == none1 ? none1 :
-                    static_cast<uint64_t>(static_cast<float>(src1 >> 16) * scaleFactor) << 16) : dst1) |
-                (forceReplace || dst2 == none2 ? (src2 == none2 ? none2 :
-                    static_cast<uint64_t>(static_cast<float>(src2 >> 32) * scaleFactor) << 32) : dst2) |
-                (forceReplace || dst3 == none3 ? (src3 == none3 ? none3 :
-                    static_cast<uint64_t>(static_cast<float>(src3 >> 48) * scaleFactor) << 48) : dst3);
-            pResult++;
+            const auto src = source[idx];
+            result[idx] = src == noData ? noData : static_cast<float>(src) * scaleFactor;
         }
     }
 }
@@ -491,7 +449,7 @@ inline bool OsmAnd::GeoTiffCollection_P::postProcess(
     dataPointer[CPLPrintPointer(dataPointer, pCharBuffer, 23)] = 0;
     auto filename = new char[1024];
     sprintf(filename,
-        "MEM:::DATATYPE=Int16,DATAPOINTER=%s,PIXELS=%d,LINES=%d,GEOTRANSFORM=%.17g/%.17g/0.0/%.17g/0.0/%.17g",
+        "MEM:::DATATYPE=Float32,DATAPOINTER=%s,PIXELS=%d,LINES=%d,GEOTRANSFORM=%.17g/%.17g/0.0/%.17g/0.0/%.17g",
         dataPointer, tileSize, tileSize, tileOrigin.x, tileResolution.x, tileOrigin.y, tileResolution.y);
     if (const auto heightmapDataset = (GDALDataset*) GDALOpen(filename, GA_ReadOnly))
     {
@@ -905,7 +863,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
             resamplingAlgorithm = GRIORA_CubicSpline;
         else if (zoom < minZoom)
         {
-            compositeTile = QByteArray(valueCount * sizeof(short), 0);
+            compositeTile = QByteArray(valueCount * sizeof(float), 0);
             compose = true;
         }
     }
@@ -964,7 +922,10 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
 
     // Files can have data for this tile
     bool available = false;
-    
+
+    // Some file failed to provide data for this tile
+    bool incomplete = false;
+
     for (const auto& collectedSources : constOf(_collectedSources))
     {
         for (const auto& itEntry : rangeOf(constOf(collectedSources)))
@@ -1122,9 +1083,9 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                             auto dataType = destDataType;
                             if (procParameters)
                             {
-                                pByteBuffer = new char[valueCount * sizeof(short)];
+                                pByteBuffer = new char[valueCount * sizeof(float)];
                                 numOfBands = 1;
-                                dataType = GDT_Int16;
+                                dataType = GDT_Float32;
                             }
                             auto pixelSizeInBytes = dataType == GDT_Byte ? 1 : (dataType == GDT_Int16 ? 2 : 4);
                             bandSize = valueCount * pixelSizeInBytes;
@@ -1147,8 +1108,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                 }
                                 if (result && compose && outRaster)
                                 {
-                                    auto pValues = reinterpret_cast<short*>(pData);
-                                    std::fill(pValues, pValues + valueCount, static_cast<short>(noData));
+                                    auto pValues = reinterpret_cast<float*>(pData);
+                                    std::fill(pValues, pValues + valueCount, static_cast<float>(noData));
                                 }
                                 result = result && band->RasterIO(GF_Read,
                                     dataOffset.x, dataOffset.y,
@@ -1209,7 +1170,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                         
                                         // Combine heightmap data
                                         mergeHeights(tileSize, scaleFactor, !atLeastOnePresent,
-                                            compositeTile, reinterpret_cast<ushort*>(pByteBuffer));
+                                            compositeTile, reinterpret_cast<float*>(pByteBuffer));
 
                                         if (!atLeastOnePresent)
                                         {
@@ -1222,6 +1183,8 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                             atLeastOnePresent = true;
                                         }
                                     }
+                                    else
+                                        incomplete = true;
                                 }
                                 else
                                 {
@@ -1267,7 +1230,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
             // Produce empty raster if no data was found
             memset(pBuffer, bandCount * bandSize, 0);
         }
-        if (result && cacheDatabase && cacheDatabase->isOpened())
+        if (result && !incomplete && cacheDatabase && cacheDatabase->isOpened())
         {
             const auto currentTime = QDateTime::currentMSecsSinceEpoch();
             cacheDatabase->storeTileData(tileId, zoom, compositeSpecification,
