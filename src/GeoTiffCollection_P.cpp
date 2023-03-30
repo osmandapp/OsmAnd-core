@@ -1225,6 +1225,11 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
             result = postProcess(compositeTile.constData(), *procParameters, tileSize, overlap, compositeOrigin,
                 compositeResolution, compositeGCPCount, compositeGCPList.constData(), pBuffer);
         }
+        else if (incomplete)
+        {
+            // No data due to failed data request
+            return false;
+        }
         else
         {
             // Produce empty raster if no data was found
