@@ -16,6 +16,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , showOnPathSymbolsRenderablesPaths(false)
     , showOnPath2dSymbolGlyphDetails(false)
     , showOnPath3dSymbolGlyphDetails(false)
+    , showBillboardSymbolBBoxes(false)
     , allSymbolsTransparentForIntersectionLookup(false)
     , showTooShortOnPathSymbolsRenderablesPaths(false)
     , showAllPaths(false)
@@ -52,6 +53,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.showOnPathSymbolsRenderablesPaths = showOnPathSymbolsRenderablesPaths;
     other.showOnPath2dSymbolGlyphDetails = showOnPath2dSymbolGlyphDetails;
     other.showOnPath3dSymbolGlyphDetails = showOnPath3dSymbolGlyphDetails;
+    other.showBillboardSymbolBBoxes = showBillboardSymbolBBoxes;
     other.allSymbolsTransparentForIntersectionLookup = allSymbolsTransparentForIntersectionLookup;
     other.showTooShortOnPathSymbolsRenderablesPaths = showTooShortOnPathSymbolsRenderablesPaths;
     other.showAllPaths = showAllPaths;

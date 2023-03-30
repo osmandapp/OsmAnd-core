@@ -208,11 +208,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->location31 = textSymbol->location31;
                     rasterizedSymbol->offset = textSymbol->drawAlongPath ? localOffset : totalOffset;
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
-                    if (!qIsNaN(textSymbol->intersectionSizeFactor))
+                    if (!qIsNaN(textSymbol->intersectionSizeFactor) && !qFuzzyCompare(textSymbol->size, 0.0f))
                     {
-                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
-                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->width()),
-                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->height())));
+                        const auto margin = static_cast<int>((textSymbol->intersectionSizeFactor - 1.0f) * textSymbol->size);
+                        const PointI size(rasterizedText->width() + margin, rasterizedText->height() + margin);
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), size);
                     }
                     else if (!qIsNaN(textSymbol->intersectionSize))
                     {
