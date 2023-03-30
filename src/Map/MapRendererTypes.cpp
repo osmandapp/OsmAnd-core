@@ -13,8 +13,8 @@ OsmAnd::SymbolSubsectionConfiguration::SymbolSubsectionConfiguration()
 
 OsmAnd::ElevationConfiguration::ElevationConfiguration()
     : dataScaleFactor(1.0f)
-    , slopeAlgorithm(SlopeAlgorithm::ZevenbergenThorne)
-    , visualizationStyle(VisualizationStyle::HillshadeTraditional)
+    , slopeAlgorithm(SlopeAlgorithm::Horn)
+    , visualizationStyle(VisualizationStyle::HillshadeCombined)
     , visualizationAlpha(1.0f)
     , visualizationZ(1.0f)
     , hillshadeSunAngle(45.0f)
@@ -42,8 +42,10 @@ OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::setVisualization
     switch (colorMapPreset)
     {
         case ColorMapPreset::GrayscaleHillshade:
-            visualizationColorMap[0] = {   0.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 1.0f) };
-            visualizationColorMap[1] = { 255.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+            visualizationColorMap[0] = {   0.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.7f) };
+            visualizationColorMap[1] = { 186.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.0f) };
+            visualizationColorMap[2] = { 187.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+            visualizationColorMap[3] = { 255.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.2f) };
             break;
         case ColorMapPreset::GrayscaleSlopeDegrees:
             visualizationColorMap[0] = {   0.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
