@@ -1008,17 +1008,38 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         internalState.glmViewport);
 
     // Get bounds in screen coordinates
-    auto boundsInWindow = AreaI::fromCenterAndSize(
+    auto visibleBBox = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + offsetOnScreen.x),
         static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
         symbol->size.x,
         symbol->size.y);
-    renderable->visibleBBox = boundsInWindow;
-    boundsInWindow.top() -= symbol->margin.top();
-    boundsInWindow.left() -= symbol->margin.left();
-    boundsInWindow.right() += symbol->margin.right();
-    boundsInWindow.bottom() += symbol->margin.bottom();
-    renderable->intersectionBBox = boundsInWindow;
+    renderable->visibleBBox = visibleBBox;
+
+    auto intersectionBBox = visibleBBox.getEnlargedBy(
+        symbol->margin.top(),
+        symbol->margin.left(),
+        symbol->margin.bottom(),
+        symbol->margin.right());
+    renderable->intersectionBBox = intersectionBBox;
+
+    if (Q_UNLIKELY(debugSettings->showBillboardSymbolBBoxes))
+    {
+        QVector<glm::vec2> debugBbox;
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.top()));
+        debugBbox.push_back(glm::vec2(visibleBBox.right(), visibleBBox.top()));
+        debugBbox.push_back(glm::vec2(visibleBBox.right(), visibleBBox.bottom()));
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.bottom()));
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.top()));
+        getRenderer()->debugStage->addLine2D(debugBbox, SK_ColorRED);
+
+        debugBbox.clear();
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.top()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.right(), intersectionBBox.top()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.right(), intersectionBBox.bottom()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.bottom()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.top()));
+        getRenderer()->debugStage->addLine2D(debugBbox, SK_ColorGREEN);
+    }
 
     if (applyFiltering)
     {

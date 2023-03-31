@@ -35,7 +35,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", fa
 
 // Text&Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTS_WITH, Output, String, "intersectsWith", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
