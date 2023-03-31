@@ -66,10 +66,6 @@ OsmAnd::HillshadeRasterMapLayerProvider_P::HillshadeRasterMapLayerProvider_P(
 
 OsmAnd::HillshadeRasterMapLayerProvider_P::~HillshadeRasterMapLayerProvider_P()
 {
-    if (!procParameters.intermediateColorsFilename.isNull())
-        VSIUnlink(qPrintable(procParameters.intermediateColorsFilename));
-    if (!procParameters.resultColorsFilename.isNull())
-        VSIUnlink(qPrintable(procParameters.resultColorsFilename));
 }
 
 OsmAnd::ZoomLevel OsmAnd::HillshadeRasterMapLayerProvider_P::getMinZoom() const

@@ -51,8 +51,6 @@ OsmAnd::SlopeRasterMapLayerProvider_P::SlopeRasterMapLayerProvider_P(
 
 OsmAnd::SlopeRasterMapLayerProvider_P::~SlopeRasterMapLayerProvider_P()
 {
-    if (!procParameters.resultColorsFilename.isNull())
-        VSIUnlink(qPrintable(procParameters.resultColorsFilename));
 }
 
 OsmAnd::ZoomLevel OsmAnd::SlopeRasterMapLayerProvider_P::getMinZoom() const
