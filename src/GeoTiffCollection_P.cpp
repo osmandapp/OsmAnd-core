@@ -826,7 +826,7 @@ OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection_P::getMaxZoom(const uint32_t tileSiz
     return maxZoom;
 }
 
-bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
+OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffData(
     const TileId& tileId,
     const ZoomLevel zoom,
     const uint32_t tileSize,
@@ -868,7 +868,7 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
         }
     }
     else if (zoom < minZoom || zoom > maxZoom)
-        return false;
+        return GeoTiffCollection::CallResult::Empty;
 
     // Calculate tile edges to find corresponding data
     const auto zoomDelta = MaxZoomLevel - zoom;
@@ -991,8 +991,11 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                             cacheDatabase = heightmapCache;
                         if (cacheDatabase && cacheDatabase->isOpened() &&
                             cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
-                            return true;
+                            return GeoTiffCollection::CallResult::Completed;
                     }
+
+                    // Tile is empty
+                    bool empty = false;
 
                     bool result = false;
                     if (const auto dataset = (GDALDataset*) GDALOpen(qPrintable(filePath), GA_ReadOnly))
@@ -1155,7 +1158,9 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                         std::floor(extraArg.dfXOff), std::floor(extraArg.dfYOff),
                                         1, 1, &centerValue, 1, 1, GDT_Float64, 0, 0, &extraArg) == CE_None;
                                     result = result && centerValue != noData;
-                                }                                
+                                }
+                                if (!result)
+                                    empty = true;
                             }
                             // Hillshade/slope raster processing
                             if (procParameters)
@@ -1198,8 +1203,10 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                                 bandSize = (tileSize - overlap) * (tileSize - overlap) *
                                     (destDataType == GDT_Byte ? 1 : (destDataType == GDT_Int16 ? 2 : 4));
                             }
+                            if (empty)
+                                result = true;
                             // Put raster data in cache database file
-                            if (result && !compose && cacheDatabase && cacheDatabase->isOpened())
+                            if (result && !empty && !compose && cacheDatabase && cacheDatabase->isOpened())
                             {
                                 const auto currentTime = QDateTime::currentMSecsSinceEpoch();
                                 cacheDatabase->storeTileData(tileId, zoom, specification,
@@ -1208,8 +1215,13 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
                         }
                         GDALClose(dataset);
                     }
-                    if (result && !compose)
-                        return true;
+                    if (!compose && !empty)
+                    {
+                        if (result)
+                            return GeoTiffCollection::CallResult::Completed;
+                        else
+                            return GeoTiffCollection::CallResult::Failed;
+                    }
                 }
             }
         }
@@ -1225,6 +1237,11 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
             result = postProcess(compositeTile.constData(), *procParameters, tileSize, overlap, compositeOrigin,
                 compositeResolution, compositeGCPCount, compositeGCPList.constData(), pBuffer);
         }
+        else if (incomplete)
+        {
+            // No data due to failed data request
+            return GeoTiffCollection::CallResult::Failed;
+        }
         else
         {
             // Produce empty raster if no data was found
@@ -1236,10 +1253,11 @@ bool OsmAnd::GeoTiffCollection_P::getGeoTiffData(
             cacheDatabase->storeTileData(tileId, zoom, compositeSpecification,
                 QByteArray::fromRawData(pByteBuffer, bandCount * bandSize), currentTime);
         }
-        return result;
+        if (result)
+            return GeoTiffCollection::CallResult::Completed;
     }
 
-    return false;
+    return GeoTiffCollection::CallResult::Empty;
 }
 
 void OsmAnd::GeoTiffCollection_P::onDirectoryChanged(const QString& path)

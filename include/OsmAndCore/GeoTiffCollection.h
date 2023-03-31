@@ -46,7 +46,7 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const Q_DECL_OVERRIDE;
 
-        virtual bool getGeoTiffData(
+        virtual CallResult getGeoTiffData(
             const TileId& tileId,
             const ZoomLevel zoom,
             const uint32_t tileSize,
