@@ -105,7 +105,7 @@ bool OsmAnd::HillshadeRasterMapLayerProvider_P::obtainData(
     const int overlap = 4;
     const auto bufferSize = tileSize * tileSize * bandCount;
     const auto pBuffer = new char[bufferSize];
-    if (owner->filesCollection->getGeoTiffData(
+    const auto result = owner->filesCollection->getGeoTiffData(
         request.tileId,
         request.zoom,
         tileSize + overlap,
@@ -113,7 +113,8 @@ bool OsmAnd::HillshadeRasterMapLayerProvider_P::obtainData(
         bandCount,
         true,
         pBuffer,
-        &procParameters))
+        &procParameters);
+    if (result == GeoTiffCollection::CallResult::Completed)
     {
         auto image = OsmAnd::SkiaUtilities::createSkImageARGB888With(
             QByteArray::fromRawData(pBuffer, bufferSize), tileSize, tileSize, SkAlphaType::kUnpremul_SkAlphaType);
@@ -135,5 +136,5 @@ bool OsmAnd::HillshadeRasterMapLayerProvider_P::obtainData(
     else
         outData.reset();
     delete[] pBuffer;
-    return true;
+    return result != GeoTiffCollection::CallResult::Failed;
 }
