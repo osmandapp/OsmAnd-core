@@ -16,6 +16,12 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(IGeoTiffCollection);
     public:
+        enum class CallResult
+        {
+            Empty,
+            Completed,
+            Failed
+        };        
         enum class RasterType
         {
             Heightmap,
@@ -37,7 +43,7 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const = 0;
 
-        virtual bool getGeoTiffData(
+        virtual CallResult getGeoTiffData(
             const TileId& tileId,
             const ZoomLevel zoom,
             const uint32_t tileSize,

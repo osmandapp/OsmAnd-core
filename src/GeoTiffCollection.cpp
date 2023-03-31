@@ -86,7 +86,7 @@ OsmAnd::ZoomLevel OsmAnd::GeoTiffCollection::getMaxZoom(const uint32_t tileSize)
     return _p->getMaxZoom(tileSize);
 }
 
-bool OsmAnd::GeoTiffCollection::getGeoTiffData(
+OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection::getGeoTiffData(
     const TileId& tileId,
     const ZoomLevel zoom,
     const uint32_t tileSize,

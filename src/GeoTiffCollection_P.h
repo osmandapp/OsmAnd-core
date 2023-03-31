@@ -167,7 +167,7 @@ namespace OsmAnd
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom(const uint32_t tileSize) const;
 
-        bool getGeoTiffData(
+        GeoTiffCollection::CallResult getGeoTiffData(
             const TileId& tileId,
             const ZoomLevel zoom,
             const uint32_t tileSize,
