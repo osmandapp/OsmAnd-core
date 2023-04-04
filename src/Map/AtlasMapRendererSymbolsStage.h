@@ -128,9 +128,13 @@ namespace OsmAnd
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
+            MapRenderer::MapSymbolReferenceOrigins* pOutProcessedSymbolsOrigins,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
+
+        mutable MapRenderer::MapSymbolReferenceOrigins _lastProcessedMapSymbolReferenceOrigins;
+        mutable QReadWriteLock _lastProcessedMapSymbolReferenceOriginsLock;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         ScreenQuadTree _lastPreparedIntersections;
@@ -379,6 +383,8 @@ namespace OsmAnd
             const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
+
+        bool isSymbolReferenceOriginProcessed(const std::shared_ptr<MapRendererBaseResource>& symbolReferenceOrigin) const;
     };
 }
 

@@ -1732,6 +1732,16 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     const auto state = entry->getState();
                     return state == MapRendererResourceState::Uploaded;
                 };
+            
+            const auto isResourceReady =
+                [this, isUsableResource]
+                (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
+                {
+                    if (!isUsableResource(entry))
+                        return false;
+
+                    return renderer->isSymbolReferenceOriginProcessed(entry);
+                };
             for (const auto& tilesEntry : rangeOf(constOf(tiles)))
             {
                 const auto activeZoom = tilesEntry.key();
@@ -1743,7 +1753,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (tiledResourcesCollection->containsResource(
                             activeTileId,
                             activeZoom,
-                            isUsableResource))
+                            isResourceReady))
                     {
                         continue;
                     }

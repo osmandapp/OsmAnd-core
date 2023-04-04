@@ -131,6 +131,8 @@ namespace OsmAnd
         
         double getTileSizeInMeters() const override;
         double getPixelsToMetersScaleFactor() const override;
+
+        bool isSymbolReferenceOriginProcessed(const std::shared_ptr<MapRendererBaseResource>& symbolReferenceOrigin) const override;
     };
 }
 

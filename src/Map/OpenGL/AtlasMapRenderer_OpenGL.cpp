@@ -1647,3 +1647,9 @@ OsmAnd::AtlasMapRendererDebugStage* OsmAnd::AtlasMapRenderer_OpenGL::createDebug
 {
     return new AtlasMapRendererDebugStage_OpenGL(this);
 }
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isSymbolReferenceOriginProcessed(
+    const std::shared_ptr<MapRendererBaseResource>& symbolReferenceOrigin) const
+{
+    return symbolsStage->isSymbolReferenceOriginProcessed(symbolReferenceOrigin);
+}

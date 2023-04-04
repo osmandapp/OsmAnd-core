@@ -347,6 +347,7 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
         virtual int getSymbolsUpdateInterval() Q_DECL_OVERRIDE;
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
+        virtual bool isSymbolReferenceOriginProcessed(const std::shared_ptr<MapRendererBaseResource>& symbolReferenceOrigin) const = 0;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;

@@ -167,6 +167,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
     convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
 }
 
+bool OsmAnd::AtlasMapRendererSymbolsStage::isSymbolReferenceOriginProcessed(
+    const std::shared_ptr<MapRendererBaseResource>& symbolReferenceOrigin) const
+{
+    QReadLocker scopedLocker(&_lastProcessedMapSymbolReferenceOriginsLock);
+
+    const auto& itReferenceOrigin = _lastProcessedMapSymbolReferenceOrigins.find(symbolReferenceOrigin);
+    if (itReferenceOrigin != _lastProcessedMapSymbolReferenceOrigins.end())
+        return (*itReferenceOrigin)->getState() == MapRendererResourceState::Uploaded;
+    else
+        return false;
+}
+
 //#define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 1
 #ifndef OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
 #   define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 0
@@ -186,12 +198,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         if (!publishedMapSymbolsByOrderLock.tryLockForRead())
             return false;
 
+        QWriteLocker scopedLocker(&_lastProcessedMapSymbolReferenceOriginsLock);
+
         _lastAcceptedMapSymbolsByOrder.clear();
+        _lastProcessedMapSymbolReferenceOrigins.clear();
+        
         const auto result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             outRenderableSymbols,
             outIntersections,
             &_lastAcceptedMapSymbolsByOrder,
+            &_lastProcessedMapSymbolReferenceOrigins,
             metric);
 
         publishedMapSymbolsByOrderLock.unlock();
@@ -278,6 +295,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         outRenderableSymbols,
         outIntersections,
         nullptr,
+        nullptr,
         metric);
 
     publishedMapSymbolsByOrderLock.unlock();
@@ -290,6 +308,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     ScreenQuadTree& outIntersections,
     MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
+    MapRenderer::MapSymbolReferenceOrigins* pOutProcessedSymbolsOrigins,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     Stopwatch stopwatch(metric != nullptr);
@@ -485,6 +504,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
                                 (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+
+                                if (pOutProcessedSymbolsOrigins)
+                                    for (const auto& referencesOrigin : constOf(referencesOrigins))
+                                        pOutProcessedSymbolsOrigins->insert(referencesOrigin);
                             }
                             atLeastOnePlotted = true;
                         }
@@ -548,6 +571,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
                                 (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+
+                                if (pOutProcessedSymbolsOrigins)
+                                    for (const auto& referencesOrigin : constOf(referencesOrigins))
+                                        pOutProcessedSymbolsOrigins->insert(referencesOrigin);
                             }
                             atLeastOnePlotted = true;
                         }
