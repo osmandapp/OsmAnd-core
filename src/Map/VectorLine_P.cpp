@@ -172,7 +172,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         {
             double newWidth = _lineWidth / 3.4f;
             double scale = newWidth / owner->pathIcon->width();
-            auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
+            auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, scale);
             _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
         }
         _hasUnappliedPrimitiveChanges = true;
