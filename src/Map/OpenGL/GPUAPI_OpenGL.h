@@ -422,7 +422,7 @@ namespace OsmAnd
         bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile, std::shared_ptr<const ResourceInGPU>& resourceInGPU) override;
         bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) override;
 
-        void waitUntilUploadIsComplete() override;
+        void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;
 
         virtual void pushDebugGroupMarker(const QString& title) = 0;
         virtual void popDebugGroupMarker() = 0;

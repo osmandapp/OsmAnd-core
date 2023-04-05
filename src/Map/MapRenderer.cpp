@@ -259,7 +259,7 @@ void OsmAnd::MapRenderer::processGpuWorker()
             if (resourcesUploaded > 0 || resourcesUnloaded > 0)
                 invalidateFrame();
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-        } while (unprocessedRequests > 0);
+        } while (_gpuWorkerThreadIsAlive && unprocessedRequests > 0);
     }
     else if (isInRenderThread())
     {
@@ -361,6 +361,8 @@ bool OsmAnd::MapRenderer::doInitializeRendering()
 bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
+
+    gpuContextIsLost = false;
 
     // GPU worker should not be suspended initially
     _gpuWorkerIsSuspended = false;
@@ -592,6 +594,9 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
 bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
 {
     assert(_renderThreadId == QThread::currentThreadId());
+
+    if (gpuContextLost)
+        gpuContextIsLost = true;
 
     bool ok;
 

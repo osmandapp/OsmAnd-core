@@ -138,6 +138,7 @@ namespace OsmAnd
             const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // General:
+        volatile bool gpuContextIsLost;
         mutable QMutex resourcesAreInUse;
         const std::unique_ptr<GPUAPI> gpuAPI;
         const MapRendererSetupOptions& setupOptions;

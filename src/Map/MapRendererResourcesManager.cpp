@@ -1362,6 +1362,9 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
     const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
     unsigned int& totalUnloaded)
 {
+    if (renderer->gpuContextIsLost)
+        return;
+
     // Select all resources with "UnloadPending" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1381,6 +1384,9 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
     // Unload from GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
+        if (renderer->gpuContextIsLost)
+            return;
+
         // Since state change is allowed (it's not changed to "Unloading" during query), check state here
         if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading))
             continue;
@@ -1431,6 +1437,9 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     bool& moreThanLimitAvailable,
     bool& atLeastOneUploadFailed)
 {
+    if (renderer->gpuContextIsLost)
+        return;
+
     // Select all resources with "Ready" state
     QList< std::shared_ptr<MapRendererBaseResource> > resources;
     collection->obtainResources(&resources,
@@ -1461,6 +1470,9 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     // Upload to GPU all selected resources
     for (const auto& resource : constOf(resources))
     {
+        if (renderer->gpuContextIsLost)
+            return;
+
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
         if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
         {
@@ -1500,7 +1512,7 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         // Before marking as uploaded, if uploading is done from GPU worker thread,
         // wait until operation completes
         if (renderer->setupOptions.gpuWorkerThreadEnabled)
-            renderer->gpuAPI->waitUntilUploadIsComplete();
+            renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost));
 
         // Mark as uploaded
         assert(resource->getState() == MapRendererResourceState::Uploading || resource->getState() == MapRendererResourceState::Renewing);

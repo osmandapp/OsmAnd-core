@@ -300,7 +300,7 @@ namespace OsmAnd
             const std::shared_ptr< const MapSymbol >& symbol,
             std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
-        virtual void waitUntilUploadIsComplete() = 0;
+        virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
 
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
 
