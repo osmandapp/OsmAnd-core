@@ -6,7 +6,6 @@ OsmAnd::VectorLine::VectorLine(
     const int baseOrder_,
     const sk_sp<const SkImage>& pathIcon_/* = nullptr*/,
     const sk_sp<const SkImage>& specialPathIcon_/* = nullptr*/,
-    const float pathIconStep_/* = -1*/,
     const bool pathIconOnSurface_/* = true*/,
     const float screenScale_/* = 2*/,
     const VectorLine::EndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
@@ -15,7 +14,6 @@ OsmAnd::VectorLine::VectorLine(
     , baseOrder(baseOrder_)
     , pathIcon(pathIcon_)
     , specialPathIcon(specialPathIcon_)
-    , pathIconStep(pathIconStep_)
     , pathIconOnSurface(pathIconOnSurface_)
     , screenScale(screenScale_)
     , endCapStyle(endCapStlye_)
@@ -119,6 +117,26 @@ OsmAnd::FColorARGB OsmAnd::VectorLine::getFillColor() const
 void OsmAnd::VectorLine::setFillColor(const FColorARGB color)
 {
     _p->setFillColor(color);
+}
+
+float OsmAnd::VectorLine::getPathIconStep() const
+{
+    return _p->getPathIconStep();
+}
+
+void OsmAnd::VectorLine::setPathIconStep(const float step)
+{
+    _p->setPathIconStep(step);
+}
+
+float OsmAnd::VectorLine::getSpecialPathIconStep() const
+{
+    return _p->getSpecialPathIconStep();
+}
+
+void OsmAnd::VectorLine::setSpecialPathIconStep(const float step)
+{
+    _p->setSpecialPathIconStep(step);
 }
 
 std::vector<double> OsmAnd::VectorLine::getLineDash() const

@@ -42,6 +42,8 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _colorizationSceme(0)
     , _lineWidth(1.0)
     , _outlineWidth(0.0)
+    , _pathIconStep(-1.0f)
+    , _specialPathIconStep(-1.0f)
     , _metersPerPixel(1.0)
     , _mapZoomLevel(InvalidZoomLevel)
     , _mapVisualZoom(0.f)
@@ -179,6 +181,46 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         _hasUnappliedChanges = true;
     }
 
+}
+
+float OsmAnd::VectorLine_P::getPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pathIconStep;
+}
+
+void OsmAnd::VectorLine_P::setPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (!qFuzzyCompare(_pathIconStep, step))
+    {
+        _pathIconStep = step;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::VectorLine_P::getSpecialPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _specialPathIconStep;
+}
+
+void OsmAnd::VectorLine_P::setSpecialPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (!qFuzzyCompare(_specialPathIconStep, step))
+    {
+        _specialPathIconStep = step;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
 }
 
 double OsmAnd::VectorLine_P::getOutlineWidth() const
@@ -982,7 +1024,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     bool ok = false;
     const auto length = pathMeasure.getLength();
 
-    float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
+    float pathIconStep = getPointStepPx();
 
     float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
     auto iconOffset = 0.5f * step;
@@ -1015,9 +1057,14 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
 {
     if (useSpecialArrow())
     {
-        return owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
+        return _specialPathIconStep > 0
+            ? _specialPathIconStep
+            : owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
     }
-    return _scaledPathIcon->height();
+    else
+    {
+        return _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
+    }
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
