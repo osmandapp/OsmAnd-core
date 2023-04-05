@@ -1364,7 +1364,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     return true;
 }
 
-void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()
+void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextLost)
 {
     if (isSupported_sync)
     {
@@ -1372,11 +1372,14 @@ void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()
         GL_CHECK_RESULT;
 
         GLenum result = GL_TIMEOUT_EXPIRED;
-        while(result == GL_TIMEOUT_EXPIRED)
-        {
+        while(result == GL_TIMEOUT_EXPIRED && !(*gpuContextLost))
+        {               
             result = glClientWaitSync_wrapper(sync, GL_SYNC_FLUSH_COMMANDS_BIT /*0x00000001*/, 8333333);
             GL_CHECK_RESULT;
         }
+
+        if (*gpuContextLost)
+            return;
 
         glDeleteSync_wrapper(sync);
         GL_CHECK_RESULT;
