@@ -67,6 +67,8 @@ namespace OsmAnd
         double _outlineWidth;
         FColorARGB _fillColor;
         FColorARGB _outlineColor;
+        float _pathIconStep;
+        float _specialPathIconStep;
         bool _dash;
         std::vector<double> _dashPattern;
 
@@ -136,6 +138,12 @@ namespace OsmAnd
         
         double getLineWidth() const;
         void setLineWidth(const double width);
+
+        float getPathIconStep() const;
+        void setPathIconStep(const float step);
+
+        float getSpecialPathIconStep() const;
+        void setSpecialPathIconStep(const float step);
 
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);

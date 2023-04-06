@@ -21,6 +21,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _lineWidth(3.0)
     , _direction(0.0f)
     , _pathIconStep(-1.0)
+    , _specialPathIconStep(-1.0)
     , _pathIconOnSurface(true)
     , _screenScale(2)
     , owner(owner_)
@@ -255,6 +256,20 @@ void OsmAnd::VectorLineBuilder_P::setPathIconStep(const float step)
     _pathIconStep = step;
 }
 
+float OsmAnd::VectorLineBuilder_P::getSpecialPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _specialPathIconStep;
+}
+
+void OsmAnd::VectorLineBuilder_P::setSpecialPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _specialPathIconStep = step;
+}
+
 bool OsmAnd::VectorLineBuilder_P::isPathIconOnSurface() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -315,7 +330,6 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _baseOrder,
                                                           _pathIcon,
                                                           _specialPathIcon,
-                                                          _pathIconStep,
                                                           _pathIconOnSurface,
                                                           _screenScale,
                                                           _endCapStyle));
@@ -329,6 +343,8 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setLineDash(_dashPattern);
     line->setOutlineWidth(_outlineWidth);
     line->setOutlineColor(_outlineColor);
+    line->setPathIconStep(_pathIconStep);
+    line->setSpecialPathIconStep(_specialPathIconStep);
     line->setColorizationScheme(_colorizationScheme);
     line->applyChanges();
     
