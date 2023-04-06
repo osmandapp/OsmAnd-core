@@ -88,6 +88,8 @@ void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
     if (_showArrows != showArrows)
     {
         _showArrows = showArrows;
+
+        _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
 }
