@@ -142,6 +142,7 @@ namespace OsmAnd
         bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
             const QByteArray& data, int64_t time = 0);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
+        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeBiggerTilesData(ZoomLevel zoom);

@@ -206,6 +206,14 @@ bool OsmAnd::TileSqliteDatabase::removeTileData(
     return _p->removeTileData(tileId, zoom, specification);
 }
 
+bool OsmAnd::TileSqliteDatabase::removeTilesData(
+    QList<TileId>& tileIds,
+    OsmAnd::ZoomLevel zoom,
+    int specification /* = 0 */)
+{
+    return _p->removeTilesData(tileIds, zoom, specification);
+}
+
 bool OsmAnd::TileSqliteDatabase::removeTilesData()
 {
     return _p->removeTilesData();

@@ -528,7 +528,7 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
         if (res > 0)
         {
             bool ok = false;
-            
+
             const auto minZoomValue = readStatementValue(statement, 0).toLongLong(&ok);
             if (!ok || minZoomValue < ZoomLevel::MinZoomLevel || minZoomValue > ZoomLevel::MaxZoomLevel)
             {
@@ -1457,15 +1457,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 
     if (zoom < getMinZoom() || zoom > getMaxZoom())
     {
-        if (!recomputeMinMaxZoom())
-        {
-            return false;
-        }
+        recomputeMinMaxZoom();
     }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1540,15 +1534,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 
     if (zoom < getMinZoom() || zoom > getMaxZoom())
     {
-        if (!recomputeMinMaxZoom())
-        {
-            return false;
-        }
+        recomputeMinMaxZoom();
     }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1594,14 +1582,78 @@ bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd:
         }
     }
     
-    if (!recomputeMinMaxZoom())
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification /* = 0 */)
+{
+    if (tileIds.isEmpty())
+    {
+        return true;
+    }
+    
+    if (!isOpened())
     {
         return false;
     }
-    if (!recomputeBBox31(zoom))
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
-        return false;
+        QWriteLocker scopedLocker(&_lock);
+
+        QList<TileId> tileIdsBuff;
+        for (auto& tileId : tileIds)
+        {
+            tileIdsBuff.push_back(tileId);
+            if (tileIdsBuff.size() >= 1024 || tileId == tileIds.last())
+            {
+                auto sql = QStringLiteral("DELETE FROM tiles WHERE (");
+                for (int i = 0; i < tileIdsBuff.size(); i++)
+                {
+                    if (i > 0)
+                    {
+                        sql.append(QStringLiteral(" OR "));
+                    }
+                    sql.append(QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i));
+                }
+                sql.append(QStringLiteral(") AND z=:z"));
+
+                const auto statement =
+                    prepareStatement(_database, specification > 0 ? sql + QStringLiteral(" AND s=:s") : sql);
+                if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileIdsBuff, zoom, specification))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to configure query for %dx%d@%d",
+                        tileId.x,
+                        tileId.y,
+                        zoom);
+                    return false;
+                }
+
+                if (stepStatement(statement) < 0)
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to remove data for %dx%d@%d: %s",
+                        tileId.x,
+                        tileId.y,
+                        zoom,
+                        sqlite3_errmsg(_database.get()));
+                    return false;
+                }
+                tileIdsBuff.clear();
+            }
+        }
     }
+
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1630,14 +1682,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData()
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1678,14 +1724,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1726,14 +1766,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeBiggerTilesData(ZoomLevel zoom)
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1772,14 +1806,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeSpecificTilesData(int specification)
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1818,14 +1846,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1881,14 +1903,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, bool strict /* 
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1940,14 +1956,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, ZoomLevel zoom,
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -2021,12 +2031,13 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
         bool invertedY,
         int invertedZoomValue,
         const std::shared_ptr<sqlite3_stmt>& statement,
-        QList<TileId> tileIds,
-        OsmAnd::ZoomLevel zoom) const
+        QList<TileId>& tileIds,
+        OsmAnd::ZoomLevel zoom,
+        const int specification /*= 0*/) const
 {
     bool res = configureStatement(invertedZoomValue, statement, zoom);
     int i = 0;
-    for (TileId tileId : tileIds)
+    for (auto& tileId : tileIds)
     {
         if (invertedY)
         {
