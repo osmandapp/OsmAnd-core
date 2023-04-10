@@ -56,7 +56,7 @@ namespace OsmAnd
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             TileId tileId, ZoomLevel zoom, const int specification = 0) const;
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
-            QList<TileId> tileIds, ZoomLevel zoom) const;
+            QList<TileId>& tileIds, ZoomLevel zoom, const int specification = 0) const;
         bool configureStatement(int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             ZoomLevel zoom) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int specification) const;
@@ -127,6 +127,7 @@ namespace OsmAnd
         bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
             const QByteArray& data, int64_t time = 0);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
+        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeBiggerTilesData(ZoomLevel zoom);
