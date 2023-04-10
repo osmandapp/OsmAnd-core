@@ -180,8 +180,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 {
     Stopwatch stopwatch(metric != nullptr);
 
+    // Overscaled/underscaled symbol resources were removed
+    const auto needUpdatedSymbols = renderer->needUpdatedSymbols();
+
     // In case symbols update was not suspended, process published symbols
-    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate)
+    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate || needUpdatedSymbols)
     {
         if (!publishedMapSymbolsByOrderLock.tryLockForRead())
             return false;
@@ -195,6 +198,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             metric);
 
         publishedMapSymbolsByOrderLock.unlock();
+
+        if (result && needUpdatedSymbols)
+            renderer->dontNeedUpdatedSymbols();
 
         if (metric)
         {
