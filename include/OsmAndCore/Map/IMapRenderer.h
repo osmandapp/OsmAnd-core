@@ -103,6 +103,9 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() = 0;
         virtual int getSymbolsUpdateInterval() = 0;
         virtual void setSymbolsUpdateInterval(int interval) = 0;
+        virtual void shouldUpdateSymbols() = 0;
+        virtual bool needUpdatedSymbols() = 0;
+        virtual void dontNeedUpdatedSymbols() = 0;
 
         virtual bool setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetMapLayerProvider(const int layerIndex, bool forcedUpdate = false) = 0;

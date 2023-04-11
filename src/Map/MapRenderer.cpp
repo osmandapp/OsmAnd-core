@@ -41,6 +41,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _currentConfigurationAsConst(_currentConfiguration)
     , _requestedConfiguration(baseConfiguration_->createCopy())
     , _suspendSymbolsUpdateCounter(0)
+    , _updateSymbols(false)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerThreadIsAlive(false)
     , _gpuWorkerIsSuspended(false)
@@ -1163,6 +1164,21 @@ int OsmAnd::MapRenderer::getSymbolsUpdateInterval()
 void OsmAnd::MapRenderer::setSymbolsUpdateInterval(int interval)
 {
     _symbolsUpdateInterval = interval;
+}
+
+void OsmAnd::MapRenderer::shouldUpdateSymbols()
+{
+    _updateSymbols = true;
+}
+
+bool OsmAnd::MapRenderer::needUpdatedSymbols()
+{
+    return _updateSymbols;
+}
+
+void OsmAnd::MapRenderer::dontNeedUpdatedSymbols()
+{
+    _updateSymbols = false;
 }
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const

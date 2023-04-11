@@ -721,10 +721,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     if (const auto tiledResourcesCollection =
             std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
     {
-        requestNeededTiledResources(
-            tiledResourcesCollection,
-            activeTiles,
-            activeZoom);
+        // Symbols only for high detail tiles are meant to be displayed
+        if (tiledResourcesCollection->type != MapRendererResourceType::Symbols || activeZoom == currentZoom)
+            requestNeededTiledResources(
+                tiledResourcesCollection,
+                activeTiles,
+                activeZoom);
     }
     else if (const auto keyedResourcesCollection =
             std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
@@ -800,6 +802,10 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         // request resource data
         std::shared_ptr<MapRendererBaseTiledResource> resource;
         resourcesCollection->obtainOrAllocateEntry(resource, activeTileId, activeZoom, resourceAllocator);
+        // Prepare to clean up overscaled/underscaled symbol resources when ones of current zoom level can be used
+        if (resourceType == MapRendererResourceType::Symbols
+            && resource->getState() == MapRendererResourceState::Unknown)
+            _clearOldSymbolResources = true;
         requestNeededResource(resource);
     }
 
@@ -1560,6 +1566,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         removedResouresCollections.clear();
     }
 
+    // Keep overscaled/underscaled symbol resources while ones of current zoom level can't be used yet
+    bool keepOldSymbolResources = false;
+
     // Use aggressive cache cleaning: remove all resources that are not needed
     for (const auto& resourcesCollection : constOf(resourcesCollections))
     {
@@ -1660,6 +1669,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             auto minVisibleZoom = MinZoomLevel;
             auto maxVisibleZoom = MaxZoomLevel;
 
+            int maxMissingDataZoomShift = MapRenderer::MaxMissingDataZoomShift;
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
             if (tiledProvider)
@@ -1745,11 +1755,102 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             for (const auto& tilesEntry : rangeOf(constOf(tiles)))
             {
                 const auto activeZoom = tilesEntry.key();
+                bool updateSymbolResources = _clearOldSymbolResources;
+                if (resourcesType == MapRendererResourceType::Symbols)
+                {
+                    // Symbols only for high detail tiles are meant to be displayed
+                    if (activeZoom != currentZoom)
+                        continue;
+
+                    // Keep overscaled/underscaled resources if symbols of current zoom level ain't ready yet
+                    if (updateSymbolResources)
+                    {
+                        const auto isLoadingResource =
+                            []
+                            (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
+                            {
+                                if (entry->isJunk)
+                                    return false;
+                                const auto state = entry->getState();
+                                return state == MapRendererResourceState::PreparedRenew
+                                    || state == MapRendererResourceState::PreparingRenew
+                                    || state == MapRendererResourceState::ProcessingRequest
+                                    || state == MapRendererResourceState::Ready
+                                    || state == MapRendererResourceState::Renewing
+                                    || state == MapRendererResourceState::Requested
+                                    || state == MapRendererResourceState::Requesting
+                                    || state == MapRendererResourceState::Uploading;
+                            };
+                        bool atLeastOnePresent = false;
+                        const auto& activeTiles = tilesEntry.value();
+                        for (const auto& activeTileId : constOf(activeTiles))
+                        {
+                            // Don't remove overscaled/underscaled resources while some resource is loading
+                            if (tiledResourcesCollection->containsResource(
+                                    activeTileId,
+                                    activeZoom,
+                                    isLoadingResource))
+                            {
+                                updateSymbolResources = false;
+                                break;
+                            }
+
+                            // Don't remove overscaled/underscaled resources if no resource is there yet
+                            if (tiledResourcesCollection->containsResource(
+                                    activeTileId,
+                                    activeZoom,
+                                    isUsableResource))
+                            {
+                                atLeastOnePresent = true;
+                            }
+                        }
+                        updateSymbolResources = updateSymbolResources && atLeastOnePresent;
+                    }
+                    if (!updateSymbolResources)
+                        keepOldSymbolResources = true;
+                }
                 const auto& activeTiles = tilesEntry.value();
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
                     // If resources have exact match for this tile, use only that
                     neededTilesMap[activeZoom].insert(activeTileId);
+
+                    // Keep resources for symbols of overscaled/underscaled tiles
+                    if (resourcesType == MapRendererResourceType::Symbols)
+                    {
+                        if (updateSymbolResources)
+                            continue;
+                        for (int zoomShift = 1; zoomShift <= maxMissingDataUnderZoomShift; zoomShift++)
+                        {
+                            const auto underscaledZoom = static_cast<int>(activeZoom) + zoomShift;
+                            if (underscaledZoom <= maxZoom)
+                                {
+                                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                                    activeTileId,
+                                    zoomShift);
+                                const auto tilesCount = underscaledTileIdsN.size();
+                                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                                for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                                {
+                                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                                    neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+                                }
+                            }
+                        }
+                        for (int zoomShift = 1; zoomShift <= maxMissingDataZoomShift; zoomShift++)
+                        {
+                            const auto overscaledZoom = static_cast<int>(activeZoom) - zoomShift;
+                            if (overscaledZoom >= minZoom)
+                            {
+                                const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
+                                    activeTileId,
+                                    zoomShift);
+                                neededTilesMap[static_cast<ZoomLevel>(overscaledZoom)].insert(overscaledTileId);
+                            }
+                        }
+                        continue;                        
+                    }
+
                     if (tiledResourcesCollection->containsResource(
                             activeTileId,
                             activeZoom,
@@ -1884,6 +1985,12 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
                 });
         }
+    }
+
+    if (!keepOldSymbolResources)
+    {
+        renderer->shouldUpdateSymbols();
+        _clearOldSymbolResources = false;
     }
 
     if (needsResourcesUploadOrUnload)
