@@ -2144,21 +2144,22 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
                 QMutex gpuResourcesSyncStageExecutedOnceMutex;
 
-                // Dispatcher always runs after GPU resources sync stage
-                renderer->getGpuThreadDispatcher().invokeAsync(
-                    [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
-                    ()
-                    {
-                        QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                        gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
-                    });
-
-                requestResourcesUploadOrUnload();
-                needsResourcesUploadOrUnload = false;
-
-                // Wait up to 250ms for GPU resources sync stage to complete
                 {
                     QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+
+                    // Dispatcher always runs after GPU resources sync stage
+                    renderer->getGpuThreadDispatcher().invokeAsync(
+                        [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
+                        ()
+                        {
+                            QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                            gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                        });
+
+                    requestResourcesUploadOrUnload();
+                    needsResourcesUploadOrUnload = false;
+
+                    // Wait up to 250ms for GPU resources sync stage to complete
                     gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
                 }
             }
