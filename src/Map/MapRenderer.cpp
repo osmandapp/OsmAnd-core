@@ -636,8 +636,33 @@ bool OsmAnd::MapRenderer::doReleaseRendering(const bool gpuContextLost)
 
 bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 {
-    if (gpuContextLost)
-        _gpuWorkerIsSuspended = true;
+    // Wait for GPU worker to finish its job
+    if (_gpuWorkerThread)
+    {
+        QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
+        QMutex gpuResourcesSyncStageExecutedOnceMutex;       
+        {
+            QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+
+            // Dispatcher always runs after GPU resources sync stage
+            getGpuThreadDispatcher().invokeAsync(
+                [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
+                ()
+                {
+                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                    gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                });
+
+            // Wake up GPU worker thread
+            {
+                QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
+                _gpuWorkerThreadWakeup.wakeAll();
+            }
+
+            // Wait up to 2s for GPU resources sync stage to complete
+            gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 2000);
+        }
+    }
 
     // Release resources (to let all resources be released)
     _resources->releaseAllResources(gpuContextLost);
