@@ -72,8 +72,10 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         while (pNextCharacter != pEnd)
         {
             const auto position = pNextCharacter - pText;
-            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
-            
+            auto npNextCharacter = pNextCharacter;
+            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&npNextCharacter));
+            const auto charSize = npNextCharacter - pNextCharacter;
+            pNextCharacter = npNextCharacter;
             if (typeface)
             {
                 if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
@@ -130,7 +132,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.textPaints.push_back(TextPaint());
                 pTextPaint = &linePaint.textPaints.last();
 
-                pTextPaint->text = QStringRef(lineRef.string(), position, 1);
+                pTextPaint->text = QStringRef(lineRef.string(), position, charSize);
                 pTextPaint->paint = paint;
                 pTextPaint->typeface = typeface;
                 pTextPaint->skFont = skFont;
