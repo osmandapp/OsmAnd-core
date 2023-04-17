@@ -1125,11 +1125,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRendererState& state,
     const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
 {
-    const auto state = getState();
-
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
     if (!ok)
@@ -1258,6 +1256,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
+    const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
+{
+    const auto state = getState();
+
+    return getLocationFromElevatedPoint(state, screenPoint, location31, heightInMeters);
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRendererState& state,

@@ -113,6 +113,11 @@ namespace OsmAnd
             const PointD& deceleration,
             const Key key = nullptr);
 
+        void animateFlatTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key = nullptr);
+
         void animateAzimuthBy(
             const float deltaValue,
             const float duration,

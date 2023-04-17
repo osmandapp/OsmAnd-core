@@ -682,6 +682,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMapTarget(forcedUpdate, disableUpdate);
     }
 
+    public final boolean resetMapTarget() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTarget();
+    }
+
+    public final boolean resetMapTargetPixelCoordinates(PointI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTargetPixelCoordinates(screenPoint);
+    }
+
     public final boolean setMapTargetPixelCoordinates(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 

@@ -140,6 +140,8 @@ namespace OsmAnd
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool resetMapTarget() = 0;
+        virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) = 0;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTargetLocation(const PointI& location31,
