@@ -127,6 +127,8 @@ namespace OsmAnd
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
             const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
+        virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
+            const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
@@ -311,6 +313,8 @@ namespace OsmAnd
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool resetMapTarget() Q_DECL_OVERRIDE;
+        virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint, 
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTargetLocation(const PointI& location31, 

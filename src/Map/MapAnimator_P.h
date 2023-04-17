@@ -69,6 +69,13 @@ namespace OsmAnd
             const float duration,
             const TimingFunction timingFunction);
 
+        void constructFlatTargetAnimationByDelta(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction);
+
         void constructTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
             const Key key,
@@ -166,6 +173,11 @@ namespace OsmAnd
         const Animation<PointI64>::ApplierMethod _targetSetter;
         void targetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
+        const Animation<PointI64>::GetInitialValueMethod _flatTargetGetter;
+        PointI64 flatTargetGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+        const Animation<PointI64>::ApplierMethod _flatTargetSetter;
+        void flatTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+
         static std::shared_ptr<GenericAnimation> findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection);
     public:
         ~MapAnimator_P();
@@ -245,6 +257,11 @@ namespace OsmAnd
             const TimingFunction zoomTimingFunction,
             const Key key);
         void parabolicAnimateTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key);
+
+        void animateFlatTargetWith(
             const PointD& velocity,
             const PointD& deceleration,
             const Key key);

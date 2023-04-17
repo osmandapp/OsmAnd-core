@@ -1832,21 +1832,26 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state, const PointI& lo
     bool sameHeight = state.fixedHeight != 0.0f  && state.fixedLocation31 == location31 &&
         state.fixedZoomLevel == state.zoomLevel;
     auto height = sameHeight ? state.fixedHeight : getHeightOfLocation(state, location31);
-    const float zoomDelta = state.zoomLevel - state.fixedZoomLevel;
-    if (height == 0.0f)
+    if (height == 0.0f && state.fixedLocation31 == location31)
     {
+        const float zoomDelta = state.zoomLevel - state.fixedZoomLevel;
         if (zoomDelta >= -1.0f && zoomDelta <= 1.0f)
             height = state.fixedHeight * (zoomDelta * 0.75f + (zoomDelta == 0.0f ? 1.0f : 1.25f));
+        sameHeight = true;
     }
     else
-    {
-        state.fixedHeight = height;
-        state.fixedZoomLevel = state.zoomLevel;
-    }
+        sameHeight = false;
+
     PointI target31;
     bool haveTarget = getNewTargetByScreenPoint(state, state.fixedPixel, location31, target31, height);
     if(!haveTarget)
         return false;
+
+    if (!sameHeight)
+    {
+        state.fixedHeight = height;
+        state.fixedZoomLevel = state.zoomLevel;
+    }
 
     bool update = forcedUpdate || (state.target31 != target31) || (state.fixedLocation31 != location31);
     if (!update)
@@ -1869,6 +1874,47 @@ bool OsmAnd::MapRenderer::setMapTarget(
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return setMapTarget(_requestedState, _requestedState.fixedLocation31, forcedUpdate, disableUpdate);
+}
+
+bool OsmAnd::MapRenderer::resetMapTarget()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0)
+        return false;
+
+    PointI location31;
+    float height;
+    bool haveTarget = getLocationFromElevatedPoint(_requestedState, _requestedState.fixedPixel, location31, &height);
+    if(!haveTarget)
+        return false;
+
+    _requestedState.fixedLocation31 = location31;
+    _requestedState.fixedHeight = height;
+    _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoint_)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (screenPoint_.x < 0 || screenPoint_.y < 0)
+        return false;
+
+    PointI location31;
+    float height;
+    bool haveTarget = getLocationFromElevatedPoint(_requestedState, screenPoint_, location31, &height);
+    if(!haveTarget)
+        return false;
+
+    _requestedState.fixedPixel = screenPoint_;
+    _requestedState.fixedLocation31 = location31;
+    _requestedState.fixedHeight = height;
+    _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
+
+    return true;
 }
 
 bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint_,
