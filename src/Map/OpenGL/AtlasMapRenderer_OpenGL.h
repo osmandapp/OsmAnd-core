@@ -100,6 +100,8 @@ namespace OsmAnd
             const MapRendererState& state,
             const PointI& screenPoint,
             PointF& outWorldPoint) const override;
+        float getWorldElevationOfLocation(const MapRendererState& state,
+            const float elevationInMeters, const PointI& location31) const override;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();

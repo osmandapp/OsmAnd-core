@@ -1090,6 +1090,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(
     return true;
 }
 
+float OsmAnd::AtlasMapRenderer_OpenGL::getWorldElevationOfLocation(const MapRendererState& state,
+    const float elevationInMeters, const PointI& location31_) const
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+    const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    return (scaledElevationInMeters / metersPerUnit) * state.elevationConfiguration.zScaleFactor;
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
 {
     PointI64 location;

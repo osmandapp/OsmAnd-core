@@ -134,6 +134,8 @@ namespace OsmAnd
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getWorldPointFromScreenPoint(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointF& outWorldPoint) const = 0;
+        virtual float getWorldElevationOfLocation(const MapRendererState& state,
+            const float elevationInMeters, const PointI& location31) const = 0;
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
