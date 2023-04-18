@@ -388,7 +388,7 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
 
             iterateFromStart = false;
 
-            for (auto pathIndex = 0; pathIndex < pathsToCombine.size(); pathIndex++)
+            for (auto pathIndex = 0; pathIndex < pathsToCombine.size() && !iterateFromStart; pathIndex++)
             {
                 if (queryController && queryController->isAborted())
                     return CombinePathsResult();
@@ -416,6 +416,7 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
                     if (otherPath->getLengthInPixels() > maxPathLengthInPixels)
                         continue;
 
+                    // Try to connect 1st path to 2nd and 2nd to 1st, choose best connection
                     float gapBetweenPaths = 0.0f;
                     if (otherPath->isAttachAllowed(path, minGapBetweenPaths, gapBetweenPaths))
                     {
@@ -423,7 +424,7 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
                         mainPath = otherPath;
                         pathToAttach = path;
                     }
-                    else if (path->isAttachAllowed(otherPath, minGapBetweenPaths, gapBetweenPaths))
+                    if (path->isAttachAllowed(otherPath, minGapBetweenPaths, gapBetweenPaths))
                     {
                         minGapBetweenPaths = gapBetweenPaths;
                         mainPath = path;
@@ -675,20 +676,47 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isAttachAllowed(
     const auto secondPathFirstVectorN = static_cast<PointF>(otherSecondPoint - otherFirstPoint).normalized();
 
     // Allow paths attachment only with obtuse angle between their segment of connection
-    const auto x = firstPathLastVectorN.x * secondPathFirstVectorN.x;
-    const auto y = firstPathLastVectorN.y * secondPathFirstVectorN.y;
-    return x + y > 0;
+
+    // If paths overlap on end/start, simply check angle
+    // between last segment of 1st path and first segment of 2nd path 
+    if (gapVector.x == 0 && gapVector.y == 0)
+    {
+        const auto x = firstPathLastVectorN.x * secondPathFirstVectorN.x;
+        const auto y = firstPathLastVectorN.y * secondPathFirstVectorN.y;
+        return x + y > 0;
+    }
+
+    // But if there is gap between paths, check angle
+    // between gap segment and both last/first segment
+    const auto gapVectorN = static_cast<PointF>(gapVector).normalized();
+
+    const auto x1 = firstPathLastVectorN.x * gapVectorN.x;
+    const auto y1 = firstPathLastVectorN.y * gapVectorN.y;
+    const auto x2 = gapVectorN.x * secondPathFirstVectorN.x;
+    const auto y2 = gapVectorN.y * secondPathFirstVectorN.y;
+
+    return x1 + y1 > 0 && x2 + y2 > 0;
 }
 
 void OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::attachPath(const std::shared_ptr<СombinedPath>& other)
 {
-    // Intentionally path is copied from 1st point,
-    // and distance from zero point to 1st point is included. 
-    // Also distance between paths is intentionally missed.
-    _points.append(other->_points.mid(1));
-    _lengthInPixels = getLengthInPixels() + other->getLengthInPixels();
-    _combined = true;
+    const auto end = _points.back();
+    const auto otherStart = other->_points[0];
+    const auto gapVector = otherStart - end;
+    if (gapVector.x == 0 && gapVector.y == 0)
+    {
+        _points.append(other->_points.mid(1));
+        _lengthInPixels = getLengthInPixels() + other->getLengthInPixels();
+    }
+    else
+    {
+        _points.append(other->_points);
+
+        const auto gapLength = static_cast<PointF>(gapVector).norm();
+        _lengthInPixels = getLengthInPixels() + gapLength + other->getLengthInPixels();
+    }
     
+    _combined = true;    
     other->_attachedToAnotherPath = true;
 }
 
