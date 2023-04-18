@@ -1890,7 +1890,7 @@ bool OsmAnd::MapRenderer::resetMapTarget()
         return false;
 
     _requestedState.fixedLocation31 = location31;
-    _requestedState.fixedHeight = height;
+    _requestedState.fixedHeight = getWorldElevationOfLocation(_requestedState, height, location31);
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
 
     return true;
@@ -1911,7 +1911,7 @@ bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoi
 
     _requestedState.fixedPixel = screenPoint_;
     _requestedState.fixedLocation31 = location31;
-    _requestedState.fixedHeight = height;
+    _requestedState.fixedHeight =  getWorldElevationOfLocation(_requestedState, height, location31);
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
 
     return true;
