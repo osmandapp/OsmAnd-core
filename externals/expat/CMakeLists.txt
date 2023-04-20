@@ -30,6 +30,9 @@ else()
 	check_function_exists("bcopy" HAVE_BCOPY)
 	check_symbol_exists("memmove" "string.h" HAVE_MEMMOVE)
 	check_function_exists("mmap" HAVE_MMAP)
+	check_function_exists("arc4random" HAVE_ARC4RANDOM)
+	check_function_exists("arc4random_buf" HAVE_ARC4RANDOM_BUF)
+	check_function_exists("getrandom" HAVE_GETRANDOM)
 
 	#/* Define to 1 if you have the ANSI C header files. */
 	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
