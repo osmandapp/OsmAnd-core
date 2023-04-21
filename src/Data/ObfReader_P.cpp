@@ -26,11 +26,15 @@
 #include "ObfPoiSectionReader_P.h"
 #include "ObfReaderUtilities.h"
 #include "Logging.h"
+#include <google/protobuf/wire_format_lite.h>
+#include "google/protobuf/wire_format_lite.cc"
 
 //#define OSMAND_TRACE_OBF_READERS 1
 #if !defined(OSMAND_TRACE_OBF_READERS)
 #   define OSMAND_TRACE_OBF_READERS 0
 #endif // !defined(OSMAND_TRACE_OBF_READERS)
+
+using google::protobuf::internal::WireFormatLite;
 
 OsmAnd::ObfReader_P::ObfReader_P(
     ObfReader* const owner_,
@@ -233,6 +237,15 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
             case OBF::OsmAndStructure::kDateCreatedFieldNumber:
                 cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&info->creationTimestamp));
                 break;
+            case OBF::OsmAndStructure::kOwnerFieldNumber:
+            {
+                int len = 0;
+                WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(cis, &len);
+                const auto oldLimit = cis->PushLimit(len);
+                readOsmAndOwner(cis, info);
+                cis->PopLimit(oldLimit);
+                break;
+            }
             case OBF::OsmAndStructure::kMapIndexFieldNumber:
             {
                 std::shared_ptr<ObfMapSectionInfo> section(new ObfMapSectionInfo(info));
@@ -331,4 +344,28 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
     }
 
     return false;
+}
+
+bool OsmAnd::ObfReader_P::readOsmAndOwner(gpb::io::CodedInputStream* cis, const std::shared_ptr<ObfInfo> info)
+{
+    uint32_t tag;
+    while ((tag = cis->ReadTag()) != 0)
+    {
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case OBF::OsmAndOwner::kOwnerFieldNumber:
+                ObfReaderUtilities::readQString(cis, info->owner.owner);
+                break;
+            case OBF::OsmAndOwner::kPluginidFieldNumber:
+                ObfReaderUtilities::readQString(cis, info->owner.pluginid);
+                break;
+            case OBF::OsmAndOwner::kDescriptionFieldNumber:
+                ObfReaderUtilities::readQString(cis, info->owner.description);
+                break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+    return true;
 }

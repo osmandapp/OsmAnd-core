@@ -84,6 +84,7 @@ class OsmAndRoutingIndex;
 class OsmAndRoutingIndex_RouteEncodingRule;
 class OsmAndRoutingIndex_RouteDataBox;
 class OsmAndRoutingIndex_RouteDataBlock;
+class OsmAndOwner;
 
 enum OsmAndAddressIndex_CitiesIndex_CitiesType {
   OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesOrTowns = 1,
@@ -175,6 +176,15 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 datecreated() const;
   inline void set_datecreated(::google::protobuf::int64 value);
 
+  // optional .OsmAnd.OBF.OsmAndOwner owner = 33;
+  inline bool has_owner() const;
+  inline void clear_owner();
+  static const int kOwnerFieldNumber = 33;
+  inline const ::OsmAnd::OBF::OsmAndOwner& owner() const;
+  inline ::OsmAnd::OBF::OsmAndOwner* mutable_owner();
+  inline ::OsmAnd::OBF::OsmAndOwner* release_owner();
+  inline void set_allocated_owner(::OsmAnd::OBF::OsmAndOwner* owner);
+
   // repeated .OsmAnd.OBF.OsmAndAddressIndex addressIndex = 7;
   inline int addressindex_size() const;
   inline void clear_addressindex();
@@ -248,12 +258,15 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline void clear_has_version();
   inline void set_has_datecreated();
   inline void clear_has_datecreated();
+  inline void set_has_owner();
+  inline void clear_has_owner();
   inline void set_has_versionconfirm();
   inline void clear_has_versionconfirm();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::int64 datecreated_;
+  ::OsmAnd::OBF::OsmAndOwner* owner_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex > addressindex_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex > transportindex_;
   ::google::protobuf::uint32 version_;
@@ -263,7 +276,7 @@ class OsmAndStructure : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex > routingindex_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3234,6 +3247,34 @@ class TransportRoute : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule >*
       mutable_scheduletrip();
 
+  // repeated uint32 attributeTagIds = 19;
+  inline int attributetagids_size() const;
+  inline void clear_attributetagids();
+  static const int kAttributeTagIdsFieldNumber = 19;
+  inline ::google::protobuf::uint32 attributetagids(int index) const;
+  inline void set_attributetagids(int index, ::google::protobuf::uint32 value);
+  inline void add_attributetagids(::google::protobuf::uint32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+      attributetagids() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+      mutable_attributetagids();
+
+  // repeated bytes attributeTextTagValues = 20;
+  inline int attributetexttagvalues_size() const;
+  inline void clear_attributetexttagvalues();
+  static const int kAttributeTextTagValuesFieldNumber = 20;
+  inline const ::std::string& attributetexttagvalues(int index) const;
+  inline ::std::string* mutable_attributetexttagvalues(int index);
+  inline void set_attributetexttagvalues(int index, const ::std::string& value);
+  inline void set_attributetexttagvalues(int index, const char* value);
+  inline void set_attributetexttagvalues(int index, const void* value, size_t size);
+  inline ::std::string* add_attributetexttagvalues();
+  inline void add_attributetexttagvalues(const ::std::string& value);
+  inline void add_attributetexttagvalues(const char* value);
+  inline void add_attributetexttagvalues(const void* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& attributetexttagvalues() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_attributetexttagvalues();
+
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRoute)
  private:
   inline void set_has_id();
@@ -3269,9 +3310,11 @@ class TransportRoute : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > reversestops_;
   ::std::string* geometry_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteSchedule > scheduletrip_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > attributetagids_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> attributetexttagvalues_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(12 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -6756,6 +6799,123 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static OsmAndRoutingIndex* default_instance_;
 };
+// -------------------------------------------------------------------
+
+class OsmAndOwner : public ::google::protobuf::Message {
+ public:
+  OsmAndOwner();
+  virtual ~OsmAndOwner();
+
+  OsmAndOwner(const OsmAndOwner& from);
+
+  inline OsmAndOwner& operator=(const OsmAndOwner& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const OsmAndOwner& default_instance();
+
+  void Swap(OsmAndOwner* other);
+
+  // implements Message ----------------------------------------------
+
+  OsmAndOwner* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const OsmAndOwner& from);
+  void MergeFrom(const OsmAndOwner& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required string owner = 1;
+  inline bool has_owner() const;
+  inline void clear_owner();
+  static const int kOwnerFieldNumber = 1;
+  inline const ::std::string& owner() const;
+  inline void set_owner(const ::std::string& value);
+  inline void set_owner(const char* value);
+  inline void set_owner(const char* value, size_t size);
+  inline ::std::string* mutable_owner();
+  inline ::std::string* release_owner();
+  inline void set_allocated_owner(::std::string* owner);
+
+  // required string description = 2;
+  inline bool has_description() const;
+  inline void clear_description();
+  static const int kDescriptionFieldNumber = 2;
+  inline const ::std::string& description() const;
+  inline void set_description(const ::std::string& value);
+  inline void set_description(const char* value);
+  inline void set_description(const char* value, size_t size);
+  inline ::std::string* mutable_description();
+  inline ::std::string* release_description();
+  inline void set_allocated_description(::std::string* description);
+
+  // required string pluginid = 3;
+  inline bool has_pluginid() const;
+  inline void clear_pluginid();
+  static const int kPluginidFieldNumber = 3;
+  inline const ::std::string& pluginid() const;
+  inline void set_pluginid(const ::std::string& value);
+  inline void set_pluginid(const char* value);
+  inline void set_pluginid(const char* value, size_t size);
+  inline ::std::string* mutable_pluginid();
+  inline ::std::string* release_pluginid();
+  inline void set_allocated_pluginid(::std::string* pluginid);
+
+  // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndOwner)
+ private:
+  inline void set_has_owner();
+  inline void clear_has_owner();
+  inline void set_has_description();
+  inline void clear_has_description();
+  inline void set_has_pluginid();
+  inline void clear_has_pluginid();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* owner_;
+  ::std::string* description_;
+  ::std::string* pluginid_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_OBF_2eproto();
+  friend void protobuf_AssignDesc_OBF_2eproto();
+  friend void protobuf_ShutdownFile_OBF_2eproto();
+
+  void InitAsDefaultInstance();
+  static OsmAndOwner* default_instance_;
+};
 // ===================================================================
 
 
@@ -6805,6 +6965,44 @@ inline ::google::protobuf::int64 OsmAndStructure::datecreated() const {
 inline void OsmAndStructure::set_datecreated(::google::protobuf::int64 value) {
   set_has_datecreated();
   datecreated_ = value;
+}
+
+// optional .OsmAnd.OBF.OsmAndOwner owner = 33;
+inline bool OsmAndStructure::has_owner() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void OsmAndStructure::set_has_owner() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void OsmAndStructure::clear_has_owner() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void OsmAndStructure::clear_owner() {
+  if (owner_ != NULL) owner_->::OsmAnd::OBF::OsmAndOwner::Clear();
+  clear_has_owner();
+}
+inline const ::OsmAnd::OBF::OsmAndOwner& OsmAndStructure::owner() const {
+  return owner_ != NULL ? *owner_ : *default_instance_->owner_;
+}
+inline ::OsmAnd::OBF::OsmAndOwner* OsmAndStructure::mutable_owner() {
+  set_has_owner();
+  if (owner_ == NULL) owner_ = new ::OsmAnd::OBF::OsmAndOwner;
+  return owner_;
+}
+inline ::OsmAnd::OBF::OsmAndOwner* OsmAndStructure::release_owner() {
+  clear_has_owner();
+  ::OsmAnd::OBF::OsmAndOwner* temp = owner_;
+  owner_ = NULL;
+  return temp;
+}
+inline void OsmAndStructure::set_allocated_owner(::OsmAnd::OBF::OsmAndOwner* owner) {
+  delete owner_;
+  owner_ = owner;
+  if (owner) {
+    set_has_owner();
+  } else {
+    clear_has_owner();
+  }
 }
 
 // repeated .OsmAnd.OBF.OsmAndAddressIndex addressIndex = 7;
@@ -6934,13 +7132,13 @@ OsmAndStructure::mutable_routingindex() {
 
 // required uint32 versionConfirm = 32;
 inline bool OsmAndStructure::has_versionconfirm() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void OsmAndStructure::set_has_versionconfirm() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void OsmAndStructure::clear_has_versionconfirm() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void OsmAndStructure::clear_versionconfirm() {
   versionconfirm_ = 0u;
@@ -11300,6 +11498,75 @@ TransportRoute::mutable_scheduletrip() {
   return &scheduletrip_;
 }
 
+// repeated uint32 attributeTagIds = 19;
+inline int TransportRoute::attributetagids_size() const {
+  return attributetagids_.size();
+}
+inline void TransportRoute::clear_attributetagids() {
+  attributetagids_.Clear();
+}
+inline ::google::protobuf::uint32 TransportRoute::attributetagids(int index) const {
+  return attributetagids_.Get(index);
+}
+inline void TransportRoute::set_attributetagids(int index, ::google::protobuf::uint32 value) {
+  attributetagids_.Set(index, value);
+}
+inline void TransportRoute::add_attributetagids(::google::protobuf::uint32 value) {
+  attributetagids_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+TransportRoute::attributetagids() const {
+  return attributetagids_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+TransportRoute::mutable_attributetagids() {
+  return &attributetagids_;
+}
+
+// repeated bytes attributeTextTagValues = 20;
+inline int TransportRoute::attributetexttagvalues_size() const {
+  return attributetexttagvalues_.size();
+}
+inline void TransportRoute::clear_attributetexttagvalues() {
+  attributetexttagvalues_.Clear();
+}
+inline const ::std::string& TransportRoute::attributetexttagvalues(int index) const {
+  return attributetexttagvalues_.Get(index);
+}
+inline ::std::string* TransportRoute::mutable_attributetexttagvalues(int index) {
+  return attributetexttagvalues_.Mutable(index);
+}
+inline void TransportRoute::set_attributetexttagvalues(int index, const ::std::string& value) {
+  attributetexttagvalues_.Mutable(index)->assign(value);
+}
+inline void TransportRoute::set_attributetexttagvalues(int index, const char* value) {
+  attributetexttagvalues_.Mutable(index)->assign(value);
+}
+inline void TransportRoute::set_attributetexttagvalues(int index, const void* value, size_t size) {
+  attributetexttagvalues_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TransportRoute::add_attributetexttagvalues() {
+  return attributetexttagvalues_.Add();
+}
+inline void TransportRoute::add_attributetexttagvalues(const ::std::string& value) {
+  attributetexttagvalues_.Add()->assign(value);
+}
+inline void TransportRoute::add_attributetexttagvalues(const char* value) {
+  attributetexttagvalues_.Add()->assign(value);
+}
+inline void TransportRoute::add_attributetexttagvalues(const void* value, size_t size) {
+  attributetexttagvalues_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+TransportRoute::attributetexttagvalues() const {
+  return attributetexttagvalues_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+TransportRoute::mutable_attributetexttagvalues() {
+  return &attributetexttagvalues_;
+}
+
 // -------------------------------------------------------------------
 
 // IncompleteTransportRoutes
@@ -15632,6 +15899,220 @@ OsmAndRoutingIndex::blocks() const {
 inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >*
 OsmAndRoutingIndex::mutable_blocks() {
   return &blocks_;
+}
+
+// -------------------------------------------------------------------
+
+// OsmAndOwner
+
+// required string owner = 1;
+inline bool OsmAndOwner::has_owner() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void OsmAndOwner::set_has_owner() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void OsmAndOwner::clear_has_owner() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void OsmAndOwner::clear_owner() {
+  if (owner_ != &::google::protobuf::internal::kEmptyString) {
+    owner_->clear();
+  }
+  clear_has_owner();
+}
+inline const ::std::string& OsmAndOwner::owner() const {
+  return *owner_;
+}
+inline void OsmAndOwner::set_owner(const ::std::string& value) {
+  set_has_owner();
+  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+    owner_ = new ::std::string;
+  }
+  owner_->assign(value);
+}
+inline void OsmAndOwner::set_owner(const char* value) {
+  set_has_owner();
+  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+    owner_ = new ::std::string;
+  }
+  owner_->assign(value);
+}
+inline void OsmAndOwner::set_owner(const char* value, size_t size) {
+  set_has_owner();
+  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+    owner_ = new ::std::string;
+  }
+  owner_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndOwner::mutable_owner() {
+  set_has_owner();
+  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+    owner_ = new ::std::string;
+  }
+  return owner_;
+}
+inline ::std::string* OsmAndOwner::release_owner() {
+  clear_has_owner();
+  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = owner_;
+    owner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void OsmAndOwner::set_allocated_owner(::std::string* owner) {
+  if (owner_ != &::google::protobuf::internal::kEmptyString) {
+    delete owner_;
+  }
+  if (owner) {
+    set_has_owner();
+    owner_ = owner;
+  } else {
+    clear_has_owner();
+    owner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// required string description = 2;
+inline bool OsmAndOwner::has_description() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void OsmAndOwner::set_has_description() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void OsmAndOwner::clear_has_description() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void OsmAndOwner::clear_description() {
+  if (description_ != &::google::protobuf::internal::kEmptyString) {
+    description_->clear();
+  }
+  clear_has_description();
+}
+inline const ::std::string& OsmAndOwner::description() const {
+  return *description_;
+}
+inline void OsmAndOwner::set_description(const ::std::string& value) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(value);
+}
+inline void OsmAndOwner::set_description(const char* value) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(value);
+}
+inline void OsmAndOwner::set_description(const char* value, size_t size) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndOwner::mutable_description() {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  return description_;
+}
+inline ::std::string* OsmAndOwner::release_description() {
+  clear_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = description_;
+    description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void OsmAndOwner::set_allocated_description(::std::string* description) {
+  if (description_ != &::google::protobuf::internal::kEmptyString) {
+    delete description_;
+  }
+  if (description) {
+    set_has_description();
+    description_ = description;
+  } else {
+    clear_has_description();
+    description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// required string pluginid = 3;
+inline bool OsmAndOwner::has_pluginid() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void OsmAndOwner::set_has_pluginid() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void OsmAndOwner::clear_has_pluginid() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void OsmAndOwner::clear_pluginid() {
+  if (pluginid_ != &::google::protobuf::internal::kEmptyString) {
+    pluginid_->clear();
+  }
+  clear_has_pluginid();
+}
+inline const ::std::string& OsmAndOwner::pluginid() const {
+  return *pluginid_;
+}
+inline void OsmAndOwner::set_pluginid(const ::std::string& value) {
+  set_has_pluginid();
+  if (pluginid_ == &::google::protobuf::internal::kEmptyString) {
+    pluginid_ = new ::std::string;
+  }
+  pluginid_->assign(value);
+}
+inline void OsmAndOwner::set_pluginid(const char* value) {
+  set_has_pluginid();
+  if (pluginid_ == &::google::protobuf::internal::kEmptyString) {
+    pluginid_ = new ::std::string;
+  }
+  pluginid_->assign(value);
+}
+inline void OsmAndOwner::set_pluginid(const char* value, size_t size) {
+  set_has_pluginid();
+  if (pluginid_ == &::google::protobuf::internal::kEmptyString) {
+    pluginid_ = new ::std::string;
+  }
+  pluginid_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndOwner::mutable_pluginid() {
+  set_has_pluginid();
+  if (pluginid_ == &::google::protobuf::internal::kEmptyString) {
+    pluginid_ = new ::std::string;
+  }
+  return pluginid_;
+}
+inline ::std::string* OsmAndOwner::release_pluginid() {
+  clear_has_pluginid();
+  if (pluginid_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = pluginid_;
+    pluginid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void OsmAndOwner::set_allocated_pluginid(::std::string* pluginid) {
+  if (pluginid_ != &::google::protobuf::internal::kEmptyString) {
+    delete pluginid_;
+  }
+  if (pluginid) {
+    set_has_pluginid();
+    pluginid_ = pluginid;
+  } else {
+    clear_has_pluginid();
+    pluginid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 
