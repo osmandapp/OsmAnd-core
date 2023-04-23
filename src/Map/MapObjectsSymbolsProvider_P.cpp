@@ -100,7 +100,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
         const auto group = *citPreallocatedGroup;
 
-        const auto& path31 = combinePathsResult.getCombinedOrOriginalPath(mapObject);
+        auto path31 = combinePathsResult.getCombinedOrOriginalPath(mapObject);
+
+        const auto visibleBBox = request.mapState.visibleBBox31;
+        const auto start = path31.front();
+        const auto end = path31.back();
+        // Reverse path to reduce placing on-path or along-path symbols out of visibleBBox
+        if (!visibleBBox.contains(start) && visibleBBox.contains(end))
+            std::reverse(path31.begin(), path31.end());
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
