@@ -73,7 +73,7 @@ namespace OsmAnd
         MapRendererState _currentState;
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        bool setMapTarget(MapRendererState& state, const PointI& location31,
+        bool setMapTarget(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
 
         // Resources-related:
@@ -136,6 +136,8 @@ namespace OsmAnd
             const PointI& screenPoint, PointF& outWorldPoint) const = 0;
         virtual float getWorldElevationOfLocation(const MapRendererState& state,
             const float elevationInMeters, const PointI& location31) const = 0;
+        virtual float getElevationOfLocationInMeters(const MapRendererState& state,
+            const float elevation, const ZoomLevel zoom, const PointI& location31) const = 0;
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
@@ -317,9 +319,11 @@ namespace OsmAnd
         virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
-        virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint, 
+        virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setMapTargetLocation(const PointI& location31, 
+        virtual bool setMapTargetLocation(const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
@@ -334,6 +338,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
+        virtual float getMapTargetHeightInMeters() const Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;

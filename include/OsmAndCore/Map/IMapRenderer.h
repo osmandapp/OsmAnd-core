@@ -146,6 +146,8 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTargetLocation(const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
@@ -159,6 +161,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
         virtual bool getMapTargetLocation(PointI& location31) const = 0;
+        virtual float getMapTargetHeightInMeters() const = 0;
 
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;
@@ -182,6 +185,11 @@ namespace OsmAnd
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
         virtual bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const = 0;
+        virtual float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const = 0;
+        virtual bool getZoomAndRotationAfterPinch(
+            const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+            PointD& zoomAndRotate) const = 0;
 
         virtual float getLocationHeightInMeters(const PointI& location31) const = 0;
 
