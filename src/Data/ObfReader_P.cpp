@@ -366,7 +366,6 @@ bool OsmAnd::ObfReader_P::readOsmAndOwner(gpb::io::CodedInputStream* cis, const 
                 ObfReaderUtilities::readQString(cis, info->owner.description);
                 break;
             default:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
     }
