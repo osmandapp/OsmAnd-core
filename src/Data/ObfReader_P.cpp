@@ -353,8 +353,11 @@ bool OsmAnd::ObfReader_P::readOsmAndOwner(gpb::io::CodedInputStream* cis, const 
     {
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-            case OBF::OsmAndOwner::kOwnerFieldNumber:
-                ObfReaderUtilities::readQString(cis, info->owner.owner);
+            case OBF::OsmAndOwner::kNameFieldNumber:
+                ObfReaderUtilities::readQString(cis, info->owner.name);
+                break;
+            case OBF::OsmAndOwner::kResourceFieldNumber:
+                ObfReaderUtilities::readQString(cis, info->owner.resource);
                 break;
             case OBF::OsmAndOwner::kPluginidFieldNumber:
                 ObfReaderUtilities::readQString(cis, info->owner.pluginid);

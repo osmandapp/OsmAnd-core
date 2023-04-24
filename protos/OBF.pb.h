@@ -6855,22 +6855,34 @@ class OsmAndOwner : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required string owner = 1;
-  inline bool has_owner() const;
-  inline void clear_owner();
-  static const int kOwnerFieldNumber = 1;
-  inline const ::std::string& owner() const;
-  inline void set_owner(const ::std::string& value);
-  inline void set_owner(const char* value);
-  inline void set_owner(const char* value, size_t size);
-  inline ::std::string* mutable_owner();
-  inline ::std::string* release_owner();
-  inline void set_allocated_owner(::std::string* owner);
+  // required string name = 1;
+  inline bool has_name() const;
+  inline void clear_name();
+  static const int kNameFieldNumber = 1;
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
-  // required string description = 2;
+  // optional string resource = 2;
+  inline bool has_resource() const;
+  inline void clear_resource();
+  static const int kResourceFieldNumber = 2;
+  inline const ::std::string& resource() const;
+  inline void set_resource(const ::std::string& value);
+  inline void set_resource(const char* value);
+  inline void set_resource(const char* value, size_t size);
+  inline ::std::string* mutable_resource();
+  inline ::std::string* release_resource();
+  inline void set_allocated_resource(::std::string* resource);
+
+  // optional string description = 3;
   inline bool has_description() const;
   inline void clear_description();
-  static const int kDescriptionFieldNumber = 2;
+  static const int kDescriptionFieldNumber = 3;
   inline const ::std::string& description() const;
   inline void set_description(const ::std::string& value);
   inline void set_description(const char* value);
@@ -6879,10 +6891,10 @@ class OsmAndOwner : public ::google::protobuf::Message {
   inline ::std::string* release_description();
   inline void set_allocated_description(::std::string* description);
 
-  // required string pluginid = 3;
+  // optional string pluginid = 4;
   inline bool has_pluginid() const;
   inline void clear_pluginid();
-  static const int kPluginidFieldNumber = 3;
+  static const int kPluginidFieldNumber = 4;
   inline const ::std::string& pluginid() const;
   inline void set_pluginid(const ::std::string& value);
   inline void set_pluginid(const char* value);
@@ -6893,8 +6905,10 @@ class OsmAndOwner : public ::google::protobuf::Message {
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndOwner)
  private:
-  inline void set_has_owner();
-  inline void clear_has_owner();
+  inline void set_has_name();
+  inline void clear_has_name();
+  inline void set_has_resource();
+  inline void clear_has_resource();
   inline void set_has_description();
   inline void clear_has_description();
   inline void set_has_pluginid();
@@ -6902,12 +6916,13 @@ class OsmAndOwner : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string* owner_;
+  ::std::string* name_;
+  ::std::string* resource_;
   ::std::string* description_;
   ::std::string* pluginid_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
 
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -15905,85 +15920,155 @@ OsmAndRoutingIndex::mutable_blocks() {
 
 // OsmAndOwner
 
-// required string owner = 1;
-inline bool OsmAndOwner::has_owner() const {
+// required string name = 1;
+inline bool OsmAndOwner::has_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void OsmAndOwner::set_has_owner() {
+inline void OsmAndOwner::set_has_name() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void OsmAndOwner::clear_has_owner() {
+inline void OsmAndOwner::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void OsmAndOwner::clear_owner() {
-  if (owner_ != &::google::protobuf::internal::kEmptyString) {
-    owner_->clear();
+inline void OsmAndOwner::clear_name() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    name_->clear();
   }
-  clear_has_owner();
+  clear_has_name();
 }
-inline const ::std::string& OsmAndOwner::owner() const {
-  return *owner_;
+inline const ::std::string& OsmAndOwner::name() const {
+  return *name_;
 }
-inline void OsmAndOwner::set_owner(const ::std::string& value) {
-  set_has_owner();
-  if (owner_ == &::google::protobuf::internal::kEmptyString) {
-    owner_ = new ::std::string;
+inline void OsmAndOwner::set_name(const ::std::string& value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
   }
-  owner_->assign(value);
+  name_->assign(value);
 }
-inline void OsmAndOwner::set_owner(const char* value) {
-  set_has_owner();
-  if (owner_ == &::google::protobuf::internal::kEmptyString) {
-    owner_ = new ::std::string;
+inline void OsmAndOwner::set_name(const char* value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
   }
-  owner_->assign(value);
+  name_->assign(value);
 }
-inline void OsmAndOwner::set_owner(const char* value, size_t size) {
-  set_has_owner();
-  if (owner_ == &::google::protobuf::internal::kEmptyString) {
-    owner_ = new ::std::string;
+inline void OsmAndOwner::set_name(const char* value, size_t size) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
   }
-  owner_->assign(reinterpret_cast<const char*>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* OsmAndOwner::mutable_owner() {
-  set_has_owner();
-  if (owner_ == &::google::protobuf::internal::kEmptyString) {
-    owner_ = new ::std::string;
+inline ::std::string* OsmAndOwner::mutable_name() {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
   }
-  return owner_;
+  return name_;
 }
-inline ::std::string* OsmAndOwner::release_owner() {
-  clear_has_owner();
-  if (owner_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* OsmAndOwner::release_name() {
+  clear_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = owner_;
-    owner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void OsmAndOwner::set_allocated_owner(::std::string* owner) {
-  if (owner_ != &::google::protobuf::internal::kEmptyString) {
-    delete owner_;
+inline void OsmAndOwner::set_allocated_name(::std::string* name) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
   }
-  if (owner) {
-    set_has_owner();
-    owner_ = owner;
+  if (name) {
+    set_has_name();
+    name_ = name;
   } else {
-    clear_has_owner();
-    owner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_name();
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
-// required string description = 2;
-inline bool OsmAndOwner::has_description() const {
+// optional string resource = 2;
+inline bool OsmAndOwner::has_resource() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void OsmAndOwner::set_has_description() {
+inline void OsmAndOwner::set_has_resource() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void OsmAndOwner::clear_has_description() {
+inline void OsmAndOwner::clear_has_resource() {
   _has_bits_[0] &= ~0x00000002u;
+}
+inline void OsmAndOwner::clear_resource() {
+  if (resource_ != &::google::protobuf::internal::kEmptyString) {
+    resource_->clear();
+  }
+  clear_has_resource();
+}
+inline const ::std::string& OsmAndOwner::resource() const {
+  return *resource_;
+}
+inline void OsmAndOwner::set_resource(const ::std::string& value) {
+  set_has_resource();
+  if (resource_ == &::google::protobuf::internal::kEmptyString) {
+    resource_ = new ::std::string;
+  }
+  resource_->assign(value);
+}
+inline void OsmAndOwner::set_resource(const char* value) {
+  set_has_resource();
+  if (resource_ == &::google::protobuf::internal::kEmptyString) {
+    resource_ = new ::std::string;
+  }
+  resource_->assign(value);
+}
+inline void OsmAndOwner::set_resource(const char* value, size_t size) {
+  set_has_resource();
+  if (resource_ == &::google::protobuf::internal::kEmptyString) {
+    resource_ = new ::std::string;
+  }
+  resource_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* OsmAndOwner::mutable_resource() {
+  set_has_resource();
+  if (resource_ == &::google::protobuf::internal::kEmptyString) {
+    resource_ = new ::std::string;
+  }
+  return resource_;
+}
+inline ::std::string* OsmAndOwner::release_resource() {
+  clear_has_resource();
+  if (resource_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = resource_;
+    resource_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void OsmAndOwner::set_allocated_resource(::std::string* resource) {
+  if (resource_ != &::google::protobuf::internal::kEmptyString) {
+    delete resource_;
+  }
+  if (resource) {
+    set_has_resource();
+    resource_ = resource;
+  } else {
+    clear_has_resource();
+    resource_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional string description = 3;
+inline bool OsmAndOwner::has_description() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void OsmAndOwner::set_has_description() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void OsmAndOwner::clear_has_description() {
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void OsmAndOwner::clear_description() {
   if (description_ != &::google::protobuf::internal::kEmptyString) {
@@ -16045,15 +16130,15 @@ inline void OsmAndOwner::set_allocated_description(::std::string* description) {
   }
 }
 
-// required string pluginid = 3;
+// optional string pluginid = 4;
 inline bool OsmAndOwner::has_pluginid() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void OsmAndOwner::set_has_pluginid() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void OsmAndOwner::clear_has_pluginid() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void OsmAndOwner::clear_pluginid() {
   if (pluginid_ != &::google::protobuf::internal::kEmptyString) {

@@ -45,7 +45,8 @@ namespace OsmAnd
         QList< Ref<ObfTransportSectionInfo> > transportSections;
         
         struct OsmAndOwner {
-            QString owner;
+            QString name;
+            QString resource;
             QString pluginid;
             QString description;
         };

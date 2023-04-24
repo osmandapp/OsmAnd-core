@@ -1124,8 +1124,9 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndRoutingIndex_RouteDataBlock));
   OsmAndOwner_descriptor_ = file->message_type(40);
-  static const int OsmAndOwner_offsets_[3] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, owner_),
+  static const int OsmAndOwner_offsets_[4] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, name_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, resource_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, description_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndOwner, pluginid_),
   };
@@ -1557,10 +1558,10 @@ void protobuf_AddDesc_OBF_2eproto() {
     "smAnd.OBF.IdTable\022*\n\013dataObjects\030\006 \003(\0132\025"
     ".OsmAnd.OBF.RouteData\0221\n\014restrictions\030\007 "
     "\003(\0132\033.OsmAnd.OBF.RestrictionData\022,\n\013stri"
-    "ngTable\030\010 \001(\0132\027.OsmAnd.OBF.StringTable\"C"
-    "\n\013OsmAndOwner\022\r\n\005owner\030\001 \002(\t\022\023\n\013descript"
-    "ion\030\002 \002(\t\022\020\n\010pluginid\030\003 \002(\tB\036\n\021net.osman"
-    "d.binaryB\tOsmandOdb", 7779);
+    "ngTable\030\010 \001(\0132\027.OsmAnd.OBF.StringTable\"T"
+    "\n\013OsmAndOwner\022\014\n\004name\030\001 \002(\t\022\020\n\010resource\030"
+    "\002 \001(\t\022\023\n\013description\030\003 \001(\t\022\020\n\010pluginid\030\004"
+    " \001(\tB\036\n\021net.osmand.binaryB\tOsmandOdb", 7796);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -21336,7 +21337,8 @@ void OsmAndRoutingIndex::Swap(OsmAndRoutingIndex* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int OsmAndOwner::kOwnerFieldNumber;
+const int OsmAndOwner::kNameFieldNumber;
+const int OsmAndOwner::kResourceFieldNumber;
 const int OsmAndOwner::kDescriptionFieldNumber;
 const int OsmAndOwner::kPluginidFieldNumber;
 #endif  // !_MSC_VER
@@ -21357,7 +21359,8 @@ OsmAndOwner::OsmAndOwner(const OsmAndOwner& from)
 
 void OsmAndOwner::SharedCtor() {
   _cached_size_ = 0;
-  owner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  resource_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   pluginid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -21368,8 +21371,11 @@ OsmAndOwner::~OsmAndOwner() {
 }
 
 void OsmAndOwner::SharedDtor() {
-  if (owner_ != &::google::protobuf::internal::kEmptyString) {
-    delete owner_;
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
+  }
+  if (resource_ != &::google::protobuf::internal::kEmptyString) {
+    delete resource_;
   }
   if (description_ != &::google::protobuf::internal::kEmptyString) {
     delete description_;
@@ -21404,9 +21410,14 @@ OsmAndOwner* OsmAndOwner::New() const {
 
 void OsmAndOwner::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (has_owner()) {
-      if (owner_ != &::google::protobuf::internal::kEmptyString) {
-        owner_->clear();
+    if (has_name()) {
+      if (name_ != &::google::protobuf::internal::kEmptyString) {
+        name_->clear();
+      }
+    }
+    if (has_resource()) {
+      if (resource_ != &::google::protobuf::internal::kEmptyString) {
+        resource_->clear();
       }
     }
     if (has_description()) {
@@ -21430,24 +21441,41 @@ bool OsmAndOwner::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required string owner = 1;
+      // required string name = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_owner()));
+                input, this->mutable_name()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->owner().data(), this->owner().length(),
+            this->name().data(), this->name().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_description;
+        if (input->ExpectTag(18)) goto parse_resource;
         break;
       }
 
-      // required string description = 2;
+      // optional string resource = 2;
       case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_resource:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_resource()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->resource().data(), this->resource().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(26)) goto parse_description;
+        break;
+      }
+
+      // optional string description = 3;
+      case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_description:
@@ -21459,12 +21487,12 @@ bool OsmAndOwner::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_pluginid;
+        if (input->ExpectTag(34)) goto parse_pluginid;
         break;
       }
 
-      // required string pluginid = 3;
-      case 3: {
+      // optional string pluginid = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_pluginid:
@@ -21498,31 +21526,40 @@ bool OsmAndOwner::MergePartialFromCodedStream(
 
 void OsmAndOwner::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required string owner = 1;
-  if (has_owner()) {
+  // required string name = 1;
+  if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->owner().data(), this->owner().length(),
+      this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      1, this->owner(), output);
+      1, this->name(), output);
   }
 
-  // required string description = 2;
+  // optional string resource = 2;
+  if (has_resource()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->resource().data(), this->resource().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      2, this->resource(), output);
+  }
+
+  // optional string description = 3;
   if (has_description()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->description().data(), this->description().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      2, this->description(), output);
+      3, this->description(), output);
   }
 
-  // required string pluginid = 3;
+  // optional string pluginid = 4;
   if (has_pluginid()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->pluginid().data(), this->pluginid().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      3, this->pluginid(), output);
+      4, this->pluginid(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -21533,34 +21570,44 @@ void OsmAndOwner::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* OsmAndOwner::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required string owner = 1;
-  if (has_owner()) {
+  // required string name = 1;
+  if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->owner().data(), this->owner().length(),
+      this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->owner(), target);
+        1, this->name(), target);
   }
 
-  // required string description = 2;
+  // optional string resource = 2;
+  if (has_resource()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->resource().data(), this->resource().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->resource(), target);
+  }
+
+  // optional string description = 3;
   if (has_description()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->description().data(), this->description().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->description(), target);
+        3, this->description(), target);
   }
 
-  // required string pluginid = 3;
+  // optional string pluginid = 4;
   if (has_pluginid()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->pluginid().data(), this->pluginid().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->pluginid(), target);
+        4, this->pluginid(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -21574,21 +21621,28 @@ int OsmAndOwner::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required string owner = 1;
-    if (has_owner()) {
+    // required string name = 1;
+    if (has_name()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->owner());
+          this->name());
     }
 
-    // required string description = 2;
+    // optional string resource = 2;
+    if (has_resource()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->resource());
+    }
+
+    // optional string description = 3;
     if (has_description()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->description());
     }
 
-    // required string pluginid = 3;
+    // optional string pluginid = 4;
     if (has_pluginid()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -21622,8 +21676,11 @@ void OsmAndOwner::MergeFrom(const ::google::protobuf::Message& from) {
 void OsmAndOwner::MergeFrom(const OsmAndOwner& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_owner()) {
-      set_owner(from.owner());
+    if (from.has_name()) {
+      set_name(from.name());
+    }
+    if (from.has_resource()) {
+      set_resource(from.resource());
     }
     if (from.has_description()) {
       set_description(from.description());
@@ -21648,14 +21705,15 @@ void OsmAndOwner::CopyFrom(const OsmAndOwner& from) {
 }
 
 bool OsmAndOwner::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
 
   return true;
 }
 
 void OsmAndOwner::Swap(OsmAndOwner* other) {
   if (other != this) {
-    std::swap(owner_, other->owner_);
+    std::swap(name_, other->name_);
+    std::swap(resource_, other->resource_);
     std::swap(description_, other->description_);
     std::swap(pluginid_, other->pluginid_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
