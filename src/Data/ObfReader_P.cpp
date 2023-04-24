@@ -26,8 +26,6 @@
 #include "ObfPoiSectionReader_P.h"
 #include "ObfReaderUtilities.h"
 #include "Logging.h"
-#include <google/protobuf/wire_format_lite.h>
-#include "google/protobuf/wire_format_lite.cc"
 
 //#define OSMAND_TRACE_OBF_READERS 1
 #if !defined(OSMAND_TRACE_OBF_READERS)
@@ -239,8 +237,8 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
                 break;
             case OBF::OsmAndStructure::kOwnerFieldNumber:
             {
-                int len = 0;
-                WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_INT32>(cis, &len);
+                uint32_t len = 0;
+                cis->ReadVarint32(&len);
                 const auto oldLimit = cis->PushLimit(len);
                 readOsmAndOwner(cis, info);
                 cis->PopLimit(oldLimit);
