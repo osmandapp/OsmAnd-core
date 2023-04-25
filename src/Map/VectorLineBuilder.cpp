@@ -166,6 +166,18 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconStep(const floa
     return *this;
 }
 
+float OsmAnd::VectorLineBuilder::getSpecialPathIconStep() const
+{
+    return _p->getSpecialPathIconStep();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setSpecialPathIconStep(const float step)
+{
+    _p->setSpecialPathIconStep(step);
+
+    return *this;
+}
+
 bool OsmAnd::VectorLineBuilder::isPathIconOnSurface() const
 {
     return _p->isPathIconOnSurface();

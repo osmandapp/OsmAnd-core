@@ -28,6 +28,7 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Bitmask.h>
+#include <OsmAndCore/Logging.h>
 
 namespace OsmAnd
 {
@@ -946,6 +947,65 @@ namespace OsmAnd
         }
         
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
+
+        // Log formatted coordinates for https://www.gpsvisualizer.com/
+        inline static void logDebugTileBBox(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const QString& name = "bbox",
+            const QString& color = "red")
+        {
+            QVector<PointI> path;
+            path.push_back(PointI(tileId.x + 0, tileId.y + 0));
+            path.push_back(PointI(tileId.x + 1, tileId.y + 0));
+            path.push_back(PointI(tileId.x + 1, tileId.y + 1));
+            path.push_back(PointI(tileId.x + 0, tileId.y + 1));
+            path.push_back(path.front());
+            logDebugPath(path, zoom, name, color);
+        }
+
+        inline static void logDebugPath(
+            const QVector<PointI>& path,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "path",
+            const QString& color = "green")
+        {
+            LogPrintf(LogSeverityLevel::Debug, "type, lat, lon, name, color");
+            for (auto i = 0; i < path.size(); i++)
+            {
+                const auto point = path[i];
+                const auto lat = getLatitudeFromTile(zoom, point.y);
+                const auto lon = getLongitudeFromTile(zoom, point.x);
+                if (i == 0)
+                {
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2, %3, %4")
+                        .arg(lat)
+                        .arg(lon)
+                        .arg(name)
+                        .arg(color)));
+                }
+                else
+                {
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2").arg(lat).arg(lon)));
+                }
+            }
+        }
+
+        inline static void logDebugPoint(
+            const PointI point,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "point",
+            const QString& color = "blue")
+        {
+            LogPrintf(LogSeverityLevel::Debug, "type, lat, lon, name, color");
+            const auto lat = getLatitudeFromTile(zoom, point.y);
+            const auto lon = getLongitudeFromTile(zoom, point.x);
+            LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("W, %1, %2, %3, %4")
+                    .arg(lat)
+                    .arg(lon)
+                    .arg(name)
+                    .arg(color)));
+        }
 
     private:
         Utilities();

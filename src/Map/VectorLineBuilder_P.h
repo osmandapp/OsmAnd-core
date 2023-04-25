@@ -54,6 +54,7 @@ namespace OsmAnd
         sk_sp<const SkImage> _pathIcon;
         sk_sp<const SkImage> _specialPathIcon;
         float _pathIconStep;
+        float _specialPathIconStep;
         bool _pathIconOnSurface;
         float _screenScale;
 
@@ -109,6 +110,9 @@ namespace OsmAnd
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);
+
+        float getSpecialPathIconStep() const;
+        void setSpecialPathIconStep(const float step);
 
         bool isPathIconOnSurface() const;
         void setPathIconOnSurface(const bool onSurface);

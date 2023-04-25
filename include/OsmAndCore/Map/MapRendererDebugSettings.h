@@ -30,6 +30,7 @@ namespace OsmAnd
         bool showOnPathSymbolsRenderablesPaths;
         bool showOnPath2dSymbolGlyphDetails;
         bool showOnPath3dSymbolGlyphDetails;
+        bool showBillboardSymbolBBoxes;
         bool allSymbolsTransparentForIntersectionLookup;
         bool showTooShortOnPathSymbolsRenderablesPaths;
         bool showAllPaths;

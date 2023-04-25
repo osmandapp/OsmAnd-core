@@ -18,6 +18,10 @@
 #include "ObfMapSectionInfo.h"
 #include "Utilities.h"
 
+#define MAX_PATHS_TO_ATTACH 20
+#define MAX_PATH_LENGTH_TO_COMBINE 500
+#define MAX_GAP_BETWEEN_PATHS 45
+
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
 {
@@ -49,14 +53,19 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         return true;
     }
 
+    const auto& combinePathsResult = combineOnPathSymbols(primitivesTile->primitivisedObjects, request.queryController);
+
     // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const SymbolRasterizer::RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
     QHash< std::shared_ptr<const MapObject>, std::shared_ptr<MapObjectSymbolsGroup> > preallocatedSymbolsGroups;
     const auto filterCallback = request.filterCallback;
     const auto rasterizationFilter =
-        [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
+        [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups, &combinePathsResult]
         (const std::shared_ptr<const MapObject>& mapObject) -> bool
         {
+            if (combinePathsResult.mapObjectToSkip.contains(mapObject))
+                return false;
+
             const std::shared_ptr<MapObjectSymbolsGroup> preallocatedGroup(new MapObjectSymbolsGroup(mapObject));
 
             if (!filterCallback || filterCallback(owner, preallocatedGroup))
@@ -91,8 +100,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
         const auto group = *citPreallocatedGroup;
 
-        // Create shareable path
-        const std::shared_ptr< const QVector<PointI> > shareablePath31(new QVector<PointI>(mapObject->points31));
+        auto path31 = combinePathsResult.getCombinedOrOriginalPath(mapObject);
+
+        const auto visibleBBox = request.mapState.visibleBBox31;
+        const auto start = path31.front();
+        const auto end = path31.back();
+        // Reverse path to reduce placing on-path or along-path symbols out of visibleBBox
+        if (!visibleBBox.contains(start) && visibleBBox.contains(end))
+            std::reverse(path31.begin(), path31.end());
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
@@ -140,6 +155,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
                 hasAtLeastOneOnPath = true;
+
+                const auto shareablePath31 = std::make_shared< QVector<PointI> >(path31);
 
                 const auto onPathSymbol = new OnPathRasterMapSymbol(group);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
@@ -202,7 +219,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
             const auto& env = owner->primitivesProvider->primitiviser->environment;
             const auto computedPinPoints = computePinPoints(
-                mapObject->points31,
+                path31,
                 env->getGlobalPathPadding(),
                 env->getDefaultBlockPathSpacing() * 10,
                 env->getDefaultSymbolPathSpacing() * 20, // Temp fix to avoid intersections of street names vs road shields on map
@@ -298,6 +315,149 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata)));
 
     return true;
+}
+
+// On-path text symbols (mainly, street names) are drawn on path,
+// that comes from map object. In some cases there is not enough
+// length of path to draw full text of symbol. That's why paths
+// are combined, to fit full text of symbol 
+OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbolsProvider_P::combineOnPathSymbols(
+    const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+    const std::shared_ptr<const IQueryController>& queryController) const
+{
+    // Firstly, collect all on-path text symbols with same content and order
+    const auto& divisor31ToPixels = primitivisedObjects->scaleDivisor31ToPixel;
+    QHash< QString, QList < std::shared_ptr<СombinedPath> > > combinedPathsMap;
+    for (const auto& mapObjectSymbolsGroup : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
+    {
+        if (queryController && queryController->isAborted())
+            return CombinePathsResult();
+
+        const auto& mapObject = mapObjectSymbolsGroup.key();
+        const auto& symbolsGroup = mapObjectSymbolsGroup.value();
+
+        QList< std::shared_ptr<const MapPrimitiviser::TextSymbol> > onPathTextSymbols;
+        for (const auto& symbol : constOf(symbolsGroup->symbols))
+        {
+            const auto& textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol);
+            if (textSymbol && textSymbol->drawOnPath && !textSymbol->value.isEmpty())
+                onPathTextSymbols.push_back(textSymbol);
+        }
+
+        if (onPathTextSymbols.isEmpty())
+            continue;
+
+        // There shouldn't be two or more on-path text symbols in group. But if so, skip
+        if (onPathTextSymbols.size() >= 2) 
+            continue;
+
+        const std::shared_ptr<СombinedPath> combinedPath(new СombinedPath(mapObject, divisor31ToPixels));
+
+        const auto& onPathTextSymbol = onPathTextSymbols.front();
+        const QString key = onPathTextSymbol->value + QString::number(onPathTextSymbol->order);
+        const auto itCombinedSymbolPathList = combinedPathsMap.find(key);
+
+        if (itCombinedSymbolPathList == combinedPathsMap.end())
+        {
+            QList< std::shared_ptr<СombinedPath> > combinedSymbolPathList;
+            combinedSymbolPathList.push_back(combinedPath);
+            combinedPathsMap.insert(key, combinedSymbolPathList);
+        }
+        else
+        {
+            auto& combinedSymbolPathList = *itCombinedSymbolPathList;
+            combinedSymbolPathList.push_back(combinedPath);
+        }
+    }
+
+    if (combinedPathsMap.isEmpty())
+        return CombinePathsResult();
+
+    CombinePathsResult result;
+
+    const auto& env = primitivisedObjects->mapPresentationEnvironment;
+    const auto maxPathLengthInPixels = MAX_PATH_LENGTH_TO_COMBINE * env->displayDensityFactor;
+    const auto maxGapBetweenPaths = MAX_GAP_BETWEEN_PATHS * env->displayDensityFactor;
+
+    for (auto& pathsToCombine : combinedPathsMap)
+    {
+        if (queryController && queryController->isAborted())
+            return CombinePathsResult();
+
+        if (pathsToCombine.size() < 2)
+            continue;
+
+        bool iterateFromStart = true;
+        for (auto attachedPaths = 0; attachedPaths < MAX_PATHS_TO_ATTACH && iterateFromStart; attachedPaths++)
+        {
+            if (queryController && queryController->isAborted())
+                return CombinePathsResult();
+
+            iterateFromStart = false;
+
+            for (auto pathIndex = 0; pathIndex < pathsToCombine.size() && !iterateFromStart; pathIndex++)
+            {
+                if (queryController && queryController->isAborted())
+                    return CombinePathsResult();
+
+                auto& path = pathsToCombine[pathIndex];
+
+                if (path->isAttachedToAnotherPath())
+                    continue;
+
+                if (path->getLengthInPixels() > maxPathLengthInPixels)
+                    continue;
+
+                auto minGapBetweenPaths = maxGapBetweenPaths;
+                std::shared_ptr<СombinedPath> mainPath;
+                std::shared_ptr<СombinedPath> pathToAttach;
+
+                // Find path with min distance to other path
+                for (auto otherPathIndex = pathIndex + 1; otherPathIndex < pathsToCombine.size(); otherPathIndex++)
+                {
+                    auto& otherPath = pathsToCombine[otherPathIndex];
+
+                    if (otherPath->isAttachedToAnotherPath())
+                        continue;
+                    
+                    if (otherPath->getLengthInPixels() > maxPathLengthInPixels)
+                        continue;
+
+                    // Try to connect 1st path to 2nd and 2nd to 1st, choose best connection
+                    float gapBetweenPaths = 0.0f;
+                    if (otherPath->isAttachAllowed(path, minGapBetweenPaths, gapBetweenPaths))
+                    {
+                        minGapBetweenPaths = gapBetweenPaths;
+                        mainPath = otherPath;
+                        pathToAttach = path;
+                    }
+                    if (path->isAttachAllowed(otherPath, minGapBetweenPaths, gapBetweenPaths))
+                    {
+                        minGapBetweenPaths = gapBetweenPaths;
+                        mainPath = path;
+                        pathToAttach = otherPath;
+                    }
+                }
+
+                // If close enough path was found, connect paths
+                if (mainPath && pathToAttach)
+                {
+                    iterateFromStart = true;
+                    mainPath->attachPath(pathToAttach);
+                }
+            }
+        }
+
+        for (const auto& path : constOf(pathsToCombine))
+        {
+            if (path->isAttachedToAnotherPath())
+                result.mapObjectToSkip.push_back(path->mapObject);
+            else if (path->isCombined())
+                result.combinedPaths.insert(path->mapObject, path->getPoints());
+        }
+    }
+
+    return result;
 }
 
 QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsSymbolsProvider_P::computePinPoints(
@@ -470,6 +630,118 @@ void OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolsPinPoints(
 
         nextSymbolStartN += symbolWidthN + symbolSpacingN;
     }
+}
+
+OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::СombinedPath(
+    const std::shared_ptr<const MapObject>& mapObject_,
+    const PointD& divisor31ToPixels_)
+    : _points(detachedOf(mapObject_->points31))
+    , _lengthInPixels(-1.0f)
+    , _attachedToAnotherPath(false)
+    , _combined(false)
+    , mapObject(mapObject_)
+    , divisor31ToPixels(divisor31ToPixels_)
+{
+}
+
+OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::~СombinedPath()
+{
+}
+
+QVector<OsmAnd::PointI> OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::getPoints() const
+{
+    return _points;
+}
+
+bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isCombined() const
+{
+    return _combined;
+}
+
+bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isAttachedToAnotherPath() const
+{
+    return _attachedToAnotherPath;
+}
+
+bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isAttachAllowed(
+    const std::shared_ptr<const СombinedPath>& other,
+    const float maxGapBetweenPaths,
+    float& outGapBetweenPaths) const
+{
+    const auto lastPoint = _points.back();
+    const auto otherFirstPoint = other->_points.front();
+    const auto gapVector = otherFirstPoint - lastPoint;
+    outGapBetweenPaths = qAbs(gapVector.x / divisor31ToPixels.x) + qAbs(gapVector.y / divisor31ToPixels.y);
+
+    if (outGapBetweenPaths >= maxGapBetweenPaths)
+        return false;
+
+    const auto penultimantePoint = _points[_points.size() - 2];
+    const auto otherSecondPoint = other->_points[1];
+
+    const auto firstPathLastVectorN = static_cast<PointF>(lastPoint - penultimantePoint).normalized();
+    const auto secondPathFirstVectorN = static_cast<PointF>(otherSecondPoint - otherFirstPoint).normalized();
+
+    // Allow paths attachment only with obtuse angle between their segment of connection
+
+    // If paths overlap on end/start, simply check angle
+    // between last segment of 1st path and first segment of 2nd path 
+    if (gapVector.x == 0 && gapVector.y == 0)
+    {
+        const auto x = firstPathLastVectorN.x * secondPathFirstVectorN.x;
+        const auto y = firstPathLastVectorN.y * secondPathFirstVectorN.y;
+        return x + y > 0;
+    }
+
+    // But if there is gap between paths, check angle
+    // between gap segment and both last/first segment
+    const auto gapVectorN = static_cast<PointF>(gapVector).normalized();
+
+    const auto x1 = firstPathLastVectorN.x * gapVectorN.x;
+    const auto y1 = firstPathLastVectorN.y * gapVectorN.y;
+    const auto x2 = gapVectorN.x * secondPathFirstVectorN.x;
+    const auto y2 = gapVectorN.y * secondPathFirstVectorN.y;
+
+    return x1 + y1 > 0 && x2 + y2 > 0;
+}
+
+void OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::attachPath(const std::shared_ptr<СombinedPath>& other)
+{
+    const auto end = _points.back();
+    const auto otherStart = other->_points[0];
+    const auto gapVector = otherStart - end;
+    if (gapVector.x == 0 && gapVector.y == 0)
+    {
+        _points.append(other->_points.mid(1));
+        _lengthInPixels = getLengthInPixels() + other->getLengthInPixels();
+    }
+    else
+    {
+        _points.append(other->_points);
+
+        const auto gapLength = static_cast<PointF>(gapVector).norm();
+        _lengthInPixels = getLengthInPixels() + gapLength + other->getLengthInPixels();
+    }
+    
+    _combined = true;    
+    other->_attachedToAnotherPath = true;
+}
+
+float OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::getLengthInPixels() const
+{
+    if (qFuzzyCompare(_lengthInPixels, -1.0f))
+    {
+        for (auto i = 1; i < _points.size(); i++)
+        {
+            const auto previousPoint = _points[i - 1];
+            const auto currentPoint = _points[i];
+            const auto delta31 = currentPoint - previousPoint;
+            const PointD deltaInPixels(delta31.x / divisor31ToPixels.x, delta31.y / divisor31ToPixels.y);
+            _lengthInPixels += qSqrt(deltaInPixels.squareNorm());
+        }
+    }
+
+    return _lengthInPixels;
 }
 
 OsmAnd::MapObjectsSymbolsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(

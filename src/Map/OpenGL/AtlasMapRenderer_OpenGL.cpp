@@ -54,6 +54,8 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromSeaLevelInMeters
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 12000.0;
 // Set minimal distance factor for tiles of each detail level (SQRT(2) * 2)
 const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.8284271247461900976033774484194;
+// Set invalid value for elevation of terrain
+const float OsmAnd::AtlasMapRenderer_OpenGL::_invalidElevationValue = -20000.0f;
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
     : AtlasMapRenderer(
@@ -951,6 +953,41 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getNearestLocationFromScreenPoint(
+    const InternalState& internalState, const MapRendererState& state,
+    const PointI& location31, const float heightInMeters, const PointI& screenPoint,
+    PointI64& fixedLocation, PointI64& currentLocation) const
+{
+    const float elevation = getWorldElevationOfLocation(state, heightInMeters, location31);
+    PointD position;
+    bool ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, elevation);
+    if (!ok)
+        return false;
+
+    position += internalState.targetInTileOffsetN;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
+    position *= tileSize31;
+
+    currentLocation.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
+    currentLocation.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+
+    auto offset = currentLocation - location31;
+    const auto intHalf = INT32_MAX / 2 + 1;
+    if (offset.x >= intHalf)
+        offset.x = offset.x - INT32_MAX - 1;
+    else if (offset.x < -intHalf)
+        offset.x = offset.x + INT32_MAX + 1;
+    if (offset.y >= intHalf)
+        offset.y = offset.y - INT32_MAX - 1;
+    else if (offset.y < -intHalf)
+        offset.y = offset.y + INT32_MAX + 1;
+    
+    fixedLocation = currentLocation - offset;
+    
+    return true;
+}
+
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRenderer_OpenGL::captureElevationDataResource(
     const MapRendererState& state, TileId normalizedTileId, ZoomLevel zoomLevel,
     std::shared_ptr<const IMapElevationDataProvider::Data>* pOutSource /*= nullptr*/) const
@@ -1090,6 +1127,32 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(
     return true;
 }
 
+float OsmAnd::AtlasMapRenderer_OpenGL::getWorldElevationOfLocation(const MapRendererState& state,
+    const float elevationInMeters, const PointI& location31_) const
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+    const auto scaledElevationInMeters = elevationInMeters * state.elevationConfiguration.dataScaleFactor;
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y, TileSize3D);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(state.zoomLevel, tileId.y + 1, TileSize3D);
+    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    return scaledElevationInMeters / metersPerUnit * state.elevationConfiguration.zScaleFactor;
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getElevationOfLocationInMeters(const MapRendererState& state,
+    const float elevation, const ZoomLevel zoom, const PointI& location31_) const
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, zoom, &offsetInTileN);
+    const auto scaledElevation = elevation / state.elevationConfiguration.zScaleFactor;
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y, TileSize3D);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoom, tileId.y + 1, TileSize3D);
+    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    return scaledElevation * metersPerUnit / state.elevationConfiguration.dataScaleFactor;
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
 {
     PointI64 location;
@@ -1125,11 +1188,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRendererState& state,
     const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
 {
-    const auto state = getState();
-
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
     if (!ok)
@@ -1260,13 +1321,88 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
+    const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
+{
+    const auto state = getState();
+
+    return getLocationFromElevatedPoint(state, screenPoint, location31, heightInMeters);
+}
+
+float OsmAnd::AtlasMapRenderer_OpenGL::getHeightAndLocationFromElevatedPoint(
+    const PointI& screenPoint, PointI& location31) const
+{
+    const auto state = getState();
+
+    float elevationInMeters = 0.0f;
+    if (!getLocationFromElevatedPoint(state, screenPoint, location31, &elevationInMeters))
+        elevationInMeters = _invalidElevationValue;
+    return elevationInMeters;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
+    const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
+    const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+    PointD& zoomAndRotate) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
+    if (!ok)
+        return false;
+
+    PointI64 firstNearest;
+    PointI64 firstCurrent;
+    ok = getNearestLocationFromScreenPoint(internalState, state,
+        firstLocation31, firstHeight, firstPoint, firstNearest, firstCurrent);
+    if (!ok)
+        return false;
+        
+    PointI64 secondNearest;
+    PointI64 secondCurrent;
+    ok = getNearestLocationFromScreenPoint(internalState, state,
+        secondLocation31, secondHeight, secondPoint, secondNearest, secondCurrent);
+    if (!ok)
+        return false;
+
+    // Calculate needed offsets for zoom and azimuth to show the same location
+    // using new screen coordinates of the second finger, assuming the first one is a pivot point
+    PointD currentDelta(secondCurrent - firstCurrent);
+    PointD neededDelta(secondNearest - firstNearest);
+    const auto currentLength = qSqrt(currentDelta.x * currentDelta.x + currentDelta.y * currentDelta.y);
+    const auto neededLength = qSqrt(neededDelta.x * neededDelta.x + neededDelta.y * neededDelta.y);
+    if (currentLength > 0.0 && neededLength > 0.0)
+    {
+        auto factor = currentLength / neededLength;
+        if (factor > 1.0)
+        {
+            const auto zoomLevel = std::floor(std::log2(factor));
+            zoomAndRotate.x = zoomLevel + (factor - zoomLevel) / static_cast<double>(1 << static_cast<int>(zoomLevel));
+        }
+        else if (factor < 1.0)
+            zoomAndRotate.x = -2.0 * factor - std::floor(std::log2(1.0 / factor));
+        else
+            zoomAndRotate.x = 0.0f;
+        const auto currentNorm = currentDelta / currentLength;
+        const auto neededNorm = neededDelta / neededLength;
+        auto angle = qRadiansToDegrees(qAcos(currentNorm.x * neededNorm.x + currentNorm.y * neededNorm.y)) *
+            (currentNorm.x * neededNorm.y - currentNorm.y * neededNorm.x < 0.0 ? -1.0 : 1.0);
+        zoomAndRotate.y = Utilities::normalizedAngleDegrees(angle);
+    }
+    else
+        return false;
+
+    return true;
+}
+
 float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRendererState& state,
     const PointI& location31_) const
 {
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
 
     // Get elevation data
-    float elevationInMeters = -20000.0f;
+    float elevationInMeters = _invalidElevationValue;
     PointF offsetInTileN;
     TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
@@ -1370,7 +1506,8 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
         return false;
 
     const auto height = getLocationHeightInMeters(state, location31);
-    const auto locationVerticalDistance = _radius + static_cast<double>(height > -20000.0f ? height : 0.0f);
+    const auto locationVerticalDistance = _radius +
+        static_cast<double>(height > _invalidElevationValue ? height : 0.0f);
     const auto groundDistanceToTarget =
         Utilities::distance(internalState.cameraCoordinates, Utilities::convert31ToLatLon(location31));
     const auto inglobeAngle = groundDistanceToTarget / _radius;

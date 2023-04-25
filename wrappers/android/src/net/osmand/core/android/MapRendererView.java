@@ -23,6 +23,7 @@ import net.osmand.core.jni.MapRendererSetupOptions;
 import net.osmand.core.jni.MapRendererState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
+import net.osmand.core.jni.PointD;
 import net.osmand.core.jni.QVectorPointI;
 import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.jni.MapSymbolInformationList;
@@ -642,13 +643,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         if (_windowWidth > 0 && _windowHeight > 0)
-        {
             return _mapRenderer.setMapTargetLocation(target31);
-        }
         else
-        {
             return _mapRenderer.setTarget(target31);
-        }
+    }
+
+    public final boolean setTarget(PointI target31, float heightInMeters) {
+        NativeCore.checkIfLoaded();
+
+        if (_windowWidth > 0 && _windowHeight > 0)
+            return _mapRenderer.setMapTargetLocation(target31, heightInMeters);
+        else
+            return _mapRenderer.setTarget(target31);
     }
 
     public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
@@ -682,6 +688,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMapTarget(forcedUpdate, disableUpdate);
     }
 
+    public final boolean resetMapTarget() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTarget();
+    }
+
+    public final boolean resetMapTargetPixelCoordinates(PointI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTargetPixelCoordinates(screenPoint);
+    }
+
     public final boolean setMapTargetPixelCoordinates(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 
@@ -704,6 +722,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setMapTargetLocation(location31, forcedUpdate, disableUpdate);
+    }
+
+    public final float getMapTargetHeightInMeters() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getMapTargetHeightInMeters();
     }
 
     public final float getZoom() {
@@ -838,6 +862,21 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getLocationFromElevatedPoint(screenPoint, location31);
+    }
+
+    public final float getHeightAndLocationFromElevatedPoint(PointI screenPoint, PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getHeightAndLocationFromElevatedPoint(screenPoint, location31);
+    }
+
+    public final boolean getZoomAndRotationAfterPinch(PointI firstLocation31, float firstHeight, PointI firstPoint,
+                                                    PointI secondLocation31, float secondHeight, PointI secondPoint,
+                                                    PointD zoomAndRotate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getZoomAndRotationAfterPinch(firstLocation31, firstHeight, firstPoint,
+                secondLocation31, secondHeight, secondPoint, zoomAndRotate);
     }
 
     public final float getLocationHeightInMeters(PointI location31) {

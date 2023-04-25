@@ -43,6 +43,14 @@ namespace OsmAnd
         QList< Ref<ObfRoutingSectionInfo> > routingSections;
         QList< Ref<ObfPoiSectionInfo> > poiSections;
         QList< Ref<ObfTransportSectionInfo> > transportSections;
+        
+        struct OsmAndOwner {
+            QString name;
+            QString resource;
+            QString pluginid;
+            QString description;
+        };
+        OsmAndOwner owner;
 
         bool containsDataFor(
             const AreaI* const pBbox31,

@@ -544,7 +544,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            }                                                                                                      ""\n"
         "            else                                                                                                   ""\n"
         "            {                                                                                                      ""\n"
-        "                float sunAzimuth = param_vs_elevation_hillshadeConfiguration.y;                                    ""\n"
+        "                float sunAzimuth = M_PI - param_vs_elevation_hillshadeConfiguration.y;                             ""\n"
         "                                                                                                                   ""\n"
         "                float zNCosZenithCosAzimuth = zNCosZenith * cos(sunAzimuth);                                       ""\n"
         "                float zNCosZenithSinAzimuth = zNCosZenith * sin(sunAzimuth);                                       ""\n"
@@ -579,7 +579,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         // NOTE: Implemented differently that in GDAL, see source that https://trac.osgeo.org/gdal/ticket/4753 references
         "                    vec2 slopeN = slopeInMeters / (slopeAlgorithmScale * heixelInMeters);                          ""\n"
         "                    float slopeN_XXpYY = slopeN.x*slopeN.x + slopeN.y*slopeN.y;                                    ""\n"
-        "                    value = 1.0 - value * abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI_2);                        ""\n"
+        "                    value *= 1.0 - abs(atan(zFactor * sqrt(slopeN_XXpYY)) / M_PI);                                 ""\n"
         "                                                                                                                   ""\n"
         "                    value = 1.0 + 254.0 * max(value, 0.0);                                                         ""\n"
         "                    colorMapKey = max(value, colorMapKey_0);                                                       ""\n"

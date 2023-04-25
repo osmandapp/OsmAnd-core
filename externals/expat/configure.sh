@@ -8,7 +8,7 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-# TODO upgrade to 2.4.1 !!! 
-# prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/expat-2.4.1.tar.gz"
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/bak/expat-2.1.0.tar.gz"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/expat-2.5.0.tar.gz"
+#prepareUpstreamFromTarArchive "$SRCLOC" "https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz"
+#prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/bak/expat-2.1.0.tar.gz"
 patchUpstream "$SRCLOC"
