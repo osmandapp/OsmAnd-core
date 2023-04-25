@@ -43,10 +43,16 @@ namespace OsmAnd
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;
         QMap<QString, QString> tagsToGpx() const;
-        static Nullable<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
+        static std::shared_ptr<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
         QString getKeyFromTag(const QString& tag) const;
         QString getValue(const QString& key) const;
         QString getRouteName() const;
+        
+        QString getNetwork();
+        QString getOperator();
+        QString getSymbol();
+        QString getWebsite();
+        QString getWikipedia();
         
         void addTag(const QString& key, const QString& value);
         

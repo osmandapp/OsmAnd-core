@@ -416,9 +416,24 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         // </trk>
         xmlWriter.writeEndElement();
     }
+    
+    auto extCopy = extensions;
+    if (!networkRouteKeyTags.isEmpty())
+    {
+        auto networkRouteExt = std::make_shared<GpxExtensions::GpxExtension>();
+        networkRouteExt->name = QStringLiteral("network_route");
+        auto attrsExt = std::make_shared<GpxExtensions::GpxExtension>();
+        attrsExt->name = QStringLiteral("route_key");
+        networkRouteExt->subextensions.append(attrsExt);
+        for (auto it = networkRouteKeyTags.begin(); it != networkRouteKeyTags.end(); ++it)
+        {
+            attrsExt->attributes[it.key()] = it.value();
+        }
+        extCopy.append(networkRouteExt);
+    }
 
     // Write gpx extensions
-    writeExtensions(extensions, attributes, xmlWriter);
+    writeExtensions(extCopy, attributes, xmlWriter);
 
     // </gpx>
     xmlWriter.writeEndElement();
@@ -540,7 +555,7 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
         xmlWriter.writeCharacters(extension->value);
 
     for (const auto& subextension : constOf(extension->subextensions))
-        writeExtension(subextension, xmlWriter, QStringLiteral(""));
+        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
 
     // assignRouteExtensionWriter(segment);
     // </*>
@@ -723,6 +738,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     QList< Ref<RouteType> > routeTypes;
     bool routeExtension = false;
     bool typesExtension = false;
+    bool networkRoute = false;
     auto document = std::make_shared<GpxDocument>();
     parserState.push(document);
 
@@ -752,6 +768,14 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         routeTypes.append(type);
                     }
                 }
+                else if (networkRoute && tagName == QStringLiteral("route_key"))
+                {
+                    QMap<QString, QString> attrs;
+                    for (const auto& attr : parser.attributes())
+                        attrs[attr.name().toString()] = attr.value().toString();
+                    
+                    document->networkRouteKeyTags = attrs;
+                }
                 if (tagName == QStringLiteral("routepointextension"))
                 {
                     routePointExtension = true;
@@ -770,6 +794,10 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 else if (tagName == QStringLiteral("types"))
                 {
                     typesExtension = true;
+                }
+                else if (tagName == QStringLiteral("network_route"))
+                {
+                    networkRoute = true;
                 }
                 else
                 {

@@ -162,6 +162,26 @@ int OsmAnd::NetworkRouteKey::getRouteQuantity(const QHash<QString, QString>& tag
     return q;
 }
 
+QString OsmAnd::NetworkRouteKey::getNetwork() {
+    return getValue(QStringLiteral("network"));
+}
+
+QString OsmAnd::NetworkRouteKey::getOperator() {
+    return getValue(QStringLiteral("operator"));
+}
+
+QString OsmAnd::NetworkRouteKey::getSymbol() {
+    return getValue(QStringLiteral("symbol"));
+}
+
+QString OsmAnd::NetworkRouteKey::getWebsite() {
+    return getValue(QStringLiteral("website"));
+}
+
+QString OsmAnd::NetworkRouteKey::getWikipedia() {
+    return getValue(QStringLiteral("wikipedia"));
+}
+
 QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsToGpx() const
 {
     QMap<QString, QString> networkRouteKey;
@@ -178,7 +198,7 @@ QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsToGpx() const
     return networkRouteKey;
 }
 
-OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QString> & networkRouteKeyTags)
+std::shared_ptr<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QString> & networkRouteKeyTags)
 {
     auto it = networkRouteKeyTags.find(NETWORK_ROUTE_TYPE);
     if (it != networkRouteKeyTags.end())
@@ -187,15 +207,15 @@ OsmAnd::Nullable<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const
         int rtype = ROUTE_TYPES_TAGS.indexOf(type);
         if (rtype < static_cast<int>(RouteType::Count))
         {
-            NetworkRouteKey routeKey(rtype);
+            const auto routeKey = std::make_shared<OsmAnd::NetworkRouteKey>(rtype);
             for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
             {
-                routeKey.addTag(i.key(), i.value());
+                routeKey->addTag(i.key(), i.value());
             }
-            return Nullable<NetworkRouteKey>(routeKey);
+            return routeKey;
         }
     }
-    return Nullable<NetworkRouteKey>();
+    return nullptr;
 }
 
 QString OsmAnd::NetworkRouteKey::getKeyFromTag(const QString& tag) const
