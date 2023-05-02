@@ -177,6 +177,11 @@ namespace OsmAnd
             return qPow(2, zoom);
         }
 
+        inline static double dotProduct(const PointD& vector1, const PointD& vector2)
+        {
+            return vector1.x * vector2.x + vector1.y * vector2.y;
+        }
+
         inline static PointD getScaleDivisor31ToPixel(const PointI& areaSizeInPixels, const ZoomLevel zoom)
         {
             PointD scaleDivisor31ToPixel;

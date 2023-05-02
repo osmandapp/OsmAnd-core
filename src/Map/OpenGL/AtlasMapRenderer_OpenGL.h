@@ -52,7 +52,7 @@ namespace OsmAnd
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         bool getNearestLocationFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
-            const PointI& location31, const float heightInMeters, const PointI& screenPoint,
+            const PointI& location31, const PointI& screenPoint,
             PointI64& fixedLocation, PointI64& currentLocation) const;
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(const MapRendererState& state,
             TileId normalizedTileId, ZoomLevel zoomLevel,
