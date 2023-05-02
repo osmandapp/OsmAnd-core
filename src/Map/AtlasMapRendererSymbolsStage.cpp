@@ -1561,7 +1561,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         }
     }
 
-    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths) && is2D)
+    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
     {
         const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
 
