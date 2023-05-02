@@ -110,6 +110,7 @@ namespace OsmAnd
                 }
 
                 glm::vec2 anchorPoint;
+                float elevation;
                 float width;
                 float angle;
                 float depth;
@@ -323,19 +324,26 @@ namespace OsmAnd
         QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const SkPath& path,
             const bool is2D,
+            const glm::vec2& directionInWorld,
             const glm::vec2& directionOnScreen,
-            const QVector<float>& glyphsWidths) const;
+            const QVector<float>& glyphsWidths,
+            const float glyphHeight) const;
 
-        bool computeGlyphPlacementOnPath(
-            const glm::vec2& anchorPoint,
-            const bool is2D,
-            glm::vec2& outAnchorPoint,
-            float& outGlyphDepth,
-            bool& outHasElevationData) const;
+        bool elevateGlyphAnchorPointIn2D(const glm::vec2& anchorPoint, glm::vec3& outElevatedAnchorPoint) const;
+
+        bool elevateGlyphAnchorPointsIn3D(
+            QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
+            const float glyphHeight,
+            const glm::vec2& directionInWorld) const;
 
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
 
         OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
+
+        QVector<PointF> calculateOnPath3DRotatedBBox(
+            const QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
+            const float glyphHeight,
+            const glm::vec2& directionInWorld) const;
 
         float getSubsectionOpacityFactor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 

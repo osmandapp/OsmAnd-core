@@ -1186,7 +1186,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         // Parameters: per-glyph data
         "struct Glyph                                                                                                       ""\n"
         "{                                                                                                                  ""\n"
-        "    vec2 anchorPoint;                                                                                              ""\n"
+        "    vec3 anchorPoint;                                                                                              ""\n"
         "    float width;                                                                                                   ""\n"
         "    float angle;                                                                                                   ""\n"
         "    float widthOfPreviousN;                                                                                        ""\n"
@@ -1206,8 +1206,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
-        "    v.y = 0.0;                                                                                                     ""\n"
-        "    v.z = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
+        "    v.y = glyph.anchorPoint.y;                                                                                     ""\n"
+        "    v.z = glyph.anchorPoint.z + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
@@ -1588,7 +1588,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
             const auto& vsGlyph = *(pGlyphVS++);
 
             // Set anchor point of glyph
-            glUniform2fv(vsGlyph.anchorPoint, 1, glm::value_ptr(glyph.anchorPoint));
+            glm::vec3 elevatedAnchorPoint(glyph.anchorPoint.x, glyph.elevation, glyph.anchorPoint.y);
+            glUniform3fv(vsGlyph.anchorPoint, 1, glm::value_ptr(elevatedAnchorPoint));
             GL_CHECK_RESULT;
 
             // Set glyph width
