@@ -91,7 +91,7 @@ namespace OsmAnd
             {
                 inline GlyphPlacement()
                     : width(qSNaN())
-                    , angle(qSNaN())
+                    , angleY(qSNaN())
                 {
                 }
 
@@ -103,7 +103,7 @@ namespace OsmAnd
                     const glm::vec2& vNormal_)
                     : anchorPoint(anchorPoint_)
                     , width(width_)
-                    , angle(angle_)
+                    , angleY(angle_)
                     , depth(depth_)
                     , vNormal(vNormal_)
                 {
@@ -112,11 +112,14 @@ namespace OsmAnd
                 glm::vec2 anchorPoint;
                 float elevation;
                 float width;
-                float angle;
+                float angleX;
+                float angleY;
+                float angleZ;
                 float depth;
                 glm::vec2 vNormal;
             };
             QVector< GlyphPlacement > glyphsPlacement;
+            QVector<glm::vec3> rotatedElevatedBBoxInWorld;
         };
     private:
         bool obtainRenderableSymbols(
@@ -321,18 +324,21 @@ namespace OsmAnd
 
         SkPath projectPathInWorldToScreen(const SkPath& pathInWorld) const;
 
-        QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
+        bool computePlacementOfGlyphsOnPath(
             const SkPath& path,
             const bool is2D,
             const glm::vec2& directionInWorld,
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths,
-            const float glyphHeight) const;
+            const float glyphHeight,
+            QVector<RenderableOnPathSymbol::GlyphPlacement>& outGlyphsPlacement,
+            QVector<glm::vec3>& outRotatedElevatedBBoxInWorld) const;
 
         bool elevateGlyphAnchorPointIn2D(const glm::vec2& anchorPoint, glm::vec3& outElevatedAnchorPoint) const;
 
         bool elevateGlyphAnchorPointsIn3D(
             QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
+            QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
             const float glyphHeight,
             const glm::vec2& directionInWorld) const;
 
