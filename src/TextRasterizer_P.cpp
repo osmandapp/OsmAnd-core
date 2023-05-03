@@ -161,7 +161,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             }
             else
             {
-                pTextPaint->text = QStringRef(lineRef.string(), pTextPaint->text.position(), pTextPaint->text.size() + 1);
+                pTextPaint->text =
+                    QStringRef(lineRef.string(), pTextPaint->text.position(), pTextPaint->text.size() + charSize);
             }
         }
 
