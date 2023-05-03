@@ -16,6 +16,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "ObfsCollection.h"
+#include "ObfReader.h"
 
 namespace OsmAnd
 {
@@ -71,6 +72,43 @@ namespace OsmAnd
 
             QFileInfo fileInfo;
         };
+
+        static bool compareObfReaders(const std::shared_ptr<const ObfReader>& o1, const std::shared_ptr<const ObfReader>& o2)
+        {
+            const auto& name1 = formatObfReaderFileName(o1);
+            const auto& name2 = formatObfReaderFileName(o2);
+            return name1.compare(name2) > 0;
+        }
+
+        static QString formatObfReaderFileName(const std::shared_ptr<const ObfReader>& obfReader)
+        {
+            const auto& filePath = obfReader->obfFile->filePath;
+            auto fileName = filePath.toLower();
+
+            if (fileName.contains(QDir::separator()))
+                fileName = fileName.mid(fileName.lastIndexOf(QDir::separator()) + 1);
+
+            if (fileName.contains("."))
+                fileName = fileName.mid(0, fileName.indexOf("."));
+            
+            if (fileName.endsWith("_2"))
+                fileName = fileName.mid(0, fileName.length() - 2);
+
+            bool timestampSpecified = false;
+            for (const auto ch : fileName)
+            {
+                if (ch >= '0' && ch <= '9')
+                {
+                    timestampSpecified = true;
+                    break;
+                }
+            }
+
+            if (!timestampSpecified)
+                fileName += "_00_00_00";
+
+            return fileName;
+        }
         
         QHash< ObfsCollection::SourceOriginId, std::shared_ptr<const SourceOrigin> > _sourcesOrigins;
         mutable QReadWriteLock _sourcesOriginsLock;

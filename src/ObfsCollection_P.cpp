@@ -6,7 +6,6 @@
 #include "QtCommon.h"
 
 #include "OsmAndCore_private.h"
-#include "ObfReader.h"
 #include "ObfDataInterface.h"
 #include "ObfFile.h"
 #include "ObfInfo.h"
@@ -387,6 +386,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             }
         }
     }
+
+    // Sort so that obf with later timestamp will be processed earlier
+    std::sort(obfReaders.begin(), obfReaders.end(), compareObfReaders);
 
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
 }
