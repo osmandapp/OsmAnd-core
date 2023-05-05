@@ -3,6 +3,7 @@
 OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
     : texturesFilteringQuality(TextureFilteringQuality::Good)
     , limitTextureColorDepthBy16bits(false)
+    , renderToOffscreenFramebuffer(false)
 {
 }
 
@@ -14,6 +15,7 @@ void OsmAnd::MapRendererConfiguration::copyTo(MapRendererConfiguration& other) c
 {
     other.texturesFilteringQuality = texturesFilteringQuality;
     other.limitTextureColorDepthBy16bits = limitTextureColorDepthBy16bits;
+    other.renderToOffscreenFramebuffer = renderToOffscreenFramebuffer;
 }
 
 std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::MapRendererConfiguration::createCopy() const

@@ -159,6 +159,7 @@ namespace OsmAnd
         {
             ColorDepthForcing,
             TexturesFilteringMode,
+            RenderToOffscreenFramebuffer,
 
             __LAST
         };

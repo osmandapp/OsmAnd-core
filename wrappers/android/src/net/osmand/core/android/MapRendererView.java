@@ -6,6 +6,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.os.SystemClock;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.ElevationConfiguration;
@@ -39,6 +41,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -130,6 +133,7 @@ public abstract class MapRendererView extends FrameLayout {
     private int _windowHeight;
 
     private int frameId;
+    private Bitmap _glFrameBitmap;
 
     private boolean isPresent;
     private volatile Runnable releaseTask;
@@ -139,6 +143,8 @@ public abstract class MapRendererView extends FrameLayout {
 
     public interface MapRendererViewListener {
         void onUpdateFrame(MapRendererView mapRenderer);
+
+        void onFrameRendered(MapRendererView mapRenderer);
     }
 
     public MapRendererView(Context context) {
@@ -1046,6 +1052,10 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapMarkersAnimationFinished;
     }
 
+    public final Bitmap getGLFrameBitmap() {
+        return _glFrameBitmap;
+    }
+
     /**
      * EGL context factory
      * <p/>
@@ -1269,11 +1279,41 @@ public abstract class MapRendererView extends FrameLayout {
             if (_mapRenderer.prepareFrame()) {
                 frameId++;
                 _mapRenderer.renderFrame();
+
+                // If OpenGL renders to offscreen buffer, it will not affect Canvas, so manually "render" to Bitmap
+                if (getConfiguration().getRenderToOffscreenFramebuffer()) {
+                    updateGLFrameBitmap(gl);
+                } else {
+                    if (_glFrameBitmap != null) {
+                        _glFrameBitmap.recycle();
+                        _glFrameBitmap = null;
+                    }
+                }
+
+                for (MapRendererViewListener listener : listeners) {
+                    listener.onFrameRendered(MapRendererView.this);
+                }
             }
 
 
             // Flush all the commands to GPU
             gl.glFlush();
+        }
+
+        private void updateGLFrameBitmap(GL10 gl) {
+            boolean create = _glFrameBitmap == null
+                || _glFrameBitmap.getWidth() != getWindowWidth()
+                || _glFrameBitmap.getHeight() != getWindowHeight();
+            if (create) {
+                _glFrameBitmap = Bitmap.createBitmap(getWindowWidth(), getWindowHeight(), Bitmap.Config.ARGB_8888);
+            }
+
+            int componetsPerPixel = 4; // ARGB
+            int bufferCapacity = componetsPerPixel * getWindowWidth() * getWindowHeight();
+            ByteBuffer pixelDataBuffer = ByteBuffer.allocateDirect(bufferCapacity);
+
+            gl.glReadPixels(0, 0, getWindowWidth(), getWindowHeight(), GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelDataBuffer);
+            _glFrameBitmap.copyPixelsFromBuffer(pixelDataBuffer);
         }
     }
 

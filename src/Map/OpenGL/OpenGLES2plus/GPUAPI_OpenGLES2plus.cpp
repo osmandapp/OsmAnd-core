@@ -95,6 +95,8 @@ OsmAnd::GPUAPI_OpenGLES2plus::GPUAPI_OpenGLES2plus()
     , _depthFramebufferColorRenderbuffer(0)
     , _depthFramebufferColorRenderbufferFormat(0)
     , _depthFramebufferColorRenderbufferType(0)
+    , _offscreenFramebuffer(0)
+    , _colorRenderbuffer(0)
     , _isSupported_EXT_unpack_subimage(false)
     , _isSupported_EXT_texture_storage(false)
     , _isSupported_APPLE_texture_max_level(false)
@@ -1868,4 +1870,67 @@ bool OsmAnd::GPUAPI_OpenGLES2plus::pickFramebufferDepthValue(
     outValue = static_cast<float>(value);
 
     return true;
+}
+
+void OsmAnd::GPUAPI_OpenGLES2plus::enableOffscreenRendering(const GLsizei bufferWidth, const GLsizei bufferHeight)
+{
+    const bool alreadyEnabled = _offscreenFramebuffer != 0;
+    if (alreadyEnabled)
+        return;
+
+    glGenFramebuffers(1, &_offscreenFramebuffer);
+    GL_CHECK_RESULT;
+    glBindFramebuffer(GL_FRAMEBUFFER, _offscreenFramebuffer);
+    GL_CHECK_RESULT;
+
+    glGenRenderbuffers(1, &_colorRenderbuffer);
+    GL_CHECK_RESULT;
+    glBindRenderbuffer(GL_RENDERBUFFER, _colorRenderbuffer);
+    GL_CHECK_RESULT;
+
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA4, bufferWidth, bufferHeight);
+    GL_CHECK_RESULT;
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _colorRenderbuffer);
+    GL_CHECK_RESULT;
+
+    const auto framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    switch (framebufferStatus)
+    {
+        case GL_FRAMEBUFFER_COMPLETE:
+            // OK
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+            LogPrintf(LogSeverityLevel::Error, "Framebuffer status: GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+            LogPrintf(LogSeverityLevel::Error, "Framebuffer status: GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+            LogPrintf(LogSeverityLevel::Error, "Framebuffer status: GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+            break;
+        case GL_FRAMEBUFFER_UNSUPPORTED:
+            LogPrintf(LogSeverityLevel::Error, "Framebuffer status: GL_FRAMEBUFFER_UNSUPPORTED");
+            break;
+        default:
+            LogPrintf(LogSeverityLevel::Error, "Framebuffer status: unknown 0x%04X", framebufferStatus);
+            break;
+    }
+
+}
+
+void OsmAnd::GPUAPI_OpenGLES2plus::disableOffscreenRendering()
+{
+    if (_offscreenFramebuffer != 0)
+    {
+        // Explicitly detach color renderbuffer from offscreen framebuffer
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
+        // Then delete color renderbuffer
+        glDeleteRenderbuffers(1, &_colorRenderbuffer);
+
+        // Change render target to onscreen buffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // Delete offscreen framebuffer
+        glDeleteFramebuffers(1, &_offscreenFramebuffer);
+    }
 }
