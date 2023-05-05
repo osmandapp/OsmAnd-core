@@ -37,6 +37,15 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 
+#define SHORT_GLYPHS_COUNT 4
+#define MEDIUM_GLYPHS_COUNT 10
+#define LONG_GLYPHS_COUNT 15
+
+#define SHORT_GLYPHS_MAX_ANGLE 20.0f
+#define MEDIUM_GLYPHS_MAX_ANGLE 5.0f
+#define LONG_GLYPHS_MAX_ANGLE 2.5f
+#define EXTRA_LONG_GLYPHS_MAX_ANGLE 1.0f
+
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
 {
@@ -2640,15 +2649,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
 
     // Check if angle between planes not too big. The longer text the less angle allowed between planes
     int glyphsCount = glyphsPlacement.size();
-    float maxAngle = 0.0f;
-    if (glyphsCount <= 4)
-        maxAngle = 20.0f;
-    else if (glyphsCount <= 10)
-        maxAngle = 5.0f;
-    else if (glyphsCount <= 15)
-        maxAngle = 2.5f;
-    else
-        maxAngle = 1.0f;
+    float maxAngle = EXTRA_LONG_GLYPHS_MAX_ANGLE;
+    if (glyphsCount <= SHORT_GLYPHS_COUNT)
+        maxAngle = SHORT_GLYPHS_MAX_ANGLE;
+    else if (glyphsCount <= MEDIUM_GLYPHS_COUNT)
+        maxAngle = MEDIUM_GLYPHS_MAX_ANGLE;
+    else if (glyphsCount <= LONG_GLYPHS_COUNT)
+        maxAngle = LONG_GLYPHS_MAX_ANGLE;
 
     for (int i = 0; i < 3; i++)
     {
