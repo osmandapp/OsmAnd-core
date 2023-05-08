@@ -950,6 +950,17 @@ namespace OsmAnd
             }
             return res;
         }
+
+        inline static glm::vec3 calculatePlaneN(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+        {
+            const auto ab = b - a;
+            const auto ac = c - a;
+
+            const auto x = ab.y * ac.z - ab.z * ac.y;
+            const auto y = ab.z * ac.x - ab.x * ac.z;
+            const auto z = ab.x * ac.y - ab.y * ac.x;
+            return glm::normalize(glm::vec3(x, y, z));
+        }
         
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
