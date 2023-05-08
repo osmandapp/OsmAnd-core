@@ -2076,7 +2076,19 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
                 return false;
             });
-        if (hasTwin)
+        // In case new text symbol has a similar but more important one that was already added, ignore this one
+        const auto hasMoreImportant = std::any_of(outSymbols,
+            [text]
+            (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
+            {
+                if (const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
+                {
+                    return otherText->order < text->order && text->hasSimilarContentAs(*otherText);
+                }
+
+                return false;
+            });
+        if ((text->drawOnPath || text->drawAlongPath) && hasTwin || hasMoreImportant)
         {
             if (metric)
             {
