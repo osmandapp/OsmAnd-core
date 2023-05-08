@@ -70,6 +70,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
         // This offset is computed only in case symbol is not on-path and not along-path
         PointI totalOffset;
+
+        // Minimum and maximum offsets to allow column of symbols grow in both directions without overlapping
+        int32_t topOffset = 0;
+        int32_t bottomOffset = 0;
+
         bool textAfterIcon = false;
 
         for (const auto& symbol : constOf(symbolsGroup->symbols))
@@ -186,11 +191,18 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     localOffset.y += textSymbol->verticalOffset;
                     if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
                     {
+                        const auto halfHeight = rasterizedText->height() / 2;
                         localOffset.y += symbolExtraTopSpace;
-                        localOffset.y += rasterizedText->height() / 2;
+                        localOffset.y += halfHeight;
                         if (textAfterIcon && symbolExtraTopSpace == 0)
                             localOffset.y += qCeil(-fontAscent / 2);
                         textAfterIcon = false;
+                        // Keep rasterized symbols from overlapping
+                        const auto centerOffset = totalOffset.y + localOffset.y;
+                        if (localOffset.y < halfHeight)
+                            localOffset.y = topOffset - halfHeight - totalOffset.y;
+                        else if (centerOffset + halfHeight > topOffset && centerOffset - halfHeight < bottomOffset)
+                            localOffset.y = bottomOffset + halfHeight - totalOffset.y;
                     }
 
                     // Increment total offset
@@ -243,9 +255,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        totalOffset.y += rasterizedText->height() / 2;
+                        const auto halfHeight = rasterizedText->height() / 2;
+                        topOffset = std::min(topOffset, totalOffset.y - halfHeight);
+                        totalOffset.y += halfHeight;
                         totalOffset.y += symbolExtraBottomSpace;
                         totalOffset.y += qCeil(lineSpacing);
+                        bottomOffset = std::max(bottomOffset, totalOffset.y);
                     }
                 }
             }
@@ -323,7 +338,16 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.y))
                     localOffset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
                 if (!group->symbols.isEmpty() && !iconSymbol->drawAlongPath)
-                    localOffset.y += rasterizedIcon->height() / 2;
+                {
+                    const auto halfHeight = rasterizedIcon->height() / 2;
+                    localOffset.y += halfHeight;
+                    // Keep rasterized symbols from overlapping
+                    const auto centerOffset = totalOffset.y + localOffset.y;
+                    if (localOffset.y < halfHeight)
+                        localOffset.y = topOffset - halfHeight - totalOffset.y;
+                    else if (centerOffset + halfHeight > topOffset && centerOffset - halfHeight < bottomOffset)
+                        localOffset.y = bottomOffset + halfHeight - totalOffset.y;
+                }
 
                 // Increment total offset
                 if (!iconSymbol->drawAlongPath)
@@ -370,7 +394,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 //  - height / 2
                 if (!iconSymbol->drawAlongPath)
                 {
-                    totalOffset.y += rasterizedIcon->height() / 2;
+                    const auto halfHeight = rasterizedIcon->height() / 2;
+                    topOffset = std::min(topOffset, totalOffset.y - halfHeight);
+                    totalOffset.y += halfHeight;
+                    bottomOffset = std::max(bottomOffset, totalOffset.y);
                     textAfterIcon = true;
                 }
             }

@@ -1614,20 +1614,15 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
             metric);
     }
 
-    // Obtain texts for this symbol
-    //HACK: (only in case it's first tag)
-    if (primitive->attributeIdIndex == 0)
-    {
-        obtainPrimitiveTexts(
-            context,
-            primitivisedObjects,
-            primitive,
-            center,
-            evaluationResult,
-            textEvaluator,
-            outSymbols,
-            metric);
-    }
+    obtainPrimitiveTexts(
+        context,
+        primitivisedObjects,
+        primitive,
+        center,
+        evaluationResult,
+        textEvaluator,
+        outSymbols,
+        metric);
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
