@@ -202,6 +202,7 @@ namespace OsmAnd
             bool operator!=(const TextSymbol& that) const;
 
             bool hasSameContentAs(const TextSymbol& that) const;
+            bool hasSimilarContentAs(const TextSymbol& that) const;
             bool hasDifferentContentAs(const TextSymbol& that) const;
 
         friend class OsmAnd::MapPrimitiviser;

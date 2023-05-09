@@ -260,6 +260,23 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& tha
         this->underlayIconResourceName == that.underlayIconResourceName;
 }
 
+bool OsmAnd::MapPrimitiviser::TextSymbol::hasSimilarContentAs(const TextSymbol& that) const
+{
+    return
+        this->location31 == that.location31 &&
+        this->value == that.value &&
+        this->drawAlongPath == that.drawAlongPath &&
+        this->drawOnPath == that.drawOnPath &&
+        this->verticalOffset == that.verticalOffset &&
+        this->color == that.color &&
+        this->shadowRadius == that.shadowRadius &&
+        this->shadowColor == that.shadowColor &&
+        this->isBold == that.isBold &&
+        this->isItalic == that.isItalic &&
+        this->shieldResourceName == that.shieldResourceName &&
+        this->underlayIconResourceName == that.underlayIconResourceName;
+}
+
 bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol& that) const
 {
     return
