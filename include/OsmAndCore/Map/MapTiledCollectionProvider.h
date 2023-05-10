@@ -141,6 +141,9 @@ namespace OsmAnd
             OsmAnd::ZoomLevel,
             getMaxZoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            bool,
+            supportsNaturalObtainDataAsync);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             OsmAnd::PointI,
             getPinIconOffset);
     SWIG_EMIT_DIRECTOR_END(MapTiledCollectionProvider);
