@@ -1886,7 +1886,7 @@ bool OsmAnd::MapRenderer::resetMapTarget()
         return false;
 
     PointI location31 = _requestedState.fixedLocation31;
-    float height;
+    float height = 0.0f;
     bool found = getLocationFromElevatedPoint(_requestedState, _requestedState.fixedPixel, location31, &height);
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = found ? getWorldElevationOfLocation(_requestedState, height, location31) : 0.0f;
@@ -1905,7 +1905,7 @@ bool OsmAnd::MapRenderer::resetMapTargetPixelCoordinates(const PointI& screenPoi
     if (_requestedState.fixedPixel != screenPoint_)
     {
         PointI location31 = _requestedState.fixedLocation31;
-        float height;
+        float height = 0.0f;
         bool found = getLocationFromElevatedPoint(_requestedState, screenPoint_, location31, &height);
         _requestedState.fixedPixel = screenPoint_;
         _requestedState.fixedLocation31 = location31;

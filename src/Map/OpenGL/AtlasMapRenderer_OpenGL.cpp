@@ -1231,7 +1231,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
     {
         location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
         if (heightInMeters)
-            *heightInMeters = getLocationHeightInMeters(state, location31);
+        {
+            const auto height = getLocationHeightInMeters(state, location31);
+            if (height > _invalidElevationValue)
+                *heightInMeters = height;
+        }
         return true;
     }
 
