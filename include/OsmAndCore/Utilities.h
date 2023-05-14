@@ -176,6 +176,13 @@ namespace OsmAnd
 
             return qPow(2, zoom);
         }
+        
+        inline static double getSignedAngle(const PointD& vector1N, const PointD& vector2N)
+        {
+            const int sign = dotProduct(vector1N, PointD(vector2N.y, -vector2N.x)) < 0 ? -1 : +1;
+            const auto signedAngle = sign * qAcos(dotProduct(vector1N, vector2N)); 
+            return Utilities::normalizedAngleRadians(signedAngle);
+        }
 
         inline static double dotProduct(const PointD& vector1, const PointD& vector2)
         {
