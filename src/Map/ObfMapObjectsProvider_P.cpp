@@ -19,7 +19,9 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-# define COMPARE_OBF_OBJECTS_MAX_ZOOM 12
+#define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
+#define ENLARGE_QUERY_BBOX_METERS 100
+#define COMPARE_OBF_OBJECTS_MAX_ZOOM 12
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -163,8 +165,20 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         );
 
     // Get bounding box that covers this tile
-    const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
     const auto zoom = request.zoom;
+    const auto originalTileBBox31 = Utilities::tileBoundingBox31(request.tileId, zoom);
+    AreaI tileBBox31;
+    if (zoom >= ENLARGE_QUERY_BBOX_MIN_ZOOM)
+    {
+        // Fix showing deleted objects in live updates https://github.com/osmandapp/OsmAnd/issues/14920#issuecomment-1538488529
+        const auto enlargeDeltaX = Utilities::metersToX31(ENLARGE_QUERY_BBOX_METERS);
+        const auto enlargeDeltaY = Utilities::metersToY31(ENLARGE_QUERY_BBOX_METERS);
+        tileBBox31 = originalTileBBox31.getEnlargedBy(PointI(enlargeDeltaX, enlargeDeltaY));
+    }
+    else
+    {
+        tileBBox31 = originalTileBBox31;
+    }
 
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
