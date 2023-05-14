@@ -995,14 +995,16 @@ namespace OsmAnd
                 if (i == 0)
                 {
                     LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2, %3, %4")
-                        .arg(lat)
-                        .arg(lon)
+                        .arg(lat, 2, 'f', 10, '0')
+                        .arg(lon, 2, 'f', 10, '0')
                         .arg(name)
                         .arg(color)));
                 }
                 else
                 {
-                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2").arg(lat).arg(lon)));
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2")
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')));
                 }
             }
         }
@@ -1017,8 +1019,8 @@ namespace OsmAnd
             const auto lat = getLatitudeFromTile(zoom, point.y);
             const auto lon = getLongitudeFromTile(zoom, point.x);
             LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("W, %1, %2, %3, %4")
-                    .arg(lat)
-                    .arg(lon)
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')
                     .arg(name)
                     .arg(color)));
         }
