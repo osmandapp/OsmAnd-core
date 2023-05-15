@@ -54,6 +54,9 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
 
     for (const auto& line : _linesCollection->getLines())
     {
+        if (!line)
+            continue;
+
         int lineId = line->lineId;
         if (line->isHidden())
         {
@@ -95,7 +98,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                 builder.setIsHidden(false);
                 builder.setPosition(symbolInfo.position31);
                 builder.setIsAccuracyCircleVisible(false);
-                const auto& newMarker = builder.buildAndAddToCollection(_markersCollection);
+                const auto newMarker = builder.buildAndAddToCollection(_markersCollection);
                 if (line->pathIconOnSurface)
                     newMarker->setOnMapSurfaceIconDirection(markerKey, symbolInfo.direction);
             }

@@ -20,7 +20,7 @@ QList<std::shared_ptr<OsmAnd::VectorLine>> OsmAnd::VectorLinesCollection_P::getL
     return _lines.values();
 }
 
-bool OsmAnd::VectorLinesCollection_P::addLine(const std::shared_ptr<VectorLine>& line)
+bool OsmAnd::VectorLinesCollection_P::addLine(const std::shared_ptr<VectorLine> line)
 {
     QWriteLocker scopedLocker(&_linesLock);
 
