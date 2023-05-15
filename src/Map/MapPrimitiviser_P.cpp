@@ -2076,19 +2076,46 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
                 return false;
             });
-        // In case new text symbol has a similar but more important one that was already added, ignore this one
-        const auto hasMoreImportant = std::any_of(outSymbols,
-            [text]
-            (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
-            {
-                if (const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
-                {
-                    return otherText->order < text->order && text->hasSimilarContentAs(*otherText);
-                }
 
-                return false;
-            });
-        if ((text->drawOnPath || text->drawAlongPath) && hasTwin || hasMoreImportant)
+        bool skipText = false;
+        if (text->drawOnPath || text->drawAlongPath)
+            skipText = hasTwin;
+        else
+        {
+            const auto symSize = outSymbols.size();
+            for (int symIndex = 0; !skipText && symIndex < symSize; symIndex++)
+            {
+                const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(outSymbols[symIndex]);
+                if (otherText && text->location31 == otherText->location31
+                    && text->drawAlongPath == otherText->drawAlongPath
+                    && text->drawOnPath == otherText->drawOnPath
+                    && text->verticalOffset == otherText->verticalOffset
+                    && text->shieldResourceName == otherText->shieldResourceName
+                    && text->underlayIconResourceName == otherText->underlayIconResourceName)
+                {
+                    if (text->value == otherText->value)
+                    {
+                        // In case there is already added text symbol with the same text, choose the more important one
+                        if (text->order < otherText->order)
+                            outSymbols.replace(symIndex, qMove(text));
+                        skipText = true;
+                    }
+                    else if (text->value.contains(otherText->value))
+                    {
+                        // In case there is already added text symbol, which is less informative, replace it
+                        outSymbols.replace(symIndex, qMove(text));
+                        skipText = true;
+                    }
+                    else if (otherText->value.contains(text->value))
+                    {
+                        // In case there is already added text symbol, which is more informative, ignore the new one
+                        skipText = true;
+                    }
+                }
+            }
+        }
+
+        if (skipText)
         {
             if (metric)
             {
