@@ -176,6 +176,13 @@ namespace OsmAnd
 
             return qPow(2, zoom);
         }
+        
+        inline static double getSignedAngle(const PointD& vector1N, const PointD& vector2N)
+        {
+            const int sign = dotProduct(vector1N, PointD(vector2N.y, -vector2N.x)) < 0 ? -1 : +1;
+            const auto signedAngle = sign * qAcos(dotProduct(vector1N, vector2N)); 
+            return Utilities::normalizedAngleRadians(signedAngle);
+        }
 
         inline static double dotProduct(const PointD& vector1, const PointD& vector2)
         {
@@ -995,14 +1002,16 @@ namespace OsmAnd
                 if (i == 0)
                 {
                     LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2, %3, %4")
-                        .arg(lat)
-                        .arg(lon)
+                        .arg(lat, 2, 'f', 10, '0')
+                        .arg(lon, 2, 'f', 10, '0')
                         .arg(name)
                         .arg(color)));
                 }
                 else
                 {
-                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2").arg(lat).arg(lon)));
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2")
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')));
                 }
             }
         }
@@ -1017,8 +1026,8 @@ namespace OsmAnd
             const auto lat = getLatitudeFromTile(zoom, point.y);
             const auto lon = getLongitudeFromTile(zoom, point.x);
             LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("W, %1, %2, %3, %4")
-                    .arg(lat)
-                    .arg(lon)
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')
                     .arg(name)
                     .arg(color)));
         }

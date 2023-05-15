@@ -21,6 +21,7 @@
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_PATH_LENGTH_TO_COMBINE 500
 #define MAX_GAP_BETWEEN_PATHS 45
+#define MAX_ANGLE_BETWEEN_VECTORS M_PI_4
 
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
@@ -676,33 +677,61 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::isAttachAllowed(
     if (outGapBetweenPaths >= maxGapBetweenPaths)
         return false;
 
-    const auto penultimantePoint = _points[_points.size() - 2];
+    const auto penultimatePoint = _points[_points.size() - 2];
     const auto otherSecondPoint = other->_points[1];
 
-    const auto firstPathLastVectorN = static_cast<PointF>(lastPoint - penultimantePoint).normalized();
-    const auto secondPathFirstVectorN = static_cast<PointF>(otherSecondPoint - otherFirstPoint).normalized();
+    const auto firstPathLastVectorN = static_cast<PointD>(lastPoint - penultimatePoint).normalized();
+    const auto secondPathFirstVectorN = static_cast<PointD>(otherSecondPoint - otherFirstPoint).normalized();
 
     // Allow paths attachment only with obtuse angle between their segment of connection
+    double cumulativeAngle = 0.0f;
 
-    // If paths overlap on end/start, simply check angle
-    // between last segment of 1st path and first segment of 2nd path 
     if (gapVector.x == 0 && gapVector.y == 0)
     {
-        const auto x = firstPathLastVectorN.x * secondPathFirstVectorN.x;
-        const auto y = firstPathLastVectorN.y * secondPathFirstVectorN.y;
-        return x + y > 0;
+        // Check angle between last segment of 1st path and first segment of 2nd path 
+        const auto angle = Utilities::getSignedAngle(firstPathLastVectorN, secondPathFirstVectorN);
+        if (qAbs(angle) >= MAX_ANGLE_BETWEEN_VECTORS)
+            return false;
+
+        cumulativeAngle += angle;
+    }
+    else
+    {
+        // Check angle between сonnecting segments and gap segment
+        const auto gapVectorN = static_cast<PointD>(gapVector).normalized();
+        const auto angle1 = Utilities::getSignedAngle(firstPathLastVectorN, gapVectorN);
+        const auto angle2 = Utilities::getSignedAngle(gapVectorN, secondPathFirstVectorN);
+        if (qAbs(angle1) >= MAX_ANGLE_BETWEEN_VECTORS || qAbs(angle2) >= MAX_ANGLE_BETWEEN_VECTORS)
+            return false;
+
+        cumulativeAngle += angle1 + angle2;
     }
 
-    // But if there is gap between paths, check angle
-    // between gap segment and both last/first segment
-    const auto gapVectorN = static_cast<PointF>(gapVector).normalized();
+    // Check angles between adjacent segments to prevent sharp U-shaped turns
 
-    const auto x1 = firstPathLastVectorN.x * gapVectorN.x;
-    const auto y1 = firstPathLastVectorN.y * gapVectorN.y;
-    const auto x2 = gapVectorN.x * secondPathFirstVectorN.x;
-    const auto y2 = gapVectorN.y * secondPathFirstVectorN.y;
+    if (_points.size() >= 3)
+    {
+        // Compute second to last vector of first path to check angle with last vector
+        const auto thirdToLastPoint = _points[_points.size() - 3];
+        const auto secondToLastVectorN = static_cast<PointD>(penultimatePoint - thirdToLastPoint).normalized();
 
-    return x1 + y1 > 0 && x2 + y2 > 0;
+        cumulativeAngle += Utilities::getSignedAngle(secondToLastVectorN, firstPathLastVectorN);
+        if (qAbs(cumulativeAngle) >= MAX_ANGLE_BETWEEN_VECTORS)
+            return false;
+    }
+
+    if (other->_points.size() >= 3)
+    {
+        // Compute second vector of second path to check angle with first vector
+        const auto thirdPoint = other->_points[2];
+        const auto secondVector = static_cast<PointD>(thirdPoint - otherSecondPoint).normalized();
+
+        cumulativeAngle += Utilities::getSignedAngle(secondPathFirstVectorN, secondVector);
+        if (qAbs(cumulativeAngle) >= MAX_ANGLE_BETWEEN_VECTORS)
+            return false;
+    }
+
+    return true;
 }
 
 void OsmAnd::MapObjectsSymbolsProvider_P::СombinedPath::attachPath(const std::shared_ptr<СombinedPath>& other)

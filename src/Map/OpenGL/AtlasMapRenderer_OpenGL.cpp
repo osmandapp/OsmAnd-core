@@ -1459,9 +1459,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     const auto actualSegmentN = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x).normalized();
     const auto neededSegmentN = neededSegment / qSqrt(sqrNeededDistance);
-    const auto angle = qRadiansToDegrees(qAcos(Utilities::dotProduct(actualSegmentN, neededSegmentN))) *
-        (Utilities::dotProduct(actualSegmentN, PointD(neededSegmentN.y, -neededSegmentN.x)) < 0.0 ? -1.0 : 1.0);
-    zoomAndRotate.y = Utilities::normalizedAngleDegrees(angle);
+    const auto angle = qRadiansToDegrees(Utilities::getSignedAngle(actualSegmentN, neededSegmentN));
+    zoomAndRotate.y = angle;
 
     return true;
 }
