@@ -9,6 +9,7 @@
 OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     : _rendererSymbolsUpdateSuspended(false)
     , _isPaused(true)
+	, _inconsistentMapTarget(false)
     , _zoomGetter(std::bind(&MapAnimator_P::zoomGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     , _zoomSetter(std::bind(&MapAnimator_P::zoomSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
     , _azimuthGetter(std::bind(&MapAnimator_P::azimuthGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
@@ -48,6 +49,9 @@ void OsmAnd::MapAnimator_P::pause()
 
 void OsmAnd::MapAnimator_P::resume()
 {
+    if (_isPaused)
+        invalidateMapTarget();
+
     _isPaused = false;
 }
 
@@ -229,6 +233,19 @@ void OsmAnd::MapAnimator_P::cancelAllAnimations()
     QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     _animationsByKey.clear();
+
+	if (_inconsistentMapTarget)
+    {
+        _inconsistentMapTarget = false;
+        _renderer->resetMapTarget();
+    }
+}
+
+void OsmAnd::MapAnimator_P::invalidateMapTarget()
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    _inconsistentMapTarget = true;
 }
 
 bool OsmAnd::MapAnimator_P::update(const float timePassed)

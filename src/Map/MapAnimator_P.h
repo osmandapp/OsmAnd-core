@@ -48,6 +48,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _animationsCollectionLock;
         QHash<Key, AnimationsCollection> _animationsByKey;
+        bool _inconsistentMapTarget;
 
         void constructZoomAnimationByDelta(
             AnimationsCollection& outAnimation,
@@ -205,6 +206,7 @@ namespace OsmAnd
         QList< std::shared_ptr<IAnimation> > getAllAnimations();
         QList< std::shared_ptr<const IAnimation> > getAllAnimations() const;
         void cancelAllAnimations();
+        void invalidateMapTarget();
 
         bool update(const float timePassed);
 
