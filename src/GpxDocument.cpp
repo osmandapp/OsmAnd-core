@@ -427,7 +427,8 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         networkRouteExt->subextensions.append(attrsExt);
         for (auto it = networkRouteKeyTags.begin(); it != networkRouteKeyTags.end(); ++it)
         {
-            attrsExt->attributes[it.key()] = it.value();
+            auto key = it.key();
+            attrsExt->attributes[key.replace(QStringLiteral(":"), QStringLiteral("_-_"))] = it.value();
         }
         extCopy.append(networkRouteExt);
     }
@@ -772,7 +773,10 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     QMap<QString, QString> attrs;
                     for (const auto& attr : parser.attributes())
-                        attrs[attr.name().toString()] = attr.value().toString();
+                    {
+                        auto key = attr.name().toString();
+                        attrs[key.replace(QStringLiteral("_-_"), QStringLiteral(":"))] = attr.value().toString();
+                    }
                     
                     document->networkRouteKeyTags = attrs;
                 }
