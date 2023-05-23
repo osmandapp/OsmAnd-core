@@ -29,7 +29,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& group /*= QString::null*/,
     const QString& icon /*= QString::null*/,
     const QString& background /*= QString::null*/,
-    const ColorRGB color /*= ColorRGB()*/,
+    const ColorARGB color /*= ColorARGB()*/,
     const QHash<QString, QString>& extensions, /*= QHash<QString, QString>*/
     const bool calendarEvent /*= false*/)
 {
@@ -47,7 +47,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const QString& group /*= QString::null*/,
     const QString& icon /*= QString::null*/,
     const QString& background /*= QString::null*/,
-    const ColorRGB color /*= ColorRGB()*/,
+    const ColorARGB color /*= ColorARGB()*/,
     const QHash<QString, QString>& extensions, /*= QHash<QString, QString>*/
     const bool calendarEvent /*= false*/)
 {

@@ -38,7 +38,7 @@ namespace OsmAnd
             const QString& group,
             const QString& icon,
             const QString& background,
-            const ColorRGB color,
+            const ColorARGB color,
             const QHash<QString, QString>& extensions,
             const bool calendarEvent);
 
@@ -54,7 +54,7 @@ namespace OsmAnd
             const QString& group,
             const QString& icon,
             const QString& background,
-            const ColorRGB color,
+            const ColorARGB color,
             const QHash<QString, QString>& extensions,
             const bool calendarEvent);
 
@@ -107,8 +107,8 @@ namespace OsmAnd
         virtual QString getBackground() const;
         virtual void setBackground(const QString& newBackground);
         
-        virtual ColorRGB getColor() const;
-        virtual void setColor(const ColorRGB newColor);
+        virtual ColorARGB getColor() const;
+        virtual void setColor(const ColorARGB newColor);
         
         virtual QHash<QString, QString> getExtensions() const;
         virtual void setExtensions(const QHash<QString, QString>& extensions);

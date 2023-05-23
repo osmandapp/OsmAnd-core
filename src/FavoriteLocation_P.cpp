@@ -168,14 +168,14 @@ void OsmAnd::FavoriteLocation_P::setGroup(const QString& newGroup)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
-OsmAnd::ColorRGB OsmAnd::FavoriteLocation_P::getColor() const
+OsmAnd::ColorARGB OsmAnd::FavoriteLocation_P::getColor() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _color;
 }
 
-void OsmAnd::FavoriteLocation_P::setColor(const ColorRGB newColor)
+void OsmAnd::FavoriteLocation_P::setColor(const ColorARGB newColor)
 {
     QWriteLocker scopedLocker(&_lock);
 

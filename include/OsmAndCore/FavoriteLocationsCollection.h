@@ -36,7 +36,7 @@ namespace OsmAnd
             const QString& group = QString(),
             const QString& icon = QString(),
             const QString& background = QString(),
-            const ColorRGB color = ColorRGB(),
+            const ColorARGB color = ColorARGB(),
             const QHash<QString, QString>& extensions = QHash<QString, QString>(),
             const bool calendarEvent = false);
 
@@ -56,7 +56,7 @@ namespace OsmAnd
             const QString& group = QString(),
             const QString& icon = QString(),
             const QString& background = QString(),
-            const ColorRGB color = ColorRGB(),
+            const ColorARGB color = ColorARGB(),
             const QHash<QString, QString>& extensions = QHash<QString, QString>(),
             const bool calendarEvent = false);
 
