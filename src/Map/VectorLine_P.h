@@ -73,7 +73,7 @@ namespace OsmAnd
         std::vector<double> _dashPattern;
 
         double _metersPerPixel;
-        AreaI _visibleBBox31;
+        AreaI _visibleBBoxShifted;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;

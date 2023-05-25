@@ -221,6 +221,27 @@ namespace OsmAnd
             return result;
         }
 
+        inline static PointD getAnglesFrom31(const PointI& p)
+        {
+            const auto intFull = static_cast<double>(INT32_MAX) + 1.0;
+            const auto sign = p.y < 0 ? -1.0 : 1.0;
+            return PointD(
+                static_cast<double>(p.x) / intFull * M_PI * 2.0 - M_PI,
+                atan(sign * sinh(M_PI * (1.0 - 2.0 * static_cast<double>(p.y) / intFull))));
+        }
+
+        inline static PointI get31FromAngles(const PointD& a)
+        {
+            const int64_t intMax = INT32_MAX;
+            const auto intFull = intMax + 1;
+            double eval = log(tan(a.y) + 1.0 / cos(a.y));
+            if (eval > M_PI)
+                eval = M_PI;
+            return PointI(
+                static_cast<int32_t>(static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull),
+                static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - eval / M_PI) / 2.0 * intFull), intMax)));
+        }
+
         inline static ZoomLevel clipZoomLevel(ZoomLevel zoom)
         {
             return qBound(MinZoomLevel, zoom, MaxZoomLevel);
@@ -839,6 +860,36 @@ namespace OsmAnd
         static PointI normalizeCoordinates(const PointI64& input, ZoomLevel zoom);
 #endif // !defined(SWIG)
 
+        inline static PointI wrapCoordinates(const PointI64& input)
+        {
+            const int64_t negMask = INT64_MAX ^ INT32_MAX;
+            const int64_t posMask = INT32_MAX;
+            const PointI64 output(
+                input.x < 0 ? input.x | negMask : input.x & posMask,
+                input.y < 0 ? input.y | negMask : input.y & posMask);
+            return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
+        }
+
+        inline static PointI shortestVector31(const PointI& offset)
+        {
+            const int intHalf = INT32_MAX / 2 + 1;
+            PointI offset31 = offset;
+            if (offset31.x >= intHalf)
+                offset31.x = offset31.x - INT32_MAX - 1;
+            else if (offset31.x < -intHalf)
+                offset31.x = offset31.x + INT32_MAX + 1;
+            if (offset31.y >= intHalf)
+                offset31.y = offset31.y - INT32_MAX - 1;
+            else if (offset31.y < -intHalf)
+                offset31.y = offset31.y + INT32_MAX + 1;
+            return offset31;
+        }
+
+        inline static PointI shortestVector31(const PointI& p0, const PointI& p1)
+        {
+            return shortestVector31(p1 - p0);
+        }
+
         enum class CHCode : uint8_t
         {
             Left = 0,
@@ -969,7 +1020,11 @@ namespace OsmAnd
             return glm::normalize(glm::vec3(x, y, z));
         }
         
+        static bool calculateIntersection(const PointI64& p1, const PointI64& p0, const AreaI& bbox, PointI64& pX);
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
+        
+        static void calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
+            PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path = nullptr);
 
         // Log formatted coordinates for https://www.gpsvisualizer.com/
         inline static void logDebugTileBBox(

@@ -39,6 +39,7 @@ namespace OsmAnd
         bool test(const QVector<PointI>& path) const;
         bool test(const AreaI& area) const;
         AreaI getBBox31() const;
+        AreaI getBBoxShifted() const;
     };
 }
 
