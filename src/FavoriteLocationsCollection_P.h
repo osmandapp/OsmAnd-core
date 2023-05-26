@@ -58,7 +58,7 @@ namespace OsmAnd
             const QString& group,
             const QString& icon,
             const QString& background,
-            const ColorRGB color,
+            const ColorARGB color,
             const QHash<QString, QString>& extensions,
             const bool calendarEvent);
         std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
@@ -72,7 +72,7 @@ namespace OsmAnd
             const QString& group,
             const QString& icon,
             const QString& background,
-            const ColorRGB color,
+            const ColorARGB color,
             const QHash<QString, QString>& extensions,
             const bool calendarEvent);
         bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);

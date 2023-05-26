@@ -42,7 +42,7 @@ namespace OsmAnd
         QString _group;
         QString _icon;
         QString _background;
-        ColorRGB _color;
+        ColorARGB _color;
         QString _comment;
         QString _amenityOriginName;
         QHash<QString, QString> _extensions;
@@ -88,8 +88,8 @@ namespace OsmAnd
         QString getBackground() const;
         void setBackground(const QString& newBackground);
         
-        ColorRGB getColor() const;
-        void setColor(const ColorRGB newColor);
+        ColorARGB getColor() const;
+        void setColor(const ColorARGB newColor);
         
         QHash<QString, QString> getExtensions() const;
         void setExtensions(const QHash<QString, QString>& extensions);

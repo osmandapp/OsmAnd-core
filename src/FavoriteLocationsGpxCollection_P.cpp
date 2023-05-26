@@ -152,7 +152,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer, 
             writeExtension(QLatin1String("background"), background, writer);
 
         const auto color = item->getColor();
-        if (color != ColorRGB())
+        if (color != ColorARGB())
         {
             // <color>
             const auto colorValue = color.toString();
@@ -382,7 +382,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                     continue;
                 }
 
-                newItem->setColor(static_cast<ColorRGB>(color));
+                newItem->setColor(static_cast<ColorARGB>(color));
             }
             else if (tagName == QLatin1String("color"))
             {
