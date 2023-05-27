@@ -101,7 +101,6 @@ bool OsmAnd::NetworkRouteSelector_P::isCancelled() const
 
 QList<std::shared_ptr<OsmAnd::NetworkRouteSegment>> OsmAnd::NetworkRouteSelector_P::loadData(const std::shared_ptr<NetworkRouteSegment> &segment, const NetworkRouteKey &rkey) const
 {
-    
     QList<std::shared_ptr<NetworkRouteSegment>> result;
     if (!segment->robj)
     {
@@ -511,9 +510,6 @@ void OsmAnd::NetworkRouteSelector_P::remove(QMap<int64_t, QList<std::shared_ptr<
     }
     else
     {
-        QString debug = QString::number(toRemove->start->robj->id.id)
-                        + QStringLiteral(" s:") + QString::number(toRemove->start->start)
-                        + QStringLiteral(" e:") + QString::number(toRemove->start->end);
         auto &lch = it.value();
         if (!lch.removeOne(toRemove))
         {
@@ -588,21 +584,20 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
     std::shared_ptr<GpxDocument> gpxFile = std::make_shared<GpxDocument>();
     std::shared_ptr<GpxDocument::Track> track = std::make_shared<GpxDocument::Track>();
     QList<int> sizes;
-    QHash<int64_t, QVector<double>> heightArrayCache;
+    QHash<int64_t, QVector<float>> heightArrayCache;
     for (const auto &c : constOf(chains)) {
         QList<std::shared_ptr<NetworkRouteSegment>> segmentList;
         segmentList.append(c->start);
-        if (c->connected.size() > 0) {
+        if (c->connected.size() > 0)
             segmentList.append(c->connected);
-        }
-        
+
         std::shared_ptr<GpxDocument::TrkSegment> trkSegment = std::make_shared<GpxDocument::TrkSegment>();
         track->segments.append(trkSegment);
         int l = 0;
         std::shared_ptr<GpxDocument::WptPt> prev;
         for (auto &segment : segmentList)
         {
-            QVector<double> heightArray;
+            QVector<float> heightArray;
             if (segment->robj)
             {
                 auto it = heightArrayCache.find(segment->robj->id.id);
@@ -611,7 +606,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::NetworkRouteSelector_P::createGpxFi
                     it = heightArrayCache.insert(segment->robj->id.id, segment->robj->calculateHeightArray());
                 }
                 heightArray = *it;
-                
             }
             int inc = segment->start < segment->end ? 1 : -1;
             for (int i = segment->start; ; i += inc)

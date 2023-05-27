@@ -172,6 +172,8 @@ void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(const std::shared_ptr
         inter = inter || (i > 0 && intersects(x31, y31, px, py));
         if (getTileId(x31, y31) != tileId)
         {
+            px = x31;
+            py = y31;
             continue;
         }
         inter = true;
@@ -179,7 +181,7 @@ void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(const std::shared_ptr
         auto it = routes.find(id);
         if (it == routes.end())
         {
-        std::shared_ptr<NetworkRoutePoint> point = std::make_shared<NetworkRoutePoint>(x31, y31, id);
+            auto point = std::make_shared<NetworkRoutePoint>(x31, y31, id);
             it = routes.insert(id, point);
         }
         auto & point = *it;
@@ -191,8 +193,6 @@ void OsmAnd::NetworkRouteContext_P::NetworkRoutesTile::add(const std::shared_ptr
         {
             addObjectToPoint(point, road, routeKey, i, len - 1);
         }
-        px = x31;
-        py = y31;
     }
     if (inter)
     {

@@ -68,28 +68,22 @@ const bool OsmAnd::Road::hasGeocodingAccess() const
     return access;
 }
 
-QVector<double> OsmAnd::Road::calculateHeightArray() const
+QVector<float> OsmAnd::Road::calculateHeightArray() const
 {
-    QVector<double> heightDistanceArray;
+    QVector<float> heightDistanceArray;
     const QHash<QString, QString> & tags = getResolvedAttributes();
     auto itStrStart = tags.find(QStringLiteral("osmand_ele_start"));
     auto itStrEnd = tags.find(QStringLiteral("osmand_ele_end"));
     if (itStrStart == tags.end() || itStrEnd == tags.end())
-    {
         return heightDistanceArray;
-    }
-    QString strStart = *itStrStart;
-    int startHeight = strStart.toInt();
-    int endHeight = startHeight;
-    if (itStrEnd != tags.end()) {
-        QString strEnd = *itStrEnd;
-        endHeight = strEnd.toInt();
-    }
-    
+
+    int startHeight = (*itStrStart).toInt();
+    int endHeight = (*itStrEnd).toInt();
+
     heightDistanceArray.resize(2 * points31.size());
     double plon = 0;
     double plat = 0;
-    double prevHeight = startHeight;
+    float prevHeight = startHeight;
     for (uint32_t k = 0; k < points31.size(); k++)
     {
         double lon = OsmAnd::Utilities::get31LongitudeX(points31[k].x);
@@ -97,7 +91,7 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
         if (k > 0)
         {
             double dd = Utilities::distance(plon, plat, lon, lat);
-            double height = HEIGHT_UNDEFINED;
+            float height = HEIGHT_UNDEFINED;
             if (k == points31.size() - 1)
             {
                 height = endHeight;
@@ -106,11 +100,11 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
             {
                 QString asc = getValue(k, QStringLiteral("osmand_ele_asc"));
                 if (!asc.isEmpty()) {
-                    height = (prevHeight + asc.toDouble());
+                    height = (prevHeight + asc.toFloat());
                 } else {
                     QString desc = getValue(k, QStringLiteral("osmand_ele_desc"));
                     if (!desc.isEmpty()) {
-                        height = (prevHeight - desc.toDouble());
+                        height = (prevHeight - desc.toFloat());
                     }
                 }
             }
@@ -153,9 +147,10 @@ QVector<double> OsmAnd::Road::calculateHeightArray() const
 
 QString OsmAnd::Road::getValue(uint32_t pnt, const QString & tag) const
 {
-    if (pointsTypes.size() > pnt)
+    auto itPointTypes = pointsTypes.find(pnt);
+    if (itPointTypes != pointsTypes.end())
     {
-        auto tps = pointsTypes[pnt];
+        auto tps = *itPointTypes;
         auto sz = tps.size();
         for (uint32_t i = 0; i < sz; i++) {
             auto k = tps[i];

@@ -73,7 +73,7 @@ namespace OsmAnd
         bool bearingVsRouteDirection(double bearing) const;
 
         const bool hasGeocodingAccess() const;
-        QVector<double> calculateHeightArray() const;
+        QVector<float> calculateHeightArray() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };
