@@ -970,7 +970,7 @@ bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0
 void OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
     PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path /*= nullptr*/)
 {
-    const double leap = 30.0;
+    const auto leap = 100.0;
     const double radius = 6371.0;
     int64_t intFull = INT32_MAX;
     intFull++;
