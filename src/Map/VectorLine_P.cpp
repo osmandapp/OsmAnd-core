@@ -566,6 +566,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
     const AreaI visibleArea(visibleArea64);
 
     // Calculate points unwrapped
+    auto pointsCount = _points.size();
     int64_t intFull = INT32_MAX;
     intFull++;
     const auto intHalf = static_cast<int32_t>(intFull >> 1);
@@ -573,11 +574,15 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
     auto point31 = _points[0];
     PointI64 point64(point31 - shiftToCenter);
     QVector<PointI64> points64;
-    points64.reserve(_points.size());
+    points64.reserve(pointsCount);
     points64.push_back(point64);
+    QVector<int> pointIndices(pointsCount);
+    pointIndices[0] = 0;
+    int nextIndex = 0;
     AreaI64 bbox(point64, point64);
     PointI nextPoint31;
-    for (int i = 1; i < _points.size(); i++)
+    auto pointsTotal = 1;
+    for (int i = 1; i < pointsCount; i++)
     {
         auto offset = _points[i] - point31;
         if (offset.x >= intHalf)
@@ -589,6 +594,10 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
         point64 += offset;
         points64.push_back(point64);
         bbox.enlargeToInclude(point64);
+        auto pointsSize = points64.size();
+        nextIndex += pointsSize - pointsTotal;
+        pointIndices[i] = nextIndex;
+        pointsTotal = pointsSize;
         point31 = nextPoint31;
     }
     auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
@@ -597,6 +606,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
     auto maxShiftY = static_cast<int32_t>(bbox.bottomRight.y / intFull + (bbox.bottomRight.y % intFull < 0 ? 0 : 1));
 
     // Use full map shifts to collect all visible segments
+    const auto nodesCount = points64.size();
     for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
         for (int shiftY = minShiftY; shiftY <= maxShiftY; shiftY++)
@@ -609,30 +619,32 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
             std::vector<PointI> segment;
             QList<FColorARGB> colors;
             bool prevIn = visibleArea64.contains(prev);
-            for (int i = 1; i < points64.size(); i++)
+            int j = 0;
+            nextIndex = 1;
+            for (int i = 1; i < nodesCount; i++)
             {
                 curr = drawTo = points64[i] - shift;
-                drawToIdx = i;
+                drawFromIdx = j;
+                if (i == nextIndex)
+                    j++;
+                    if (j < pointsCount)
+                        nextIndex = pointIndices[j];
+                drawToIdx = j;
                 bool currIn = visibleArea64.contains(curr);
                 bool draw = false;
                 if (prevIn && currIn)
-                {
                     draw = true;
-                }
                 else
                 {
                     if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
                     {
                         draw = true;
                         if (prevIn)
-                        {
                             drawTo = inter1;
-                            drawToIdx = i;
-                        }
                         else if (currIn)
                         {
                             drawFrom = inter1;
-                            drawFromIdx = i;
+                            drawFromIdx = drawToIdx;
                             segmentStarted = false;
                         }
                         else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
@@ -640,13 +652,10 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                             drawFrom = inter1;
                             drawTo = inter2;
                             drawFromIdx = drawToIdx;
-                            drawToIdx = i;
                             segmentStarted = false;
                         }
                         else
-                        {
                             draw = false;
-                        }
                     }
                 }
                 if (draw)
@@ -677,12 +686,9 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
                     }
                 }
                 else
-                {
                     segmentStarted = false;
-                }
                 prevIn = currIn;
                 prev = drawFrom = curr;
-                drawFromIdx = i;
             }
             if (!segment.empty())
                 segments.push_back(segment);
@@ -1005,10 +1011,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     }
 
     // Tesselate the line for the surface
-	auto partSizes =
-		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+    auto partSizes =
+        std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
     const auto zoomLevel = _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
-	const auto cellsPerTileSize = (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << zoomLevel - _mapZoomLevel);
+    const auto cellsPerTileSize = (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << zoomLevel - _mapZoomLevel);
     bool tesselated = _hasElevationDataProvider
         ? GeometryModifiers::overGrid(
             vertices,
@@ -1021,7 +1027,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             1.0f, 0.01f,
             false, false)
         : false;
-	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+    verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
 
     //verticesAndIndices->verticesCount = (includedPointsCount - 2) * 2 + 2 * 2;
