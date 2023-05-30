@@ -191,7 +191,7 @@ bool OsmAnd::MapPrimitiviser::Symbol::hasDifferentContentAs(const Symbol& that) 
 OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
     , drawOnPath(false)
-    , verticalOffset(0)
+    , placement(Placement::Default)
     , size(0)
     , shadowRadius(0)
     , wrapWidth(0)
@@ -211,7 +211,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator==(const TextSymbol& that) con
         this->value == that.value &&
         this->languageId == that.languageId &&
         this->drawOnPath == that.drawOnPath &&
-        this->verticalOffset == that.verticalOffset &&
+        this->placement == that.placement &&
         this->color == that.color &&
         this->size == that.size &&
         this->shadowRadius == that.shadowRadius &&
@@ -230,7 +230,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) con
         this->value != that.value ||
         this->languageId != that.languageId ||
         this->drawOnPath != that.drawOnPath ||
-        this->verticalOffset != that.verticalOffset ||
+        this->placement != that.placement ||
         this->color != that.color ||
         this->size != that.size ||
         this->shadowRadius != that.shadowRadius ||
@@ -248,7 +248,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& tha
         Symbol::hasSameContentAs(that) &&
         this->value == that.value &&
         this->drawOnPath == that.drawOnPath &&
-        this->verticalOffset == that.verticalOffset &&
+        this->placement == that.placement &&
         this->color == that.color &&
         this->size == that.size &&
         this->shadowRadius == that.shadowRadius &&
@@ -266,7 +266,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol
         Symbol::hasDifferentContentAs(that) ||
         this->value != that.value ||
         this->drawOnPath != that.drawOnPath ||
-        this->verticalOffset != that.verticalOffset ||
+        this->placement != that.placement ||
         this->color != that.color ||
         this->size != that.size ||
         this->shadowRadius != that.shadowRadius ||
@@ -276,6 +276,16 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol
         this->isItalic != that.isItalic ||
         this->shieldResourceName != that.shieldResourceName ||
         this->underlayIconResourceName != that.underlayIconResourceName;
+}
+
+OsmAnd::MapPrimitiviser::TextSymbol::Placement OsmAnd::MapPrimitiviser::TextSymbol::placementFromString(const QString& placement)
+{
+    if (placement == QLatin1String("top"))
+        return Placement::Top;
+    else if (placement == QLatin1String("additionalBottom"))
+        return Placement::BottomAdditional;
+    else
+        return Placement::Default;
 }
 
 OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)

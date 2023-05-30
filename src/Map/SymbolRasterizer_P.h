@@ -34,6 +34,7 @@ namespace OsmAnd
         typedef SymbolRasterizer::RasterizedSpriteSymbol RasterizedSpriteSymbol;
         typedef SymbolRasterizer::RasterizedOnPathSymbol RasterizedOnPathSymbol;
         typedef SymbolRasterizer::FilterByMapObject FilterByMapObject;
+        typedef MapPrimitiviser::TextSymbol::Placement TextSymbolPlacement;
 
     private:
     protected:

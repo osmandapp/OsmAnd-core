@@ -330,8 +330,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
-                assert(removed);
+                bool intersectsWithOthers = !symbolRef.renderable->mapSymbol->intersectsWithClasses.isEmpty();
+                if (intersectsWithOthers)
+                {
+                    const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
+                    assert(removed);
+                }
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 plottedSymbols.erase(symbolRef.iterator);
             }
