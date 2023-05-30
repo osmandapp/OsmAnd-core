@@ -178,6 +178,13 @@ namespace OsmAnd
         class OSMAND_CORE_API TextSymbol : public Symbol
         {
             Q_DISABLE_COPY_AND_MOVE(TextSymbol);
+        public:
+            enum Placement
+            {
+                Top,
+                Default,
+                BottomAdditional
+            };
         private:
         protected:
             TextSymbol(const std::shared_ptr<const Primitive>& primitive);
@@ -187,7 +194,7 @@ namespace OsmAnd
             QString value;
             LanguageId languageId;
             bool drawOnPath;
-            int verticalOffset;
+            Placement placement;
             ColorARGB color;
             int size;
             int shadowRadius;
@@ -204,6 +211,8 @@ namespace OsmAnd
             bool hasSameContentAs(const TextSymbol& that) const;
             bool hasDifferentContentAs(const TextSymbol& that) const;
 
+            static Placement placementFromString(const QString& placement);
+            
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };

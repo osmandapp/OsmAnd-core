@@ -1594,25 +1594,13 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
         center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
     }
 
-    // Obtain icon for this symbol (only if there's no icon yet)
-    const auto alreadyContainsIcon = std::contains_if(outSymbols,
-        []
-        (const std::shared_ptr<const Symbol>& symbol) -> bool
-        {
-            if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
-                return true;
-            return false;
-        });
-    if (!alreadyContainsIcon)
-    {
-        obtainPrimitiveIcon(
-            context,
-            primitive,
-            center,
-            evaluationResult,
-            outSymbols,
-            metric);
-    }
+    obtainPrimitiveIcon(
+        context,
+        primitive,
+        center,
+        evaluationResult,
+        outSymbols,
+        metric);
 
     obtainPrimitiveTexts(
         context,
@@ -1944,6 +1932,30 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->value = caption;
         text->scaleFactor = env->symbolsScaleFactor;
 
+        TextSymbol::Placement placement = TextSymbol::Placement::Default;
+        if (primitive->type == PrimitiveType::Point || primitive->type == PrimitiveType::Polygon)
+        {
+            QString placementString;
+            bool ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_PLACEMENT, placementString);
+            if (ok)
+                placement = TextSymbol::placementFromString(placementString); 
+            
+            bool placementTaken = std::any_of(outSymbols,
+                [placement]
+                (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
+                {
+                    if (const auto textSymbol = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
+                        return !textSymbol->drawAlongPath
+                            && !textSymbol->drawOnPath
+                            && textSymbol->placement == placement;
+
+                    return false;
+                });
+            if (placementTaken)
+                return;
+        }
+        text->placement = placement;
+
         // Get additional text from nameTag2 if present (and not yet added)
         if (!extraCaptionTextAdded)
         {
@@ -1990,12 +2002,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         // By default, text order is treated as 100
         text->order = 100;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
-
-        if (primitive->type == PrimitiveType::Point ||
-            primitive->type == PrimitiveType::Polygon)
-        {
-            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
-        }
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
         if (!ok || text->color == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
@@ -2077,45 +2083,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 return false;
             });
 
-        bool skipText = false;
-        if (text->drawOnPath || text->drawAlongPath)
-            skipText = hasTwin;
-        else
-        {
-            const auto symSize = outSymbols.size();
-            for (int symIndex = 0; !skipText && symIndex < symSize; symIndex++)
-            {
-                const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(outSymbols[symIndex]);
-                if (otherText && text->location31 == otherText->location31
-                    && text->drawAlongPath == otherText->drawAlongPath
-                    && text->drawOnPath == otherText->drawOnPath
-                    && text->verticalOffset == otherText->verticalOffset
-                    && text->shieldResourceName == otherText->shieldResourceName
-                    && text->underlayIconResourceName == otherText->underlayIconResourceName)
-                {
-                    if (text->value == otherText->value)
-                    {
-                        // In case there is already added text symbol with the same text, choose the more important one
-                        if (text->order < otherText->order)
-                            outSymbols.replace(symIndex, qMove(text));
-                        skipText = true;
-                    }
-                    else if (text->value.contains(otherText->value))
-                    {
-                        // In case there is already added text symbol, which is less informative, replace it
-                        outSymbols.replace(symIndex, qMove(text));
-                        skipText = true;
-                    }
-                    else if (otherText->value.contains(text->value))
-                    {
-                        // In case there is already added text symbol, which is more informative, ignore the new one
-                        skipText = true;
-                    }
-                }
-            }
-        }
-
-        if (skipText)
+        if (hasTwin)
         {
             if (metric)
             {
