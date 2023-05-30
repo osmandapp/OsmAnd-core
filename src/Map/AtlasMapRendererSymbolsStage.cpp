@@ -1753,10 +1753,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
                 const auto rotateY = glm::rotate(
                     (float)Utilities::normalizedAngleRadians(glyph.angleY + M_PI),
                     glm::vec3(0.0f, -1.0f, 0.0f));
-                const auto rotateX = glm::rotate(glyph.angleX, glm::vec3(-1.0f, 0.0f, 0.0f));
-                const auto rotateZ = glm::rotate(glyph.angleZ, glm::vec3(0.0f, 0.0f, -1.0f));
+                const auto rotateXZ = glm::rotate(glyph.angleXZ, glm::vec3(glyph.rotationX, 0.0f, glyph.rotationZ));
                 const auto fromCenter = glm::translate(pC);
-                const auto M = fromCenter*rotateZ*rotateX*rotateY*toCenter;
+                const auto M = fromCenter * rotateXZ * rotateY * toCenter;
                 getRenderer()->debugStage->addQuad3D(
                     (M*p0).xyz(),
                     (M*p1).xyz(),
@@ -2480,9 +2479,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     }
     const auto glyphWidthIncrement = (shouldInvert ? -1 : +1);
 
-    // Check 3D-Terrain is shown
-    bool elevate = false;
-
     SkPathMeasure pathToDrawOnMeasure(path, false);
 
     auto glyphOffsetOnStraight = 0.0f;
@@ -2649,6 +2645,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
         approximatedBBoxPlaneN += planeN;
     }
     approximatedBBoxPlaneN /= 4.0f;
+    const auto planeLength = glm::length(approximatedBBoxPlaneN);
+    if (planeLength > 0.0f)
+        approximatedBBoxPlaneN /= planeLength;
+    else
+        approximatedBBoxPlaneN = glm::vec3(1.0f, -1.0f, 0.0f);
 
 
     // Check if angle between planes not too big. The longer text the less angle allowed between planes
@@ -2673,11 +2674,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
         }
     }
 
-    // Calculate xz rotation angles from approximated bbox plane
-    const auto angleX = static_cast<float>(qAtan2(approximatedBBoxPlaneN.y, approximatedBBoxPlaneN.z) + M_PI_2);
-    const auto angleZ = static_cast<float>(qAtan2(approximatedBBoxPlaneN.y, approximatedBBoxPlaneN.x) + M_PI_2);
-    const auto mRotateX = glm::rotate(angleX, glm::vec3(1.0f, 0.0f, 0.0f));
-    const auto mRotateZ = glm::rotate(angleZ, glm::vec3(0.0f, 0.0f, 1.0f));
+    // Calculate rotation angle from approximated bbox plane
+    const auto angle = static_cast<float>(qAcos(-approximatedBBoxPlaneN.y));
+    const auto rotationN = glm::normalize(angle > 0.0f ?
+        glm::vec3(approximatedBBoxPlaneN.z, 0.0f, -approximatedBBoxPlaneN.x) : glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto mRotate = glm::rotate(angle, rotationN);
 
     const auto mTranslateToStart = glm::translate(-glm::vec3(elevatedBboxCenter.x, 0.0f, elevatedBboxCenter.z));
     const auto mTranslateToElevatedCenter = glm::translate(elevatedBboxCenter);
@@ -2686,12 +2687,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     for (auto& glyph : glyphsPlacement)
     {
         const glm::vec4 originalAnchorPoint(glyph.anchorPoint.x, 0.0f, glyph.anchorPoint.y, 1.0f);
-        const auto elevatedAnchorPoint = mTranslateToElevatedCenter * mRotateZ * mRotateX * mTranslateToStart * originalAnchorPoint;
+        const auto elevatedAnchorPoint = mTranslateToElevatedCenter * mRotate * mTranslateToStart * originalAnchorPoint;
 
         glyph.anchorPoint = elevatedAnchorPoint.xz();
         glyph.elevation = elevatedAnchorPoint.y;
-        glyph.angleX = -angleX;
-        glyph.angleZ = -angleZ;
+        glyph.angleXZ = -angle;
+        glyph.rotationX = rotationN.x;
+        glyph.rotationZ = rotationN.z;
     }
 
     outRotatedElevatedBBoxInWorld.resize(4);
@@ -2699,7 +2701,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     {
         const auto vertex = bboxInWorld[i];
         const glm::vec4 originalVertex(vertex.x, 0.0f, vertex.y, 1.0f);
-        const auto elevatedVertex = mTranslateToElevatedCenter * mRotateZ * mRotateX * mTranslateToStart * originalVertex;
+        const auto elevatedVertex = mTranslateToElevatedCenter * mRotate * mTranslateToStart * originalVertex;
         outRotatedElevatedBBoxInWorld[i] = elevatedVertex;
     }
 

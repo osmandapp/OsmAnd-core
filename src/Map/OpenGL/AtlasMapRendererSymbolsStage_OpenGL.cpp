@@ -1187,38 +1187,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         "struct Glyph                                                                                                       ""\n"
         "{                                                                                                                  ""\n"
         "    vec3 anchorPoint;                                                                                              ""\n"
-        "    vec3 angle;                                                                                                    ""\n"
+        "    vec4 angle;                                                                                                    ""\n"
         "    float width;                                                                                                   ""\n"
         "    float widthOfPreviousN;                                                                                        ""\n"
         "    float widthN;                                                                                                  ""\n"
         "};                                                                                                                 ""\n"
         "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
         "                                                                                                                   ""\n"
-        "vec3 rotateX(vec3 p, float angle)                                                                                  ""\n"
-        "{                                                                                                                  ""\n"
-        "    float sin_a = sin(angle);                                                                                      ""\n"
-        "    float cos_a = cos(angle);                                                                                      ""\n"
-        "    float y = p.y*cos_a + p.z*sin_a;                                                                               ""\n"
-        "    float z = p.z*cos_a - p.y*sin_a;                                                                               ""\n"
-        "    return vec3(p.x, y, z);                                                                                        ""\n"
-        "}                                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
         "vec3 rotateY(vec3 p, float angle)                                                                                  ""\n"
         "{                                                                                                                  ""\n"
-        "    float sin_a = sin(angle);                                                                                      ""\n"
-        "    float cos_a = cos(angle);                                                                                      ""\n"
-        "    float x = p.x*cos_a - p.z*sin_a;                                                                               ""\n"
-        "    float z = p.x*sin_a + p.z*cos_a;                                                                               ""\n"
+        "    float sn = sin(angle);                                                                                         ""\n"
+        "    float cs = cos(angle);                                                                                         ""\n"
+        "    float x = p.x * cs - p.z * sn;                                                                                 ""\n"
+        "    float z = p.x * sn + p.z * cs;                                                                                 ""\n"
         "    return vec3(x, p.y, z);                                                                                        ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
-        "vec3 rotateZ(vec3 p, float angle)                                                                                  ""\n"
+        "vec3 rotateXZ(vec3 p, float angle, vec2 u)                                                                         ""\n"
         "{                                                                                                                  ""\n"
-        "    float sin_a = sin(angle);                                                                                      ""\n"
-        "    float cos_a = cos(angle);                                                                                      ""\n"
-        "    float x = p.x*cos_a + p.y*sin_a;                                                                               ""\n"
-        "    float y = p.y*cos_a - p.x*sin_a;                                                                               ""\n"
-        "    return vec3(x, y, p.z);                                                                                        ""\n"
+        "    float sn = sin(angle);                                                                                         ""\n"
+        "    float cs = cos(angle);                                                                                         ""\n"
+        "    float csr = 1.0 - cs;                                                                                          ""\n"
+        "    float x = p.x * (cs + u.x * u.x * csr) - p.y * u.y * sn + p.z * u.x * u.y * csr;                               ""\n"
+        "    float y = p.x * u.y * sn + p.y * cs - p.z * u.x * sn;                                                          ""\n"
+        "    float z = p.x * u.x * u.y * csr + p.y * u.x * sn + p.z * (cs + u.y * u.y * csr);                               ""\n"
+        "    return vec3(x, y, z);                                                                                          ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -1231,8 +1224,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         "    p.y = 0.0;                                                                                                     ""\n"
         "    p.z = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
         "    p = rotateY(p, glyph.angle.y);                                                                                 ""\n"
-        "    p = rotateX(p, glyph.angle.x);                                                                                 ""\n"
-        "    p = rotateZ(p, glyph.angle.z);                                                                                 ""\n"
+        "    p = rotateXZ(p, glyph.angle.x, glyph.angle.zw);                                                                ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = glyph.anchorPoint.x + p.x;                                                                               ""\n"
         "    v.y = glyph.anchorPoint.y + p.y;                                                                               ""\n"
@@ -1626,11 +1618,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
             GL_CHECK_RESULT;
 
             // Set angle
-            glm::vec3 angle(
-                Utilities::normalizedAngleRadians(glyph.angleX),
+            glm::vec4 angle(
+                glyph.angleXZ,
                 Utilities::normalizedAngleRadians(glyph.angleY + M_PI),
-                Utilities::normalizedAngleRadians(glyph.angleZ));
-            glUniform3fv(vsGlyph.angle, 1, glm::value_ptr(angle));
+                glyph.rotationX,
+                glyph.rotationZ);
+            glUniform4fv(vsGlyph.angle, 1, glm::value_ptr(angle));
             GL_CHECK_RESULT;
 
             // Set normalized width of all previous glyphs
