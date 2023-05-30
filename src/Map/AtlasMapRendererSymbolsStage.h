@@ -103,7 +103,10 @@ namespace OsmAnd
                     const glm::vec2& vNormal_)
                     : anchorPoint(anchorPoint_)
                     , width(width_)
+                    , angleXZ(0.0f)
                     , angleY(angle_)
+                    , rotationX(1.0f)
+                    , rotationZ(0.0f)
                     , depth(depth_)
                     , vNormal(vNormal_)
                 {
@@ -112,9 +115,10 @@ namespace OsmAnd
                 glm::vec2 anchorPoint;
                 float elevation;
                 float width;
-                float angleX;
+                float angleXZ;
                 float angleY;
-                float angleZ;
+                float rotationX;
+                float rotationZ;
                 float depth;
                 glm::vec2 vNormal;
             };
