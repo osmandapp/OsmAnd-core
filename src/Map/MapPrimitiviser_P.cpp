@@ -736,6 +736,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     //}
     //////////////////////////////////////////////////////////////////////////
 
+    bool skipUnclosedPolygon = !mapObject->containsTag("boundary");
     double doubledPolygonArea31 = -1.0;
     Nullable<bool> rejectByArea;
 
@@ -837,7 +838,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
-            if (!mapObject->isClosedFigure())
+            if (skipUnclosedPolygon && !mapObject->isClosedFigure())
             {
                 if (metric)
                     metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
@@ -849,7 +850,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
-            if (!mapObject->isClosedFigure(true))
+            if (skipUnclosedPolygon && !mapObject->isClosedFigure(true))
             {
                 if (metric)
                     metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
@@ -1487,8 +1488,8 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     const auto& points31 = primitive->sourceObject->points31;
 
     assert(points31.size() > 2);
-    assert(primitive->sourceObject->isClosedFigure());
-    assert(primitive->sourceObject->isClosedFigure(true));
+    // assert(primitive->sourceObject->isClosedFigure());
+    // assert(primitive->sourceObject->isClosedFigure(true));
 
     // Get center of polygon, since all symbols of polygon are related to it's center
     PointI64 center;

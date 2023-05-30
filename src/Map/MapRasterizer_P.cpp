@@ -332,8 +332,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     const auto& area31 = context.area31;
 
     assert(points31.size() > 2);
-    assert(primitive->sourceObject->isClosedFigure());
-    assert(primitive->sourceObject->isClosedFigure(true));
+    // assert(primitive->sourceObject->isClosedFigure());
+    // assert(primitive->sourceObject->isClosedFigure(true));
 
     //////////////////////////////////////////////////////////////////////////
     //if ((primitive->sourceObject->id >> 1) == 9223372032559801460u)

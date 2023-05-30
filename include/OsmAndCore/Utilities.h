@@ -351,7 +351,7 @@ namespace OsmAnd
         {
             int64_t area = 0.0;
 
-            assert(points.first() == points.last());
+            // assert(points.first() == points.last());
 
             auto p0 = points.constData();
             auto p1 = p0 + 1;
