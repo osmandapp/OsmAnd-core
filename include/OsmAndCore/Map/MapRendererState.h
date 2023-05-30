@@ -83,6 +83,7 @@ namespace OsmAnd
         
         double metersPerPixel;
         AreaI visibleBBox31;
+        AreaI visibleBBoxShifted;
         bool hasElevationDataProvider;
     };
 
@@ -126,6 +127,7 @@ namespace OsmAnd
         
         double metersPerPixel;
         AreaI visibleBBox31;
+        AreaI visibleBBoxShifted;
     };
 }
 

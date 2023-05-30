@@ -194,6 +194,7 @@ namespace OsmAnd
         virtual float getLocationHeightInMeters(const PointI& location31) const = 0;
 
         virtual AreaI getVisibleBBox31() const = 0;
+        virtual AreaI getVisibleBBoxShifted() const = 0;
         virtual bool isPositionVisible(const PointI64& position) const = 0;
         virtual bool isPositionVisible(const PointI& position31) const = 0;
         virtual bool isPathVisible(const QVector<PointI>& path31) const = 0;

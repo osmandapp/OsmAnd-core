@@ -90,6 +90,7 @@ namespace OsmAnd
         AtlasMapRendererDebugStage* createDebugStage() override;
 
         AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const override;
+        AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const override;
         double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const override;
         bool getNewTargetByScreenPoint(const MapRendererState& state,
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
@@ -134,6 +135,7 @@ namespace OsmAnd
         float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
 
         AreaI getVisibleBBox31() const override;
+        AreaI getVisibleBBoxShifted() const override;
         bool isPositionVisible(const PointI64& position) const override;
         bool isPositionVisible(const PointI& position31) const override;
         bool isPathVisible(const QVector<PointI>& path31) const override;

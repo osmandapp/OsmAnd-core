@@ -336,10 +336,11 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
     bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.1;
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
-    if (!changed && _visibleBBox31 != mapState.visibleBBox31)
+    if (!changed && _visibleBBoxShifted != mapState.visibleBBoxShifted)
     {
-        auto bboxShiftPoint = _visibleBBox31.topLeft - mapState.visibleBBox31.topLeft;
-        bool bboxChanged = abs(bboxShiftPoint.x) > _visibleBBox31.width() || abs(bboxShiftPoint.y) > _visibleBBox31.height();
+        auto bboxShiftPoint = _visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
+        bool bboxChanged = abs(bboxShiftPoint.x) > _visibleBBoxShifted.width()
+            || abs(bboxShiftPoint.y) > _visibleBBoxShifted.height();
         changed |= bboxChanged;
     }
 
@@ -352,7 +353,7 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
 {
     _metersPerPixel = mapState.metersPerPixel;
-    _visibleBBox31 = mapState.visibleBBox31;
+    _visibleBBoxShifted = mapState.visibleBBoxShifted;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
@@ -553,96 +554,205 @@ bool OsmAnd::VectorLine_P::forceIncludePoint(const QList<FColorARGB>& pointsColo
     return false;
 }
 
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::middleColor(
+    const FColorARGB& first, const FColorARGB& last, const float factor) const
+{
+    return FColorARGB(
+        first.a + (last.a - first.a) * factor,
+        first.r + (last.r - first.r) * factor,
+        first.g + (last.g - first.g) * factor,
+        first.b + (last.b - first.b) * factor);
+}
+
 void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
 {
-    bool segmentStarted = false;
-    // Use the largest area on low zoom levls to prevent integer overflow
-    auto visibleArea = _mapZoomLevel > ZoomLevel3 ? _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3)) : AreaI::largest();
-    PointI curr, drawFrom, drawTo, inter1, inter2;
-    auto prev = drawFrom = _points[0];
-    int drawFromIdx = 0, drawToIdx = 0;
+    // Use enlarged visible area
+    const AreaI64 visibleBBox64(_visibleBBoxShifted);
+    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width() * 3, visibleBBox64.height() * 3));
+    visibleArea64.topLeft.x = visibleArea64.topLeft.x < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.x;
+    visibleArea64.topLeft.y = visibleArea64.topLeft.y < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.y;
+    visibleArea64.bottomRight.x = visibleArea64.bottomRight.x > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.x;
+    visibleArea64.bottomRight.y = visibleArea64.bottomRight.y > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.y;
+    const AreaI visibleArea(visibleArea64);
+
+    // Calculate points unwrapped
+    auto pointsCount = _points.size();
+    int64_t intFull = INT32_MAX;
+    intFull++;
+    const auto intHalf = static_cast<int32_t>(intFull >> 1);
+    const PointI shiftToCenter(intHalf, intHalf);
+    auto point31 = _points[0];
+    PointI64 point64(point31 - shiftToCenter);
+    QVector<PointI64> points64;
+    points64.reserve(pointsCount);
+    points64.push_back(point64);
+    QVector<int> pointIndices(pointsCount);
+    pointIndices[0] = 0;
+    int nextIndex = 0;
+    AreaI64 bbox(point64, point64);
+    PointI nextPoint31;
+    auto pointsTotal = 1;
+    for (int i = 1; i < pointsCount; i++)
+    {
+        auto offset = _points[i] - point31;
+        if (offset.x >= intHalf)
+            offset.x = offset.x - INT32_MAX - 1;
+        else if (offset.x < -intHalf)
+            offset.x = offset.x + INT32_MAX + 1;
+        nextPoint31 = Utilities::normalizeCoordinates(PointI64(point31) + offset, ZoomLevel31);
+        Utilities::calculateShortestPath(point64, point31, nextPoint31, bbox.topLeft, bbox.bottomRight, &points64);
+        point64 += offset;
+        points64.push_back(point64);
+        bbox.enlargeToInclude(point64);
+        auto pointsSize = points64.size();
+        nextIndex += pointsSize - pointsTotal;
+        pointIndices[i] = nextIndex;
+        pointsTotal = pointsSize;
+        point31 = nextPoint31;
+    }
+    auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
+    auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
+    auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
+    auto maxShiftY = static_cast<int32_t>(bbox.bottomRight.y / intFull + (bbox.bottomRight.y % intFull < 0 ? 0 : 1));
+
+    // Use full map shifts to collect all visible segments
+    const auto withColors = hasColorizationMapping();
+    pointsCount = points64.size();
+    PointI64 curr, drawFrom, drawTo, inter1, inter2;
+    FColorARGB colorFrom, colorTo, colorSubFrom, colorSubTo, colorInterFrom, colorInterTo;
     std::vector<PointI> segment;
     QList<FColorARGB> colors;
-    bool prevIn = visibleArea.contains(prev);
-    for (int i = 1; i < _points.size(); i++)
+    for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
-        curr = drawTo = _points[i];
-        drawToIdx = i;
-        bool currIn = visibleArea.contains(curr);
-        bool draw = false;
-        if (prevIn && currIn)
+        for (int shiftY = minShiftY; shiftY <= maxShiftY; shiftY++)
         {
-            draw = true;
-        }
-        else
-        {
-            if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+            const PointI64 shift(shiftX * intFull, shiftY * intFull);
+            bool segmentStarted = false;
+            if (withColors)
             {
-                draw = true;
-                if (prevIn)
+                colorTo = _colorizationMapping[0];
+                colorSubTo = _colorizationMapping[0];
+            }
+            auto prev = drawFrom = points64[0] - shift;
+            int prevIndex;
+            nextIndex = 0;            
+            int j = 0;
+            bool prevIn = visibleArea64.contains(prev);
+            for (int i = 1; i < pointsCount; i++)
+            {
+                curr = drawTo = points64[i] - shift;
+                if (withColors)
                 {
-                    drawTo = inter1;
-                    drawToIdx = i;
+                    if (i > nextIndex)
+                    {
+                        prevIndex = nextIndex;
+                        nextIndex = pointIndices[++j];
+                        colorFrom = colorTo;
+                        colorTo = _colorizationMapping[j];
+                    }
+                    colorSubFrom = colorSubTo;
+                    const auto factor = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
+                    colorSubTo = middleColor(colorFrom, colorTo, factor);
                 }
-                else if (currIn)
+                bool currIn = visibleArea64.contains(curr);
+                bool draw = false;
+                if (prevIn && currIn)
                 {
-                    drawFrom = inter1;
-                    drawFromIdx = i;
-                    segmentStarted = false;
-                }
-                else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
-                {
-                    drawFrom = inter1;
-                    drawTo = inter2;
-                    drawFromIdx = drawToIdx;
-                    drawToIdx = i;
-                    segmentStarted = false;
+                    draw = true;
+                    if (withColors)
+                    {
+                        colorInterFrom = colorSubFrom;
+                        colorInterTo = colorSubTo;
+                    }
                 }
                 else
                 {
-                    draw = false;
+                    if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+                    {
+                        draw = true;
+                        if (prevIn)
+                        {
+                            drawTo = inter1;
+                            if (withColors)
+                            {
+                                colorInterFrom = colorSubFrom;
+                                const auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawTo - prev).norm());
+                                colorInterTo = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                            }
+                        }
+                        else if (currIn)
+                        {
+                            drawFrom = inter1;
+                            segmentStarted = false;
+                            if (withColors)
+                            {
+                                const auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawFrom - prev).norm());
+                                colorInterFrom = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                                colorInterTo = colorSubTo;
+                            }
+                        }
+                        else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
+                        {
+                            drawFrom = inter1;
+                            drawTo = inter2;
+                            segmentStarted = false;
+                            if (withColors)
+                            {
+                                auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawFrom - prev).norm());
+                                colorInterFrom = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                                factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawTo - prev).norm());
+                                colorInterTo = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                            }
+                        }
+                        else
+                            draw = false;
+                    }
                 }
-            }
-        }
-        if (draw)
-        {
-            if (!segmentStarted)
-            {
-                if (!segment.empty())
+                if (draw)
                 {
-                    segments.push_back(segment);
-                    segment = std::vector<PointI>();
-
-                    segmentColors.push_back(colors);
-                    colors.clear();
+                    if (!segmentStarted)
+                    {
+                        if (!segment.empty())
+                        {
+                            segments.push_back(segment);
+                            segment = std::vector<PointI>();
+                            segmentColors.push_back(colors);
+                            colors.clear();
+                        }
+                        segment.push_back(PointI(drawFrom));
+                        if (withColors)
+                            colors.push_back(colorInterFrom);
+                        segmentStarted = currIn;
+                    }
+                    PointI drawTo31(drawTo);
+                    if (segment.empty() || segment.back() != drawTo31)
+                    {
+                        segment.push_back(drawTo31);
+                        if (withColors)
+                            colors.push_back(colorInterTo);
+                    }
                 }
-                segment.push_back(drawFrom);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawFromIdx]);
-
-                segmentStarted = currIn;
+                else
+                    segmentStarted = false;
+                prevIn = currIn;
+                prev = drawFrom = curr;
             }
-            if (segment.empty() || segment.back() != drawTo)
-            {
-                segment.push_back(drawTo);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawToIdx]);
-
-            }
+            if (!segment.empty())
+                segments.push_back(segment);
+            if (!colors.empty())
+                segmentColors.push_back(colors);
+            segment.clear();
+            colors.clear();
         }
-        else
-        {
-            segmentStarted = false;
-        }
-        prevIn = currIn;
-        prev = drawFrom = curr;
-        drawFromIdx = i;
     }
-    if (!segment.empty())
-        segments.push_back(segment);
-
-    if (!colors.empty())
-        segmentColors.push_back(colors);
 }
 
 float OsmAnd::VectorLine_P::zoom() const
@@ -682,7 +792,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     QList<QList<FColorARGB>> colors;
     calculateVisibleSegments(segments, colors);
 
-    PointI startPos;
+    PointD startPos;
     bool startPosDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
@@ -694,9 +804,17 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (!startPosDefined)
         {
             startPosDefined = true;
-            startPos = points[0];
-            vectorLine->position31 = startPos;
-            verticesAndIndices->position31 = new PointI(startPos);
+            const auto startPoint = PointI64(points[0]);
+            int64_t intFull = INT32_MAX;
+            intFull++;
+            const auto intHalf = intFull >> 1;
+            const auto origPos = startPoint + PointI64(intHalf, intHalf);
+            const auto origPos31 = Utilities::normalizeCoordinates(origPos, ZoomLevel31);
+            vectorLine->position31 = origPos31;
+            verticesAndIndices->position31 = new PointI(origPos31);
+            startPos = PointD(
+                startPoint.x - (origPos.x > INT32_MAX ? intFull : (origPos.x < 0 ? -intFull : 0)),
+                startPoint.y - (origPos.y > INT32_MAX ? intFull : (origPos.y < 0 ? -intFull : 0)));
         }
         int pointsCount = (int) points.size();
 
@@ -713,7 +831,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         int includedPointsCount = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
-            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
+            pointsToPlot[pointIdx] = PointD(points[pointIdx]) - startPos;
             if (hasColorizationMapping() && _colorizationSceme == COLORIZATION_SOLID)
             {
                 FColorARGB prevColor = colorsForSegment[prevPointIdx];
