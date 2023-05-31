@@ -21,7 +21,7 @@
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_PATH_LENGTH_TO_COMBINE 500
 #define MAX_GAP_BETWEEN_PATHS 45
-#define MAX_ANGLE_BETWEEN_VECTORS M_PI_4
+#define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
 
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
