@@ -911,8 +911,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     const MapRendererState& state, const PointI& screenPoint, PointD& position,
     const float height /*=0.0f*/, float* distance /*=nullptr*/) const
 {
-    if (screenPoint.x < 0 || screenPoint.y < 0)
-        return false;
     const auto nearInWorld = glm::unProject(
         glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
         internalState.mCameraView,
