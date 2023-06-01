@@ -37,7 +37,7 @@ namespace OsmAnd
 
         inline void add(const PointI point)
         {
-            if (bbox.left() == 1 && bbox.right() == -1)
+            if (bbox.isNegative())
             {
                 bbox.topLeft = point;
                 bbox.bottomRight = point;
@@ -65,7 +65,7 @@ namespace OsmAnd
             auto start = index;
             PointI point31;
             auto point64 = last;
-            if (bbox.left() == 1 && bbox.right() == -1)
+            if (bbox.isNegative())
             {
                 point31 = path[start++];
                 point64 = point31;
@@ -95,7 +95,7 @@ namespace OsmAnd
         {
             const int64_t intMin = INT32_MIN;
             const int64_t intMax = INT32_MAX;
-            const int64_t intFull = bbox.left() == 1 && bbox.right() == -1 ? 0 : intMax + 1;
+            const int64_t intFull = bbox.isNegative() ? 0 : intMax + 1;
             const PointI64 shiftBack(bbox.topLeft.x < 0 ? 0 : intFull, bbox.topLeft.y < 0 ? 0 : intFull);
             const PointI64 topLeft(bbox.topLeft - shiftBack);
             const PointI64 bottomRight(bbox.bottomRight - shiftBack);
