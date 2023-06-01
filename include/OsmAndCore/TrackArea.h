@@ -19,10 +19,7 @@ namespace OsmAnd
 
         inline TrackArea()
         {
-            bbox.top() = 1;
-            bbox.left() = 1;
-            bbox.bottom() = -1;
-            bbox.right() = -1;
+            bbox = AreaI64::negative();
         }
 
         inline TrackArea(const TrackArea& that)
