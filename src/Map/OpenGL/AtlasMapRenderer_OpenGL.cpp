@@ -937,10 +937,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
 
     if (height != 0.0f)
     {
-        auto pointOffset = glm::normalize(rayD.xz());
-        const auto offsetLength = height * qTan(qAcos(-rayD.y));
-        pointOffset *= offsetLength;
-        pointOnPlane -= pointOffset;
+        const auto heightFactor = height / nearInWorld.y;
+        pointOnPlane += (nearInWorld.xz() - pointOnPlane) * heightFactor;
     }
 
     position = pointOnPlane / static_cast<float>(TileSize3D);
@@ -1320,14 +1318,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
                 static_cast<float>(startElevationFactor), static_cast<float>(midElevationFactor),
                 scaledStart, startPointZ, scaledEnd, midPointZ, tileSize, exactLocation, &exactHeight))
             {
-                const PointD finalLocation(startPointOffset.x + tileSize * (exactLocation.x - scaledStart.x),
+                const PointD scaledLocation(startPointOffset.x + tileSize * (exactLocation.x - scaledStart.x),
                     startPointOffset.y + tileSize * (exactLocation.y - scaledStart.y));
-                location31 = Utilities::normalizeCoordinates(PointI64(
-                    static_cast<int64_t>((static_cast<double>(finalLocation.x) + startTileId.x) * tileSize31),
-                    static_cast<int64_t>((static_cast<double>(finalLocation.y) + startTileId.y) * tileSize31)),
-                    ZoomLevel31);
-                if (heightInMeters)
-                    *heightInMeters = exactHeight;
+                PointI64 finalLocation(
+                    static_cast<int64_t>((static_cast<double>(scaledLocation.x) + startTileId.x) * tileSize31),
+                    static_cast<int64_t>((static_cast<double>(scaledLocation.y) + startTileId.y) * tileSize31));
+                if (finalLocation.x != cameraLocation.x || finalLocation.y != cameraLocation.y)
+                {
+                    location31 = Utilities::normalizeCoordinates(finalLocation, ZoomLevel31);
+                    if (heightInMeters)
+                        *heightInMeters = exactHeight;
+                }
+                else
+                    location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
                 return true;
             }
         }
