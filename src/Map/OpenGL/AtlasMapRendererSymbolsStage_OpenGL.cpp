@@ -2575,10 +2575,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
         int32_t partOffset = 0;
 
-        const auto maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
-        const auto maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
-        const auto minZoom = currentState.elevationDataProvider->getMinZoom();
-        const auto maxZoom = currentState.elevationDataProvider->getMaxZoom();
+        int maxMissingDataZoomShift = 0;
+        int maxUnderZoomShift = 0;
+        auto minZoom = ZoomLevel0;
+        auto maxZoom = ZoomLevel0;
+        if (currentState.elevationDataProvider)
+        {
+            maxMissingDataZoomShift = currentState.elevationDataProvider->getMaxMissingDataZoomShift();
+            maxUnderZoomShift = currentState.elevationDataProvider->getMaxMissingDataUnderZoomShift();
+            minZoom = currentState.elevationDataProvider->getMinZoom();
+            maxZoom = currentState.elevationDataProvider->getMaxZoom();
+        }
         double tileSize;
         for (const auto partSizes : *gpuResource->partSizes)
         {
