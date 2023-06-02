@@ -92,11 +92,9 @@ namespace OsmAnd
         QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
             const float globalPaddingInPixels,
-            const float blockSpacingInPixels,
             const float symbolSpacingInPixels,
             const QVector<float>& symbolsWidthsInPixels,
-            const ZoomLevel minZoom,
-            const ZoomLevel maxZoom,
+            const PointI& windowSize,
             const ZoomLevel neededZoom) const;
 
         void computeSymbolsPinPoints(

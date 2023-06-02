@@ -21,7 +21,7 @@
 #define MAX_PATHS_TO_ATTACH 20
 #define MAX_PATH_LENGTH_TO_COMBINE 500
 #define MAX_GAP_BETWEEN_PATHS 45
-#define MAX_ANGLE_BETWEEN_VECTORS M_PI_4
+#define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
 
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
@@ -222,11 +222,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             const auto computedPinPoints = computePinPoints(
                 path31,
                 env->getGlobalPathPadding(),
-                env->getDefaultBlockPathSpacing() * 10,
                 env->getDefaultSymbolPathSpacing() * 20, // Temp fix to avoid intersections of street names vs road shields on map
                 symbolsWidthsInPixels,
-                mapObject->getMinZoomLevel(),
-                mapObject->getMaxZoomLevel(),
+                request.mapState.windowSize,
                 request.zoom);
 
             // After pin-points were computed, assign them to symbols in the same order
@@ -464,16 +462,11 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
 QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalPaddingInPixels,
-    const float blockSpacingInPixels,
     const float symbolSpacingInPixels,
     const QVector<float>& symbolsWidthsInPixels,
-    const ZoomLevel minZoom,
-    const ZoomLevel maxZoom,
+    const PointI& windowSize,
     const ZoomLevel neededZoom) const
 {
-    Q_UNUSED(minZoom);
-    Q_UNUSED(maxZoom);
-
     QList<ComputedPinPoint> computedPinPoints;
 
     if (symbolsWidthsInPixels.isEmpty())
@@ -521,6 +514,9 @@ QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsS
     pPathSegmentLengthInPixels = pathSegmentsLengthInPixels.data();
     for (auto pathSegmentIdx = 0; pathSegmentIdx < pathSegmentsCount; pathSegmentIdx++)
         *(pPathSegmentLengthN++) = *(pPathSegmentLengthInPixels++) / pathLengthInPixels;
+
+    const auto minWindowSize = qMin(windowSize.x, windowSize.y);
+    const auto blockSpacingInPixels = qMax(minWindowSize / 2.0f, minWindowSize - blockLengthInPixels * 1.5f);
 
     auto blockPinPoints = Utilities::calculateItemPointsOnPath(
         pathLengthInPixels,
