@@ -933,16 +933,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         return;
 
     // Calculate location of symbol in world coordinates.
-    auto offset31 = position31 - currentState.target31;
-    const auto intHalf = INT32_MAX / 2 + 1;
-    if (offset31.x >= intHalf)
-        offset31.x = offset31.x - INT32_MAX - 1;
-    else if (offset31.x < -intHalf)
-        offset31.x = offset31.x + INT32_MAX + 1;
-    if (offset31.y >= intHalf)
-        offset31.y = offset31.y - INT32_MAX - 1;
-    else if (offset31.y < -intHalf)
-        offset31.y = offset31.y + INT32_MAX + 1;
+    auto offset31 = Utilities::shortestVector31(currentState.target31, position31);
 
     const auto offsetFromTarget = Utilities::convert31toFloat(offset31, currentState.zoomLevel);
     auto positionInWorld = glm::vec3(offsetFromTarget.x * AtlasMapRenderer::TileSize3D, 0.0f, offsetFromTarget.y * AtlasMapRenderer::TileSize3D);

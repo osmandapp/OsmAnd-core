@@ -32,6 +32,7 @@
 #include <OsmAndCore/QIODeviceLogSink.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/WorldRegions.h>
+#include <OsmAndCore/TrackArea.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -432,6 +433,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/QIODeviceLogSink.h>
 %include <OsmAndCore/Utilities.h>
 %include <OsmAndCore/WorldRegions.h>
+%include <OsmAndCore/TrackArea.h>
 %include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>

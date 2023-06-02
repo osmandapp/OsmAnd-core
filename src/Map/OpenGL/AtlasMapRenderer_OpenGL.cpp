@@ -969,17 +969,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNearestLocationFromScreenPoint(
     currentLocation.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
     currentLocation.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
 
-    auto offset = currentLocation - location31;
-    const auto intHalf = INT32_MAX / 2 + 1;
-    if (offset.x >= intHalf)
-        offset.x = offset.x - INT32_MAX - 1;
-    else if (offset.x < -intHalf)
-        offset.x = offset.x + INT32_MAX + 1;
-    if (offset.y >= intHalf)
-        offset.y = offset.y - INT32_MAX - 1;
-    else if (offset.y < -intHalf)
-        offset.y = offset.y + INT32_MAX + 1;
-    
+    auto offset = Utilities::shortestVector31(Utilities::wrapCoordinates(currentLocation - location31));
     fixedLocation = currentLocation - offset;
     
     return true;
@@ -1594,7 +1584,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getProjectedLocation(const MapRendererInte
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 
-    const auto offsetFromTarget = Utilities::convert31toFloat(location31 - state.target31, state.zoomLevel);
+    const auto offsetFromTarget31 = Utilities::shortestVector31(state.target31, location31);
+    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
     const auto positionInWorld = glm::vec3(
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
         height,
@@ -1644,6 +1635,23 @@ OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31(const MapRendere
 {
     const auto internalState = static_cast<const InternalState*>(&internalState_);
     return internalState->globalFrustum2D31.getBBox31();
+}
+
+OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBoxShifted() const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration(), true);
+    if (!ok)
+        return AreaI::largest();
+
+    return internalState.globalFrustum2D31.getBBoxShifted();
+}
+
+OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBoxShifted(
+    const MapRendererInternalState& internalState_) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+    return internalState->globalFrustum2D31.getBBoxShifted();
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position) const

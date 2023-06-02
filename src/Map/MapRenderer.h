@@ -123,6 +123,7 @@ namespace OsmAnd
         bool updateCurrentDebugSettings();
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
+        virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
             const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;

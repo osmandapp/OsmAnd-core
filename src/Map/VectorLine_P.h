@@ -73,7 +73,7 @@ namespace OsmAnd
         std::vector<double> _dashPattern;
 
         double _metersPerPixel;
-        AreaI _visibleBBox31;
+        AreaI _visibleBBoxShifted;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;
@@ -113,6 +113,7 @@ namespace OsmAnd
             std::vector<bool>& include) const;
         bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
+        inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
         void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const;
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
