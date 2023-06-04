@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QHash>
 #include <QSet>
+#include <QList>
 #include <QReadWriteLock>
 #include <QFileSystemWatcher>
 #include <QEventLoop>
@@ -176,6 +177,12 @@ namespace OsmAnd
             const bool toBytes,
             void* pBuffer,
             const GeoTiffCollection::ProcessingParameters* procParameters) const;
+
+        bool calculateHeights(
+			const ZoomLevel zoom,
+			const uint32_t tileSize,
+			const QList<PointI>& points31,
+			QList<float>& outHeights) const;
 
     friend class OsmAnd::GeoTiffCollection;
     friend class OsmAnd::GeoTiffCollection_P__SignalProxy;

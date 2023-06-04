@@ -11,6 +11,7 @@
 
 #include "QtCommon.h"
 
+#include "IMapElevationDataProvider.h"
 #include "OsmAndCore_private.h"
 #include "QKeyValueIterator.h"
 #include "Stopwatch.h"
@@ -1269,3 +1270,55 @@ void OsmAnd::GeoTiffCollection_P::onFileChanged(const QString& path)
 {
     invalidateCollectedSources();
 }
+
+bool OsmAnd::GeoTiffCollection_P::calculateHeights(
+	const ZoomLevel zoom,
+	const uint32_t tileSize,
+	const QList<PointI>& points31,
+	QList<float>& outHeights) const
+{
+    std::shared_ptr<IMapElevationDataProvider::Data> lastData;
+    for (const auto& point31 : constOf(points31))
+    {
+        PointF offsetInTileN;
+        TileId tileId = Utilities::getTileId(point31, zoom, &offsetInTileN);
+        PointF offsetInScaledTileN = offsetInTileN;
+        if (lastData && lastData->tileId == tileId)
+        {
+            float elevationInMeters = 0.0f;
+            if (lastData->getValue(offsetInScaledTileN, elevationInMeters))
+                outHeights.append(elevationInMeters);
+            else
+                return false;
+        }
+        else
+        {
+            const auto pBuffer = new float[tileSize * tileSize];
+            const auto result = getGeoTiffData(tileId, zoom, tileSize, 3, 1, false, pBuffer, nullptr);
+            if (result == GeoTiffCollection::CallResult::Completed)
+            {
+                auto data = std::make_shared<IMapElevationDataProvider::Data>(
+                    tileId,
+                      zoom,
+                      sizeof(float)*tileSize,
+                      tileSize,
+                      pBuffer);
+
+                float elevationInMeters = 0.0f;
+                if (data->getValue(offsetInScaledTileN, elevationInMeters))
+                    outHeights.append(elevationInMeters);
+                else
+                    return false;
+
+                lastData = data;
+            }
+            else
+            {
+                delete[] pBuffer;
+                return false;
+            }
+        }
+    }
+    return true;
+}
+

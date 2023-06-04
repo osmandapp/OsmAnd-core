@@ -402,6 +402,7 @@ using namespace OsmAnd;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
 	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
 	%template(QListDouble) QList<double>;
+	%template(QListFloat) QList<float>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>

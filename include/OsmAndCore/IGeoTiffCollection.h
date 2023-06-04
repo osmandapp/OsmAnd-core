@@ -52,6 +52,13 @@ namespace OsmAnd
             const bool toBytes,
             void* pBuffer,
             const ProcessingParameters* procParameters = nullptr) const = 0;
+
+        // Example: calculateHeights(ZoomLevel14, MapRenderer::ElevationDataTileSize, points31, outHeights))
+        virtual bool calculateHeights(
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const QList<PointI>& points31,
+            QList<float>& outHeights) const = 0;
     };
 }
 

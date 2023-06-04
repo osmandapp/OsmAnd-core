@@ -98,3 +98,12 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection::getGeoTiffData(
 {
     return _p->getGeoTiffData(tileId, zoom, tileSize, overlap, bandCount, toBytes, pBuffer, procParameters);
 }
+
+bool OsmAnd::GeoTiffCollection::calculateHeights(
+    const ZoomLevel zoom,
+    const uint32_t tileSize,
+    const QList<PointI>& points31,
+    QList<float>& outHeights) const
+{
+    return _p->calculateHeights(zoom, tileSize, points31, outHeights);
+}

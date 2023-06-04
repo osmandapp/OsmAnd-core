@@ -55,6 +55,12 @@ namespace OsmAnd
             const bool toBytes,
             void* pBuffer,
             const ProcessingParameters* procParameters = nullptr) const Q_DECL_OVERRIDE;
+
+        virtual bool calculateHeights(
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const QList<PointI>& points31,
+            QList<float>& outHeights) const Q_DECL_OVERRIDE;
     };
 }
 
