@@ -783,7 +783,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndices->indices = nullptr;
     verticesAndIndices->indicesCount = 0;
 
-    _arrowsOnPath.clear();
+    clearArrowsOnPath();
 
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
@@ -1116,9 +1116,16 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
 }
 
+void OsmAnd::VectorLine_P::clearArrowsOnPath()
+{
+    QWriteLocker scopedLocker(&_arrowsOnPathLock);
+
+    _arrowsOnPath.clear();
+}
+
 const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrowsOnPath() const
 {
-    QReadLocker scopedLocker(&_lock);
+    QReadLocker scopedLocker(&_arrowsOnPathLock);
 
     return detachedOf(_arrowsOnPath);
 }
@@ -1151,6 +1158,8 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
     if (iconInstancesCount > 0)
     {
+        QWriteLocker scopedLocker(&_arrowsOnPathLock);
+
         for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
         {
             SkPoint p;
@@ -1175,6 +1184,8 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
+    QReadLocker scopedLocker(&_lock);
+
     if (useSpecialArrow())
     {
         return _specialPathIconStep > 0
@@ -1189,6 +1200,8 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
 {
+    QReadLocker scopedLocker(&_lock);
+
     return useSpecialArrow() ? owner->specialPathIcon : _scaledPathIcon;
 }
 

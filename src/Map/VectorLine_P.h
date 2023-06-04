@@ -53,6 +53,7 @@ namespace OsmAnd
         VectorLine_P(VectorLine* const owner);
 
         mutable QReadWriteLock _lock;
+        mutable QReadWriteLock _arrowsOnPathLock;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
 
@@ -98,6 +99,7 @@ namespace OsmAnd
         
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
         
+        void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
