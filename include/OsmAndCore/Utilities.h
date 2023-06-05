@@ -892,6 +892,17 @@ namespace OsmAnd
             return shortestVector31(p1 - p0);
         }
 
+        inline static PointI shortestLongitudeVector(const PointI& offset)
+        {
+            const int intHalf = INT32_MAX / 2 + 1;
+            PointI offset31 = offset;
+            if (offset31.x >= intHalf)
+                offset31.x = offset31.x - INT32_MAX - 1;
+            else if (offset31.x < -intHalf)
+                offset31.x = offset31.x + INT32_MAX + 1;
+            return offset31;
+        }
+
         enum class CHCode : uint8_t
         {
             Left = 0,
