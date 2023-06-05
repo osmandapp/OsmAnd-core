@@ -39,7 +39,7 @@ namespace OsmAnd
         void addArrowsOnSegmentPath(
             const std::vector<PointI>& segmentPoints,
             const std::vector<bool>& includedPoints,
-            const PointI& arrowsOrigin);
+            const PointI64& arrowsOrigin);
         
         QList<VectorLine::OnPathSymbolData> _arrowsOnPath;
         sk_sp<const SkImage> _scaledPathIcon;

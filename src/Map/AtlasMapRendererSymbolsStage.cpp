@@ -1174,7 +1174,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         else
         {
             PointI testPoint;
-            testPoint = position31;
+            testPoint = Utilities::normalizeCoordinates(position31, ZoomLevel31);
             if (height != 0.0f)
                 getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
             if (!internalState.globalFrustum2D31.test(testPoint))
@@ -1198,8 +1198,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     }
 
     PointF offsetInTileN;
-    const auto tileId = Utilities::normalizeTileId(
-        Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+    const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(Utilities::normalizeCoordinates(
+        position31, ZoomLevel31), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
 
     // Get elevation data
     float elevationInMeters = 0.0f;
@@ -1242,9 +1242,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         outRenderableSymbols.push_back(renderable);
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = position31 - currentState.target31;
-        renderable->offsetFromTarget =
-            Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
+        int64_t intFull = INT32_MAX;
+        intFull++;
+        const auto intHalf = intFull >> 1;
+        const auto intTwo = intFull << 1;
+        PointI64 position = position31;
+        position.x += position.x < -intHalf ? intTwo : 0;
+        position.y += position.y < -intHalf ? intTwo : 0;
+        const PointI64 offset = position - currentState.target31;
+        renderable->offsetFromTarget31 = Utilities::wrapCoordinates(offset);
+        renderable->offsetFromTarget = PointF(Utilities::convert31toDouble(offset, currentState.zoomLevel));
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
             elevationInWorld,
