@@ -215,7 +215,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectIds,
-            tileBBox31,
+            originalTileBBox31,
             zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -243,7 +243,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = requestedZoom == zoom && originalTileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -317,7 +317,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &allLoadedRoadsCounters,
             &allLoadedBinaryMapObjectIds,
             &allLoadedRoadsIds,
-            tileBBox31,
+            originalTileBBox31,
             metric]
         (const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const ObfRoutingSectionReader::DataBlockId& blockId,
@@ -345,7 +345,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            const auto canNotBeShared = originalTileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)
