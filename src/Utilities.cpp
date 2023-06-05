@@ -717,20 +717,19 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
 {
     PointI output = input;
 
-    const auto tilesCount = static_cast<int32_t>(1u << zoom);
+    if (zoom >= ZoomLevel0 && zoom < ZoomLevel31)
+    {
+        const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
-    while (output.x < 0)
-    {
-        output.x += tilesCount;
-    }
-    while (output.y < 0)
-    {
-        output.y += tilesCount;
-    }
+        while (output.x < 0)
+        {
+            output.x += tilesCount;
+        }
+        while (output.y < 0)
+        {
+            output.y += tilesCount;
+        }
 
-    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-    if (zoom < ZoomLevel31)
-    {
         while (output.x >= tilesCount)
         {
             output.x -= tilesCount;
@@ -739,10 +738,25 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
         {
             output.y -= tilesCount;
         }
+
+        assert(output.x < tilesCount);
+        assert(output.y < tilesCount);
+    }
+    else if (zoom == ZoomLevel31)
+    {
+        if (output.x < 0)
+            output.x = output.x + INT32_MAX + 1;
+        if (output.y < 0)
+            output.y = output.y + INT32_MAX + 1;
+    }
+    else
+    {
+        output.x = 0;
+        output.y = 0;
     }
 
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
+    assert(output.x >= 0);
+    assert(output.x >= 0);
 
     return output;
 }

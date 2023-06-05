@@ -338,9 +338,10 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
     if (!changed && _visibleBBoxShifted != mapState.visibleBBoxShifted)
     {
-        auto bboxShiftPoint = _visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
-        bool bboxChanged = abs(bboxShiftPoint.x) > _visibleBBoxShifted.width()
-            || abs(bboxShiftPoint.y) > _visibleBBoxShifted.height();
+        const AreaI64 visibleBBoxShifted(_visibleBBoxShifted);
+        auto bboxShiftPoint = visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
+        bool bboxChanged = abs(bboxShiftPoint.x) > visibleBBoxShifted.width()
+            || abs(bboxShiftPoint.y) > visibleBBoxShifted.height();
         changed |= bboxChanged;
     }
 
@@ -568,7 +569,7 @@ void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<Poin
 {
     // Use enlarged visible area
     const AreaI64 visibleBBox64(_visibleBBoxShifted);
-    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width() * 3, visibleBBox64.height() * 3));
+    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width(), visibleBBox64.height()));
     visibleArea64.topLeft.x = visibleArea64.topLeft.x < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.x;
     visibleArea64.topLeft.y = visibleArea64.topLeft.y < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.y;
     visibleArea64.bottomRight.x = visibleArea64.bottomRight.x > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.x;
@@ -804,17 +805,18 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (!startPosDefined)
         {
             startPosDefined = true;
-            const auto startPoint = PointI64(points[0]);
+            const auto startPoint = points[0];
             int64_t intFull = INT32_MAX;
             intFull++;
             const auto intHalf = intFull >> 1;
-            const auto origPos = startPoint + PointI64(intHalf, intHalf);
-            const auto origPos31 = Utilities::normalizeCoordinates(origPos, ZoomLevel31);
-            vectorLine->position31 = origPos31;
-            verticesAndIndices->position31 = new PointI(origPos31);
-            startPos = PointD(
-                startPoint.x - (origPos.x > INT32_MAX ? intFull : (origPos.x < 0 ? -intFull : 0)),
-                startPoint.y - (origPos.y > INT32_MAX ? intFull : (origPos.y < 0 ? -intFull : 0)));
+            const auto intTwo = intFull << 1;
+            const PointI64 origPos = PointI64(intHalf, intHalf) + startPoint;
+            const PointI location31(
+                origPos.x > INT32_MAX ? origPos.x - intTwo : origPos.x,
+                origPos.y > INT32_MAX ? origPos.y - intTwo : origPos.y);
+            vectorLine->position31 = location31;
+            verticesAndIndices->position31 = new PointI(location31);
+            startPos = PointD(startPoint);
         }
         int pointsCount = (int) points.size();
 
@@ -883,7 +885,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             original[insertIdx] = pnt;
             if (pointIdx > 0)
             {
-                ntan = atan2(points[pointIdx].x - points[prevPointIdx].x, points[pointIdx].y - points[prevPointIdx].y);
+                ntan = atan2(pnt.x - prevPnt.x, pnt.y - prevPnt.y);
                 nx1 = radius * sin(M_PI_2 - ntan) ;
                 ny1 = radius * cos(M_PI_2 - ntan) ;
                 e1[insertIdx] = b1[insertIdx] = OsmAnd::PointD(pnt.x - nx1, pnt.y + ny1);
@@ -1133,10 +1135,10 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
 void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const std::vector<PointI>& segmentPoints,
     const std::vector<bool>& includedPoints,
-    const PointI& origin)
+    const PointI64& origin)
 {
     SkPath path;
-    const auto& start = segmentPoints.back();
+    const PointI64 start = segmentPoints.back();
     path.moveTo(start.x - origin.x, start.y - origin.y);
     for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
     {
@@ -1158,6 +1160,12 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
     if (iconInstancesCount > 0)
     {
+        int64_t intFull = INT32_MAX;
+        intFull++;
+        const auto intHalf = intFull >> 1;
+        const auto intTwo = intFull << 1;
+        const PointD location(origin);
+
         QWriteLocker scopedLocker(&_arrowsOnPathLock);
 
         for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
@@ -1168,7 +1176,13 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
             if (!ok)
                 break;
 
-            const auto position = PointI((double)p.x() + origin.x, (double)p.y() + origin.y);
+            PointI64 origPos(
+                static_cast<int64_t>((double)p.x() + location.x),
+                static_cast<int64_t>((double)p.y() + location.y));
+            origPos += PointI64(intHalf, intHalf);
+            const PointI position(
+                origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
+                origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
             // Get mirrored direction
             float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
             const VectorLine::OnPathSymbolData arrowSymbol(position, direction);

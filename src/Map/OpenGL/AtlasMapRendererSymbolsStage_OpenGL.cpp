@@ -2378,6 +2378,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         ? renderable->instanceParameters->position31
         : symbol->getPosition31();
     }
+    position31.x = position31.x < 0 ? position31.x + INT32_MAX + 1 : position31.x;
+    position31.y = position31.y < 0 ? position31.y + INT32_MAX + 1 : position31.y;
     float scaleFactor = 1.0f;
     switch (symbol->scaleType)
     {
