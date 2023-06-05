@@ -1754,7 +1754,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI
     if (!checkOffScreen && !internalState.globalFrustum2D31.test(position31))
         return false;
 
-    const auto offsetFromTarget31 = position31 - state.target31;
+    const auto offsetFromTarget31 = Utilities::shortestLongitudeVector(position31 - state.target31);
     const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
     const auto positionInWorld = glm::vec3(
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
@@ -1784,7 +1784,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::obtainElevatedPointFromPosition(const Poin
         return false;
 
     float height = getHeightOfLocation(state, position31);
-    const auto offsetFromTarget31 = position31 - state.target31;
+    const auto offsetFromTarget31 = Utilities::shortestLongitudeVector(position31 - state.target31);
     const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
     const auto positionInWorld = glm::vec3(
         offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
