@@ -1940,22 +1940,29 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             bool ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_PLACEMENT, placementString);
             if (ok)
                 placement = TextSymbol::placementFromString(placementString); 
-            
-            bool placementTaken = std::any_of(outSymbols,
-                [placement]
-                (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
-                {
-                    if (const auto textSymbol = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
-                        return !textSymbol->drawAlongPath
-                            && !textSymbol->drawOnPath
-                            && textSymbol->placement == placement;
-
-                    return false;
-                });
-            if (placementTaken)
-                return;
         }
         text->placement = placement;
+
+        bool textPositioningTaken = std::any_of(outSymbols,
+            [text]
+            (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
+            {
+                if (const auto otherTextSymbol = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
+                {
+                    bool bothAlongPath = text->drawAlongPath && otherTextSymbol->drawAlongPath;
+                    bool bothOnPath = text->drawOnPath && otherTextSymbol->drawOnPath;
+                    bool bothWithoutPath = !text->drawAlongPath
+                        && !text->drawOnPath 
+                        && !otherTextSymbol->drawAlongPath
+                        && !otherTextSymbol->drawOnPath;
+                    bool equalPlacement = text->placement == otherTextSymbol->placement;
+
+                    return bothAlongPath || bothOnPath || bothWithoutPath && equalPlacement;
+                }
+                return false;
+            });
+        if (textPositioningTaken)
+            return;
 
         // Get additional text from nameTag2 if present (and not yet added)
         if (!extraCaptionTextAdded)
@@ -2101,9 +2108,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
             metric->obtainedTextSymbols++;
         }
-                
-        // Only the highest priority caption needed, so don't process less priority captions and break
-        break;
     }
 }
 
