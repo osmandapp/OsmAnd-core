@@ -974,6 +974,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
                 pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
+                // Icon also depends on native text length
+                const auto& nativeCaption = mapObject->getCaptionInNativeLanguage();
+                int nativeCaptionLength = nativeCaption.isNull() ? 0 : nativeCaption.length();
+                pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, nativeCaptionLength);
+
                 // Evaluate Point rules
                 evaluationResult.clear();
                 const auto hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
@@ -1104,6 +1109,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Setup tag+value-specific input data
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
+
+            // Icon also depends on native text length
+            const auto& nativeCaption = mapObject->getCaptionInNativeLanguage();
+            int nativeCaptionLength = nativeCaption.isNull() ? 0 : nativeCaption.length();
+            pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, nativeCaptionLength);
 
             // Evaluate Point rules
             evaluationResult.clear();
