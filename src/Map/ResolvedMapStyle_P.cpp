@@ -208,8 +208,7 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
         const auto& valueDef = getValueDefinitionById(valueDefId);
         if ((valueDefId < 0 || !valueDef))
         {
-            if (name != SEQ_ATTR && name != ORDER_BY_DENSITY_ATTR && name != ONEWAY_ARROWS_COLOR_ATTR &&
-                name != ADD_POINT_ATTR)
+            if (!IGNORED_ATTRS.contains(name))
             {
                 LogPrintf(LogSeverityLevel::Warning, "Ignoring unknown value '%s' = '%s'", qPrintable(name),
                           qPrintable(value));
