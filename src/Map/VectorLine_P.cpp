@@ -1198,8 +1198,6 @@ bool OsmAnd::VectorLine_P::useSpecialArrow() const
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
 {
-    QReadLocker scopedLocker(&_lock);
-
     if (useSpecialArrow())
     {
         return _specialPathIconStep > 0
@@ -1214,8 +1212,6 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const
 {
-    QReadLocker scopedLocker(&_lock);
-
     return useSpecialArrow() ? owner->specialPathIcon : _scaledPathIcon;
 }
 
