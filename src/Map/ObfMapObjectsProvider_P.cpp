@@ -215,7 +215,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectIds,
-            tileBBox31,
+            originalTileBBox31,
             zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
@@ -243,7 +243,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = requestedZoom == zoom && originalTileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -317,7 +317,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &allLoadedRoadsCounters,
             &allLoadedBinaryMapObjectIds,
             &allLoadedRoadsIds,
-            tileBBox31,
+            originalTileBBox31,
             metric]
         (const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const ObfRoutingSectionReader::DataBlockId& blockId,
@@ -345,7 +345,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             blockIds.insert(blockId);
 
             // This road may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            const auto canNotBeShared = originalTileBBox31.contains(bbox);
 
             // If road can not be shared, just read it
             if (canNotBeShared)
@@ -602,7 +602,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
     QList< std::shared_ptr<const MapObject> > allMapObjects;
     allMapObjects.reserve(allMapObjectsCount);
 
-    QHash< ObfObjectId, QList< std::shared_ptr<const MapObject> > > duplicatedMapObjects; 
+    QHash< ObfObjectId, QList< std::shared_ptr<const ObfMapObject> > > duplicatedMapObjects; 
     const auto allBinaryMapObjects = loadedBinaryMapObjects + referencedBinaryMapObjects;
     const auto allRoads = loadedRoads + referencedRoads;
     for (const auto& binaryMapObject : constOf(allBinaryMapObjects))
@@ -634,16 +634,37 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    // Process duplicated map objects. If zoom > 12, choose first loaded object.
-    // Otherwise, choose object with largest number of points31
+    // Sort duplicated ObfMapObjects by importance, choose the most important one
+    bool comparePoints = zoom <= COMPARE_OBF_OBJECTS_MAX_ZOOM;
     for (auto& duplicates : duplicatedMapObjects.values())
     {
-        auto mostPreferredObject = duplicates.at(0);
-        if (zoom <= COMPARE_OBF_OBJECTS_MAX_ZOOM)
-            for (auto& duplicate : duplicates)
-                if (duplicate->points31.size() > mostPreferredObject->points31.size())
-                    mostPreferredObject = duplicate;
-        allMapObjects.push_back(mostPreferredObject);
+        std::sort(duplicates.begin(), duplicates.end(),
+            [comparePoints]
+            (const std::shared_ptr<const ObfMapObject>& o1, const std::shared_ptr<const ObfMapObject>& o2)
+            {
+                // BinaryMapObject (full object) is more important than Road (only)
+                if (std::dynamic_pointer_cast<const BinaryMapObject>(o1) && std::dynamic_pointer_cast<const Road>(o2))
+                    return true;
+                else if (std::dynamic_pointer_cast<const Road>(o1) && std::dynamic_pointer_cast<const BinaryMapObject>(o2))
+                    return false;
+
+                if (comparePoints)
+                {
+                    // If objects' sections differ regionally, object with the most points is more important
+                    const auto& sectionNameWithoutDate1 = formatObfSectionName(o1->obfSection, false);
+                    const auto& sectionNameWithoutDate2 = formatObfSectionName(o2->obfSection, false);
+                    if (sectionNameWithoutDate1 != sectionNameWithoutDate2)
+                        return o1->points31.size() > o2->points31.size();
+                }
+
+                // Object with latest date is more important
+                const auto& formattedSectionName1 = formatObfSectionName(o1->obfSection, true);
+                const auto& formattedSectionName2 = formatObfSectionName(o2->obfSection, true);
+                return formattedSectionName1.compare(formattedSectionName2) > 0;
+            });
+
+        // Add the most important duplicate
+        allMapObjects.push_back(duplicates.first());
     }
 
     // Create tile
@@ -720,6 +741,34 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 #endif // OSMAND_PERFORMANCE_METRICS
 
     return true;
+}
+
+QString OsmAnd::ObfMapObjectsProvider_P::formatObfSectionName(
+    const std::shared_ptr<const ObfSectionInfo>& sectionInfo,
+    const bool withDate)
+{
+    auto sectionName = sectionInfo->name.toLower();
+
+    if (sectionName.endsWith("_2"))
+        sectionName = sectionName.mid(0, sectionName.length() - 2);
+
+    bool dateSpecified = false;
+    for (const auto ch : sectionName)
+    {
+        if (ch >= '0' && ch <= '9')
+        {
+            dateSpecified = true;
+            break;
+        }
+    }
+
+    const QString defaultDate("_00_00_00");
+    if (dateSpecified && !withDate)
+        sectionName = sectionName.mid(0, sectionName.length() - defaultDate.length());
+    else if (!dateSpecified && withDate)
+        sectionName += defaultDate;
+
+    return sectionName;
 }
 
 OsmAnd::ObfMapObjectsProvider_P::BinaryMapObjectsDataBlocksCache::BinaryMapObjectsDataBlocksCache(

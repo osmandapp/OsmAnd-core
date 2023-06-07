@@ -1055,6 +1055,21 @@ namespace OsmAnd
             logDebugPath(path, zoom, name, color);
         }
 
+        inline static void logDebugBBox(
+            const AreaI& bbox,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "bbox",
+            const QString& color = "red")
+        {
+            QVector<PointI> path;
+            path.push_back(bbox.topLeft);
+            path.push_back(bbox.topRight());
+            path.push_back(bbox.bottomRight);
+            path.push_back(bbox.bottomLeft());
+            path.push_back(path.first());
+            logDebugPath(path, zoom, name, color);
+        }
+
         inline static void logDebugPath(
             const QVector<PointI>& path,
             const ZoomLevel zoom = ZoomLevel31,
