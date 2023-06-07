@@ -41,7 +41,6 @@
 #define MEDIUM_GLYPHS_COUNT 10
 #define LONG_GLYPHS_COUNT 15
 
-#define SHORT_GLYPHS_MAX_ANGLE 20.0f
 #define MEDIUM_GLYPHS_MAX_ANGLE 5.0f
 #define LONG_GLYPHS_MAX_ANGLE 2.5f
 #define EXTRA_LONG_GLYPHS_MAX_ANGLE 1.0f
@@ -2650,25 +2649,29 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
         approximatedBBoxPlaneN = glm::vec3(1.0f, -1.0f, 0.0f);
 
 
-    // Check if angle between planes not too big. The longer text the less angle allowed between planes
+    // Check if angle between planes not too big. The longer text the less angle allowed between planes.
+    // Short texts are displayed unconditionally
     int glyphsCount = glyphsPlacement.size();
-    float maxAngle = EXTRA_LONG_GLYPHS_MAX_ANGLE;
-    if (glyphsCount <= SHORT_GLYPHS_COUNT)
-        maxAngle = SHORT_GLYPHS_MAX_ANGLE;
-    else if (glyphsCount <= MEDIUM_GLYPHS_COUNT)
-        maxAngle = MEDIUM_GLYPHS_MAX_ANGLE;
-    else if (glyphsCount <= LONG_GLYPHS_COUNT)
-        maxAngle = LONG_GLYPHS_MAX_ANGLE;
-
-    for (int i = 0; i < 3; i++)
+    if (glyphsCount > SHORT_GLYPHS_COUNT)
     {
-        for (int j = i + 1; j < 4; j++)
+        float maxAngle;
+        if (glyphsCount <= MEDIUM_GLYPHS_COUNT)
+            maxAngle = MEDIUM_GLYPHS_MAX_ANGLE;
+        else if (glyphsCount <= LONG_GLYPHS_COUNT)
+            maxAngle = LONG_GLYPHS_MAX_ANGLE;      
+        else
+            maxAngle = EXTRA_LONG_GLYPHS_MAX_ANGLE;
+
+        for (int i = 0; i < 3; i++)
         {
-            const auto planeN1 = bboxPlanesN[i];
-            const auto planeN2 = bboxPlanesN[j];
-            const auto angleBetweenPlanes = qAcos(planeN1.x * planeN2.x + planeN1.y * planeN2.y);
-            if (angleBetweenPlanes > qDegreesToRadians(maxAngle))
-                return false;
+            for (int j = i + 1; j < 4; j++)
+            {
+                const auto planeN1 = bboxPlanesN[i];
+                const auto planeN2 = bboxPlanesN[j];
+                const auto angleBetweenPlanes = qAcos(planeN1.x * planeN2.x + planeN1.y * planeN2.y);
+                if (angleBetweenPlanes > qDegreesToRadians(maxAngle))
+                    return false;
+            }
         }
     }
 
