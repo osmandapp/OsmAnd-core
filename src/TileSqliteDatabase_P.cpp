@@ -82,6 +82,18 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
         }
 #endif
 
+        const auto statement = prepareStatement(database,
+            QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' AND name='tiles'"));
+        if (!statement || (res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to check table presence: %s",
+                sqlite3_errmsg(database.get()));
+
+            return false;
+        }        
+
         const auto meta = readMeta(database);
 
         const auto sqlHead = QStringLiteral(
@@ -107,18 +119,7 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
             return false;
         }
 
-        const auto statement = prepareStatement(database, QStringLiteral("PRAGMA index_list(tiles)"));
-        if (!statement || (res = stepStatement(statement)) < 0)
-        {
-            LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to query indices: %s",
-                sqlite3_errmsg(database.get()));
-
-            return false;
-        }
-
-        if (res <= 1)
+        if (res < 1)
         {
 
             if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
