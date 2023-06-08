@@ -912,37 +912,37 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     const float height /*=0.0f*/, float* distance /*=nullptr*/) const
 {
     const auto nearInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
+        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
+        glm::dmat4(internalState.mCameraView),
+        glm::dmat4(internalState.mPerspectiveProjection),
+        glm::dvec4(internalState.glmViewport));
     const auto farInWorld = glm::unProject(
-        glm::vec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
-        internalState.glmViewport);
+        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
+        glm::dmat4(internalState.mCameraView),
+        glm::dmat4(internalState.mPerspectiveProjection),
+        glm::dvec4(internalState.glmViewport));
     const auto rayD = glm::normalize(farInWorld - nearInWorld);
 
-    const glm::vec3 planeN(0.0f, 1.0f, 0.0f);
-    const glm::vec3 planeO(0.0f, 0.0f, 0.0f);
-    float length;
+    const glm::dvec3 planeN(0.0f, 1.0f, 0.0f);
+    const glm::dvec3 planeO(0.0f, 0.0f, 0.0f);
+    double length;
     const auto intersects = Utilities_OpenGL_Common::rayIntersectPlane(planeN, planeO, rayD, nearInWorld, length);
     if (!intersects)
         return false;
 
-    auto intersection = nearInWorld + length*rayD;
+    auto intersection = nearInWorld + length * rayD;
     auto pointOnPlane = intersection.xz();
 
     if (height != 0.0f)
     {
-        const auto heightFactor = height / nearInWorld.y;
+        const auto heightFactor = static_cast<double>(height) / nearInWorld.y;
         pointOnPlane += (nearInWorld.xz() - pointOnPlane) * heightFactor;
     }
 
-    position = pointOnPlane / static_cast<float>(TileSize3D);
+    position = pointOnPlane / static_cast<double>(TileSize3D);
 
     if (distance)
-        *distance = length;
+        *distance = static_cast<float>(length);
 
     return true;
 }
