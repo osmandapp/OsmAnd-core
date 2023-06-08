@@ -26,6 +26,13 @@ namespace OsmAnd
             const glm::vec3& rayO,
             float& distance);
 
+        bool rayIntersectPlane(
+            const glm::dvec3& planeN,
+            const glm::dvec3& planeO,
+            const glm::dvec3& rayD,
+            const glm::dvec3& rayO,
+            double& distance);
+
         bool lineSegmentIntersectPlane(
             const glm::vec3& planeN,
             const glm::vec3& planeO,
