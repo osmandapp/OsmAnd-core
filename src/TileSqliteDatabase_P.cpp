@@ -121,48 +121,30 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
 
         if (res < 1)
         {
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
+            if (!withSpecification)
             {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(x): %s",
-                    sqlite3_errmsg(database.get()));
+                if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS IND ON tiles(x,y,z)")))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to create index on tiles(x,y,z): %s",
+                        sqlite3_errmsg(database.get()));
 
-                return false;
+                    return false;
+                }
             }
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_y_index ON tiles(y)")))
+            else
             {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(y): %s",
-                    sqlite3_errmsg(database.get()));
+                if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS IND ON tiles(x,y,z,s)")))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to create index on tiles(x,y,z,s): %s",
+                        sqlite3_errmsg(database.get()));
 
-                return false;
+                    return false;
+                }
             }
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_z_index ON tiles(z)")))
-            {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(z): %s",
-                    sqlite3_errmsg(database.get()));
-
-                return false;
-            }
-
-            if (withSpecification &&
-                !execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_s_index ON tiles(s)")))
-            {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(s): %s",
-                    sqlite3_errmsg(database.get()));
-
-                return false;
-            }
-
         }
         resetCachedInfo();
         _database = database;
