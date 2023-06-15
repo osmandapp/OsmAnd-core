@@ -986,11 +986,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                         const auto link_ = cachedResource->link.lock();
                         if (link_ && dataAvailable && cachedResource->zoom != cachedResource->_sourceData->zoom)
                         {
+                            const auto zoomLevel = cachedResource->_sourceData->zoom != InvalidZoomLevel
+                                ? cachedResource->_sourceData->zoom
+                                : cachedResource->zoom;
                             const auto tiledResources =
                                 static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
-                            if (!tiledResources->containsResource(
-                                cachedResource->_sourceData->tileId,
-                                cachedResource->_sourceData->zoom))
+                            if (!tiledResources->containsResource(cachedResource->_sourceData->tileId, zoomLevel))
                             {
                                 const auto resourceAllocator =
                                     [this, cachedResource]
@@ -1008,7 +1009,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                 tiledResources->obtainOrAllocateEntry(
                                     completeResource,
                                     cachedResource->_sourceData->tileId,
-                                    cachedResource->_sourceData->zoom,
+                                    zoomLevel,
                                     resourceAllocator);
                                 requestResourcesUploadOrUnload();
                             }
