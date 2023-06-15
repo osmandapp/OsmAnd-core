@@ -251,6 +251,7 @@ void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, co
     dst.zoom = src.zoom;
     dst.bands = src.bands;
     dst.localData = src.localData;
+    dst.cacheOnly = src.cacheOnly;
     dst.queryController = src.queryController;
     dst.version = src.version;
     dst.ignoreVersion = src.ignoreVersion;

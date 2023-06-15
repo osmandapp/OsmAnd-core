@@ -104,6 +104,8 @@ namespace OsmAnd
     private:
         ImplementationInterface<WeatherTileResourceProvider> owner;
         QThreadPool *_obtainValueThreadPool;
+        QThreadPool *_obtainCacheDataThreadPool;
+        QThreadPool *_obtainOnlineDataThreadPool;
 
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
 

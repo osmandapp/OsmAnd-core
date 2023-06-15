@@ -67,6 +67,7 @@ namespace OsmAnd
             ZoomLevel zoom;
             QList<BandIndex> bands;
             bool localData;
+            bool cacheOnly;
 
             int version;
             bool ignoreVersion;

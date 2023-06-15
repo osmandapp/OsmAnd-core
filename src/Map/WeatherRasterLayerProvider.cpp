@@ -110,6 +110,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
     _request.zoom = request.zoom;
     _request.bands = getBands();
     _request.localData = getLocalData();
+    _request.cacheOnly = request.cacheOnly;
     _request.queryController = request.queryController;
 
     WeatherTileResourcesManager::ObtainTileDataAsyncCallback _callback =
@@ -131,7 +132,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
             }
             else
             {
-                callback(this, false, nullptr, nullptr);
+                callback(this, requestSucceeded, nullptr, nullptr);
             }
         };
         

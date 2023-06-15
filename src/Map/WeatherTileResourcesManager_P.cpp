@@ -383,6 +383,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
         rr.zoom = request.zoom;
         rr.bands = request.bands;
         rr.localData = request.localData;
+        rr.cacheOnly = request.cacheOnly;
         rr.queryController = request.queryController;
         
         const WeatherTileResourceProvider::ObtainTileDataAsyncCallback rc =
@@ -405,7 +406,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
                 }
                 else
                 {
-                    callback(false, nullptr, nullptr);
+                    callback(requestSucceeded, nullptr, nullptr);
                 }
             };
         

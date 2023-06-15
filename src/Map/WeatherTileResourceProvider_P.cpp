@@ -24,6 +24,8 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : owner(owner_)
     , _obtainValueThreadPool(new QThreadPool())
+    , _obtainCacheDataThreadPool(new QThreadPool())
+    , _obtainOnlineDataThreadPool(new QThreadPool())
     , _bandSettings(bandSettings_)
     , _priority(0)
     , _obtainValuePriority(0)
@@ -37,6 +39,8 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , densityFactor(densityFactor_)
 {
     _obtainValueThreadPool->setMaxThreadCount(1);
+    _obtainCacheDataThreadPool->setMaxThreadCount(1);
+    _obtainOnlineDataThreadPool->setMaxThreadCount(4);
     
     auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     auto geoDbCachePath = localCachePath
@@ -63,6 +67,10 @@ OsmAnd::WeatherTileResourceProvider_P::~WeatherTileResourceProvider_P()
 {
     _obtainValueThreadPool->clear();
     delete _obtainValueThreadPool;
+    _obtainCacheDataThreadPool->clear();
+    delete _obtainCacheDataThreadPool;
+    _obtainOnlineDataThreadPool->clear();
+    delete _obtainOnlineDataThreadPool;
 }
 
 int OsmAnd::WeatherTileResourceProvider_P::getAndIncreasePriority()
@@ -196,7 +204,8 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         + QString::number(tileId.x) + QStringLiteral("_")
         + QString::number(15 - tileId.y) + QStringLiteral(".tiff.gz");
 
-    lockGeoTile(tileId, zoom);
+    if (forceDownload || !localData)
+        lockGeoTile(tileId, zoom);
 
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
@@ -268,7 +277,8 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         }
     }
 
-    unlockGeoTile(tileId, zoom);
+    if (forceDownload || !localData)
+        unlockGeoTile(tileId, zoom);
     return !outData.isEmpty();
 }
 
@@ -397,7 +407,10 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainDataAsync(
 
     ObtainTileTask *task = new ObtainTileTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
-    QThreadPool::globalInstance()->start(task, getAndIncreasePriority());
+    if (requestClone->cacheOnly)
+        _obtainCacheDataThreadPool->start(task);
+    else
+        _obtainOnlineDataThreadPool->start(task, getAndIncreasePriority());
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::downloadGeoTiles(
@@ -807,7 +820,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
-    bool localData = request->localData;
+    bool cacheOnly = request->cacheOnly;
+    bool localData = request->localData || cacheOnly;
 
     if (request->version != provider->getCurrentRequestVersion() && !request->ignoreVersion)
     {
@@ -912,9 +926,12 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     {
         provider->unlockRasterTile(tileId, zoom);
 
-        LogPrintf(LogSeverityLevel::Error,
-            "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
-        callback(false, nullptr, nullptr);
+        if (!cacheOnly)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
+        }
+        callback(cacheOnly, nullptr, nullptr);
         return;
     }
     if (request->queryController && request->queryController->isAborted())
@@ -1002,7 +1019,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         {
             auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
                 tileId,
-                zoom,
+                cacheOnly ? InvalidZoomLevel : zoom,
                 AlphaChannelPresence::Present,
                 provider->densityFactor,
                 image
@@ -1036,7 +1053,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
-    bool localData = request->localData;
+    bool cacheOnly = request->cacheOnly;
+    bool localData = request->localData || cacheOnly;
 
     if (request->queryController && request->queryController->isAborted())
     {
@@ -1077,9 +1095,12 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     {
         provider->unlockContourTile(tileId, zoom);
 
-        LogPrintf(LogSeverityLevel::Error,
-            "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
-        callback(false, nullptr, nullptr);
+        if (!cacheOnly)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
+        }
+        callback(cacheOnly, nullptr, nullptr);
         return;
     }
     if (request->queryController && request->queryController->isAborted())
@@ -1142,7 +1163,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
 
     auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
         tileId,
-        zoom,
+        cacheOnly ? InvalidZoomLevel : zoom,
         AlphaChannelPresence::Present,
         provider->densityFactor,
         nullptr,
