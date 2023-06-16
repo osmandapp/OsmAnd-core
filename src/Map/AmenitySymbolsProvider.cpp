@@ -60,7 +60,7 @@ void OsmAnd::AmenitySymbolsProvider::obtainDataAsync(
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
 OsmAnd::AmenitySymbolsProvider::Data::Data(

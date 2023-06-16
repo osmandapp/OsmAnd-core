@@ -67,10 +67,21 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(
             mapObject));
 
-        // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
-        // This offset is computed only in case symbol is not on-path and not along-path
-        PointI totalOffset;
-        bool textAfterIcon = false;
+        // Minimum and maximum offsets to allow column of symbols grow in both directions without overlapping
+        // These offsets are computed only in case symbol is not on-path and not along-path
+        int32_t topOffset = 0;
+        int32_t bottomOffset = 0;
+
+        bool iconOnBottom = false;
+        bool bottomTextSectionTaken = std::any_of(symbolsGroup->symbols,
+            []
+            (const std::shared_ptr<const MapPrimitiviser::Symbol>& symbol) -> bool
+            {
+                if (const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
+                    return textSymbol->placement != TextSymbolPlacement::Top;
+                
+                return false;
+            });
 
         for (const auto& symbol : constOf(symbolsGroup->symbols))
         {
@@ -176,26 +187,33 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
                 else
                 {
-                    // Calculate local offset. Since offset specifies center, it's a sum of
-                    //  - vertical offset
-                    //  - extra top space (which should be in texture, but not rendered, since transparent)
+                    // Calculate offset. Since offset specifies center, it's a sum of
+                    //  - top/bottom offset
+                    //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - height / 2
-                    // This calculation is used only if this symbol is not first. Otherwise only following is used:
-                    //  - vertical offset
-                    PointI localOffset;
-                    localOffset.y += textSymbol->verticalOffset;
+                    PointI offset;
+
+                    // If bottom text section is free, move top section text to bottom
+                    bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top && bottomTextSectionTaken;
                     if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
                     {
-                        localOffset.y += symbolExtraTopSpace;
-                        localOffset.y += rasterizedText->height() / 2;
-                        if (textAfterIcon && symbolExtraTopSpace == 0)
-                            localOffset.y += qCeil(-fontAscent / 2);
-                        textAfterIcon = false;
+                        const auto halfHeight = rasterizedText->height() / 2;
+                        if (drawInTopSection)
+                        {
+                            offset.y += topOffset;
+                            offset.y -= symbolExtraBottomSpace;
+                            offset.y -= halfHeight;
+                        }
+                        else
+                        {
+                            offset.y += bottomOffset;
+                            offset.y += symbolExtraTopSpace;
+                            offset.y += halfHeight;
+                            if (iconOnBottom && qFuzzyIsNull(symbolExtraTopSpace))
+                                offset.y += qCeil(-fontAscent / 2.0f);
+                            iconOnBottom = false;
+                        }
                     }
-
-                    // Increment total offset
-                    if (!textSymbol->drawAlongPath)
-                        totalOffset += localOffset;
 
                     // Publish new rasterized symbol
                     const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, textSymbol));
@@ -206,13 +224,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->location31 = textSymbol->location31;
-                    rasterizedSymbol->offset = textSymbol->drawAlongPath ? localOffset : totalOffset;
+                    rasterizedSymbol->offset = textSymbol->drawAlongPath ? PointI() : offset;
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
-                    if (!qIsNaN(textSymbol->intersectionSizeFactor))
+                    if (!qIsNaN(textSymbol->intersectionSizeFactor) && !qFuzzyCompare(textSymbol->size, 0.0f))
                     {
-                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
-                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->width()),
-                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->height())));
+                        const auto margin = static_cast<int>((textSymbol->intersectionSizeFactor - 1.0f) * textSymbol->size);
+                        const PointI size(rasterizedText->width() + margin, rasterizedText->height() + margin);
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), size);
                     }
                     else if (!qIsNaN(textSymbol->intersectionSize))
                     {
@@ -239,13 +257,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
                     // Next symbol should also take into account:
                     //  - height / 2
-                    //  - extra bottom space (which should be in texture, but not rendered, since transparent)
+                    //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - spacing between lines
                     if (!textSymbol->drawAlongPath)
                     {
-                        totalOffset.y += rasterizedText->height() / 2;
-                        totalOffset.y += symbolExtraBottomSpace;
-                        totalOffset.y += qCeil(lineSpacing);
+                        const auto halfHeight = rasterizedText->height() / 2;
+
+                        const auto topAdvance = -qCeil(halfHeight + symbolExtraTopSpace + lineSpacing);
+                        topOffset = std::min(topOffset, offset.y + topAdvance);
+
+                        const auto bottomAdvance = qCeil(halfHeight + symbolExtraBottomSpace + lineSpacing);
+                        bottomOffset = std::max(bottomOffset, offset.y + bottomAdvance);
                     }
                 }
             }
@@ -314,20 +336,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 
-                // Calculate local offset. Since offset specifies center, it's a sum of
-                //  - height / 2
-                // This calculation is used only if this symbol is not first. Otherwise nothing is used.
-                PointI localOffset;
+                // Icons offset always measured from center, without indents from other symbols
+                PointI offset;
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.x))
-                    localOffset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
+                    offset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.y))
-                    localOffset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
-                if (!group->symbols.isEmpty() && !iconSymbol->drawAlongPath)
-                    localOffset.y += rasterizedIcon->height() / 2;
-
-                // Increment total offset
-                if (!iconSymbol->drawAlongPath)
-                    totalOffset += localOffset;
+                    offset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
 
                 // Publish new rasterized symbol
                 const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, iconSymbol));
@@ -338,7 +352,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->languageId = LanguageId::Invariant;
                 rasterizedSymbol->minDistance = iconSymbol->minDistance;
                 rasterizedSymbol->location31 = iconSymbol->location31;
-                rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
+                rasterizedSymbol->offset = offset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
                 if (!qIsNaN(iconSymbol->intersectionSizeFactor))
                 {
@@ -370,8 +384,15 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 //  - height / 2
                 if (!iconSymbol->drawAlongPath)
                 {
-                    totalOffset.y += rasterizedIcon->height() / 2;
-                    textAfterIcon = true;
+                    const auto halfHeight = rasterizedIcon->height() / 2;
+
+                    topOffset = std::min(topOffset, offset.y - halfHeight);
+
+                    if (offset.y + halfHeight > bottomOffset)
+                    {
+                        bottomOffset = offset.y + halfHeight;
+                        iconOnBottom = true;
+                    }
                 }
             }
         }

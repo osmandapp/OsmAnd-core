@@ -68,6 +68,7 @@ namespace OsmAnd
             ZoomLevel zoom;
             QList<BandIndex> bands;
             bool localData;
+            bool cacheOnly;
 
             std::shared_ptr<const IQueryController> queryController;
 

@@ -44,6 +44,8 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(Road);
     private:
+        static const int HEIGHT_UNDEFINED = -80000;
+        QString getValue(uint32_t pnt, const QString & tag) const;
     protected:
         Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section);
     public:
@@ -51,6 +53,7 @@ namespace OsmAnd
 
         // General information
         const std::shared_ptr<const ObfRoutingSectionInfo> section;
+        ObfRoutingSectionDataBlockId blockId;
 
         // Road information
         QHash< uint32_t, QVector<uint32_t> > pointsTypes;
@@ -70,6 +73,7 @@ namespace OsmAnd
         bool bearingVsRouteDirection(double bearing) const;
 
         const bool hasGeocodingAccess() const;
+        QVector<float> calculateHeightArray() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };

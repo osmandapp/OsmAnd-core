@@ -31,6 +31,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 {
     MapState mapState;
 
+    mapState.windowSize = windowSize;
+    mapState.viewport = viewport;
     mapState.fieldOfView = fieldOfView;
     mapState.visibleDistance = visibleDistance;
     mapState.detailedDistance = detailedDistance;
@@ -52,6 +54,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     
     mapState.metersPerPixel = metersPerPixel;
     mapState.visibleBBox31 = visibleBBox31;
+    mapState.visibleBBoxShifted = visibleBBoxShifted;
     mapState.hasElevationDataProvider = elevationDataProvider != nullptr;
 
     return mapState;

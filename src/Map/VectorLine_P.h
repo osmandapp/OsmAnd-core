@@ -35,18 +35,12 @@ namespace OsmAnd
             double radius,
             FColorARGB &fillColor,
             QList<FColorARGB>& colorMapping) const;
+                
+        void addArrowsOnSegmentPath(
+            const std::vector<PointI>& segmentPoints,
+            const std::vector<bool>& includedPoints,
+            const PointI64& arrowsOrigin);
         
-        QVector<SkPath> calculateLinePath(
-            const std::vector<std::vector<PointI>>& visibleSegments,
-            bool approximate = false,
-            double simplificationRadius = 0) const;
-        
-        void generateArrowsOnPath(
-            const std::vector<std::vector<PointI>>& visibleSegments,
-            bool approximate = false,
-            double simplificationRadius = 0);
-        
-        mutable QReadWriteLock _arrowsOnPathLock;
         QList<VectorLine::OnPathSymbolData> _arrowsOnPath;
         sk_sp<const SkImage> _scaledPathIcon;
         
@@ -59,6 +53,7 @@ namespace OsmAnd
         VectorLine_P(VectorLine* const owner);
 
         mutable QReadWriteLock _lock;
+        mutable QReadWriteLock _arrowsOnPathLock;
         bool _hasUnappliedChanges;
         bool _hasUnappliedPrimitiveChanges;
 
@@ -72,11 +67,14 @@ namespace OsmAnd
         double _lineWidth;
         double _outlineWidth;
         FColorARGB _fillColor;
+        FColorARGB _outlineColor;
+        float _pathIconStep;
+        float _specialPathIconStep;
         bool _dash;
         std::vector<double> _dashPattern;
 
         double _metersPerPixel;
-        AreaI _visibleBBox31;
+        AreaI _visibleBBoxShifted;
         ZoomLevel _mapZoomLevel;
         float _mapVisualZoom;
         float _mapVisualZoomShift;
@@ -101,6 +99,7 @@ namespace OsmAnd
         
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine);
         
+        void clearArrowsOnPath();
         const QList<OsmAnd::VectorLine::OnPathSymbolData> getArrowsOnPath() const;
 
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
@@ -108,8 +107,15 @@ namespace OsmAnd
         PointD getProjection(PointD point, PointD from, PointD to ) const;
         double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
         
-        int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
-                                   std::vector<bool>& include) const;
+        int simplifyDouglasPeucker(
+            const std::vector<PointI>& points,
+            const uint begin,
+            const uint end,
+            const double epsilon,
+            std::vector<bool>& include) const;
+        bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
+        bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
+        inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
         void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const;
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
@@ -136,6 +142,12 @@ namespace OsmAnd
         double getLineWidth() const;
         void setLineWidth(const double width);
 
+        float getPathIconStep() const;
+        void setPathIconStep(const float step);
+
+        float getSpecialPathIconStep() const;
+        void setSpecialPathIconStep(const float step);
+
         FColorARGB getFillColor() const;
         void setFillColor(const FColorARGB color);
 
@@ -144,6 +156,9 @@ namespace OsmAnd
         
         double getOutlineWidth() const;
         void setOutlineWidth(const double width);
+
+        FColorARGB getOutlineColor() const;
+        void setOutlineColor(const FColorARGB color);
 
         void setColorizationScheme(const int colorizationScheme);
 

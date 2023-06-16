@@ -42,6 +42,7 @@ const QHash<QString, QStringList> GEOCODING_ACCESS {
 OsmAnd::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : ObfMapObject(section_)
     , section(section_)
+    , blockId(ObfRoutingSectionDataBlockId::invalidId())
 {
     attributeMapping = section->getAttributeMapping();
 }
@@ -65,6 +66,105 @@ const bool OsmAnd::Road::hasGeocodingAccess() const
             break;
     }
     return access;
+}
+
+QVector<float> OsmAnd::Road::calculateHeightArray() const
+{
+    QVector<float> heightDistanceArray;
+    const QHash<QString, QString> & tags = getResolvedAttributes();
+    auto itStrStart = tags.find(QStringLiteral("osmand_ele_start"));
+    auto itStrEnd = tags.find(QStringLiteral("osmand_ele_end"));
+    if (itStrStart == tags.end() || itStrEnd == tags.end())
+        return heightDistanceArray;
+
+    int startHeight = (*itStrStart).toInt();
+    int endHeight = (*itStrEnd).toInt();
+
+    heightDistanceArray.resize(2 * points31.size());
+    double plon = 0;
+    double plat = 0;
+    float prevHeight = startHeight;
+    for (uint32_t k = 0; k < points31.size(); k++)
+    {
+        double lon = OsmAnd::Utilities::get31LongitudeX(points31[k].x);
+        double lat = OsmAnd::Utilities::get31LatitudeY(points31[k].y);
+        if (k > 0)
+        {
+            double dd = Utilities::distance(plon, plat, lon, lat);
+            float height = HEIGHT_UNDEFINED;
+            if (k == points31.size() - 1)
+            {
+                height = endHeight;
+            }
+            else
+            {
+                QString asc = getValue(k, QStringLiteral("osmand_ele_asc"));
+                if (!asc.isEmpty()) {
+                    height = (prevHeight + asc.toFloat());
+                } else {
+                    QString desc = getValue(k, QStringLiteral("osmand_ele_desc"));
+                    if (!desc.isEmpty()) {
+                        height = (prevHeight - desc.toFloat());
+                    }
+                }
+            }
+            heightDistanceArray[2 * k] = dd;
+            heightDistanceArray[2 * k + 1] = height;
+            if (height != HEIGHT_UNDEFINED)
+            {
+                // interpolate undefined
+                double totalDistance = dd;
+                int startUndefined = k;
+                while (startUndefined - 1 >= 0 &&
+                       heightDistanceArray[2 * (startUndefined - 1) + 1] == HEIGHT_UNDEFINED)
+                {
+                    startUndefined--;
+                    totalDistance += heightDistanceArray[2 * (startUndefined)];
+                }
+                if (totalDistance > 0)
+                {
+                    double angle = (height - prevHeight) / totalDistance;
+                    for (int j = startUndefined; j < k; j++)
+                    {
+                        heightDistanceArray[2 * j + 1] =
+                        ((heightDistanceArray[2 * j] * angle) + heightDistanceArray[2 * j - 1]);
+                    }
+                }
+                prevHeight = height;
+            }
+            
+        }
+        else
+        {
+            heightDistanceArray[0] = 0;
+            heightDistanceArray[1] = startHeight;
+        }
+        plat = lat;
+        plon = lon;
+    }
+    return heightDistanceArray;
+}
+
+QString OsmAnd::Road::getValue(uint32_t pnt, const QString & tag) const
+{
+    auto itPointTypes = pointsTypes.find(pnt);
+    if (itPointTypes != pointsTypes.end())
+    {
+        auto tps = *itPointTypes;
+        auto sz = tps.size();
+        for (uint32_t i = 0; i < sz; i++) {
+            auto k = tps[i];
+            if (attributeMapping->decodeMap.size() > k)
+            {
+                const auto& decodedAttribute = attributeMapping->decodeMap[k];
+                if (decodedAttribute.tag == tag)
+                {
+                    return decodedAttribute.value;
+                }
+            }            
+        }
+    }
+    return QStringLiteral("");
 }
 
 QString OsmAnd::Road::getRefInNativeLanguage() const

@@ -259,6 +259,8 @@ namespace OsmAnd
             const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             const ZoomLevel zoomLevel;
             const PointI* position31;
+
+            void lostRefInGPU() const override;
         };
 
     private:
@@ -298,7 +300,7 @@ namespace OsmAnd
             const std::shared_ptr< const MapSymbol >& symbol,
             std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
-        virtual void waitUntilUploadIsComplete() = 0;
+        virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
 
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
 

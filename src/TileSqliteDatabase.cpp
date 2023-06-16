@@ -163,6 +163,15 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    int64_t* pOutTime /* = nullptr*/) const
+{
+    return _p->obtainTileData(tileId, zoom, outData, pOutTime);
+}
+
+bool OsmAnd::TileSqliteDatabase::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int specification,
     void* outData,
     int64_t* pOutTime /* = nullptr*/) const
@@ -197,6 +206,14 @@ bool OsmAnd::TileSqliteDatabase::removeTileData(
     return _p->removeTileData(tileId, zoom, specification);
 }
 
+bool OsmAnd::TileSqliteDatabase::removeTilesData(
+    QList<TileId>& tileIds,
+    OsmAnd::ZoomLevel zoom,
+    int specification /* = 0 */)
+{
+    return _p->removeTilesData(tileIds, zoom, specification);
+}
+
 bool OsmAnd::TileSqliteDatabase::removeTilesData()
 {
     return _p->removeTilesData();
@@ -205,6 +222,21 @@ bool OsmAnd::TileSqliteDatabase::removeTilesData()
 bool OsmAnd::TileSqliteDatabase::removeTilesData(ZoomLevel zoom)
 {
     return _p->removeTilesData(zoom);
+}
+
+bool OsmAnd::TileSqliteDatabase::removeBiggerTilesData(ZoomLevel zoom)
+{
+    return _p->removeBiggerTilesData(zoom);
+}
+
+bool OsmAnd::TileSqliteDatabase::removeSpecificTilesData(int specification)
+{
+    return _p->removeSpecificTilesData(specification);
+}
+
+bool OsmAnd::TileSqliteDatabase::removeOlderTilesData(int64_t time)
+{
+    return _p->removeOlderTilesData(time);
 }
 
 bool OsmAnd::TileSqliteDatabase::removeTilesData(AreaI bbox31, bool strict /* = true */ )

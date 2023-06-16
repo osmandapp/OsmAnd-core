@@ -15,7 +15,9 @@ namespace OsmAnd
     class MapObject;
 
     class MapObjectsProvider_P;
-    class OSMAND_CORE_API MapObjectsProvider Q_DECL_FINAL : public IMapObjectsProvider
+    class OSMAND_CORE_API MapObjectsProvider Q_DECL_FINAL
+        : public std::enable_shared_from_this<MapObjectsProvider>
+        , public IMapObjectsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapObjectsProvider);
 

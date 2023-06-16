@@ -57,7 +57,7 @@ namespace OsmAnd
         static double properCast(const int32_t value);
         static double properCast(const int64_t value);
 
-        static double relativeZoomFactor(const float currentZoom, const float finalZoom);
+        static double relativeZoomFactor(const float initialZoom, const float currentZoom, const float finalZoom);
 
         template <typename T>
         static void calculateValue(const float t, const T initial, const T delta, const float duration, const TimingFunction timingFunction, T& value)
@@ -437,17 +437,22 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             // Do panning scaled by zoom if needed
             if (std::is_same<T, float>::value && _initialValueCaptured && panObtainer && panDeltaValueObtainer)
             {
+                const auto initialZoom = static_cast<double>(*reinterpret_cast<const float*>(&_initialValue));
                 const auto finalZoom = static_cast<double>(
                     *reinterpret_cast<const float*>(&_initialValue) + *reinterpret_cast<const float*>(&_deltaValue));
                 const auto currentZoom = static_cast<double>(*reinterpret_cast<const float*>(&_currentValue));
-                const auto deltaFactor = relativeZoomFactor(currentZoom, finalZoom);
+                const auto deltaFactor = relativeZoomFactor(initialZoom, currentZoom, finalZoom);
                 PointI64 currentPoint;
+                currentPoint.x = _panInitialValue.x + static_cast<int64_t>(static_cast<double>(_panDelta.x) * deltaFactor);
+                currentPoint.y = _panInitialValue.y + static_cast<int64_t>(static_cast<double>(_panDelta.y) * deltaFactor);
+                /*
                 calculateValue(currentTime, _panInitialValue.x,
                     static_cast<int64_t>(static_cast<double>(_panDelta.x) * deltaFactor),
                     duration, timingFunction, currentPoint.x);
                 calculateValue(currentTime, _panInitialValue.y,
                     static_cast<int64_t>(static_cast<double>(_panDelta.y) * deltaFactor),
                     duration, timingFunction, currentPoint.y);
+                */
                 panApplier(key, currentPoint, _ownContext, _sharedContext);
             }
 

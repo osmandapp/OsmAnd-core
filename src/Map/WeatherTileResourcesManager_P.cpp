@@ -43,7 +43,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
 
 std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider(int64_t dateTime)
 {
-    auto dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
+    auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     {
         QReadLocker scopedLocker(&_resourceProvidersLock);
 
@@ -383,6 +383,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
         rr.zoom = request.zoom;
         rr.bands = request.bands;
         rr.localData = request.localData;
+        rr.cacheOnly = request.cacheOnly;
         rr.queryController = request.queryController;
         
         const WeatherTileResourceProvider::ObtainTileDataAsyncCallback rc =
@@ -405,7 +406,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
                 }
                 else
                 {
-                    callback(false, nullptr, nullptr);
+                    callback(requestSucceeded, nullptr, nullptr);
                 }
             };
         
@@ -582,7 +583,7 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
             bool checkBefore = beforeDateTime > dateTime;
             if (!clearBefore || checkBefore)
             {
-                QString dateTimeStr = QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC).toString(QStringLiteral("yyyyMMdd_hh00"));
+                auto dateTimeStr =  Utilities::getDateTimeString(dateTime);
                 provider->closeProvider();
                 _resourceProviders.remove(dateTimeStr);
             }

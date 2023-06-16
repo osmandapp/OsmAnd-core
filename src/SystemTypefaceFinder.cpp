@@ -28,6 +28,11 @@ std::shared_ptr<const OsmAnd::ITypefaceFinder::Typeface> OsmAnd::SystemTypefaceF
         return nullptr;
     }
 
+    SkString typefaceName;
+    pTypeface->getFamilyName(&typefaceName);
+    if (typefaceName.contains("LastResort"))
+        return nullptr;
+
     const auto skTypeface = pTypeface->makeClone({});
     if (!skTypeface)
     {

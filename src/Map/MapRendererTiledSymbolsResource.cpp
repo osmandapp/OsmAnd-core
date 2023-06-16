@@ -9,6 +9,7 @@
 #include "MapRendererBaseResourcesCollection.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
 #include "QKeyValueIterator.h"
+#include "QRunnableFunctor.h"
 #include "Utilities.h"
 
 //#define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 1
@@ -42,7 +43,20 @@ OsmAnd::MapRendererTiledSymbolsResource::~MapRendererTiledSymbolsResource()
 
 bool OsmAnd::MapRendererTiledSymbolsResource::supportsObtainDataAsync() const
 {
-    return false;
+    bool ok = false;
+
+    std::shared_ptr<IMapDataProvider> provider;
+    if (const auto link_ = link.lock())
+    {
+        const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(collection),
+            provider);
+    }
+    if (!ok)
+        return false;
+
+    return provider->supportsNaturalObtainDataAsync();
 }
 
 bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
@@ -298,6 +312,334 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
     const std::shared_ptr<const IQueryController>& queryController,
     const bool cacheOnly /*=false*/)
 {
+    // Obtain collection link and maintain it
+    const auto link_ = link.lock();
+    if (!link_)
+    {
+        callback(false, false);
+        return;
+    }
+
+    const auto self = std::static_pointer_cast<MapRendererTiledSymbolsResource>(shared_from_this());
+    const auto weakSelf = std::weak_ptr<MapRendererTiledSymbolsResource>(self);
+    const auto weakController = std::weak_ptr<const IQueryController>(queryController);
+    const auto weakManager =
+        std::weak_ptr<MapRendererResourcesManager>(resourcesManager->renderer->getResourcesSharedPtr());
+
+    const QRunnableFunctor::Callback task =
+        [weakSelf, weakController, weakManager, callback]
+        (const QRunnableFunctor* const runnable)
+        {
+            const auto self = weakSelf.lock();
+            const auto queryController = weakController.lock();
+            if (!self || !queryController)
+            {
+                callback(false, false);
+                return;
+            }
+            const auto link = self->link.lock();
+            if (!link)
+            {
+                callback(false, false);
+                return;
+            }
+
+            const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link->collection);
+
+            std::shared_ptr<IMapDataProvider> provider_;
+            if (const auto resourcesManager = weakManager.lock())
+            {
+                // Get source of tile
+                bool ok = resourcesManager->obtainProviderFor(
+                    static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
+                if (!ok)
+                {
+                    callback(false, false);
+                    return;
+                }
+            }
+            else
+                return;
+            const auto provider = std::static_pointer_cast<IMapTiledSymbolsProvider>(provider_);
+            const auto tileId = self->tileId;
+            const auto zoom = self->zoom;
+            auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
+
+            // Obtain tile from provider
+            QList< std::shared_ptr<SharedGroupResources> > referencedSharedGroupsResources;
+            QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
+            QSet< uint64_t > loadedSharedGroups;
+            std::shared_ptr<IMapTiledSymbolsProvider::Data> tile;
+            IMapTiledSymbolsProvider::Request request;
+            request.queryController = queryController;
+            request.tileId = tileId;
+            request.zoom = zoom;
+            if (const auto resourcesManager = weakManager.lock())
+            {
+                const auto& mapState = resourcesManager->renderer->getMapState();
+                request.mapState = mapState;
+            }
+            else
+                return;
+            request.filterCallback =
+                [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
+                (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
+                {
+                    // If map symbols group is not shareable, just accept it
+                    MapSymbolsGroup::SharingKey sharingKey;
+                    const auto isSharableById = symbolsGroup->obtainSharingKey(sharingKey);
+                    if (!isSharableById)
+                        return true;
+
+                    // Check if this shared symbol is already available, or mark it as pending
+                    std::shared_ptr<SharedGroupResources> sharedGroupResources;
+                    proper::shared_future< std::shared_ptr<SharedGroupResources> > futureSharedGroupResources;
+                    if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(sharingKey, sharedGroupResources, futureSharedGroupResources))
+                    {
+                        if (static_cast<bool>(sharedGroupResources))
+                        {
+                            referencedSharedGroupsResources.push_back(qMove(sharedGroupResources));
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                            LogPrintf(LogSeverityLevel::Debug,
+                                "Shared GroupResources(%p) for %s referenced from %p (%dx%d@%d)",
+                                sharedGroupResources.get(),
+                                qPrintable(symbolsGroup->getDebugTitle()),
+                                this,
+                                tileId.x, tileId.y, zoom);
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                        }
+                        else
+                            futureReferencedSharedGroupsResources.push_back(qMove(futureSharedGroupResources));
+                        return false;
+                    }
+
+                    // Or load this shared group
+                    loadedSharedGroups.insert(sharingKey);
+                    return true;
+                };
+            const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
+            if (queryController && queryController->isAborted())
+            {
+                callback(false, false);
+                return;
+            }
+            if (!requestSucceeded)
+            {
+                callback(false, false);
+                return;
+            }
+
+            // Store data
+            self->_sourceData = tile;
+            const bool dataAvailable = static_cast<bool>(tile);
+
+            // Process data
+            if (!dataAvailable)
+            {
+                callback(true, false);
+                return;
+            }
+
+            if (const auto resourcesManager = weakManager.lock())
+            {
+                // Convert data
+                for (const auto& symbolsGroup : constOf(self->_sourceData->symbolsGroups))
+                {
+                    if (queryController && queryController->isAborted())
+                        break;
+
+                    for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
+                    {
+                        if (queryController && queryController->isAborted())
+                            break;
+
+                        const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
+                        if (!rasterMapSymbol)
+                            continue;
+
+                        rasterMapSymbol->image = resourcesManager->adjustImageToConfiguration(
+                            rasterMapSymbol->image,
+                            AlphaChannelPresence::Present);
+                    }
+                }
+            }
+            else
+                return;
+
+            if (queryController && queryController->isAborted())
+            {
+                callback(false, false);
+                return;
+            }
+
+            // Move referenced shared groups
+            self->_referencedSharedGroupsResources = referencedSharedGroupsResources;
+
+            // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
+            for (const auto& symbolsGroup : constOf(self->_sourceData->symbolsGroups))
+            {
+                if (queryController && queryController->isAborted())
+                    break;
+
+                MapSymbolsGroup::SharingKey sharingKey;
+                if (symbolsGroup->obtainSharingKey(sharingKey))
+                {
+                    // Check if this map symbols group is loaded as shared (even if it's sharable)
+                    if (!loadedSharedGroups.contains(sharingKey))
+                    {
+                        // Create GroupResources instance and add it to unique group resources
+                        const std::shared_ptr<GroupResources> groupResources(new GroupResources(symbolsGroup));
+                        self->_uniqueGroupsResources.push_back(qMove(groupResources));
+                        continue;
+                    }
+
+                    // Otherwise insert it as shared group
+                    const std::shared_ptr<SharedGroupResources> groupResources(new SharedGroupResources(symbolsGroup));
+                    sharedGroupsResources.fulfilPromiseAndReference(sharingKey, groupResources);
+                    self->_referencedSharedGroupsResources.push_back(qMove(groupResources));
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                    LogPrintf(LogSeverityLevel::Debug,
+                        "Shared GroupResources(%p) for %s allocated and referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+                        groupResources.get(),
+                        qPrintable(symbolsGroup->getDebugTitle()),
+                        this,
+                        tileId.x, tileId.y, zoom,
+                        sharedGroupsResources.getReferencesCount(symbolsGroupWithId->getId()));
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                }
+                else
+                {
+                    // Create GroupResources instance and add it to unique group resources
+                    const std::shared_ptr<GroupResources> groupResources(new GroupResources(symbolsGroup));
+                    self->_uniqueGroupsResources.push_back(qMove(groupResources));
+                }
+            }
+            if (queryController && queryController->isAborted())
+            {
+                callback(false, false);
+                return;
+            }
+
+            int failCounter = 0;
+            // Wait for future referenced shared groups
+            for (auto& futureGroup : futureReferencedSharedGroupsResources)
+            {
+                if (queryController && queryController->isAborted())
+                    break;
+
+                auto timeout = proper::chrono::system_clock::now() + proper::chrono::seconds(3);
+                if (proper::future_status::ready == futureGroup.wait_until(timeout))
+                {
+                    auto groupResources = futureGroup.get();
+                    self->_referencedSharedGroupsResources.push_back(qMove(groupResources));
+                }
+                else
+                {
+                    failCounter++;
+                    LogPrintf(LogSeverityLevel::Error, "Get groupResources timeout exceed = %d", failCounter);
+                }
+                if (failCounter >= 3)
+                {
+                    LogPrintf(LogSeverityLevel::Error, "Get groupResources timeout exceed");
+                    break;
+                }
+
+#if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+                const auto symbolsGroupWithId = std::static_pointer_cast<const IMapSymbolsGroupWithUniqueId>(groupResources->group);
+                LogPrintf(LogSeverityLevel::Debug,
+                    "Shared GroupResources(%p) for %s referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+                    groupResources.get(),
+                    qPrintable(symbolsGroup->getDebugTitle()),
+                    this,
+                    tileId.x, tileId.y, zoom,
+                    sharedGroupsResources.getReferencesCount(symbolsGroupWithId->getId()));
+#endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
+            }
+            if (queryController && queryController->isAborted())
+            {
+                callback(false, false);
+                return;
+            }
+
+            int symbolSubsection;
+            if (const auto resourcesManager = weakManager.lock())
+            {
+                // Get symbol subsection
+                symbolSubsection = resourcesManager->renderer->getSymbolsProviderSubsection(provider);
+            }
+            else
+                return;
+
+            // Register all obtained symbols
+            QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
+            for (const auto& groupResources : constOf(self->_uniqueGroupsResources))
+            {
+                if (queryController && queryController->isAborted())
+                    break;
+
+                const auto& symbolsGroup = groupResources->group;
+                auto& publishedMapSymbols = self->_publishedMapSymbolsByGroup[symbolsGroup];
+                mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
+                for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
+                {
+                    // Set symbol subsection
+                    mapSymbol->subsection = symbolSubsection;
+
+                    PublishOrUnpublishMapSymbol mapSymbolToPublish = {
+                        symbolsGroup,
+                        std::static_pointer_cast<const MapSymbol>(mapSymbol),
+                        self };
+                    mapSymbolsToPublish.push_back(mapSymbolToPublish);
+                    publishedMapSymbols.push_back(mapSymbol);
+                }
+            }
+            for (const auto& groupResources : constOf(self->_referencedSharedGroupsResources))
+            {
+                if (queryController && queryController->isAborted())
+                    break;
+
+                const auto& symbolsGroup = groupResources->group;
+                auto& publishedMapSymbols = self->_publishedMapSymbolsByGroup[symbolsGroup];
+                mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
+                for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
+                {
+                    // Set symbol subsection
+                    mapSymbol->subsection = symbolSubsection;
+
+                    PublishOrUnpublishMapSymbol mapSymbolToPublish = {
+                        symbolsGroup,
+                        std::static_pointer_cast<const MapSymbol>(mapSymbol),
+                        self };
+                    mapSymbolsToPublish.push_back(mapSymbolToPublish);
+                    publishedMapSymbols.push_back(mapSymbol);
+                }
+            }
+            if (queryController && queryController->isAborted())
+            {
+                callback(false, false);
+                return;
+            }
+
+            if (const auto resourcesManager = weakManager.lock())
+            {
+                resourcesManager->batchPublishMapSymbols(mapSymbolsToPublish);
+            }
+            else
+                return;
+
+            // Since there's a copy of references to map symbols groups and symbols themselves,
+            // it's safe to consume all the data here
+            self->_retainableCacheMetadata = self->_sourceData->retainableCacheMetadata;
+            self->_sourceData.reset();
+
+            callback(requestSucceeded, dataAvailable);
+        };
+
+    const auto taskRunnable = new QRunnableFunctor(task);
+    taskRunnable->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(taskRunnable);
 }
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
@@ -308,6 +650,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     bool anyUploadFailed = false;
 
     const auto link_ = link.lock();
+    if (!link_)
+        return false;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Unique
@@ -463,6 +807,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(bool gpuContextLost)
 {
     const auto link_ = link.lock();
+    if (!link_)
+        return;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Remove quick references
@@ -557,6 +903,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::lostDataInGPU()
 void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 {
     const auto link_ = link.lock();
+    if (!link_)
+        return;
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
     const auto& self = shared_from_this();
 

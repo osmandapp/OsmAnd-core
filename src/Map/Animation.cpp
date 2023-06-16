@@ -46,8 +46,13 @@ double OsmAnd::GenericAnimation::properCast(const int64_t value)
     return static_cast<double>(value);
 }
 
-double OsmAnd::GenericAnimation::relativeZoomFactor(const float currentZoom, const float finalZoom)
+double OsmAnd::GenericAnimation::relativeZoomFactor(
+    const float initialZoom, const float currentZoom, const float finalZoom)
 {
+    const auto initialZoomLevel = qRound(initialZoom);
+    const double initialFraction = initialZoom - initialZoomLevel;
+    const double initialFactor =
+        qPow(2.0, initialZoomLevel) * (1.0 + initialFraction * (initialFraction > 0.0 ? 1.0 : 0.5));
     const auto finalZoomLevel = qRound(finalZoom);
     const double finalFraction = finalZoom - finalZoomLevel;
     const double finalFactor =
@@ -56,7 +61,7 @@ double OsmAnd::GenericAnimation::relativeZoomFactor(const float currentZoom, con
     const double currentFraction = currentZoom - currentZoomLevel;
     const double currentFactor =
         qPow(2.0, currentZoomLevel) * (1.0 + currentFraction * (currentFraction > 0.0 ? 1.0 : 0.5));
-    return finalFactor / currentFactor;
+    return (currentFactor - initialFactor) / (finalFactor - initialFactor) * finalFactor / currentFactor;
 }
 
 OsmAnd::Animator::Key OsmAnd::GenericAnimation::getKey() const

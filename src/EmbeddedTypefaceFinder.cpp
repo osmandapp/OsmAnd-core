@@ -9,6 +9,7 @@
 #include "ICoreResourcesProvider.h"
 #include "SkiaUtilities.h"
 #include "Logging.h"
+#include "Utilities.h"
 
 // #define OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING 1
 #ifndef OSMAND_LOG_TYPEFACE_FOR_CHARACTER_RESOLVING
@@ -40,6 +41,33 @@ OsmAnd::EmbeddedTypefaceFinder::EmbeddedTypefaceFinder(
         }
 
         _typefaces.push_back(std::move(typeface));
+    }
+    const auto& fontPath = getFontDirectory();
+    auto fontDir = QDir(fontPath);
+    if (!fontPath.isEmpty() && !fontDir.path().isEmpty())
+    {
+        QFileInfoList filesInfo;
+        Utilities::findFiles(
+            fontDir,
+            QStringList() << QStringLiteral("*.ttf") << QStringLiteral("*.otf"),
+            filesInfo,
+            true);
+        for(const auto& fileInfo : constOf(filesInfo))
+        {
+            const auto filePath = fileInfo.canonicalFilePath();
+            const auto typeface = OsmAnd::ITypefaceFinder::Typeface::fromFile(qPrintable(filePath));
+            if (!typeface)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to get typeface from '%s'",
+                    qPrintable(filePath));
+                continue;
+            }
+            if (resources.contains(QStringLiteral("map/fonts/") + fileInfo.fileName()))
+                _typefaces.push_back(std::move(typeface));
+            else
+                _typefaces.prepend(std::move(typeface));
+        }
     }
 }
 

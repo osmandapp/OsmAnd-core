@@ -70,8 +70,8 @@ namespace OsmAnd
         virtual QString getBackground() const = 0;
         virtual void setBackground(const QString& newBackground) = 0;
         
-        virtual ColorRGB getColor() const = 0;
-        virtual void setColor(const ColorRGB newColor) = 0;
+        virtual ColorARGB getColor() const = 0;
+        virtual void setColor(const ColorARGB newColor) = 0;
         
         virtual QString getComment() const = 0;
         virtual void setComment(const QString& comment) = 0;

@@ -32,6 +32,7 @@
 #include <OsmAndCore/QIODeviceLogSink.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/WorldRegions.h>
+#include <OsmAndCore/TrackArea.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -124,6 +125,8 @@
 #include <OsmAndCore/GeoTiffCollection.h>
 #include <OsmAndCore/TileSqliteDatabase.h>
 #include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+#include <OsmAndCore/Map/SlopeRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/HillshadeRasterMapLayerProvider.h>
 #include <OsmAndCore/Map/Animation.h>
 #include <OsmAndCore/Map/AnimatorTypes.h>
 #include <OsmAndCore/Map/IAnimation.h>
@@ -318,6 +321,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::GeoTiffCollection)
 	%shared_ptr(OsmAnd::TileSqliteDatabase)
 	%shared_ptr(OsmAnd::SqliteHeightmapTileProvider)
+	%shared_ptr(OsmAnd::SlopeRasterMapLayerProvider)
+	%shared_ptr(OsmAnd::HillshadeRasterMapLayerProvider)
 	%shared_ptr(OsmAnd::MapAnimator)
 	%shared_ptr(OsmAnd::MapMarkersAnimator)
 	%shared_ptr(OsmAnd::IAnimation)
@@ -397,6 +402,7 @@ using namespace OsmAnd;
 	%template(QListMapTiledCollectionPoint) QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>>;
 	%template(QListIAnimation) QList<std::shared_ptr<OsmAnd::IAnimation>>;
 	%template(QListDouble) QList<double>;
+	%template(QListFloat) QList<float>;
 #endif
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
@@ -428,6 +434,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/QIODeviceLogSink.h>
 %include <OsmAndCore/Utilities.h>
 %include <OsmAndCore/WorldRegions.h>
+%include <OsmAndCore/TrackArea.h>
 %include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>
@@ -525,6 +532,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/GeoTiffCollection.h>
 %include <OsmAndCore/TileSqliteDatabase.h>
 %include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
+%include <OsmAndCore/Map/SlopeRasterMapLayerProvider.h>
+%include <OsmAndCore/Map/HillshadeRasterMapLayerProvider.h>
 %include <OsmAndCore/Map/Animation.h>
 %include <OsmAndCore/Map/AnimatorTypes.h>
 %include <OsmAndCore/Map/IAnimation.h>

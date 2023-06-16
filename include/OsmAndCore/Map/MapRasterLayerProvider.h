@@ -25,7 +25,9 @@
 namespace OsmAnd
 {
     class MapRasterLayerProvider_P;
-    class OSMAND_CORE_API MapRasterLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API MapRasterLayerProvider
+        : public std::enable_shared_from_this<MapRasterLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider);
     public:
@@ -54,12 +56,14 @@ namespace OsmAnd
         MapRasterLayerProvider(
             MapRasterLayerProvider_P* const p,
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
-            const bool fillBackground);
+            const bool fillBackground,
+            const bool forceObtainDataAsync);
     public:
         virtual ~MapRasterLayerProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const bool fillBackground;
+        const bool forceObtainDataAsync;
 
         virtual MapStubStyle getDesiredStubsStyle() const;
 

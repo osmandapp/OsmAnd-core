@@ -88,6 +88,27 @@ int OsmAnd::Utilities::extractFirstInteger(const QString& s)
     return i;
 }
 
+int OsmAnd::Utilities::extractIntegerNumber(const QString& s)
+{
+    int i = 0;
+    int k;
+    for (k = 0; k < s.length(); k++)
+    {
+        const QChar & c = s.at(k);
+        if (c.isDigit())
+            break;
+    }
+    for (; k < s.length(); k++)
+    {
+        const QChar & c = s.at(k);
+        if (c.isDigit())
+            i = i * 10 + c.digitValue();
+        else
+            break;
+    }
+    return i;
+}
+
 bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot)
 {
     first = -1;
@@ -696,20 +717,19 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
 {
     PointI output = input;
 
-    const auto tilesCount = static_cast<int32_t>(1u << zoom);
+    if (zoom >= ZoomLevel0 && zoom < ZoomLevel31)
+    {
+        const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
-    while (output.x < 0)
-    {
-        output.x += tilesCount;
-    }
-    while (output.y < 0)
-    {
-        output.y += tilesCount;
-    }
+        while (output.x < 0)
+        {
+            output.x += tilesCount;
+        }
+        while (output.y < 0)
+        {
+            output.y += tilesCount;
+        }
 
-    // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
-    if (zoom < ZoomLevel31)
-    {
         while (output.x >= tilesCount)
         {
             output.x -= tilesCount;
@@ -718,10 +738,25 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI& input, cons
         {
             output.y -= tilesCount;
         }
+
+        assert(output.x < tilesCount);
+        assert(output.y < tilesCount);
+    }
+    else if (zoom == ZoomLevel31)
+    {
+        if (output.x < 0)
+            output.x = output.x + INT32_MAX + 1;
+        if (output.y < 0)
+            output.y = output.y + INT32_MAX + 1;
+    }
+    else
+    {
+        output.x = 0;
+        output.y = 0;
     }
 
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.x < tilesCount) || (zoom == ZoomLevel31)));
-    assert(output.x >= 0 && ((zoom < ZoomLevel31 && output.y < tilesCount) || (zoom == ZoomLevel31)));
+    assert(output.x >= 0);
+    assert(output.x >= 0);
 
     return output;
 }
@@ -824,17 +859,17 @@ std::pair<int, int> OsmAnd::Utilities::calculateFinalXYFromBaseAndPrecisionXY(in
     return std::make_pair(finalX, finalY);
 }
 
-bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX)
+bool OsmAnd::Utilities::calculateIntersection(const PointI64& p1, const PointI64& p0, const AreaI& bbox, PointI64& pX)
 {
     // Calculates intersection between line and bbox in clockwise manner.
     const auto& px = p0.x;
     const auto& py = p0.y;
     const auto& x = p1.x;
     const auto& y = p1.y;
-    const auto& leftX = bbox.left();
-    const auto& rightX = bbox.right();
-    const auto& topY = bbox.top();
-    const auto& bottomY = bbox.bottom();
+    const auto& leftX = static_cast<int64_t>(bbox.left());
+    const auto& rightX = static_cast<int64_t>(bbox.right());
+    const auto& topY = static_cast<int64_t>(bbox.top());
+    const auto& bottomY = static_cast<int64_t>(bbox.bottom());
 
     // firstly try to search if the line goes in
     if (py < topY && y >= topY) {
@@ -932,4 +967,114 @@ bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0
     }
      */
     return false;
+}
+
+bool OsmAnd::Utilities::calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX)
+{
+    PointI64 pointX;
+    const auto result = calculateIntersection(PointI64(p1), PointI64(p0), bbox, pointX);
+    if (result)
+    {
+        pX.x = pointX.x;
+        pX.y = pointX.y;
+    }
+    return result;
+}
+
+void OsmAnd::Utilities::calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
+    PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path /*= nullptr*/)
+{
+    const auto leap = 100.0;
+    const double radius = 6371.0;
+    int64_t intFull = INT32_MAX;
+    intFull++;
+    const auto intHalf = static_cast<int32_t>(intFull >> 1);
+    auto angles = getAnglesFrom31(start31);
+    const auto prevX = qCos(angles.y) * qSin(angles.x);
+    const auto prevY = qCos(angles.y) * qCos(angles.x);
+    const auto prevZ = qSin(angles.y);
+    angles = getAnglesFrom31(finish31);
+    const auto nextX = qCos(angles.y) * qSin(angles.x);
+    const auto nextY = qCos(angles.y) * qCos(angles.x);
+    const auto nextZ = qSin(angles.y);
+    double nX = prevY * nextZ - prevZ * nextY;
+    double nY = prevZ * nextX - prevX * nextZ;
+    double nZ = prevX * nextY - prevY * nextX;
+    const auto length = qSqrt(nX * nX + nY * nY + nZ * nZ);
+    nX /= length;
+    nY /= length;
+    nZ /= length;
+    const auto angle = qAtan2(length, prevX * nextX + prevY * nextY + prevZ * nextZ);
+    const int count = qFloor(radius * qAbs(angle) / leap) + 1;
+    const auto delta = angle / count;
+    const auto sn = qSin(delta);
+    const auto cs = qCos(delta);
+    const auto csr = 1.0 - cs;
+    const auto rot11 = cs + nX * nX * csr;
+    const auto rot12 = nX * nY * csr - nZ * sn;
+    const auto rot13 = nX * nZ * csr + nY * sn;
+    const auto rot21 = nX * nY * csr + nZ * sn;
+    const auto rot22 = cs + nY * nY * csr;
+    const auto rot23 = nY * nZ * csr - nX * sn;
+    const auto rot31 = nX * nZ * csr - nY * sn;
+    const auto rot32 = nY * nZ * csr + nX * sn;
+    const auto rot33 = cs + nZ * nZ * csr;
+    auto previous31 = start31;
+    PointI next31;
+    auto middlePoint = start64;
+    auto midX = prevX;
+    auto midY = prevY;
+    auto midZ = prevZ;
+    for (int index = 1; index < count; index++)
+    {
+        const auto tempX = midX * rot11 + midY * rot12 + midZ * rot13;
+        const auto tempY = midX * rot21 + midY * rot22 + midZ * rot23;
+        const auto tempZ = midX * rot31 + midY * rot32 + midZ * rot33;
+        midX = tempX;
+        midY = tempY;
+        midZ = tempZ;
+        angles = PointD(qAtan2(midX, midY), qAsin(midZ));
+        next31 = get31FromAngles(angles);
+        middlePoint += next31 - previous31;
+        if (next31.x - previous31.x >= intHalf)
+            middlePoint.x -= intFull;
+        else if (previous31.x - next31.x >= intHalf)
+            middlePoint.x += intFull;        
+        minCoordinates.x = std::min(minCoordinates.x, middlePoint.x);
+        minCoordinates.y = std::min(minCoordinates.y, middlePoint.y);
+        maxCoordinates.x = std::max(maxCoordinates.x, middlePoint.x);
+        maxCoordinates.y = std::max(maxCoordinates.y, middlePoint.y);
+        if (path != nullptr)
+            path->push_back(middlePoint);
+        previous31 = next31;
+    }
+}
+
+/**
+ * @see <a href="http://alienryderflex.com/polygon/">Determining Whether A Point Is Inside A Complex Polygon</a>
+ * @param point
+ * @param polygon
+ * @return true if the point is in the area of the polygon
+ */
+bool OsmAnd::Utilities::isPointInsidePolygon(const OsmAnd::PointI point,
+                                           const QVector<OsmAnd::PointI> &polygon)
+{
+    int px = point.x;
+    int py = point.y;
+    bool oddNodes = false;
+    for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++)
+    {
+        int x1 = polygon[i].x;
+        int y1 = polygon[i].y;
+        int x2 = polygon[j].x;
+        int y2 = polygon[j].y;
+        if (((y1 < py && y2 >= py)
+             || (y2 < py && y1 >= py))
+            && (x1 <= px || x2 <= px)) {
+            if (x1 + (py - y1) / (y2 - y1) * (x2 - x1) < px) {
+                oddNodes = !oddNodes;
+            }
+        }
+    }
+    return oddNodes;
 }

@@ -29,6 +29,11 @@
 #define COLORIZATION_GRADIENT 1
 #define COLORIZATION_SOLID 2
 
+
+// The smaller delta, the less line is simplified and the more time it takes to generate primitives
+#define MIN_ALPHA_DELTA 0.1f
+#define MIN_RGB_DELTA 0.075f
+
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     : _hasUnappliedChanges(false)
     , _hasUnappliedPrimitiveChanges(false)
@@ -37,6 +42,8 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _colorizationSceme(0)
     , _lineWidth(1.0)
     , _outlineWidth(0.0)
+    , _pathIconStep(-1.0f)
+    , _specialPathIconStep(-1.0f)
     , _metersPerPixel(1.0)
     , _mapZoomLevel(InvalidZoomLevel)
     , _mapVisualZoom(0.f)
@@ -81,6 +88,8 @@ void OsmAnd::VectorLine_P::setShowArrows(const bool showArrows)
     if (_showArrows != showArrows)
     {
         _showArrows = showArrows;
+
+        _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
 }
@@ -167,13 +176,53 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         {
             double newWidth = _lineWidth / 3.4f;
             double scale = newWidth / owner->pathIcon->width();
-            auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, 1);
+            auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, scale);
             _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
         }
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
     }
 
+}
+
+float OsmAnd::VectorLine_P::getPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pathIconStep;
+}
+
+void OsmAnd::VectorLine_P::setPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (!qFuzzyCompare(_pathIconStep, step))
+    {
+        _pathIconStep = step;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::VectorLine_P::getSpecialPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _specialPathIconStep;
+}
+
+void OsmAnd::VectorLine_P::setSpecialPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (!qFuzzyCompare(_specialPathIconStep, step))
+    {
+        _specialPathIconStep = step;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
 }
 
 double OsmAnd::VectorLine_P::getOutlineWidth() const
@@ -190,6 +239,26 @@ void OsmAnd::VectorLine_P::setOutlineWidth(const double width)
     if (_outlineWidth != width)
     {
         _outlineWidth = width;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::getOutlineColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _outlineColor;
+}
+
+void OsmAnd::VectorLine_P::setOutlineColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_outlineColor != color)
+    {
+        _outlineColor = color;
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -267,10 +336,12 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
     bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.1;
     changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
-    if (!changed && _visibleBBox31 != mapState.visibleBBox31)
+    if (!changed && _visibleBBoxShifted != mapState.visibleBBoxShifted)
     {
-        auto bboxShiftPoint = _visibleBBox31.topLeft - mapState.visibleBBox31.topLeft;
-        bool bboxChanged = abs(bboxShiftPoint.x) > _visibleBBox31.width() || abs(bboxShiftPoint.y) > _visibleBBox31.height();
+        const AreaI64 visibleBBoxShifted(_visibleBBoxShifted);
+        auto bboxShiftPoint = visibleBBoxShifted.topLeft - mapState.visibleBBoxShifted.topLeft;
+        bool bboxChanged = abs(bboxShiftPoint.x) > visibleBBoxShifted.width()
+            || abs(bboxShiftPoint.y) > visibleBBoxShifted.height();
         changed |= bboxChanged;
     }
 
@@ -283,7 +354,7 @@ bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
 {
     _metersPerPixel = mapState.metersPerPixel;
-    _visibleBBox31 = mapState.visibleBBox31;
+    _visibleBBoxShifted = mapState.visibleBBoxShifted;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
@@ -421,13 +492,21 @@ double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double x
     return (xB - xA) * (xC - xA) + (yB - yA) * (yC - yA);
 }
 
-int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, uint start, uint end, double epsilon, std::vector<bool>& include) const
+int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
+    const std::vector<PointI>& points,
+    const uint start,
+    const uint end,
+    const double epsilon,
+    std::vector<bool>& include) const
 {
     double dmax = -1;
     int index = -1;
     for (int i = start + 1; i <= end - 1; i++)
     {
-        PointD proj = getProjection(points[i], points[start], points[end]);
+        PointD pointToProject = static_cast<PointD>(points[i]);
+        PointD startPoint = static_cast<PointD>(points[start]);
+        PointD endPoint = static_cast<PointD>(points[end]);
+        PointD proj = getProjection(pointToProject, startPoint, endPoint);
         double d = qSqrt((points[i].x - proj.x) * (points[i].x - proj.x) +
                          (points[i].y - proj.y) * (points[i].y - proj.y));
         // calculate distance from line
@@ -450,95 +529,231 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
     }
 }
 
+bool OsmAnd::VectorLine_P::forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const
+{
+    if (!hasColorizationMapping())
+        return false;
+
+    const auto currColor = pointsColors[pointIndex];
+
+    const auto pPrevColor = pointIndex == 0 ? nullptr : &pointsColors[pointIndex - 1];
+    const auto pNextColor = pointIndex + 1 == pointsColors.size() ? nullptr : &pointsColors[pointIndex + 1];
+
+    if (_colorizationSceme == COLORIZATION_SOLID)
+        return !pPrevColor || *pPrevColor != currColor;
+
+    if (_colorizationSceme == COLORIZATION_GRADIENT)
+    {
+        bool highColorDiff = false;
+        highColorDiff |= pPrevColor && qAbs(pPrevColor->a - currColor.a) > MIN_ALPHA_DELTA;
+        highColorDiff |= pNextColor && qAbs(pNextColor->a - currColor.a) > MIN_ALPHA_DELTA;
+        highColorDiff |= pPrevColor && currColor.getRGBDelta(*pPrevColor) > MIN_RGB_DELTA;
+        highColorDiff |= pNextColor && currColor.getRGBDelta(*pNextColor) > MIN_RGB_DELTA;
+        return highColorDiff;
+    }
+
+    return false;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine_P::middleColor(
+    const FColorARGB& first, const FColorARGB& last, const float factor) const
+{
+    return FColorARGB(
+        first.a + (last.a - first.a) * factor,
+        first.r + (last.r - first.r) * factor,
+        first.g + (last.g - first.g) * factor,
+        first.b + (last.b - first.b) * factor);
+}
+
 void OsmAnd::VectorLine_P::calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const
 {
-    bool segmentStarted = false;
-    auto visibleArea = _visibleBBox31.getEnlargedBy(PointI(_visibleBBox31.width() * 3, _visibleBBox31.height() * 3));
-    PointI curr, drawFrom, drawTo, inter1, inter2;
-    auto prev = drawFrom = _points[0];
-    int drawFromIdx = 0, drawToIdx = 0;
+    // Use enlarged visible area
+    const AreaI64 visibleBBox64(_visibleBBoxShifted);
+    auto visibleArea64 = visibleBBox64.getEnlargedBy(PointI64(visibleBBox64.width(), visibleBBox64.height()));
+    visibleArea64.topLeft.x = visibleArea64.topLeft.x < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.x;
+    visibleArea64.topLeft.y = visibleArea64.topLeft.y < INT32_MIN ? INT32_MIN : visibleArea64.topLeft.y;
+    visibleArea64.bottomRight.x = visibleArea64.bottomRight.x > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.x;
+    visibleArea64.bottomRight.y = visibleArea64.bottomRight.y > INT32_MAX ? INT32_MAX : visibleArea64.bottomRight.y;
+    const AreaI visibleArea(visibleArea64);
+
+    // Calculate points unwrapped
+    auto pointsCount = _points.size();
+    int64_t intFull = INT32_MAX;
+    intFull++;
+    const auto intHalf = static_cast<int32_t>(intFull >> 1);
+    const PointI shiftToCenter(intHalf, intHalf);
+    auto point31 = _points[0];
+    PointI64 point64(point31 - shiftToCenter);
+    QVector<PointI64> points64;
+    points64.reserve(pointsCount);
+    points64.push_back(point64);
+    QVector<int> pointIndices(pointsCount);
+    pointIndices[0] = 0;
+    int nextIndex = 0;
+    AreaI64 bbox(point64, point64);
+    PointI nextPoint31;
+    auto pointsTotal = 1;
+    for (int i = 1; i < pointsCount; i++)
+    {
+        auto offset = _points[i] - point31;
+        if (offset.x >= intHalf)
+            offset.x = offset.x - INT32_MAX - 1;
+        else if (offset.x < -intHalf)
+            offset.x = offset.x + INT32_MAX + 1;
+        nextPoint31 = Utilities::normalizeCoordinates(PointI64(point31) + offset, ZoomLevel31);
+        Utilities::calculateShortestPath(point64, point31, nextPoint31, bbox.topLeft, bbox.bottomRight, &points64);
+        point64 += offset;
+        points64.push_back(point64);
+        bbox.enlargeToInclude(point64);
+        auto pointsSize = points64.size();
+        nextIndex += pointsSize - pointsTotal;
+        pointIndices[i] = nextIndex;
+        pointsTotal = pointsSize;
+        point31 = nextPoint31;
+    }
+    auto minShiftX = static_cast<int32_t>(bbox.topLeft.x / intFull - (bbox.topLeft.x % intFull < 0 ? 1 : 0));
+    auto minShiftY = static_cast<int32_t>(bbox.topLeft.y / intFull - (bbox.topLeft.y % intFull < 0 ? 1 : 0));
+    auto maxShiftX = static_cast<int32_t>(bbox.bottomRight.x / intFull + (bbox.bottomRight.x % intFull < 0 ? 0 : 1));
+    auto maxShiftY = static_cast<int32_t>(bbox.bottomRight.y / intFull + (bbox.bottomRight.y % intFull < 0 ? 0 : 1));
+
+    // Use full map shifts to collect all visible segments
+    const auto withColors = hasColorizationMapping();
+    pointsCount = points64.size();
+    PointI64 curr, drawFrom, drawTo, inter1, inter2;
+    FColorARGB colorFrom, colorTo, colorSubFrom, colorSubTo, colorInterFrom, colorInterTo;
     std::vector<PointI> segment;
     QList<FColorARGB> colors;
-    bool prevIn = visibleArea.contains(prev);
-    for (int i = 1; i < _points.size(); i++)
+    for (int shiftX = minShiftX; shiftX <= maxShiftX; shiftX++)
     {
-        curr = drawTo = _points[i];
-        drawToIdx = i;
-        bool currIn = visibleArea.contains(curr);
-        bool draw = false;
-        if (prevIn && currIn)
+        for (int shiftY = minShiftY; shiftY <= maxShiftY; shiftY++)
         {
-            draw = true;
-        }
-        else
-        {
-            if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+            const PointI64 shift(shiftX * intFull, shiftY * intFull);
+            bool segmentStarted = false;
+            if (withColors)
             {
-                draw = true;
-                if (prevIn)
+                colorTo = _colorizationMapping[0];
+                colorSubTo = _colorizationMapping[0];
+            }
+            auto prev = drawFrom = points64[0] - shift;
+            int prevIndex;
+            nextIndex = 0;            
+            int j = 0;
+            bool prevIn = visibleArea64.contains(prev);
+            for (int i = 1; i < pointsCount; i++)
+            {
+                curr = drawTo = points64[i] - shift;
+                if (withColors)
                 {
-                    drawTo = inter1;
-                    drawToIdx = i;
+                    if (i > nextIndex)
+                    {
+                        prevIndex = nextIndex;
+                        nextIndex = pointIndices[++j];
+                        colorFrom = colorTo;
+                        colorTo = _colorizationMapping[j];
+                    }
+                    colorSubFrom = colorSubTo;
+                    const auto factor = static_cast<float>(i - prevIndex) / static_cast<float>(nextIndex - prevIndex);
+                    colorSubTo = middleColor(colorFrom, colorTo, factor);
                 }
-                else if (currIn)
+                bool currIn = visibleArea64.contains(curr);
+                bool draw = false;
+                if (prevIn && currIn)
                 {
-                    drawFrom = inter1;
-                    drawFromIdx = i;
-                    segmentStarted = false;
-                }
-                else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
-                {
-                    drawFrom = inter1;
-                    drawTo = inter2;
-                    drawFromIdx = drawToIdx;
-                    drawToIdx = i;
-                    segmentStarted = false;
+                    draw = true;
+                    if (withColors)
+                    {
+                        colorInterFrom = colorSubFrom;
+                        colorInterTo = colorSubTo;
+                    }
                 }
                 else
                 {
-                    draw = false;
+                    if (Utilities::calculateIntersection(curr, prev, visibleArea, inter1))
+                    {
+                        draw = true;
+                        if (prevIn)
+                        {
+                            drawTo = inter1;
+                            if (withColors)
+                            {
+                                colorInterFrom = colorSubFrom;
+                                const auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawTo - prev).norm());
+                                colorInterTo = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                            }
+                        }
+                        else if (currIn)
+                        {
+                            drawFrom = inter1;
+                            segmentStarted = false;
+                            if (withColors)
+                            {
+                                const auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawFrom - prev).norm());
+                                colorInterFrom = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                                colorInterTo = colorSubTo;
+                            }
+                        }
+                        else if (Utilities::calculateIntersection(prev, curr, visibleArea, inter2))
+                        {
+                            drawFrom = inter1;
+                            drawTo = inter2;
+                            segmentStarted = false;
+                            if (withColors)
+                            {
+                                auto factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawFrom - prev).norm());
+                                colorInterFrom = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                                factor =
+                                    static_cast<double>((curr - prev).norm()) /
+                                    static_cast<double>((drawTo - prev).norm());
+                                colorInterTo = middleColor(colorSubFrom, colorSubTo, static_cast<float>(factor));
+                            }
+                        }
+                        else
+                            draw = false;
+                    }
                 }
-            }
-        }
-        if (draw)
-        {
-            if (!segmentStarted)
-            {
-                if (!segment.empty())
+                if (draw)
                 {
-                    segments.push_back(segment);
-                    segment = std::vector<PointI>();
-
-                    segmentColors.push_back(colors);
-                    colors.clear();
+                    if (!segmentStarted)
+                    {
+                        if (!segment.empty())
+                        {
+                            segments.push_back(segment);
+                            segment = std::vector<PointI>();
+                            segmentColors.push_back(colors);
+                            colors.clear();
+                        }
+                        segment.push_back(PointI(drawFrom));
+                        if (withColors)
+                            colors.push_back(colorInterFrom);
+                        segmentStarted = currIn;
+                    }
+                    PointI drawTo31(drawTo);
+                    if (segment.empty() || segment.back() != drawTo31)
+                    {
+                        segment.push_back(drawTo31);
+                        if (withColors)
+                            colors.push_back(colorInterTo);
+                    }
                 }
-                segment.push_back(drawFrom);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawFromIdx]);
-
-                segmentStarted = currIn;
+                else
+                    segmentStarted = false;
+                prevIn = currIn;
+                prev = drawFrom = curr;
             }
-            if (segment.empty() || segment.back() != drawTo)
-            {
-                segment.push_back(drawTo);
-                if (hasColorizationMapping())
-                    colors.push_back(_colorizationMapping[drawToIdx]);
-
-            }
+            if (!segment.empty())
+                segments.push_back(segment);
+            if (!colors.empty())
+                segmentColors.push_back(colors);
+            segment.clear();
+            colors.clear();
         }
-        else
-        {
-            segmentStarted = false;
-        }
-        prevIn = currIn;
-        prev = drawFrom = curr;
-        drawFromIdx = i;
     }
-    if (!segment.empty())
-        segments.push_back(segment);
-
-    if (!colors.empty())
-        segmentColors.push_back(colors);
 }
 
 float OsmAnd::VectorLine_P::zoom() const
@@ -554,8 +769,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 
     double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
     double radius = _lineWidth * scale * visualShiftCoef;
-    bool approximate = _isApproximationEnabled && !hasColorizationMapping();
-    double simplificationRadius = (_lineWidth - _outlineWidth) * scale * visualShiftCoef;
+    double outlineRadius = _outlineWidth * scale * visualShiftCoef;
+    bool approximate = _isApproximationEnabled;
+    double simplificationRadius = _lineWidth * scale * visualShiftCoef;
 
     vectorLine->order = order++;
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
@@ -568,16 +784,16 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndices->indices = nullptr;
     verticesAndIndices->indicesCount = 0;
 
+    clearArrowsOnPath();
+
     std::vector<VectorMapSymbol::Vertex> vertices;
     VectorMapSymbol::Vertex vertex;
 
     std::vector<std::vector<PointI>> segments;
     QList<QList<FColorARGB>> colors;
     calculateVisibleSegments(segments, colors);
-    // Generate new arrow paths for visible segments
-    generateArrowsOnPath(segments, approximate, simplificationRadius);
 
-    PointI startPos;
+    PointD startPos;
     bool startPosDefined = false;
     for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++)
     {
@@ -589,18 +805,35 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (!startPosDefined)
         {
             startPosDefined = true;
-            startPos = points[0];
-            vectorLine->position31 = startPos;
-            verticesAndIndices->position31 = new PointI(startPos);
+            const auto startPoint = points[0];
+            int64_t intFull = INT32_MAX;
+            intFull++;
+            const auto intHalf = intFull >> 1;
+            const auto intTwo = intFull << 1;
+            const PointI64 origPos = PointI64(intHalf, intHalf) + startPoint;
+            const PointI location31(
+                origPos.x > INT32_MAX ? origPos.x - intTwo : origPos.x,
+                origPos.y > INT32_MAX ? origPos.y - intTwo : origPos.y);
+            vectorLine->position31 = location31;
+            verticesAndIndices->position31 = new PointI(location31);
+            startPos = PointD(startPoint);
         }
         int pointsCount = (int) points.size();
-        // generate array of points
+
+        std::vector<bool> include(pointsCount, !approximate);
+        if (approximate)
+        {
+            include[0] = true;
+            simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
+        }
+
         std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
         QSet<uint> colorChangeIndexes;
         uint prevPointIdx = 0;
+        int includedPointsCount = 0;
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
-            pointsToPlot[pointIdx] = PointD((points[pointIdx].x - startPos.x), (points[pointIdx].y - startPos.y));
+            pointsToPlot[pointIdx] = PointD(points[pointIdx]) - startPos;
             if (hasColorizationMapping() && _colorizationSceme == COLORIZATION_SOLID)
             {
                 FColorARGB prevColor = colorsForSegment[prevPointIdx];
@@ -611,16 +844,23 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 }
                 prevPointIdx = pointIdx;
             }
+
+            // If color is lost after approximation, restore it
+            if (approximate && !include[pointIdx])
+                include[pointIdx] = forceIncludePoint(colorsForSegment, pointIdx);
+
+            if (include[pointIdx])
+                includedPointsCount++;
         }
-        // Do not simplify colorization
-        std::vector<bool> include(pointsCount, !approximate);
-        include[0] = true;
-        int pointsSimpleCount = approximate
-            ? simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, simplificationRadius / 3, include) + 1
-            : pointsCount;
+
+        if (_showArrows && owner->pathIcon)
+        {
+            const auto arrowsOrigin = segments.back().back();
+            addArrowsOnSegmentPath(points, include, arrowsOrigin);
+        }
 
         // generate base points for connecting lines with triangles
-        std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
+        std::vector<OsmAnd::PointD> b1(includedPointsCount), b2(includedPointsCount), e1(includedPointsCount), e2(includedPointsCount), original(includedPointsCount);
         double ntan = 0, nx1 = 0, ny1 = 0;
         prevPointIdx = 0;
         uint insertIdx = 0;
@@ -645,7 +885,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             original[insertIdx] = pnt;
             if (pointIdx > 0)
             {
-                ntan = atan2(points[pointIdx].x - points[prevPointIdx].x, points[pointIdx].y - points[prevPointIdx].y);
+                ntan = atan2(pnt.x - prevPnt.x, pnt.y - prevPnt.y);
                 nx1 = radius * sin(M_PI_2 - ntan) ;
                 ny1 = radius * cos(M_PI_2 - ntan) ;
                 e1[insertIdx] = b1[insertIdx] = OsmAnd::PointD(pnt.x - nx1, pnt.y + ny1);
@@ -662,7 +902,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
 
         //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndices->verticesCount,
-        //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
+        //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, includedPointsCount,pointsCount);
         //FColorARGB fillColor = FColorARGB(0.6, 1.0, 0.0, 0.0);
         FColorARGB fillColor = _fillColor;
         int patternLength = (int) _dashPattern.size();
@@ -691,7 +931,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             double dashPhase = 0;
             int patternIndex = 0;
             bool firstDash = true;
-            for (auto pointIdx = 1u; pointIdx < pointsSimpleCount; pointIdx++)
+            for (auto pointIdx = 1u; pointIdx < includedPointsCount; pointIdx++)
             {
                 OsmAnd::PointD pnt = original[pointIdx];
                 double segLength = sqrt(pow((prevPnt.x - pnt.x), 2) + pow((prevPnt.y - pnt.y), 2));
@@ -800,6 +1040,17 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         else
         {
+            // Drawing outline on relief is not supported 
+            bool drawOutline = !qFuzzyIsNull(_outlineWidth) && !_hasElevationDataProvider;
+            if (drawOutline)
+                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                    vertex,
+                    vertices,
+                    original, outlineRadius * 2,
+                    _outlineColor, QList<FColorARGB>(),
+                    crushedpixel::Polyline2D::JointStyle::ROUND,
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
+
             crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
                 vertex,
                 vertices,
@@ -837,7 +1088,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 	verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
     verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
 
-    //verticesAndIndices->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
+    //verticesAndIndices->verticesCount = (includedPointsCount - 2) * 2 + 2 * 2;
     verticesAndIndices->verticesCount = (unsigned int) vertices.size();
     verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
     std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
@@ -867,45 +1118,11 @@ void OsmAnd::VectorLine_P::createVertexes(std::vector<VectorMapSymbol::Vertex> &
         static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)));
 }
 
-QVector<SkPath> OsmAnd::VectorLine_P::calculateLinePath(
-    const std::vector<std::vector<PointI>>& visibleSegments,
-    bool approximate /*= false*/,
-    double simplificationRadius /*= 0*/) const
+void OsmAnd::VectorLine_P::clearArrowsOnPath()
 {
-    QVector<SkPath> paths;
-    if (!visibleSegments.empty())
-    {
-        PointI origin(visibleSegments.back().back());
-        for (const auto& segment : visibleSegments)
-        {
-            int pointsCount = (int) segment.size();
-            std::vector<bool> include(pointsCount, !approximate);
-            if (approximate)
-            {
-                std::vector<PointD> points;
-                for (auto& p : constOf(segment))
-                    points.push_back(PointD(p.x, p.y));
+    QWriteLocker scopedLocker(&_arrowsOnPathLock);
 
-                include[0] = true;
-                if (points.size() > 1)
-                    simplifyDouglasPeucker(points, 0, (uint) points.size() - 1, simplificationRadius / 3, include);
-            }
-
-            SkPath path;
-            const auto& start = segment.back();
-            path.moveTo(start.x - origin.x, start.y - origin.y);
-            for (int i = (int) segment.size() - 2; i >= 0; i--)
-            {
-                if (!include[i])
-                    continue;
-
-                const auto& p = segment[i];
-                path.lineTo(p.x - origin.x, p.y - origin.y);
-            }
-            paths.push_back(path);
-        }
-    }
-    return paths;
+    _arrowsOnPath.clear();
 }
 
 const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrowsOnPath() const
@@ -915,46 +1132,61 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
     return detachedOf(_arrowsOnPath);
 }
 
-void OsmAnd::VectorLine_P::generateArrowsOnPath(
-    const std::vector<std::vector<PointI>>& visibleSegments,
-    bool approximate /*= false*/,
-    double simplificationRadius /*= 0*/)
+void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
+    const std::vector<PointI>& segmentPoints,
+    const std::vector<bool>& includedPoints,
+    const PointI64& origin)
 {
-    QWriteLocker scopedLocker(&_arrowsOnPathLock);
-
-    _arrowsOnPath.clear();
-    if (_showArrows && owner->pathIcon)
+    SkPath path;
+    const PointI64 start = segmentPoints.back();
+    path.moveTo(start.x - origin.x, start.y - origin.y);
+    for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
     {
-        const auto paths = calculateLinePath(visibleSegments, approximate, simplificationRadius);
-        for (const auto& path : paths)
+        if (!includedPoints[i])
+            continue;
+
+        const auto& p = segmentPoints[i];
+        path.lineTo(p.x - origin.x, p.y - origin.y);
+    }
+
+    SkPathMeasure pathMeasure(path, false);
+    bool ok = false;
+    const auto length = pathMeasure.getLength();
+
+    float pathIconStep = getPointStepPx();
+
+    float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
+    auto iconOffset = 0.5f * step;
+    const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
+    if (iconInstancesCount > 0)
+    {
+        int64_t intFull = INT32_MAX;
+        intFull++;
+        const auto intHalf = intFull >> 1;
+        const auto intTwo = intFull << 1;
+        const PointD location(origin);
+
+        QWriteLocker scopedLocker(&_arrowsOnPathLock);
+
+        for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
         {
-            PointI origin(visibleSegments.back().back());
-            SkPathMeasure pathMeasure(path, false);
-            bool ok = false;
-            const auto length = pathMeasure.getLength();
+            SkPoint p;
+            SkVector t;
+            ok = pathMeasure.getPosTan(iconOffset, &p, &t);
+            if (!ok)
+                break;
 
-            float pathIconStep = owner->pathIconStep > 0 ? owner->pathIconStep : getPointStepPx();
-
-            float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
-            auto iconOffset = 0.5f * step;
-            const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
-            if (iconInstancesCount > 0)
-            {
-                for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
-                {
-                    SkPoint p;
-                    SkVector t;
-                    ok = pathMeasure.getPosTan(iconOffset, &p, &t);
-                    if (!ok)
-                        break;
-
-                    const auto position = PointI((double)p.x() + origin.x, (double)p.y() + origin.y);
-                    // Get mirrored direction
-                    float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
-                    const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
-                    _arrowsOnPath.push_back(arrowSymbol);
-                }
-            }
+            PointI64 origPos(
+                static_cast<int64_t>((double)p.x() + location.x),
+                static_cast<int64_t>((double)p.y() + location.y));
+            origPos += PointI64(intHalf, intHalf);
+            const PointI position(
+                origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
+                origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
+            // Get mirrored direction
+            float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
+            const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
+            _arrowsOnPath.push_back(arrowSymbol);
         }
     }
 }
@@ -968,9 +1200,14 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
 {
     if (useSpecialArrow())
     {
-        return owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
+        return _specialPathIconStep > 0
+            ? _specialPathIconStep
+            : owner->specialPathIcon->height() * SPECIAL_ARROW_DISTANCE_MULTIPLIER;
     }
-    return _scaledPathIcon->height();
+    else
+    {
+        return _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
+    }
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLine_P::getPointImage() const

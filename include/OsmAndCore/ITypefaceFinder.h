@@ -37,6 +37,7 @@ namespace OsmAnd
             std::unordered_map<uint32_t, uint32_t> replacementCodepoints;
 
             static std::shared_ptr<Typeface> fromData(const QByteArray& data);
+            static std::shared_ptr<Typeface> fromFile(const char* filePath);
         };
 
     private:

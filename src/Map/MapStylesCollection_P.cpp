@@ -140,10 +140,6 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::g
     {
         QReadLocker scopedLocker(&_stylesLock);
 
-        // Put style addons in chain first
-        auto styleAddons = getEditableStyleAddons_noSync();
-        stylesChain << styleAddons;
-
         auto style = getEditableStyleByName_noSync(name);
         while (style)
         {
@@ -165,6 +161,10 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::g
             }
             style = parentStyle;
         }
+
+        // Put style addons in chain after
+        auto styleAddons = getEditableStyleAddons_noSync();
+        stylesChain << styleAddons;
     }
 
     // From top-most parent to style, load it

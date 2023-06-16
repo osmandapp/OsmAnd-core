@@ -51,16 +51,21 @@ bool OsmAnd::ImageMapLayerProvider::supportsObtainImage() const
     return false;
 }
 
-sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::getEmptyImage() const
+sk_sp<const SkImage> OsmAnd::ImageMapLayerProvider::obtainImageWithData(
+    const IMapDataProvider::Request& request)
 {
-    SkBitmap bitmap;
-    const auto tileSize = getTileSize();
-    if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
+    QByteArray imageData = QByteArray();
+    const auto imageDimensions = obtainImageData(request, imageData);
+    if (imageDimensions > 0)
     {
-        bitmap.eraseColor(SK_ColorTRANSPARENT);
-        return bitmap.asImage();
+        int width = imageDimensions & UINT_MAX;
+        int height = imageDimensions >> 32;
+        return SkiaUtilities::createSkImageARGB888With(imageData, width, height);
     }
-    return nullptr;
+    else
+    {
+        return nullptr;
+    }
 }
 
 bool OsmAnd::ImageMapLayerProvider::obtainData(
@@ -82,15 +87,19 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (!supportsNaturalObtainData())
         return MapDataProviderHelpers::nonNaturalObtainData(this, request, outData, pOutMetric);
 
-    if (request.queryController != nullptr && request.queryController->isAborted())
-        return false;
-
-    sk_sp<const SkImage> image;
+    sk_sp<const SkImage> image = nullptr;
     ZoomLevel zoom = request.zoom;
     TileId tileId = request.tileId;
-    if (supportsObtainImage())
+    if (request.queryController != nullptr && request.queryController->isAborted())
     {
-        image = obtainImage(request);
+        return false;
+    }
+    else
+    {
+        const auto supportsImage = supportsObtainImage();
+
+        // Obtain image
+        image = supportsImage ? obtainImage(request) : obtainImageWithData(request);
 
         if (request.queryController != nullptr && request.queryController->isAborted())
             return false;
@@ -109,7 +118,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
                 tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
                 r.zoom = zoom;
                 r.tileId = tileId;
-                image = obtainImage(r);
+                image = supportsImage ? obtainImage(r) : obtainImageWithData(r);
                 if (request.queryController != nullptr && request.queryController->isAborted())
                     return false;
                 if (image)
@@ -118,7 +127,8 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         }
         if (!image)
         {
-            const auto emptyImage = getEmptyImage();
+            int tileSize = getTileSize();
+            const auto emptyImage = SkiaUtilities::getEmptyImage(tileSize, tileSize);
             if (emptyImage && !request.cacheOnly)
             {
                 // Check for overscale images to avoid rendering blank image instead
@@ -127,7 +137,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
                 {
                     r.zoom = static_cast<ZoomLevel>(request.zoom - zoomShift);
                     r.tileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, zoomShift);
-                    image = obtainImage(r);
+                    image = supportsImage ? obtainImage(r) : obtainImageWithData(r);
                     if (request.queryController != nullptr && request.queryController->isAborted())
                         return false;
                     if (image)
@@ -154,37 +164,6 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
             }
             return true;
         }
-    }
-    else
-    {
-        // Obtain image data
-        const auto imageData = obtainImageData(request);
-
-        if (request.queryController != nullptr && request.queryController->isAborted())
-            return false;
-
-        if (imageData.isNull())
-        {
-            const auto emptyImage = getEmptyImage();
-            if (emptyImage)
-            {
-                // Return empty tile
-                outData.reset(new IRasterMapLayerProvider::Data(
-                    request.tileId,
-                    request.zoom,
-                    getAlphaChannelPresence(),
-                    getTileDensityFactor(),
-                    emptyImage));
-            }
-            else
-            {
-                outData.reset();
-            }
-            return true;
-        }
-
-        // Decode image data
-        image = SkiaUtilities::createImageFromData(imageData);
     }
 
     if (!image)

@@ -212,11 +212,16 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
 
+                    // Per-tile data
+                    GLlocation elevation_scale;
+
                     // Per-symbol data
+                    GLlocation offsetInTile;
                     GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
                     GLlocation zDistanceFromCamera;
+                    GLlocation elevationInMeters;
                 } param;
             } vs;
 
@@ -257,8 +262,10 @@ namespace OsmAnd
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
                     GLlocation tileId;
+                    GLlocation offsetInTile;
                     GLlocation lookupOffsetAndScale;
                     GLlocation elevation_scale;
+                    GLlocation elevationInMeters;
                     GLlocation elevation_dataSampler;
                     GLlocation texCoordsOffsetAndScale;
                     GLlocation elevationLayerDataPlace;

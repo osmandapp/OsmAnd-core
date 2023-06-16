@@ -120,6 +120,7 @@ namespace OsmAnd
             QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outOtherResourcesCollections) const;
 
         // Symbols-related:
+        bool _clearOldSymbolResources;
         void publishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
@@ -210,7 +211,8 @@ namespace OsmAnd
         std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapStubStylesCount> _unavailableTileStubs;
         bool initializeDefaultResources();
         bool initializeTileStub(const QString& resourceName, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
-        bool releaseDefaultResources();
+        bool initializeEmptyStub(std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
+        bool releaseDefaultResources(bool gpuContextLost);
     protected:
         MapRendererResourcesManager(MapRenderer* const owner);
 

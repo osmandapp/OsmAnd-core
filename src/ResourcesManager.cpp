@@ -357,12 +357,16 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
     const QUrl& url_,
     const uint64_t size_,
     const uint64_t timestamp_,
-    const uint64_t packageSize_)
+    const uint64_t packageSize_,
+    const bool free_,
+    const QString& message_)
     : Resource(id_, type_, ResourceOrigin::Repository)
     , url(url_)
     , size(size_)
     , timestamp(timestamp_)
     , packageSize(packageSize_)
+    , free(free_)
+    , message(message_)
 {
 }
 

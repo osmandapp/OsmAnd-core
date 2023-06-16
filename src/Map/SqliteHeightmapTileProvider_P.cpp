@@ -82,8 +82,9 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
     {
         // There was no data in db, so try to get it from GeoTIFF file
         const auto pBuffer = new float[owner->outputTileSize*owner->outputTileSize];
-        if (owner->filesCollection->getGeoTiffData(request.tileId, request.zoom,
-            owner->outputTileSize, 3, 1, false, pBuffer))
+        const auto result = owner->filesCollection->getGeoTiffData(request.tileId, request.zoom,
+            owner->outputTileSize, 3, 1, false, pBuffer);
+        if (result == GeoTiffCollection::CallResult::Completed)
         {
             outData = std::make_shared<IMapElevationDataProvider::Data>(
                 request.tileId,
@@ -95,6 +96,8 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
         }
         else
             delete[] pBuffer;
+        if (result == GeoTiffCollection::CallResult::Failed)
+            return false;
     }
     if (data.isEmpty())
     {

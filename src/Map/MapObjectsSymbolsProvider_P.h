@@ -30,6 +30,53 @@ namespace OsmAnd
         typedef MapObjectsSymbolsProvider::MapObjectSymbolsGroup MapObjectSymbolsGroup;
 
     private:
+        typedef OsmAnd::MapPrimitiviser::PrimitivisedObjects PrimitivisedObjects;
+        typedef OsmAnd::MapPrimitiviser::Symbol PrimitivisedSymbol;
+
+        class СombinedPath
+        {
+        private:
+            QVector<PointI> _points;
+            mutable float _lengthInPixels;
+            bool _attachedToAnotherPath;
+            bool _combined;
+        public:
+            СombinedPath(
+                const std::shared_ptr<const MapObject>& mapObject,
+                const PointD& divisor31ToPixels);
+            virtual ~СombinedPath();
+
+            const std::shared_ptr<const MapObject> mapObject;
+            const PointD divisor31ToPixels;
+
+            QVector<PointI> getPoints() const;
+            bool isCombined() const;
+
+            bool isAttachedToAnotherPath() const;
+            bool isAttachAllowed(
+                const std::shared_ptr<const СombinedPath>& other,
+                const float maxGapBetweenPaths,
+                float& outGapBetweenPaths) const;
+            void attachPath(const std::shared_ptr<СombinedPath>& other);
+
+            float getLengthInPixels() const;
+        };
+
+        struct CombinePathsResult
+        {
+            QHash< std::shared_ptr<const MapObject>, QVector<PointI> > combinedPaths;
+            QList< std::shared_ptr<const MapObject> > mapObjectToSkip;
+
+            QVector<PointI> getCombinedOrOriginalPath(const std::shared_ptr<const MapObject>& mapObject) const
+            {
+                const auto& citCombinedPath = combinedPaths.constFind(mapObject);
+                if (citCombinedPath == combinedPaths.cend())
+                    return mapObject->points31;
+                else
+                    return *citCombinedPath;
+            }
+        };
+
         struct ComputedPinPoint
         {
             PointI point31;
@@ -38,14 +85,16 @@ namespace OsmAnd
             float normalizedOffsetFromBasePathPoint;
         };
 
+        CombinePathsResult combineOnPathSymbols(
+            const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+            const std::shared_ptr<const IQueryController>& queryController) const;
+
         QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
             const float globalPaddingInPixels,
-            const float blockSpacingInPixels,
             const float symbolSpacingInPixels,
             const QVector<float>& symbolsWidthsInPixels,
-            const ZoomLevel minZoom,
-            const ZoomLevel maxZoom,
+            const PointI& windowSize,
             const ZoomLevel neededZoom) const;
 
         void computeSymbolsPinPoints(

@@ -39,12 +39,28 @@ namespace OsmAnd
         bool remove(const SourceOriginId entryId);
         void setLocalCache(const QDir& dir);
         void setLocalCache(const QString& dirPath);
+        bool refreshTilesInCache(const RasterType cache);
+        bool removeFileTilesFromCache(const RasterType cache, const QString& filePath);
+        bool removeOlderTilesFromCache(const RasterType cache, int64_t time);
 
-        virtual ZoomLevel getMinZoom() const;
-        virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const;
+        virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
+        virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const Q_DECL_OVERRIDE;
 
-        virtual bool getGeoTiffData(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
-            const uint32_t overlap, const uint32_t bandCount, const bool toBytes, void *pBuffer) const;
+        virtual CallResult getGeoTiffData(
+            const TileId& tileId,
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const uint32_t overlap,
+            const uint32_t bandCount,
+            const bool toBytes,
+            void* pBuffer,
+            const ProcessingParameters* procParameters = nullptr) const Q_DECL_OVERRIDE;
+
+        virtual bool calculateHeights(
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const QList<PointI>& points31,
+            QList<float>& outHeights) const Q_DECL_OVERRIDE;
     };
 }
 

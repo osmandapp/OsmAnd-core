@@ -1,6 +1,7 @@
 #include "MapRendererRasterMapLayerResource.h"
 
 #include "IRasterMapLayerProvider.h"
+#include "MapRenderer.h"
 #include "MapRendererResourcesManager.h"
 
 OsmAnd::MapRendererRasterMapLayerResource::MapRendererRasterMapLayerResource(
@@ -101,13 +102,18 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
     }
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
+    const auto self = std::static_pointer_cast<MapRendererRasterMapLayerResource>(shared_from_this());
+    const auto weakSelf = std::weak_ptr<MapRendererRasterMapLayerResource>(self);
+    const auto weakManager =
+        std::weak_ptr<MapRendererResourcesManager>(resourcesManager->renderer->getResourcesSharedPtr());
+
     IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
     request.cacheOnly = cacheOnly;
     request.queryController = queryController;
     provider->obtainDataAsync(request,
-        [this, callback]
+        [weakSelf, weakManager, callback]
         (const IMapDataProvider* const provider,
             const bool requestSucceeded,
             const std::shared_ptr<IMapDataProvider::Data>& data,
@@ -117,16 +123,28 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
 
             // Store data
             if (dataAvailable)
-                _sourceData = std::static_pointer_cast<IRasterMapLayerProvider::Data>(data);
-
-            // Convert data if such is present
-            if (_sourceData)
             {
-                _sourceData->image = resourcesManager->adjustImageToConfiguration(
-                    _sourceData->image,
-                    _sourceData->alphaChannelPresence);
-            }
+                const auto self = weakSelf.lock();
+                if (!self)
+                {
+                    callback(false, false);
+                    return;
+                }
+                if (const auto resourcesManager = weakManager.lock())
+                {
+                    self->_sourceData = std::static_pointer_cast<IRasterMapLayerProvider::Data>(data);
 
+                    // Convert data if such is present
+                    if (self->_sourceData)
+                    {
+                        self->_sourceData->image = resourcesManager->adjustImageToConfiguration(
+                            self->_sourceData->image,
+                            self->_sourceData->alphaChannelPresence);
+                    }
+                }
+                else
+                    return;
+            }
             callback(requestSucceeded, dataAvailable);
         });
 }
@@ -151,7 +169,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::unloadFromGPU()
 
 void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
 {
-    _resourceInGPU->lostRefInGPU();
+    if (_resourceInGPU)
+        _resourceInGPU->lostRefInGPU();
     _resourceInGPU.reset();
 }
 

@@ -97,6 +97,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         const auto mapObjectsFilterById =
             [this]
             (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
+                const OsmAnd::ObfMapSectionReader::DataBlockId& blockId,
                 const uint64_t mapObjectId,
                 const OsmAnd::AreaI& bbox,
                 const OsmAnd::ZoomLevel firstZoomLevel,
@@ -472,7 +473,20 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         }
                         output << std::endl;
                         output << xT("\t\tDraw text on path: ") << (textSymbol->drawOnPath ? xT("yes") : xT("no")) << std::endl;
-                        output << xT("\t\tText vertical offset: ") << textSymbol->verticalOffset << std::endl;
+                        output << xT("\t\tPlacement: ");
+                        typedef OsmAnd::MapPrimitiviser::TextSymbol::Placement Placement;
+                        switch(textSymbol->placement)
+                        {
+                            case Placement::Default:
+                                output << xT("default");
+                                break;
+                            case Placement::Top:
+                                output << xT("top");
+                                break;
+                            case Placement::BottomAdditional:
+                                output << xT("additional bottom");
+                                break;
+                        }
                         output << xT("\t\tText color: ") << QStringToStlString(textSymbol->color.toString()) << std::endl;
                         output << xT("\t\tText size: ") << textSymbol->size << std::endl;
                         output << xT("\t\tText shadow radius: ") << textSymbol->shadowRadius << std::endl;

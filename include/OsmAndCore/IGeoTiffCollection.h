@@ -15,6 +15,25 @@ namespace OsmAnd
     class OSMAND_CORE_API IGeoTiffCollection
     {
         Q_DISABLE_COPY_AND_MOVE(IGeoTiffCollection);
+    public:
+        enum class CallResult
+        {
+            Empty,
+            Completed,
+            Failed
+        };        
+        enum class RasterType
+        {
+            Heightmap,
+            Hillshade,
+            Slope
+        };        
+        struct ProcessingParameters
+        {
+            RasterType rasterType;
+            QString resultColorsFilename;
+            QString intermediateColorsFilename;
+        };
     private:
     protected:
         IGeoTiffCollection();
@@ -24,8 +43,22 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom(const uint32_t tileSize) const = 0;
 
-        virtual bool getGeoTiffData(const TileId& tileId, const ZoomLevel zoom, const uint32_t tileSize,
-            const uint32_t overlap, const uint32_t bandCount, const bool toBytes, void *pBuffer) const = 0;
+        virtual CallResult getGeoTiffData(
+            const TileId& tileId,
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const uint32_t overlap,
+            const uint32_t bandCount,
+            const bool toBytes,
+            void* pBuffer,
+            const ProcessingParameters* procParameters = nullptr) const = 0;
+
+        // Example: calculateHeights(ZoomLevel14, MapRenderer::ElevationDataTileSize, points31, outHeights))
+        virtual bool calculateHeights(
+            const ZoomLevel zoom,
+            const uint32_t tileSize,
+            const QList<PointI>& points31,
+            QList<float>& outHeights) const = 0;
     };
 }
 

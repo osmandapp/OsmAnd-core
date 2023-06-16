@@ -24,7 +24,9 @@
 namespace OsmAnd
 {
     class MapPrimitivesMetricsLayerProvider_P;
-    class OSMAND_CORE_API MapPrimitivesMetricsLayerProvider Q_DECL_FINAL : public IRasterMapLayerProvider
+    class OSMAND_CORE_API MapPrimitivesMetricsLayerProvider Q_DECL_FINAL
+        : public std::enable_shared_from_this<MapPrimitivesMetricsLayerProvider>
+        , public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitivesMetricsLayerProvider);
     public:

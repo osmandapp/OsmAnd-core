@@ -20,7 +20,9 @@ namespace OsmAnd
     class MapObject;
     
     class MapObjectsSymbolsProvider_P;
-    class OSMAND_CORE_API MapObjectsSymbolsProvider : public IMapTiledSymbolsProvider
+    class OSMAND_CORE_API MapObjectsSymbolsProvider
+        : public std::enable_shared_from_this<MapObjectsSymbolsProvider>
+        , public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapObjectsSymbolsProvider);
     public:
@@ -65,12 +67,14 @@ namespace OsmAnd
         MapObjectsSymbolsProvider(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const float referenceTileSizeOnScreenInPixels,
-            const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer = std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()));
+            const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer = std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()),
+            const bool forceObtainDataAsync = false);
         virtual ~MapObjectsSymbolsProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const float referenceTileSizeOnScreenInPixels;
         const std::shared_ptr<const SymbolRasterizer> symbolRasterizer;
+        const bool forceObtainDataAsync;
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;

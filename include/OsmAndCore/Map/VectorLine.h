@@ -82,7 +82,6 @@ namespace OsmAnd
             const int baseOrder,
             const sk_sp<const SkImage>& pathIcon = nullptr,
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
-            const float pathIconStep = -1,
             const bool pathIconOnSurface = true,
             const float screenScale = 2,
             const EndCapStyle endCapStyle = EndCapStyle::ROUND
@@ -96,7 +95,6 @@ namespace OsmAnd
         const int baseOrder;
         const sk_sp<const SkImage> pathIcon;
         const sk_sp<const SkImage> specialPathIcon;
-        const float pathIconStep;
         const bool pathIconOnSurface;
         const float screenScale;
         EndCapStyle endCapStyle;
@@ -121,6 +119,15 @@ namespace OsmAnd
 
         double getOutlineWidth() const;
         void setOutlineWidth(const double width);
+
+        FColorARGB getOutlineColor() const;
+        void setOutlineColor(const FColorARGB color);
+
+        float getPathIconStep() const;
+        void setPathIconStep(const float step);
+
+        float getSpecialPathIconStep() const;
+        void setSpecialPathIconStep(const float step);
 
         void setColorizationScheme(const int colorizationScheme);
 

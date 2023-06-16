@@ -15,6 +15,7 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkMath.h>
 #include <SkMathPriv.h>
+#include <SkPathMeasure.h>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -35,6 +36,14 @@
 #include "GlmExtensions.h"
 #include "MapMarker.h"
 #include "VectorLine.h"
+
+#define SHORT_GLYPHS_COUNT 4
+#define MEDIUM_GLYPHS_COUNT 10
+#define LONG_GLYPHS_COUNT 15
+
+#define MEDIUM_GLYPHS_MAX_ANGLE 5.0f
+#define LONG_GLYPHS_MAX_ANGLE 2.5f
+#define EXTRA_LONG_GLYPHS_MAX_ANGLE 1.0f
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -179,8 +188,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 {
     Stopwatch stopwatch(metric != nullptr);
 
+    // Overscaled/underscaled symbol resources were removed
+    const auto needUpdatedSymbols = renderer->needUpdatedSymbols();
+
     // In case symbols update was not suspended, process published symbols
-    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate)
+    if (!renderer->isSymbolsUpdateSuspended() || forceUpdate || needUpdatedSymbols)
     {
         if (!publishedMapSymbolsByOrderLock.tryLockForRead())
             return false;
@@ -194,6 +206,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             metric);
 
         publishedMapSymbolsByOrderLock.unlock();
+
+        if (result && needUpdatedSymbols)
+            renderer->dontNeedUpdatedSymbols();
 
         if (metric)
         {
@@ -314,8 +329,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
-                assert(removed);
+                bool intersectsWithOthers = !symbolRef.renderable->mapSymbol->intersectsWithClasses.isEmpty();
+                if (intersectsWithOthers)
+                {
+                    const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
+                    assert(removed);
+                }
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 plottedSymbols.erase(symbolRef.iterator);
             }
@@ -913,7 +932,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         return;
 
     // Calculate location of symbol in world coordinates.
-    const auto offsetFromTarget = Utilities::convert31toFloat(position31 - currentState.target31, currentState.zoomLevel);
+    auto offset31 = Utilities::shortestVector31(currentState.target31, position31);
+
+    const auto offsetFromTarget = Utilities::convert31toFloat(offset31, currentState.zoomLevel);
     auto positionInWorld = glm::vec3(offsetFromTarget.x * AtlasMapRenderer::TileSize3D, 0.0f, offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
     // Get elevation data
@@ -996,17 +1017,38 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         internalState.glmViewport);
 
     // Get bounds in screen coordinates
-    auto boundsInWindow = AreaI::fromCenterAndSize(
+    auto visibleBBox = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + offsetOnScreen.x),
         static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
         symbol->size.x,
         symbol->size.y);
-    renderable->visibleBBox = boundsInWindow;
-    boundsInWindow.top() -= symbol->margin.top();
-    boundsInWindow.left() -= symbol->margin.left();
-    boundsInWindow.right() += symbol->margin.right();
-    boundsInWindow.bottom() += symbol->margin.bottom();
-    renderable->intersectionBBox = boundsInWindow;
+    renderable->visibleBBox = visibleBBox;
+
+    auto intersectionBBox = visibleBBox.getEnlargedBy(
+        symbol->margin.top(),
+        symbol->margin.left(),
+        symbol->margin.bottom(),
+        symbol->margin.right());
+    renderable->intersectionBBox = intersectionBBox;
+
+    if (Q_UNLIKELY(debugSettings->showBillboardSymbolBBoxes))
+    {
+        QVector<glm::vec2> debugBbox;
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.top()));
+        debugBbox.push_back(glm::vec2(visibleBBox.right(), visibleBBox.top()));
+        debugBbox.push_back(glm::vec2(visibleBBox.right(), visibleBBox.bottom()));
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.bottom()));
+        debugBbox.push_back(glm::vec2(visibleBBox.left(), visibleBBox.top()));
+        getRenderer()->debugStage->addLine2D(debugBbox, SK_ColorRED);
+
+        debugBbox.clear();
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.top()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.right(), intersectionBBox.top()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.right(), intersectionBBox.bottom()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.bottom()));
+        debugBbox.push_back(glm::vec2(intersectionBBox.left(), intersectionBBox.top()));
+        getRenderer()->debugStage->addLine2D(debugBbox, SK_ColorGREEN);
+    }
 
     if (applyFiltering)
     {
@@ -1060,9 +1102,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     if (!debugSettings->disableSymbolsFastCheckByFrustum &&
         allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
+        const auto height = getRenderer()->getHeightOfLocation(currentState, position31);
         if (const auto vectorMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(onSurfaceMapSymbol))
         {
+            int64_t mapSize31 = INT32_MAX;
+            mapSize31++;
             AreaI symbolArea;
+            AreaI64 symbolArea64;
+            PointI64 topLeft;
+            PointI64 bottomRight;
             QVector<PointI> symbolRect;
             switch (vectorMapSymbol->scaleType)
             {
@@ -1070,13 +1118,50 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                     symbolRect << position31;
                     break;
                 case VectorMapSymbol::ScaleType::In31:
-                    symbolArea = AreaI(position31.y - vectorMapSymbol->scale, position31.x - vectorMapSymbol->scale, position31.y + vectorMapSymbol->scale, position31.x + vectorMapSymbol->scale);
+                    topLeft = PointI64(static_cast<int64_t>(position31.x) - vectorMapSymbol->scale,
+                        static_cast<int64_t>(position31.y) - vectorMapSymbol->scale);
+                    bottomRight = PointI64(static_cast<int64_t>(position31.x) + vectorMapSymbol->scale,
+                        static_cast<int64_t>(position31.y) + vectorMapSymbol->scale);
+                    if (bottomRight.x >= mapSize31)
+                    {
+                        topLeft.x -= mapSize31;
+                        bottomRight.x -= mapSize31;
+                    }
+                    if (bottomRight.y >= mapSize31)
+                    {
+                        topLeft.y -= mapSize31;
+                        bottomRight.y -= mapSize31;
+                    }
+                    symbolArea = AreaI(topLeft.y, topLeft.x, bottomRight.y, bottomRight.x);
                     symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
                     break;
                 case VectorMapSymbol::ScaleType::InMeters:
-                    symbolArea = (AreaI)Utilities::boundingBox31FromAreaInMeters(vectorMapSymbol->scale, position31);
+                    symbolArea64 = Utilities::boundingBox31FromAreaInMeters(vectorMapSymbol->scale, position31);
+                    if (symbolArea64.right() >= mapSize31)
+                    {
+                        symbolArea64.left() -= mapSize31;
+                        symbolArea64.right() -= mapSize31;
+                    }
+                    if (symbolArea64.bottom() >= mapSize31)
+                    {
+                        symbolArea64.top() -= mapSize31;
+                        symbolArea64.bottom() -= mapSize31;
+                    }
+                    symbolArea = (AreaI)symbolArea64;
                     symbolRect << symbolArea.topLeft << symbolArea.topRight() << symbolArea.bottomRight << symbolArea.bottomLeft();
                     break;
+            }
+            if (height != 0.0f)
+            {
+                PointI elevatedPoint;
+                for (auto& symbolPoint : symbolRect)
+                {
+                    if (getRenderer()->getProjectedLocation(
+                        internalState, currentState, symbolPoint, height, elevatedPoint))
+                    {
+                        symbolPoint = elevatedPoint;
+                    }
+                }
             }
             if (!internalState.globalFrustum2D31.test(symbolRect))
             {
@@ -1085,11 +1170,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
                 return;
             }
         }
-        else if (!internalState.globalFrustum2D31.test(position31))
+        else
         {
-            if (metric)
-                metric->onSurfaceSymbolsRejectedByFrustum++;
-            return;
+            PointI testPoint;
+            testPoint = Utilities::normalizeCoordinates(position31, ZoomLevel31);
+            if (height != 0.0f)
+                getRenderer()->getProjectedLocation(internalState, currentState, position31, height, testPoint);
+            if (!internalState.globalFrustum2D31.test(testPoint))
+            {
+                if (metric)
+                    metric->onSurfaceSymbolsRejectedByFrustum++;
+                return;
+            }
         }
     }
 
@@ -1104,14 +1196,32 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
             position31 = PointI(gpuMeshResource->position31->x, gpuMeshResource->position31->y);
     }
 
-    // Check and hide the symbol if put under 3D-terrain
-    if (std::dynamic_pointer_cast<const RasterMapSymbol>(onSurfaceMapSymbol))
+    PointF offsetInTileN;
+    const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(Utilities::normalizeCoordinates(
+        position31, ZoomLevel31), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
+
+    // Get elevation data
+    float elevationInMeters = 0.0f;
+    float elevationInWorld = 0.0f;
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel &&
+        elevationData)
     {
-        PointF offsetInTileN;
-		const auto tileId = Utilities::normalizeTileId(
-			Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-        if (getElevationData(tileId, currentState.zoomLevel, offsetInTileN) != InvalidZoomLevel)
-            return;
+        if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
+        {
+            const auto scaledElevationInMeters =
+                elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
+
+            const auto upperMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+            const auto lowerMetersPerUnit =
+                Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+            const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+
+            elevationInWorld =
+                (scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor;
+        }
     }
 
     // Don't render fully transparent symbols
@@ -1124,16 +1234,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->genericInstanceParameters = instanceParameters;
         renderable->instanceParameters = instanceParameters;
         renderable->gpuResource = gpuResource;
+        renderable->elevationInMeters = elevationInMeters;
+        renderable->tileId = tileId;
+        renderable->offsetInTileN = offsetInTileN;        
         renderable->opacityFactor = opacityFactor;
         outRenderableSymbols.push_back(renderable);
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = position31 - currentState.target31;
-        renderable->offsetFromTarget =
-            Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
+        int64_t intFull = INT32_MAX;
+        intFull++;
+        const auto intHalf = intFull >> 1;
+        const auto intTwo = intFull << 1;
+        PointI64 position = position31;
+        position.x += position.x < -intHalf ? intTwo : 0;
+        position.y += position.y < -intHalf ? intTwo : 0;
+        const PointI64 offset = position - currentState.target31;
+        renderable->offsetFromTarget31 = Utilities::wrapCoordinates(offset);
+        renderable->offsetFromTarget = PointF(Utilities::convert31toDouble(offset, currentState.zoomLevel));
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-            0.0f,
+            elevationInWorld,
             renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
         // Get direction
@@ -1388,95 +1508,103 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     const auto subpathStartIndex = is2D ? startPathPointIndex2D : startPathPointIndex3D;
     const auto subpathEndIndex = is2D ? endPathPointIndex2D : endPathPointIndex3D;
     assert(subpathEndIndex >= subpathStartIndex);
-    const auto directionInWorld = computePathDirection(
-        computedPathData.pathInWorld,
-        subpathStartIndex,
-        exactStartPointInWorld,
-        subpathEndIndex,
-        exactEndPointInWorld);
-    const auto directionOnScreen = computePathDirection(
+
+    const auto originaPathDirectionOnScreen = glm::normalize(exactEndPointOnScreen - exactStartPointOnScreen);
+    // Compute path to place glyphs on
+    const auto path = computePathForGlyphsPlacement(
+        is2D,
         computedPathData.pathOnScreen,
+        computedPathData.pathSegmentsLengthsOnScreen,
+        computedPathData.pathInWorld,
+        computedPathData.pathSegmentsLengthsInWorld,
         subpathStartIndex,
-        exactStartPointOnScreen,
+        is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
         subpathEndIndex,
-        exactEndPointOnScreen);
+        originaPathDirectionOnScreen,
+        onPathMapSymbol->glyphsWidth);
+
+    if (path.countPoints() < 2)
+        return;
+
+    bool ok = true;
+    const auto pathInWorld = is2D ? convertPathOnScreenToWorld(path, ok) : path;
+    if (!ok)
+        return;
+
+    const auto pathOnScreen = is2D ? path : projectPathInWorldToScreen(path);
+
+    const auto directionInWorld = computePathDirection(pathInWorld);
+    const auto directionOnScreen = computePathDirection(pathOnScreen);
 
     // Don't render fully transparent symbols
     const auto opacityFactor = getSubsectionOpacityFactor(onPathMapSymbol);
     if (opacityFactor > 0.0f)
     {
-        std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-        renderable->mapSymbolGroup = mapSymbolGroup;
-        renderable->mapSymbol = onPathMapSymbol;
-        renderable->genericInstanceParameters = instanceParameters;
-        renderable->instanceParameters = instanceParameters;
-        renderable->gpuResource = gpuResource;
-        renderable->is2D = is2D;
-        renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-            computedPathData.pathInWorld,
-            subpathStartIndex,
-            exactStartPointInWorld,
-            subpathEndIndex,
-            exactEndPointInWorld);
-        renderable->directionInWorld = directionInWorld;
-        renderable->directionOnScreen = directionOnScreen;
-        renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+        QVector<RenderableOnPathSymbol::GlyphPlacement> glyphsPlacement;
+        QVector<glm::vec3> rotatedElevatedBBoxInWorld;
+        bool ok = computePlacementOfGlyphsOnPath(
+            path,
             is2D,
-            computedPathData.pathOnScreen,
-            computedPathData.pathSegmentsLengthsOnScreen,
-            computedPathData.pathInWorld,
-            computedPathData.pathSegmentsLengthsInWorld,
-            subpathStartIndex,
-            is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
-            subpathEndIndex,
+            directionInWorld,
             directionOnScreen,
-            onPathMapSymbol->glyphsWidth);
-        renderable->opacityFactor = opacityFactor;
-        outRenderableSymbols.push_back(renderable);
+            onPathMapSymbol->glyphsWidth,
+            onPathMapSymbol->size.y,
+            glyphsPlacement,
+            rotatedElevatedBBoxInWorld);
+        
+        if (ok)
+        {
+            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+            renderable->mapSymbolGroup = mapSymbolGroup;
+            renderable->mapSymbol = onPathMapSymbol;
+            renderable->genericInstanceParameters = instanceParameters;
+            renderable->instanceParameters = instanceParameters;
+            renderable->gpuResource = gpuResource;
+            renderable->is2D = is2D;
+            renderable->distanceToCamera = computeDistanceFromCameraToPath(pathInWorld);
+            renderable->directionInWorld = directionInWorld;
+            renderable->directionOnScreen = directionOnScreen;
+            renderable->glyphsPlacement = glyphsPlacement;
+            renderable->rotatedElevatedBBoxInWorld = rotatedElevatedBBoxInWorld;
+            renderable->opacityFactor = opacityFactor;
+            outRenderableSymbols.push_back(renderable);
+        }
     }
 
     if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
     {
         const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
 
-        // Path itself
-        QVector< glm::vec3 > debugPoints;
-        debugPoints.push_back(qMove(glm::vec3(
-            exactStartPointInWorld.x,
-            0.0f,
-            exactStartPointInWorld.y)));
-        auto pPointInWorld = computedPathData.pathInWorld.constData() + subpathStartIndex + 1;
-        for (auto idx = subpathStartIndex + 1; idx <= subpathEndIndex; idx++)
         {
-            const auto& pointInWorld = *(pPointInWorld++);
-            debugPoints.push_back(qMove(glm::vec3(
-                pointInWorld.x,
-                0.0f,
-                pointInWorld.y)));
+            QVector< glm::vec3 > debugPathPoints;
+            for (auto i = 0; i < pathInWorld.countPoints(); i++)
+            {
+                const auto skPoint = pathInWorld.getPoint(i);
+                const glm::vec3 point(skPoint.x(), 0.0f, skPoint.y());
+                debugPathPoints.push_back(point);
+            }
+            getRenderer()->debugStage->addLine3D(debugPathPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
         }
-        debugPoints.push_back(qMove(glm::vec3(
-            exactEndPointInWorld.x,
-            0.0f,
-            exactEndPointInWorld.y)));
-        getRenderer()->debugStage->addLine3D(debugPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
 
         // Subpath N (start)
         {
             QVector<glm::vec2> lineN;
-            const auto sn0 = exactStartPointOnScreen;
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const auto sn1 = sn0 + (directionOnScreenN*24.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+            const auto skStartPoint = pathOnScreen.getPoint(0);
+            const glm::vec2 start(skStartPoint.x(), skStartPoint.y());
+            const glm::vec2 end = start + directionOnScreenN * 24.0f;
+            lineN.push_back(glm::vec2(start.x, currentState.windowSize.y - start.y));
+            lineN.push_back(glm::vec2(end.x, currentState.windowSize.y - end.y));
             getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
         }
 
         // Subpath N (end)
         {
             QVector<glm::vec2> lineN;
-            const auto sn0 = exactEndPointOnScreen;
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const auto sn1 = sn0 + (directionOnScreenN*24.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+            const auto skStartPoint = pathOnScreen.getPoint(pathOnScreen.countPoints() - 1);
+            const glm::vec2 start(skStartPoint.x(), skStartPoint.y());
+            const glm::vec2 end = start + directionOnScreenN * 24.0f;
+            lineN.push_back(glm::vec2(start.x, currentState.windowSize.y - start.y));
+            lineN.push_back(glm::vec2(end.x, currentState.windowSize.y - end.y));
             getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
         }
 
@@ -1566,7 +1694,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
             {
                 getRenderer()->debugStage->addRect2D(AreaF::fromCenterAndSize(
                     glyph.anchorPoint.x, currentState.windowSize.y - glyph.anchorPoint.y,
-                    glyph.width, symbol->size.y), SkColorSetA(SK_ColorGREEN, 128), glyph.angle);
+                    glyph.width, symbol->size.y), SkColorSetA(SK_ColorGREEN, 128), glyph.angleY);
 
                 QVector<glm::vec2> lineN;
                 const auto ln0 = glyph.anchorPoint;
@@ -1605,6 +1733,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         {
             for (const auto& glyph : constOf(renderable->glyphsPlacement))
             {
+                const auto elevation = glyph.elevation;
                 const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
                     glyph.anchorPoint.x, glyph.anchorPoint.y, /* anchor points are specified in world coordinates already */
                     glyph.width*internalState.pixelInWorldProjectionScale, symbol->size.y*internalState.pixelInWorldProjectionScale);
@@ -1612,17 +1741,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
                 const auto& tr = glyphInMapPlane.topRight();
                 const auto& br = glyphInMapPlane.bottomRight;
                 const auto& bl = glyphInMapPlane.bottomLeft();
-                const glm::vec3 pC(glyph.anchorPoint.x, 0.0f, glyph.anchorPoint.y);
-                const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
-                const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
-                const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
-                const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
+                const glm::vec3 pC(glyph.anchorPoint.x, elevation, glyph.anchorPoint.y);
+                const glm::vec4 p0(tl.x, elevation, tl.y, 1.0f);
+                const glm::vec4 p1(tr.x, elevation, tr.y, 1.0f);
+                const glm::vec4 p2(br.x, elevation, br.y, 1.0f);
+                const glm::vec4 p3(bl.x, elevation, bl.y, 1.0f);
                 const auto toCenter = glm::translate(-pC);
-                const auto rotate = glm::rotate(
-                    (float)Utilities::normalizedAngleRadians(glyph.angle + M_PI),
+                const auto rotateY = glm::rotate(
+                    (float)Utilities::normalizedAngleRadians(glyph.angleY + M_PI),
                     glm::vec3(0.0f, -1.0f, 0.0f));
+                const auto rotateXZ = glm::rotate(glyph.angleXZ, glm::vec3(glyph.rotationX, 0.0f, glyph.rotationZ));
                 const auto fromCenter = glm::translate(pC);
-                const auto M = fromCenter*rotate*toCenter;
+                const auto M = fromCenter * rotateXZ * rotateY * toCenter;
                 getRenderer()->debugStage->addQuad3D(
                     (M*p0).xyz(),
                     (M*p1).xyz(),
@@ -1632,9 +1762,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
 
                 QVector<glm::vec3> lineN;
                 const auto ln0 = glyph.anchorPoint;
-                lineN.push_back(glm::vec3(ln0.x, 0.0f, ln0.y));
+                lineN.push_back(glm::vec3(ln0.x, elevation, ln0.y));
                 const auto ln1 = glyph.anchorPoint + (glyph.vNormal*16.0f*internalState.pixelInWorldProjectionScale);
-                lineN.push_back(glm::vec3(ln1.x, 0.0f, ln1.y));
+                lineN.push_back(glm::vec3(ln1.x, elevation, ln1.y));
                 getRenderer()->debugStage->addLine3D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
             }
         }
@@ -2091,93 +2221,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::segmentValidFor2D(const glm::vec2& vS
     return true;
 }
 
-glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
-    const QVector<glm::vec2>& path,
-    const unsigned int startPathPointIndex,
-    const glm::vec2& exactStartPoint,
-    const unsigned int endPathPointIndex,
-    const glm::vec2& exactEndPoint)
-{
-    assert(endPathPointIndex >= startPathPointIndex);
-
-    glm::vec2 subpathDirection(0.0f, 0.0f);
-    if (endPathPointIndex > startPathPointIndex)
-    {
-        const auto segmentsCount = endPathPointIndex - startPathPointIndex + 1;
-
-        // First compute segment between exact start point (which is after startPathPointIndex)
-        // and next point (startPathPointIndex + 1)
-        subpathDirection += path[startPathPointIndex + 1] - exactStartPoint;
-
-        auto pPathPoint = path.constData() + startPathPointIndex + 1;
-        auto pPrevPathPoint = pPathPoint++;
-        for (auto segmentIdx = 1; segmentIdx < segmentsCount - 1; segmentIdx++)
-            subpathDirection += *(pPathPoint++) - *(pPrevPathPoint++);
-
-        // Last check is between path[endPathPointIndex] and exact end point,
-        // which is always after endPathPointIndex
-        assert(pPrevPathPoint == &path[endPathPointIndex]);
-        subpathDirection += exactEndPoint - *pPrevPathPoint;
-    }
-    else
-    {
-        // In case both exact points are on the same segment,
-        // computation is simple
-        subpathDirection = exactEndPoint - exactStartPoint;
-    }
-
-    return glm::normalize(subpathDirection);
-}
-
-double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
-    const QVector<glm::vec2>& pathInWorld,
-    const unsigned int startPathPointIndex,
-    const glm::vec2& exactStartPointInWorld,
-    const unsigned int endPathPointIndex,
-    const glm::vec2& exactEndPointInWorld) const
-{
-    const auto& internalState = getInternalState();
-
-    assert(endPathPointIndex >= startPathPointIndex);
-
-    auto distanceToCamera = 0.0;
-
-    // First process distance to exactStartPointInWorld
-    {
-        const auto distance = glm::distance(
-            internalState.worldCameraPosition,
-            glm::vec3(exactStartPointInWorld.x, 0.0f, exactStartPointInWorld.y));
-        distanceToCamera += distance;
-    }
-
-    // Process distances to inner points
-    auto pPathPointInWorld = pathInWorld.constData() + 1;
-    for (auto pathPointIdx = startPathPointIndex + 1; pathPointIdx <= endPathPointIndex; pathPointIdx++)
-    {
-        const auto& pathPointInWorld = *(pPathPointInWorld++);
-
-        const auto distance = glm::distance(
-            internalState.worldCameraPosition,
-            glm::vec3(pathPointInWorld.x, 0.0f, pathPointInWorld.y));
-        distanceToCamera += distance;
-    }
-
-    // At last process distance to exactEndPointInWorld
-    {
-        const auto distance = glm::distance(
-            internalState.worldCameraPosition,
-            glm::vec3(exactEndPointInWorld.x, 0.0f, exactEndPointInWorld.y));
-        distanceToCamera += distance;
-    }
-
-    // Normalize result
-    distanceToCamera /= endPathPointIndex - startPathPointIndex + 2;
-
-    return distanceToCamera;
-}
-
-QVector<OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnPathSymbol::GlyphPlacement>
-OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
+SkPath OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphsPlacement(
     const bool is2D,
     const QVector<glm::vec2>& pathOnScreen,
     const QVector<float>& pathSegmentsLengthsOnScreen,
@@ -2193,13 +2237,232 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
 
     assert(endPathPointIndex >= startPathPointIndex);
     const auto projectionScale = is2D ? 1.0f : internalState.pixelInWorldProjectionScale;
+
+    const auto glyphsCount = glyphsWidths.size();
+
+    const auto atLeastTwoSegments = endPathPointIndex > startPathPointIndex;
+    const auto forceDrawGlyphsOnStaright = glyphsCount <= 4 && atLeastTwoSegments;
+
+    if (forceDrawGlyphsOnStaright)
+    {
+        const auto originalPathSegmentsCount = endPathPointIndex - startPathPointIndex + 1; 
+        const auto originalPointsCount = originalPathSegmentsCount + 1;
+
+        // New path intersects points on 1/3 and 2/3 of original path
+        const auto firstPointOnPathIndex = (startPathPointIndex + originalPointsCount / 3) - 1;
+        const auto secondPointOnPathIndex = (startPathPointIndex + originalPointsCount / 3 * 2) - 1;
+
+        const auto firstPointOnPath = is2D ? pathOnScreen[firstPointOnPathIndex] : pathInWorld[firstPointOnPathIndex];
+        const auto secondPointOnPath = is2D ? pathOnScreen[secondPointOnPathIndex] : pathInWorld[secondPointOnPathIndex];
+
+        const auto pathInitialVector = secondPointOnPath - firstPointOnPath;
+        const auto pathInitialLength = glm::distance(firstPointOnPath, secondPointOnPath);
+        if (pathInitialLength == 0.0f)
+            return SkPath();
+        
+        const auto pathDirection = pathInitialVector / pathInitialLength;
+
+        const auto pathCenter = firstPointOnPath + pathInitialVector / 2.0f;
+
+        const auto totalGlyphsWidth = std::accumulate(glyphsWidths.begin(), glyphsWidths.end(), 0.0f) * projectionScale;
+        // Make sure new path will accomodate all glyphs
+        const auto pathScale = totalGlyphsWidth / pathInitialLength;
+
+        // Compute start/end of new path
+        const auto pathStart = pathCenter - (pathInitialVector / 2.0f) * pathScale;
+        const auto pathEnd = pathCenter + (pathInitialVector / 2.0f) * pathScale;
+
+        SkPath straightPath;
+        straightPath.moveTo(pathStart.x, pathStart.y);
+        straightPath.lineTo(pathEnd.x, pathEnd.y);
+
+        return straightPath;
+    }
+
     const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
-    const auto shouldInvert = (directionOnScreenN.y /* == horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
+    const auto shouldInvert = directionOnScreenN.y < 0; // For text readability
+
+    auto pGlyphWidth = glyphsWidths.constData();
+    if (shouldInvert)
+    {
+        // In case of direction inversion, start from last glyph
+        pGlyphWidth += glyphsCount - 1;
+    }
+    const auto glyphWidthIncrement = shouldInvert ? -1 : +1;
+
+    // Compute start with offset on original path
+    const auto startNoOffset = is2D ? pathOnScreen[startPathPointIndex] : pathInWorld[startPathPointIndex];
+    const auto firstSegmentEnd = is2D ? pathOnScreen[startPathPointIndex + 1] : pathInWorld[startPathPointIndex + 1];
+    const auto firstSegmentVector = firstSegmentEnd - startNoOffset;
+    const auto firstSegmentLength = is2D
+        ? pathSegmentsLengthsOnScreen[startPathPointIndex]
+        : pathSegmentsLengthsInWorld[startPathPointIndex];
+    const auto firstSegmentDirection = firstSegmentVector / firstSegmentLength;
+    const auto start = startNoOffset + firstSegmentDirection * offsetFromStartPathPoint;
+
+    // Fill original path
+    SkPath originalPath;
+    originalPath.moveTo(start.x, start.y);
+    for (auto i = startPathPointIndex + 1; i <= endPathPointIndex + 1; i++)
+    {
+        const auto point = is2D ? pathOnScreen[i] : pathInWorld[i];
+        originalPath.lineTo(point.x, point.y);
+    }
+    SkPathMeasure originalPathMeasure(originalPath, false);
+
+    // Compute start of each glyph on straight line
+    QVector<float> glyphsStartOnStraight;
+    auto glyphsTotalWidth = 0.0f;
+    for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++)
+    {
+        glyphsStartOnStraight.push_back(glyphsTotalWidth);
+        const auto glyphWidth = *(pGlyphWidth + glyphIdx * glyphWidthIncrement);
+        const auto scaledGlyphWidth = glyphWidth * projectionScale;
+        glyphsTotalWidth += scaledGlyphWidth;
+    }
+
+    // Add start point to new path
+    SkPath pathToDrawOn;
+    pathToDrawOn.moveTo(start.x, start.y);
+
+    // This will build such path, that in each triplet of glyphs 1st and 2nd glyph will
+    // be drawn on one segment, and 3rd glyph will be drawn on separate segment
+    for (auto i = 0; i < glyphsCount; i += 3)
+    {
+        // Find start of 1st and end of 2nd (or 1st, if there are no more glyphs) glyph in triplet
+        const auto start = glyphsStartOnStraight[i];
+        const auto endIndex = qMin(i + 1, glyphsCount - 1);
+        const auto endGlyphWidth = *(pGlyphWidth + endIndex * glyphWidthIncrement);
+        const auto endGlyphScaledWidth = endGlyphWidth * projectionScale;
+        const auto end = glyphsStartOnStraight[endIndex] + endGlyphScaledWidth;
+        
+        // Find such segment on original path, so that 1st and 2nd glyphs of triplet will fit
+        SkPath glyphsGroupPath;
+        originalPathMeasure.getSegment(start, end, &glyphsGroupPath, true);
+        const auto pointsCount = glyphsGroupPath.countPoints();
+
+        if (pointsCount < 2)
+            return SkPath();
+
+        // Add founded segment to new path 
+        pathToDrawOn.lineTo(glyphsGroupPath.getPoint(0));
+        pathToDrawOn.lineTo(glyphsGroupPath.getPoint(pointsCount - 1));
+    }
+
+    // Add last point to new path
+    const auto lastPoint = is2D ? pathOnScreen[endPathPointIndex + 1] : pathInWorld[endPathPointIndex + 1]; 
+    pathToDrawOn.lineTo(lastPoint.x, lastPoint.y);
+
+    // Check that glyphs won't overlap each other too much
+    SkPathMeasure pathToDrawOnMeasure(pathToDrawOn, false);
+    auto textUnreadable = pathToDrawOnMeasure.getLength() < glyphsTotalWidth;
+    if (textUnreadable)
+        return SkPath();
+
+    return pathToDrawOn;
+}
+
+glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(const SkPath& path) const
+{
+    const auto skPathStart = path.getPoint(0);
+    const auto skPathEnd = path.getPoint(path.countPoints() - 1);
+
+    const glm::vec2 pathStart(skPathStart.x(), skPathStart.y());
+    const glm::vec2 pathEnd(skPathEnd.x(), skPathEnd.y());
+
+    return glm::normalize(pathEnd - pathStart);
+}
+
+double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceFromCameraToPath(const SkPath& pathInWorld) const
+{
+    const auto& internalState = getInternalState();
+
+    auto distancesSum = 0.0;
+    for (auto i = 0; i < pathInWorld.countPoints(); i++)
+    {
+        const auto skPoint = pathInWorld.getPoint(i);
+        const auto distance = glm::distance(
+            internalState.worldCameraPosition,
+            glm::vec3(skPoint.x(), 0.0f, skPoint.y()));
+        distancesSum += distance;
+    }
+
+    return distancesSum / pathInWorld.countPoints();
+}
+
+SkPath OsmAnd::AtlasMapRendererSymbolsStage::convertPathOnScreenToWorld(const SkPath& pathOnScreen, bool& outOk) const
+{
+    const auto& internalState = getInternalState();
+    SkPath pathInWorld;
+
+    for (auto i = 0; i < pathOnScreen.countPoints(); i++)
+    {
+        const auto skPoint = pathOnScreen.getPoint(i);
+        const PointI point(skPoint.x(), currentState.windowSize.y - skPoint.y());
+        PointF worldPoint;
+        const auto ok = getRenderer()->getWorldPointFromScreenPoint(internalState, currentState, point, worldPoint);
+
+        if (!ok)
+        {
+            outOk = false;
+            return SkPath();
+        }
+        
+        if (pathInWorld.countPoints() == 0)
+            pathInWorld.moveTo(worldPoint.x, worldPoint.y);
+        else
+            pathInWorld.lineTo(worldPoint.x, worldPoint.y);
+    }
+
+    outOk = true;
+    return pathInWorld;
+}
+
+SkPath OsmAnd::AtlasMapRendererSymbolsStage::projectPathInWorldToScreen(const SkPath& pathInWorld) const
+{
+    const auto& internalState = getInternalState();
+
+    SkPath pathOnScreen;
+
+    for (auto i = 0; i < pathInWorld.countPoints(); i++)
+    {
+        const auto skPoint = pathInWorld.getPoint(i);
+        const auto pointOnScreen = glm_extensions::project(
+            glm::vec3(skPoint.x(), 0.0f, skPoint.y()),
+            internalState.mPerspectiveProjectionView,
+            internalState.glmViewport).xy();
+
+        if (pathOnScreen.countPoints() == 0)
+            pathOnScreen.moveTo(pointOnScreen.x, pointOnScreen.y);
+        else
+            pathOnScreen.lineTo(pointOnScreen.x, pointOnScreen.y);
+    }
+
+    return pathOnScreen;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
+    const SkPath& path,
+    const bool is2D,
+    const glm::vec2& directionInWorld,
+    const glm::vec2& directionOnScreen,
+    const QVector<float>& glyphsWidths,
+    const float glyphHeight,
+    QVector<RenderableOnPathSymbol::GlyphPlacement>& outGlyphsPlacement,
+    QVector<glm::vec3>& outRotatedElevatedBBoxInWorld) const
+{
+    const auto& internalState = getInternalState();
+
+    assert(path.countPoints() >= 2);
+
+    const auto projectionScale = is2D ? 1.0f : internalState.pixelInWorldProjectionScale;
+    const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
+    const auto shouldInvert = directionOnScreenN.y < 0; // For readability
 
     // Initialize glyph input and output pointers
     const auto glyphsCount = glyphsWidths.size();
-    QVector<RenderableOnPathSymbol::GlyphPlacement> glyphsPlacement(glyphsCount);
-    auto pGlyphPlacement = glyphsPlacement.data();
+    outGlyphsPlacement.resize(glyphsCount);
+    auto pGlyphPlacement = outGlyphsPlacement.data();
     if (shouldInvert)
     {
         // In case of direction inversion, fill from end
@@ -2213,189 +2476,237 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     }
     const auto glyphWidthIncrement = (shouldInvert ? -1 : +1);
 
-    // Check 3D-Terrain is shown
-    bool elevate = false;
+    SkPathMeasure pathToDrawOnMeasure(path, false);
 
-    // Plot glyphs one by one
-    auto segmentScanIndex = startPathPointIndex;
-    auto scannedSegmentsLength = 0.0f;
-    auto consumedSegmentsLength = 0.0f;
-    auto prevGlyphOffset = offsetFromStartPathPoint;
-    glm::vec2 currentSegmentStartPoint(0.0f, 0.0f);
-    glm::vec2 currentSegmentDirection(0.0f, 0.0f);
-    glm::vec2 currentSegmentN(0.0f, 0.0f);
-    auto currentSegmentAngle = 0.0f;
-    for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++, pGlyphWidth += glyphWidthIncrement)
+    auto glyphOffsetOnStraight = 0.0f;
+
+    for (auto glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++)
     {
-        // Get current glyph anchor offset and provide offset for next glyph
-        const auto glyphWidth = *pGlyphWidth;
+        const auto glyphWidth = *(pGlyphWidth + glyphIdx * glyphWidthIncrement);
         const auto glyphWidthScaled = glyphWidth * projectionScale;
-        const auto anchorOffset = prevGlyphOffset + glyphWidthScaled / 2.0f;
-        prevGlyphOffset += glyphWidthScaled;
 
-        // Find path segment where this glyph should be placed
-        while (anchorOffset > scannedSegmentsLength)
-        {
-            if (segmentScanIndex > endPathPointIndex)
-            {
-                // Wow! This shouldn't happen ever, since it means that glyphs doesn't fit into the provided path!
-                // And this means that path calculation above gave error!
-                /*
-                LogPrintf(LogSeverityLevel::Error,
-                    "computePlacementOfGlyphsOnPath() failed:\n"
-                    "\t%d glyphs;\n"
-                    "\tfailed on glyph #%d;\n"
-                    "\tstartPathPointIndex = %d;\n"
-                    "\tendPathPointIndex = %d;\n"
-                    "\tsegmentScanIndex = %d;\n"
-                    "\tanchorOffset = %f;\n"
-                    "\tscannedSegmentsLength = %f;\n"
-                    "\tprojectionScale = %f;\n"
-                    "\toffsetFromStartPathPoint = %f;\n"
-                    "\tpathSegmentsLengths = %s;\n"
-                    "\tglyphsWidths = %s;\n"
-                    "\tglyphsWidths (scaled) = %s;",
-                    glyphsCount,
-                    glyphIdx,
-                    startPathPointIndex,
-                    endPathPointIndex,
-                    segmentScanIndex,
-                    anchorOffset,
-                    scannedSegmentsLength,
-                    projectionScale,
-                    offsetFromStartPathPoint,
-                    qPrintable(qTransform<QStringList>(
-                        pathSegmentsLengths,
-                        []
-                        (const float& value) -> QStringList
-                        {
-                            return QStringList() << QString::number(value);
-                        }).join(QLatin1String(", "))),
-                    qPrintable(qTransform<QStringList>(
-                        glyphsWidths,
-                        []
-                        (const float& value) -> QStringList
-                        {
-                            return QStringList() << QString::number(value);
-                        }).join(QLatin1String(", "))),
-                    qPrintable(qTransform<QStringList>(
-                        glyphsWidths,
-                        [projectionScale]
-                        (const float& value) -> QStringList
-                        {
-                            return QStringList() << QString::number(value * projectionScale);
-                        }).join(QLatin1String(", "))));
-                */
-                glyphsPlacement.clear();
-                return glyphsPlacement;
-            }
+        const auto glyphStartOnStraight = glyphOffsetOnStraight;
+        const auto glyphEndOnStraight = glyphStartOnStraight + glyphWidthScaled;
 
-            // Check this segment
-            const auto& segmentLength =
-                is2D ? pathSegmentsLengthsOnScreen[segmentScanIndex] : pathSegmentsLengthsInWorld[segmentScanIndex];
-            consumedSegmentsLength = scannedSegmentsLength;
-            scannedSegmentsLength += segmentLength;
-            segmentScanIndex++;
-            if (anchorOffset > scannedSegmentsLength)
-                continue;
+        // Find such segment on path, so that current glyph will fit 
+        SkPath glyphPath;
+        pathToDrawOnMeasure.getSegment(glyphStartOnStraight, glyphEndOnStraight, &glyphPath, true);
 
-            // Get points for this segment
-            const auto& segmentStartPoint =
-                is2D ? pathOnScreen[segmentScanIndex - 1] : pathInWorld[segmentScanIndex - 1];
-            const auto& segmentEndPoint =
-                is2D ? pathOnScreen[segmentScanIndex - 0] : pathInWorld[segmentScanIndex - 0];
-            currentSegmentStartPoint = segmentStartPoint;
+        const auto glyphPathPointsCount = glyphPath.countPoints();
+        if (glyphPathPointsCount < 2)
+            return false;
 
-            // Get segment direction and normal
-            currentSegmentDirection = (segmentEndPoint - segmentStartPoint) / segmentLength;
-            if (is2D)
-            {
-                // CCW 90 degrees rotation of Y is up
-                currentSegmentN.x = -currentSegmentDirection.y;
-                currentSegmentN.y = currentSegmentDirection.x;
-            }
-            else
-            {
-                // CCW 90 degrees rotation of Y is down
-                currentSegmentN.x = currentSegmentDirection.y;
-                currentSegmentN.y = -currentSegmentDirection.x;
-            }
-            currentSegmentAngle = qAtan2(currentSegmentDirection.y, currentSegmentDirection.x);//TODO: maybe for 3D a -y should be passed (see -1 rotation axis)
-            if (shouldInvert)
-                currentSegmentAngle = Utilities::normalizedAngleRadians(currentSegmentAngle + M_PI);
-        }
+        const auto skGlyphStart = glyphPath.getPoint(0);
+        const auto skGlyphEnd = glyphPath.getPoint(glyphPathPointsCount - 1);
+        
+        const glm::vec2 glyphStart(skGlyphStart.x(), skGlyphStart.y());
+        const glm::vec2 glyphEnd(skGlyphEnd.x(), skGlyphEnd.y());
 
-        // Compute anchor point
-        auto anchorOffsetFromSegmentStartPoint = (anchorOffset - consumedSegmentsLength);
-        auto anchorPoint = currentSegmentStartPoint + anchorOffsetFromSegmentStartPoint * currentSegmentDirection;
+        const auto glyphVector = glyphEnd - glyphStart;
+        const auto glyphDirection = glyphVector / glyphWidthScaled;
 
-        // TODO: more precise computation of anchor point in world
-        auto segmentLengthInWorld = pathSegmentsLengthsInWorld[segmentScanIndex - 1];
-        anchorOffsetFromSegmentStartPoint /= 
-            is2D ? pathSegmentsLengthsOnScreen[segmentScanIndex - 1] : pathSegmentsLengthsInWorld[segmentScanIndex - 1];
-        anchorOffsetFromSegmentStartPoint *= segmentLengthInWorld;
-        auto anchorPointInWorld = pathInWorld[segmentScanIndex - 1];
-        currentSegmentDirection = pathInWorld[segmentScanIndex] - anchorPointInWorld;
-        currentSegmentDirection /= segmentLengthInWorld;
-        anchorPointInWorld += anchorOffsetFromSegmentStartPoint * currentSegmentDirection;
-       
-        float glyphDepth = NAN;
-
-        // Compute elevated anchor point
-        glm::highp_vec3 position3D = { anchorPointInWorld.x, 0.0f, anchorPointInWorld.y};
-        PointD position2D = static_cast<PointD>(anchorPointInWorld) / static_cast<double>(AtlasMapRenderer::TileSize3D);
-        position2D *= static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
-        PointI position31 = static_cast<PointI>(position2D) + currentState.target31;
-        PointF offsetInTileN;
-        const auto tileId = Utilities::normalizeTileId(
-            Utilities::getTileId(position31, currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
-        float elevationInMeters = 0.0f;
-        std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-        PointF offsetInScaledTileN = offsetInTileN;
-        if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel &&
-            elevationData)
-        {
-            if (elevationData->getValue(offsetInScaledTileN, elevationInMeters))
-            {
-                elevate = true;
-                if (is2D)
-                {
-                    const auto scaledElevationInMeters = elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
-
-                    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-                    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-                    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-
-                    position3D.y = static_cast<float>((scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor);
-                }
-            }
-        }
+        glm::vec2 glyphNormal;
         if (is2D)
         {
-            auto glyphOnScreen = glm_extensions::project(
-                            position3D,
-                            internalState.mPerspectiveProjectionView,
-                            internalState.glmViewport);
-            anchorPoint.x = glyphOnScreen.x;
-            anchorPoint.y = glyphOnScreen.y;
-            glyphDepth = glyphOnScreen.z;
+            // CCW 90 degrees rotation of Y is up
+            glyphNormal.x = -glyphDirection.y;
+            glyphNormal.y = glyphDirection.x;
+        }
+        else
+        {
+            // CCW 90 degrees rotation of Y is down
+            glyphNormal.x = glyphDirection.y;
+            glyphNormal.y = -glyphDirection.x;
         }
 
-        // Add glyph location data.
-        // In case inverted, filling is performed from back-to-front. Otherwise from front-to-back
+        //TODO: maybe for 3D a -y should be passed (see -1 rotation axis)
+        float glyphAngle = qAtan2(glyphDirection.y, glyphDirection.x);
+        if (shouldInvert)
+            glyphAngle = Utilities::normalizedAngleRadians(glyphAngle + M_PI);
+
+        // Position glyph anchor point without elevation
+        const auto anchorPointNoElevation = glyphStart + glyphVector / 2.0f;
+        
+        glm::vec2 anchorPoint;
+        float glyphDepth;
+
+        if (is2D)
+        {
+            // If elevation data is provided, elevate glyph anchor point
+            glm::vec3 elevatedAnchorPoint;
+            auto ok = elevateGlyphAnchorPointIn2D(anchorPointNoElevation, elevatedAnchorPoint);
+            if (!ok)
+                return false;
+            anchorPoint = elevatedAnchorPoint.xy();
+            glyphDepth = elevatedAnchorPoint.z;
+        }
+        else
+        {
+            // Glyph anchor point will be elevated later
+            anchorPoint = anchorPointNoElevation;
+            glyphDepth = NAN;
+        }
+
+
         (shouldInvert ? *(pGlyphPlacement--) : *(pGlyphPlacement++)) = RenderableOnPathSymbol::GlyphPlacement(
             anchorPoint,
             glyphWidth,
-            currentSegmentAngle,
+            glyphAngle,
             glyphDepth,
-            currentSegmentN);
+            glyphNormal);
+
+        glyphOffsetOnStraight += glyphWidthScaled;
     }
 
-    // Check and hide not ready onPath3D if put under 3D-terrain
-    if (elevate && !is2D)
-        glyphsPlacement.clear();
+    if (!is2D)
+    {
+        // Try to elevate all glyph anchor points
+        bool ok = elevateGlyphAnchorPointsIn3D(outGlyphsPlacement, outRotatedElevatedBBoxInWorld, glyphHeight, directionInWorld);
+        if (!ok)
+            return false;
+    }
 
-    return glyphsPlacement;
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointIn2D(
+    const glm::vec2& anchorPoint,
+    glm::vec3& outElevatedAnchorPoint) const
+{
+    const auto& internalState = getInternalState();
+    const auto zoom = currentState.zoomLevel;
+    
+    // Convert screen point to world
+    const PointI anchorOnScreenNoElevation(anchorPoint.x, currentState.windowSize.y - anchorPoint.y);
+    PointF anchorInWorldNoElevation;
+    auto ok = getRenderer()->getWorldPointFromScreenPoint(
+        internalState,
+        currentState,
+        anchorOnScreenNoElevation,
+        anchorInWorldNoElevation);
+
+    if (!ok)
+        return false;
+
+    // Find height of anchor point
+    const auto anchorPointFloat = anchorInWorldNoElevation / AtlasMapRenderer::TileSize3D;
+    const auto anchorPoint31 = Utilities::convertFloatTo31(anchorPointFloat, currentState.target31, zoom);
+    const auto anchorHeightInWorld = getRenderer()->getHeightOfLocation(currentState, anchorPoint31);
+
+    // Project point back to screen, but now with elevation
+    const glm::vec3 elevatedAnchorInWorld(anchorInWorldNoElevation.x, anchorHeightInWorld, anchorInWorldNoElevation.y);
+    outElevatedAnchorPoint = glm_extensions::project(
+        elevatedAnchorInWorld,
+        internalState.mPerspectiveProjectionView,
+        internalState.glmViewport);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
+    QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
+    QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
+    const float glyphHeight,
+    const glm::vec2& directionInWorld) const
+{
+    const auto& bboxInWorld = calculateOnPath3DRotatedBBox(glyphsPlacement, glyphHeight, directionInWorld);
+
+    // Elevate bbox vertices and center
+    glm::vec3 elevatedVertices[4];
+    glm::vec3 elevatedBboxCenter(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < 4; i++)
+    {
+        const auto vertex = bboxInWorld[i];
+        const auto bboxVertex31 = Utilities::convertFloatTo31(
+            vertex / AtlasMapRenderer::TileSize3D,
+            currentState.target31,
+            currentState.zoomLevel);
+        const auto vertexElevation = getRenderer()->getHeightOfLocation(currentState, bboxVertex31);
+        const glm::vec3 elevatedVertex(vertex.x, vertexElevation, vertex.y);
+
+        elevatedVertices[i] = elevatedVertex;
+        elevatedBboxCenter += elevatedVertex;
+    }
+    elevatedBboxCenter /= 4.0f;
+
+    // Calculate normals to all 4 planes of elevated bbox and normal to approximate common bbox plane 
+    glm::vec3 bboxPlanesN[4];
+    glm::vec3 approximatedBBoxPlaneN(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < 4; i++)
+    {
+        const auto vertex0 = elevatedVertices[(i + 0) % 4];
+        const auto vertex1 = elevatedVertices[(i + 1) % 4];
+        const auto vertex2 = elevatedVertices[(i + 2) % 4];
+        const auto planeN = Utilities::calculatePlaneN(vertex0, vertex1, vertex2);
+        bboxPlanesN[(i + 1) % 4] = planeN;
+        approximatedBBoxPlaneN += planeN;
+    }
+    approximatedBBoxPlaneN /= 4.0f;
+    const auto planeLength = glm::length(approximatedBBoxPlaneN);
+    if (planeLength > 0.0f)
+        approximatedBBoxPlaneN /= planeLength;
+    else
+        approximatedBBoxPlaneN = glm::vec3(1.0f, -1.0f, 0.0f);
+
+
+    // Check if angle between planes not too big. The longer text the less angle allowed between planes.
+    // Short texts are displayed unconditionally
+    int glyphsCount = glyphsPlacement.size();
+    if (glyphsCount > SHORT_GLYPHS_COUNT)
+    {
+        float maxAngle;
+        if (glyphsCount <= MEDIUM_GLYPHS_COUNT)
+            maxAngle = MEDIUM_GLYPHS_MAX_ANGLE;
+        else if (glyphsCount <= LONG_GLYPHS_COUNT)
+            maxAngle = LONG_GLYPHS_MAX_ANGLE;      
+        else
+            maxAngle = EXTRA_LONG_GLYPHS_MAX_ANGLE;
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = i + 1; j < 4; j++)
+            {
+                const auto planeN1 = bboxPlanesN[i];
+                const auto planeN2 = bboxPlanesN[j];
+                const auto angleBetweenPlanes = qAcos(planeN1.x * planeN2.x + planeN1.y * planeN2.y);
+                if (angleBetweenPlanes > qDegreesToRadians(maxAngle))
+                    return false;
+            }
+        }
+    }
+
+    // Calculate rotation angle from approximated bbox plane
+    const auto angle = static_cast<float>(qAcos(-approximatedBBoxPlaneN.y));
+    const auto rotationN = glm::normalize(angle > 0.0f ?
+        glm::vec3(approximatedBBoxPlaneN.z, 0.0f, -approximatedBBoxPlaneN.x) : glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto mRotate = glm::rotate(angle, rotationN);
+
+    const auto mTranslateToStart = glm::translate(-glm::vec3(elevatedBboxCenter.x, 0.0f, elevatedBboxCenter.z));
+    const auto mTranslateToElevatedCenter = glm::translate(elevatedBboxCenter);
+
+    // Project glyphs onto plane of elevated bbox
+    for (auto& glyph : glyphsPlacement)
+    {
+        const glm::vec4 originalAnchorPoint(glyph.anchorPoint.x, 0.0f, glyph.anchorPoint.y, 1.0f);
+        const auto elevatedAnchorPoint = mTranslateToElevatedCenter * mRotate * mTranslateToStart * originalAnchorPoint;
+
+        glyph.anchorPoint = elevatedAnchorPoint.xz();
+        glyph.elevation = elevatedAnchorPoint.y;
+        glyph.angleXZ = -angle;
+        glyph.rotationX = rotationN.x;
+        glyph.rotationZ = rotationN.z;
+    }
+
+    outRotatedElevatedBBoxInWorld.resize(4);
+    for (int i = 0; i < 4; i++)
+    {
+        const auto vertex = bboxInWorld[i];
+        const glm::vec4 originalVertex(vertex.x, 0.0f, vertex.y, 1.0f);
+        const auto elevatedVertex = mTranslateToElevatedCenter * mRotate * mTranslateToStart * originalVertex;
+        outRotatedElevatedBBoxInWorld[i] = elevatedVertex;
+    }
+
+    return true;
 }
 
 OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(
@@ -2422,8 +2733,8 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(
             glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
         };
 
-        const auto segmentAngleCos = qCos(glyph.angle);
-        const auto segmentAngleSin = qSin(glyph.angle);
+        const auto segmentAngleCos = qCos(glyph.angleY);
+        const auto segmentAngleSin = qSin(glyph.angleY);
 
         for (int idx = 0; idx < 4; idx++)
         {
@@ -2467,137 +2778,33 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
 {
     const auto& internalState = getInternalState();
     const auto& symbol = std::static_pointer_cast<const OnPathRasterMapSymbol>(renderable->mapSymbol);
-
-    const auto directionAngleInWorld = qAtan2(renderable->directionInWorld.y, renderable->directionInWorld.x);
-    const auto negDirectionAngleInWorldCos = qCos(-directionAngleInWorld);
-    const auto negDirectionAngleInWorldSin = qSin(-directionAngleInWorld);
-    const auto directionAngleInWorldCos = qCos(directionAngleInWorld);
-    const auto directionAngleInWorldSin = qSin(directionAngleInWorld);
-    const auto halfGlyphHeight = (symbol->size.y / 2.0f) * internalState.pixelInWorldProjectionScale;
-    auto bboxInWorldInitialized = false;
-    AreaF bboxInWorldDirection;
-    for (const auto& glyph : constOf(renderable->glyphsPlacement))
-    {
-        const auto halfGlyphWidth = (glyph.width / 2.0f) * internalState.pixelInWorldProjectionScale;
-        const glm::vec2 glyphPoints[4] =
-        {
-            glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
-            glm::vec2( halfGlyphWidth, -halfGlyphHeight), // TR
-            glm::vec2( halfGlyphWidth,  halfGlyphHeight), // BR
-            glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
-        };
-
-        const auto segmentAngleCos = qCos(glyph.angle);
-        const auto segmentAngleSin = qSin(glyph.angle);
-
-        for (int idx = 0; idx < 4; idx++)
-        {
-            const auto& glyphPoint = glyphPoints[idx];
-
-            // Rotate to align with its segment
-            glm::vec2 pointInWorld;
-            pointInWorld.x = glyphPoint.x*segmentAngleCos - glyphPoint.y*segmentAngleSin;
-            pointInWorld.y = glyphPoint.x*segmentAngleSin + glyphPoint.y*segmentAngleCos;
-
-            // Add anchor point
-            pointInWorld += glyph.anchorPoint;
-
-            // Rotate to align with direction
-            PointF alignedPoint;
-            alignedPoint.x = pointInWorld.x*negDirectionAngleInWorldCos - pointInWorld.y*negDirectionAngleInWorldSin;
-            alignedPoint.y = pointInWorld.x*negDirectionAngleInWorldSin + pointInWorld.y*negDirectionAngleInWorldCos;
-            if (Q_LIKELY(bboxInWorldInitialized))
-                bboxInWorldDirection.enlargeToInclude(alignedPoint);
-            else
-            {
-                bboxInWorldDirection.topLeft = bboxInWorldDirection.bottomRight = alignedPoint;
-                bboxInWorldInitialized = true;
-            }
-        }
-    }
-    const auto alignedCenterInWorld = bboxInWorldDirection.center();
-    bboxInWorldDirection -= alignedCenterInWorld;
-
-    PointF rotatedBBoxInWorld[4];
-    const auto& tl = bboxInWorldDirection.topLeft;
-    rotatedBBoxInWorld[0].x = tl.x*directionAngleInWorldCos - tl.y*directionAngleInWorldSin;
-    rotatedBBoxInWorld[0].y = tl.x*directionAngleInWorldSin + tl.y*directionAngleInWorldCos;
-    const auto& tr = bboxInWorldDirection.topRight();
-    rotatedBBoxInWorld[1].x = tr.x*directionAngleInWorldCos - tr.y*directionAngleInWorldSin;
-    rotatedBBoxInWorld[1].y = tr.x*directionAngleInWorldSin + tr.y*directionAngleInWorldCos;
-    const auto& br = bboxInWorldDirection.bottomRight;
-    rotatedBBoxInWorld[2].x = br.x*directionAngleInWorldCos - br.y*directionAngleInWorldSin;
-    rotatedBBoxInWorld[2].y = br.x*directionAngleInWorldSin + br.y*directionAngleInWorldCos;
-    const auto& bl = bboxInWorldDirection.bottomLeft();
-    rotatedBBoxInWorld[3].x = bl.x*directionAngleInWorldCos - bl.y*directionAngleInWorldSin;
-    rotatedBBoxInWorld[3].y = bl.x*directionAngleInWorldSin + bl.y*directionAngleInWorldCos;
-
-    PointF centerInWorld;
-    centerInWorld.x = alignedCenterInWorld.x*directionAngleInWorldCos - alignedCenterInWorld.y*directionAngleInWorldSin;
-    centerInWorld.y = alignedCenterInWorld.x*directionAngleInWorldSin + alignedCenterInWorld.y*directionAngleInWorldCos;
-    bboxInWorldDirection += centerInWorld;
-    rotatedBBoxInWorld[0] += centerInWorld;
-    rotatedBBoxInWorld[1] += centerInWorld;
-    rotatedBBoxInWorld[2] += centerInWorld;
-    rotatedBBoxInWorld[3] += centerInWorld;
-
-#if OSMAND_DEBUG && 0
-    {
-        const auto& cc = bboxInWorldDirection.center();
-        const auto& tl = bboxInWorldDirection.topLeft;
-        const auto& tr = bboxInWorldDirection.topRight();
-        const auto& br = bboxInWorldDirection.bottomRight;
-        const auto& bl = bboxInWorldDirection.bottomLeft();
-
-        const glm::vec3 pC(cc.x, 0.0f, cc.y);
-        const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
-        const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
-        const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
-        const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
-        const auto toCenter = glm::translate(-pC);
-        const auto rotate = glm::rotate(
-            (float)Utilities::normalizedAngleRadians(directionAngleInWorld + M_PI),
-            glm::vec3(0.0f, -1.0f, 0.0f));
-        const auto fromCenter = glm::translate(pC);
-        const auto M = fromCenter*rotate*toCenter;
-        getRenderer()->debugStage->addQuad3D(
-            (M*p0).xyz(),
-            (M*p1).xyz(),
-            (M*p2).xyz(),
-            (M*p3).xyz(),
-            SkColorSetA(SK_ColorGREEN, 50));
-    }
-#endif // OSMAND_DEBUG
+    const auto& rotatedBBoxInWorld = renderable->rotatedElevatedBBoxInWorld;
 #if OSMAND_DEBUG && 0
         {
-            const auto& tl = rotatedBBoxInWorld[0];
-            const auto& tr = rotatedBBoxInWorld[1];
-            const auto& br = rotatedBBoxInWorld[2];
-            const auto& bl = rotatedBBoxInWorld[3];
-
-            const glm::vec3 p0(tl.x, 0.0f, tl.y);
-            const glm::vec3 p1(tr.x, 0.0f, tr.y);
-            const glm::vec3 p2(br.x, 0.0f, br.y);
-            const glm::vec3 p3(bl.x, 0.0f, bl.y);
-            getRenderer()->debugStage->addQuad3D(p0, p1, p2, p3, SkColorSetA(SK_ColorGREEN, 50));
+            getRenderer()->debugStage->addQuad3D(
+                rotatedBBoxInWorld[0],
+                rotatedBBoxInWorld[1],
+                rotatedBBoxInWorld[2],
+                rotatedBBoxInWorld[3],
+                SkColorSetA(SK_ColorGREEN, 50));
         }
 #endif // OSMAND_DEBUG
 
     // Project points of OOBB in world to screen
     const PointF projectedRotatedBBoxInWorldP0(static_cast<glm::vec2>(
-        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
+        glm_extensions::project(rotatedBBoxInWorld[0],
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP1(static_cast<glm::vec2>(
-        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
+        glm_extensions::project(rotatedBBoxInWorld[1],
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP2(static_cast<glm::vec2>(
-        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
+        glm_extensions::project(rotatedBBoxInWorld[2],
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
     const PointF projectedRotatedBBoxInWorldP3(static_cast<glm::vec2>(
-        glm_extensions::project(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
+        glm_extensions::project(rotatedBBoxInWorld[3],
         internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy()));
 #if OSMAND_DEBUG && 0
@@ -2649,6 +2856,118 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
         bboxInDirection.width(), bboxInDirection.height());
 
     return OOBBF(bboxInDirection, -directionAngle);
+}
+
+QVector<OsmAnd::PointF> OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3DRotatedBBox(
+    const QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
+    const float glyphHeight,
+    const glm::vec2& directionInWorld) const
+{
+    const auto& internalState = getInternalState();
+
+    const auto directionAngleInWorld = qAtan2(directionInWorld.y, directionInWorld.x);
+    const auto negDirectionAngleInWorldCos = qCos(-directionAngleInWorld);
+    const auto negDirectionAngleInWorldSin = qSin(-directionAngleInWorld);
+    const auto directionAngleInWorldCos = qCos(directionAngleInWorld);
+    const auto directionAngleInWorldSin = qSin(directionAngleInWorld);
+    const auto halfGlyphHeight = (glyphHeight / 2.0f) * internalState.pixelInWorldProjectionScale;
+    auto bboxInWorldInitialized = false;
+    AreaF bboxInWorldDirection;
+    for (const auto& glyph : constOf(glyphsPlacement))
+    {
+        const auto halfGlyphWidth = (glyph.width / 2.0f) * internalState.pixelInWorldProjectionScale;
+        const glm::vec2 glyphPoints[4] =
+        {
+            glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
+            glm::vec2( halfGlyphWidth, -halfGlyphHeight), // TR
+            glm::vec2( halfGlyphWidth,  halfGlyphHeight), // BR
+            glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
+        };
+
+        const auto segmentAngleCos = qCos(glyph.angleY);
+        const auto segmentAngleSin = qSin(glyph.angleY);
+
+        for (int idx = 0; idx < 4; idx++)
+        {
+            const auto& glyphPoint = glyphPoints[idx];
+
+            // Rotate to align with its segment
+            glm::vec2 pointInWorld;
+            pointInWorld.x = glyphPoint.x*segmentAngleCos - glyphPoint.y*segmentAngleSin;
+            pointInWorld.y = glyphPoint.x*segmentAngleSin + glyphPoint.y*segmentAngleCos;
+
+            // Add anchor point
+            pointInWorld += glyph.anchorPoint;
+
+            // Rotate to align with direction
+            PointF alignedPoint;
+            alignedPoint.x = pointInWorld.x*negDirectionAngleInWorldCos - pointInWorld.y*negDirectionAngleInWorldSin;
+            alignedPoint.y = pointInWorld.x*negDirectionAngleInWorldSin + pointInWorld.y*negDirectionAngleInWorldCos;
+            if (Q_LIKELY(bboxInWorldInitialized))
+                bboxInWorldDirection.enlargeToInclude(alignedPoint);
+            else
+            {
+                bboxInWorldDirection.topLeft = bboxInWorldDirection.bottomRight = alignedPoint;
+                bboxInWorldInitialized = true;
+            }
+        }
+    }
+    const auto alignedCenterInWorld = bboxInWorldDirection.center();
+    bboxInWorldDirection -= alignedCenterInWorld;
+
+    QVector<PointF> rotatedBBoxInWorld(4);
+
+    const auto& tl = bboxInWorldDirection.topLeft;
+    rotatedBBoxInWorld[0].x = tl.x*directionAngleInWorldCos - tl.y*directionAngleInWorldSin;
+    rotatedBBoxInWorld[0].y = tl.x*directionAngleInWorldSin + tl.y*directionAngleInWorldCos;
+    const auto& tr = bboxInWorldDirection.topRight();
+    rotatedBBoxInWorld[1].x = tr.x*directionAngleInWorldCos - tr.y*directionAngleInWorldSin;
+    rotatedBBoxInWorld[1].y = tr.x*directionAngleInWorldSin + tr.y*directionAngleInWorldCos;
+    const auto& br = bboxInWorldDirection.bottomRight;
+    rotatedBBoxInWorld[2].x = br.x*directionAngleInWorldCos - br.y*directionAngleInWorldSin;
+    rotatedBBoxInWorld[2].y = br.x*directionAngleInWorldSin + br.y*directionAngleInWorldCos;
+    const auto& bl = bboxInWorldDirection.bottomLeft();
+    rotatedBBoxInWorld[3].x = bl.x*directionAngleInWorldCos - bl.y*directionAngleInWorldSin;
+    rotatedBBoxInWorld[3].y = bl.x*directionAngleInWorldSin + bl.y*directionAngleInWorldCos;
+
+    PointF centerInWorld;
+    centerInWorld.x = alignedCenterInWorld.x*directionAngleInWorldCos - alignedCenterInWorld.y*directionAngleInWorldSin;
+    centerInWorld.y = alignedCenterInWorld.x*directionAngleInWorldSin + alignedCenterInWorld.y*directionAngleInWorldCos;
+    bboxInWorldDirection += centerInWorld;
+    rotatedBBoxInWorld[0] += centerInWorld;
+    rotatedBBoxInWorld[1] += centerInWorld;
+    rotatedBBoxInWorld[2] += centerInWorld;
+    rotatedBBoxInWorld[3] += centerInWorld;
+
+#if OSMAND_DEBUG && 0
+    {
+        const auto& cc = bboxInWorldDirection.center();
+        const auto& tl = bboxInWorldDirection.topLeft;
+        const auto& tr = bboxInWorldDirection.topRight();
+        const auto& br = bboxInWorldDirection.bottomRight;
+        const auto& bl = bboxInWorldDirection.bottomLeft();
+
+        const glm::vec3 pC(cc.x, 0.0f, cc.y);
+        const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
+        const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
+        const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
+        const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
+        const auto toCenter = glm::translate(-pC);
+        const auto rotate = glm::rotate(
+            (float)Utilities::normalizedAngleRadians(directionAngleInWorld + M_PI),
+            glm::vec3(0.0f, -1.0f, 0.0f));
+        const auto fromCenter = glm::translate(pC);
+        const auto M = fromCenter*rotate*toCenter;
+        getRenderer()->debugStage->addQuad3D(
+            (M*p0).xyz(),
+            (M*p1).xyz(),
+            (M*p2).xyz(),
+            (M*p3).xyz(),
+            SkColorSetA(SK_ColorGREEN, 50));
+    }
+#endif // OSMAND_DEBUG
+
+    return rotatedBBoxInWorld;
 }
 
 float OsmAnd::AtlasMapRendererSymbolsStage::getSubsectionOpacityFactor(

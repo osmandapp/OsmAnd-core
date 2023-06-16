@@ -16,7 +16,9 @@ namespace OsmAnd
 {
     class VectorLinesCollection;
     class VectorLineArrowsProvider_P;
-    class OSMAND_CORE_API VectorLineArrowsProvider : public IMapKeyedSymbolsProvider
+    class OSMAND_CORE_API VectorLineArrowsProvider
+        : public std::enable_shared_from_this<VectorLineArrowsProvider>
+        , public IMapKeyedSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLineArrowsProvider);
 

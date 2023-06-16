@@ -32,6 +32,7 @@ namespace OsmAnd
     class MapRendererTiledResources;
     class MapSymbol;
     class MapRendererStage;
+    class AtlasMapRendererSymbolsStage;
     struct MapRendererInternalState;
 
     class MapRenderer : public IMapRenderer
@@ -72,11 +73,11 @@ namespace OsmAnd
         MapRendererState _currentState;
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        bool setMapTarget(MapRendererState& state,
+        bool setMapTarget(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
 
         // Resources-related:
-        std::unique_ptr<MapRendererResourcesManager> _resources;
+        std::shared_ptr<MapRendererResourcesManager> _resources;
         QAtomicInt _resourcesGpuSyncRequestsCounter;
 
         // Symbols-related:
@@ -95,6 +96,7 @@ namespace OsmAnd
         bool validatePublishedMapSymbolsIntegrity();
         QAtomicInt _suspendSymbolsUpdateCounter;
         int _symbolsUpdateInterval;
+        volatile bool _updateSymbols;
 
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -121,11 +123,22 @@ namespace OsmAnd
         bool updateCurrentDebugSettings();
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
+        virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
-        virtual bool getNewTargetByScreenPoint(const MapRendererState& state,
-            const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
+        virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
+            const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
+        virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
+            const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
+        virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
+            const PointI& location31, const float height, PointI& outLocation31) const = 0;
+        virtual bool getWorldPointFromScreenPoint(const MapRendererInternalState& internalState, const MapRendererState& state,
+            const PointI& screenPoint, PointF& outWorldPoint) const = 0;
+        virtual float getWorldElevationOfLocation(const MapRendererState& state,
+            const float elevationInMeters, const PointI& location31) const = 0;
+        virtual float getElevationOfLocationInMeters(const MapRendererState& state,
+            const float elevation, const ZoomLevel zoom, const PointI& location31) const = 0;
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
@@ -133,6 +146,8 @@ namespace OsmAnd
             const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // General:
+        volatile bool gpuContextIsLost;
+        mutable QMutex resourcesAreInUse;
         const std::unique_ptr<GPUAPI> gpuAPI;
         const MapRendererSetupOptions& setupOptions;
         bool hasGpuWorkerThread() const;
@@ -173,6 +188,7 @@ namespace OsmAnd
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
         MapRendererResourcesManager& getResources();
+        std::shared_ptr<MapRendererResourcesManager>& getResourcesSharedPtr();
         virtual void onValidateResourcesOfType(const MapRendererResourceType type);
         void requestResourcesUploadOrUnload();
         bool adjustImageToConfiguration(
@@ -302,9 +318,13 @@ namespace OsmAnd
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint, 
+        virtual bool resetMapTarget() Q_DECL_OVERRIDE;
+        virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
+        virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setMapTargetLocation(const PointI& location31, 
+        virtual bool setMapTargetLocation(const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
@@ -319,6 +339,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
+        virtual float getMapTargetHeightInMeters() const Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;
@@ -340,6 +361,9 @@ namespace OsmAnd
         virtual bool resumeSymbolsUpdate() Q_DECL_OVERRIDE;
         virtual int getSymbolsUpdateInterval() Q_DECL_OVERRIDE;
         virtual void setSymbolsUpdateInterval(int interval) Q_DECL_OVERRIDE;
+        virtual void shouldUpdateSymbols() Q_DECL_OVERRIDE;
+        virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
+        virtual void dontNeedUpdatedSymbols() Q_DECL_OVERRIDE;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;
@@ -351,7 +375,10 @@ namespace OsmAnd
 
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
+    friend class OsmAnd::AtlasMapRendererSymbolsStage;
     friend class OsmAnd::MapRendererResourcesManager;
+    friend class OsmAnd::MapRendererTiledSymbolsResource;
+    friend class OsmAnd::MapRendererRasterMapLayerResource;
     };
 }
 

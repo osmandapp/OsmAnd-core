@@ -29,6 +29,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#define DRAW_AREA_BOUNDS 0
 
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
@@ -105,6 +106,17 @@ void OsmAnd::MapRasterizer_P::rasterize(
         rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly,
                                queryController);
     rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines, queryController);
+
+#if DRAW_AREA_BOUNDS
+    {
+        SkPaint paint;
+        paint.setColor(SK_ColorRED);
+        paint.setStrokeWidth(context.env->mapScaleFactor);
+        paint.setStyle(SkPaint::kStroke_Style);
+        const auto& rect = SkRect::MakeLTRB(0, 0, context.pixelArea.right(), context.pixelArea.bottom());
+        canvas.drawRect(rect, paint);
+    }
+#endif // DRAW_AREA_BOUND
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
@@ -332,8 +344,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     const auto& area31 = context.area31;
 
     assert(points31.size() > 2);
-    assert(primitive->sourceObject->isClosedFigure());
-    assert(primitive->sourceObject->isClosedFigure(true));
+    // assert(primitive->sourceObject->isClosedFigure());
+    // assert(primitive->sourceObject->isClosedFigure(true));
 
     //////////////////////////////////////////////////////////////////////////
     //if ((primitive->sourceObject->id >> 1) == 9223372032559801460u)
@@ -439,8 +451,12 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
-bool OsmAnd::MapRasterizer_P::calculateLinePath(const Context& context, const QVector<PointI>& points31,
-                                                SkPath& outPath, float offset = 0.0f) const
+bool OsmAnd::MapRasterizer_P::calculateLinePath(
+    const Context& context,
+    const QVector<PointI>& points31,
+    const AreaI& area31,
+    SkPath& outPath,
+    float offset = 0.0f) const
 {
     bool rightShift = offset > 0;
     offset = abs(offset);
@@ -449,7 +465,6 @@ bool OsmAnd::MapRasterizer_P::calculateLinePath(const Context& context, const QV
     bool intersect = false;
     int pointIdx = 0;
     int prevCross = 0;
-    const auto& area31 = context.area31;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
     PointF vertex;
@@ -511,6 +526,7 @@ void OsmAnd::MapRasterizer_P::drawLineLayer(
     SkPaint& paint,
     SkPath& path,
     const Context& context,
+    const AreaI& area31,
     const QVector<PointI>& points31,
     const MapStyleEvaluationResult::Packed& evalResult,
     const PaintValuesSet valueSetSelector,
@@ -522,7 +538,7 @@ void OsmAnd::MapRasterizer_P::drawLineLayer(
         if (evalResult.getFloatValue(hMarginId, hMargin))
         {
             SkPath newPath;
-            if (calculateLinePath(context, points31, newPath, hMargin))
+            if (calculateLinePath(context, points31, area31, newPath, hMargin))
                 canvas.drawPath(newPath, paint);
         }
         else
@@ -560,8 +576,15 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     if (drawOnlyShadow && (!ok || shadowRadius <= 0.0f))
         return;
 
+    // Enlarge area to draw stroke if logical path is outside of original area
+    const auto& area31 = context.area31;
+    const auto& scalePixelTo31 = context.primitivisedObjects->scaleDivisor31ToPixel;
+    const auto enlarge31X = static_cast<int>(context.pixelArea.width() / 4.0f * scalePixelTo31.x);
+    const auto enlarge31Y = static_cast<int>(context.pixelArea.height() / 4.0f * scalePixelTo31.y);
+    const auto enlargedArea31 = area31.getEnlargedBy(PointI(enlarge31X, enlarge31Y));
+
     SkPath path;
-    bool intersect = calculateLinePath(context, points31, path);
+    bool intersect = calculateLinePath(context, points31, enlargedArea31, path);
     if (!intersect)
         return;
 
@@ -577,28 +600,28 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus2,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus2,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__2);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus1,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_minus1,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN__1);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_0,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_0,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_0);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_1,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_1,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_2,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_2,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_2);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_3,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_3,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_3);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_4,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_4,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_4);
 
-        drawLineLayer(canvas, paint, path, context, points31, primitive->evaluationResult, PaintValuesSet::Layer_5,
+        drawLineLayer(canvas, paint, path, context, enlargedArea31, points31, primitive->evaluationResult, PaintValuesSet::Layer_5,
                       env->styleBuiltinValueDefs->id_OUTPUT_PATH_HMARGIN_5);
 
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
@@ -664,6 +687,12 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     mIconTransform.setIdentity();
     mIconTransform.setTranslate(-0.5f * pathIcon->width(), -0.5f * pathIcon->height());
     mIconTransform.postRotate(90.0f);
+
+    auto legacyScale = context.env->displayDensityFactor > 1.0f
+            ? 2.0f / 3.0f
+            : 1.0f;
+    const auto iconScale = context.env->mapScaleFactor * legacyScale;
+    mIconTransform.postScale(iconScale, iconScale);
 
     SkPathMeasure pathMeasure(path, false);
 

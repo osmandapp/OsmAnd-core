@@ -11,6 +11,49 @@
 
 namespace OsmAnd
 {
+    struct ColorUtilities
+    {
+        inline static float getRGBDelta(float r1, float g1, float b1, float r2, float g2, float b2)
+        {
+            const auto redmean = (r1 + r2) * 0.5f;
+            const auto rDiff = r1 - r2;
+            const auto gDiff = g1 - g2;
+            const auto bDiff = b1 - b2;
+
+            const auto rCoeff = 2.0f + redmean;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (1.0f - redmean);
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
+        }
+
+        inline static float getRGBDelta(uint8_t r1, uint8_t g1, uint8_t b1, uint8_t r2, uint8_t g2, uint8_t b2)
+        {
+            const auto redmean = (r1 + r2) * 0.5f;
+            const auto rDiff = r1 - r2;
+            const auto gDiff = g1 - g2;
+            const auto bDiff = b1 - b2;
+
+            const auto rCoeff = 2.0f + redmean / 255.0f;
+            const auto gCoeff = 4.0f;
+            const auto bCoeff = 2.0f + (255.0f - redmean) / 255.0f;
+
+            const auto rDelta = rCoeff * rDiff * rDiff;
+            const auto gDelta = gCoeff * gDiff * gDiff;
+            const auto bDelta = bCoeff * bDiff * bDiff;
+
+            return rDelta + gDelta + bDelta;
+        }
+
+        private:
+            ColorUtilities();
+            ~ColorUtilities();
+    };
+
     union FColorARGB
     {
         inline FColorARGB()
@@ -77,6 +120,11 @@ namespace OsmAnd
         inline bool isTransparent() const
         {
             return qFuzzyIsNull(a);
+        }
+
+        inline float getRGBDelta(const FColorARGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
     };
 
@@ -147,6 +195,11 @@ namespace OsmAnd
         {
             return qFuzzyIsNull(a);
         }
+
+        inline float getRGBDelta(const FColorRGBA& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
     };
 
     union FColorRGB
@@ -166,6 +219,13 @@ namespace OsmAnd
         }
 
         explicit inline FColorRGB(const FColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
+
+        explicit inline FColorRGB(const FColorRGBA& other)
             : r(other.r)
             , g(other.g)
             , b(other.b)
@@ -216,6 +276,11 @@ namespace OsmAnd
         inline FColorARGB withAlpha(const float alpha) const
         {
             return FColorARGB(alpha, r, g, b);
+        }
+
+        inline float getRGBDelta(const FColorRGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
     };
 
@@ -309,6 +374,11 @@ namespace OsmAnd
         inline bool isTransparent() const
         {
             return (a == 0);
+        }
+
+        inline float getRGBDelta(const ColorARGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
 
         inline QString toString() const
@@ -407,6 +477,11 @@ namespace OsmAnd
             return (a == 0);
         }
 
+        inline float getRGBDelta(const ColorRGBA& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
+        }
+        
         inline QString toString() const
         {
             if (a == 0)
@@ -444,6 +519,13 @@ namespace OsmAnd
         }
 
         explicit inline ColorRGB(const ColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
+
+        explicit inline ColorRGB(const ColorRGBA& other)
             : r(other.r)
             , g(other.g)
             , b(other.b)
@@ -506,6 +588,11 @@ namespace OsmAnd
         inline ColorARGB withAlpha(const uint8_t alpha) const
         {
             return ColorARGB(alpha, r, g, b);
+        }
+
+        inline float getRGBDelta(const ColorRGB& other) const
+        {
+            return ColorUtilities::getRGBDelta(r, g, b, other.r, other.g, other.b);
         }
 
         inline QString toString() const

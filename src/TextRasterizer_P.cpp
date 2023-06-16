@@ -72,8 +72,10 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         while (pNextCharacter != pEnd)
         {
             const auto position = pNextCharacter - pText;
-            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
-            
+            auto npNextCharacter = pNextCharacter;
+            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&npNextCharacter));
+            const auto charSize = npNextCharacter - pNextCharacter;
+            pNextCharacter = npNextCharacter;
             if (typeface)
             {
                 if (typeface->skTypeface->unicharToGlyph(characterUCS4) == 0)
@@ -130,7 +132,7 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 linePaint.textPaints.push_back(TextPaint());
                 pTextPaint = &linePaint.textPaints.last();
 
-                pTextPaint->text = QStringRef(lineRef.string(), position, 1);
+                pTextPaint->text = QStringRef(lineRef.string(), position, charSize);
                 pTextPaint->paint = paint;
                 pTextPaint->typeface = typeface;
                 pTextPaint->skFont = skFont;
@@ -159,7 +161,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             }
             else
             {
-                pTextPaint->text = QStringRef(lineRef.string(), pTextPaint->text.position(), pTextPaint->text.size() + 1);
+                pTextPaint->text =
+                    QStringRef(lineRef.string(), pTextPaint->text.position(), pTextPaint->text.size() + charSize);
             }
         }
 
@@ -221,7 +224,14 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
+            // Remove excessive width from first glyph
             *pWidth += -textPaint.bounds.left();
+
+            // Remove excessive width from last glyph
+            const auto pWidthEnd = pWidth + glyphsCount;
+            const auto glyphsWidth = std::accumulate(pWidth, pWidthEnd, 0.0f);
+            const auto pLastWidth = pWidthEnd - 1;
+            *pLastWidth -= qMax(0.0f, glyphsWidth - textPaint.bounds.width());
 
             ///////
             /*
@@ -322,7 +332,14 @@ void OsmAnd::TextRasterizer_P::measureHaloGlyphs(
                 glyphs.constData(), glyphsCount,
                 pWidth);
 
+            // Remove excessive width from first glyph
             *pWidth += -haloTextPaint.bounds.left();
+
+            // Remove excessive width from last glyph
+            const auto pWidthEnd = pWidth + glyphsCount;
+            const auto glyphsWidth = std::accumulate(pWidth, pWidthEnd, 0.0f);
+            const auto pLastWidth = pWidthEnd - 1;
+            *pLastWidth -= qMax(0.0f, glyphsWidth - textPaint.bounds.width());
         }
     }
 }
@@ -453,14 +470,9 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     return target.asImage();
 }
 
-bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
+bool OsmAnd::TextRasterizer_P::drawPart(SkCanvas& canvas, const TextPaint& textPaint,
+    QString text, bool rtl, SkPoint& origin) const
 {
-    const auto text = ICU::convertToVisualOrder(textPaint.text.toString());
-    if (text.isEmpty())
-    {
-        return true;
-    }
-
     const auto pHbBuffer = hb_buffer_create();
     if (pHbBuffer == hb_buffer_get_empty())
     {
@@ -473,7 +485,7 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     }
 
     hb_buffer_add_utf16(hbBuffer.get(), reinterpret_cast<const uint16_t*>(text.constData()), text.size(), 0, -1);
-    hb_buffer_set_direction(hbBuffer.get(), HB_DIRECTION_LTR);
+    hb_buffer_set_direction(hbBuffer.get(), rtl ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hbBuffer.get());
 
     hb_shape(textPaint.hbFont.get(), hbBuffer.get(), nullptr, 0);
@@ -487,7 +499,6 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     const auto pGlyphPositions = hb_buffer_get_glyph_positions(hbBuffer.get(), nullptr);
 
     SkTextBlobBuilder textBlobBuilder;
-    auto origin = SkPoint::Make(0.0f, 0.0f);
     const auto textBlobRunBuffer = textBlobBuilder.allocRunPos(textPaint.skFont, glyphsCount);
     for (auto glyphIdx = 0u; glyphIdx < glyphsCount; glyphIdx++)
     {
@@ -520,6 +531,44 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     );
 
     return true;
+}
+
+bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textPaint) const
+{
+    auto text = textPaint.text.toString();
+    if (text.isEmpty())
+        return true;
+
+    // Detect parts that have different text directions
+    const auto rightToLeft = ICU::isRightToLeft(text);
+    const auto len = text.length();
+    int countLeft = 0;
+    int countRight = 0;
+    if (rightToLeft)
+    {
+        for (countLeft = 0; countLeft < len - 1; countLeft++)
+        {
+            if (ICU::isRightToLeft(text.left(countLeft + 1)))
+                break;
+        }
+        for (countRight = 0; countRight < len - 1; countRight++)
+        {
+            if (ICU::isRightToLeft(text.right(countRight + 1)))
+                break;
+        }
+    }
+
+    // Draw parts
+    auto origin = SkPoint::Make(0.0f, 0.0f);
+    bool result = true;
+    if (countLeft > 0)
+        result = drawPart(canvas, textPaint, text.left(countLeft), !rightToLeft, origin);
+    if (result)
+        result = drawPart(canvas, textPaint, text.mid(countLeft, len - countLeft - countRight), rightToLeft, origin);
+    if (result && countRight > 0)
+        result = drawPart(canvas, textPaint, text.right(countRight), !rightToLeft, origin);
+
+    return result;
 }
 
 bool OsmAnd::TextRasterizer_P::rasterize(
@@ -673,6 +722,26 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             (bitmapWidth - style.backgroundImage->width()) / 2.0f,
             (bitmapHeight - style.backgroundImage->height()) / 2.0f
         );
+    }
+
+    // Enable to draw background for each glyph
+    bool visualizeGlyphWidths = false;
+    if (outGlyphWidths && visualizeGlyphWidths)
+    {
+        SkPaint glyphPaint;
+        auto start = 0.0f;
+        auto i = 0;
+        for (auto& width : *outGlyphWidths)
+        {
+            const auto left = start;
+            const auto right = start + width;
+            const auto glyphRect = SkRect::MakeLTRB(left, 0, right, bitmapHeight);
+
+            glyphPaint.setColor(i++ % 2 == 0 ? SK_ColorGREEN : SK_ColorRED);
+            canvas.drawRect(glyphRect, glyphPaint);
+            
+            start = right;
+        }
     }
 
     bool success = true;

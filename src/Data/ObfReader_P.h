@@ -44,6 +44,7 @@ namespace OsmAnd
 
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
         static bool readInfo(const ObfReader_P& reader, std::shared_ptr<ObfInfo>& info);
+        static bool readOsmAndOwner(gpb::io::CodedInputStream* cis, const std::shared_ptr<ObfInfo> info);
 
 #if OSMAND_VERIFY_OBF_READER_THREAD
         const Qt::HANDLE _threadId;

@@ -34,7 +34,7 @@ namespace OsmAnd
         mutable QReadWriteLock _linesLock;
         QHash< IMapKeyedSymbolsProvider::Key, std::shared_ptr<VectorLine> > _lines;
 
-        bool addLine(const std::shared_ptr<VectorLine>& line);
+        bool addLine(const std::shared_ptr<VectorLine> line);
     public:
         virtual ~VectorLinesCollection_P();
 

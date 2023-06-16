@@ -32,12 +32,12 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(ObtainValueTask);
         private:
-            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
+            const std::weak_ptr<WeatherTileResourceProvider_P> _provider;
             
         protected:
         public:
             ObtainValueTask(
-                 const std::shared_ptr<WeatherTileResourceProvider_P> provider,
+                 const std::shared_ptr<WeatherTileResourceProvider_P>& provider,
                  const std::shared_ptr<WeatherTileResourceProvider::ValueRequest> request,
                  const WeatherTileResourceProvider::ObtainValueAsyncCallback callback,
                  const bool collectMetric = false);
@@ -54,7 +54,7 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(ObtainTileTask);
         private:
-            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
+            const std::weak_ptr<WeatherTileResourceProvider_P> _provider;
 
             sk_sp<const SkImage> createTileImage(
                 const QHash<BandIndex, sk_sp<const SkImage>>& bandImages,
@@ -66,7 +66,7 @@ namespace OsmAnd
         protected:
         public:
             ObtainTileTask(
-                 const std::shared_ptr<WeatherTileResourceProvider_P> provider,
+                 const std::shared_ptr<WeatherTileResourceProvider_P>& provider,
                  const std::shared_ptr<WeatherTileResourceProvider::TileRequest> request,
                  const WeatherTileResourceProvider::ObtainTileDataAsyncCallback callback,
                  const bool collectMetric = false);
@@ -83,12 +83,12 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(DownloadGeoTileTask);
         private:
-            std::shared_ptr<WeatherTileResourceProvider_P> _provider;
+            const std::weak_ptr<WeatherTileResourceProvider_P> _provider;
             
         protected:
         public:
             DownloadGeoTileTask(
-                 const std::shared_ptr<WeatherTileResourceProvider_P> provider,
+                 const std::shared_ptr<WeatherTileResourceProvider_P>& provider,
                  const std::shared_ptr<WeatherTileResourceProvider::DownloadGeoTileRequest> request,
                  const WeatherTileResourceProvider::DownloadGeoTilesAsyncCallback callback,
                  const bool collectMetric = false);
@@ -103,8 +103,9 @@ namespace OsmAnd
 
     private:
         ImplementationInterface<WeatherTileResourceProvider> owner;
-        QThreadPool *_threadPool;
         QThreadPool *_obtainValueThreadPool;
+        QThreadPool *_obtainCacheDataThreadPool;
+        QThreadPool *_obtainOnlineDataThreadPool;
 
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
 
@@ -120,8 +121,8 @@ namespace OsmAnd
         bool _lastRequestedLocalData;
         int _requestVersion;
 
-        int getAndDecreasePriority();
-        int getAndDecreaseObtainValuePriority();
+        int getAndIncreasePriority();
+        int getAndIncreaseObtainValuePriority();
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;

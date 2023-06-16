@@ -9,6 +9,7 @@ OsmAnd::BinaryMapObject::BinaryMapObject(
     : ObfMapObject(section_)
     , section(section_)
     , level(level_)
+    , blockId(ObfMapSectionDataBlockId::invalidId())
 {
     attributeMapping = section->getAttributeMapping();
 }

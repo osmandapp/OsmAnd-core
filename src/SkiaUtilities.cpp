@@ -18,6 +18,17 @@ OsmAnd::SkiaUtilities::~SkiaUtilities()
 {
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getEmptyImage(int width, int height)
+{
+    SkBitmap bitmap;
+    if (bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(width, height)))
+    {
+        bitmap.eraseColor(SK_ColorTRANSPARENT);
+        return bitmap.asImage();
+    }
+    return nullptr;
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileInfo)
 {
     return SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
@@ -31,6 +42,27 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data
         [](const void* ptr, void* context) { delete reinterpret_cast<QByteArray*>(context); },
         new QByteArray(data)
     ));
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
+    const QByteArray& byteArray, int width, int height, SkAlphaType alphaType /* = SkAlphaType::kPremul_SkAlphaType */)
+{
+    SkBitmap bitmap;
+   
+    if (!bitmap.tryAllocPixels(SkImageInfo::Make(
+        width,
+        height,
+        SkColorType::kRGBA_8888_SkColorType,
+        alphaType)))
+    {
+        return nullptr;
+    }
+    if (bitmap.computeByteSize() < byteArray.size())
+        return nullptr;
+    memcpy(bitmap.getPixels(), byteArray.data(), byteArray.size());
+
+    bitmap.setImmutable(); // Don't copy when we create an image.
+    return bitmap.asImage();
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(

@@ -263,7 +263,7 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
         const auto switchNode = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
             ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(switchNode);
-        else
+        else if (currentRulesetType != MapStyleRulesetType::Invalid)
         {
             // Several cases:
             //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be copied inside every <case>-child
@@ -281,13 +281,20 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                 return false;
             }
         }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "Style parsing error. Undefined ruleset type at line %" PRIi64 " column:%" PRIi64,
+                      lineNum,
+                      columnNum);
+        }
     }
     else if (tagName == QStringLiteral("case") || tagName == QStringLiteral("filter"))
     {
         const auto caseNode = ruleNodesStack.pop();
         if (!ruleNodesStack.isEmpty())
             ruleNodesStack.top()->oneOfConditionalSubnodes.push_back(caseNode);
-        else
+        else if (currentRulesetType != MapStyleRulesetType::Invalid)
         {
             // In case there's no <switch> parent, create or obtain top-level one with 'tag' and 'value' attributes pair of this case
             const auto ok = insertNodeIntoTopLevelTagValueRule(
@@ -302,6 +309,13 @@ bool OsmAnd::UnresolvedMapStyle_P::processEndElement(OsmAnd::MapStyleRulesetType
                           columnNum);
                 return false;
             }
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                      "Style parsing error. Undefined ruleset type at line %" PRIi64 " column:%" PRIi64,
+                      lineNum,
+                      columnNum);
         }
     }
     else if (tagName == QStringLiteral("apply") || tagName == QStringLiteral("apply_if") || tagName == QStringLiteral("groupFilter"))
@@ -544,20 +558,21 @@ void OsmAnd::XmlTreeSequence::process(
                                     OsmAnd::UnresolvedMapStyle_P *parserObj,
                                     OsmAnd::MapStyleRulesetType &currentRulesetType,
                                     QStack<std::shared_ptr<UnresolvedMapStyle::RuleNode> > &ruleNodesStack) {
-    
-    for (int i = 0; i < attrsMap.size(); i++)
+    QXmlStreamAttributes attrsMapCopy = attrsMap;
+    for (int i = 0; i < attrsMapCopy.size(); i++)
     {
-        if (attrsMap[i].value().contains(SEQ_PLACEHOLDER))
+        if (attrsMapCopy[i].value().contains(SEQ_PLACEHOLDER))
         {
-            QString seqVal = attrsMap[i].value().toString();
-            QString key = attrsMap[i].name().toString();
+            QString namespaceUri = attrsMapCopy[i].namespaceUri().toString();
+            QString name = attrsMapCopy[i].name().toString();
+            QString seqVal = attrsMapCopy[i].value().toString();
             seqVal.replace(SEQ_PLACEHOLDER, QString::number(index));
-            const QXmlStreamAttribute seqAttr(key, seqVal);
-            attrsMap.replace(i, seqAttr);
+            const QXmlStreamAttribute seqAttr(namespaceUri, name, seqVal);
+            attrsMapCopy.replace(i, seqAttr);
         }
     };
 
-    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMap, lineNum, columnNum);
+    parserObj->processStartElement(currentRulesetType, ruleNodesStack, name, attrsMapCopy, lineNum, columnNum);
     for (const auto& child : children) {
         child.lock()->process(index, parserObj, currentRulesetType, ruleNodesStack);
         

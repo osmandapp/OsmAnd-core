@@ -82,6 +82,18 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
         }
 #endif
 
+        const auto statement = prepareStatement(database,
+            QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' AND name='tiles'"));
+        if (!statement || (res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to check table presence: %s",
+                sqlite3_errmsg(database.get()));
+
+            return false;
+        }        
+
         const auto meta = readMeta(database);
 
         const auto sqlHead = QStringLiteral(
@@ -107,61 +119,32 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
             return false;
         }
 
-        const auto statement = prepareStatement(database, QStringLiteral("PRAGMA index_list(tiles)"));
-        if (!statement || (res = stepStatement(statement)) < 0)
+        if (res < 1)
         {
-            LogPrintf(
-                LogSeverityLevel::Error,
-                "Failed to query indices: %s",
-                sqlite3_errmsg(database.get()));
-
-            return false;
-        }
-
-        if (res <= 1)
-        {
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_x_index ON tiles(x)")))
+            if (!withSpecification)
             {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(x): %s",
-                    sqlite3_errmsg(database.get()));
+                if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS IND ON tiles(x,y,z)")))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to create index on tiles(x,y,z): %s",
+                        sqlite3_errmsg(database.get()));
 
-                return false;
+                    return false;
+                }
             }
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_y_index ON tiles(y)")))
+            else
             {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(y): %s",
-                    sqlite3_errmsg(database.get()));
+                if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS IND ON tiles(x,y,z,s)")))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to create index on tiles(x,y,z,s): %s",
+                        sqlite3_errmsg(database.get()));
 
-                return false;
+                    return false;
+                }
             }
-
-            if (!execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_z_index ON tiles(z)")))
-            {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(z): %s",
-                    sqlite3_errmsg(database.get()));
-
-                return false;
-            }
-
-            if (withSpecification &&
-                !execStatement(database, QStringLiteral("CREATE INDEX IF NOT EXISTS tiles_s_index ON tiles(s)")))
-            {
-                LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to create index on tiles(s): %s",
-                    sqlite3_errmsg(database.get()));
-
-                return false;
-            }
-
         }
         resetCachedInfo();
         _database = database;
@@ -176,6 +159,8 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
 {
     if (isOpened())
     {
+        bool onlineTileSource = isOnlineTileSource();
+        
         QWriteLocker scopedLocker(&_lock);
 
         if (!isOpened())
@@ -186,7 +171,7 @@ bool OsmAnd::TileSqliteDatabase_P::close(bool compact /* = true */)
             return false;
         }
 
-        if (compact && isOnlineTileSource() && !vacuum(_database))
+        if (compact && onlineTileSource && !vacuum(_database))
         {
             return false;
         }
@@ -526,7 +511,7 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeMinMaxZoom()
         if (res > 0)
         {
             bool ok = false;
-            
+
             const auto minZoomValue = readStatementValue(statement, 0).toLongLong(&ok);
             if (!ok || minZoomValue < ZoomLevel::MinZoomLevel || minZoomValue > ZoomLevel::MaxZoomLevel)
             {
@@ -591,13 +576,16 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBox31(ZoomLevel zoom, AreaI* pOutBB
 {
     AreaI bbox31 = AreaI::negative();
 
+    bool inverted = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QReadLocker scopedLocker(&_lock);
 
         int res;
 
         const auto statement = prepareStatement(_database, QStringLiteral("SELECT MIN(x), MAX(x), MIN(y), MAX(y) FROM tiles WHERE z=:z"));
-        if (!statement || !configureStatement(statement, zoom) || (res = stepStatement(statement)) < 0)
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom) || (res = stepStatement(statement)) < 0)
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -636,7 +624,7 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBox31(ZoomLevel zoom, AreaI* pOutBB
                 return false;
             }
 
-            if (isInvertedY())
+            if (inverted)
             {
                 minY = (1 << zoom) - 1 - minY;
                 maxY = (1 << zoom) - 1 - maxY;
@@ -651,13 +639,16 @@ bool OsmAnd::TileSqliteDatabase_P::recomputeBBox31(ZoomLevel zoom, AreaI* pOutBB
         }
     }
 
+    const auto minZoom = getMinZoom();
+    const auto maxZoom = getMaxZoom();
+
     {
         QWriteLocker scopedLocker(&_cachedBboxes31Lock);
 
         _cachedBboxes31[zoom] = bbox31;
 
         _cachedBbox31 = AreaI::negative();
-        for (int zoom = getMinZoom(); zoom <= getMaxZoom(); zoom++)
+        for (int zoom = minZoom; zoom <= maxZoom; zoom++)
         {
             const auto& zoomBbox31 = _cachedBboxes31[zoom];
             if (!zoomBbox31.isNegative())
@@ -882,13 +873,15 @@ bool OsmAnd::TileSqliteDatabase_P::getTileIds(QList<TileId>& tileIds, ZoomLevel 
         return false;
     }
 
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QReadLocker scopedLocker(&_lock);
 
         int res;
 
         const auto statement = prepareStatement(_database, QStringLiteral("SELECT x, y FROM tiles WHERE z=:z"));
-        if (!statement || !configureStatement(statement, zoom))
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom))
         {
             LogPrintf(
                     LogSeverityLevel::Error,
@@ -937,6 +930,9 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, uint64_t&
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QReadLocker scopedLocker(&_lock);
 
@@ -950,7 +946,7 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(QList<TileId> tileIds, uint64_t&
         }
 
         const auto statement = prepareStatement(_database, query);
-        if (!statement || !configureStatement(statement, tileIds, zoom))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileIds, zoom))
         {
             LogPrintf(
                     LogSeverityLevel::Error,
@@ -1003,6 +999,9 @@ bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAn
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QReadLocker scopedLocker(&_lock);
 
@@ -1011,7 +1010,7 @@ bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAn
         const auto sql = QStringLiteral("SELECT COUNT(*) FROM tiles WHERE x=:x AND y=:y AND z=:z");
         const auto statement =
             prepareStatement(_database, specification > 0 ? sql + QStringLiteral(" AND s=:s") : sql);
-        if (!statement || !configureStatement(statement, tileId, zoom, specification))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1075,6 +1074,9 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileTime(
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QReadLocker scopedLocker(&_lock);
 
@@ -1083,7 +1085,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileTime(
         const auto sql = QStringLiteral("SELECT time FROM tiles WHERE x=:x AND y=:y AND z=:z");
         const auto statement =
             prepareStatement(_database, specification > 0 ? sql + QStringLiteral(" AND s=:s") : sql);
-        if (!statement || !configureStatement(statement, tileId, zoom, specification))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1144,6 +1146,9 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     const auto timeSupported = isTileTimeSupported();
 
     {
@@ -1155,7 +1160,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
             ? QStringLiteral("SELECT image, time FROM tiles WHERE x=:x AND y=:y AND z=:z")
             : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z")
         );
-        if (!statement || !configureStatement(statement, tileId, zoom))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1208,6 +1213,86 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    int64_t* pOutTime /* = nullptr */) const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    {
+        return false;
+    }
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
+    const auto timeSupported = isTileTimeSupported();
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        int res;
+
+        const auto statement = prepareStatement(_database, timeSupported
+            ? QStringLiteral("SELECT image, time FROM tiles WHERE x=:x AND y=:y AND z=:z")
+            : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z")
+        );
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for %dx%d@%d",
+                tileId.x,
+                tileId.y,
+                zoom);
+            return false;
+        }
+        if ((res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to query for %dx%d@%d data: %s",
+                tileId.x,
+                tileId.y,
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (res > 0)
+        {
+            readStatementValue(statement, 0, outData);
+
+            if (timeSupported && pOutTime)
+            {
+                int64_t time = 0;
+                const auto timeValue = readStatementValue(statement, 1);
+                if (!timeValue.isNull())
+                {
+                    bool ok = false;
+                    const auto timeLL = timeValue.toLongLong(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    time = static_cast<int64_t>(timeLL);
+                }
+                *pOutTime = time;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int specification,
     void* outData,
     int64_t* pOutTime /* = nullptr */) const
@@ -1222,6 +1307,9 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     const auto timeSupported = isTileTimeSupported();
 
     {
@@ -1233,7 +1321,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
             ? QStringLiteral("SELECT image, time FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s")
             : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s")
         );
-        if (!statement || !configureStatement(statement, tileId, zoom, specification))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1294,6 +1382,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     const auto timeSupported = isTileTimeSupported();
 
     {
@@ -1303,7 +1394,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
             ? QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, image, time) VALUES(:x, :y, :z, :data, :time)")
             : QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, image) VALUES(:x, :y, :z, :data)")
         );
-        if (!statement || !configureStatement(statement, tileId, zoom))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1349,15 +1440,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 
     if (zoom < getMinZoom() || zoom > getMaxZoom())
     {
-        if (!recomputeMinMaxZoom())
-        {
-            return false;
-        }
+        recomputeMinMaxZoom();
     }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1374,6 +1459,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     const auto timeSupported = isTileTimeSupported();
 
     {
@@ -1383,7 +1471,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
             ? QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, s, image, time) VALUES(:x, :y, :z, :s, :data, :time)")
             : QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, s, image) VALUES(:x, :y, :z, :s, :data)")
         );
-        if (!statement || !configureStatement(statement, tileId, zoom, specification))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1429,15 +1517,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 
     if (zoom < getMinZoom() || zoom > getMaxZoom())
     {
-        if (!recomputeMinMaxZoom())
-        {
-            return false;
-        }
+        recomputeMinMaxZoom();
     }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1450,13 +1532,16 @@ bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd:
         return false;
     }
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QWriteLocker scopedLocker(&_lock);
 
         const auto sql = QStringLiteral("DELETE FROM tiles WHERE x=:x AND y=:y AND z=:z");
         const auto statement =
             prepareStatement(_database, specification > 0 ? sql + QStringLiteral(" AND s=:s") : sql);
-        if (!statement || !configureStatement(statement, tileId, zoom, specification))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1480,14 +1565,78 @@ bool OsmAnd::TileSqliteDatabase_P::removeTileData(OsmAnd::TileId tileId, OsmAnd:
         }
     }
     
-    if (!recomputeMinMaxZoom())
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification /* = 0 */)
+{
+    if (tileIds.isEmpty())
+    {
+        return true;
+    }
+    
+    if (!isOpened())
     {
         return false;
     }
-    if (!recomputeBBox31(zoom))
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
-        return false;
+        QWriteLocker scopedLocker(&_lock);
+
+        QList<TileId> tileIdsBuff;
+        for (auto& tileId : tileIds)
+        {
+            tileIdsBuff.push_back(tileId);
+            if (tileIdsBuff.size() >= 1024 || tileId == tileIds.last())
+            {
+                auto sql = QStringLiteral("DELETE FROM tiles WHERE (");
+                for (int i = 0; i < tileIdsBuff.size(); i++)
+                {
+                    if (i > 0)
+                    {
+                        sql.append(QStringLiteral(" OR "));
+                    }
+                    sql.append(QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i));
+                }
+                sql.append(QStringLiteral(") AND z=:z"));
+
+                const auto statement =
+                    prepareStatement(_database, specification > 0 ? sql + QStringLiteral(" AND s=:s") : sql);
+                if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileIdsBuff, zoom, specification))
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to configure query for %dx%d@%d",
+                        tileId.x,
+                        tileId.y,
+                        zoom);
+                    return false;
+                }
+
+                if (stepStatement(statement) < 0)
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Error,
+                        "Failed to remove data for %dx%d@%d: %s",
+                        tileId.x,
+                        tileId.y,
+                        zoom,
+                        sqlite3_errmsg(_database.get()));
+                    return false;
+                }
+                tileIdsBuff.clear();
+            }
+        }
     }
+
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1516,14 +1665,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData()
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1535,6 +1678,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
         return false;
     }
 
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QWriteLocker scopedLocker(&_lock);
 
@@ -1542,7 +1687,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
             _database,
             QStringLiteral("DELETE FROM tiles WHERE z=:z")
         );
-        if (!statement || !configureStatement(statement, zoom))
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1562,14 +1707,130 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(ZoomLevel zoom)
         }
     }
 
-    if (!recomputeMinMaxZoom())
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeBiggerTilesData(ZoomLevel zoom)
+{
+    if (!isOpened())
     {
         return false;
     }
-    if (!recomputeBBox31(zoom))
+
+    int invertedZoomValue = getInvertedZoomValue();
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE z<:z")
+        );
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                zoom);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeSpecificTilesData(int specification)
+{
+    if (!isOpened())
     {
         return false;
     }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE s=:s")
+        );
+        if (!statement || !configureStatement(statement, specification))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                specification);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                specification,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::removeOlderTilesData(int64_t time)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(
+            _database,
+            QStringLiteral("DELETE FROM tiles WHERE time<:time")
+        );
+        if (!statement || !configureStatement(statement, time))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for @%d",
+                time);
+            return false;
+        }
+
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to remove data for @%d: %s",
+                time,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1580,6 +1841,9 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, bool strict /* 
     {
         return false;
     }
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
 
     {
         QWriteLocker scopedLocker(&_lock);
@@ -1598,7 +1862,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, bool strict /* 
                 _database,
                 QStringLiteral("DELETE FROM tiles WHERE y>=:t AND x>=:l AND y<=:b AND x<=:r AND z=:z")
             );
-            if (!statement || configureStatement(statement, bbox, static_cast<ZoomLevel>(zoom)))
+            if (!statement || configureStatement(invertedY, invertedZoomValue,
+                statement, bbox, static_cast<ZoomLevel>(zoom)))
             {
                 LogPrintf(
                     LogSeverityLevel::Error,
@@ -1621,14 +1886,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, bool strict /* 
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBoxes31())
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }
@@ -1648,6 +1907,9 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, ZoomLevel zoom,
         (bbox31.right() >> shift) + (strict ? 0 : 1)
     );
 
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
     {
         QWriteLocker scopedLocker(&_lock);
 
@@ -1655,7 +1917,7 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, ZoomLevel zoom,
             _database,
             QStringLiteral("DELETE FROM tiles WHERE y>=:t AND x>=:l AND y<=:b AND x<=:r AND z=:z")
         );
-        if (!statement || !configureStatement(statement, bbox, zoom))
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, bbox, zoom))
         {
             LogPrintf(
                 LogSeverityLevel::Error,
@@ -1677,14 +1939,8 @@ bool OsmAnd::TileSqliteDatabase_P::removeTilesData(AreaI bbox31, ZoomLevel zoom,
         }
     }
 
-    if (!recomputeMinMaxZoom())
-    {
-        return false;
-    }
-    if (!recomputeBBox31(zoom))
-    {
-        return false;
-    }
+    recomputeMinMaxZoom();
+    recomputeBBox31(zoom);
 
     return true;
 }
@@ -1709,16 +1965,18 @@ bool OsmAnd::TileSqliteDatabase_P::compact()
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
-    const std::shared_ptr<sqlite3_stmt>& statement,
-    OsmAnd::AreaI bbox,
-    OsmAnd::ZoomLevel zoom) const
+        bool invertedY,
+        int invertedZoomValue,
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        OsmAnd::AreaI bbox,
+        OsmAnd::ZoomLevel zoom) const
 {
     auto t = bbox.top();
     auto l = bbox.left();
     auto b = bbox.bottom();
     auto r = bbox.right();
 
-    if (isInvertedY())
+    if (invertedY)
     {
         t = (1 << zoom) - 1 - t;
         b = (1 << zoom) - 1 - b;
@@ -1726,7 +1984,7 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
         qSwap(t, b);
     }
 
-    return configureStatement(statement, zoom)
+    return configureStatement(invertedZoomValue, statement, zoom)
         && bindStatementParameter(statement, QStringLiteral(":t"), t)
         && bindStatementParameter(statement, QStringLiteral(":l"), l)
         && bindStatementParameter(statement, QStringLiteral(":b"), b)
@@ -1734,32 +1992,37 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
-    const std::shared_ptr<sqlite3_stmt>& statement,
-    OsmAnd::TileId tileId,
-    OsmAnd::ZoomLevel zoom,
-    const int specification /*= 0*/) const
+        bool invertedY,
+        int invertedZoomValue,
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        OsmAnd::TileId tileId,
+        OsmAnd::ZoomLevel zoom,
+        const int specification /*= 0*/) const
 {
-    if (isInvertedY())
+    if (invertedY)
     {
         tileId.y = (1 << zoom) - 1 - tileId.y;
     }
 
-    return configureStatement(statement, zoom)
+    return configureStatement(invertedZoomValue, statement, zoom)
         && bindStatementParameter(statement, QStringLiteral(":x"), tileId.x)
         && bindStatementParameter(statement, QStringLiteral(":y"), tileId.y)
         && (specification == 0 || bindStatementParameter(statement, QStringLiteral(":s"), specification));
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        bool invertedY,
+        int invertedZoomValue,
         const std::shared_ptr<sqlite3_stmt>& statement,
-        QList<TileId> tileIds,
-        OsmAnd::ZoomLevel zoom) const
+        QList<TileId>& tileIds,
+        OsmAnd::ZoomLevel zoom,
+        const int specification /*= 0*/) const
 {
-    bool res = configureStatement(statement, zoom);
+    bool res = configureStatement(invertedZoomValue, statement, zoom);
     int i = 0;
-    for (TileId tileId : tileIds)
+    for (auto& tileId : tileIds)
     {
-        if (isInvertedY())
+        if (invertedY)
         {
             tileId.y = (1 << zoom) - 1 - tileId.y;
         }
@@ -1773,16 +2036,30 @@ bool OsmAnd::TileSqliteDatabase_P::configureStatement(
 }
 
 bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        int invertedZoomValue,
         const std::shared_ptr<sqlite3_stmt>& statement,
         OsmAnd::ZoomLevel zoom) const
 {
-    int invertedZoomValue;
-    if ((invertedZoomValue = getInvertedZoomValue()) > 0)
+    if (invertedZoomValue > 0)
     {
         zoom = static_cast<ZoomLevel>(invertedZoomValue - zoom);
     }
 
     return bindStatementParameter(statement, QStringLiteral(":z"), static_cast<int>(zoom));
+}
+
+bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        int specification) const
+{
+    return bindStatementParameter(statement, QStringLiteral(":s"), specification);
+}
+
+bool OsmAnd::TileSqliteDatabase_P::configureStatement(
+        const std::shared_ptr<sqlite3_stmt>& statement,
+        int64_t time) const
+{
+    return bindStatementParameter(statement, QStringLiteral(":time"), static_cast<qlonglong>(time));
 }
 
 std::shared_ptr<sqlite3_stmt> OsmAnd::TileSqliteDatabase_P::prepareStatement(

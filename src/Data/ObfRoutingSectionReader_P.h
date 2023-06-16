@@ -85,6 +85,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& tree,
+            const DataBlockId& blockId,
             QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
             const AreaI* bbox31,
             const FilterRoadsByIdFunction filterById,

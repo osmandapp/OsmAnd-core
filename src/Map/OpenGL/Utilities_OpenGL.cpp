@@ -28,6 +28,22 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::vec3& planeN,
     return true;
 }
 
+bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::dvec3& planeN, const glm::dvec3& planeO, const glm::dvec3& rayD, const glm::dvec3& rayO, double& distance)
+{
+    const auto numerator = glm::dot(planeO - rayO, planeN);
+    if (qFuzzyIsNull(numerator))
+    {
+        distance = std::numeric_limits<double>::quiet_NaN();
+        return true;
+    }
+    const auto denominator = glm::dot(rayD, planeN);
+    if (qFuzzyIsNull(denominator))
+        return false;
+
+    distance = numerator / denominator;
+    return true;
+}
+
 bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX)
 {
     const auto line = line1 - line0;

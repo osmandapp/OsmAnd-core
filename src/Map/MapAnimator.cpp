@@ -196,6 +196,14 @@ void OsmAnd::MapAnimator::parabolicAnimateTargetWith(
     _p->parabolicAnimateTargetWith(velocity, deceleration, key);
 }
 
+void OsmAnd::MapAnimator::animateFlatTargetWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const Key key /*= nullptr*/)
+{
+    _p->animateFlatTargetWith(velocity, deceleration, key);
+}
+
 void OsmAnd::MapAnimator::animateAzimuthBy(
     const float deltaValue,
     const float duration,

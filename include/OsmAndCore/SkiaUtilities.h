@@ -20,11 +20,21 @@ namespace OsmAnd
 {
     struct OSMAND_CORE_API SkiaUtilities Q_DECL_FINAL
     {
+        static sk_sp<SkImage> getEmptyImage(
+            int width,
+            int height);
+
         static sk_sp<SkImage> createImageFromFile(
             const QFileInfo& fileInfo);
 
         static sk_sp<SkImage> createImageFromData(
             const QByteArray& data);
+        
+        static sk_sp<SkImage> createSkImageARGB888With(
+            const QByteArray& byteArray,
+            int width,
+            int height,
+            SkAlphaType alphaType = SkAlphaType::kPremul_SkAlphaType);
 
         static sk_sp<SkImage> scaleImage(
             const sk_sp<const SkImage>& original,

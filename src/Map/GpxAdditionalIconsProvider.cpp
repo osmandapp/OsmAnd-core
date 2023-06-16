@@ -267,7 +267,7 @@ void OsmAnd::GpxAdditionalIconsProvider::obtainDataAsync(const IMapDataProvider:
                                                  const IMapDataProvider::ObtainDataAsyncCallback callback,
                                                  const bool collectMetric /*= false*/)
 {
-    OsmAnd::MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    OsmAnd::MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
 OsmAnd::GpxAdditionalIconsProvider::Data::Data(const OsmAnd::TileId tileId_,

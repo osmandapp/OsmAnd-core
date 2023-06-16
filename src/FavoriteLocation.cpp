@@ -15,7 +15,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& group_,
     const QString& icon_,
     const QString& background_,
-    const ColorRGB color_,
+    const ColorARGB color_,
     const QHash<QString, QString>& extensions_,
     const bool calendarEvent_)
     : _p(new FavoriteLocation_P(this))
@@ -50,7 +50,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& group_,
     const QString& icon_,
     const QString& background_,
-    const ColorRGB color_,
+    const ColorARGB color_,
     const QHash<QString, QString>& extensions_,
     const bool calendarEvent_)
     : _p(new FavoriteLocation_P(this))
@@ -220,18 +220,18 @@ void OsmAnd::FavoriteLocation::setBackground(const QString& newBackground)
     _p->setBackground(newBackground);
 }
 
-OsmAnd::ColorRGB OsmAnd::FavoriteLocation::getColor() const
+OsmAnd::ColorARGB OsmAnd::FavoriteLocation::getColor() const
 {
-    auto undefinedColor = OsmAnd::ColorRGB(0xFF, 0xFF, 0xFF);
-    auto defaultColor = OsmAnd::ColorRGB(0x3F, 0x51, 0xB5);
+    auto undefinedColor = OsmAnd::ColorARGB(0xFF, 0xFF, 0xFF, 0xFF);
+    auto defaultColor = OsmAnd::ColorARGB(0xFF, 0x3F, 0x51, 0xB5);
 
-    OsmAnd::ColorRGB color = _p->getColor();
+    OsmAnd::ColorARGB color = _p->getColor();
     if (color == undefinedColor)
         return defaultColor;
     return color;
 }
 
-void OsmAnd::FavoriteLocation::setColor(const ColorRGB newColor)
+void OsmAnd::FavoriteLocation::setColor(const ColorARGB newColor)
 {
     _p->setColor(newColor);
 }

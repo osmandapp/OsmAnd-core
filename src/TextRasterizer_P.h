@@ -103,6 +103,7 @@ namespace OsmAnd
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
+        bool drawPart(SkCanvas& canvas, const TextPaint& textPaint, QString text, bool rtl, SkPoint& origin) const;
         bool drawText(SkCanvas& canvas, const TextPaint& textPaint) const;
 
     protected:

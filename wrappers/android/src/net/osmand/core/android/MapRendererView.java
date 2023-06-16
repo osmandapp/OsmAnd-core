@@ -8,6 +8,7 @@ import android.widget.FrameLayout;
 import android.os.SystemClock;
 
 import net.osmand.core.jni.AreaI;
+import net.osmand.core.jni.ElevationConfiguration;
 import net.osmand.core.jni.FColorRGB;
 import net.osmand.core.jni.IMapElevationDataProvider;
 import net.osmand.core.jni.IMapKeyedSymbolsProvider;
@@ -22,6 +23,8 @@ import net.osmand.core.jni.MapRendererSetupOptions;
 import net.osmand.core.jni.MapRendererState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
+import net.osmand.core.jni.PointD;
+import net.osmand.core.jni.QVectorPointI;
 import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.jni.MapSymbolInformationList;
 import net.osmand.core.jni.MapAnimator;
@@ -46,6 +49,9 @@ import java.util.List;
  */
 public abstract class MapRendererView extends FrameLayout {
     private static final String TAG = "OsmAndCore:Android/MapRendererView";
+
+    private final static long RELEASE_STOP_TIMEOUT = 4000;
+    private final static long RELEASE_WAIT_TIMEOUT = 400;
 
     /**
      * Main GLSurfaceView
@@ -125,6 +131,10 @@ public abstract class MapRendererView extends FrameLayout {
 
     private int frameId;
 
+    private boolean isPresent;
+    private volatile Runnable releaseTask;
+    private volatile boolean waitRelease;
+
     private List<MapRendererViewListener> listeners = new ArrayList<>();
 
     public interface MapRendererViewListener {
@@ -172,6 +182,12 @@ public abstract class MapRendererView extends FrameLayout {
         _mapMarkersAnimator.setMapRenderer(_mapRenderer);
     }
 
+    @Override
+    public void setVisibility(int visibility) {
+        _glSurfaceView.setVisibility(visibility);
+        super.setVisibility(visibility);
+    }
+    
     public void addListener(MapRendererViewListener listener) {
         if (!this.listeners.contains(listener)) {
             List<MapRendererViewListener> listeners = new ArrayList<>();
@@ -206,26 +222,41 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
-    private void scheduleReleaseRendering() {
-        _glSurfaceView.queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                if (!_mapRenderer.isRenderingInitialized()) {
+    private void releaseRendering() {
+        if(releaseTask == null) {
+            waitRelease = true;
+            releaseTask = new Runnable() {
+                @Override
+                public void run() {
+                    if (_mapRenderer.isRenderingInitialized()) {
+                        Log.v(TAG, "Forcibly releasing rendering by schedule");
+                        _mapRenderer.releaseRendering(true);
+                    }
+                    synchronized (this) {
+                        waitRelease = false;
+                        this.notifyAll();
+                    }                
+                }
+            };
+            _glSurfaceView.queueEvent(releaseTask);
+        }
+        synchronized (releaseTask) {
+            long stopTime = System.currentTimeMillis();
+            while(waitRelease){
+                if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT)
                     return;
-                }
-
-                EGL10 egl = (EGL10) EGLContext.getEGL();
-                if (egl == null ||
-                        egl.eglGetCurrentContext() == null ||
-                        egl.eglGetCurrentContext() == EGL10.EGL_NO_CONTEXT) {
-                    Log.v(TAG, "Forcibly releasing rendering by schedule");
-                    _mapRenderer.releaseRendering(true);
-                } else {
-                    Log.v(TAG, "Releasing rendering by schedule");
-                    _mapRenderer.releaseRendering();
-                }
+                try {
+                    releaseTask.wait(RELEASE_WAIT_TIMEOUT);
+                } catch (InterruptedException ex) {}
             }
-        });
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Log.v(TAG, "onAttachedToWindow()");
+        isPresent = true;
     }
 
     @Override
@@ -233,10 +264,14 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "onDetachedFromWindow()");
         NativeCore.checkIfLoaded();
 
-        // Surface and context are going to be destroyed, thus try to release rendering
-        // before that will happen
-        Log.v(TAG, "Scheduling rendering release due to onDetachedFromWindow()");
-        scheduleReleaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Surface and context are going to be destroyed, thus try to release rendering
+            // before that will happen
+            Log.v(TAG, "Rendering release due to onDetachedFromWindow()");
+            releaseRendering();
+        }
 
         super.onDetachedFromWindow();
     }
@@ -244,8 +279,7 @@ public abstract class MapRendererView extends FrameLayout {
     public final void handleOnCreate(Bundle savedInstanceState) {
         Log.v(TAG, "handleOnCreate()");
         NativeCore.checkIfLoaded();
-
-        //TODO: do something here
+        isPresent = true;
     }
 
     public final void handleOnSaveInstanceState(Bundle outState) {
@@ -259,11 +293,15 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "handleOnDestroy()");
         NativeCore.checkIfLoaded();
 
-        // Don't delete map renderer here, since context destruction will happen later.
-        // Map renderer will be automatically deleted by GC anyways. But queue
-        // action to release rendering
-        Log.v(TAG, "Scheduling rendering release due to handleOnDestroy()");
-        scheduleReleaseRendering();
+        if(isPresent)
+        {
+            isPresent = false;
+            // Don't delete map renderer here, since context destruction will happen later.
+            // Map renderer will be automatically deleted by GC anyways. But queue
+            // action to release rendering
+            Log.v(TAG, "Rendering release due to handleOnDestroy()");
+            releaseRendering();
+        }
     }
 
     public final void handleOnLowMemory() {
@@ -457,6 +495,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMapLayerConfiguration(layerIndex, mapLayerConfiguration);
     }
 
+    public final boolean setElevationConfiguration(ElevationConfiguration elevationConfiguration) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setElevationConfiguration(elevationConfiguration);
+    }
+
     public final boolean setElevationDataProvider(IMapElevationDataProvider provider) {
         NativeCore.checkIfLoaded();
 
@@ -599,13 +643,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         if (_windowWidth > 0 && _windowHeight > 0)
-        {
             return _mapRenderer.setMapTargetLocation(target31);
-        }
         else
-        {
             return _mapRenderer.setTarget(target31);
-        }
+    }
+
+    public final boolean setTarget(PointI target31, float heightInMeters) {
+        NativeCore.checkIfLoaded();
+
+        if (_windowWidth > 0 && _windowHeight > 0)
+            return _mapRenderer.setMapTargetLocation(target31, heightInMeters);
+        else
+            return _mapRenderer.setTarget(target31);
     }
 
     public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
@@ -639,6 +688,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMapTarget(forcedUpdate, disableUpdate);
     }
 
+    public final boolean resetMapTarget() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTarget();
+    }
+
+    public final boolean resetMapTargetPixelCoordinates(PointI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.resetMapTargetPixelCoordinates(screenPoint);
+    }
+
     public final boolean setMapTargetPixelCoordinates(PointI screenPoint) {
         NativeCore.checkIfLoaded();
 
@@ -661,6 +722,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setMapTargetLocation(location31, forcedUpdate, disableUpdate);
+    }
+
+    public final float getMapTargetHeightInMeters() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getMapTargetHeightInMeters();
     }
 
     public final float getZoom() {
@@ -797,6 +864,21 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getLocationFromElevatedPoint(screenPoint, location31);
     }
 
+    public final float getHeightAndLocationFromElevatedPoint(PointI screenPoint, PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getHeightAndLocationFromElevatedPoint(screenPoint, location31);
+    }
+
+    public final boolean getZoomAndRotationAfterPinch(PointI firstLocation31, float firstHeight, PointI firstPoint,
+                                                    PointI secondLocation31, float secondHeight, PointI secondPoint,
+                                                    PointD zoomAndRotate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getZoomAndRotationAfterPinch(firstLocation31, firstHeight, firstPoint,
+                secondLocation31, secondHeight, secondPoint, zoomAndRotate);
+    }
+
     public final float getLocationHeightInMeters(PointI location31) {
         NativeCore.checkIfLoaded();
 
@@ -850,6 +932,18 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.isPositionVisible(position31);
+    }
+
+    public final boolean isPathVisible(QVectorPointI path31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isPathVisible(path31);
+    }
+
+    public final boolean isAreaVisible(AreaI area31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.isAreaVisible(area31);
     }
 
     public final boolean isTileVisible(int tileX, int tileY, int zoom) {

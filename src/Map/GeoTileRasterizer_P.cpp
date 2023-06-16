@@ -245,7 +245,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psInterpolateOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for interpolate GeoTIFF %dx%d@%d", tileId.x, tileId.y, zoom);
+                "Failed to create options for interpolate GeoTIFF %dx%d@%d. ProjDB path: %s. Error: %s", tileId.x, tileId.y, zoom, qPrintable(projSearchPath), CPLGetLastErrorMsg());
             return QHash<BandIndex, sk_sp<const SkImage>>();
         }
         int bWarpError = FALSE;
@@ -288,7 +288,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psColorizeOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to to create options for colorize GeoTIFF %dx%d@%d", tileId.x, tileId.y, zoom);
+                "Failed to to create options for colorize GeoTIFF %dx%d@%d: %s", tileId.x, tileId.y, zoom, CPLGetLastErrorMsg());
             return QHash<BandIndex, sk_sp<const SkImage>>();
         }
 
@@ -345,7 +345,7 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for result tile %dx%dx%d band=%d", tileX, tileX, zoom, band);
+                "Failed to create options for result tile %dx%dx%d band=%d error=%s", tileX, tileX, zoom, band, CPLGetLastErrorMsg());
             continue;
         }
         int bTranslateError = FALSE;
@@ -566,12 +566,13 @@ QHash<OsmAnd::BandIndex, QList<std::shared_ptr<OsmAnd::GeoContour>>> OsmAnd::Geo
         if (!psCropOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for crop GeoTIFF %dx%d@%d to %s / %s.",
+                "Failed to create options for crop GeoTIFF %dx%d@%d to %s / %s. Error: %s",
                 tileId.x,
                 tileId.y,
                 zoom,
                 qPrintable(tlExtLatLon.toQString()),
-                qPrintable(brExtLatLon.toQString()));
+                qPrintable(brExtLatLon.toQString()),
+                CPLGetLastErrorMsg());
             return QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>();
         }
         int bCropError = FALSE;
@@ -687,7 +688,7 @@ QList<std::shared_ptr<OsmAnd::GeoContour>> OsmAnd::GeoTileRasterizer_P::evaluate
     if (err != CE_None)
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to generate gdal layer contour lines");
+            "Failed to generate gdal layer contour lines: %s", CPLGetLastErrorMsg());
         return QList<std::shared_ptr<GeoContour>>();
     }
     

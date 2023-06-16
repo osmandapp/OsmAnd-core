@@ -34,6 +34,82 @@ namespace OsmAnd
     protected:
         ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner);
 
+        class UniqueBinaryMapObjectId
+        {
+        private:
+        protected:
+        public:
+            inline UniqueBinaryMapObjectId(const ObfMapSectionReader::DataBlockId& blockId_, const ObfObjectId objectId_)
+                : blockId(blockId_)
+                , objectId(objectId_)
+            {
+            }
+            
+            inline virtual ~UniqueBinaryMapObjectId()
+            {
+            }
+
+            const ObfMapSectionReader::DataBlockId blockId;
+            const ObfObjectId objectId;
+            
+            inline operator uint64_t() const
+            {
+                const int prime = 31;
+                int result = 1;
+                result = prime * result + qHash(static_cast<uint64_t>(blockId));
+                result = prime * result + qHash(static_cast<uint64_t>(objectId));
+                return result;
+            }
+    
+            inline bool operator==(const UniqueBinaryMapObjectId& that) const
+            {
+                return blockId == that.blockId && objectId == that.objectId;
+            }
+
+            inline bool operator!=(const UniqueBinaryMapObjectId& that) const
+            {
+                return blockId != that.blockId || objectId != that.objectId;
+            }
+        };
+
+        class UniqueRoadId
+        {
+        private:
+        protected:
+        public:
+            inline UniqueRoadId(const ObfRoutingSectionReader::DataBlockId& blockId_, const ObfObjectId objectId_)
+                : blockId(blockId_)
+                , objectId(objectId_)
+            {
+            }
+            
+            inline virtual ~UniqueRoadId()
+            {
+            }
+
+            const ObfRoutingSectionReader::DataBlockId blockId;
+            const ObfObjectId objectId;
+            
+            inline operator uint64_t() const
+            {
+                const int prime = 31;
+                int result = 1;
+                result = prime * result + qHash(static_cast<uint64_t>(blockId));
+                result = prime * result + qHash(static_cast<uint64_t>(objectId));
+                return result;
+            }
+    
+            inline bool operator==(const UniqueRoadId& that) const
+            {
+                return blockId == that.blockId && objectId == that.objectId;
+            }
+
+            inline bool operator!=(const UniqueRoadId& that) const
+            {
+                return blockId != that.blockId || objectId != that.objectId;
+            }
+        };
+
         class BinaryMapObjectsDataBlocksCache : public ObfMapSectionReader::DataBlocksCache
         {
             Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsDataBlocksCache);
@@ -51,7 +127,7 @@ namespace OsmAnd
                 const AreaI* const queryArea31 = nullptr) const;
         };
         const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _binaryMapObjectsDataBlocksCache;
-        mutable SharedByZoomResourcesContainer<ObfObjectId, const BinaryMapObject> _sharedBinaryMapObjects;
+        mutable SharedByZoomResourcesContainer<UniqueBinaryMapObjectId, const BinaryMapObject> _sharedBinaryMapObjects;
 
         class RoadsDataBlocksCache : public ObfRoutingSectionReader::DataBlocksCache
         {
@@ -71,7 +147,7 @@ namespace OsmAnd
                 const AreaI* const queryArea31 = nullptr) const;
         };
         const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache> _roadsDataBlocksCache;
-        mutable SharedResourcesContainer<ObfObjectId, const Road> _sharedRoads;
+        mutable SharedResourcesContainer<UniqueRoadId, const Road> _sharedRoads;
 
         enum class TileState
         {
@@ -147,6 +223,8 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > referencedRoadsDataBlocks;
             QList< std::shared_ptr<const Road> > referencedRoads;
         };
+
+        static QString formatObfSectionName(const std::shared_ptr<const ObfSectionInfo>& sectionInfo, const bool withDate);
     public:
         ~ObfMapObjectsProvider_P();
 

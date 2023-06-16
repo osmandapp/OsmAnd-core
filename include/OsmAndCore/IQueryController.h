@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 
 namespace OsmAnd
 {
@@ -20,6 +21,12 @@ namespace OsmAnd
 
         virtual bool isAborted() const = 0;
     };
+
+    SWIG_EMIT_DIRECTOR_BEGIN(IQueryController);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            bool,
+            isAborted);
+    SWIG_EMIT_DIRECTOR_END(IQueryController);
 }
 
 #endif // !defined(_OSMAND_CORE_I_QUERY_CONTROLLER_H_)

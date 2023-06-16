@@ -17,6 +17,8 @@
 #include <QVector>
 #include <QSet>
 #include <QByteArray>
+#include <QLocale>
+#include <QDateTime>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -26,6 +28,7 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Bitmask.h>
+#include <OsmAndCore/Logging.h>
 
 namespace OsmAnd
 {
@@ -40,6 +43,12 @@ namespace OsmAnd
             localtime_r(&time, &tm_snapshot); // POSIX
 #endif
             return tm_snapshot;
+        }
+        
+        inline static QString getDateTimeString(int64_t dateTime)
+        {
+            QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
+            return locale.toString(QDateTime::fromMSecsSinceEpoch(dateTime, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
         }
 
         inline static double toRadians(const double angle)
@@ -122,6 +131,14 @@ namespace OsmAnd
             return { (static_cast<double>(p.x) / tileSize31), (static_cast<double>(p.y) / tileSize31) };
         }
 
+        inline static PointI convertFloatTo31(const PointF& point, const PointI& target31, const ZoomLevel zoom)
+        {
+            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
+            const auto offsetFromTarget31 = static_cast<PointD>(point) * static_cast<double>(tileSize31);
+            const PointI64 location = static_cast<PointI64>(target31) + static_cast<PointI64>(offsetFromTarget31);
+            return Utilities::normalizeCoordinates(location, ZoomLevel::ZoomLevel31);
+        }
+
         inline static double normalizeLatitude(double latitude)
         {
             while (latitude < -90.0 || latitude > 90.0)
@@ -159,6 +176,18 @@ namespace OsmAnd
 
             return qPow(2, zoom);
         }
+        
+        inline static double getSignedAngle(const PointD& vector1N, const PointD& vector2N)
+        {
+            const int sign = dotProduct(vector1N, PointD(vector2N.y, -vector2N.x)) < 0 ? -1 : +1;
+            const auto signedAngle = sign * qAcos(dotProduct(vector1N, vector2N)); 
+            return Utilities::normalizedAngleRadians(signedAngle);
+        }
+
+        inline static double dotProduct(const PointD& vector1, const PointD& vector2)
+        {
+            return vector1.x * vector2.x + vector1.y * vector2.y;
+        }
 
         inline static PointD getScaleDivisor31ToPixel(const PointI& areaSizeInPixels, const ZoomLevel zoom)
         {
@@ -190,6 +219,32 @@ namespace OsmAnd
             int sign = y < 0 ? -1 : 1;
             double result = atan(sign * sinh(M_PI * (1 - 2 * y / getPowZoom(zoom)))) * 180. / M_PI;
             return result;
+        }
+
+        inline static PointD getAnglesFrom31(const PointI& p)
+        {
+            const auto intFull = static_cast<double>(INT32_MAX) + 1.0;
+            const auto sign = p.y < 0 ? -1.0 : 1.0;
+            return PointD(
+                static_cast<double>(p.x) / intFull * M_PI * 2.0 - M_PI,
+                atan(sign * sinh(M_PI * (1.0 - 2.0 * static_cast<double>(p.y) / intFull))));
+        }
+
+        inline static PointI get31FromAngles(const PointD& a)
+        {
+            const int64_t intMax = INT32_MAX;
+            const auto intFull = intMax + 1;
+            double eval = log(tan(a.y) + 1.0 / cos(a.y));
+            if (eval > M_PI)
+                eval = M_PI;
+            return PointI(
+                static_cast<int32_t>(static_cast<int64_t>((a.x + M_PI) / (M_PI * 2.0) * intFull) % intFull),
+                static_cast<int32_t>(std::min(static_cast<int64_t>((1.0 - eval / M_PI) / 2.0 * intFull), intMax)));
+        }
+
+        inline static ZoomLevel clipZoomLevel(ZoomLevel zoom)
+        {
+            return qBound(MinZoomLevel, zoom, MaxZoomLevel);
         }
 
         inline static double x31toMeters(const int32_t x31)
@@ -242,15 +297,17 @@ namespace OsmAnd
 
         inline static double distance(const double xLonA, const double yLatA, const double xLonB, const double yLatB)
         {
-            double R = 6371; // km
+            double R = 6372.8; // for haversine use R = 6372.8 km instead of 6371 km
             double dLat = toRadians(yLatB - yLatA);
             double dLon = toRadians(xLonB - xLonA);
             double a =
                 qSin(dLat / 2.0) * qSin(dLat / 2.0) +
                 qCos(toRadians(yLatA)) * qCos(toRadians(yLatB)) *
                 qSin(dLon / 2.0) * qSin(dLon / 2.0);
-            double c = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a));
-            return R * c * 1000.0;
+            //double c = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a));
+            //return R * c * 1000.0;
+            // simplyfy haversine:
+            return (2 * R * 1000 * qAsin(qSqrt(a)));
         }
 
         inline static double distance(const LatLon& a, const LatLon& b)
@@ -317,7 +374,7 @@ namespace OsmAnd
         {
             int64_t area = 0.0;
 
-            assert(points.first() == points.last());
+            // assert(points.first() == points.last());
 
             auto p0 = points.constData();
             auto p1 = p0 + 1;
@@ -805,6 +862,47 @@ namespace OsmAnd
         static PointI normalizeCoordinates(const PointI64& input, ZoomLevel zoom);
 #endif // !defined(SWIG)
 
+        inline static PointI wrapCoordinates(const PointI64& input)
+        {
+            const int64_t negMask = INT64_MAX ^ INT32_MAX;
+            const int64_t posMask = INT32_MAX;
+            const PointI64 output(
+                input.x < 0 ? input.x | negMask : input.x & posMask,
+                input.y < 0 ? input.y | negMask : input.y & posMask);
+            return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
+        }
+
+        inline static PointI shortestVector31(const PointI& offset)
+        {
+            const int intHalf = INT32_MAX / 2 + 1;
+            PointI offset31 = offset;
+            if (offset31.x >= intHalf)
+                offset31.x = offset31.x - INT32_MAX - 1;
+            else if (offset31.x < -intHalf)
+                offset31.x = offset31.x + INT32_MAX + 1;
+            if (offset31.y >= intHalf)
+                offset31.y = offset31.y - INT32_MAX - 1;
+            else if (offset31.y < -intHalf)
+                offset31.y = offset31.y + INT32_MAX + 1;
+            return offset31;
+        }
+
+        inline static PointI shortestVector31(const PointI& p0, const PointI& p1)
+        {
+            return shortestVector31(p1 - p0);
+        }
+
+        inline static PointI shortestLongitudeVector(const PointI& offset)
+        {
+            const int intHalf = INT32_MAX / 2 + 1;
+            PointI offset31 = offset;
+            if (offset31.x >= intHalf)
+                offset31.x = offset31.x - INT32_MAX - 1;
+            else if (offset31.x < -intHalf)
+                offset31.x = offset31.x + INT32_MAX + 1;
+            return offset31;
+        }
+
         enum class CHCode : uint8_t
         {
             Left = 0,
@@ -832,6 +930,7 @@ namespace OsmAnd
         }
 
         static int extractFirstInteger(const QString& s);
+        static int extractIntegerNumber(const QString& s);
         static bool extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);
         static double parseSpeed(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static double parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
@@ -895,6 +994,8 @@ namespace OsmAnd
         static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
+        static bool isPointInsidePolygon(const PointI point,
+                                                        const QVector<PointI> &polygon);
 
         inline static void resizeVector(const PointF& start, PointF& end, float sizeIncrement)
         {
@@ -920,8 +1021,99 @@ namespace OsmAnd
             }
             return res;
         }
+
+        inline static glm::vec3 calculatePlaneN(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+        {
+            const auto ab = b - a;
+            const auto ac = c - a;
+
+            const auto x = ab.y * ac.z - ab.z * ac.y;
+            const auto y = ab.z * ac.x - ab.x * ac.z;
+            const auto z = ab.x * ac.y - ab.y * ac.x;
+            return glm::normalize(glm::vec3(x, y, z));
+        }
         
+        static bool calculateIntersection(const PointI64& p1, const PointI64& p0, const AreaI& bbox, PointI64& pX);
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
+        
+        static void calculateShortestPath(const PointI64& start64, const PointI& start31, const PointI& finish31,
+            PointI64& minCoordinates, PointI64& maxCoordinates, QVector<PointI64>* path = nullptr);
+
+        // Log formatted coordinates for https://www.gpsvisualizer.com/
+        inline static void logDebugTileBBox(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const QString& name = "bbox",
+            const QString& color = "red")
+        {
+            QVector<PointI> path;
+            path.push_back(PointI(tileId.x + 0, tileId.y + 0));
+            path.push_back(PointI(tileId.x + 1, tileId.y + 0));
+            path.push_back(PointI(tileId.x + 1, tileId.y + 1));
+            path.push_back(PointI(tileId.x + 0, tileId.y + 1));
+            path.push_back(path.front());
+            logDebugPath(path, zoom, name, color);
+        }
+
+        inline static void logDebugBBox(
+            const AreaI& bbox,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "bbox",
+            const QString& color = "red")
+        {
+            QVector<PointI> path;
+            path.push_back(bbox.topLeft);
+            path.push_back(bbox.topRight());
+            path.push_back(bbox.bottomRight);
+            path.push_back(bbox.bottomLeft());
+            path.push_back(path.first());
+            logDebugPath(path, zoom, name, color);
+        }
+
+        inline static void logDebugPath(
+            const QVector<PointI>& path,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "path",
+            const QString& color = "green")
+        {
+            LogPrintf(LogSeverityLevel::Debug, "type, lat, lon, name, color");
+            for (auto i = 0; i < path.size(); i++)
+            {
+                const auto point = path[i];
+                const auto lat = getLatitudeFromTile(zoom, point.y);
+                const auto lon = getLongitudeFromTile(zoom, point.x);
+                if (i == 0)
+                {
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2, %3, %4")
+                        .arg(lat, 2, 'f', 10, '0')
+                        .arg(lon, 2, 'f', 10, '0')
+                        .arg(name)
+                        .arg(color)));
+                }
+                else
+                {
+                    LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("T, %1, %2")
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')));
+                }
+            }
+        }
+
+        inline static void logDebugPoint(
+            const PointI point,
+            const ZoomLevel zoom = ZoomLevel31,
+            const QString& name = "point",
+            const QString& color = "blue")
+        {
+            LogPrintf(LogSeverityLevel::Debug, "type, lat, lon, name, color");
+            const auto lat = getLatitudeFromTile(zoom, point.y);
+            const auto lon = getLongitudeFromTile(zoom, point.x);
+            LogPrintf(LogSeverityLevel::Debug, qPrintable(QString::fromLatin1("W, %1, %2, %3, %4")
+                    .arg(lat, 2, 'f', 10, '0')
+                    .arg(lon, 2, 'f', 10, '0')
+                    .arg(name)
+                    .arg(color)));
+        }
 
     private:
         Utilities();

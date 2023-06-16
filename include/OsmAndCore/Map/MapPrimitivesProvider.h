@@ -19,7 +19,9 @@
 namespace OsmAnd
 {
     class MapPrimitivesProvider_P;
-    class OSMAND_CORE_API MapPrimitivesProvider : public IMapTiledDataProvider
+    class OSMAND_CORE_API MapPrimitivesProvider
+        : public std::enable_shared_from_this<MapPrimitivesProvider>
+        , public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitivesProvider);
     public:

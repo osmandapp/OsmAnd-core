@@ -34,5 +34,7 @@ OsmAnd::IRasterMapLayerProvider::Data::Data(
 
 OsmAnd::IRasterMapLayerProvider::Data::~Data()
 {
+    if (image)
+        image.reset();
     release();
 }

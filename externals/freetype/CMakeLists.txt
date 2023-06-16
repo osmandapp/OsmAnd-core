@@ -62,6 +62,7 @@ add_library(freetype_static STATIC
 )
 add_dependencies(freetype_static
 	z_static
+	png_static
 )
 
 check_include_file("unistd.h" HAVE_UNISTD_H)
@@ -85,4 +86,5 @@ target_include_directories(freetype_static
 target_link_libraries(freetype_static
 	LINK_PUBLIC
 		z_static
+		png_static
 )

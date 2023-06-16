@@ -9,10 +9,12 @@
 OsmAnd::MapRasterLayerProvider::MapRasterLayerProvider(
     MapRasterLayerProvider_P* const p_,
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
-    const bool fillBackground_)
+    const bool fillBackground_,
+    const bool forceObtainDataAsync_)
     : _p(p_)
     , primitivesProvider(primitivesProvider_)
     , fillBackground(fillBackground_)
+    , forceObtainDataAsync(forceObtainDataAsync_)
 {
     _p->initialize();
 }
@@ -51,7 +53,7 @@ bool OsmAnd::MapRasterLayerProvider::obtainData(
 
 bool OsmAnd::MapRasterLayerProvider::supportsNaturalObtainDataAsync() const
 {
-    return false;
+    return forceObtainDataAsync;
 }
 
 void OsmAnd::MapRasterLayerProvider::obtainDataAsync(
@@ -59,7 +61,7 @@ void OsmAnd::MapRasterLayerProvider::obtainDataAsync(
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
 bool OsmAnd::MapRasterLayerProvider::obtainRasterizedTile(

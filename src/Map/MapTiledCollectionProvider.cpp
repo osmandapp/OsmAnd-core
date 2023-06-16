@@ -95,15 +95,19 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
     const auto from31toPixelsScale = static_cast<double>(getReferenceTileSizeOnScreenInPixels()) / tileSize31;
     CollectionQuadTree boundIntersections(AreaD(tileBBox31).getEnlargedBy(tileBBox31.width() / 2), 4);
+
     const auto showCaptions = shouldShowCaptions();
     const auto& captionStyle = getCaptionStyle();
     const auto captionTopSpace = getCaptionTopSpace();
     const auto baseOrder = getBaseOrder();
-    const auto& hiddenPoints = getHiddenPoints();
-    
-    int pointsCount = getPointsCount();
+
+    const auto& points31 = getPoints31();
+    const auto& hiddenPoints31 = getHiddenPoints();
     const auto& tilePoints = getTilePoints(tileId, zoom);
+    
+    int pointsCount = points31.count();
     int tilePointsCount = tilePoints.count();
+
     for (int i = 0; i < pointsCount + tilePointsCount; i++)
     {
         int it = i - pointsCount;
@@ -111,8 +115,8 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
         if (i >= pointsCount && !data)
             continue;
         
-        const auto pos31 = i < pointsCount ? getPoint31(i) : data->getPoint31();
-        if (extendedTileBBox31.contains(pos31) && !hiddenPoints.contains(pos31))
+        const auto pos31 = i < pointsCount ? points31[i] : data->getPoint31();
+        if (extendedTileBBox31.contains(pos31) && !hiddenPoints31.contains(pos31))
         {
             if (zoomFilter)
             {
@@ -210,7 +214,7 @@ void OsmAnd::MapTiledCollectionProvider::obtainDataAsync(
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(shared_from_this(), request, callback, collectMetric);
 }
 
 OsmAnd::MapTiledCollectionProvider::Data::Data(

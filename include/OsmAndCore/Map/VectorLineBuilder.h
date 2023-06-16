@@ -72,6 +72,9 @@ namespace OsmAnd
         double getOutlineWidth() const;
         OsmAnd::VectorLineBuilder& setOutlineWidth(const double width);
 
+        FColorARGB getOutlineColor() const;
+        OsmAnd::VectorLineBuilder& setOutlineColor(const FColorARGB color);
+
         sk_sp<const SkImage> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const sk_sp<const SkImage>& image);
         
@@ -81,6 +84,9 @@ namespace OsmAnd
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);
         
+        float getSpecialPathIconStep() const;
+        VectorLineBuilder& setSpecialPathIconStep(const float step);
+
         bool isPathIconOnSurface() const;
         VectorLineBuilder& setPathIconOnSurface(const bool onSurface);
 

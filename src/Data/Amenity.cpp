@@ -133,6 +133,64 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
     return result;
 }
 
+QHash<QString, QString> OsmAnd::Amenity::getDecodedValuesHash() const
+{
+    QHash<QString, QString> result;
+    
+    const auto sectionSubtypes = obfSection->getSubtypes();
+    if (!sectionSubtypes)
+        return result;
+
+    for (const auto& valueEntry : rangeOf(constOf(values)))
+    {
+        const auto subtypeIndex = valueEntry.key();
+        if (subtypeIndex >= sectionSubtypes->subtypes.size())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Amenity %s (%s) references non-existent subtype %d",
+                qPrintable(id.toString()),
+                qPrintable(nativeName),
+                subtypeIndex);
+            continue;
+        }
+
+        const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
+        const auto& value = valueEntry.value();
+        
+        QString resultTag = subtype->tagName;
+        QString resultValue;
+
+        switch (value.type())
+        {
+            case QVariant::Int:
+            case QVariant::UInt:
+            {
+                const auto intValue = value.toInt();
+                if (subtype->possibleValues.size() > intValue)
+                    resultValue = subtype->possibleValues[intValue];
+                break;
+            }
+            case QVariant::String:
+            {
+                const auto stringValue = value.toString();
+                resultValue = stringValue;
+                break;
+            }
+            case QVariant::ByteArray:
+            {
+                const auto dataValue = value.toByteArray();
+                const auto stringValue = QString::fromUtf8(zlibUtilities::gzipDecompress(dataValue));
+                resultValue = stringValue;
+                break;
+            }
+            default:
+                break;
+        }
+        result[resultTag] = resultValue;
+    }
+    return result;
+}
+
 QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > OsmAnd::Amenity::groupByCategories(
     const QList< std::shared_ptr<const OsmAnd::Amenity> >& input)
 {

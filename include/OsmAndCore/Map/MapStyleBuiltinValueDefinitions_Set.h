@@ -35,14 +35,13 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", fa
 
 // Text&Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTS_WITH, Output, String, "intersectsWith", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_DY, Output, Integer, "textDy", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_RADIUS, Output, Integer, "textHaloRadius", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_COLOR, Output, Color, "textHaloColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SIZE, Output, Integer, "textSize", true)
@@ -53,6 +52,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_COLOR, Output, Color, "textColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_BOLD, Output, Boolean, "textBold", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ITALIC, Output, Boolean, "textItalic", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_PLACEMENT, Output, String, "textPlacement", false)
 
 // Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__3, Output, String, "icon__3", false)
