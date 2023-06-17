@@ -1778,7 +1778,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         // Parameters: per-symbol data
         "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
         "uniform float param_vs_direction;                                                                                  ""\n"
-        "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "uniform vec2 param_vs_symbolSize;                                                                                  ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform float param_vs_elevationInMeters;                                                                          ""\n"
         "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
@@ -1789,8 +1789,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "    float cos_a = cos(param_vs_direction);                                                                         ""\n"
         "    float sin_a = sin(param_vs_direction);                                                                         ""\n"
         "    vec2 p;                                                                                                        ""\n"
-        "    p.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                                   ""\n"
-        "    p.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                                   ""\n"
+        "    p.x = in_vs_vertexPosition.x * param_vs_symbolSize.x;                                                          ""\n"
+        "    p.y = in_vs_vertexPosition.y * param_vs_symbolSize.y;                                                          ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = param_vs_symbolOffsetFromTarget.x * %TileSize3D%.0 + (p.x*cos_a - p.y*sin_a);                            ""\n"
         "    v.y = 0.0;                                                                                                     ""\n"
@@ -2042,11 +2042,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glUniform2f(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
     GL_CHECK_RESULT;
 
-    // Set symbol size
-    glUniform2i(
+    // Set symbol size. Scale size to keep raster's original size on screen with 3D-terrain
+    const float cameraHeight = internalState.distanceFromCameraToGround;
+    const float sizeScale = cameraHeight > renderable->positionInWorld.y && !qFuzzyIsNull(cameraHeight)
+        ? (cameraHeight - renderable->positionInWorld.y) / cameraHeight
+        : 1.0f;
+    glUniform2f(
         _onSurfaceRasterProgram.vs.param.symbolSize,
-        gpuResource->width * internalState.pixelInWorldProjectionScale,
-        gpuResource->height * internalState.pixelInWorldProjectionScale);
+        gpuResource->width * internalState.pixelInWorldProjectionScale * sizeScale,
+        gpuResource->height * internalState.pixelInWorldProjectionScale * sizeScale);
     GL_CHECK_RESULT;
 
     // Set direction
