@@ -35,6 +35,8 @@
 #define MAX_ENLARGE_PRIMITIVIZED_AREA_METERS 50
 #define ENLARGE_PRIMITIVIZED_AREA_COEFF 0.2f
 
+#define DEFAULT_TEXT_MIN_DISTANCE 150
+
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -2062,7 +2064,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ITALIC, text->isItalic);
 
-        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
+        ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
+        if (!ok || qFuzzyIsNull(text->minDistance))
+            text->minDistance = DEFAULT_TEXT_MIN_DISTANCE * env->displayDensityFactor * env->symbolsScaleFactor;
 
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
