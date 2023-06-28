@@ -54,12 +54,13 @@ namespace OsmAnd
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             AreaI bbox, ZoomLevel zoom) const;
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
-            TileId tileId, ZoomLevel zoom, const int specification = 0) const;
+            TileId tileId, ZoomLevel zoom, const int64_t specification = 0) const;
         bool configureStatement(bool invertedY, int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
-            QList<TileId>& tileIds, ZoomLevel zoom, const int specification = 0) const;
+            QList<TileId>& tileIds, ZoomLevel zoom, const int64_t specification = 0) const;
         bool configureStatement(int invertedZoomValue, const std::shared_ptr<sqlite3_stmt>& statement,
             ZoomLevel zoom) const;
-        bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int specification) const;
+        bool configureStatementSpecification(const std::shared_ptr<sqlite3_stmt>& statement,
+            int64_t specification) const;
         bool configureStatement(const std::shared_ptr<sqlite3_stmt>& statement, int64_t time) const;
 
         static std::shared_ptr<sqlite3_stmt> prepareStatement(const std::shared_ptr<sqlite3>& db, QString sql);
@@ -115,23 +116,26 @@ namespace OsmAnd
         bool storeMeta(const Meta& meta);
 
         bool isEmpty() const;
-        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom);
-        bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom);
-        bool containsTileData(TileId tileId, ZoomLevel zoom, int specification = 0) const;
-        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
+        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);
+        bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom, int64_t specification = 0);
+        bool containsTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0) const;
+        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int64_t specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
+            QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
-        bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
-        bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
+        bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             const QByteArray& data, int64_t time = 0);
-        bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
-        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification = 0);
+        bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
+        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeBiggerTilesData(ZoomLevel zoom);
-        bool removeSpecificTilesData(int specification);
+        bool removeSpecificTilesData(int64_t specification);
+        bool removePreviousTilesData(int64_t specification);
         bool removeOlderTilesData(int64_t time);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);

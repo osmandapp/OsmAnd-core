@@ -69,9 +69,10 @@ namespace OsmAnd
             std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
             const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
-        virtual bool downloadFile(
+        virtual long long downloadFile(
             const QString& url,
             const QString& fileName,
+            const long long lastTime,
             std::shared_ptr<const SWIG_CLARIFY(IWebClient, IRequestResult)>* const requestResult = nullptr,
             const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
@@ -94,10 +95,11 @@ namespace OsmAnd
             const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback,
             const std::shared_ptr<const IQueryController>& queryController);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            bool,
+            long long,
             downloadFile,
             const QString& url,
             const QString& fileName,
+            const long long lastTime,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
             const SWIG_CLARIFY(IWebClient, RequestProgressCallbackSignature) progressCallback,
             const std::shared_ptr<const IQueryController>& queryController);

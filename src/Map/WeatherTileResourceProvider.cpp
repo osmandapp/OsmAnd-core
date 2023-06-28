@@ -13,14 +13,15 @@
 #include <Logging.h>
 
 OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
-    const int64_t dateTime,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,
     const QString& projResourcesPath,
+    const int cacheValidityPeriod,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
-    : _p(new WeatherTileResourceProvider_P(this, dateTime, bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+    : _p(new WeatherTileResourceProvider_P(this,
+        bandSettings, localCachePath, projResourcesPath, cacheValidityPeriod, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }
@@ -133,11 +134,6 @@ int OsmAnd::WeatherTileResourceProvider::getMaxMissingDataUnderZoomShift(const W
         return 0;
 }
 
-int64_t OsmAnd::WeatherTileResourceProvider::getDateTime()
-{
-    return _p->dateTime;
-}
-
 void OsmAnd::WeatherTileResourceProvider::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     return _p->setBandSettings(bandSettings);
@@ -177,17 +173,25 @@ QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingT
 uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,
-    const ZoomLevel zoom)
+    const ZoomLevel zoom,
+    const int64_t dateTime)
 {
-    return _p->calculateTilesSize(tileIds, excludeTileIds, zoom);
+    return _p->calculateTilesSize(tileIds, excludeTileIds, zoom, dateTime);
+}
+
+bool OsmAnd::WeatherTileResourceProvider::removeTileDataBefore(
+    const int64_t dateTime)
+{
+    return _p->removeTileDataBefore(dateTime);
 }
 
 bool OsmAnd::WeatherTileResourceProvider::removeTileData(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,
-    const ZoomLevel zoom)
+    const ZoomLevel zoom,
+    const int64_t dateTime)
 {
-    return _p->removeTileData(tileIds, excludeTileIds, zoom);
+    return _p->removeTileData(tileIds, excludeTileIds, zoom, dateTime);
 }
 
 bool OsmAnd::WeatherTileResourceProvider::closeProvider()
@@ -196,7 +200,8 @@ bool OsmAnd::WeatherTileResourceProvider::closeProvider()
 }
 
 OsmAnd::WeatherTileResourceProvider::ValueRequest::ValueRequest()
-    : point31(0, 0)
+    : dateTime(0)
+    , point31(0, 0)
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
     , localData(false)
@@ -214,6 +219,7 @@ OsmAnd::WeatherTileResourceProvider::ValueRequest::~ValueRequest()
 
 void OsmAnd::WeatherTileResourceProvider::ValueRequest::copy(ValueRequest& dst, const ValueRequest& src)
 {
+    dst.dateTime = src.dateTime;
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
@@ -227,7 +233,8 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::ValueRequest> OsmAnd::Weath
 }
 
 OsmAnd::WeatherTileResourceProvider::TileRequest::TileRequest()
-    : weatherType(WeatherType::Raster)
+    : dateTime(0)
+    , weatherType(WeatherType::Raster)
     , tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
     , version(0)
@@ -246,6 +253,7 @@ OsmAnd::WeatherTileResourceProvider::TileRequest::~TileRequest()
 
 void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, const TileRequest& src)
 {
+    dst.dateTime = src.dateTime;
     dst.weatherType = src.weatherType;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
@@ -263,7 +271,8 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::TileRequest> OsmAnd::Weathe
 }
 
 OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::DownloadGeoTileRequest()
-    : forceDownload(false)
+    : dateTime(0)
+    , forceDownload(false)
     , localData(false)
 {
 }
@@ -279,6 +288,7 @@ OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::~DownloadGeoTileReq
 
 void OsmAnd::WeatherTileResourceProvider::DownloadGeoTileRequest::copy(DownloadGeoTileRequest& dst, const DownloadGeoTileRequest& src)
 {
+    dst.dateTime = src.dateTime;
     dst.topLeft = src.topLeft;
     dst.bottomRight = src.bottomRight;
     dst.forceDownload = src.forceDownload;

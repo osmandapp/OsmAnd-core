@@ -1237,7 +1237,7 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     // Download content of the index
     const auto tmpFilePath = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("indexes.xml"));
     const auto tmpFilePathGz = QDir(owner->localTemporaryPath).absoluteFilePath(QStringLiteral("indexes.xml.gz"));
-    bool ok = _webClient->downloadFile(owner->indexesUrl, tmpFilePathGz);
+    bool ok = _webClient->downloadFile(owner->indexesUrl, tmpFilePathGz, 0) > -1;
     if (!ok)
         return false;
 
@@ -1859,7 +1859,8 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient->downloadFile(resourceInRepository->url.url(), tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient->downloadFile(
+        resourceInRepository->url.url(), tmpFilePath, 0, nullptr, downloadProgressCallback) > -1;
     if (!ok)
         return false;
 
@@ -2059,7 +2060,8 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient->downloadFile(resourceInRepository->url.url(), tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient->downloadFile(
+        resourceInRepository->url.url(), tmpFilePath, 0, nullptr, downloadProgressCallback) > -1;
     if (!ok)
         return false;
 

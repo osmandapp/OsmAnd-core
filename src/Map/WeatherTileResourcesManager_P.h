@@ -26,10 +26,10 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(WeatherTileResourcesManager_P);
     private:
-        mutable QReadWriteLock _resourceProvidersLock;
-        QHash<QString, std::shared_ptr<WeatherTileResourceProvider>> _resourceProviders;
+        mutable QReadWriteLock _resourceProviderLock;
+        std::shared_ptr<WeatherTileResourceProvider> _resourceProvider;
         
-        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider(int64_t dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider();
 
         mutable QReadWriteLock _bandSettingsLock;
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
@@ -41,6 +41,7 @@ namespace OsmAnd
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
+            const int cacheValidityPeriod,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
@@ -61,6 +62,7 @@ namespace OsmAnd
 
         const QString localCachePath;
         const QString projResourcesPath;
+        const int cacheValidityPeriod;
         const uint32_t tileSize;
         const float densityFactor;
 
@@ -70,7 +72,7 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
-        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(int64_t dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider();
 
         bool isDownloadingTiles(const int64_t dateTime);
         bool isEvaluatingTiles(const int64_t dateTime);

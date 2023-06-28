@@ -25,8 +25,6 @@
 #include <OsmAndCore/Map/GeoBandSettings.h>
 #include <OsmAndCore/Map/WeatherCommonTypes.h>
 
-static const int64_t kGeoTileExpireTime = 1000 * 60 * 60 * 6; // 6 hours
-
 namespace OsmAnd
 {
     class WeatherTileResourceProvider_P;
@@ -45,6 +43,7 @@ namespace OsmAnd
             ValueRequest(const ValueRequest& that);
             virtual ~ValueRequest();
 
+            int64_t dateTime;
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
@@ -62,6 +61,7 @@ namespace OsmAnd
             TileRequest(const TileRequest& that);
             virtual ~TileRequest();
 
+            int64_t dateTime;
             WeatherType weatherType;
             TileId tileId;
             ZoomLevel zoom;
@@ -84,6 +84,7 @@ namespace OsmAnd
             DownloadGeoTileRequest(const DownloadGeoTileRequest& that);
             virtual ~DownloadGeoTileRequest();
 
+            int64_t dateTime;
             LatLon topLeft;
             LatLon bottomRight;
             bool forceDownload;
@@ -140,10 +141,10 @@ namespace OsmAnd
     protected:
     public:
         WeatherTileResourceProvider(
-            const int64_t dateTime,
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
+            const int cacheValidityPeriod,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
@@ -190,7 +191,6 @@ namespace OsmAnd
         static WeatherLayer getWeatherLayerByZoom(const ZoomLevel zoom);
         static int getMaxMissingDataZoomShift(const WeatherLayer layer);
         static int getMaxMissingDataUnderZoomShift(const WeatherLayer layer);
-        int64_t getDateTime();
 
         bool isEmpty();
 
@@ -202,12 +202,17 @@ namespace OsmAnd
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
-            const ZoomLevel zoom);
+            const ZoomLevel zoom,
+            const int64_t dateTime);
+
+        bool removeTileDataBefore(
+            const int64_t dateTime);
 
         bool removeTileData(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
-            const ZoomLevel zoom);
+            const ZoomLevel zoom,
+            const int64_t dateTime);
 
         bool closeProvider();
     };

@@ -121,9 +121,10 @@ namespace OsmAnd
             const QNetworkRequest& networkRequest,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
             const IWebClient::RequestProgressCallbackSignature progressCallback) const;
-        bool downloadFile(
+        long long downloadFile(
             const QNetworkRequest& networkRequest,
             const QString& fileName,
+            const long long lastTime,
             std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
             const IWebClient::RequestProgressCallbackSignature progressCallback) const;
 
