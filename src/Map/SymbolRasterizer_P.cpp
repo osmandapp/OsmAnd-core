@@ -193,8 +193,16 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - height / 2
                     PointI offset;
 
-                    // If bottom text section is free, move top section text to bottom
-                    bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top && bottomTextSectionTaken;
+                    // If bottom text section is free, move top section text to bottom and reset vertical offset
+                    bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top;
+                    int verticalOffset = textSymbol->verticalOffset;
+                    if (drawInTopSection && !bottomTextSectionTaken)
+                    {
+                        drawInTopSection = false;
+                        verticalOffset = 0;
+                    }
+                    offset.y += verticalOffset;
+
                     if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
                     {
                         const auto halfHeight = rasterizedText->height() / 2;

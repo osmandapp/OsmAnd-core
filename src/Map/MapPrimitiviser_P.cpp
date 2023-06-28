@@ -2035,6 +2035,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->order = 100;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 
+        if (primitive->type == PrimitiveType::Point || primitive->type == PrimitiveType::Polygon)
+            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
+
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
         if (!ok || text->color == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
             text->color = ColorARGB::fromSkColor(SK_ColorBLACK);

@@ -24,8 +24,7 @@ static const QVector<QString> IGNORED_ATTRS({
     SEQ_ATTR,
     QStringLiteral("orderByDensity"),
     QStringLiteral("onewayArrowsColor"),
-    QStringLiteral("addPoint"),
-    QStringLiteral("textDy")});
+    QStringLiteral("addPoint")});
 
 namespace OsmAnd
 {

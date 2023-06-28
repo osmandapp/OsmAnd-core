@@ -195,6 +195,7 @@ namespace OsmAnd
             LanguageId languageId;
             bool drawOnPath;
             Placement placement;
+            int verticalOffset;
             ColorARGB color;
             int size;
             int shadowRadius;
