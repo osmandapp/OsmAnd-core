@@ -193,7 +193,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
     return nullptr;
 }
 
-int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
+bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         const TileId tileId,
         const ZoomLevel zoom,
         const int64_t dateTime,
@@ -216,7 +216,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
     {
-        bool hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime) && !outData.isEmpty();
+        geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime);
         if (forceDownload || !localData)
         {
             auto filePath = localCachePath
@@ -283,7 +283,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     if (forceDownload || !localData)
         unlockGeoTile(tileId, zoom);
     
-    return !outData.isEmpty() ? obtainedTime : -1;
+    return obtainedTime > 0;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::lockGeoTile(const TileId tileId, const ZoomLevel zoom)
@@ -779,7 +779,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     );
 
     QByteArray geoTileData;
-    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) > 0)
+    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData))
     {
         GeoTileEvaluator *evaluator = new GeoTileEvaluator(
             geoTileId,
@@ -924,7 +924,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             int64_t rasterizedTime = 0;
             if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterizedTime) && !data.isEmpty())
             {
-                if (rasterizedTime > 0 && currentTime - rasterizedTime > provider->cacheValidityPeriod)
+                // Check cached tile to see if it was created within the same cache validity period
+                if (currentTime / provider->cacheValidityPeriod != rasterizedTime / provider->cacheValidityPeriod)
                 {
                     missingBands << band;
                 }
@@ -994,8 +995,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         geoTileId = tileId;
     }
 
-    int64_t timeStamp = provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData);
-    if (timeStamp <= 0 || geoTileData.isEmpty())
+    if (!provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData)
+        || geoTileData.isEmpty())
     {
         if (!localData)
             provider->unlockRasterTile(tileId, zoom);
@@ -1063,7 +1064,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto db = provider->getRasterTilesDatabase(band);
         if (db && db->isOpened())
         {
-            if (!db->storeTileData(tileId, zoom, dateTime, data, timeStamp))
+            if (!db->storeTileData(tileId, zoom, dateTime, data, currentTime))
             {
                 LogPrintf(LogSeverityLevel::Error,
                     "Failed to store tile image of rasterized weather tile %dx%dx%d in sqlitedb %s",
@@ -1172,7 +1173,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     {
         geoTileId = tileId;
     }
-    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) <= 0
+    if (!provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData)
         || geoTileData.isEmpty())
     {
         if (!localData)
@@ -1313,7 +1314,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
 
         QByteArray data;
         bool res = provider->obtainGeoTile(tileId, geoTileZoom, dateTime, data,
-            request->forceDownload, localData, request->queryController) > 0;
+            request->forceDownload, localData, request->queryController);
 
         callback(res, ++downloadedTiles, tilesCount, nullptr);
     }

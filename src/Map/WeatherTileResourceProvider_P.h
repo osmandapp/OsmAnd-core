@@ -225,7 +225,7 @@ namespace OsmAnd
         QList<TileId> getCurrentDownloadingTileIds() const;
         QList<TileId> getCurrentEvaluatingTileIds() const;
 
-        int64_t obtainGeoTile(
+        bool obtainGeoTile(
             const TileId tileId,
             const ZoomLevel zoom,
             const int64_t dateTime,
