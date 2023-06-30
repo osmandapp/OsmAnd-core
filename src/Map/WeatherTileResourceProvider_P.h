@@ -248,6 +248,8 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> getGeoTilesDatabase();
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
 
+        bool importTileData(const QString& dbFilePath);
+
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,

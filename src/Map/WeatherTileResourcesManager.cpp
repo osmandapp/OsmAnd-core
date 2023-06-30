@@ -244,6 +244,11 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
 }
 
+bool OsmAnd::WeatherTileResourcesManager::importDbCache(const QString& dbFilePath)
+{
+    return _p->importDbCache(dbFilePath);
+}
+
 uint64_t OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,

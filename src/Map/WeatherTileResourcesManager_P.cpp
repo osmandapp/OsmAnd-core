@@ -55,6 +55,12 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
             return _resourceProvider;
 
         _resourceProvider = createResourceProvider();
+
+        auto imppath = localCachePath
+            + QDir::separator()
+            + QStringLiteral("import_i.db");
+        _resourceProvider->importTileData(imppath);
+
         return _resourceProvider;
     }
 }
@@ -498,6 +504,14 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
     {
         callback(false, 0, 0, nullptr);
     }
+}
+
+bool OsmAnd::WeatherTileResourcesManager_P::importDbCache(const QString& dbFilePath)
+{
+    auto resourceProvider = getResourceProvider();
+    if (resourceProvider)
+        return resourceProvider->importTileData(dbFilePath);
+    return false;
 }
 
 uint64_t OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(

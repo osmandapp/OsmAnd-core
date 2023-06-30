@@ -169,6 +169,11 @@ QList<OsmAnd::TileId> OsmAnd::WeatherTileResourceProvider::getCurrentEvaluatingT
     return _p->getCurrentEvaluatingTileIds();
 }
 
+bool OsmAnd::WeatherTileResourceProvider::importTileData(const QString& dbFilePath)
+{
+    return _p->importTileData(dbFilePath);
+}
+
 uint64_t OsmAnd::WeatherTileResourceProvider::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,

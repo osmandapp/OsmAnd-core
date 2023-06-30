@@ -82,6 +82,16 @@ bool OsmAnd::TileSqliteDatabase_P::open(const bool withSpecification /* = false 
         }
 #endif
 
+        if (!execStatement(database, QStringLiteral("PRAGMA encoding = 'UTF-8'")))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to set encoding for the new database to UTF-8: %s",
+                sqlite3_errmsg(database.get()));
+
+            return false;
+        }
+
         const auto statement = prepareStatement(database,
             QStringLiteral("SELECT name FROM sqlite_master WHERE type='table' AND name='tiles'"));
         if (!statement || (res = stepStatement(statement)) < 0)
@@ -1627,6 +1637,114 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         recomputeMinMaxZoom();
     }
     recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::updateTileDataFrom(
+    const QString& dbFilePath,
+    const QString* specName /* = nullptr */)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    const auto timeSupported = isTileTimeSupported();
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(_database, QStringLiteral("ATTACH DATABASE :importdb AS importdb"));
+        if (!statement
+            || !bindStatementParameter(statement, QStringLiteral(":importdb"), dbFilePath)
+            || stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to attach database %s: %s",
+                qPrintable(dbFilePath),
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+        if (!execStatement(_database, QStringLiteral("BEGIN")))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to begin update from %s: %s",
+                qPrintable(dbFilePath),
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (timeSupported)
+        {
+            const auto sql = QStringLiteral(
+                "UPDATE tiles SET image=external.image, time=external.time FROM (SELECT x, y, z, ")
+                + (specName ? *specName + QStringLiteral(", image, time") : QStringLiteral("image, time"))
+                + QStringLiteral(" FROM importdb.tiles) AS external WHERE"
+                    " tiles.x=external.x AND"
+                    " tiles.y=external.y AND"
+                    " tiles.z=external.z AND")
+                + (specName
+                    ? QStringLiteral(" tiles.s=external.") + *specName + QStringLiteral(" AND ")
+                    : QStringLiteral(" "))
+                + QStringLiteral("tiles.time<=external.time");
+            if (!execStatement(_database, sql))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to update tile data from %s: %s",
+                    qPrintable(dbFilePath),
+                    sqlite3_errmsg(_database.get()));
+                return false;
+            }
+        }
+
+        const auto sqlMode = timeSupported ? QStringLiteral("IGNORE") : QStringLiteral("REPLACE");
+        const auto sqlHead = specName
+            ? QStringLiteral("INSERT OR ") + sqlMode + QStringLiteral(" INTO tiles(x, y, z, s, image")
+            : QStringLiteral("INSERT OR ") + sqlMode + QStringLiteral(" INTO tiles(x, y, z, image");
+        const auto sqlTail = specName
+            ? QStringLiteral("SELECT x, y, z, ") + *specName + QStringLiteral(", image")
+            : QStringLiteral("SELECT x, y, z, image");
+  
+        const auto sql = sqlHead + (timeSupported ? QStringLiteral(", time) ") : QStringLiteral(") ")) +
+            sqlTail + (timeSupported
+                ? QStringLiteral(", time FROM importdb.tiles")
+                : QStringLiteral(" FROM importdb.tiles"));
+        if (!execStatement(_database, sql))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to append tile data from %s: %s",
+                qPrintable(dbFilePath),
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+        
+        if (!execStatement(_database, QStringLiteral("COMMIT")))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to commit updates from %s: %s",
+                qPrintable(dbFilePath),
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+        if (!execStatement(_database, QStringLiteral("DETACH importdb")))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to detach database %s: %s",
+                qPrintable(dbFilePath),
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
+
+    recomputeMinMaxZoom();
+    recomputeBBoxes31();
 
     return true;
 }

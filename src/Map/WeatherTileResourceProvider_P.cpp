@@ -493,6 +493,18 @@ bool OsmAnd::WeatherTileResourceProvider_P::isEmpty()
     return _geoTilesDb->isEmpty();
 }
 
+bool OsmAnd::WeatherTileResourceProvider_P::importTileData(const QString& dbFilePath)
+{
+    auto geoDb = getGeoTilesDatabase();
+    if (geoDb)
+    {
+        const auto specName = QStringLiteral("forecastdate");
+        if (!geoDb->updateTileDataFrom(dbFilePath, &specName))
+            return false;
+    }
+    return false;
+}
+
 uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,

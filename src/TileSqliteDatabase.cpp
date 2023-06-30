@@ -210,6 +210,12 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     return _p->storeTileData(tileId, zoom, specification, data, time);
 }
 
+bool OsmAnd::TileSqliteDatabase::updateTileDataFrom(
+    const QString& dbFilePath,
+    const QString* specName /* = nullptr */)
+{
+    return _p->updateTileDataFrom(dbFilePath, specName);
+}
 bool OsmAnd::TileSqliteDatabase::removeTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,

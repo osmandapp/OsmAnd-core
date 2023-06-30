@@ -198,6 +198,8 @@ namespace OsmAnd
         QList<TileId> getCurrentDownloadingTileIds() const;
         QList<TileId> getCurrentEvaluatingTileIds() const;
 
+        bool importTileData(const QString& dbFilePath);
+
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,
