@@ -1026,20 +1026,22 @@ bool OsmAnd::TileSqliteDatabase_P::containsTileData(OsmAnd::TileId tileId, OsmAn
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to configure query for %dx%d@%d",
+                "Failed to configure query for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
-                zoom);
+                zoom,
+                specification);
             return false;
         }
         if ((res = stepStatement(statement)) < 0)
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to query for %dx%d@%d existence: %s",
+                "Failed to query for %dx%d@%d,%lld existence: %s",
                 tileId.x,
                 tileId.y,
                 zoom,
+                specification,
                 sqlite3_errmsg(_database.get()));
             return false;
         }
@@ -1101,20 +1103,22 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileTime(
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to configure query for %dx%d@%d",
+                "Failed to configure query for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
-                zoom);
+                zoom,
+                specification);
             return false;
         }
         if ((res = stepStatement(statement)) < 0)
         {
             LogPrintf(
                 LogSeverityLevel::Error,
-                "Failed to query for %dx%d@%d time: %s",
+                "Failed to query for %dx%d@%d,%lld time: %s",
                 tileId.x,
                 tileId.y,
                 zoom,
+                specification,
                 sqlite3_errmsg(_database.get()));
             return false;
         }

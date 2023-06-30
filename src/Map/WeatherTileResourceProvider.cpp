@@ -16,12 +16,11 @@ OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,
     const QString& projResourcesPath,
-    const int cacheValidityPeriod,
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new WeatherTileResourceProvider_P(this,
-        bandSettings, localCachePath, projResourcesPath, cacheValidityPeriod, tileSize, densityFactor, webClient))
+        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }

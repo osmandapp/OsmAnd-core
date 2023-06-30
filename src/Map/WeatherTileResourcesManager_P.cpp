@@ -11,7 +11,6 @@ OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
     const QString& localCachePath_,
     const QString& projResourcesPath_,
-    const int cacheValidityPeriod_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
@@ -20,7 +19,6 @@ OsmAnd::WeatherTileResourcesManager_P::WeatherTileResourcesManager_P(
     , webClient(webClient_)
     , localCachePath(localCachePath_)
     , projResourcesPath(projResourcesPath_)
-    , cacheValidityPeriod(cacheValidityPeriod_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
@@ -36,7 +34,6 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
         _bandSettings,
         localCachePath,
         projResourcesPath,
-        cacheValidityPeriod,
         tileSize,
         densityFactor,
         webClient

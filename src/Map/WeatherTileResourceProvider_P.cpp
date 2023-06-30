@@ -18,7 +18,6 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
     const QString& localCachePath_,
     const QString& projResourcesPath_,
-    const int cacheValidityPeriod_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient_ /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
@@ -34,7 +33,6 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , webClient(webClient_)
     , localCachePath(localCachePath_)
     , projResourcesPath(projResourcesPath_)
-    , cacheValidityPeriod(cacheValidityPeriod_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
@@ -193,7 +191,22 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
     return nullptr;
 }
 
-bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
+bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTileTime(
+        const TileId tileId,
+        const ZoomLevel zoom,
+        const int64_t dateTime,
+        int64_t& outTime)
+{
+    auto geoDb = getGeoTilesDatabase();
+    if (geoDb->isOpened())
+    {
+        geoDb->obtainTileTime(tileId, zoom, outTime, dateTime);
+        return true;
+    }
+    return false;
+}
+
+int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
         const TileId tileId,
         const ZoomLevel zoom,
         const int64_t dateTime,
@@ -283,7 +296,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     if (forceDownload || !localData)
         unlockGeoTile(tileId, zoom);
     
-    return obtainedTime > 0;
+    return outData.isEmpty() ? -1 : obtainedTime;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::lockGeoTile(const TileId tileId, const ZoomLevel zoom)
@@ -779,7 +792,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     );
 
     QByteArray geoTileData;
-    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData))
+    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) > 0)
     {
         GeoTileEvaluator *evaluator = new GeoTileEvaluator(
             geoTileId,
@@ -911,9 +924,28 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     if (!localData)
         provider->lockRasterTile(tileId, zoom);
 
+    ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
+    TileId geoTileId;
+    if (zoom < geoTileZoom)
+    {
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
+
+        // Underzoom for geo tiles currently not supported
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to resolve geoTileId for weather tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).",
+            tileId.x, tileId.y, zoom, geoTileZoom, zoom);
+        callback(false, nullptr, nullptr);
+        return;
+    }
+    else if (zoom > geoTileZoom)
+        geoTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
+    else
+        geoTileId = tileId;
+
     QList<BandIndex> missingBands;
     QHash<BandIndex, sk_sp<const SkImage>> images;
-    auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    int64_t minRasterizedTime = INT64_MAX;
 
     for (auto band : bands)
     {
@@ -924,31 +956,27 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             int64_t rasterizedTime = 0;
             if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterizedTime) && !data.isEmpty())
             {
-                // Check cached tile to see if it was created within the same cache validity period
-                if (currentTime / provider->cacheValidityPeriod != rasterizedTime / provider->cacheValidityPeriod)
+                int64_t geoTileTime = 0;
+                if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
+                    && rasterizedTime >= geoTileTime)
                 {
-                    missingBands << band;
-                }
-                else
-                {
+                    minRasterizedTime = std::min(minRasterizedTime, rasterizedTime);
                     const auto image = SkiaUtilities::createImageFromData(data);
                     if (image)
                         images.insert(band, image);
                     else
                         missingBands << band;
                 }
+                else
+                    missingBands << band;
             }
             else
-            {
                 missingBands << band;
-            }
         }
     }
-    if (missingBands.empty())
-    {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
 
+    if (missingBands.empty() && localData)
+    {
         auto image = createTileImage(images, bands);
         if (image)
         {
@@ -971,32 +999,10 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         }
     }
 
-    ZoomLevel geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     QByteArray geoTileData;
-    TileId geoTileId;
-    if (zoom < geoTileZoom)
-    {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
 
-        // Underzoom for geo tiles currently not supported
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to resolve geoTileId for weather tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).",
-            tileId.x, tileId.y, zoom, geoTileZoom, zoom);
-        callback(false, nullptr, nullptr);
-        return;
-    }
-    else if (zoom > geoTileZoom)
-    {
-        geoTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
-    }
-    else
-    {
-        geoTileId = tileId;
-    }
-
-    if (!provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData)
-        || geoTileData.isEmpty())
+    const auto geoTileTime = provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData);
+    if (geoTileTime <= 0)
     {
         if (!localData)
             provider->unlockRasterTile(tileId, zoom);
@@ -1019,6 +1025,32 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
 
         callback(false, nullptr, nullptr);
         return;
+    }
+
+    if (missingBands.empty() && minRasterizedTime >= geoTileTime)
+    {
+        provider->unlockRasterTile(tileId, zoom);
+
+        auto image = createTileImage(images, bands);
+        if (image)
+        {
+            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
+                tileId,
+                zoom,
+                AlphaChannelPresence::Present,
+                provider->densityFactor,
+                image
+            );
+            callback(true, data, nullptr);
+            return;
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to create tile image of weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
+            callback(false, nullptr, nullptr);
+            return;
+        }
     }
 
     GeoTileRasterizer *rasterizer = new GeoTileRasterizer(
@@ -1064,11 +1096,11 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto db = provider->getRasterTilesDatabase(band);
         if (db && db->isOpened())
         {
-            if (!db->storeTileData(tileId, zoom, dateTime, data, currentTime))
+            if (!db->storeTileData(tileId, zoom, dateTime, data, geoTileTime))
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "Failed to store tile image of rasterized weather tile %dx%dx%d in sqlitedb %s",
-                          tileId.x, tileId.y, zoom, qPrintable(db->filename));
+                    "Failed to store tile image of rasterized weather tile %dx%dx%d for time %lld",
+                          tileId.x, tileId.y, zoom, dateTime);
             }
         }
     }
@@ -1173,8 +1205,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     {
         geoTileId = tileId;
     }
-    if (!provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData)
-        || geoTileData.isEmpty())
+    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) <= 0)
     {
         if (!localData)
             provider->unlockContourTile(tileId, zoom);
@@ -1314,7 +1345,7 @@ void OsmAnd::WeatherTileResourceProvider_P::DownloadGeoTileTask::run()
 
         QByteArray data;
         bool res = provider->obtainGeoTile(tileId, geoTileZoom, dateTime, data,
-            request->forceDownload, localData, request->queryController);
+            request->forceDownload, localData, request->queryController) > 0;
 
         callback(res, ++downloadedTiles, tilesCount, nullptr);
     }

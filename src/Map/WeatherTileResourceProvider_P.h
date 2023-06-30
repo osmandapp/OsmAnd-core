@@ -166,7 +166,6 @@ namespace OsmAnd
             const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
             const QString& localCachePath,
             const QString& projResourcesPath,
-            const int cacheValidityPeriod,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f,
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())
@@ -179,7 +178,6 @@ namespace OsmAnd
 
         const QString localCachePath;
         const QString projResourcesPath;
-        const int cacheValidityPeriod;
         const uint32_t tileSize;
         const float densityFactor;
 
@@ -225,7 +223,13 @@ namespace OsmAnd
         QList<TileId> getCurrentDownloadingTileIds() const;
         QList<TileId> getCurrentEvaluatingTileIds() const;
 
-        bool obtainGeoTile(
+        bool obtainGeoTileTime(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            const int64_t dateTime,
+            int64_t& outTime);
+
+        int64_t obtainGeoTile(
             const TileId tileId,
             const ZoomLevel zoom,
             const int64_t dateTime,
