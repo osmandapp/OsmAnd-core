@@ -55,12 +55,6 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
             return _resourceProvider;
 
         _resourceProvider = createResourceProvider();
-
-        auto imppath = localCachePath
-            + QDir::separator()
-            + QStringLiteral("import_i.db");
-        _resourceProvider->importTileData(imppath);
-
         return _resourceProvider;
     }
 }
