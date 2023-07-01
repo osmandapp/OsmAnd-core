@@ -900,8 +900,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
         upperLeft31.y = upperLeft31.y - INT32_MAX - 1;
         lowerRight64.y = lowerRight64.y - INT32_MAX - 1;
     }
-    lowerRight31.x = lowerRight64.x;
-    lowerRight31.y = lowerRight64.y;
+    lowerRight31.x = lowerRight64.x - 1;
+    lowerRight31.y = lowerRight64.y - 1;
 
     PointD upperLeftOverscaled;
     PointD lowerRightOverscaled;
@@ -971,8 +971,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                         upperLeft31Overscaled.y = upperLeft31Overscaled.y - INT32_MAX - 1;
                         lowerRight64.y = lowerRight64.y - INT32_MAX - 1;
                     }
-                    lowerRight31Overscaled.x = lowerRight64.x;
-                    lowerRight31Overscaled.y = lowerRight64.y;
+                    lowerRight31Overscaled.x = lowerRight64.x - 1;
+                    lowerRight31Overscaled.y = lowerRight64.y - 1;
                     if (!containsTile(tiffProperties.region31, AreaI(upperLeft31Overscaled, lowerRight31Overscaled)))
                         tileFound = false;
                 }
