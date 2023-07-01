@@ -986,32 +986,93 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                         const auto link_ = cachedResource->link.lock();
                         if (link_ && dataAvailable && cachedResource->zoom != cachedResource->_sourceData->zoom)
                         {
-                            const auto zoomLevel = cachedResource->_sourceData->zoom != InvalidZoomLevel
-                                ? cachedResource->_sourceData->zoom
-                                : cachedResource->zoom;
                             const auto tiledResources =
                                 static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
-                            if (!tiledResources->containsResource(cachedResource->_sourceData->tileId, zoomLevel))
+                            if (cachedResource->_sourceData->zoom != InvalidZoomLevel)
                             {
-                                const auto resourceAllocator =
-                                    [this, cachedResource]
-                                    (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-                                        const TileId tileId,
-                                        const ZoomLevel zoom) -> MapRendererBaseTiledResource*
+                                // Create a resource for existing overscale (or underscale) cached tile
+                                const auto zoomLevel = cachedResource->_sourceData->zoom;
+                                if (!tiledResources->containsResource(cachedResource->_sourceData->tileId, zoomLevel))
+                                {
+                                    const auto resourceAllocator =
+                                        [this, cachedResource]
+                                        (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+                                            const TileId tileId,
+                                            const ZoomLevel zoom) -> MapRendererBaseTiledResource*
+                                        {
+                                            auto resource = new MapRendererRasterMapLayerResource(
+                                                this, collection, tileId, zoom);
+                                            resource->_sourceData = cachedResource->_sourceData;
+                                            resource->setState(MapRendererResourceState::Ready);
+                                            return resource;
+                                        };
+                                    std::shared_ptr<MapRendererBaseTiledResource> completeResource;
+                                    tiledResources->obtainOrAllocateEntry(
+                                        completeResource,
+                                        cachedResource->_sourceData->tileId,
+                                        zoomLevel,
+                                        resourceAllocator);
+                                    requestResourcesUploadOrUnload();
+                                }
+                            }
+                            else
+                            {
+                                // Create four underscale resources of higher zoom level
+                                const auto zoomLevel = cachedResource->zoom;
+                                const auto underscaledZoom = static_cast<ZoomLevel>(zoomLevel + 1);
+                                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                                    cachedResource->_sourceData->tileId, 1);
+                                const auto tilesCount = underscaledTileIdsN.size();
+                                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                                auto alphaChannelPresence = cachedResource->_sourceData->alphaChannelPresence;
+                                auto densityFactor = cachedResource->_sourceData->densityFactor;
+                                bool atLeastOneAbsent = false;
+                                for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                                {
+                                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                                    const auto underscaledTilePresent = tiledResources->containsResource(
+                                        underscaledTileId,
+                                        underscaledZoom);
+                                    if (!underscaledTilePresent)
                                     {
-                                        auto resource = new MapRendererRasterMapLayerResource(
-                                            this, collection, tileId, zoom);
-                                        resource->_sourceData = cachedResource->_sourceData;
-                                        resource->setState(MapRendererResourceState::Ready);
-                                        return resource;
-                                    };                            
-                                std::shared_ptr<MapRendererBaseTiledResource> completeResource;
-                                tiledResources->obtainOrAllocateEntry(
-                                    completeResource,
-                                    cachedResource->_sourceData->tileId,
-                                    zoomLevel,
-                                    resourceAllocator);
-                                requestResourcesUploadOrUnload();
+                                        atLeastOneAbsent = true;
+                                        auto image = cachedResource->_sourceData->image;
+                                        if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
+                                            image = SkiaUtilities::getUpperLeft(image);
+                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
+                                            image = SkiaUtilities::getUpperRight(image);
+                                        else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
+                                            image = SkiaUtilities::getLowerLeft(image);
+                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
+                                            image = SkiaUtilities::getLowerRight(image);
+                                        image = adjustImageToConfiguration(image, alphaChannelPresence);
+                                        const auto resourceAllocator =
+                                            [this, alphaChannelPresence, densityFactor, image]
+                                            (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+                                                const TileId tileId,
+                                                const ZoomLevel zoom) -> MapRendererBaseTiledResource*
+                                            {
+                                                auto resource = new MapRendererRasterMapLayerResource(
+                                                    this, collection, tileId, zoom);
+                                                resource->_sourceData.reset(new IRasterMapLayerProvider::Data(
+                                                    tileId,
+                                                    zoom,
+                                                    alphaChannelPresence,
+                                                    densityFactor,
+                                                    image));
+                                                resource->setState(MapRendererResourceState::Ready);
+                                                return resource;
+                                            };
+                                        std::shared_ptr<MapRendererBaseTiledResource> completeResource;
+                                        tiledResources->obtainOrAllocateEntry(
+                                            completeResource,
+                                            underscaledTileId,
+                                            underscaledZoom,
+                                            resourceAllocator);
+                                    }
+                                }
+                                if (atLeastOneAbsent)
+                                    requestResourcesUploadOrUnload();
                             }
                         }
                         // Continue requesting data for the same resource (last time)

@@ -9,11 +9,11 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const QList<BandIndex> bands,
     const bool localData)
     : _resourcesManager(resourcesManager)
-    , _dateTime(dateTime)
     , _bands(bands)
     , _localData(localData)
     , weatherLayer(weatherLayer_)
 {
+    setDateTime(dateTime);
 }
 
 OsmAnd::WeatherRasterLayerProvider::~WeatherRasterLayerProvider()
@@ -31,7 +31,10 @@ void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTime)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _dateTime = dateTime;
+    // Clamp milliseconds to the nearest hour
+    const int64_t oneHour = 1000 * 60 * 60;
+    const int64_t timeOfHour = dateTime / oneHour * oneHour;
+    _dateTime = timeOfHour + (dateTime - timeOfHour < (oneHour >> 1) ? 0 : oneHour);
 }
 
 const QList<OsmAnd::BandIndex> OsmAnd::WeatherRasterLayerProvider::getBands() const

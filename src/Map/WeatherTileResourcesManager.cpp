@@ -12,7 +12,8 @@ OsmAnd::WeatherTileResourcesManager::WeatherTileResourcesManager(
     const uint32_t tileSize /*= 256*/,
     const float densityFactor /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
-    : _p(new WeatherTileResourcesManager_P(this, bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
+    : _p(new WeatherTileResourcesManager_P(this,
+        bandSettings, localCachePath, projResourcesPath, tileSize, densityFactor, webClient))
     , networkAccessAllowed(true)
 {
 }
@@ -241,6 +242,11 @@ void OsmAnd::WeatherTileResourcesManager::downloadGeoTilesAsync(
     const bool collectMetric /*= false*/)
 {
     _p->downloadGeoTilesAsync(request, callback, collectMetric);
+}
+
+bool OsmAnd::WeatherTileResourcesManager::importDbCache(const QString& dbFilePath)
+{
+    return _p->importDbCache(dbFilePath);
 }
 
 uint64_t OsmAnd::WeatherTileResourcesManager::calculateDbCacheSize(

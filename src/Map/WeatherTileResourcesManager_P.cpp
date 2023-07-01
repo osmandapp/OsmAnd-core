@@ -28,10 +28,9 @@ OsmAnd::WeatherTileResourcesManager_P::~WeatherTileResourcesManager_P()
 {
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::createResourceProvider(int64_t dateTime)
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::createResourceProvider()
 {
     return std::make_shared<WeatherTileResourceProvider>(
-        dateTime,
         _bandSettings,
         localCachePath,
         projResourcesPath,
@@ -41,42 +40,43 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResource
     );
 }
 
-std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider(int64_t dateTime)
+std::shared_ptr<OsmAnd::WeatherTileResourceProvider> OsmAnd::WeatherTileResourcesManager_P::getResourceProvider()
 {
-    auto dateTimeStr = Utilities::getDateTimeString(dateTime);
     {
-        QReadLocker scopedLocker(&_resourceProvidersLock);
+        QReadLocker scopedLocker(&_resourceProviderLock);
 
-        const auto citResourceProvider = _resourceProviders.constFind(dateTimeStr);
-        if (citResourceProvider != _resourceProviders.cend())
-            return *citResourceProvider;
+        if (_resourceProvider)
+            return _resourceProvider;
     }
     {
-        QWriteLocker scopedLocker(&_resourceProvidersLock);
+        QWriteLocker scopedLocker(&_resourceProviderLock);
 
-        auto resourceProvider = createResourceProvider(dateTime);
-        _resourceProviders.insert(dateTimeStr, resourceProvider);
-        return resourceProvider;
+        if (_resourceProvider)
+            return _resourceProvider;
+
+        _resourceProvider = createResourceProvider();
+        return _resourceProvider;
     }
 }
 
 void OsmAnd::WeatherTileResourcesManager_P::updateProvidersBandSettings()
-{
-    QWriteLocker scopedLocker(&_resourceProvidersLock);
+{    
+    QWriteLocker scopedLocker(&_resourceProviderLock);
 
-    const auto& bandSettings = _bandSettings;
-    for (const auto& provider : _resourceProviders.values())
-        provider->setBandSettings(bandSettings);
+    if (_resourceProvider)
+        _resourceProvider->setBandSettings(_bandSettings);
 }
 
-const QHash<OsmAnd::BandIndex, std::shared_ptr<const OsmAnd::GeoBandSettings>> OsmAnd::WeatherTileResourcesManager_P::getBandSettings() const
+const QHash<OsmAnd::BandIndex,
+    std::shared_ptr<const OsmAnd::GeoBandSettings>> OsmAnd::WeatherTileResourcesManager_P::getBandSettings() const
 {
     QReadLocker scopedLocker(&_bandSettingsLock);
 
     return _bandSettings;
 }
 
-void OsmAnd::WeatherTileResourcesManager_P::setBandSettings(const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
+void OsmAnd::WeatherTileResourcesManager_P::setBandSettings(
+    const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings)
 {
     QWriteLocker scopedLocker(&_bandSettingsLock);
 
@@ -145,7 +145,8 @@ double OsmAnd::WeatherTileResourcesManager_P::getConvertedBandValue(const BandIn
     return result;
 }
 
-QString OsmAnd::WeatherTileResourcesManager_P::getFormattedBandValue(const BandIndex band, const double value, const bool precise) const
+QString OsmAnd::WeatherTileResourcesManager_P::getFormattedBandValue(
+    const BandIndex band, const double value, const bool precise) const
 {
     const auto bandSettings = getBandSettings();
     if (bandSettings.contains(band))
@@ -154,7 +155,12 @@ QString OsmAnd::WeatherTileResourcesManager_P::getFormattedBandValue(const BandI
         const auto& format = precise ? settings->unitFormatPrecise : settings->unitFormatGeneral;
         int roundValue = (int)(value + 0.5);
         // d i u o x X - int
-        if (format.contains('d') || format.contains('i') || format.contains('u') || format.contains('o') || format.contains('x') || format.contains('X'))
+        if (format.contains('d')
+            || format.contains('i')
+            || format.contains('u')
+            || format.contains('o')
+            || format.contains('x')
+            || format.contains('X'))
         {
             return QString::asprintf(qPrintable(format), roundValue);
         }
@@ -173,7 +179,8 @@ OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getGeoTileZoom() const
     return WeatherTileResourceProvider::getGeoTileZoom();
 }
 
-OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMinTileZoom(const WeatherType type, const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMinTileZoom(
+    const WeatherType type, const WeatherLayer layer) const
 {
     switch (type)
     {
@@ -186,7 +193,8 @@ OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMinTileZoom(const We
     }
 }
 
-OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMaxTileZoom(const WeatherType type, const WeatherLayer layer) const
+OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMaxTileZoom(
+    const WeatherType type, const WeatherLayer layer) const
 {
     switch (type)
     {
@@ -200,7 +208,8 @@ OsmAnd::ZoomLevel OsmAnd::WeatherTileResourcesManager_P::getMaxTileZoom(const We
     }
 }
 
-int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const
+int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataZoomShift(
+    const WeatherType type, const WeatherLayer layer) const
 {
     switch (type)
     {
@@ -213,7 +222,8 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataZoomShift(const Weat
     }
 }
 
-int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const
+int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(
+    const WeatherType type, const WeatherLayer layer) const
 {
     switch (type)
     {
@@ -228,25 +238,25 @@ int OsmAnd::WeatherTileResourcesManager_P::getMaxMissingDataUnderZoomShift(const
 
 bool OsmAnd::WeatherTileResourcesManager_P::isDownloadingTiles(const int64_t dateTime)
 {
-    auto resourceProvider = getResourceProvider(dateTime);
+    auto resourceProvider = getResourceProvider();
     return resourceProvider && resourceProvider->isDownloadingTiles();
 }
 
 bool OsmAnd::WeatherTileResourcesManager_P::isEvaluatingTiles(const int64_t dateTime)
 {
-    auto resourceProvider = getResourceProvider(dateTime);
+    auto resourceProvider = getResourceProvider();
     return resourceProvider && resourceProvider->isEvaluatingTiles();
 }
 
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentDownloadingTileIds(const int64_t dateTime)
 {
-    auto resourceProvider = getResourceProvider(dateTime);
+    auto resourceProvider = getResourceProvider();
     return resourceProvider ? resourceProvider->getCurrentDownloadingTileIds() : QList<OsmAnd::TileId>();
 }
 
 QList<OsmAnd::TileId> OsmAnd::WeatherTileResourcesManager_P::getCurrentEvaluatingTileIds(const int64_t dateTime)
 {
-    auto resourceProvider = getResourceProvider(dateTime);
+    auto resourceProvider = getResourceProvider();
     return resourceProvider ? resourceProvider->getCurrentEvaluatingTileIds() : QList<OsmAnd::TileId>();
 }
 
@@ -255,10 +265,11 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
+        rr.dateTime = request.dateTime;
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
@@ -289,10 +300,11 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
     const WeatherTileResourcesManager::ObtainValueAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
+        rr.dateTime = request.dateTime;
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
@@ -326,10 +338,11 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
     const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
+        rr.dateTime = request.dateTime;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
@@ -374,10 +387,11 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     const WeatherTileResourcesManager::ObtainTileDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
+        rr.dateTime = request.dateTime;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
@@ -423,10 +437,11 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTiles(
     const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::DownloadGeoTileRequest rr;
+        rr.dateTime = request.dateTime;
         rr.topLeft = request.topLeft;
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
@@ -456,10 +471,11 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
     const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    auto resourceProvider = getResourceProvider(request.dateTime);
+    auto resourceProvider = getResourceProvider();
     if (resourceProvider)
     {
         WeatherTileResourceProvider::DownloadGeoTileRequest rr;
+        rr.dateTime = request.dateTime;
         rr.topLeft = request.topLeft;
         rr.bottomRight = request.bottomRight;
         rr.forceDownload = request.forceDownload;
@@ -484,26 +500,23 @@ void OsmAnd::WeatherTileResourcesManager_P::downloadGeoTilesAsync(
     }
 }
 
+bool OsmAnd::WeatherTileResourcesManager_P::importDbCache(const QString& dbFilePath)
+{
+    auto resourceProvider = getResourceProvider();
+    if (resourceProvider)
+        return resourceProvider->importTileData(dbFilePath);
+    return false;
+}
+
 uint64_t OsmAnd::WeatherTileResourcesManager_P::calculateDbCacheSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,
     const ZoomLevel zoom)
 {
-    auto cacheDir = QDir(localCachePath);
     uint64_t size = 0;
-
-    QFileInfoList fileInfos;
-    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
-    for (const auto& fileInfo : constOf(fileInfos))
-    {
-        QString baseName = fileInfo.baseName();
-        QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
-        dateTime.setTimeSpec(Qt::UTC);
-
-        auto resourceProvider = getResourceProvider(dateTime.toMSecsSinceEpoch());
-        if (resourceProvider)
-            size += resourceProvider->calculateTilesSize(tileIds, excludeTileIds, zoom);
-    }
+    auto resourceProvider = getResourceProvider();
+    if (resourceProvider)
+        size += resourceProvider->calculateTilesSize(tileIds, excludeTileIds, zoom, 0);
 
     return size;
 }
@@ -513,51 +526,44 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(
     const QList<TileId>& excludeTileIds,
     const ZoomLevel zoom)
 {
-    auto cacheDir = QDir(localCachePath);
-
-    QFileInfoList fileInfos;
-    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db"), fileInfos, false);
-    for (const auto& fileInfo : constOf(fileInfos))
+    auto resourceProvider = getResourceProvider();
+    if (resourceProvider)
     {
-        QString baseName = fileInfo.baseName();
-        QDateTime dateTime = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
-        dateTime.setTimeSpec(Qt::UTC);
+        QWriteLocker scopedLocker(&_resourceProviderLock);
 
-        auto resourceProvider = getResourceProvider(dateTime.toMSecsSinceEpoch());
-        if (resourceProvider)
+        if (!resourceProvider->removeTileData(tileIds, excludeTileIds, zoom, 0))
         {
-            QWriteLocker scopedLocker(&_resourceProvidersLock);
+            LogPrintf(LogSeverityLevel::Error,
+                    "Failed to delete tile ids from weather resource provider");
+        }
 
-            if (!resourceProvider->removeTileData(tileIds, excludeTileIds, zoom))
+        bool isEmpty = resourceProvider->isEmpty();
+        if (isEmpty)
+        {
+            resourceProvider->closeProvider();
+            _resourceProvider.reset();
+
+            auto geoDbCachePath = localCachePath
+            + QDir::separator()
+            + QStringLiteral("weather_tiffs.db");
+
+            if (!QFile(geoDbCachePath).remove())
             {
                 LogPrintf(LogSeverityLevel::Error,
-                        "Failed to delete tile ids from weather resource provider: %s", qPrintable(baseName));
+                        "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
             }
-
-            bool isEmpty = resourceProvider->isEmpty();
-            if (isEmpty)
+            else
             {
-                resourceProvider->closeProvider();
-                QString dateTimeStr = dateTime.toString(QStringLiteral("yyyyMMdd_hh00"));
-                _resourceProviders.remove(dateTimeStr);
-
-                const auto geoDbCachePath = fileInfo.absoluteFilePath();
-                if (!QFile(geoDbCachePath).remove())
+                QFileInfoList rasterFileInfos;
+                Utilities::findFiles(QDir(localCachePath),
+                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
+                for (const auto &rasterFileInfo: constOf(rasterFileInfos))
                 {
-                    LogPrintf(LogSeverityLevel::Error,
-                            "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
-                }
-                else
-                {
-                    QFileInfoList rasterFileInfos;
-                    Utilities::findFiles(cacheDir, QStringList() << (dateTime.toString(QStringLiteral("yyyyMMdd_hh00")) + QStringLiteral("*.raster.db")), rasterFileInfos, false);
-                    for (const auto &rasterFileInfo: constOf(rasterFileInfos))
+                    auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();
+                    if (!QFile(rasterDbCachePath).remove())
                     {
-                        if (!QFile(rasterFileInfo.absoluteFilePath()).remove())
-                        {
-                            LogPrintf(LogSeverityLevel::Error,
-                                    "Failed to delete weather raster cache db file: %s", qPrintable(geoDbCachePath));
-                        }
+                        LogPrintf(LogSeverityLevel::Error,
+                                "Failed to delete weather raster cache db file: %s", qPrintable(rasterDbCachePath));
                     }
                 }
             }
@@ -574,53 +580,51 @@ bool OsmAnd::WeatherTileResourcesManager_P::clearDbCache(int64_t beforeDateTime 
 
     bool clearBefore = beforeDateTime > 0;
 
-    {
-        QWriteLocker scopedLocker(&_resourceProvidersLock);
-
-        for (auto &provider: _resourceProviders.values())
-        {
-            uint64_t dateTime = provider->getDateTime();
-            bool checkBefore = beforeDateTime > dateTime;
-            if (!clearBefore || checkBefore)
-            {
-                auto dateTimeStr =  Utilities::getDateTimeString(dateTime);
-                provider->closeProvider();
-                _resourceProviders.remove(dateTimeStr);
-            }
-        }
-    }
-
     bool res = true;
-    auto cacheDir = QDir(localCachePath);
-
-    QFileInfoList fileInfos;
-    Utilities::findFiles(cacheDir, QStringList() << QStringLiteral("*.tiff.db") << QStringLiteral("*.raster.db"), fileInfos, false);
-    for (const auto& fileInfo : constOf(fileInfos))
+    auto resourceProvider = getResourceProvider();
+    if (resourceProvider)
     {
-        bool deleted = true;
-        const auto filePath = fileInfo.absoluteFilePath();
-        if (clearBefore)
-        {
-            QString baseName = fileInfo.baseName();
-            QDateTime dateTimeBefore;
-            if (fileInfo.completeSuffix().contains(QStringLiteral("tiff.db")))
-                dateTimeBefore = QDateTime::fromString(baseName, QStringLiteral("yyyyMMdd_hh00"));
-            else
-                dateTimeBefore = QDateTime::fromString(baseName.mid(0, baseName.count() - 2), QStringLiteral("yyyyMMdd_hh00"));
-            dateTimeBefore.setTimeSpec(Qt::UTC);
-            bool checkBefore = beforeDateTime > dateTimeBefore.toMSecsSinceEpoch();
-            if (checkBefore)
-                deleted = QFile(filePath).remove();
-        }
-        else
-        {
-            deleted = QFile(filePath).remove();
-        }
-        if (!deleted)
+        QWriteLocker scopedLocker(&_resourceProviderLock);
+
+        if (!resourceProvider->removeTileDataBefore(beforeDateTime))
         {
             res = false;
             LogPrintf(LogSeverityLevel::Error,
-                    "Failed to delete weather cache db file: %s", qPrintable(filePath));
+                    "Failed to delete tile ids from weather resource provider");
+        }
+
+        bool isEmpty = resourceProvider->isEmpty();
+        if (isEmpty)
+        {
+            resourceProvider->closeProvider();
+            _resourceProvider.reset();
+
+            auto geoDbCachePath = localCachePath
+            + QDir::separator()
+            + QStringLiteral("weather_tiffs.db");
+
+            if (!QFile(geoDbCachePath).remove())
+            {
+                res = false;
+                LogPrintf(LogSeverityLevel::Error,
+                        "Failed to delete weather geo cache db file: %s", qPrintable(geoDbCachePath));
+            }
+            else
+            {
+                QFileInfoList rasterFileInfos;
+                Utilities::findFiles(QDir(localCachePath),
+                    QStringList() << (QStringLiteral("weather_cache*.db")), rasterFileInfos, false);
+                for (const auto &rasterFileInfo: constOf(rasterFileInfos))
+                {
+                    auto rasterDbCachePath = rasterFileInfo.absoluteFilePath();
+                    if (!QFile(rasterDbCachePath).remove())
+                    {
+                        res = false;
+                        LogPrintf(LogSeverityLevel::Error,
+                                "Failed to delete weather raster cache db file: %s", qPrintable(rasterDbCachePath));
+                    }
+                }
+            }
         }
     }
 

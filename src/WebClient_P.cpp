@@ -181,9 +181,10 @@ QString OsmAnd::WebClient_P::downloadString(
     return QString::fromLocal8Bit(data);
 }
 
-bool OsmAnd::WebClient_P::downloadFile(
+long long OsmAnd::WebClient_P::downloadFile(
     const QNetworkRequest& networkRequest,
     const QString& fileName,
+    const long long lastTime,
     std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
     const IWebClient::RequestProgressCallbackSignature progressCallback) const
 {
@@ -195,7 +196,7 @@ bool OsmAnd::WebClient_P::downloadFile(
     // Open file for writing, replacing
     bool ok = file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     if (!ok)
-        return false;
+        return -1;
 
     enum {
         IntermediateBufferSize = 16 * 1024
@@ -259,7 +260,7 @@ bool OsmAnd::WebClient_P::downloadFile(
 
         if (requestResult != nullptr)
             requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-        return false;
+        return -1;
     }
 
     file.flush();
@@ -267,7 +268,7 @@ bool OsmAnd::WebClient_P::downloadFile(
 
     if (requestResult != nullptr)
         requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-    return true;
+    return 1; // TODO: return actual value of 'Last-Modified' header
 }
 
 OsmAnd::WebClient_P::Request::Request(
