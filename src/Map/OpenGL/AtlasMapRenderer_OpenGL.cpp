@@ -1446,6 +1446,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (zoomLevel > MaxZoomLevel)
         return false;
     const auto zoom = static_cast<double>(1u << static_cast<int>(zoomLevel));
+    const auto neededZoom = upScale ? zoomLevel + factor / zoom - 1.0 : (zoom / factor - 1.0) * 2.0 - zoomLevel;
+    if (neededZoom != neededZoom)
+        return false;
     const auto actualSegment = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x);
     const auto sqrActualDistance = actualSegment.squareNorm();
@@ -1453,8 +1456,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
         return false;
     const auto actualSegmentN = actualSegment / qSqrt(sqrActualDistance);
     const auto neededSegmentN = neededSegment / qSqrt(sqrNeededDistance);
-    zoomAndRotate.x = upScale ? zoomLevel + factor / zoom - 1.0 : (zoom / factor - 1.0) * 2.0 - zoomLevel;
-    zoomAndRotate.y = qRadiansToDegrees(Utilities::getSignedAngle(actualSegmentN, neededSegmentN));
+    const auto neededAngle = qRadiansToDegrees(Utilities::getSignedAngle(actualSegmentN, neededSegmentN));
+    if (neededAngle != neededAngle)
+        return false;
+
+    zoomAndRotate.x = neededZoom;
+    zoomAndRotate.y = neededAngle;
 
     return true;
 }
