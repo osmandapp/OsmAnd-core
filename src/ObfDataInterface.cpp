@@ -64,7 +64,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,
-    const AreaI* const bbox31_ /*= nullptr*/,
+    const AreaI* const bbox31 /*= nullptr*/,
     const ObfMapSectionReader::FilterByIdFunction filterById /*= nullptr*/,
     ObfMapSectionReader::DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
@@ -82,14 +82,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
 
         const auto& obfInfo = obfReader->obtainInfo();
 
-        const AreaI* bbox31 = bbox31_;
-        
         // Handle main basemap
         if (obfInfo->isBasemapWithCoastlines)
         {
-            if (coastlineOnly)
-                continue;
-            
             // In case there's more than 1 basemap reader present, use only first and warn about this fact
             if (basemapReader)
             {
@@ -100,13 +95,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
             // Save basemap reader for later use
             basemapReader = obfReader;
 
-            // Enlarge bbox to find more coastlines from basemap
-            if (bbox31_ && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
-            {
-                const auto roundZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-                const auto& roundedBBox31 = Utilities::roundBoundingBox31(*bbox31_, roundZoom);
-                bbox31 = &roundedBBox31;
-            }
+            // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
+            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+                continue;
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
@@ -137,6 +128,54 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
                 else if (mergedSurfaceType != surfaceTypeToMerge)
                     mergedSurfaceType = MapSurfaceType::Mixed;
             }
+        }
+    }
+
+    // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
+    // read tile from MaxBasemapZoomLevel that covers requested tile
+    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel) && !coastlineOnly)
+    {
+        const auto& obfInfo = basemapReader->obtainInfo();
+
+        // Calculate proper bbox31 on MaxBasemapZoomLevel (if possible)
+        const AreaI *pBasemapBBox31 = nullptr;
+        AreaI basemapBBox31;
+        if (bbox31)
+        {
+            pBasemapBBox31 = &basemapBBox31;
+            basemapBBox31 = Utilities::roundBoundingBox31(
+                *bbox31,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+        }
+
+        for (const auto& mapSection : constOf(obfInfo->mapSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+
+            // Read objects from each map section
+            auto surfaceTypeToMerge = MapSurfaceType::Undefined;
+            OsmAnd::ObfMapSectionReader::loadMapObjects(
+                basemapReader,
+                mapSection,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
+                pBasemapBBox31,
+                resultOut,
+                &surfaceTypeToMerge,
+                filterById,
+                nullptr,
+                cache,
+                outReferencedCacheEntries,
+                queryController,
+                metric,
+                false);
+
+            // Basemap must always have a surface type defined
+            assert(surfaceTypeToMerge != MapSurfaceType::Undefined);
+            if (mergedSurfaceType == MapSurfaceType::Undefined)
+                mergedSurfaceType = surfaceTypeToMerge;
+            else if (mergedSurfaceType != surfaceTypeToMerge)
+                mergedSurfaceType = MapSurfaceType::Mixed;
         }
     }
 
@@ -217,7 +256,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,
     MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,
-    const AreaI* const bbox31_ /*= nullptr*/,
+    const AreaI* const bbox31 /*= nullptr*/,
     const ObfMapSectionReader::FilterByIdFunction filterMapObjectsById /*= nullptr*/,
     ObfMapSectionReader::DataBlocksCache* binaryMapObjectsCache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedBinaryMapObjectsCacheEntries /*= nullptr*/,
@@ -267,8 +306,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         QFileInfo fileInfo(obfReader->obfFile->filePath);
         if (obfReader->obfFile->filePath.contains(QStringLiteral(".road")) && regularMapNames.contains(fileInfo.baseName()))
             continue;
-        
-        const AreaI* bbox31 = bbox31_;
 
         // Handle basemap
         if (obfInfo->isBasemapWithCoastlines)
@@ -276,14 +313,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             // Ignore this basemap if skipped before
             if (basemapReader && obfReader != basemapReader)
                 continue;
-            
-            // Enlarge bbox to find more coastlines from basemap
-            if (bbox31_ && zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
-            {
-                const auto roundZoom = static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel);
-                const auto& roundedBBox31 = Utilities::roundBoundingBox31(*bbox31_, roundZoom);
-                bbox31 = &roundedBBox31;
-            }
+            // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
+            if (obfReader == basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+                continue;
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
@@ -313,6 +345,53 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 else if (mergedSurfaceType != surfaceTypeToMerge)
                     mergedSurfaceType = MapSurfaceType::Mixed;
             }
+        }
+    }
+
+    // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
+    // read tile from MaxBasemapZoomLevel that covers requested tile
+    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+    {
+        const auto& obfInfo = basemapReader->obtainInfo();
+
+        // Calculate proper bbox31 on MaxBasemapZoomLevel (if possible)
+        const AreaI *pBasemapBBox31 = nullptr;
+        AreaI basemapBBox31;
+        if (bbox31)
+        {
+            pBasemapBBox31 = &basemapBBox31;
+            basemapBBox31 = Utilities::roundBoundingBox31(
+                *bbox31,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+        }
+
+        for (const auto& mapSection : constOf(obfInfo->mapSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+
+            // Read objects from each map section
+            auto surfaceTypeToMerge = MapSurfaceType::Undefined;
+            OsmAnd::ObfMapSectionReader::loadMapObjects(
+                basemapReader,
+                mapSection,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
+                pBasemapBBox31,
+                outBinaryMapObjects,
+                &surfaceTypeToMerge,
+                filterMapObjectsById,
+                nullptr,
+                binaryMapObjectsCache,
+                outReferencedBinaryMapObjectsCacheEntries,
+                queryController,
+                binaryMapObjectsMetric);
+
+            // Basemap must always have a surface type defined
+            assert(surfaceTypeToMerge != MapSurfaceType::Undefined);
+            if (mergedSurfaceType == MapSurfaceType::Undefined)
+                mergedSurfaceType = surfaceTypeToMerge;
+            else if (mergedSurfaceType != surfaceTypeToMerge)
+                mergedSurfaceType = MapSurfaceType::Mixed;
         }
     }
 
@@ -346,7 +425,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                     obfReader,
                     routingSection,
                     RoutingDataLevel::Detailed,
-                    bbox31_,
+                    bbox31,
                     outRoads,
                     filterRoadsById,
                     nullptr,
