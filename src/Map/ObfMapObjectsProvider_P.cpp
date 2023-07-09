@@ -654,7 +654,31 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                     const auto& sectionNameWithoutDate1 = formatObfSectionName(o1->obfSection, false);
                     const auto& sectionNameWithoutDate2 = formatObfSectionName(o2->obfSection, false);
                     if (sectionNameWithoutDate1 != sectionNameWithoutDate2)
-                        return o1->points31.size() > o2->points31.size();
+                    {
+                        const auto& points1 = o1->points31;
+                        const auto& points2 = o2->points31;
+                        if (points1.size() != points2.size())
+                        {
+                            return points1.size() > points2.size();
+                        }
+                        else
+                        {
+                            double length1;
+                            double length2;
+                            for (int pointIdx = 1; pointIdx < points1.size(); pointIdx++)
+                            {
+                                const auto& prevPoint1 = points1[pointIdx - 1];
+                                const auto& currPoint1 = points1[pointIdx];
+                                length1 += Utilities::squareDistance31(prevPoint1, currPoint1);
+
+                                const auto& prevPoint2 = points2[pointIdx - 1];
+                                const auto& currPoint2 = points2[pointIdx];
+                                length2 += Utilities::squareDistance31(prevPoint2, currPoint2);
+                            }
+
+                            return length1 > length2;
+                        }
+                    }
                 }
 
                 // Object with latest date is more important
