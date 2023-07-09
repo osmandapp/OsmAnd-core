@@ -395,6 +395,24 @@ namespace OsmAnd
             return static_cast<double>(doubledPolygonArea(points))* 0.5;
         }
 
+        inline static float pathLength(const QVector<PointI>& pathPoints)
+        {
+            return qSqrt(squarePathLength(pathPoints));
+        }
+
+        inline static float squarePathLength(const QVector<PointI>& pathPoints)
+        {
+            float squareLength = 0.0f;
+            for (int pointIdx = 1; pointIdx < pathPoints.size(); pointIdx++)
+            {
+                const auto& prevPoint = pathPoints[pointIdx - 1];
+                const auto& currPoint = pathPoints[pointIdx];
+                squareLength += static_cast<PointF>(currPoint - prevPoint).squareNorm();
+            }
+            
+            return squareLength;
+        }
+
         inline static bool rayIntersectX(const PointD& v0_, const PointD& v1_, double mY, double& mX)
         {
             // prev node above line

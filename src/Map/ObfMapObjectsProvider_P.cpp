@@ -650,11 +650,16 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
                 if (comparePoints)
                 {
-                    // If objects' sections differ regionally, object with the most points is more important
+                    // If objects' sections differ regionally, object with the most points or longest path is more important
                     const auto& sectionNameWithoutDate1 = formatObfSectionName(o1->obfSection, false);
                     const auto& sectionNameWithoutDate2 = formatObfSectionName(o2->obfSection, false);
                     if (sectionNameWithoutDate1 != sectionNameWithoutDate2)
-                        return o1->points31.size() > o2->points31.size();
+                    {
+                        if (o1->points31.size() != o2->points31.size())
+                            return o1->points31.size() > o2->points31.size();
+                        else
+                            return Utilities::squarePathLength(o1->points31) > Utilities::squarePathLength(o2->points31);
+                    }
                 }
 
                 // Object with latest date is more important
