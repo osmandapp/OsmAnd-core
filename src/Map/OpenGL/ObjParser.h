@@ -19,7 +19,7 @@ namespace OsmAnd
         ObjParser(const QString& objFilename, const QString& mtlDirPath);
         virtual ~ObjParser();
 
-        bool parse(std::shared_ptr<Model3D>& outModel) const;
+        bool parse(std::shared_ptr<Model3D>& outModel, const bool translateToOrigin) const;
     };   
 }
 

@@ -23,10 +23,21 @@ namespace OsmAnd
 
         struct BBox
         {
-            float minX, maxX;
-            float minY, maxY;
-            float minZ, maxZ;
+            const float minX, maxX;
+            const float minY, maxY;
+            const float minZ, maxZ;
+
+            BBox(float minX_, float maxX_, float minY_, float maxY_, float minZ_, float maxZ_)
+                : minX(minX_)
+                , maxX(maxX_)
+                , minY(minY_)
+                , maxY(maxY_)
+                , minZ(minZ_)
+                , maxZ(maxZ_)
+            {
+            }
         };
+
     private:
         QVector<VertexInfo> _vertexInfos;
         QHash<QString, FColorRGBA> _customMaterialColors;
@@ -46,11 +57,10 @@ namespace OsmAnd
         void setCustomMaterialColors(const QHash<QString, FColorRGBA>& customMaterialColors);
         void useDefaultMaterialColors();
         
-        const int getVerticesCount() const;
-        const QVector<Model3D::Vertex> getVertices() const;
+        int getVerticesCount() const;
+        QVector<Model3D::Vertex> getVertices() const;
 
-        const QList<PointF> getHorizontalBBox() const;
-        const BBox getBBox() const;
+        BBox getBBox() const;
     };
 }
 

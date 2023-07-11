@@ -21,7 +21,7 @@ OsmAnd::ObjParser::~ObjParser()
 {
 }
 
-bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
+bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel, const bool translateToOrigin) const
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -37,22 +37,22 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
     bool ok = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &error, objFilename, mtlDirPath, true, false);
 
     if (warn.length() > 0)
-        LogPrintf(LogSeverityLevel::Warning, qPrintable(QString::fromStdString(warn)));
+        LogPrintf(LogSeverityLevel::Warning, warn.c_str());
 
     if (error.length() > 0)
-        LogPrintf(LogSeverityLevel::Error, qPrintable(QString::fromStdString(error)));
+        LogPrintf(LogSeverityLevel::Error, error.c_str());
 
     if (!ok)
         return false;
 
-    if (attrib.vertices.size() == 0)
+    if (attrib.vertices.empty())
     {
         QFileInfo objFileInfo(_objFilename);
         LogPrintf(LogSeverityLevel::Error, "No vertices data provided in %s", qPrintable(objFileInfo.fileName()));
         return false;
     }
 
-    if (materials.size() == 0 && attrib.colors.size() != attrib.vertices.size())
+    if (materials.empty() && attrib.colors.size() != attrib.vertices.size())
     {
         QFileInfo objFileInfo(_objFilename);
         LogPrintf(LogSeverityLevel::Error, "No color data provided in %s", qPrintable(objFileInfo.fileName()));
@@ -60,67 +60,68 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
     }
 
     QVector<Model3D::VertexInfo> vertices;
-    Model3D::BBox bbox = {
-        .minX = attrib.vertices[0],
-        .maxX = bbox.minX,
-        .minY = attrib.vertices[1],
-        .maxY = bbox.minY,
-        .minZ = attrib.vertices[2],
-        .maxZ = bbox.minZ
-    };
-    for (auto shape : shapes)
+    float minX = attrib.vertices[0];
+    float maxX = minX;
+    float minY = attrib.vertices[1];
+    float maxY = minY;
+    float minZ = attrib.vertices[2];
+    float maxZ = minZ;
+
+    for (const auto& shape : shapes)
     {
-        auto mesh = shape.mesh;
-        for (auto faceIdx = 0; faceIdx < mesh.num_face_vertices.size(); faceIdx++)
+        const auto& mesh = shape.mesh;
+        for (int faceIdx = 0; faceIdx < mesh.num_face_vertices.size(); faceIdx++)
         {
-            auto vertexNumberPerFace = mesh.num_face_vertices[faceIdx];
+            const auto vertexNumberPerFace = mesh.num_face_vertices[faceIdx];
             assert(vertexNumberPerFace == 3); // Should be triangulated by tinyobj
 
-            auto materialIdx = mesh.material_ids[faceIdx];
-            tinyobj::material_t* faceMaterial = materialIdx == -1 ? nullptr : &materials[materialIdx]; 
+            const int materialIdx = mesh.material_ids[faceIdx];
 
-            auto startIdx = faceIdx * vertexNumberPerFace;
-            auto endIdx = startIdx + vertexNumberPerFace;
+            // Indices to vector of vertex indices
+            const int startVertexIdx = faceIdx * vertexNumberPerFace;
+            const int endVertexIdx = startVertexIdx + vertexNumberPerFace;
 
             QVector<Model3D::VertexInfo> faceVertices;
 
-            for (auto idx = startIdx; idx < endIdx; idx++)
+            for (int idx = startVertexIdx; idx < endVertexIdx; idx++)
             {
-                auto vertexOrder = mesh.indices[idx].vertex_index;
+                int vertexOrder = mesh.indices[idx].vertex_index;
                 if (vertexOrder == -1)
                     break;
                 
                 auto vertexIdx = vertexOrder * vertexNumberPerFace;
-                Model3D::VertexInfo vertex = Model3D::VertexInfo {}; // or no?
 
-                float x = attrib.vertices[vertexIdx + 0];
-                float y = attrib.vertices[vertexIdx + 1];
-                float z = attrib.vertices[vertexIdx + 2];
+                const float x = attrib.vertices[vertexIdx + 0];
+                const float y = attrib.vertices[vertexIdx + 1];
+                const float z = attrib.vertices[vertexIdx + 2];
 
+                // Update min/max values 
+                if (x < minX)
+                    minX = x;
+                if (x > maxX)
+                    maxX = x;
+                if (y < minY)
+                    minY = y;
+                if (y > maxY)
+                    maxY = y;
+                if (z < minZ)
+                    minZ = z;
+                if (z > maxZ)
+                    maxZ = z;
+
+                Model3D::VertexInfo vertex;
                 vertex.xyz[0] = x;
                 vertex.xyz[1] = y;
                 vertex.xyz[2] = z;
 
-                if (x < bbox.minX)
-                    bbox.minX = x;
-                if (x > bbox.maxX)
-                    bbox.maxX = x;
-                if (y < bbox.minY)
-                    bbox.minY = y;
-                if (y > bbox.maxY)
-                    bbox.maxY = y;
-                if (z < bbox.minZ)
-                    bbox.minZ = z;
-                if (z > bbox.maxZ)
-                    bbox.maxZ = z;
-
-                if (faceMaterial)
+                if (materialIdx != -1)
                 {
-                    vertex.rgba[0] = faceMaterial->diffuse[0];
-                    vertex.rgba[1] = faceMaterial->diffuse[1];
-                    vertex.rgba[2] = faceMaterial->diffuse[2];
-                    vertex.rgba[3] = faceMaterial->dissolve;
-                    vertex.materialName = QString::fromStdString(faceMaterial->name);
+                    const auto& faceMaterial = materials[materialIdx];
+                    vertex.rgba[0] = faceMaterial.diffuse[0];
+                    vertex.rgba[1] = faceMaterial.diffuse[1];
+                    vertex.rgba[2] = faceMaterial.diffuse[2];
+                    vertex.rgba[3] = faceMaterial.dissolve;
+                    vertex.materialName = QString::fromStdString(faceMaterial.name);
                 }
                 else
                 {
@@ -134,11 +135,40 @@ bool OsmAnd::ObjParser::parse(std::shared_ptr<Model3D>& outModel) const
             }
 
             if (faceVertices.length() == vertexNumberPerFace)
-                for (auto vertex : faceVertices)
+                for (const auto& vertex : faceVertices)
                     vertices.push_back(vertex);
         }
     }
 
+    if (minX == maxX || minY == maxY || minZ == maxZ)
+    {
+        LogPrintf(LogSeverityLevel::Error, "3D Model is flat in one of axis");
+        return false;
+    }
+
+    if (translateToOrigin)
+    {
+        const auto translateX = -(minX + (maxX - minX) / 2.0f);
+        const auto translateY = -minY;
+        const auto translateZ = -(minZ + (maxZ - minZ) / 2.0f);
+
+        for (size_t i = 0; i < vertices.size(); i++)
+        {
+            auto& vertex = vertices[i];
+            vertex.xyz[0] += translateX;
+            vertex.xyz[1] += translateY;
+            vertex.xyz[2] += translateZ;
+        }
+
+        minX += translateX;
+        maxX += translateX;
+        minY += translateY;
+        maxY += translateY;
+        minZ += translateZ;
+        maxZ += translateZ;
+    }
+
+    Model3D::BBox bbox(minX, maxX, minY, maxY, minZ, maxZ);
     outModel.reset(new Model3D(vertices, bbox));
 
     return true;
