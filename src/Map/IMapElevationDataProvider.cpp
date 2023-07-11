@@ -39,8 +39,8 @@ inline float OsmAnd::IMapElevationDataProvider::Data::getInterpolatedValue(const
 {
     float xCoord;
     float yCoord;
-    const auto xOffset = std::max(0.0f, std::modf(x, &xCoord));
-    const auto yOffset = std::max(0.0f, std::modf(y, &yCoord));
+    const auto xOffset = std::max(0.0f, std::modf(x - 0.5f, &xCoord));
+    const auto yOffset = std::max(0.0f, std::modf(y - 0.5f, &yCoord));
 
     auto row = std::max(0, static_cast<int>(yCoord));
     auto col = std::max(0, static_cast<int>(xCoord));

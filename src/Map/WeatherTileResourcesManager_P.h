@@ -26,10 +26,10 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(WeatherTileResourcesManager_P);
     private:
-        mutable QReadWriteLock _resourceProvidersLock;
-        QHash<QString, std::shared_ptr<WeatherTileResourceProvider>> _resourceProviders;
+        mutable QReadWriteLock _resourceProviderLock;
+        std::shared_ptr<WeatherTileResourceProvider> _resourceProvider;
         
-        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider(int64_t dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> createResourceProvider();
 
         mutable QReadWriteLock _bandSettingsLock;
         QHash<BandIndex, std::shared_ptr<const GeoBandSettings>> _bandSettings;
@@ -70,7 +70,7 @@ namespace OsmAnd
         int getMaxMissingDataZoomShift(const WeatherType type, const WeatherLayer layer) const;
         int getMaxMissingDataUnderZoomShift(const WeatherType type, const WeatherLayer layer) const;
 
-        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider(int64_t dateTime);
+        std::shared_ptr<WeatherTileResourceProvider> getResourceProvider();
 
         bool isDownloadingTiles(const int64_t dateTime);
         bool isEvaluatingTiles(const int64_t dateTime);
@@ -106,6 +106,8 @@ namespace OsmAnd
             const WeatherTileResourcesManager::DownloadGeoTileRequest& request,
             const WeatherTileResourcesManager::DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
+
+        bool importDbCache(const QString& dbFilePath);
 
         uint64_t calculateDbCacheSize(
             const QList<TileId>& tileIds,

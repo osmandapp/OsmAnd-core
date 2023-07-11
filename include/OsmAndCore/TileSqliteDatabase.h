@@ -130,23 +130,27 @@ namespace OsmAnd
         bool storeMeta(const Meta& meta);
 
         bool isEmpty() const;
-        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom);
-        bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom);
-        bool containsTileData(TileId tileId, ZoomLevel zoom, int specification = 0) const;
-        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int specification = 0) const;
+        bool getTileIds(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);
+        bool getTilesSize(QList<TileId> tileIds, uint64_t& size, ZoomLevel zoom, int64_t specification = 0);
+        bool containsTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0) const;
+        bool obtainTileTime(TileId tileId, ZoomLevel zoom, int64_t& outTime, int64_t specification = 0) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, QByteArray& outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
+            QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
-        bool obtainTileData(TileId tileId, ZoomLevel zoom, int specification,
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
-        bool storeTileData(TileId tileId, ZoomLevel zoom, int specification,
+        bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             const QByteArray& data, int64_t time = 0);
-        bool removeTileData(TileId tileId, ZoomLevel zoom, int specification = 0);
-        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int specification = 0);
+        bool updateTileDataFrom(const QString& dbFilePath, const QString* specName = nullptr);
+        bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
+        bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);
         bool removeTilesData();
         bool removeTilesData(ZoomLevel zoom);
         bool removeBiggerTilesData(ZoomLevel zoom);
-        bool removeSpecificTilesData(int specification);
+        bool removeSpecificTilesData(int64_t specification);
+        bool removePreviousTilesData(int64_t specification);
         bool removeOlderTilesData(int64_t time);
         bool removeTilesData(AreaI bbox31, bool strict = true);
         bool removeTilesData(AreaI bbox31, ZoomLevel zoom, bool strict = true);

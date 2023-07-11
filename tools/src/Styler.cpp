@@ -487,6 +487,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                                 output << xT("additional bottom");
                                 break;
                         }
+                        output << xT("\t\tText vertical offset: ") << textSymbol->verticalOffset << std::endl;
                         output << xT("\t\tText color: ") << QStringToStlString(textSymbol->color.toString()) << std::endl;
                         output << xT("\t\tText size: ") << textSymbol->size << std::endl;
                         output << xT("\t\tText shadow radius: ") << textSymbol->shadowRadius << std::endl;

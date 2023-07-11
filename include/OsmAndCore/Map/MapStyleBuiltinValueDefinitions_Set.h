@@ -42,6 +42,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_DY, Output, Integer, "textDy", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_RADIUS, Output, Integer, "textHaloRadius", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_COLOR, Output, Color, "textHaloColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SIZE, Output, Integer, "textSize", true)

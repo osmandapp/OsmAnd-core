@@ -36,6 +36,18 @@ namespace OsmAnd
             int height,
             SkAlphaType alphaType = SkAlphaType::kPremul_SkAlphaType);
 
+        static sk_sp<SkImage> getUpperLeft(
+            const sk_sp<const SkImage>& original);
+
+        static sk_sp<SkImage> getUpperRight(
+            const sk_sp<const SkImage>& original);
+
+        static sk_sp<SkImage> getLowerLeft(
+            const sk_sp<const SkImage>& original);
+
+        static sk_sp<SkImage> getLowerRight(
+            const sk_sp<const SkImage>& original);
+
         static sk_sp<SkImage> scaleImage(
             const sk_sp<const SkImage>& original,
             float xScale,

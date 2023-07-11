@@ -207,6 +207,8 @@ namespace OsmAnd
             const DownloadGeoTilesAsyncCallback callback,
             const bool collectMetric = false);
 
+        bool importDbCache(const QString& dbFilePath);
+
         uint64_t calculateDbCacheSize(
             const QList<TileId>& tileIds,
             const QList<TileId>& excludeTileIds,

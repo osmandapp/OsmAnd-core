@@ -193,8 +193,16 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - height / 2
                     PointI offset;
 
-                    // If bottom text section is free, move top section text to bottom
-                    bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top && bottomTextSectionTaken;
+                    // If bottom text section is free, move top section text to bottom and reset vertical offset
+                    bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top;
+                    int verticalOffset = textSymbol->verticalOffset;
+                    if (drawInTopSection && !bottomTextSectionTaken)
+                    {
+                        drawInTopSection = false;
+                        verticalOffset = 0;
+                    }
+                    offset.y += verticalOffset;
+
                     if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
                     {
                         const auto halfHeight = rasterizedText->height() / 2;
@@ -337,11 +345,18 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 #endif // OSMAND_DUMP_SYMBOLS
 
                 // Icons offset always measured from center, without indents from other symbols
-                PointI offset;
+                PointI symbolOffset;
+                PointI iconOffset;
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.x))
-                    offset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
+                {
+                    symbolOffset.x = qRound(iconSymbol->offsetFactor.x * icon->width());
+                    iconOffset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
+                }
                 if (!qFuzzyIsNull(iconSymbol->offsetFactor.y))
-                    offset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
+                {
+                    symbolOffset.y = qRound(iconSymbol->offsetFactor.y * icon->height());
+                    iconOffset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
+                }
 
                 // Publish new rasterized symbol
                 const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, iconSymbol));
@@ -352,7 +367,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->languageId = LanguageId::Invariant;
                 rasterizedSymbol->minDistance = iconSymbol->minDistance;
                 rasterizedSymbol->location31 = iconSymbol->location31;
-                rasterizedSymbol->offset = offset;
+                rasterizedSymbol->offset = symbolOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
                 if (!qIsNaN(iconSymbol->intersectionSizeFactor))
                 {
@@ -386,11 +401,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 {
                     const auto halfHeight = rasterizedIcon->height() / 2;
 
-                    topOffset = std::min(topOffset, offset.y - halfHeight);
+                    topOffset = std::min(topOffset, iconOffset.y - halfHeight);
 
-                    if (offset.y + halfHeight > bottomOffset)
+                    if (iconOffset.y + halfHeight > bottomOffset)
                     {
-                        bottomOffset = offset.y + halfHeight;
+                        bottomOffset = iconOffset.y + halfHeight;
                         iconOnBottom = true;
                     }
                 }

@@ -65,6 +65,66 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
     return bitmap.asImage();
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getUpperLeft(
+    const sk_sp<const SkImage>& original)
+{
+    if (!original || original->width() <= 0 || original->height() <= 0)
+        return nullptr;
+
+    const auto scaledWidth = original->width() / 2;
+    const auto scaledHeight = original->height() / 2;
+
+    if (scaledWidth <= 0 || scaledHeight <= 0)
+        return nullptr;
+   
+    return original->makeSubset(SkIRect::MakeXYWH(0, 0, scaledWidth, scaledHeight));
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getUpperRight(
+    const sk_sp<const SkImage>& original)
+{
+    if (!original || original->width() <= 0 || original->height() <= 0)
+        return nullptr;
+
+    const auto scaledWidth = original->width() / 2;
+    const auto scaledHeight = original->height() / 2;
+
+    if (scaledWidth <= 0 || scaledHeight <= 0)
+        return nullptr;
+
+    return original->makeSubset(SkIRect::MakeXYWH(scaledWidth, 0, scaledWidth, scaledHeight));
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getLowerLeft(
+    const sk_sp<const SkImage>& original)
+{
+    if (!original || original->width() <= 0 || original->height() <= 0)
+        return nullptr;
+
+    const auto scaledWidth = original->width() / 2;
+    const auto scaledHeight = original->height() / 2;
+
+    if (scaledWidth <= 0 || scaledHeight <= 0)
+        return nullptr;
+
+    return original->makeSubset(SkIRect::MakeXYWH(0, scaledHeight, scaledWidth, scaledHeight));
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getLowerRight(
+    const sk_sp<const SkImage>& original)
+{
+    if (!original || original->width() <= 0 || original->height() <= 0)
+        return nullptr;
+
+    const auto scaledWidth = original->width() / 2;
+    const auto scaledHeight = original->height() / 2;
+
+    if (scaledWidth <= 0 || scaledHeight <= 0)
+        return nullptr;
+
+    return original->makeSubset(SkIRect::MakeXYWH(scaledWidth, scaledHeight, scaledWidth, scaledHeight));
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::scaleImage(
     const sk_sp<const SkImage>& original,
     float xScale,

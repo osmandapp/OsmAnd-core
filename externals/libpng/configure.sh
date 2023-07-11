@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/libpng-1.6.16.tar.xz"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://creator.osmand.net/dependencies-mirror/libpng-1.6.16.tar.xz"
 patchUpstream "$SRCLOC"
