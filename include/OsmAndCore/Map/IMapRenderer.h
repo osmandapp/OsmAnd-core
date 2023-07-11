@@ -206,7 +206,10 @@ namespace OsmAnd
         virtual bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
             PointI& target31, const float height = 0.0f) const = 0;
         virtual float getHeightOfLocation(const PointI& location31) const = 0;
-        virtual float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const = 0;
+        virtual float getMapTargetDistance(
+            const PointI& location31,
+            const bool considerElevationData,
+            const bool checkOffScreen = false) const = 0;
 
         virtual float getCameraHeightInMeters() const = 0;
 

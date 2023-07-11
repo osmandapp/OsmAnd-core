@@ -1553,7 +1553,10 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightOfLocation(const PointI& locatio
     return getHeightOfLocation(state, location31);
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& location31, bool checkOffScreen /*=false*/) const
+float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(
+    const PointI& location31,
+    const bool considerElevationData,
+    const bool checkOffScreen /*=false*/) const
 {
     const auto state = getState();
 
@@ -1565,7 +1568,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
     if (!checkOffScreen && !internalState.globalFrustum2D31.test(location31))
         return false;
 
-    const auto height = getLocationHeightInMeters(state, location31);
+    const auto height = considerElevationData ? getLocationHeightInMeters(state, location31) : 0.0f;
     const auto locationVerticalDistance = _radius +
         static_cast<double>(height > _invalidElevationValue ? height : 0.0f);
     const auto groundDistanceToTarget =
@@ -1576,8 +1579,9 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getMapTargetDistance(const PointI& locati
     const auto horizontalDelta = locationVerticalDistance * qSin(inglobeAngle);
     const auto distance =
         static_cast<float>(qSqrt(verticalDelta * verticalDelta + horizontalDelta * horizontalDelta) / 1000.0);
+    const auto sign = cameraVerticalDistance >= locationVerticalDistance ? 1.0f : -1.0f;
 
-    return distance;
+    return sign * distance;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getProjectedLocation(const MapRendererInternalState& internalState_,

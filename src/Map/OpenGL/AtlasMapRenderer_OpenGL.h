@@ -132,7 +132,10 @@ namespace OsmAnd
         bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,
             PointI& target31, const float height = 0.0f) const override;
         float getHeightOfLocation(const PointI& location31) const override;
-        float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const override;
+        float getMapTargetDistance(
+            const PointI& location31,
+            const bool considerElevationData,
+            const bool checkOffScreen = false) const override;
 
         AreaI getVisibleBBox31() const override;
         AreaI getVisibleBBoxShifted() const override;
