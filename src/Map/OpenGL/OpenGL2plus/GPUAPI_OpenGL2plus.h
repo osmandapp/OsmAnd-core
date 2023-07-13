@@ -39,6 +39,7 @@ namespace OsmAnd
 
         GLenum _framebufferDepthDataFormat;
         GLenum _framebufferDepthDataType;
+        QVector<GLuint> _pointVisibilityCheckQueries;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
@@ -66,6 +67,8 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGL2plus();
 
         bool initialize() override;
+        int checkElementVisibility(int queryIndex, float pointSize) override;
+        bool elementIsVisible(int queryIndex) override;
         bool attachToRenderTarget() override;
         bool detachFromRenderTarget(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;

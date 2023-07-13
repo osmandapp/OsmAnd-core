@@ -97,6 +97,7 @@ namespace OsmAnd
         QAtomicInt _suspendSymbolsUpdateCounter;
         int _symbolsUpdateInterval;
         volatile bool _updateSymbols;
+        volatile bool _freshSymbols;
 
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -242,6 +243,7 @@ namespace OsmAnd
         virtual bool postReleaseRendering(bool gpuContextLost);
 
         virtual bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask);
+        virtual void flushRenderCommands() = 0;
     public:
         virtual ~MapRenderer();
 
@@ -364,6 +366,9 @@ namespace OsmAnd
         virtual void shouldUpdateSymbols() Q_DECL_OVERRIDE;
         virtual bool needUpdatedSymbols() Q_DECL_OVERRIDE;
         virtual void dontNeedUpdatedSymbols() Q_DECL_OVERRIDE;
+        virtual void setSymbolsUpdated() Q_DECL_OVERRIDE;
+        virtual bool freshSymbols() Q_DECL_OVERRIDE;
+        virtual void clearSymbolsUpdated() Q_DECL_OVERRIDE;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;

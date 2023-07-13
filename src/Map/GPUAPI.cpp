@@ -36,6 +36,16 @@ bool OsmAnd::GPUAPI::initialize()
     return true;
 }
 
+int OsmAnd::GPUAPI::checkElementVisibility(int queryIndex, float pointSize)
+{
+    return 0;
+}
+
+bool OsmAnd::GPUAPI::elementIsVisible(int queryIndex)
+{
+    return true;
+}
+
 bool OsmAnd::GPUAPI::attachToRenderTarget()
 {
     _isAttachedToRenderTarget = true;

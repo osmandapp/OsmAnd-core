@@ -289,6 +289,8 @@ namespace OsmAnd
         virtual bool isAttachedToRenderTarget();
 
         virtual bool initialize() = 0;
+        virtual int checkElementVisibility(int queryIndex, float pointSize) = 0;
+        virtual bool elementIsVisible(int queryIndex) = 0;
         virtual bool attachToRenderTarget() = 0;
         virtual bool detachFromRenderTarget(bool gpuContextLost) = 0;
         virtual bool release(bool gpuContextLost) = 0;

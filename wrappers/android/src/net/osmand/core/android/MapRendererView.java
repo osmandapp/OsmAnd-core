@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.os.SystemClock;
+import android.opengl.GLSurfaceView;
 
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.ElevationConfiguration;
@@ -33,6 +34,7 @@ import net.osmand.core.jni.MapRendererFramePreparedObservable;
 import net.osmand.core.jni.MapRendererTargetChangedObservable;
 
 import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGL11;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
@@ -167,7 +169,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         // Configure GLSurfaceView
         _glSurfaceView.setPreserveEGLContextOnPause(true);
-        _glSurfaceView.setEGLContextClientVersion(2);
+        _glSurfaceView.setEGLContextClientVersion(3);
         _glSurfaceView.setEGLConfigChooser(new SimpleEGLConfigChooser(true));
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new RendererProxy());
@@ -1046,6 +1048,43 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapMarkersAnimationFinished;
     }
 
+    public static String getEglErrorString(int error) {
+        switch (error) {
+            case EGL10.EGL_SUCCESS:
+                return "EGL_SUCCESS";
+            case EGL10.EGL_NOT_INITIALIZED:
+                return "EGL_NOT_INITIALIZED";
+            case EGL10.EGL_BAD_ACCESS:
+                return "EGL_BAD_ACCESS";
+            case EGL10.EGL_BAD_ALLOC:
+                return "EGL_BAD_ALLOC";
+            case EGL10.EGL_BAD_ATTRIBUTE:
+                return "EGL_BAD_ATTRIBUTE";
+            case EGL10.EGL_BAD_CONFIG:
+                return "EGL_BAD_CONFIG";
+            case EGL10.EGL_BAD_CONTEXT:
+                return "EGL_BAD_CONTEXT";
+            case EGL10.EGL_BAD_CURRENT_SURFACE:
+                return "EGL_BAD_CURRENT_SURFACE";
+            case EGL10.EGL_BAD_DISPLAY:
+                return "EGL_BAD_DISPLAY";
+            case EGL10.EGL_BAD_MATCH:
+                return "EGL_BAD_MATCH";
+            case EGL10.EGL_BAD_NATIVE_PIXMAP:
+                return "EGL_BAD_NATIVE_PIXMAP";
+            case EGL10.EGL_BAD_NATIVE_WINDOW:
+                return "EGL_BAD_NATIVE_WINDOW";
+            case EGL10.EGL_BAD_PARAMETER:
+                return "EGL_BAD_PARAMETER";
+            case EGL10.EGL_BAD_SURFACE:
+                return "EGL_BAD_SURFACE";
+            case EGL11.EGL_CONTEXT_LOST:
+                return "EGL_CONTEXT_LOST";
+            default:
+                return "0x" + Integer.toHexString(error);
+        }
+    }
+
     private abstract class BaseConfigChooser
             implements GLSurfaceView.EGLConfigChooser {
         public BaseConfigChooser(int[] configSpec) {
@@ -1090,7 +1129,7 @@ public abstract class MapRendererView extends FrameLayout {
             int[] newConfigSpec = new int[len + 2];
             System.arraycopy(configSpec, 0, newConfigSpec, 0, len-1);
             newConfigSpec[len-1] = EGL10.EGL_RENDERABLE_TYPE;
-            newConfigSpec[len] = EGL14.EGL_OPENGL_ES2_BIT;  /* EGL_OPENGL_ES2_BIT */
+            newConfigSpec[len] = 0x0040; /* EGL_OPENGL_ES3_BIT_KHR */
             newConfigSpec[len+1] = EGL10.EGL_NONE;
             return newConfigSpec;
         }
@@ -1187,12 +1226,13 @@ public abstract class MapRendererView extends FrameLayout {
      * Implements creation of main and GPU-worker contexts along with needed resources
      */
     private final class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
+        private int EGL_CONTEXT_CLIENT_VERSION = 0x3098;        
         /**
          * EGL attributes used to initialize EGL context:
-         * - EGL context must support at least OpenGLES 2.0
+         * - EGL context must support at least OpenGLES 3.0
          */
         private final int[] contextAttributes = {
-                EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                EGL_CONTEXT_CLIENT_VERSION, 3,
                 EGL10.EGL_NONE};
 
         /**
@@ -1233,7 +1273,7 @@ public abstract class MapRendererView extends FrameLayout {
             }
             if (_mainContext == null || _mainContext == EGL10.EGL_NO_CONTEXT) {
                 Log.e(TAG, "Failed to create main EGL context: " +
-                        GLSurfaceView.getEglErrorString(egl.eglGetError()));
+                        getEglErrorString(egl.eglGetError()));
 
                 _mainContext = null;
 
@@ -1256,7 +1296,7 @@ public abstract class MapRendererView extends FrameLayout {
             }
             if (_gpuWorkerContext == null || _gpuWorkerContext == EGL10.EGL_NO_CONTEXT) {
                 Log.e(TAG, "Failed to create GPU-worker EGL context: " +
-                        GLSurfaceView.getEglErrorString(egl.eglGetError()));
+                        getEglErrorString(egl.eglGetError()));
                 _gpuWorkerContext = null;
             }
 
@@ -1276,7 +1316,7 @@ public abstract class MapRendererView extends FrameLayout {
                 }
                 if (_gpuWorkerFakeSurface == null || _gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE) {
                     Log.e(TAG, "Failed to create GPU-worker EGL surface: " +
-                            GLSurfaceView.getEglErrorString(egl.eglGetError()));
+                            getEglErrorString(egl.eglGetError()));
 
                     egl.eglDestroyContext(display, _gpuWorkerContext);
                     _gpuWorkerContext = null;
@@ -1460,7 +1500,7 @@ public abstract class MapRendererView extends FrameLayout {
                         _gpuWorkerFakeSurface,
                         _gpuWorkerContext)) {
                     Log.e(TAG, "Failed to set GPU-worker EGL context active: " +
-                            GLSurfaceView.getEglErrorString(egl.eglGetError()));
+                            getEglErrorString(egl.eglGetError()));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to set GPU-worker EGL context active", e);
@@ -1485,7 +1525,7 @@ public abstract class MapRendererView extends FrameLayout {
             try {
                 if (!egl.eglWaitGL()) {
                     Log.e(TAG, "Failed to wait for GPU-worker EGL context: " +
-                            GLSurfaceView.getEglErrorString(egl.eglGetError()));
+                            getEglErrorString(egl.eglGetError()));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to wait for GPU-worker EGL context", e);

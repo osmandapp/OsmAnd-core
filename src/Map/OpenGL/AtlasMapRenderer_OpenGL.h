@@ -80,6 +80,7 @@ namespace OsmAnd
         bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool doReleaseRendering(bool gpuContextLost) override;
         bool handleStateChange(const MapRendererState& state, MapRendererStateChanges mask) override;
+        void flushRenderCommands() override;
 
         GPUAPI_OpenGL* getGPUAPI() const;
 

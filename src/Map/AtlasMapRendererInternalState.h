@@ -76,6 +76,7 @@ namespace OsmAnd
         Frustum2D31 frustum2D31;
         Frustum2D31 globalFrustum2D31;
         Frustum2DF extraField2D;
+        Frustum2D31 extraFrustum2D31;
     };
 }
 

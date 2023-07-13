@@ -283,6 +283,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
     return ok;
 }
 
+void OsmAnd::AtlasMapRenderer_OpenGL::flushRenderCommands()
+{
+    glFlush();
+    GL_CHECK_RESULT;
+}
+
 void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourceType type)
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
@@ -641,9 +647,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
         internalState->extraField2D.p1 = PointF(extraIntersections[1].x, extraIntersections[1].y);
         internalState->extraField2D.p2 = PointF(extraIntersections[2].x, extraIntersections[2].y);
         internalState->extraField2D.p3 = PointF(extraIntersections[3].x, extraIntersections[3].y);
+        internalState->extraFrustum2D31.p0 =
+            PointI64((internalState->extraField2D.p0 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+        internalState->extraFrustum2D31.p1 =
+            PointI64((internalState->extraField2D.p1 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+        internalState->extraFrustum2D31.p2 =
+            PointI64((internalState->extraField2D.p2 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+        internalState->extraFrustum2D31.p3 =
+            PointI64((internalState->extraField2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
     }
     else
+    {
         internalState->extraField2D.p0 = PointF(NAN, NAN);
+        internalState->extraFrustum2D31 = Frustum2D31();
+    }
 
     internalState->rightMiddlePoint = PointF(middleIntersections[0].x, middleIntersections[0].y);
     internalState->leftMiddlePoint = PointF(middleIntersections[1].x, middleIntersections[1].y);

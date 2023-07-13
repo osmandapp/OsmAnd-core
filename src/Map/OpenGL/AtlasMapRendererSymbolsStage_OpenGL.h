@@ -20,10 +20,10 @@ namespace OsmAnd
 
     private:
     protected:
+        GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
 
         GLname _billboardRasterSymbolVAO;
         GLname _billboardRasterSymbolVBO;
@@ -44,7 +44,6 @@ namespace OsmAnd
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mOrthographicProjection;
                     GLlocation viewport;
-                    GLlocation cameraInWorld;
                     GLlocation target31;
 
                     // Per-tile data
@@ -74,15 +73,13 @@ namespace OsmAnd
         bool initializeBillboardRaster();
         bool renderBillboardRasterSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseBillboardRaster(bool gpuContextLost);
 
         bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnPath(bool gpuContextLost);
 
         struct Glyph
@@ -137,8 +134,7 @@ namespace OsmAnd
         bool initializeOnPath2DProgram(unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnPath2D(bool gpuContextLost);
 
         GLname _onPathSymbol3dVAO;
@@ -185,14 +181,12 @@ namespace OsmAnd
         bool initializeOnPath3DProgram(unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnPath3D(bool gpuContextLost);
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
 
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
@@ -239,8 +233,7 @@ namespace OsmAnd
         bool initializeOnSurfaceRaster();
         bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnSurfaceRaster(bool gpuContextLost);
 
         struct OnSurfaceVectorProgram {
@@ -256,8 +249,6 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-
-                    // Per-symbol data
                     GLlocation mModelViewProjection;
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
@@ -284,14 +275,58 @@ namespace OsmAnd
         bool initializeOnSurfaceVector();
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-            AlphaChannelType &currentAlphaChannelType,
-            GLname& lastUsedProgram);
+            AlphaChannelType &currentAlphaChannelType);
         bool releaseOnSurfaceVector(bool gpuContextLost);
 
         // Terrain-related:
-        bool applyTerrainVisibilityFiltering(
-            const glm::vec3& positionOnScreen,
+        int _queryMaxCount;
+        int _nextQueryIndex;
+        int _queryResultsCount;
+        QVector<bool> _queryResults;
+        QHash<int, int> _queryMapEven;
+        QHash<int, int> _queryMapOdd;
+        float _querySizeFactor;
+        GLname _visibilityCheckVAO;
+        GLname _visibilityCheckVBO;
+        struct VisibilityCheckProgram {
+            GLname id;
+
+            struct {
+                // Input data
+                struct {
+                    GLlocation vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLlocation firstPointPosition;
+                    GLlocation secondPointPosition;
+                    GLlocation thirdPointPosition;
+                    GLlocation fourthPointPosition;
+                    GLlocation cameraInWorld;
+                    GLlocation mModelViewProjection;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+                } param;
+            } fs;
+        } _visibilityCheckProgram;
+        bool initializeVisibilityCheck();
+        void clearTerrainVisibilityFiltering() override;
+        int startTerrainVisibilityFiltering(
+            const PointF& pointOnScreen,
+            const glm::vec3& firstPointInWorld,
+            const glm::vec3& secondPointInWorld,
+            const glm::vec3& thirdPointInWorld,
+            const glm::vec3& fourthPointInWorld) override;
+        bool applyTerrainVisibilityFiltering(const int queryIndex,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
+        bool releaseVisibilityCheck(bool gpuContextLost);
         void configureElevationData(
             const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
             const OnSurfaceVectorProgram& program,

@@ -1631,6 +1631,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
     // Keep overscaled/underscaled symbol resources while ones of current zoom level can't be used yet
     bool keepOldSymbolResources = false;
 
+    // Update symbols only if at least one overscaled/underscaled symbol resource present
+    bool atLeastOneScaledPresent = false;
+
     // Use aggressive cache cleaning: remove all resources that are not needed
     for (const auto& resourcesCollection : constOf(resourcesCollections))
     {
@@ -1820,9 +1823,28 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 bool updateSymbolResources = _clearOldSymbolResources;
                 if (resourcesType == MapRendererResourceType::Symbols)
                 {
-                    // Symbols only for high detail tiles are meant to be displayed
                     if (activeZoom != currentZoom)
+                    {
+                        // Don't update symbols if there are no more overscaled/underscaled resources already
+                        if (updateSymbolResources && !keepOldSymbolResources && !atLeastOneScaledPresent)
+                        {
+                            const auto& activeTiles = tilesEntry.value();
+                            for (const auto& activeTileId : constOf(activeTiles))
+                            {
+                                if (tiledResourcesCollection->containsResource(
+                                        activeTileId,
+                                        activeZoom,
+                                        isUsableResource))
+                                {
+                                    atLeastOneScaledPresent = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Symbols only for high detail tiles are meant to be displayed
                         continue;
+                    }
 
                     // Keep overscaled/underscaled resources if symbols of current zoom level ain't ready yet
                     if (updateSymbolResources)
@@ -2049,7 +2071,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         }
     }
 
-    if (!keepOldSymbolResources)
+    if (!keepOldSymbolResources && atLeastOneScaledPresent)
     {
         renderer->shouldUpdateSymbols();
         _clearOldSymbolResources = false;
