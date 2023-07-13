@@ -502,7 +502,7 @@ bool OsmAnd::WeatherTileResourceProvider_P::importTileData(const QString& dbFile
         if (!geoDb->updateTileDataFrom(dbFilePath, &specName))
             return false;
     }
-    return false;
+    return true;
 }
 
 uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
