@@ -153,10 +153,11 @@ namespace OsmAnd
         mutable QReadWriteLock _cachedValuesLock;
         PointI _cachedValuesPoint31;
         ZoomLevel _cachedValuesZoom;
+        QString _cachedValuesDateTimeStr;
         QList<double> _cachedValues;
         
-        bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
-        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
+        bool getCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, QList<double>& values);
+        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, const QList<double>& values);
 
         bool isEmpty();
 

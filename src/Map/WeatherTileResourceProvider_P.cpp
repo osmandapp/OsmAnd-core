@@ -359,11 +359,11 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockContourTile(const TileId tileI
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(
-    const PointI point31, const ZoomLevel zoom, QList<double>& values)
+    const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, QList<double>& values)
 {
     QReadLocker scopedLocker(&_cachedValuesLock);
 
-    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom)
+    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom && _cachedValuesDateTimeStr == dateTimeStr)
     {
         values = _cachedValues;
         return true;
@@ -372,12 +372,13 @@ bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::setCachedValues(
-    const PointI point31, const ZoomLevel zoom, const QList<double>& values)
+    const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, const QList<double>& values)
 {
     QWriteLocker scopedLocker(&_cachedValuesLock);
 
     _cachedValuesPoint31 = point31;
     _cachedValuesZoom = zoom;
+    _cachedValuesDateTimeStr = dateTimeStr;
     _cachedValues = values;
 }
 
@@ -791,6 +792,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
 
     const auto& clientId = request->clientId;
     const auto dateTime = request->dateTime;
+    const auto& dateTimeStr = Utilities::getDateTimeString(dateTime);
     PointI point31 = request->point31;
     ZoomLevel zoom = request->zoom;
     const auto band = request->band;
@@ -798,7 +800,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     bool abortIfNotRecent = request->abortIfNotRecent;
 
     QList<double> values;
-    if (provider->getCachedValues(point31, zoom, values))
+    if (provider->getCachedValues(point31, zoom, dateTimeStr, values))
     {
         callback(true, values, nullptr);
         return;
@@ -842,7 +844,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
 
         if (evaluator->evaluate(latLon, values))
         {
-            provider->setCachedValues(point31, zoom, values);
+            provider->setCachedValues(point31, zoom, dateTimeStr, values);
             callback(true, values, nullptr);
         }
         else
