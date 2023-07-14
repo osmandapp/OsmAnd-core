@@ -106,6 +106,8 @@ namespace OsmAnd
         };
 
     private:
+        typedef QString ObtainValueRequestId;
+
         ImplementationInterface<WeatherTileResourceProvider> owner;
         QThreadPool *_obtainValueThreadPool;
         QThreadPool *_obtainCacheDataThreadPool;
@@ -116,7 +118,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         int _obtainValuePriority;
-        QMap<BandIndex, int> _recentObtainValuePriorityByBand;
+        QMap<ObtainValueRequestId, int> _recentObtainValuePriorities;
 
         QList<TileId> _currentDownloadingTileIds;
         QList<TileId> _currentEvaluatingTileIds;
@@ -127,7 +129,7 @@ namespace OsmAnd
         int _requestVersion;
 
         int getAndIncreasePriority();
-        int getAndIncreaseObtainValuePriority(const BandIndex band);
+        int getAndIncreaseObtainValuePriority(const ObtainValueRequestId& requestId);
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;

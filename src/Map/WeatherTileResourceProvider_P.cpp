@@ -77,12 +77,12 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndIncreasePriority()
     return ++_priority;
 }
 
-int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority(const BandIndex band)
+int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority(const ObtainValueRequestId& requestId)
 {
     QWriteLocker scopedLocker(&_lock);
     
     _obtainValuePriority++;
-    _recentObtainValuePriorityByBand[band] = _obtainValuePriority;
+    _recentObtainValuePriorities[requestId] = _obtainValuePriority;
     return _obtainValuePriority;
 }
 
@@ -398,7 +398,8 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const bool collectMetric /*= false*/)
 {
     const auto requestClone = request.clone();
-    const auto priority = getAndIncreaseObtainValuePriority(request.band);
+    const ObtainValueRequestId requestId = request.clientId + "_" + QString::number(request.band);
+    const auto priority = getAndIncreaseObtainValuePriority(requestId);
     ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
     task->setPriority(priority);
@@ -788,10 +789,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     if (!provider)
         return;
 
+    const auto& clientId = request->clientId;
     const auto dateTime = request->dateTime;
     PointI point31 = request->point31;
     ZoomLevel zoom = request->zoom;
+    const auto band = request->band;
     bool localData = request->localData;
+    bool abortIfNotRecent = request->abortIfNotRecent;
 
     QList<double> values;
     if (provider->getCachedValues(point31, zoom, values))
@@ -801,12 +805,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     }
 
     // Abort task without callback if band priority is outdated
-    if (_priority.isSet())
+    if (abortIfNotRecent && _priority.isSet())
     {
         QReadLocker scopedLocker(&provider->_lock);
 
-        const auto& recentPriorities = provider->_recentObtainValuePriorityByBand;
-        const auto citRecentPriority = recentPriorities.find(request->band);
+        const ObtainValueRequestId requestId = clientId + "_" + QString::number(band);
+        const auto& recentPriorities = provider->_recentObtainValuePriorities;
+        const auto citRecentPriority = recentPriorities.find(requestId);
         const auto priority = *_priority;
         if (citRecentPriority != recentPriorities.cend() && citRecentPriority.value() != priority)
             return;

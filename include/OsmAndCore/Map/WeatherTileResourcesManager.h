@@ -43,11 +43,13 @@ namespace OsmAnd
             ValueRequest(const ValueRequest& that);
             virtual ~ValueRequest();
 
+            QString clientId;
             int64_t dateTime;
             PointI point31;
             ZoomLevel zoom;
             BandIndex band;
             bool localData;
+            bool abortIfNotRecent;
 
             std::shared_ptr<const IQueryController> queryController;
 

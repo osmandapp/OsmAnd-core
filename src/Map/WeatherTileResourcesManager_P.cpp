@@ -304,11 +304,13 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
     if (resourceProvider)
     {
         WeatherTileResourceProvider::ValueRequest rr;
+        rr.clientId = request.clientId;
         rr.dateTime = request.dateTime;
         rr.point31 = request.point31;
         rr.zoom = request.zoom;
         rr.band = request.band;
         rr.localData = request.localData;
+        rr.abortIfNotRecent = request.abortIfNotRecent;
         rr.queryController = request.queryController;
      
         auto dateTime = request.dateTime;
