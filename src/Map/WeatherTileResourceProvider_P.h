@@ -20,6 +20,7 @@
 #include "PrivateImplementation.h"
 #include "WeatherTileResourceProvider.h"
 #include "TileSqliteDatabase.h"
+#include "Nullable.h"
 
 namespace OsmAnd
 {
@@ -33,7 +34,8 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(ObtainValueTask);
         private:
             const std::weak_ptr<WeatherTileResourceProvider_P> _provider;
-            
+
+            Nullable<int> _priority;
         protected:
         public:
             ObtainValueTask(
@@ -48,6 +50,8 @@ namespace OsmAnd
             const bool collectMetric;
 
             virtual void run() Q_DECL_OVERRIDE;
+
+            void setPriority(int priority);
         };
         
         class OSMAND_CORE_API ObtainTileTask : public QRunnable
@@ -112,6 +116,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         int _obtainValuePriority;
+        QMap<BandIndex, int> _recentObtainValuePriorityByBand;
 
         QList<TileId> _currentDownloadingTileIds;
         QList<TileId> _currentEvaluatingTileIds;
@@ -122,7 +127,7 @@ namespace OsmAnd
         int _requestVersion;
 
         int getAndIncreasePriority();
-        int getAndIncreaseObtainValuePriority();
+        int getAndIncreaseObtainValuePriority(const BandIndex band);
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;

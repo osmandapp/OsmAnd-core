@@ -77,11 +77,13 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndIncreasePriority()
     return ++_priority;
 }
 
-int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority()
+int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority(const BandIndex band)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    return ++_obtainValuePriority;
+    _obtainValuePriority++;
+    _recentObtainValuePriorityByBand[band] = _obtainValuePriority;
+    return _obtainValuePriority;
 }
 
 const QHash<OsmAnd::BandIndex,
@@ -396,9 +398,11 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const bool collectMetric /*= false*/)
 {
     const auto requestClone = request.clone();
+    const auto priority = getAndIncreaseObtainValuePriority(request.band);
     ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
-    _obtainValueThreadPool->start(task, getAndIncreaseObtainValuePriority());
+    task->setPriority(priority);
+    _obtainValueThreadPool->start(task, priority);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::obtainData(
@@ -796,6 +800,18 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
         return;
     }
 
+    // Abort task without callback if band priority is outdated
+    if (_priority.isSet())
+    {
+        QReadLocker scopedLocker(&provider->_lock);
+
+        const auto& recentPriorities = provider->_recentObtainValuePriorityByBand;
+        const auto citRecentPriority = recentPriorities.find(request->band);
+        const auto priority = *_priority;
+        if (citRecentPriority != recentPriorities.cend() && citRecentPriority.value() != priority)
+            return;
+    }
+
     const auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
     const auto latLon = Utilities::convert31ToLatLon(point31);
     const auto geoTileId = TileId::fromXY(
@@ -840,6 +856,11 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     {
         callback(false, QList<double>(), nullptr);
     }
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::setPriority(int priority)
+{
+    _priority = priority;
 }
 
 OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::ObtainTileTask(
