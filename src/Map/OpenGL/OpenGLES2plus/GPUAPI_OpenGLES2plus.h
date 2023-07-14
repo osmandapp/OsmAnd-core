@@ -43,6 +43,7 @@ namespace OsmAnd
         GLuint _depthFramebufferColorRenderbuffer;
         GLint _depthFramebufferColorRenderbufferFormat;
         GLint _depthFramebufferColorRenderbufferType;
+        QVector<GLuint> _pointVisibilityCheckQueries;
 
         struct DepthFramebufferProgram {
             GLname id;
@@ -109,6 +110,8 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGLES2plus();
 
         bool initialize() override;
+        int checkElementVisibility(int queryIndex, float pointSize) override;
+        bool elementIsVisible(int queryIndex) override;
         bool attachToRenderTarget() override;
         bool detachFromRenderTarget(bool gpuContextLost) override;
         bool release(bool gpuContextLost) override;

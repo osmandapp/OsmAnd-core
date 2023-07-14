@@ -362,6 +362,46 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     return true;
 }
 
+int OsmAnd::GPUAPI_OpenGL2plus::checkElementVisibility(int queryIndex, float pointSize)
+{
+    const auto prevSize = _pointVisibilityCheckQueries.size();
+    if (prevSize <= queryIndex)
+    {
+        const auto nextSize = queryIndex + 10;
+        _pointVisibilityCheckQueries.resize(nextSize);
+        glGenQueries(nextSize - prevSize, _pointVisibilityCheckQueries.data() + prevSize);
+        if (glGetError() != GL_NO_ERROR)
+            return -1;
+    }
+    
+    glPointSize(pointSize);
+    GL_CHECK_RESULT;
+
+    glBeginQuery(GL_SAMPLES_PASSED, _pointVisibilityCheckQueries[queryIndex]);
+    if (glGetError() != GL_NO_ERROR)
+        return -1;
+    
+    glDrawArrays(GL_POINTS, 0, 4);
+    GL_CHECK_RESULT;
+
+    glEndQuery(GL_SAMPLES_PASSED);
+    if (glGetError() != GL_NO_ERROR)
+        return -1;
+
+    return queryIndex;
+}
+
+bool OsmAnd::GPUAPI_OpenGL2plus::elementIsVisible(int queryIndex)
+{
+    assert(_pointVisibilityCheckQueries.size() > queryIndex);
+
+    GLuint queryResult = 0;
+    glGetQueryObjectuiv(_pointVisibilityCheckQueries[queryIndex], GL_QUERY_RESULT, &queryResult);
+    GL_CHECK_RESULT;
+
+    return queryResult == 0;
+}
+
 bool OsmAnd::GPUAPI_OpenGL2plus::attachToRenderTarget()
 {
     if (isAttachedToRenderTarget())
@@ -434,7 +474,13 @@ bool OsmAnd::GPUAPI_OpenGL2plus::detachFromRenderTarget(bool gpuContextLost)
 
 bool OsmAnd::GPUAPI_OpenGL2plus::release(bool gpuContextLost)
 {
-    bool ok;
+    if (!gpuContextLost && _pointVisibilityCheckQueries.size() > 0)
+    {
+        GL_CHECK_PRESENT(glDeleteQueries);
+        glDeleteQueries(_pointVisibilityCheckQueries.size(), _pointVisibilityCheckQueries.data());
+        GL_CHECK_RESULT;
+    }
+    _pointVisibilityCheckQueries.resize(0);
 
     if (isSupported_samplerObjects)
     {
@@ -450,7 +496,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release(bool gpuContextLost)
         }
     }
 
-    ok = GPUAPI_OpenGL::release(gpuContextLost);
+    bool ok = GPUAPI_OpenGL::release(gpuContextLost);
     if (!ok)
         return false;
 

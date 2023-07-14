@@ -46,6 +46,10 @@ namespace OsmAnd
         FIELD_ACTION(unsigned int, applyVisibilityFilteringCalls, "");                                          \
         FIELD_ACTION(unsigned int, acceptedByVisibilityFiltering, "");                                          \
         FIELD_ACTION(unsigned int, rejectedByVisibilityFiltering, "");                                          \
+        FIELD_ACTION(float, elapsedTimeForApplyTerrainVisibilityFilteringCalls, "s");                           \
+        FIELD_ACTION(unsigned int, applyTerrainVisibilityFilteringCalls, "");                                   \
+        FIELD_ACTION(unsigned int, acceptedByTerrainVisibilityFiltering, "");                                   \
+        FIELD_ACTION(unsigned int, rejectedByTerrainVisibilityFiltering, "");                                   \
         FIELD_ACTION(float, elapsedTimeForApplyIntersectionWithOtherSymbolsFilteringCalls, "s");                \
         FIELD_ACTION(unsigned int, applyIntersectionWithOtherSymbolsFilteringCalls, "");                        \
         FIELD_ACTION(unsigned int, acceptedByIntersectionWithOtherSymbolsFiltering, "");                        \

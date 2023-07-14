@@ -310,13 +310,14 @@ bool OsmAnd::MapRenderer::initializeRendering(bool renderTargetAvailable)
     if (!ok)
         return false;
 
+    // DEPTH BUFFER READING IS NOT NEEDED
     // Once rendering is initialized, attach to render target if available
-    if (renderTargetAvailable)
-    {
-        ok = attachToRenderTarget();
-        if (!ok)
-            return false;
-    }
+    //if (renderTargetAvailable)
+    //{
+    //    ok = attachToRenderTarget();
+    //    if (!ok)
+    //        return false;
+    //}
 
     // Once rendering is initialized, invalidate frame
     invalidateFrame();
@@ -589,6 +590,18 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
     // Decrement "frame-invalidates" counter by amount of processed "frame-invalidates"
     _frameInvalidatesCounter.fetchAndAddOrdered(-_frameInvalidatesToBeProcessed);
     _frameInvalidatesToBeProcessed = 0;
+
+    // Flush all pending GPU commands
+    flushRenderCommands();
+    
+    if (freshSymbols())
+        clearSymbolsUpdated();
+    else if (!isFrameInvalidated())
+    {
+        // Invalidate the last frame and request updated symbols for the next one
+        shouldUpdateSymbols();
+        invalidateFrame();
+    }
 
     return true;
 }
@@ -1205,6 +1218,21 @@ bool OsmAnd::MapRenderer::needUpdatedSymbols()
 void OsmAnd::MapRenderer::dontNeedUpdatedSymbols()
 {
     _updateSymbols = false;
+}
+
+void OsmAnd::MapRenderer::setSymbolsUpdated()
+{
+    _freshSymbols = true;
+}
+
+bool OsmAnd::MapRenderer::freshSymbols()
+{
+    return _freshSymbols;
+}
+
+void OsmAnd::MapRenderer::clearSymbolsUpdated()
+{
+    _freshSymbols = false;
 }
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const

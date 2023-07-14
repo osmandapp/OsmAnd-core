@@ -33,6 +33,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
     ok = ok && initializeOnPath();
     ok = ok && initializeOnSurfaceRaster();
     ok = ok && initializeOnSurfaceVector();
+    ok = ok && initializeVisibilityCheck();
     return ok;
 }
 
@@ -50,20 +51,29 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
+    _lastUsedProgram = 0;
+
+    // Disable actual drawing for symbol preparation phase
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    GL_CHECK_RESULT;
+    
     prepare(metric);
+    
+    // Resume drawing
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    GL_CHECK_RESULT;
 
     // Initially, configure for straight alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Straight;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
-    GLname lastUsedProgram;
     for (const auto& renderableSymbol : constOf(renderableSymbols))
     {
         if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
-            ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType, lastUsedProgram);
+            ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType);
             if (metric)
             {
                 metric->elapsedTimeForBillboardSymbolsRendering += renderBillboardSymbolStopwatch.elapsed();
@@ -73,7 +83,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         else if (const auto& renderableOnPathSymbol = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderableSymbol))
         {
             Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType, lastUsedProgram);
+            ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType);
             if (metric)
             {
                 metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
@@ -83,7 +93,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
-            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType, lastUsedProgram);
+            ok = ok && renderOnSurfaceSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
             if (metric)
             {
                 metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
@@ -111,69 +121,52 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
         return renderBillboardRasterSymbol(
             renderable,
-            currentAlphaChannelType,
-            lastUsedProgram);
+            currentAlphaChannelType);
     }
-    /*else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
-    {
-    renderBillboardVectorSymbol(
-    renderable,
-    viewport,
-    intersections,
-    lastUsedProgram,
-    distanceFromCamera);
-    }*/
 
     return false;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     // Draw the glyphs
     if (renderable->is2D)
     {
         return renderOnPath2dSymbol(
             renderable,
-            currentAlphaChannelType,
-            lastUsedProgram);
+            currentAlphaChannelType);
     }
     else
     {
         return renderOnPath3dSymbol(
             renderable,
-            currentAlphaChannelType,
-            lastUsedProgram);
+            currentAlphaChannelType);
     }
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
         return renderOnSurfaceRasterSymbol(
             renderable,
-            currentAlphaChannelType,
-            lastUsedProgram);
+            currentAlphaChannelType);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
         return renderOnSurfaceVectorSymbol(
             renderable,
-            currentAlphaChannelType,
-            lastUsedProgram);
+            currentAlphaChannelType);
     }
 
     return false;
@@ -186,6 +179,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
     ok = ok && releaseOnPath(gpuContextLost);
     ok = ok && releaseOnSurfaceRaster(gpuContextLost);
     ok = ok && releaseOnSurfaceVector(gpuContextLost);
+    ok = ok && releaseVisibilityCheck(gpuContextLost);
     return ok;
 }
 
@@ -214,7 +208,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
         "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
-        "uniform vec3 param_vs_cameraInWorld;                                                                               ""\n"
         "uniform highp ivec4 param_vs_target31; // x, y, zoom, tileSize31                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
@@ -336,7 +329,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -456,8 +448,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -467,7 +458,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != _billboardRasterProgram.id)
+    if (_lastUsedProgram != _billboardRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'billboard-raster' program");
 
@@ -515,7 +506,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
-        lastUsedProgram = _billboardRasterProgram.id;
+        _lastUsedProgram = _billboardRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -948,7 +939,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1266,7 +1256,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -1329,8 +1318,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1340,7 +1328,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != _onPath2dProgram.id)
+    if (_lastUsedProgram != _onPath2dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-2d' program");
 
@@ -1370,7 +1358,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
-        lastUsedProgram = _onPath2dProgram.id;
+        _lastUsedProgram = _onPath2dProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -1487,8 +1475,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1498,7 +1485,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != _onPath3dProgram.id)
+    if (_lastUsedProgram != _onPath3dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-3d' program");
 
@@ -1528,7 +1515,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         glDepthFunc(GL_LEQUAL);
         GL_CHECK_RESULT;
 
-        lastUsedProgram = _onPath3dProgram.id;
+        _lastUsedProgram = _onPath3dProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -1955,8 +1942,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1966,7 +1952,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != _onSurfaceRasterProgram.id)
+    if (_lastUsedProgram != _onSurfaceRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-raster' program");
 
@@ -1996,7 +1982,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
-        lastUsedProgram = _onSurfaceRasterProgram.id;
+        _lastUsedProgram = _onSurfaceRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -2178,8 +2164,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "                                                                                                                   ""\n"
         // Parameters: common data
         "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
         "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
@@ -2274,7 +2258,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    FRAGMENT_COLOR_OUTPUT = v2f_color;                                                                             ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
@@ -2328,8 +2311,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
-    AlphaChannelType &currentAlphaChannelType,
-    GLname& lastUsedProgram)
+    AlphaChannelType &currentAlphaChannelType)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -2339,7 +2321,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != _onSurfaceVectorProgram.id)
+    if (_lastUsedProgram != _onSurfaceVectorProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
 
@@ -2354,7 +2336,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glDepthFunc(GL_LEQUAL);
         GL_CHECK_RESULT;
 
-        lastUsedProgram = _onSurfaceVectorProgram.id;
+        _lastUsedProgram = _onSurfaceVectorProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -2749,29 +2731,351 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(bool gp
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFiltering(
-    const glm::vec3& positionOnScreen,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeVisibilityCheck()
 {
     const auto gpuAPI = getGPUAPI();
-    const auto renderer = getRenderer();
 
-    auto depthValue = 0.0f;
-    /* Disable depth buffer reading
-    if (!gpuAPI->pickFramebufferDepthValue(
-            renderer->terrainDepthBuffer,
-            positionOnScreen.x,
-            positionOnScreen.y,
-            renderer->terrainDepthBufferSize.x,
-            renderer->terrainDepthBufferSize.y,
-            depthValue))
+    GL_CHECK_PRESENT(glBindTexture);
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT lowp float in_vs_vertexPosition;                                                                             ""\n"
+        // Parameters: common data
+        "uniform vec3 param_vs_firstPointPosition;                                                                          ""\n"
+        "uniform vec3 param_vs_secondPointPosition;                                                                         ""\n"
+        "uniform vec3 param_vs_thirdPointPosition;                                                                          ""\n"
+        "uniform vec3 param_vs_fourthPointPosition;                                                                         ""\n"
+        "uniform vec4 param_vs_cameraInWorld;                                                                               ""\n"
+        "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        // Get vertex coordinates in world
+        "    vec3 v = in_vs_vertexPosition < 2.5 ? param_vs_thirdPointPosition : param_vs_fourthPointPosition;              ""\n"
+        "    v = in_vs_vertexPosition < 1.5 ? param_vs_secondPointPosition : v;                                             ""\n"
+        "    v = in_vs_vertexPosition < 0.5 ? param_vs_firstPointPosition : v;                                              ""\n"
+        "    v.y += 0.2;                                                                                                    ""\n"
+        "    v += normalize(param_vs_cameraInWorld.xyz - v) * 0.3;                                                          ""\n"
+        "    gl_PointSize = param_vs_cameraInWorld.w;                                                                       ""\n"
+        "    gl_Position = param_vs_mModelViewProjection * vec4(v.x, v.y, v.z, 1.0);                                        ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    if (vsId == 0)
     {
-        return true;
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
     }
-    */ return true;
 
-    // NOTE: To reduce Z-fight, reduce precision of comparison
-    return positionOnScreen.z - depthValue <= 0.00001f;
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = vec4(0.0, 0.0, 0.0, 0.0);                                                              ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    if (fsId == 0)
+    {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
+
+    // Link everything into program object
+    GLuint shaders[] = { vsId, fsId };
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _visibilityCheckProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    if (!_visibilityCheckProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
+
+    bool ok = true;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_visibilityCheckProgram.id, variablesMap);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.firstPointPosition, "param_vs_firstPointPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.secondPointPosition, "param_vs_secondPointPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.thirdPointPosition, "param_vs_thirdPointPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.fourthPointPosition, "param_vs_fourthPointPosition", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.cameraInWorld, "param_vs_cameraInWorld", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_visibilityCheckProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
+    if (!ok)
+    {
+        glDeleteProgram(_visibilityCheckProgram.id);
+        GL_CHECK_RESULT;
+        _visibilityCheckProgram.id.reset();
+
+        return false;
+    }
+
+    // Unbind symbol texture from texture sampler
+    glBindTexture(GL_TEXTURE_2D, 0);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    GLfloat baseVertex[] = {0.0f, 1.0f, 2.0f, 3.0f};
+
+    _visibilityCheckVAO = gpuAPI->allocateUninitializedVAO();
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_visibilityCheckVBO);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _visibilityCheckVBO);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, sizeof(baseVertex), baseVertex, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(*_visibilityCheckProgram.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_visibilityCheckProgram.vs.in.vertexPosition, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    GL_CHECK_RESULT;
+
+    gpuAPI->initializeVAO(_visibilityCheckVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    _queryMaxCount = INT32_MAX;
+    _queryResults.reserve(4096);
+    _querySizeFactor = 0.0f;
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseVisibilityCheck(bool gpuContextLost)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if (_visibilityCheckVAO.isValid())
+    {
+        gpuAPI->releaseVAO(_visibilityCheckVAO, gpuContextLost);
+        _visibilityCheckVAO.reset();
+    }
+
+    if (_visibilityCheckVBO.isValid())
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_visibilityCheckVBO);
+            GL_CHECK_RESULT;
+        }
+        _visibilityCheckVBO.reset();
+    }
+
+    if (_visibilityCheckProgram.id.isValid())
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_visibilityCheckProgram.id);
+            GL_CHECK_RESULT;
+        }
+        _visibilityCheckProgram = VisibilityCheckProgram();
+    }
+
+    return true;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::clearTerrainVisibilityFiltering()
+{
+    if (_querySizeFactor == 0.0f)
+    {
+        _querySizeFactor =
+            static_cast<float>(std::min(currentState.viewport.width(), currentState.viewport.height())) / 100.0f;
+    }
+
+    _nextQueryIndex = 0;
+    _queryResultsCount = 0;
+    _queryMapEven.clear();
+    _queryMapOdd.clear();
+}
+
+int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering(
+    const PointF& pointOnScreen,
+    const glm::vec3& firstPointInWorld,
+    const glm::vec3& secondPointInWorld,
+    const glm::vec3& thirdPointInWorld,
+    const glm::vec3& fourthPointInWorld)
+{
+    if (!currentState.elevationDataProvider
+        || currentState.zoomLevel < currentState.elevationDataProvider->getMinZoom())
+        return -1;
+
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    const auto filterQuery = pointOnScreen.x > -1.0f && pointOnScreen.y > -1.0f;
+
+    PointF scaledPoint;
+    int evenCode;
+    int oddCode;
+
+    float pointSize = 1.0f;
+
+    if (filterQuery)
+    {
+        scaledPoint = pointOnScreen / _querySizeFactor;
+        evenCode = static_cast<int>(scaledPoint.y) * 10000 + static_cast<int>(scaledPoint.x);
+        oddCode = static_cast<int>(scaledPoint.y + 0.5f) * 10000 + static_cast<int>(scaledPoint.x + 0.5f);
+        auto citQueryIndex = _queryMapEven.constFind(evenCode);
+        if (citQueryIndex != _queryMapEven.cend())
+            return *citQueryIndex;
+        citQueryIndex = _queryMapOdd.constFind(oddCode);
+        if (citQueryIndex != _queryMapOdd.cend())
+            return *citQueryIndex;
+
+        // The larger checking point of symbol requires the more distinctive visible terrain location
+        pointSize = _querySizeFactor * (90.0f - currentState.elevationAngle) / glm::dot(
+            internalState.worldCameraPosition - firstPointInWorld, glm::normalize(internalState.worldCameraPosition));
+        if (pointSize < 1.0f)
+            pointSize = 1.0f;
+    }
+
+    // Check if correct program is being used
+    if (_lastUsedProgram != _visibilityCheckProgram.id)
+    {
+        GL_PUSH_GROUP_MARKER("use 'visibility-check' program");
+
+        // Set VAO
+        gpuAPI->useVAO(_visibilityCheckVAO);
+
+        // Activate program
+        glUseProgram(_visibilityCheckProgram.id);
+        GL_CHECK_RESULT;
+
+        // Set perspective projection-view matrix
+        glUniformMatrix4fv(
+            _visibilityCheckProgram.vs.param.mModelViewProjection,
+            1,
+            GL_FALSE,
+            glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Change depth test function to perform > depth test
+        glDepthFunc(GL_GREATER);
+        GL_CHECK_RESULT;
+
+        _lastUsedProgram = _visibilityCheckProgram.id;
+
+        GL_POP_GROUP_MARKER;
+    }
+
+    // Set camera position
+    glUniform4f(
+        _visibilityCheckProgram.vs.param.cameraInWorld,
+        internalState.worldCameraPosition.x,
+        internalState.worldCameraPosition.y,
+        internalState.worldCameraPosition.z,
+        pointSize);
+
+    glUniform3f(_visibilityCheckProgram.vs.param.firstPointPosition,
+        firstPointInWorld.x,
+        firstPointInWorld.y,
+        firstPointInWorld.z);
+    GL_CHECK_RESULT;
+
+    glUniform3f(_visibilityCheckProgram.vs.param.secondPointPosition,
+        secondPointInWorld.x,
+        secondPointInWorld.y,
+        secondPointInWorld.z);
+    GL_CHECK_RESULT;
+
+    glUniform3f(_visibilityCheckProgram.vs.param.thirdPointPosition,
+        thirdPointInWorld.x,
+        thirdPointInWorld.y,
+        thirdPointInWorld.z);
+    GL_CHECK_RESULT;
+
+    glUniform3f(_visibilityCheckProgram.vs.param.fourthPointPosition,
+        fourthPointInWorld.x,
+        fourthPointInWorld.y,
+        fourthPointInWorld.z);
+    GL_CHECK_RESULT;
+  
+    auto queryIndex = _nextQueryIndex < _queryMaxCount ? gpuAPI->checkElementVisibility(_nextQueryIndex, pointSize) : -1;
+    
+    if (queryIndex < 0)
+    {
+        _queryMaxCount = _nextQueryIndex;
+        queryIndex = _queryResultsCount;
+        for (int i = 0; i < _queryMaxCount; i++)
+        {
+            const auto result = gpuAPI->elementIsVisible(i);
+            if (queryIndex < _queryResults.size())
+                _queryResults[queryIndex] = result;
+            else
+                _queryResults.push_back(result);
+            queryIndex++;
+        }
+        _queryResultsCount = queryIndex;
+        _nextQueryIndex = 0;
+        gpuAPI->checkElementVisibility(_nextQueryIndex, pointSize);
+    }
+    else
+        queryIndex += _queryResultsCount;
+
+    _nextQueryIndex += 1;
+
+    if (filterQuery)
+    {
+        _queryMapEven.insert(evenCode, queryIndex);
+        _queryMapOdd.insert(oddCode, queryIndex);
+    }
+
+    return queryIndex;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFiltering(const int queryIndex,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const
+{
+    Stopwatch stopwatch(metric != nullptr);
+
+    bool result;
+
+    if (queryIndex < _queryResultsCount)
+        result = _queryResults[queryIndex];
+    else
+    {
+        const auto gpuAPI = getGPUAPI();
+        result = gpuAPI->elementIsVisible(queryIndex - _queryResultsCount);
+    }
+
+    if (metric)
+    {
+        metric->elapsedTimeForApplyTerrainVisibilityFilteringCalls += stopwatch.elapsed();
+        metric->applyTerrainVisibilityFilteringCalls++;
+        if (result)
+            metric->acceptedByTerrainVisibilityFiltering++;
+        else
+            metric->rejectedByTerrainVisibilityFiltering++;
+    }
+
+    return result;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(

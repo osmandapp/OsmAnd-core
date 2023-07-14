@@ -42,9 +42,9 @@ OsmAnd::ElevationConfiguration& OsmAnd::ElevationConfiguration::setVisualization
     switch (colorMapPreset)
     {
         case ColorMapPreset::GrayscaleHillshade:
-            visualizationColorMap[0] = {   0.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.7f) };
-            visualizationColorMap[1] = { 186.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.0f) };
-            visualizationColorMap[2] = { 187.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
+            visualizationColorMap[0] = {   0.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.6f) };
+            visualizationColorMap[1] = { 179.0f, FColorRGBA(0.0f, 0.0f, 0.0f, 0.0f) };
+            visualizationColorMap[2] = { 180.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.0f) };
             visualizationColorMap[3] = { 255.0f, FColorRGBA(1.0f, 1.0f, 1.0f, 0.2f) };
             break;
         case ColorMapPreset::GrayscaleSlopeDegrees:

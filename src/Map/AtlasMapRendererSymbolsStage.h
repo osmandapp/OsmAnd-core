@@ -45,6 +45,7 @@ namespace OsmAnd
             ScreenQuadTree::BBox visibleBBox;
             ScreenQuadTree::BBox intersectionBBox;
             float opacityFactor;
+            int queryIndex;
         };
 
         struct RenderableBillboardSymbol : RenderableSymbol
@@ -130,13 +131,13 @@ namespace OsmAnd
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric,
-            bool forceUpdate = false) const;
+            bool forceUpdate = false);
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
         std::chrono::high_resolution_clock::time_point _lastResumeSymbolsUpdateTime;
 
@@ -163,8 +164,9 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
@@ -179,8 +181,9 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
@@ -205,7 +208,7 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
             bool allowFastCheckByFrustum = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
@@ -230,8 +233,9 @@ namespace OsmAnd
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            ScreenQuadTree& intersections,
             bool allowFastCheckByFrustum = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
             ScreenQuadTree& intersections,
@@ -239,8 +243,14 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // Terrain-related:
-        virtual bool applyTerrainVisibilityFiltering(
-            const glm::vec3& positionOnScreen,
+        virtual void clearTerrainVisibilityFiltering() = 0;
+        virtual int startTerrainVisibilityFiltering(
+            const PointF& pointOnScreen,
+            const glm::vec3& firstPointInWorld,
+            const glm::vec3& secondPointInWorld,
+            const glm::vec3& thirdPointInWorld,
+            const glm::vec3& fourthPointInWorld) = 0;
+        virtual bool applyTerrainVisibilityFiltering(const int queryIndex,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const = 0;
 
         // Intersection-related:
@@ -338,7 +348,10 @@ namespace OsmAnd
             QVector<RenderableOnPathSymbol::GlyphPlacement>& outGlyphsPlacement,
             QVector<glm::vec3>& outRotatedElevatedBBoxInWorld) const;
 
-        bool elevateGlyphAnchorPointIn2D(const glm::vec2& anchorPoint, glm::vec3& outElevatedAnchorPoint) const;
+        bool elevateGlyphAnchorPointIn2D(
+            const glm::vec2& anchorPoint,
+            glm::vec3& outElevatedAnchorPoint,
+            glm::vec3& outElevatedAnchorInWorld) const;
 
         bool elevateGlyphAnchorPointsIn3D(
             QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
