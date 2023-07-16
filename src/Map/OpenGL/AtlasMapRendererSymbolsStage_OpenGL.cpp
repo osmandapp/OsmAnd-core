@@ -2922,8 +2922,7 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
     const glm::vec3& thirdPointInWorld,
     const glm::vec3& fourthPointInWorld)
 {
-    if (!currentState.elevationDataProvider
-        || currentState.zoomLevel < currentState.elevationDataProvider->getMinZoom())
+    if (!withTerrainFilter())
         return -1;
 
     const auto gpuAPI = getGPUAPI();
@@ -2950,8 +2949,9 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
             return *citQueryIndex;
 
         // The larger checking point of symbol requires the more distinctive visible terrain location
-        pointSize = _querySizeFactor * (90.0f - currentState.elevationAngle) / glm::dot(
-            internalState.worldCameraPosition - firstPointInWorld, glm::normalize(internalState.worldCameraPosition));
+        const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
+        pointSize = _querySizeFactor * (90.0f - currentState.elevationAngle) / 
+            glm::dot(internalState.worldCameraPosition - firstPointInWorld, cameraVectorN);
         if (pointSize < 1.0f)
             pointSize = 1.0f;
     }
