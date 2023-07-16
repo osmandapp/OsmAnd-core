@@ -20,6 +20,7 @@
 #include "PrivateImplementation.h"
 #include "WeatherTileResourceProvider.h"
 #include "TileSqliteDatabase.h"
+#include "Nullable.h"
 
 namespace OsmAnd
 {
@@ -33,7 +34,8 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(ObtainValueTask);
         private:
             const std::weak_ptr<WeatherTileResourceProvider_P> _provider;
-            
+
+            Nullable<int> _priority;
         protected:
         public:
             ObtainValueTask(
@@ -48,6 +50,8 @@ namespace OsmAnd
             const bool collectMetric;
 
             virtual void run() Q_DECL_OVERRIDE;
+
+            void setPriority(int priority);
         };
         
         class OSMAND_CORE_API ObtainTileTask : public QRunnable
@@ -102,6 +106,8 @@ namespace OsmAnd
         };
 
     private:
+        typedef QString ObtainValueRequestId;
+
         ImplementationInterface<WeatherTileResourceProvider> owner;
         QThreadPool *_obtainValueThreadPool;
         QThreadPool *_obtainCacheDataThreadPool;
@@ -112,6 +118,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
         int _priority;
         int _obtainValuePriority;
+        QMap<ObtainValueRequestId, int> _recentObtainValuePriorities;
 
         QList<TileId> _currentDownloadingTileIds;
         QList<TileId> _currentEvaluatingTileIds;
@@ -122,7 +129,7 @@ namespace OsmAnd
         int _requestVersion;
 
         int getAndIncreasePriority();
-        int getAndIncreaseObtainValuePriority();
+        int getAndIncreaseObtainValuePriority(const ObtainValueRequestId& requestId);
         
         mutable QMutex _geoTilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _geoTilesInProcess;
@@ -146,10 +153,11 @@ namespace OsmAnd
         mutable QReadWriteLock _cachedValuesLock;
         PointI _cachedValuesPoint31;
         ZoomLevel _cachedValuesZoom;
+        QString _cachedValuesDateTimeStr;
         QList<double> _cachedValues;
         
-        bool getCachedValues(const PointI point31, const ZoomLevel zoom, QList<double>& values);
-        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QList<double>& values);
+        bool getCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, QList<double>& values);
+        void setCachedValues(const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, const QList<double>& values);
 
         bool isEmpty();
 

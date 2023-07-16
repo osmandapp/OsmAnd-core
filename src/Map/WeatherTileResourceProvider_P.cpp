@@ -77,11 +77,13 @@ int OsmAnd::WeatherTileResourceProvider_P::getAndIncreasePriority()
     return ++_priority;
 }
 
-int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority()
+int OsmAnd::WeatherTileResourceProvider_P::getAndIncreaseObtainValuePriority(const ObtainValueRequestId& requestId)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    return ++_obtainValuePriority;
+    _obtainValuePriority++;
+    _recentObtainValuePriorities[requestId] = _obtainValuePriority;
+    return _obtainValuePriority;
 }
 
 const QHash<OsmAnd::BandIndex,
@@ -357,11 +359,11 @@ void OsmAnd::WeatherTileResourceProvider_P::unlockContourTile(const TileId tileI
 }
 
 bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(
-    const PointI point31, const ZoomLevel zoom, QList<double>& values)
+    const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, QList<double>& values)
 {
     QReadLocker scopedLocker(&_cachedValuesLock);
 
-    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom)
+    if (_cachedValuesPoint31 == point31 && _cachedValuesZoom == zoom && _cachedValuesDateTimeStr == dateTimeStr)
     {
         values = _cachedValues;
         return true;
@@ -370,12 +372,13 @@ bool OsmAnd::WeatherTileResourceProvider_P::getCachedValues(
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::setCachedValues(
-    const PointI point31, const ZoomLevel zoom, const QList<double>& values)
+    const PointI point31, const ZoomLevel zoom, const QString& dateTimeStr, const QList<double>& values)
 {
     QWriteLocker scopedLocker(&_cachedValuesLock);
 
     _cachedValuesPoint31 = point31;
     _cachedValuesZoom = zoom;
+    _cachedValuesDateTimeStr = dateTimeStr;
     _cachedValues = values;
 }
 
@@ -396,9 +399,12 @@ void OsmAnd::WeatherTileResourceProvider_P::obtainValueAsync(
     const bool collectMetric /*= false*/)
 {
     const auto requestClone = request.clone();
+    const ObtainValueRequestId requestId = request.clientId + "_" + QString::number(request.band);
+    const auto priority = getAndIncreaseObtainValuePriority(requestId);
     ObtainValueTask *task = new ObtainValueTask(shared_from_this(), requestClone, callback, collectMetric);
     task->setAutoDelete(true);
-    _obtainValueThreadPool->start(task, getAndIncreaseObtainValuePriority());
+    task->setPriority(priority);
+    _obtainValueThreadPool->start(task, priority);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::obtainData(
@@ -784,16 +790,33 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     if (!provider)
         return;
 
+    const auto& clientId = request->clientId;
     const auto dateTime = request->dateTime;
+    const auto& dateTimeStr = Utilities::getDateTimeString(dateTime);
     PointI point31 = request->point31;
     ZoomLevel zoom = request->zoom;
+    const auto band = request->band;
     bool localData = request->localData;
+    bool abortIfNotRecent = request->abortIfNotRecent;
 
     QList<double> values;
-    if (provider->getCachedValues(point31, zoom, values))
+    if (provider->getCachedValues(point31, zoom, dateTimeStr, values))
     {
         callback(true, values, nullptr);
         return;
+    }
+
+    // Abort task without callback if band priority is outdated
+    if (abortIfNotRecent && _priority.isSet())
+    {
+        QReadLocker scopedLocker(&provider->_lock);
+
+        const ObtainValueRequestId requestId = clientId + "_" + QString::number(band);
+        const auto& recentPriorities = provider->_recentObtainValuePriorities;
+        const auto citRecentPriority = recentPriorities.find(requestId);
+        const auto priority = *_priority;
+        if (citRecentPriority != recentPriorities.cend() && citRecentPriority.value() != priority)
+            return;
     }
 
     const auto geoTileZoom = WeatherTileResourceProvider::getGeoTileZoom();
@@ -821,7 +844,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
 
         if (evaluator->evaluate(latLon, values))
         {
-            provider->setCachedValues(point31, zoom, values);
+            provider->setCachedValues(point31, zoom, dateTimeStr, values);
             callback(true, values, nullptr);
         }
         else
@@ -840,6 +863,11 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     {
         callback(false, QList<double>(), nullptr);
     }
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::setPriority(int priority)
+{
+    _priority = priority;
 }
 
 OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::ObtainTileTask(

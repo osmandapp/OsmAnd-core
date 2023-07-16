@@ -275,6 +275,7 @@ OsmAnd::WeatherTileResourcesManager::ValueRequest::ValueRequest()
     , zoom(ZoomLevel::InvalidZoomLevel)
     , band(0)
     , localData(false)
+    , abortIfNotRecent(false)
 {
 }
 
@@ -289,11 +290,13 @@ OsmAnd::WeatherTileResourcesManager::ValueRequest::~ValueRequest()
 
 void OsmAnd::WeatherTileResourcesManager::ValueRequest::copy(ValueRequest& dst, const ValueRequest& src)
 {
+    dst.clientId = src.clientId;
     dst.dateTime = src.dateTime;
     dst.point31 = src.point31;
     dst.zoom = src.zoom;
     dst.band = src.band;
     dst.localData = src.localData;
+    dst.abortIfNotRecent = src.abortIfNotRecent;
     dst.queryController = src.queryController;
 }
 
