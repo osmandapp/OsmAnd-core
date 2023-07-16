@@ -21,7 +21,7 @@
 
 #define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
 #define ENLARGE_QUERY_BBOX_METERS 100
-#define COMPARE_OBF_OBJECTS_MAX_ZOOM 12
+#define COMPARE_OBF_OBJECTS_MAX_ZOOM 14
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -634,61 +634,62 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    // Sort duplicated ObfMapObjects by importance, choose the most important one
     bool comparePoints = zoom <= COMPARE_OBF_OBJECTS_MAX_ZOOM;
     for (auto& duplicates : duplicatedMapObjects.values())
     {
+        // Sort duplicated ObfMapObjects by maps date and data completeness
         std::sort(duplicates.begin(), duplicates.end(),
-            [comparePoints]
+            []
             (const std::shared_ptr<const ObfMapObject>& o1, const std::shared_ptr<const ObfMapObject>& o2)
             {
-                // BinaryMapObject (full object) is more important than Road (only)
                 if (std::dynamic_pointer_cast<const BinaryMapObject>(o1) && std::dynamic_pointer_cast<const Road>(o2))
                     return true;
                 else if (std::dynamic_pointer_cast<const Road>(o1) && std::dynamic_pointer_cast<const BinaryMapObject>(o2))
                     return false;
 
-                if (comparePoints)
-                {
-                    // If objects' sections differ regionally, object with the most points is more important
-                    const auto& sectionNameWithoutDate1 = formatObfSectionName(o1->obfSection, false);
-                    const auto& sectionNameWithoutDate2 = formatObfSectionName(o2->obfSection, false);
-                    if (sectionNameWithoutDate1 != sectionNameWithoutDate2)
-                    {
-                        const auto& points1 = o1->points31;
-                        const auto& points2 = o2->points31;
-                        if (points1.size() != points2.size())
-                        {
-                            return points1.size() > points2.size();
-                        }
-                        else
-                        {
-                            double length1;
-                            double length2;
-                            for (int pointIdx = 1; pointIdx < points1.size(); pointIdx++)
-                            {
-                                const auto& prevPoint1 = points1[pointIdx - 1];
-                                const auto& currPoint1 = points1[pointIdx];
-                                length1 += Utilities::squareDistance31(prevPoint1, currPoint1);
-
-                                const auto& prevPoint2 = points2[pointIdx - 1];
-                                const auto& currPoint2 = points2[pointIdx];
-                                length2 += Utilities::squareDistance31(prevPoint2, currPoint2);
-                            }
-
-                            return length1 > length2;
-                        }
-                    }
-                }
-
-                // Object with latest date is more important
                 const auto& formattedSectionName1 = formatObfSectionName(o1->obfSection, true);
                 const auto& formattedSectionName2 = formatObfSectionName(o2->obfSection, true);
                 return formattedSectionName1.compare(formattedSectionName2) > 0;
             });
 
-        // Add the most important duplicate
-        allMapObjects.push_back(duplicates.first());
+        if (comparePoints)
+        {
+            // Add all duplicates with unique map and start/end points
+            QSet<QString> obfSectionNames;
+            QList<PointI> starts;
+            QList<PointI> ends;
+
+            for (const auto& duplicate : duplicates)
+            {
+                const auto& obfSectionName = formatObfSectionName(duplicate->obfSection, false);
+                if (obfSectionNames.contains(obfSectionName))
+                    continue;
+
+                const auto& start = duplicate->points31.first();
+                const auto& end = duplicate->points31.last();
+
+                bool equalStartEnd = false;
+                for (int i = 0; i < starts.size(); i++) {
+                    if (start == starts[i] && end == ends[i])
+                    {
+                        equalStartEnd = true;
+                        break;
+                    }
+                }
+                if (equalStartEnd)
+                    continue;
+
+                allMapObjects.push_back(duplicate);
+                obfSectionNames.insert(obfSectionName);
+                starts.push_back(start);
+                ends.push_back(end);
+            }
+        }
+        else
+        {
+            // Add first object from most recent map
+            allMapObjects.push_back(duplicates.first());
+        }
     }
 
     // Create tile
