@@ -707,6 +707,7 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
     const AreaI* const pBbox31 /*= nullptr*/,
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
+    const QStringList& excludedCategories /*= QStringList()*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     OsmAnd::ObfObjectId shiftedID = OsmAnd::ObfObjectId::fromRawId(obfMapObject->id >> 1);
@@ -765,6 +766,23 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
         const auto& obfInfo = obfReader->obtainInfo();
         for (const auto& poiSection : constOf(obfInfo->poiSections))
         {
+            bool hasExcludedCategory = false;
+            auto categories = poiSection->getCategories();
+            if (categories != nullptr)
+            {
+                QStringList mainCategories = categories->mainCategories;
+                for (const auto& excludedCategory : constOf(excludedCategories))
+                {
+                    if (mainCategories.contains(excludedCategory))
+                    {
+                        hasExcludedCategory = true;
+                        break;
+                    }
+                }
+            }
+            if (hasExcludedCategory)
+                continue;
+
             if (queryController && queryController->isAborted())
                 return false;
 
@@ -834,6 +852,7 @@ bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
         &alignedBBox,
         nullptr,
         InvalidZoomLevel,
+        QStringList(),
         queryController);
 }
 

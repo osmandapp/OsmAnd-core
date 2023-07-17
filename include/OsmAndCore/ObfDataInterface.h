@@ -116,6 +116,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const TileAcceptorFunction tileFilter = nullptr,
             const ZoomLevel zoomFilter = InvalidZoomLevel,
+            const QStringList& excludedCategories = QStringList(),
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool findAmenityForObfMapObject(
