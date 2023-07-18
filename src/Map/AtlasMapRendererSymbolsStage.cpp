@@ -60,16 +60,25 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
 {
     Stopwatch stopwatch(metric != nullptr);
 
-    ScreenQuadTree intersections;
     float timeSinceLastUpdate = std::chrono::duration<float>(
-        std::chrono::high_resolution_clock::now() - _lastResumeSymbolsUpdateTime).count();
-    // Don't invalidate this possibly last frame if symbols are quite fresh
-    if (timeSinceLastUpdate < 0.5f)
-        renderer->setSymbolsUpdated();
+        std::chrono::high_resolution_clock::now() - _lastResumeSymbolsUpdateTime).count() * 1000.0f;
     bool forceSymbolsUpdate = false;
-    int symbolsUpdateInterval = renderer->getSymbolsUpdateInterval();
-    if (symbolsUpdateInterval > 0)
-        forceSymbolsUpdate = timeSinceLastUpdate * 1000.0 > symbolsUpdateInterval;
+    const auto symbolsUpdateInterval = static_cast<float>(renderer->getSymbolsUpdateInterval());
+    if (symbolsUpdateInterval > 0.0f)
+    {
+        forceSymbolsUpdate = timeSinceLastUpdate > symbolsUpdateInterval;
+
+        // Don't invalidate this possibly last frame if symbols are quite fresh
+        if (timeSinceLastUpdate < symbolsUpdateInterval / 2.0f)
+            renderer->setSymbolsUpdated();
+    }
+    else if (timeSinceLastUpdate < 1000.0f)
+    {
+        // Don't invalidate this possibly last frame if symbols aren't older than 1s
+        renderer->setSymbolsUpdated();
+    }
+
+    ScreenQuadTree intersections;
     if (!obtainRenderableSymbols(renderableSymbols, intersections, metric, forceSymbolsUpdate))
     {
         // In case obtain failed due to lock, schedule another frame
@@ -1294,12 +1303,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         symbol->size.x,
         symbol->size.y);
 
-    if (!applyOnScreenVisibilityFiltering(visibleBBox, intersections, metric))
+    if (allowFastCheckByFrustum && !applyOnScreenVisibilityFiltering(visibleBBox, intersections, metric))
         return;
 
     const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
     const auto distanceToPoint = glm::dot(internalState.worldCameraPosition - positionInWorld, cameraVectorN);
-    if (distanceToPoint / internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
+    if (allowFastCheckByFrustum &&
+        distanceToPoint / internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
         return;
 
     // Don't render fully transparent symbols
@@ -1907,7 +1917,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             const auto oobb = calculateOnPath2dOOBB(renderable);
             renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
 
-            if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
+            if (allowFastCheckByFrustum &&
+                !applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
                 return;
 
             const auto pointsCount = rotatedElevatedBBoxInWorld.size();
@@ -1925,16 +1936,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
                 p2 = rotatedElevatedBBoxInWorld[1];
 
             const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
-            if (glm::dot(internalState.worldCameraPosition - p0, cameraVectorN) /
+            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p0, cameraVectorN) /
                 internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
                 return;
-            if (glm::dot(internalState.worldCameraPosition - p1, cameraVectorN) /
+            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p1, cameraVectorN) /
                 internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
                 return;
-            if (glm::dot(internalState.worldCameraPosition - p2, cameraVectorN) /
+            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p2, cameraVectorN) /
                 internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
                 return;
-            if (glm::dot(internalState.worldCameraPosition - p3, cameraVectorN) /
+            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p3, cameraVectorN) /
                 internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
                 return;
 
