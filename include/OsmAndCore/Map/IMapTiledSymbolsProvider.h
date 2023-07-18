@@ -33,7 +33,8 @@ namespace OsmAnd
         //    const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
         typedef std::function< bool(
             const IMapTiledSymbolsProvider* const provider,
-            const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup)> FilterCallback;
+            const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup,
+            const ObfObjectId sourceObjectId)> FilterCallback;
 
         class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
         {

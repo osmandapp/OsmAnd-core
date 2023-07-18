@@ -15,6 +15,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "OnPathRasterMapSymbol.h"
 #include "MapObject.h"
+#include "ObfMapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "Utilities.h"
 
@@ -69,7 +70,11 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
             const std::shared_ptr<MapObjectSymbolsGroup> preallocatedGroup(new MapObjectSymbolsGroup(mapObject));
 
-            if (!filterCallback || filterCallback(owner, preallocatedGroup))
+            ObfObjectId id = ObfObjectId::invalidId();
+            if (const auto obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObject))
+                id = obfMapObject->id;
+
+            if (!filterCallback || filterCallback(owner, preallocatedGroup, id))
             {
                 preallocatedSymbolsGroups.insert(mapObject, qMove(preallocatedGroup));
                 return true;
