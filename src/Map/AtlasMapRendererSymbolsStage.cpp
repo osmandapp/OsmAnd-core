@@ -120,7 +120,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::withTerrainFilter()
 {
     const auto result = currentState.elevationDataProvider
         && currentState.zoomLevel >= currentState.elevationDataProvider->getMinZoom()
-        && currentState.elevationAngle < 5.0f * currentState.zoomLevel;
+        && currentState.elevationAngle < std::min(5.0f * currentState.zoomLevel, 89.0f);
 
     return result;
 }
@@ -697,7 +697,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             metric);
 
                         if (renderableSymbols->size() > 0)
-                            originalRenderableSymbols.push_back(SymbolRenderables(originalSymbolIndex, renderableSymbols));
+                        {
+                            originalRenderableSymbols.push_back(
+                                SymbolRenderables(originalSymbolIndex, renderableSymbols));
+                        }
                         originalSymbolIndex++;
                     }
                 }
