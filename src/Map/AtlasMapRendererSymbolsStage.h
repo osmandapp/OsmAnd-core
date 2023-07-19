@@ -41,6 +41,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbol> mapSymbol;
             std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters> genericInstanceParameters;
 
+            MapRenderer::MapSymbolReferenceOrigins* referenceOrigins;
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             ScreenQuadTree::BBox visibleBBox;
             ScreenQuadTree::BBox intersectionBBox;

@@ -444,7 +444,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     outIntersections = ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u));
     ComputedPathsDataCache computedPathsDataCache;
     bool applyFiltering = pOutAcceptedMapSymbolsByOrder != nullptr;
-    if (!withTerrainFilter())
+    if (!applyFiltering || !withTerrainFilter())
     {
         // Simplified one-pass cycle if all symbols are visible on terrain
         for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
@@ -620,14 +620,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         // Two-pass algorithm if symbol visibility on terrain should be verified
 
-        typedef std::pair<int, std::shared_ptr<QList<std::shared_ptr<RenderableSymbol>>>> SymbolRenderables;
-        QList<SymbolRenderables> originalRenderableSymbols;
-        QList<SymbolRenderables> additionalRenderableSymbols;
+        typedef std::pair<const std::shared_ptr<MapSymbolsGroup::AdditionalInstance>*,
+            std::shared_ptr<QList<std::shared_ptr<RenderableSymbol>>>> SymbolRenderables;
+        QList<SymbolRenderables> renderables;
         clearTerrainVisibilityFiltering();
 
         // Collect renderable symbols for rendering
-        int originalSymbolIndex = 0;
-        int additionalSymbolIndex = 0;
         for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
         {
             const auto& mapSymbols = mapSymbolsByOrderEntry.value();
@@ -697,11 +695,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             metric);
 
                         if (renderableSymbols->size() > 0)
-                        {
-                            originalRenderableSymbols.push_back(
-                                SymbolRenderables(originalSymbolIndex, renderableSymbols));
-                        }
-                        originalSymbolIndex++;
+                            renderables.push_back(SymbolRenderables(nullptr, renderableSymbols));
                     }
                 }
 
@@ -740,168 +734,90 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             metric);
 
                         if (renderableSymbols->size() > 0)
-                        {
-                            additionalRenderableSymbols.push_back(
-                                SymbolRenderables(additionalSymbolIndex, renderableSymbols));
-                        }
-                        additionalSymbolIndex++;
+                            renderables.push_back(SymbolRenderables(&additionalGroupInstance, renderableSymbols));
                     }
                 }
             }
         }
 
         // Process renderable symbols before rendering
-        originalSymbolIndex = 0;
-        additionalSymbolIndex = 0;
-        int originalSymbolListIndex = 0;
-        int additionalSymbolListIndex = 0;
-        auto currentOriginalRenderables = SymbolRenderables(0, originalRenderableSymbols.isEmpty()
-            ?  nullptr : originalRenderableSymbols.at(0).second);
-        auto currentAdditionalRenderables = SymbolRenderables(0, additionalRenderableSymbols.isEmpty()
-            ?  nullptr : additionalRenderableSymbols.at(0).second);
-        for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
+        int order = 0;
+        MapRenderer::PublishedMapSymbolsByGroup* pAcceptedMapSymbols = nullptr;
+        const auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
+        for (const auto& symbolRenderable : constOf(renderables))
         {
-            const auto order = mapSymbolsByOrderEntry.key();
-            const auto& mapSymbols = mapSymbolsByOrderEntry.value();
-            MapRenderer::PublishedMapSymbolsByGroup* pAcceptedMapSymbols = nullptr;
-
-            const auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
-
-            // Iterate over all groups in proper order (proper order is maintained during publishing)
-            for (const auto& mapSymbolsEntry : constOf(mapSymbols))
+            if (!symbolRenderable.first)
             {
-                const auto& mapSymbolsGroup = mapSymbolsEntry.first;
-                const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
-
-                // Check if this symbol can be skipped
-                if (mapSymbolsGroup->additionalInstancesDiscardOriginal && mapSymbolsGroup->additionalInstances.isEmpty())
-                    continue;
-
-                // Check if original was discarded
-                if (!mapSymbolsGroup->additionalInstancesDiscardOriginal)
+                bool atLeastOnePlotted = false;
+                for (const auto& renderableSymbol : constOf(*symbolRenderable.second))
                 {
-                    // Process symbols from this group in order as they are stored in group
-                    for (const auto& mapSymbol : constOf(mapSymbolsGroup->symbols))
+                    if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
+                        continue;
+
+                    const auto mapSymbolsGroup = renderableSymbol->mapSymbolGroup;
+                    const auto mapSymbol = renderableSymbol->mapSymbol;
+
+                    if (!atLeastOnePlotted)
                     {
-                        if (mapSymbol->isHidden)
-                            continue;
-
-                        // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
-                            continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
-
-                        if (originalSymbolIndex > currentOriginalRenderables.first)
+                        // In case renderable symbol was obtained and accepted map symbols were requested,
+                        // add this symbol to accepted
+                        if (pOutAcceptedMapSymbolsByOrder)
                         {
-                            originalSymbolListIndex++;
-                            if (originalSymbolListIndex < originalRenderableSymbols.size())
-                                currentOriginalRenderables = originalRenderableSymbols.at(originalSymbolListIndex);
-                            else
-                                currentOriginalRenderables = SymbolRenderables(INT32_MAX, nullptr);
-                        }
-
-                        const auto pRenderableSymbols = originalSymbolIndex == currentOriginalRenderables.first
-                            ? currentOriginalRenderables.second : nullptr;
-                        const auto& renderableSymbols =
-                            pRenderableSymbols ? *pRenderableSymbols : QList<std::shared_ptr<RenderableSymbol>>();
-
-                        originalSymbolIndex++;
-
-                        bool atLeastOnePlotted = false;
-                        for (const auto& renderableSymbol : constOf(renderableSymbols))
-                        {
-                            if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
-                                continue;
-
-                            if (!atLeastOnePlotted)
+                            if (pAcceptedMapSymbols == nullptr || order != mapSymbol->order)
                             {
-                                // In case renderable symbol was obtained and accepted map symbols were requested,
-                                // add this symbol to accepted
-                                if (pOutAcceptedMapSymbolsByOrder)
-                                {
-                                    if (pAcceptedMapSymbols == nullptr)
-                                        pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
-
-                                    (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
-                                }
-                                atLeastOnePlotted = true;
+                                order = mapSymbol->order;
+                                pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
                             }
 
-                            const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
-                            PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
-
-                            plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
-                                .instancesRefs[nullptr]
-                                .symbolsRefs.push_back(qMove(plottedSymbolRef));
+                            (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(
+                                mapSymbol, *renderableSymbol->referenceOrigins);
                         }
+                        atLeastOnePlotted = true;
                     }
+
+                    const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
+                    PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
+
+                    plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
+                        .instancesRefs[nullptr]
+                        .symbolsRefs.push_back(qMove(plottedSymbolRef));
                 }
-
-                // Now process rest of the instances in order as they are defined in original group
-                for (const auto& additionalGroupInstance : constOf(mapSymbolsGroup->additionalInstances))
+            }
+            else
+            {
+                bool atLeastOnePlotted = false;
+                for (const auto& renderableSymbol : constOf(*symbolRenderable.second))
                 {
-                    // Process symbols from this group in order as they are stored in original group
-                    for (const auto& mapSymbol : constOf(mapSymbolsGroup->symbols))
+                    if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
+                        continue;
+
+                    const auto mapSymbolsGroup = renderableSymbol->mapSymbolGroup;
+                    const auto mapSymbol = renderableSymbol->mapSymbol;
+
+                    if (!atLeastOnePlotted)
                     {
-                        if (mapSymbol->isHidden)
-                            continue;
-
-                        // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
-                            continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
-
-                        // If symbol is not references in additional group reference, also skip
-                        const auto citAdditionalSymbolInstance = additionalGroupInstance->symbols.constFind(mapSymbol);
-                        if (citAdditionalSymbolInstance == additionalGroupInstance->symbols.cend())
-                            continue;
-
-                        if (additionalSymbolIndex > currentAdditionalRenderables.first)
+                        // In case renderable symbol was obtained and accepted map symbols were requested,
+                        // add this symbol to accepted
+                        if (pOutAcceptedMapSymbolsByOrder)
                         {
-                            additionalSymbolListIndex++;
-                            if (additionalSymbolListIndex < additionalRenderableSymbols.size())
-                                currentAdditionalRenderables = additionalRenderableSymbols.at(additionalSymbolListIndex);
-                            else
-                                currentAdditionalRenderables = SymbolRenderables(INT32_MAX, nullptr);
-                        }
-
-                        const auto pRenderableSymbols = additionalSymbolIndex == currentAdditionalRenderables.first
-                            ? currentAdditionalRenderables.second : nullptr;
-                        const auto& renderableSymbols =
-                            pRenderableSymbols ? *pRenderableSymbols : QList<std::shared_ptr<RenderableSymbol>>();
-
-                        additionalSymbolIndex++;
-
-                        bool atLeastOnePlotted = false;
-                        for (const auto& renderableSymbol : constOf(renderableSymbols))
-                        {
-                            if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
-                                continue;
-
-                            if (!atLeastOnePlotted)
+                            if (pAcceptedMapSymbols == nullptr || order != mapSymbol->order)
                             {
-                                // In case renderable symbol was obtained and accepted map symbols were requested,
-                                // add this symbol to accepted
-                                if (pOutAcceptedMapSymbolsByOrder)
-                                {
-                                    if (pAcceptedMapSymbols == nullptr)
-                                        pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
-
-                                    (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
-                                }
-                                atLeastOnePlotted = true;
+                                order = mapSymbol->order;
+                                pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
                             }
 
-                            const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
-                            PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
-
-                            plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
-                                .instancesRefs[additionalGroupInstance]
-                                .symbolsRefs.push_back(qMove(plottedSymbolRef));
+                            (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(
+                                mapSymbol, *renderableSymbol->referenceOrigins);
                         }
+                        atLeastOnePlotted = true;
                     }
+
+                    const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
+                    PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
+
+                    plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
+                        .instancesRefs[*symbolRenderable.first]
+                        .symbolsRefs.push_back(qMove(plottedSymbolRef));
                 }
             }
         }
@@ -1324,6 +1240,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         renderable->mapSymbol = mapSymbol;
         renderable->genericInstanceParameters = instanceParameters;
         renderable->instanceParameters = instanceParameters;
+        renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
         renderable->positionInWorld = positionInWorld;
         renderable->elevationInMeters = elevationInMeters;
@@ -1579,6 +1496,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->mapSymbol = mapSymbol;
         renderable->genericInstanceParameters = instanceParameters;
         renderable->instanceParameters = instanceParameters;
+        renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
         renderable->elevationInMeters = elevationInMeters;
         renderable->tileId = tileId;
@@ -1907,6 +1825,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             renderable->mapSymbol = onPathMapSymbol;
             renderable->genericInstanceParameters = instanceParameters;
             renderable->instanceParameters = instanceParameters;
+            renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
             renderable->gpuResource = gpuResource;
             renderable->is2D = is2D;
             renderable->distanceToCamera = computeDistanceFromCameraToPath(pathInWorld);
