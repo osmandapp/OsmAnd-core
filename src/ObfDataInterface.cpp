@@ -790,20 +790,48 @@ bool OsmAnd::ObfDataInterface::findAmenityByObfMapObject(
                 visitorById,
                 subQueryController);
 
-            if (res == nullptr)
+            if (res)
             {
-                OsmAnd::ObfPoiSectionReader::loadAmenities(
-                    obfReader,
-                    poiSection,
-                    nullptr,
-                    pBbox31,
-                    tileFilter,
-                    zoomFilter,
-                    nullptr,
-                    visitorByName,
-                    subQueryController);
+                if (outAmenity)
+                    *outAmenity = res;
+                return true;
             }
-            
+        }
+    }
+
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& poiSection : constOf(obfInfo->poiSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+
+            if (pBbox31)
+            {
+                bool accept = false;
+                accept = accept || poiSection->area31.contains(*pBbox31);
+                accept = accept || poiSection->area31.intersects(*pBbox31);
+                accept = accept || pBbox31->contains(poiSection->area31);
+
+                if (!accept)
+                    continue;
+            }
+
+            OsmAnd::ObfPoiSectionReader::loadAmenities(
+                obfReader,
+                poiSection,
+                nullptr,
+                pBbox31,
+                tileFilter,
+                zoomFilter,
+                nullptr,
+                visitorByName,
+                subQueryController);
+
             if (res)
             {
                 if (outAmenity)
