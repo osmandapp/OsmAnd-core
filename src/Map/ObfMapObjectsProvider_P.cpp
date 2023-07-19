@@ -21,7 +21,6 @@
 
 #define ENLARGE_QUERY_BBOX_MIN_ZOOM 15
 #define ENLARGE_QUERY_BBOX_METERS 100
-#define COMPARE_OBF_OBJECTS_MAX_ZOOM 14
 
 OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _binaryMapObjectsDataBlocksCache(new BinaryMapObjectsDataBlocksCache(false))
@@ -634,7 +633,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         }
     }
 
-    bool comparePoints = zoom <= COMPARE_OBF_OBJECTS_MAX_ZOOM;
+    bool addDuplicates = zoom <= ObfMapObjectsProvider::AddDuplicatedMapObjectsMaxZoom;
     for (auto& duplicates : duplicatedMapObjects.values())
     {
         // Sort duplicated ObfMapObjects by maps date and data completeness
@@ -652,7 +651,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                 return formattedSectionName1.compare(formattedSectionName2) > 0;
             });
 
-        if (comparePoints)
+        if (addDuplicates)
         {
             // Add all duplicates with unique map and start/end points
             QSet<QString> obfSectionNames;
