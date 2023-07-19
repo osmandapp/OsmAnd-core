@@ -85,11 +85,11 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
         "    position = (v2f_position.y - (sky ? param_fs_skySize.z : 0.0)) * skyHeight;                                    ""\n"
         "    float low = 1.0 / pow(1.1 + position, 4.0);                                                                    ""\n"
         "    float high = 1.0 - low;                                                                                        ""\n"
-        "    color.r = sky ? 0.7647059 * low + high * exp(1.0 - position / 3.0) * 0.3101728 : param_fs_fogColor.r;          ""\n"
-        "    color.g = sky ? 0.8039216 * low + high * exp(1.0 - position / 5.0) * 0.3390262 : param_fs_fogColor.g;          ""\n"
-        "    color.b = sky ? 0.9019608 * low + high * exp(1.0 - position / 12.0) * 0.3678794 : param_fs_fogColor.b;         ""\n"
+        "    color.r = (0.7647059 * low + high * exp(1.0 - position / 3.0) * 0.3101728) * param_fs_skyColor.r;              ""\n"
+        "    color.g = (0.8039216 * low + high * exp(1.0 - position / 5.0) * 0.3390262) * param_fs_skyColor.g;              ""\n"
+        "    color.b = (0.9019608 * low + high * exp(1.0 - position / 12.0) * 0.3678794) * param_fs_skyColor.b;             ""\n"
         "    color.a = 1.0;                                                                                                 ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = color * param_fs_skyColor;                                                             ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = sky ? color : param_fs_fogColor;                                                       ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
