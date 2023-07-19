@@ -1835,9 +1835,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             renderable->rotatedElevatedBBoxInWorld = rotatedElevatedBBoxInWorld;
             renderable->opacityFactor = opacityFactor;
 
-            // Calculate OOBB for 2D SOP
-            const auto oobb = calculateOnPath2dOOBB(renderable);
-            renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+            if (is2D)
+            {
+                // Calculate OOBB for 2D SOP
+                const auto oobb = calculateOnPath2dOOBB(renderable);
+                renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+            }
+            else
+            {
+                // Calculate OOBB for 3D SOP in world
+                const auto oobb = calculateOnPath3dOOBB(renderable);
+                renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+            }
 
             if (allowFastCheckByFrustum &&
                 !applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
