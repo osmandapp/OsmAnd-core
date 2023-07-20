@@ -33,6 +33,10 @@ namespace OsmAnd
             BinaryMapObjectsAndRoads
         };
 
+        enum {
+            AddDuplicatedMapObjectsMaxZoom = ZoomLevel14
+        };
+
     private:
         PrivateImplementation<ObfMapObjectsProvider_P> _p;
     protected:

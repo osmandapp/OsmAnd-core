@@ -4,6 +4,7 @@
 #include "MapRendererResourcesManager.h"
 #include "IMapDataProvider.h"
 #include "IMapTiledSymbolsProvider.h"
+#include "ObfMapObjectsProvider.h"
 #include "RasterMapSymbol.h"
 #include "MapRendererResourcesManager.h"
 #include "MapRendererBaseResourcesCollection.h"
@@ -78,6 +79,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
 
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
 
+    QSet<ObfObjectId> uniqueSourceObjectsIds;
+    bool checkUniqueIds = zoom <= ObfMapObjectsProvider::AddDuplicatedMapObjectsMaxZoom;
     // Obtain tile from provider
     QList< std::shared_ptr<SharedGroupResources> > referencedSharedGroupsResources;
     QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
@@ -90,9 +93,16 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
     request.filterCallback =
-        [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
-        (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
+        [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSourceObjectsIds, checkUniqueIds]
+        (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup, const ObfObjectId sourceObjectId) -> bool
         {
+            if (checkUniqueIds && sourceObjectId != ObfObjectId::invalidId())
+            {
+                if (uniqueSourceObjectsIds.contains(sourceObjectId))
+                    return false;
+                uniqueSourceObjectsIds.insert(sourceObjectId);
+            }
+
             // If map symbols group is not shareable, just accept it
             MapSymbolsGroup::SharingKey sharingKey;
             const auto isSharableById = symbolsGroup->obtainSharingKey(sharingKey);
@@ -366,6 +376,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
 
             // Obtain tile from provider
+            QSet<ObfObjectId> uniqueSourceObjectsIds;
+            bool checkUniqueIds = zoom <= ObfMapObjectsProvider::AddDuplicatedMapObjectsMaxZoom;
             QList< std::shared_ptr<SharedGroupResources> > referencedSharedGroupsResources;
             QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
             QSet< uint64_t > loadedSharedGroups;
@@ -382,9 +394,15 @@ void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
             else
                 return;
             request.filterCallback =
-                [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
-                (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
+                [provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups, &uniqueSourceObjectsIds, checkUniqueIds]
+                (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup, const ObfObjectId sourceObjectId) -> bool
                 {
+                    if (checkUniqueIds && sourceObjectId != ObfObjectId::invalidId())
+                    {
+                        if (uniqueSourceObjectsIds.contains(sourceObjectId))
+                            return false;
+                        uniqueSourceObjectsIds.insert(sourceObjectId);
+                    }
                     // If map symbols group is not shareable, just accept it
                     MapSymbolsGroup::SharingKey sharingKey;
                     const auto isSharableById = symbolsGroup->obtainSharingKey(sharingKey);
