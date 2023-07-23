@@ -437,14 +437,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto distanceToScreenTop = internalState->distanceFromCameraToTarget *
         static_cast<float>(qSin(internalState->fovInRadians) /
         qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
-    const auto visibleDistance = (distanceToScreenTop < farEnd ? distanceToScreenTop :
-        static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine)) /
-        internalState->scaleToRetainProjectedSize;
-    const auto minDistanceGap = static_cast<float>(_detailDistanceFactor * TileSize3D);
-    internalState->zLowerDetail = state.detailedDistance < visibleDistance - minDistanceGap ?
-        internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize + static_cast<float>(
-        qMax(0.0, static_cast<double>(state.detailedDistance) * elevationCosine)) :
-        internalState->zFar;
+    const auto visibleDistance = distanceToScreenTop < farEnd ? distanceToScreenTop :
+        static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine);
+    const auto highDetail = static_cast<float>(
+        internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize *
+        qTan(internalState->fovInRadians) * state.detailedDistance + _detailDistanceFactor * TileSize3D);
+    internalState->zLowerDetail = highDetail < visibleDistance
+        ? internalState->distanceFromCameraToTarget +
+        static_cast<float>(qMax(0.0, static_cast<double>(highDetail) * elevationCosine))
+        : internalState->zFar;
 
     // Recalculate perspective projection
     internalState->mPerspectiveProjection = glm::frustum(
@@ -483,7 +484,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Compute visible tileset
     if (!skipTiles)
-        computeVisibleTileset(internalState, state, visibleDistance, elevationCosine, sortTiles);
+        computeVisibleTileset(internalState, state, highDetail, visibleDistance, elevationCosine, sortTiles);
 
     return true;
 }
@@ -685,12 +686,14 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::computeTileset(const TileId targetT
     {
         int xMin = std::numeric_limits<int32_t>::max();
         int xMax = std::numeric_limits<int32_t>::min();
+        int cxMin = std::numeric_limits<int32_t>::max();
+        int cxMax = std::numeric_limits<int32_t>::min();
         for (int k = 0; k < 4; k++)
         {
             if (Utilities::rayIntersectX(p[k % 4], p[(k + 1) % 4], y, x))
             {
-                xMin = qMin(xMin, qFloor(x));
-                xMax = qMax(xMax, qFloor(x));
+                cxMin = qMin(cxMin, qFloor(x));
+                cxMax = qMax(cxMax, qFloor(x));
             }
             if (p[k % 4].y > y - 1 && p[k % 4].y < y)
             {
@@ -698,20 +701,22 @@ inline void OsmAnd::AtlasMapRenderer_OpenGL::computeTileset(const TileId targetT
                 xMax = qMax(xMax, qFloor(p[k % 4].x));
             }
         }
-        for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
+        xMin = qMin(qMin(xMin, cxMin), pxMin);
+        xMax = qMax(qMax(xMax, cxMax), pxMax);
+        for (auto x = xMin; x <= xMax; x++)
         {
             TileId tileId;
             tileId.x = x + targetTileId.x;
             tileId.y = y - 1 + targetTileId.y;
             visibleTiles->insert(tileId);
         }
-        pxMin = xMin;
-        pxMax = xMax;
+        pxMin = cxMin;
+        pxMax = cxMax;
     }
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
-    InternalState* internalState, const MapRendererState& state,
+    InternalState* internalState, const MapRendererState& state, const float highDetail,
     const float visibleDistance, const double elevationCosine, const bool sortTiles) const
 {
     float tileSize = TileSize3D;
@@ -769,17 +774,16 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
         QSet<TileId> visibleTiles;
         PointF offsetInTileN;
         TileId currentTargetTileId;
-        auto distanceToLowerDetail = state.detailedDistance;
+        auto distanceToLowerDetail = highDetail;
         for (auto zoomLevel = state.zoomLevel - 1; zoomLevel >= MinZoomLevel; zoomLevel--)
         {
             // Calculate distance to tiles of lower detail level
             tileSize *= 2.0f;
             distanceToLowerDetail += static_cast<float>(_detailDistanceFactor * tileSize);
-            const auto zLowerDetail =
-                distanceToLowerDetail < visibleDistance ?
-                internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize +
-                static_cast<float>(qMax(0.0, static_cast<double>(distanceToLowerDetail) * elevationCosine)) :
-                internalState->zFar;
+            const auto zLowerDetail = distanceToLowerDetail < visibleDistance
+                ? internalState->distanceFromCameraToTarget +
+                static_cast<float>(qMax(0.0, static_cast<double>(distanceToLowerDetail) * elevationCosine))
+                : internalState->zFar;
 
             // 4 points of frustum lower detail plane in camera coordinate space
             const auto zMid = zLowerDetail;
