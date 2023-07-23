@@ -276,22 +276,23 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValue(
         rr.localData = request.localData;
         rr.queryController = request.queryController;
         
-        auto dateTime = request.dateTime;
-        auto band = request.band;
+        const auto point31 = request.point31;
+        const auto dateTime = request.dateTime;
+        const auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, dateTime, band]
+            [callback, point31, dateTime, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
-                callback(requestSucceeded, dateTime, values[band], nullptr);
+                callback(requestSucceeded, point31, dateTime, values[band], nullptr);
             };
         
         resourceProvider->obtainValue(rr, rc);
     }
     else
     {
-        callback(false, request.dateTime, 0, nullptr);
+        callback(false, request.point31, request.dateTime, 0, nullptr);
     }
 }
 
@@ -313,25 +314,26 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainValueAsync(
         rr.abortIfNotRecent = request.abortIfNotRecent;
         rr.queryController = request.queryController;
      
-        auto dateTime = request.dateTime;
-        auto band = request.band;
+        const auto point31 = request.point31;
+        const auto dateTime = request.dateTime;
+        const auto band = request.band;
         const WeatherTileResourceProvider::ObtainValueAsyncCallback rc =
-            [callback, dateTime, band]
+            [callback, point31, dateTime, band]
             (const bool requestSucceeded,
                 const QList<double>& values,
                 const std::shared_ptr<Metric>& metric)
             {
                 if (requestSucceeded)
-                    callback(true, dateTime, values[band], nullptr);
+                    callback(true, point31, dateTime, values[band], nullptr);
                 else
-                    callback(false, dateTime, 0, nullptr);
+                    callback(false, point31, dateTime, 0, nullptr);
             };
         
         resourceProvider->obtainValueAsync(rr, rc);
     }
     else
     {
-        callback(false, request.dateTime, 0, nullptr);
+        callback(false, request.point31, request.dateTime, 0, nullptr);
     }
 }
 
