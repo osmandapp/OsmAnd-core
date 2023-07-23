@@ -43,7 +43,7 @@ namespace OsmAnd
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
             const PointF* points, QSet<TileId>* visibleTiles) const;
-        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state,
+        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state, const float highDetail,
             const float visibleDistance, const double elevationCosine, const bool sortTiles) const;
         void computeUniqueTileset(InternalState* internalState,
             const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
