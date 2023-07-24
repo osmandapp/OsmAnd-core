@@ -931,6 +931,8 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
         resourceType = ResourceType::GpxFile;
     else if (resourceTypeValue == QLatin1String("sqlite"))
         resourceType = ResourceType::SqliteFile;
+    else if (resourceTypeValue == QLatin1String("travel"))
+        resourceType = ResourceType::Travel;
     
     return resourceType;
 }
@@ -1131,6 +1133,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .remove(QLatin1String("_0.voice.zip"))
                     .toLower()
                     .append(QLatin1String(".voice"));
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?file=") +
+                    QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::Travel:
+                // '[resourceName]_2.travel.obf.zip' -> '[resourceName].travel'
+                resourceId = QString(name)
+                    .remove(QLatin1String("_2.travel.obf.zip"))
+                    .toLower()
+                    .append(QLatin1String(".travel.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?file=") +
@@ -1605,6 +1618,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = installObfFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
@@ -2019,6 +2033,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = updateObfFromFile(installedResource, filePath);
             break;
         case ResourceType::HillshadeRegion:

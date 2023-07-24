@@ -58,7 +58,8 @@ namespace OsmAnd
             OnlineTileSources,
             GpxFile,
             SqliteFile,
-            WeatherForecast
+            WeatherForecast,
+            Travel
         };
 
         enum class ResourceOrigin
