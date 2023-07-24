@@ -122,6 +122,7 @@ namespace OsmAnd
         OSMAND_CALLABLE(ObtainValueAsyncCallback,
             void,
             bool succeeded,
+            PointI requestedPoint31,
             int64_t requestedTime,
             double value,
             const std::shared_ptr<Metric>& metric);
