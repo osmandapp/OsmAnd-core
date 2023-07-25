@@ -353,6 +353,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QLatin1String("*.wiki.obf"),
             ResourceType::WikiMapRegion);
         
+        // Find ResourceType::Travel -> "*.travel.obf" files
+        loadLocalResourcesFromPath_Obf(
+            storagePath,
+            cachedOsmandIndexes,
+            outResult,
+            QLatin1String("*.travel.obf"),
+            ResourceType::Travel);
+        
         if (outResult.size() > 0)
             cachedOsmandIndexes->writeToFile(indCache.fileName());
     }
@@ -485,6 +493,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::LiveUpdateRegion;
         else if (fileName.endsWith(".depth.obf"))
             resourceType = ResourceType::DepthMapRegion;
+        else if (fileName.endsWith(".travel.obf"))
+            resourceType = ResourceType::Travel;
         else
         {
             resourceType = ResourceType::MapRegion;
