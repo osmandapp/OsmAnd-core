@@ -25,38 +25,53 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseAllMapObjects(
-    const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
+    const TileId tileId,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric /*= nullptr*/)
 {
-    return _p->primitiviseAllMapObjects(scaleDivisor31ToPixel, zoom, objects, cache, queryController, metric);
+    return _p->primitiviseAllMapObjects(zoom, tileId, objects, cache, queryController, metric);
+}
+
+std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseAllMapObjects(
+    const PointD scaleDivisor31ToPixel,
+    const ZoomLevel zoom,
+    const TileId tileId,
+    const QList< std::shared_ptr<const MapObject> >& objects,
+    const std::shared_ptr<Cache>& cache /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric /*= nullptr*/)
+{
+    return _p->primitiviseAllMapObjects(scaleDivisor31ToPixel, zoom, tileId, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithSurface(
     const AreaI area31,
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
+    const TileId tileId,
     const MapSurfaceType surfaceType,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, surfaceType, objects, cache, queryController, metric);
+    return _p->primitiviseWithSurface(
+        area31, areaSizeInPixels, zoom, tileId, surfaceType, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithoutSurface(
     const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
+    const TileId tileId,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithoutSurface(scaleDivisor31ToPixel, zoom, objects, cache, queryController, metric);
+    return _p->primitiviseWithoutSurface(scaleDivisor31ToPixel, zoom, tileId, objects, cache, queryController, metric);
 }
 
 OsmAnd::MapPrimitiviser::CoastlineMapObject::CoastlineMapObject()
@@ -123,6 +138,22 @@ OsmAnd::MapPrimitiviser::SymbolsGroup::SymbolsGroup(
 }
 
 OsmAnd::MapPrimitiviser::SymbolsGroup::~SymbolsGroup()
+{
+}
+
+OsmAnd::MapPrimitiviser::GridSymbolsGroup::GridSymbolsGroup(
+    const std::shared_ptr<const SymbolsGroup>& symbolsGroup_,
+    const int oddCode_,
+    const bool canBeShared_,
+    const MapObject::SharingKey sharingKey_)
+    : symbolsGroup(symbolsGroup_)
+    , oddCode(oddCode_)
+    , canBeShared(canBeShared_)
+    , sharingKey(sharingKey_)
+{
+}
+
+OsmAnd::MapPrimitiviser::GridSymbolsGroup::~GridSymbolsGroup()
 {
 }
 

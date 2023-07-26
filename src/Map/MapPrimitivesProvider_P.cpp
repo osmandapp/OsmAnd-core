@@ -144,6 +144,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
     {
         primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
             request.zoom,
+            request.tileId,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -156,6 +157,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
             Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), request.zoom),
             request.zoom,
+            request.tileId,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -168,6 +170,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         primitivisedObjects = owner->primitiviser->primitiviseWithoutSurface(
             Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), request.zoom),
             request.zoom,
+            request.tileId,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -182,6 +185,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
             tileBBox31,
             PointI(owner->tileSize, owner->tileSize),
             request.zoom,
+            request.tileId,
             dataTile->tileSurfaceType,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
