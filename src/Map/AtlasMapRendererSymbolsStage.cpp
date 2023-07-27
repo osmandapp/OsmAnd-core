@@ -37,9 +37,6 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 
-// Maximum distance from camera to visible symbols (per camera-to-target distance)
-#define VISIBLE_DISTANCE_FACTOR 1.4f
-
 #define SHORT_GLYPHS_COUNT 4
 #define MEDIUM_GLYPHS_COUNT 10
 #define LONG_GLYPHS_COUNT 15
@@ -1225,12 +1222,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     if (allowFastCheckByFrustum && !applyOnScreenVisibilityFiltering(visibleBBox, intersections, metric))
         return;
 
-    const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
-    const auto distanceToPoint = glm::dot(internalState.worldCameraPosition - positionInWorld, cameraVectorN);
-    if (allowFastCheckByFrustum &&
-        distanceToPoint / internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
-        return;
-
     // Don't render fully transparent symbols
     const auto opacityFactor = getSubsectionOpacityFactor(mapSymbol);
     if (opacityFactor > 0.0f)
@@ -1865,20 +1856,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             }
             else if (pointsCount > 2)
                 p2 = rotatedElevatedBBoxInWorld[1];
-
-            const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
-            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p0, cameraVectorN) /
-                internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
-                return;
-            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p1, cameraVectorN) /
-                internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
-                return;
-            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p2, cameraVectorN) /
-                internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
-                return;
-            if (allowFastCheckByFrustum && glm::dot(internalState.worldCameraPosition - p3, cameraVectorN) /
-                internalState.distanceFromCameraToTarget > VISIBLE_DISTANCE_FACTOR)
-                return;
 
             if (allowFastCheckByFrustum)
                 renderable->queryIndex = startTerrainVisibilityFiltering(PointF(-1.0f, -1.0f), p0, p1, p2, p3);
