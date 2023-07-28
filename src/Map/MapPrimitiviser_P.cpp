@@ -1440,11 +1440,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                 const auto& citGroupOdd = tileGridOdd.constFind(oddCode);
                 const auto foundEven = citGroupEven != tileGridEven.cend();
                 const auto foundOdd = citGroupOdd != tileGridOdd.cend();
-                bool shouldInsert = true;
+                bool shouldReplace = true;
                 if (foundEven || foundOdd)
                 {
                     const auto& groupOnGrid = foundEven ? *citGroupEven : *tileGridEven.constFind(citGroupOdd.value());
-                    bool shouldReplace = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
+                    shouldReplace = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
                     if (pSharedSymbolGroups)
                     {
                         group->symbols.clear();
@@ -1461,7 +1461,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                             tileGridOdd.remove(groupOnGrid->oddCode);
                     }
                 }
-                if (shouldInsert)
+                if (shouldReplace)
                 {
                     const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
                     preGroup->symbols.push_back(qMove(textSymbol));
