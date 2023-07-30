@@ -1425,13 +1425,20 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             metric);
 
         // Filter out overlapping labels of points by placing them on the coarse grid
-        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0)
+        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
+            && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
         {
             if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.back()))
             {
+                const auto minCell = -GRID_CELLS_PER_TILESIDE;
+                const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
                 const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
-                PointD filterCoords(textSymbol->location31 - PointI(tileId.x << zoomShift, tileId.y << zoomShift));
+                PointD filterCoords(textSymbol->location31);
+                filterCoords -= PointD(
+                    static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
                 filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
+                filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
+                filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
                 const auto evenCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
                     + static_cast<int>(std::floor(filterCoords.x));
                 const auto oddCode = static_cast<int>(std::floor(filterCoords.y + 0.5)) * 10000
