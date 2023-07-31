@@ -151,14 +151,12 @@ namespace OsmAnd
         protected:
             GridSymbolsGroup(
                 const std::shared_ptr<const SymbolsGroup>& symbolsGroup,
-                const int oddCode,
                 const bool canBeShared,
                 const MapObject::SharingKey sharingKey);
         public:
             ~GridSymbolsGroup();
 
             const std::shared_ptr<const SymbolsGroup> symbolsGroup;
-            const int oddCode;
             const bool canBeShared;
             const MapObject::SharingKey sharingKey;
         

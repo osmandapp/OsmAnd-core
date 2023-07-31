@@ -1331,9 +1331,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
-    // Use coarse grids of tile symbols for preliminary overlap filtering
-    QHash<int, std::shared_ptr<const GridSymbolsGroup>> tileGridEven;
-    QHash<int, int> tileGridOdd;
+    // Use coarse grid of tile symbols for preliminary overlap filtering
+    QHash<int, std::shared_ptr<const GridSymbolsGroup>> tileGrid;
 
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
@@ -1439,43 +1438,30 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
                 filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
                 filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
                 filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
-                const auto evenCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
+                const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
                     + static_cast<int>(std::floor(filterCoords.x));
-                const auto oddCode = static_cast<int>(std::floor(filterCoords.y + 0.5)) * 10000
-                    + static_cast<int>(std::floor(filterCoords.x + 0.5));
-                const auto& citGroupEven = tileGridEven.constFind(evenCode);
-                const auto& citGroupOdd = tileGridOdd.constFind(oddCode);
-                const auto foundEven = citGroupEven != tileGridEven.cend();
-                const auto foundOdd = citGroupOdd != tileGridOdd.cend();
-                bool shouldReplace = true;
-                if (foundEven || foundOdd)
+                bool shouldInsert = true;
+                const auto& citGroup = tileGrid.constFind(gridCode);
+                if (citGroup != tileGrid.cend())
                 {
-                    const auto& groupOnGrid = foundEven ? *citGroupEven : *tileGridEven.constFind(citGroupOdd.value());
-                    shouldReplace = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
+                    const auto& groupOnGrid = *citGroup;
+                    shouldInsert = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
                     if (pSharedSymbolGroups)
                     {
                         group->symbols.clear();
-                        if (shouldReplace && groupOnGrid->canBeShared)
+                        if (shouldInsert && groupOnGrid->canBeShared)
                             pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
-                        if (!shouldReplace && canBeShared)
+                        if (!shouldInsert && canBeShared)
                             pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
                     }
-                    if (shouldReplace)
-                    {
-                        if (!foundEven)
-                            tileGridEven.remove(citGroupOdd.value());
-                        else if (!foundOdd)
-                            tileGridOdd.remove(groupOnGrid->oddCode);
-                    }
                 }
-                if (shouldReplace)
+                if (shouldInsert)
                 {
                     const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
                     preGroup->symbols.push_back(qMove(textSymbol));
                     const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
-                        new GridSymbolsGroup(preGroup, oddCode, canBeShared, sharingKey));
-                    tileGridEven.insert(evenCode, qMove(groupOnGrid));
-                    tileGridOdd.insert(oddCode, evenCode);
+                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
+                    tileGrid.insert(gridCode, qMove(groupOnGrid));
                 }
                 group->symbols.clear();
                 canBeShared = false;
@@ -1499,7 +1485,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     }
 
     // Keep only those symbols, that left on the filter grid
-    for (const auto& groupOnGrid : constOf(tileGridEven))
+    for (const auto& groupOnGrid : constOf(tileGrid))
     {
         const auto& lastGroup = qMove(groupOnGrid->symbolsGroup);
         if (pSharedSymbolGroups && groupOnGrid->canBeShared)
