@@ -143,11 +143,9 @@ OsmAnd::MapPrimitiviser::SymbolsGroup::~SymbolsGroup()
 
 OsmAnd::MapPrimitiviser::GridSymbolsGroup::GridSymbolsGroup(
     const std::shared_ptr<const SymbolsGroup>& symbolsGroup_,
-    const int oddCode_,
     const bool canBeShared_,
     const MapObject::SharingKey sharingKey_)
     : symbolsGroup(symbolsGroup_)
-    , oddCode(oddCode_)
     , canBeShared(canBeShared_)
     , sharingKey(sharingKey_)
 {
