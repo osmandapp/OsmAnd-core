@@ -20,6 +20,7 @@
 #include <OsmAndCore/QuadTree.h>
 #include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Map/MapTiledCollectionPoint.h>
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -64,7 +65,7 @@ namespace OsmAnd
             virtual float getReferenceTileSizeOnScreenInPixels() const = 0;
             virtual double getScale() const = 0;
             
-            virtual sk_sp<const SkImage> getImageBitmap(const int index, bool isFullSize = true) const = 0;
+            virtual SingleSkImage getImageBitmap(const int index, bool isFullSize = true) const = 0;
             virtual QString getCaption(const int index) const = 0;
 
             virtual QList<std::shared_ptr<OsmAnd::MapTiledCollectionPoint>> getTilePoints(const OsmAnd::TileId& tileId, const OsmAnd::ZoomLevel zoom) const = 0;
@@ -115,7 +116,7 @@ namespace OsmAnd
             double,
             getScale);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            sk_sp<const SkImage>,
+            SingleSkImage,
             getImageBitmap,
             const int index,
             bool isFullSize);

@@ -10,8 +10,6 @@
 #include <QList>
 #include <OsmAndCore/restore_internal_warnings.h>
 
-//#include <SkImage.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -22,6 +20,7 @@
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IAmenityIconProvider.h>
 #include <OsmAndCore/Map/CoreResourcesAmenityIconProvider.h>
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -88,9 +87,9 @@ namespace OsmAnd
             const double screenScale,
             const QList<PointI>& startFinishPoints,
             const QList<SplitLabel>& splitLabels,
-            const sk_sp<const SkImage>& startIcon,
-            const sk_sp<const SkImage>& finishIcon,
-            const sk_sp<const SkImage>& startFinishIcon);
+            const SingleSkImage& startIcon,
+            const SingleSkImage& finishIcon,
+            const SingleSkImage& startFinishIcon);
         virtual ~GpxAdditionalIconsProvider();
         
         const int baseOrder;

@@ -9,11 +9,10 @@
 #include <QList>
 #include <OsmAndCore/restore_internal_warnings.h>
 
-#include <SkImage.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -27,7 +26,7 @@ namespace OsmAnd
         virtual ~MapTiledCollectionPoint();
         
         virtual OsmAnd::PointI getPoint31() const = 0;
-        virtual sk_sp<const SkImage> getImageBitmap(bool isFullSize = true) const = 0;
+        virtual SingleSkImage getImageBitmap(bool isFullSize = true) const = 0;
         virtual QString getCaption() const = 0;
     };
     
@@ -36,7 +35,7 @@ namespace OsmAnd
             OsmAnd::PointI,
             getPoint31);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            sk_sp<const SkImage>,
+            SingleSkImage,
             getImageBitmap,
             bool isFullSize);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(

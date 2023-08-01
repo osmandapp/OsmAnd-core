@@ -19,6 +19,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/VectorLine.h>
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -76,10 +77,10 @@ namespace OsmAnd
         OsmAnd::VectorLineBuilder& setOutlineColor(const FColorARGB color);
 
         sk_sp<const SkImage> getPathIcon() const;
-        VectorLineBuilder& setPathIcon(const sk_sp<const SkImage>& image);
+        VectorLineBuilder& setPathIcon(const SingleSkImage& image);
         
         sk_sp<const SkImage> getSpecialPathIcon() const;
-        VectorLineBuilder& setSpecialPathIcon(const sk_sp<const SkImage>& image);
+        VectorLineBuilder& setSpecialPathIcon(const SingleSkImage& image);
 
         float getPathIconStep() const;
         VectorLineBuilder& setPathIconStep(const float step);

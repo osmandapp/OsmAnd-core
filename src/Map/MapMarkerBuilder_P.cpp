@@ -146,11 +146,11 @@ sk_sp<const SkImage> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
     return _pinIcon;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPinIcon(const sk_sp<const SkImage>& image)
+void OsmAnd::MapMarkerBuilder_P::setPinIcon(const SingleSkImage& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pinIcon = image;
+    _pinIcon = image.sp;
 }
 
 OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::MapMarkerBuilder_P::getPinIconVerticalAlignment() const
@@ -261,11 +261,11 @@ OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 
 void OsmAnd::MapMarkerBuilder_P::addOnMapSurfaceIcon(
     const MapMarker::OnSurfaceIconKey key,
-    const sk_sp<const SkImage>& image)
+    const SingleSkImage& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _onMapSurfaceIcons.insert(key, image);
+    _onMapSurfaceIcons.insert(key, image.sp);
 }
 
 void OsmAnd::MapMarkerBuilder_P::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)

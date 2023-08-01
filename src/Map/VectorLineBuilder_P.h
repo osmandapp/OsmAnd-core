@@ -13,6 +13,7 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "VectorLine.h"
+#include "SingleSkImage.h"
 
 namespace OsmAnd
 {
@@ -103,10 +104,10 @@ namespace OsmAnd
         void setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
 
         sk_sp<const SkImage> getPathIcon() const;
-        void setPathIcon(const sk_sp<const SkImage>& image);
+        void setPathIcon(const SingleSkImage& image);
         
         sk_sp<const SkImage> getSpecialPathIcon() const;
-        void setSpecialPathIcon(const sk_sp<const SkImage>& image);
+        void setSpecialPathIcon(const SingleSkImage& image);
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);

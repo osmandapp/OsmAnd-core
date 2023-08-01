@@ -6,6 +6,7 @@
 #include <OsmAndCore/IQueryController.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/SingleSkImage.h>
 #include <QString>
 #include <QByteArray>
 #include <QFile>
@@ -103,7 +104,7 @@ namespace OsmAnd
 #ifdef SWIG
         %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
-        inline static sk_sp<const SkImage> createSkImageARGB888With(
+        inline static SingleSkImage createSkImageARGB888With(
             const unsigned int width,
             const unsigned int height,
             const char* const pBuffer,
@@ -117,19 +118,19 @@ namespace OsmAnd
                 SkColorType::kRGBA_8888_SkColorType,
                 SkAlphaType::kPremul_SkAlphaType)))
             {
-                return nullptr;
+                return SingleSkImage(nullptr);
             }
             if (bitmap.computeByteSize() < bufferSize)
-                return nullptr;
+                return SingleSkImage(nullptr);
             memcpy(bitmap.getPixels(), pBuffer, bufferSize);
 
             bitmap.setImmutable(); // Don't copy when we create an image.
-            return bitmap.asImage();
+            return SingleSkImage(bitmap.asImage());
         }
-        
-        inline static sk_sp<const SkImage> nullSkImage()
+
+        inline static SingleSkImage nullSkImage()
         {
-            return nullptr;
+            return SingleSkImage(nullptr);
         }
 
     private:
