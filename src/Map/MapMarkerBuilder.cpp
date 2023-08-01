@@ -111,7 +111,7 @@ sk_sp<const SkImage> OsmAnd::MapMarkerBuilder::getPinIcon() const
     return _p->getPinIcon();
 }
 
-OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const sk_sp<const SkImage>& image)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const SingleSkImage& image)
 {
     _p->setPinIcon(image);
 
@@ -213,7 +213,7 @@ QHash< OsmAnd::MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > OsmAnd::MapMa
     return _p->getOnMapSurfaceIcons();
 }
 
-OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const SingleSkImage& image)
 {
     _p->addOnMapSurfaceIcon(key, image);
 

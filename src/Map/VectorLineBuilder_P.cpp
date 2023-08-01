@@ -221,11 +221,11 @@ sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
     return _pathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setPathIcon(const sk_sp<const SkImage>& image)
+void OsmAnd::VectorLineBuilder_P::setPathIcon(const SingleSkImage& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pathIcon = image;
+    _pathIcon = image.sp;
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
@@ -235,11 +235,11 @@ sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getSpecialPathIcon() const
     return _specialPathIcon;
 }
 
-void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const sk_sp<const SkImage>& image)
+void OsmAnd::VectorLineBuilder_P::setSpecialPathIcon(const SingleSkImage& image)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _specialPathIcon = image;
+    _specialPathIcon = image.sp;
 }
 
 float OsmAnd::VectorLineBuilder_P::getPathIconStep() const
