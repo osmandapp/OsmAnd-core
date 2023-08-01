@@ -135,7 +135,7 @@ sk_sp<const SkImage> OsmAnd::VectorLineBuilder::getPathIcon() const
     return _p->getPathIcon();
 }
 
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const sk_sp<const SkImage>& image)
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const SingleSkImage& image)
 {
     _p->setPathIcon(image);
 
@@ -147,7 +147,7 @@ sk_sp<const SkImage> OsmAnd::VectorLineBuilder::getSpecialPathIcon() const
     return _p->getSpecialPathIcon();
 }
 
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setSpecialPathIcon(const sk_sp<const SkImage>& image)
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setSpecialPathIcon(const SingleSkImage& image)
 {
     _p->setSpecialPathIcon(image);
 

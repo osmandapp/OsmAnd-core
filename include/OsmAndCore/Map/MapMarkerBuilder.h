@@ -18,6 +18,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/MapMarker.h>
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -57,7 +58,7 @@ namespace OsmAnd
         MapMarkerBuilder& setPosition(const PointI position);
 
         sk_sp<const SkImage> getPinIcon() const;
-        MapMarkerBuilder& setPinIcon(const sk_sp<const SkImage>& image);
+        MapMarkerBuilder& setPinIcon(const SingleSkImage& image);
         MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
         MapMarkerBuilder& setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
@@ -76,7 +77,7 @@ namespace OsmAnd
         MapMarkerBuilder& setCaptionTopSpace(const double captionTopSpace);
 
         QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > getOnMapSurfaceIcons() const;
-        MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image);
+        MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const SingleSkImage& image);
         MapMarkerBuilder& removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         MapMarkerBuilder& clearOnMapSurfaceIcons();
 

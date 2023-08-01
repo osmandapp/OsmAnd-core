@@ -19,6 +19,7 @@
 #include "CommonTypes.h"
 #include "MapMarker.h"
 #include "TextRasterizer.h"
+#include <OsmAndCore/SingleSkImage.h>
 
 namespace OsmAnd
 {
@@ -88,7 +89,7 @@ namespace OsmAnd
         void setPosition(const PointI position);
 
         sk_sp<const SkImage> getPinIcon() const;
-        void setPinIcon(const sk_sp<const SkImage>& image);
+        void setPinIcon(const SingleSkImage& image);
 
         MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
         MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
@@ -108,7 +109,7 @@ namespace OsmAnd
         void setCaptionTopSpace(const double captionTopSpace);
 
         QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > getOnMapSurfaceIcons() const;
-        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const sk_sp<const SkImage>& image);
+        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const SingleSkImage& image);
         void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         void clearOnMapSurfaceIcons();
 

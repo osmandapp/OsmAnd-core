@@ -141,6 +141,7 @@
 #include <OsmAndCore/Map/WeatherTileResourceProvider.h>
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include <OsmAndCore/Map/GeoTileObjectsProvider.h>
+#include <OsmAndCore/SingleSkImage.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -372,6 +373,7 @@ using namespace OsmAnd;
 	%rename(method) operator();
 #endif
 %include <swig/OsmAndCore_Stubs.h>
+%include <OsmAndCore/SingleSkImage.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
 %include <OsmAndCore/CommonSWIG.h>
