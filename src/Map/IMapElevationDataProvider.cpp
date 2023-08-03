@@ -106,12 +106,24 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
     auto coordX = startHeixel.x;
     auto coordY = startHeixel.y;
     auto rayHeight = startElevation * startElevationFactor;
+    auto prevRayHeight = rayHeight;
     const auto count = static_cast<int>(std::round(stepCount));
+    float prevHeight;
     for (int index = 0; index <= count; index++)
     {
         auto height = getInterpolatedValue(coordX, coordY);
         if (height >= rayHeight)
         {
+            if (index > 0)
+            {
+                const auto prevIndex = static_cast<float>(index - 1);
+                const auto prevCoordX = startHeixel.x + rateX * prevIndex;
+                const auto prevCoordY = startHeixel.y + rateY * prevIndex;
+                const auto prevDifference = prevRayHeight - prevHeight;
+                const auto distanceFactor = prevDifference / (height - rayHeight + prevDifference);
+                coordX = prevCoordX + (coordX - prevCoordX) * distanceFactor;
+                coordY = prevCoordY + (coordY - prevCoordY) * distanceFactor;
+            }
             const auto tileHexelCount = tSize - 3.0f;
             const auto rayVector = endCoordinates - startCoordinates;
             const auto length = rayVector.norm();
@@ -126,7 +138,9 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
         const auto nextIndex = static_cast<float>(index + 1);
         coordX = startHeixel.x + rateX * nextIndex;
         coordY = startHeixel.y + rateY * nextIndex;
+        prevRayHeight = rayHeight;
         rayHeight = (startElevation + rateZ * nextIndex) * (startElevationFactor + rateE * nextIndex);
+        prevHeight = height;
     }
     return false;
 }
