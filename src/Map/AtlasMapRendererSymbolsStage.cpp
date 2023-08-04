@@ -740,9 +740,21 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         // Process renderable symbols before rendering
         int order = 0;
         MapRenderer::PublishedMapSymbolsByGroup* pAcceptedMapSymbols = nullptr;
-        const auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
+        auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
+        bool firstOrder = true;
+        int prevOrder;
         for (const auto& symbolRenderable : constOf(renderables))
         {
+            if (firstOrder)
+            {
+                firstOrder = false;
+                prevOrder = symbolRenderable.second->front()->mapSymbol->order;
+            }
+            else if (symbolRenderable.second->front()->mapSymbol->order != prevOrder)
+            {
+                itPlottedSymbolsInsertPosition = plottedSymbols.begin();
+                prevOrder = symbolRenderable.second->front()->mapSymbol->order;
+            }
             if (!symbolRenderable.first)
             {
                 bool atLeastOnePlotted = false;
