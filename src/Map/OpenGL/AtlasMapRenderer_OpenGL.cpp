@@ -1713,12 +1713,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path3
     if (!ok)
         return false;
 
-    if (!internalState.globalFrustum2D31.test(path31))
-        return false;
-
-    // TODO: Check pixelsize of path
-
-    return true;
+    if (internalState.globalFrustum2D31.test(path31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(path31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isAreaVisible(const AreaI& area31) const
@@ -1728,7 +1726,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isAreaVisible(const AreaI& area31) const
     if (!ok)
         return false;
 
-    return internalState.globalFrustum2D31.test(area31);
+    if (internalState.globalFrustum2D31.test(area31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(area31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int tileY, const int zoom) const

@@ -7,6 +7,10 @@ bool OsmAnd::Frustum2D31::test(const PointI& p_) const
     bbox.enlargeToInclude(p1);
     bbox.enlargeToInclude(p2);
     bbox.enlargeToInclude(p3);
+
+    if (bbox.width() == 0 && bbox.height() == 0)
+        return false;
+
     const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
     const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
     const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
@@ -40,6 +44,10 @@ bool OsmAnd::Frustum2D31::test(const PointI& lp0_, const PointI& lp1_) const
     bbox.enlargeToInclude(p1);
     bbox.enlargeToInclude(p2);
     bbox.enlargeToInclude(p3);
+
+    if (bbox.width() == 0 && bbox.height() == 0)
+        return false;
+
     const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
     const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
     const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
@@ -91,6 +99,10 @@ bool OsmAnd::Frustum2D31::test(const QVector<PointI>& path) const
     bbox.enlargeToInclude(p1);
     bbox.enlargeToInclude(p2);
     bbox.enlargeToInclude(p3);
+
+    if (bbox.width() == 0 && bbox.height() == 0)
+        return false;
+
     const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
     const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
     const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
@@ -139,6 +151,10 @@ bool OsmAnd::Frustum2D31::test(const AreaI& area) const
     bbox.enlargeToInclude(p1);
     bbox.enlargeToInclude(p2);
     bbox.enlargeToInclude(p3);
+
+    if (bbox.width() == 0 && bbox.height() == 0)
+        return false;
+
     const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
     const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
     const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
