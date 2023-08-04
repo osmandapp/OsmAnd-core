@@ -120,7 +120,8 @@ bool OsmAnd::IMapElevationDataProvider::Data::getClosestPoint(
                 const auto prevCoordX = startHeixel.x + rateX * prevIndex;
                 const auto prevCoordY = startHeixel.y + rateY * prevIndex;
                 const auto prevDifference = prevRayHeight - prevHeight;
-                const auto distanceFactor = prevDifference / (height - rayHeight + prevDifference);
+                auto distanceFactor = prevDifference / (height - rayHeight + prevDifference);
+                distanceFactor = distanceFactor >= 0.0f && distanceFactor < 1.0f ? distanceFactor : 1.0f;
                 coordX = prevCoordX + (coordX - prevCoordX) * distanceFactor;
                 coordY = prevCoordY + (coordY - prevCoordY) * distanceFactor;
             }
