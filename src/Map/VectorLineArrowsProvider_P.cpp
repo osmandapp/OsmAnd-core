@@ -88,10 +88,11 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
             {
                 OsmAnd::MapMarkerBuilder builder;
                 const auto markerKey = reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(1);
+                const auto pointImage = SingleSkImage(line->getPointImage());
                 if (line->pathIconOnSurface)
-                    builder.addOnMapSurfaceIcon(markerKey, line->getPointImage());
+                    builder.addOnMapSurfaceIcon(markerKey, pointImage);
                 else
-                    builder.setPinIcon(line->getPointImage());
+                    builder.setPinIcon(pointImage);
                 
                 builder.setMarkerId(markerId);
                 builder.setBaseOrder(baseOrder);

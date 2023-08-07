@@ -18,18 +18,18 @@ OsmAnd::GpxAdditionalIconsProvider::GpxAdditionalIconsProvider(
     const double screenScale_,
     const QList<PointI>& startFinishPoints_,
     const QList<SplitLabel>& splitLabels_,
-    const sk_sp<const SkImage>& startIcon_,
-    const sk_sp<const SkImage>& finishIcon_,
-    const sk_sp<const SkImage>& startFinishIcon_)
+    const SingleSkImage& startIcon_,
+    const SingleSkImage& finishIcon_,
+    const SingleSkImage& startFinishIcon_)
     : _cachedZoomLevel(MinZoomLevel)
     , _textRasterizer(TextRasterizer::getDefault())
     , baseOrder(baseOrder_)
     , screenScale(screenScale_)
     , startFinishPoints(startFinishPoints_)
     , splitLabels(splitLabels_)
-    , startIcon(startIcon_)
-    , finishIcon(finishIcon_)
-    , startFinishIcon(startFinishIcon_)
+    , startIcon(startIcon_.sp)
+    , finishIcon(finishIcon_.sp)
+    , startFinishIcon(startFinishIcon_.sp)
 {
     _captionStyle
         .setWrapWidth(100)

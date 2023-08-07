@@ -37,6 +37,9 @@
 
 #define DEFAULT_TEXT_MIN_DISTANCE 150
 
+// Filtering grid dimension in cells per tile side
+#define GRID_CELLS_PER_TILESIDE 32.0
+
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -56,6 +59,25 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     return primitiviseAllMapObjects(
         PointD(-1.0, -1.0),
         zoom,
+        TileId::fromXY(-1, -1),
+        objects,
+        cache,
+        queryController,
+        metric);
+}
+
+std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseAllMapObjects(
+    const ZoomLevel zoom,
+    const TileId tileId,
+    const QList< std::shared_ptr<const MapObject> >& objects,
+    const std::shared_ptr<Cache>& cache,
+    const std::shared_ptr<const IQueryController>& queryController,
+    MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric)
+{
+    return primitiviseAllMapObjects(
+        PointD(-1.0, -1.0),
+        zoom,
+        tileId,
         objects,
         cache,
         queryController,
@@ -65,6 +87,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseAllMapObjects(
     const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
+    const TileId tileId,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController,
@@ -106,7 +129,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController, metric);
+    obtainPrimitivesSymbols(context, primitivisedObjects, tileId, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -124,6 +147,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const AreaI area31,
     const PointI areaSizeInPixels,
     const ZoomLevel zoom,
+    const TileId tileId,
     const MapSurfaceType surfaceType_,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
@@ -462,7 +486,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController, metric);
+    obtainPrimitivesSymbols(context, primitivisedObjects, tileId, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -479,6 +503,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimitiviser_P::primitiviseWithoutSurface(
     const PointD scaleDivisor31ToPixel,
     const ZoomLevel zoom,
+    const TileId tileId,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController,
@@ -566,7 +591,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController, metric);
+    obtainPrimitivesSymbols(context, primitivisedObjects, tileId, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -1291,6 +1316,7 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
 void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
+    const TileId tileId,
     MapStyleEvaluationResult& evaluationResult,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController,
@@ -1304,6 +1330,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     env->applyTo(textEvaluator);
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
+
+    // Use coarse grid of tile symbols for preliminary overlap filtering
+    QHash<int, std::shared_ptr<const GridSymbolsGroup>> tileGrid;
 
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
@@ -1319,7 +1348,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // (using shared cache is only allowed for non-generated MapObjects),
         // then symbols group can be shared
         MapObject::SharingKey sharingKey;
-        const auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
+        auto canBeShared = primitivesGroup->sourceObject->obtainSharingKey(sharingKey);
 
         //////////////////////////////////////////////////////////////////////////
         //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
@@ -1380,6 +1409,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             group->symbols,
             queryController,
             metric);
+
+        const auto prevSize = group->symbols.size();
+
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
@@ -1390,6 +1422,51 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             group->symbols,
             queryController,
             metric);
+
+        // Filter out overlapping labels of points by placing them on the coarse grid
+        if (tileId.x >= 0 && tileId.y >= 0 && group->symbols.size() == 1 && prevSize == 0
+            && primitivisedObjects->zoom >= MinZoomLevel && primitivisedObjects->zoom <= MaxZoomLevel)
+        {
+            if (const auto& textSymbol = std::dynamic_pointer_cast<const TextSymbol>(group->symbols.back()))
+            {
+                const auto minCell = -GRID_CELLS_PER_TILESIDE;
+                const auto maxCell = GRID_CELLS_PER_TILESIDE * 2.0;
+                const auto zoomShift = MaxZoomLevel - primitivisedObjects->zoom;
+                PointD filterCoords(textSymbol->location31);
+                filterCoords -= PointD(
+                    static_cast<double>(tileId.x << zoomShift), static_cast<double>(tileId.y << zoomShift));
+                filterCoords *= GRID_CELLS_PER_TILESIDE / static_cast<double>(1u << zoomShift);
+                filterCoords.x = filterCoords.x > minCell && filterCoords.x < maxCell ? filterCoords.x : minCell;
+                filterCoords.y = filterCoords.y > minCell && filterCoords.y < maxCell ? filterCoords.y : minCell;
+                const auto gridCode = static_cast<int>(std::floor(filterCoords.y)) * 10000
+                    + static_cast<int>(std::floor(filterCoords.x));
+                bool shouldInsert = true;
+                const auto& citGroup = tileGrid.constFind(gridCode);
+                if (citGroup != tileGrid.cend())
+                {
+                    const auto& groupOnGrid = *citGroup;
+                    shouldInsert = textSymbol->order < groupOnGrid->symbolsGroup->symbols.back()->order;
+                    if (pSharedSymbolGroups)
+                    {
+                        group->symbols.clear();
+                        if (shouldInsert && groupOnGrid->canBeShared)
+                            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, group);
+                        if (!shouldInsert && canBeShared)
+                            pSharedSymbolGroups->fulfilPromiseAndReference(sharingKey, group);
+                    }
+                }
+                if (shouldInsert)
+                {
+                    const std::shared_ptr<SymbolsGroup> preGroup(new SymbolsGroup(primitivesGroup->sourceObject));
+                    preGroup->symbols.push_back(qMove(textSymbol));
+                    const std::shared_ptr<GridSymbolsGroup> groupOnGrid(
+                        new GridSymbolsGroup(preGroup, canBeShared, sharingKey));
+                    tileGrid.insert(gridCode, qMove(groupOnGrid));
+                }
+                group->symbols.clear();
+                canBeShared = false;
+            }
+        }
 
         // Update metric
         if (metric)
@@ -1405,6 +1482,15 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
         primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
+    }
+
+    // Keep only those symbols, that left on the filter grid
+    for (const auto& groupOnGrid : constOf(tileGrid))
+    {
+        const auto& lastGroup = qMove(groupOnGrid->symbolsGroup);
+        if (pSharedSymbolGroups && groupOnGrid->canBeShared)
+            pSharedSymbolGroups->fulfilPromiseAndReference(groupOnGrid->sharingKey, lastGroup);
+        primitivisedObjects->symbolsGroups.insert(lastGroup->sourceObject, lastGroup);
     }
 
     int failCounter = 0;

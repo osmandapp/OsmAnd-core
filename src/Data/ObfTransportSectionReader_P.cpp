@@ -433,7 +433,7 @@ std::shared_ptr<OsmAnd::TransportStop> OsmAnd::ObfTransportSectionReader_P::read
             }
             case OBF::TransportStop::kIdFieldNumber:
             {
-                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&id));
+                id.id = static_cast<uint64_t>(ObfReaderUtilities::readSInt64(cis));
                 break;
             }
             default:
@@ -510,7 +510,8 @@ std::shared_ptr<OsmAnd::TransportRoute> OsmAnd::ObfTransportSectionReader_P::get
     
     auto dataObject = std::make_shared<TransportRoute>();
     bool end = false;
-    ObfObjectId rid = ObfObjectId::invalidId();
+    ObfObjectId rid;
+    rid.id = 0;
     int32_t rx = 0;
     int32_t ry = 0;
     

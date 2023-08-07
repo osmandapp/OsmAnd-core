@@ -144,6 +144,26 @@ namespace OsmAnd
         friend class OsmAnd::MapPrimitiviser_P;
         };
 
+        class OSMAND_CORE_API GridSymbolsGroup Q_DECL_FINAL
+        {
+            Q_DISABLE_COPY_AND_MOVE(GridSymbolsGroup);
+        private:
+        protected:
+            GridSymbolsGroup(
+                const std::shared_ptr<const SymbolsGroup>& symbolsGroup,
+                const bool canBeShared,
+                const MapObject::SharingKey sharingKey);
+        public:
+            ~GridSymbolsGroup();
+
+            const std::shared_ptr<const SymbolsGroup> symbolsGroup;
+            const bool canBeShared;
+            const MapObject::SharingKey sharingKey;
+        
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
+        };
+
         class OSMAND_CORE_API Symbol
         {
             Q_DISABLE_COPY_AND_MOVE(Symbol);
@@ -316,8 +336,17 @@ namespace OsmAnd
             MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
+            const ZoomLevel zoom,
+            const TileId tileId,
+            const QList< std::shared_ptr<const MapObject> >& objects,
+            const std::shared_ptr<Cache>& cache = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
+
+        std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
             const PointD scaleDivisor31ToPixel,
             const ZoomLevel zoom,
+            const TileId tileId,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,
@@ -327,6 +356,7 @@ namespace OsmAnd
             const AreaI area31,
             const PointI areaSizeInPixels,
             const ZoomLevel zoom,
+            const TileId tileId,
             const MapSurfaceType surfaceType,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
@@ -336,6 +366,7 @@ namespace OsmAnd
         std::shared_ptr<PrimitivisedObjects> primitiviseWithoutSurface(
             const PointD scaleDivisor31ToPixel,
             const ZoomLevel zoom,
+            const TileId tileId,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr,

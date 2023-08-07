@@ -143,7 +143,7 @@ QList<std::shared_ptr<OsmAnd::MapSymbolsGroup>> OsmAnd::MapTiledCollectionProvid
                 .setPinIconVerticalAlignment(getPinIconVerticalAlignment())
                 .setPinIconHorisontalAlignment(getPinIconHorisontalAlignment());
 
-            sk_sp<const SkImage> img;
+            SingleSkImage img;
             QString caption;
             if (showCaptions)
                 caption = i < pointsCount ? getCaption(i) : data->getCaption();
