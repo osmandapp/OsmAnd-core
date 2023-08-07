@@ -17,7 +17,7 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::vec3& planeN,
     const auto numerator = glm::dot(planeO - rayO, planeN);
     if (qFuzzyIsNull(numerator))
     {
-        distance = std::numeric_limits<float>::quiet_NaN();
+        distance = 0.0f;
         return true;
     }
     const auto denominator = glm::dot(rayD, planeN);
@@ -33,7 +33,7 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::dvec3& planeN
     const auto numerator = glm::dot(planeO - rayO, planeN);
     if (qFuzzyIsNull(numerator))
     {
-        distance = std::numeric_limits<double>::quiet_NaN();
+        distance = 0.0f;
         return true;
     }
     const auto denominator = glm::dot(rayD, planeN);
@@ -53,9 +53,10 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(const glm::vec3&
         return false;
 
     // If point is not in [line0 .. line1]
-    if (d < 0.0f || d > glm::length(line))
+    if (d >= 0.0f && d <= glm::length(line))
+        lineX = line0 + d * lineD;
+    else
         return false;
 
-    lineX = line0 + d*lineD;
     return true;
 }
