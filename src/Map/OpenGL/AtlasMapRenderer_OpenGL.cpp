@@ -1703,7 +1703,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31
     if (!ok)
         return false;
 
-    return internalState.globalFrustum2D31.test(position31);
+    if (internalState.globalFrustum2D31.test(position31))
+        return true;
+    else
+        return internalState.extraFrustum2D31.test(position31);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPathVisible(const QVector<PointI>& path31) const
