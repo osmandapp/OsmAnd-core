@@ -2212,7 +2212,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
-        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 0.5;                                ""\n"
+        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 1.0;                                ""\n"
         "        gl_Position = param_vs_mModelViewProjection * v;                                                           ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"
