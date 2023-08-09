@@ -421,7 +421,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         state.visibleDistance) * internalState->scaleToRetainProjectedSize;
     const auto additionalDistanceToZFar =
         qMax(static_cast<double>(farEnd) * elevationCosine, static_cast<double>(deepEnd) * elevationSine);
-    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToZFar;
+    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + qMax(0.01, additionalDistanceToZFar);
     internalState->zFar = static_cast<float>(zFar);
     internalState->zNear = _zNear;
 
@@ -438,13 +438,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<float>(qSin(internalState->fovInRadians) /
         qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
     const auto visibleDistance = distanceToScreenTop < farEnd ? distanceToScreenTop :
-        static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine);
+        qMin(farEnd, static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine));
     const auto highDetail = static_cast<float>(
         internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize *
         qTan(internalState->fovInRadians) * state.detailedDistance + _detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = highDetail < visibleDistance
-        ? internalState->distanceFromCameraToTarget +
-        static_cast<float>(qMax(0.0, static_cast<double>(highDetail) * elevationCosine))
+        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget +
+        static_cast<float>(qMax(0.01, static_cast<double>(highDetail) * elevationCosine)))
         : internalState->zFar;
 
     // Recalculate perspective projection
@@ -781,8 +781,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
             tileSize *= 2.0f;
             distanceToLowerDetail += static_cast<float>(_detailDistanceFactor * tileSize);
             const auto zLowerDetail = distanceToLowerDetail < visibleDistance
-                ? internalState->distanceFromCameraToTarget +
-                static_cast<float>(qMax(0.0, static_cast<double>(distanceToLowerDetail) * elevationCosine))
+                ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget +
+                static_cast<float>(qMax(0.01, static_cast<double>(distanceToLowerDetail) * elevationCosine)))
                 : internalState->zFar;
 
             // 4 points of frustum lower detail plane in camera coordinate space
