@@ -954,16 +954,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     auto intersection = nearInWorld + length * rayD;
     auto pointOnPlane = intersection.xz();
 
+    double heightFactor = 0.0;
     if (height != 0.0f)
     {
-        const auto heightFactor = static_cast<double>(height) / nearInWorld.y;
+        heightFactor = static_cast<double>(height) / nearInWorld.y;
         pointOnPlane += (nearInWorld.xz() - pointOnPlane) * heightFactor;
     }
 
     position = pointOnPlane / static_cast<double>(TileSize3D);
 
+    const auto visible = (length > 0.0 && heightFactor < 1.0) || (length < 0.0 && heightFactor > 1.0);
+    
     if (distance)
-        *distance = static_cast<float>(length);
+        *distance = visible ? static_cast<float>(length) : 0.0f;
 
     return true;
 }
@@ -1522,9 +1525,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendere
         return false;
 
     PointD position;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height);
+    float distance = 0.0f;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height, &distance);
     if (!ok)
         return false;
+
+    // Indicate target is invisible due to terrain elevation
+    if (distance == 0.0f)
+    {
+        target31 = PointI(-1, -1);
+        return true;
+    }
 
     const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
     const auto tileSize31 = (1u << zoomLevelDiff);
