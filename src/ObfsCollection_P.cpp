@@ -222,6 +222,39 @@ QList<OsmAnd::ObfsCollection::SourceOriginId> OsmAnd::ObfsCollection_P::getSourc
     return _sourcesOrigins.keys();
 }
 
+void OsmAnd::ObfsCollection_P::removeDirectory(const QDir& dir)
+{
+    const auto originId = getOriginIdByName(dir);
+    if (originId > 0) 
+    {
+        remove(originId);
+    }
+}
+
+bool OsmAnd::ObfsCollection_P::hasDirectory(const QDir& dir)
+{
+    return getOriginIdByName(dir) > 0;
+}
+
+OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::getOriginIdByName(const QDir& dir)
+{
+    auto originId = -1;
+    for(const auto& itEntry : rangeOf(constOf(_sourcesOrigins)))
+    {
+        const auto& entry = itEntry.value(); 
+        if (entry->type == SourceOriginType::Directory)
+        {
+            const auto& directoryAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(entry);
+            if (directoryAsSourceOrigin->directory.path() == dir.path())
+            {
+                originId = itEntry.key();
+                break;
+            }
+        }
+    }
+    return originId;
+}
+
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(const QDir& dir, bool recursive)
 {
     QWriteLocker scopedLocker(&_sourcesOriginsLock);
