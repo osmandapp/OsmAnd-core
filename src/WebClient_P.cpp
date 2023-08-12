@@ -77,8 +77,7 @@ void OsmAnd::WebClient_P::setFollowRedirects(const bool followRedirects)
 
 QByteArray OsmAnd::WebClient_P::downloadData(
     const QNetworkRequest& networkRequest,
-    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-    const IWebClient::RequestProgressCallbackSignature progressCallback,
+    IWebClient::DataRequest& dataRequest,
     const QString& userAgent) const
 {
     QByteArray data;
@@ -90,6 +89,7 @@ QByteArray OsmAnd::WebClient_P::downloadData(
 
         return chunk.size();
     };
+    const auto progressCallback = dataRequest.progressCallback;
     const Request::TransferProgressCallback downloadProgressCallback =
         [progressCallback]
         (qint64 transferredBytes, qint64 totalBytes) -> void
@@ -110,20 +110,25 @@ QByteArray OsmAnd::WebClient_P::downloadData(
 
     if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if (requestResult != nullptr)
-            requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        if (dataRequest.requestResult)
+        {
+            dataRequest.requestResult.reset(
+                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        }
         return QByteArray();
     }
 
-    if (requestResult != nullptr)
-        requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    if (dataRequest.requestResult)
+    {
+        dataRequest.requestResult.reset(
+            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    }
     return data;
 }
 
 QString OsmAnd::WebClient_P::downloadString(
     const QNetworkRequest& networkRequest,
-    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-    const IWebClient::RequestProgressCallbackSignature progressCallback) const
+    IWebClient::DataRequest& dataRequest) const
 {
     QByteArray data;
 
@@ -134,6 +139,7 @@ QString OsmAnd::WebClient_P::downloadString(
 
         return chunk.size();
     };
+    const auto progressCallback = dataRequest.progressCallback;
     const Request::TransferProgressCallback downloadProgressCallback =
         [progressCallback]
     (qint64 transferredBytes, qint64 totalBytes) -> void
@@ -169,13 +175,19 @@ QString OsmAnd::WebClient_P::downloadString(
 
     if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if (requestResult != nullptr)
-            requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        if (dataRequest.requestResult)
+        {
+            dataRequest.requestResult.reset(
+                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        }
         return QString::null;
     }
 
-    if (requestResult != nullptr)
-        requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    if (dataRequest.requestResult)
+    {
+        dataRequest.requestResult.reset(
+            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    }
     if (!charset.isNull() && charset.contains(QLatin1String("utf-8")))
         return QString::fromUtf8(data);
     return QString::fromLocal8Bit(data);
@@ -185,8 +197,7 @@ long long OsmAnd::WebClient_P::downloadFile(
     const QNetworkRequest& networkRequest,
     const QString& fileName,
     const long long lastTime,
-    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-    const IWebClient::RequestProgressCallbackSignature progressCallback) const
+    IWebClient::DataRequest& dataRequest) const
 {
     QFile file(fileName);
 
@@ -233,6 +244,7 @@ long long OsmAnd::WebClient_P::downloadFile(
         return totalBytesConsumed;
     };
 
+    const auto progressCallback = dataRequest.progressCallback;
     const Request::TransferProgressCallback downloadProgressCallback =
         [progressCallback]
         (qint64 transferredBytes, qint64 totalBytes) -> void
@@ -258,16 +270,22 @@ long long OsmAnd::WebClient_P::downloadFile(
         file.close();
         file.remove();
 
-        if (requestResult != nullptr)
-            requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        if (dataRequest.requestResult)
+        {
+            dataRequest.requestResult.reset(
+                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+        }
         return -1;
     }
 
     file.flush();
     file.close();
 
-    if (requestResult != nullptr)
-        requestResult->reset(request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    if (dataRequest.requestResult)
+    {
+        dataRequest.requestResult.reset(
+            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+    }
     return 1; // TODO: return actual value of 'Last-Modified' header
 }
 

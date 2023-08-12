@@ -131,14 +131,14 @@ bool OsmAnd::IncrementalChangesManager_P::getIncrementalUpdatesForRegion(const Q
                                                                          uint64_t timestamp,
                                                                          QList< std::shared_ptr<const IncrementalUpdate> >& resources) const
 {
-    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
+    IWebClient::DataRequest dataRequest;
     const auto& downloadResult = _webClient->downloadData(
                                                           owner->repositoryBaseUrl +
                                                           QStringLiteral("check_live?aosmc=true&timestamp=") +
                                                           QString::number(timestamp) +
                                                           "&file=" + QUrl::toPercentEncoding(region),
-                                                          &requestResult);
-    if (downloadResult.isNull() || !requestResult || !requestResult->isSuccessful())
+                                                          dataRequest);
+    if (downloadResult.isNull() || !dataRequest.requestResult || !dataRequest.requestResult->isSuccessful())
         return false;
     // Parse XML
     QXmlStreamReader xmlReader(downloadResult);

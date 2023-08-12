@@ -250,8 +250,11 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 _currentDownloadingTileIds << tileId;
             }
 
+            IWebClient::DataRequest dataRequest;
+            if (queryController)
+                dataRequest.queryController = queryController;
             auto generatedTime =
-                webClient->downloadFile(geoTileUrl, filePathGz, obtainedTime, nullptr, nullptr, queryController);
+                webClient->downloadFile(geoTileUrl, filePathGz, obtainedTime, dataRequest);
             if (generatedTime > 0)
             {
                 ArchiveReader archive(filePathGz);
@@ -827,7 +830,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainValueTask::run()
     );
 
     QByteArray geoTileData;
-    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) > 0)
+    if (provider->obtainGeoTile(
+        geoTileId, geoTileZoom, dateTime, geoTileData, false, localData, request->queryController) > 0)
     {
         GeoTileEvaluator *evaluator = new GeoTileEvaluator(
             geoTileId,
@@ -1041,7 +1045,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
 
     QByteArray geoTileData;
 
-    const auto geoTileTime = provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData);
+    const auto geoTileTime = provider->obtainGeoTile(
+        geoTileId, geoTileZoom, dateTime, geoTileData, false, localData, request->queryController);
     if (geoTileTime <= 0)
     {
         if (!localData)
@@ -1245,7 +1250,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     {
         geoTileId = tileId;
     }
-    if (provider->obtainGeoTile(geoTileId, geoTileZoom, dateTime, geoTileData, false, localData) <= 0)
+    if (provider->obtainGeoTile(
+        geoTileId, geoTileZoom, dateTime, geoTileData, false, localData, request->queryController) <= 0)
     {
         if (!localData)
             provider->unlockContourTile(tileId, zoom);
