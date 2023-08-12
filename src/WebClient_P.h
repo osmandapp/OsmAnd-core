@@ -114,19 +114,16 @@ namespace OsmAnd
         // Operations:
         QByteArray downloadData(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-            const IWebClient::RequestProgressCallbackSignature progressCallback,
+            IWebClient::DataRequest& dataRequest,
             const QString& userAgent) const;
         QString downloadString(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
+            IWebClient::DataRequest& dataRequest) const;
         long long downloadFile(
             const QNetworkRequest& networkRequest,
             const QString& fileName,
             const long long lastTime,
-            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
-            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
+            IWebClient::DataRequest& dataRequest) const;
 
     friend class OsmAnd::WebClient;
     };
