@@ -22,6 +22,7 @@ namespace OsmAnd
 {
     class VectorLineArrowsProvider;
     class VectorLineArrowsProvider_P Q_DECL_FINAL
+		: public std::enable_shared_from_this<VectorLineArrowsProvider_P>
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLineArrowsProvider_P);
 
@@ -40,6 +41,8 @@ namespace OsmAnd
         VectorLineArrowsProvider_P(
             VectorLineArrowsProvider* const owner,
             const std::shared_ptr<VectorLinesCollection>& collection);
+
+        void init();
 
     public:
         virtual ~VectorLineArrowsProvider_P();
