@@ -44,6 +44,36 @@ void OsmAnd::AmenitiesInAreaSearch::performSearch(
         queryController);
 }
 
+void OsmAnd::AmenitiesInAreaSearch::performTravelGuidesSearch(
+    const ISearch::Criteria& criteria_,
+    const NewResultEntryCallback newResultEntryCallback,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
+{
+    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
+
+    const auto dataInterface = obfsCollection->obtainTravelGuidesDataInterface(criteria.obfInfoAreaFilter.getValuePtrOrNullptr(), MinZoomLevel, MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
+
+    const ObfPoiSectionReader::VisitorFunction visitorFunction =
+        [newResultEntryCallback, criteria_]
+        (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
+        {
+            ResultEntry resultEntry;
+            resultEntry.amenity = amenity;
+            newResultEntryCallback(criteria_, resultEntry);
+
+            return true;
+        };
+
+    dataInterface->loadAmenities(
+        nullptr,
+        criteria.bbox31.getValuePtrOrNullptr(),
+        criteria.tileFilter,
+        criteria.zoomFilter,
+        criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
+        visitorFunction,
+        queryController);
+}
+
 OsmAnd::AmenitiesInAreaSearch::Criteria::Criteria()
     : zoomFilter(InvalidZoomLevel)
 {

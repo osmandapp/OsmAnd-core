@@ -57,6 +57,11 @@ namespace OsmAnd
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+        
+        virtual void performTravelGuidesSearch(
+            const ISearch::Criteria& criteria,
+            const NewResultEntryCallback newResultEntryCallback,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
 
