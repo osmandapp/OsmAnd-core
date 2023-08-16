@@ -2365,11 +2365,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
-std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainTravelGuidesDataInterface(
-    const AreaI* const pBbox31 /*= nullptr*/,
-    const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
-    const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterfaceByFilename(
+    const QString filename) const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -2378,7 +2375,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     QList< std::shared_ptr<const ObfReader> > obfReaders;
     for (const auto& localResource : constOf(owner->_localResources))
     {
-        if (localResource->type != ResourceType::Travel)
+        if (localResource->id != filename)
         {
             continue;
         }
@@ -2387,19 +2384,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         if (!obfMetadata)
             continue;
 
-        if (const auto installedResource = std::dynamic_pointer_cast<const InstalledResource>(localResource))
-        {
-            if (!installedResource->_lock.tryLockForReading())
-                continue;
-            lockedResources.push_back(installedResource);
-        }
-
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
         obfReaders.push_back(qMove(obfReader));
     }
-
-    sortReaders(obfReaders);
-    
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 

@@ -217,11 +217,7 @@ namespace OsmAnd
                 const ZoomLevel minZoomLevel = MinZoomLevel,
                 const ZoomLevel maxZoomLevel = MaxZoomLevel,
                 const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const;
-            virtual std::shared_ptr<ObfDataInterface> obtainTravelGuidesDataInterface(
-                const AreaI* const pBbox31 = nullptr,
-                const ZoomLevel minZoomLevel = MinZoomLevel,
-                const ZoomLevel maxZoomLevel = MaxZoomLevel,
-                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const;
+            virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterfaceByFilename( const QString filename) const;
 
         friend class OsmAnd::ResourcesManager_P;
         };

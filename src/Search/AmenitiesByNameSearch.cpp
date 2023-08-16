@@ -46,13 +46,14 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
 }
 
 void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
+    const QString filename,
     const ISearch::Criteria& criteria_,
     const NewResultEntryCallback newResultEntryCallback,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obfsCollection->obtainTravelGuidesDataInterface(criteria.obfInfoAreaFilter.getValuePtrOrNullptr(), MinZoomLevel, MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
+    const auto dataInterface = obfsCollection->obtainDataInterfaceByFilename(filename);
 
     const ObfPoiSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]
