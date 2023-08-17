@@ -119,6 +119,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         bool hasAtLeastOneOnPath = false;
         bool hasAtLeastOneAlongPathBillboard = false;
         bool hasAtLeastOneSimpleBillboard = false;
+        QMap< std::shared_ptr<MapSymbol>, PointI> additionalOffsets;
+
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
             assert(static_cast<bool>(rasterizedSymbol->image));
@@ -157,6 +159,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                     }
                 }
                 symbol.reset(billboardRasterSymbol);
+
+                if (rasterizedSpriteSymbol->additionalOffset)
+                    additionalOffsets[symbol] = *(rasterizedSpriteSymbol->additionalOffset);
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
@@ -283,6 +288,27 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
             // Finally there's no need in original, so turn it off
             group->additionalInstancesDiscardOriginal = true;
+        }
+        else if (!additionalOffsets.isEmpty())
+        {
+            for (const auto& itEntry : rangeOf(constOf(additionalOffsets)))
+            {
+                const auto& symbol = itEntry.key();
+                const auto& offset = itEntry.value();
+
+                if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                {
+                    std::shared_ptr<MapSymbolsGroup::AdditionalInstance> additionalGroupInstance(
+                        new MapSymbolsGroup::AdditionalInstance(group));
+                    std::shared_ptr<MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters> billboardSymbolInstance(
+                        new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters(additionalGroupInstance.get()));
+                    billboardSymbolInstance->discardableByAnotherInstances = true;
+                    billboardSymbolInstance->overridesOffset = true;
+                    billboardSymbolInstance->offset = offset;
+                    additionalGroupInstance->symbols.insert(symbol, qMove(billboardSymbolInstance));
+                    group->additionalInstances.push_back(additionalGroupInstance);
+                }
+            }
         }
 
         // Configure group

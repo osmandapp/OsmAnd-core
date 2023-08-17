@@ -9,6 +9,7 @@
 #include <SkColorFilter.h>
 #include "restore_internal_warnings.h"
 
+#include "Nullable.h"
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapPrimitiviser.h"
@@ -73,15 +74,24 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         int32_t bottomOffset = 0;
 
         bool iconOnBottom = false;
-        bool bottomTextSectionTaken = std::any_of(symbolsGroup->symbols,
-            []
-            (const std::shared_ptr<const MapPrimitiviser::Symbol>& symbol) -> bool
+        bool iconOnTop = false;
+
+        bool bottomTextSectionTaken = false;
+        bool hasIcon = false;
+        for (const auto& symbol : symbolsGroup->symbols)
+        {
+            if (hasIcon && bottomTextSectionTaken)
+                break;
+
+            if (const auto iconSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::IconSymbol>(symbol))
+                hasIcon = true;
+
+            if (const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
             {
-                if (const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
-                    return textSymbol->placement != TextSymbolPlacement::Top;
-                
-                return false;
-            });
+                if (textSymbol->placement != TextSymbolPlacement::Top)
+                    bottomTextSectionTaken = true;
+            }
+        }
 
         for (const auto& symbol : constOf(symbolsGroup->symbols))
         {
@@ -187,11 +197,15 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
                 else
                 {
+                    if (mapObject->toString().contains("18446743747269496317"))
+                        auto stop = 1;
+
                     // Calculate offset. Since offset specifies center, it's a sum of
                     //  - top/bottom offset
                     //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)
                     //  - height / 2
                     PointI offset;
+                    Nullable<PointI> additionalOffset;
 
                     // If bottom text section is free, move top section text to bottom and reset vertical offset
                     bool drawInTopSection = textSymbol->placement == TextSymbolPlacement::Top;
@@ -201,6 +215,15 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         drawInTopSection = false;
                         verticalOffset = 0;
                     }
+
+                    const bool hasAdditionalTopSection = textSymbol->placement != TextSymbolPlacement::Top
+                        && std::any_of(textSymbol->additionalPlacements,
+                            []
+                            (const TextSymbolPlacement additionalPlacement) -> bool
+                            {
+                                return additionalPlacement == TextSymbolPlacement::Top;
+                            });
+
                     offset.y += verticalOffset;
 
                     if (!group->symbols.isEmpty() && !textSymbol->drawAlongPath)
@@ -211,6 +234,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             offset.y += topOffset;
                             offset.y -= symbolExtraBottomSpace;
                             offset.y -= halfHeight;
+
+                            iconOnTop = false;
                         }
                         else
                         {
@@ -220,6 +245,18 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                             if (iconOnBottom && qFuzzyIsNull(symbolExtraTopSpace))
                                 offset.y += qCeil(-fontAscent / 2.0f);
                             iconOnBottom = false;
+
+                            if (hasAdditionalTopSection && hasIcon)
+                            {
+                                additionalOffset = PointI();
+                                additionalOffset->y += topOffset;
+                                additionalOffset->y -= verticalOffset;
+                                additionalOffset->y -= symbolExtraBottomSpace;
+                                additionalOffset->y -= halfHeight;
+                                if (iconOnTop)
+                                    additionalOffset->y += qFloor(fontAscent / 2.0f);
+                                iconOnTop = false;
+                            }
                         }
                     }
 
@@ -233,6 +270,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->location31 = textSymbol->location31;
                     rasterizedSymbol->offset = textSymbol->drawAlongPath ? PointI() : offset;
+                    rasterizedSymbol->additionalOffset = textSymbol->drawAlongPath ? Nullable<PointI>() : additionalOffset;
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
                     if (!qIsNaN(textSymbol->intersectionSizeFactor) && !qFuzzyCompare(textSymbol->size, 0.0f))
                     {
@@ -271,11 +309,19 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     {
                         const auto halfHeight = rasterizedText->height() / 2;
 
+                        auto currentTopOffset = offset.y;
+                        auto currentBottomOffset = offset.y;
+                        if (additionalOffset)
+                        {
+                            currentTopOffset = std::min(currentTopOffset, additionalOffset->y);
+                            currentBottomOffset = std::max(currentBottomOffset, additionalOffset->y);
+                        }
+
                         const auto topAdvance = -qCeil(halfHeight + symbolExtraTopSpace + lineSpacing);
-                        topOffset = std::min(topOffset, offset.y + topAdvance);
+                        topOffset = std::min(topOffset, currentTopOffset + topAdvance);
 
                         const auto bottomAdvance = qCeil(halfHeight + symbolExtraBottomSpace + lineSpacing);
-                        bottomOffset = std::max(bottomOffset, offset.y + bottomAdvance);
+                        bottomOffset = std::max(bottomOffset, currentBottomOffset + bottomAdvance);
                     }
                 }
             }
@@ -401,7 +447,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 {
                     const auto halfHeight = rasterizedIcon->height() / 2;
 
-                    topOffset = std::min(topOffset, iconOffset.y - halfHeight);
+                    if (iconOffset.y - halfHeight < topOffset)
+                    {
+                        topOffset = iconOffset.y - halfHeight;
+                        iconOnTop = true;
+                    }
 
                     if (iconOffset.y + halfHeight > bottomOffset)
                     {
