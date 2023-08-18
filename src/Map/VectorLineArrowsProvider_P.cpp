@@ -7,26 +7,33 @@
 OsmAnd::VectorLineArrowsProvider_P::VectorLineArrowsProvider_P(
     VectorLineArrowsProvider* const owner_,
     const std::shared_ptr<VectorLinesCollection>& collection)
-    : owner(owner_)
-    , _linesCollection(collection)
-    , _markersCollection(std::make_shared<MapMarkersCollection>())
+	: _linesCollection(collection)
+	, _markersCollection(std::make_shared<MapMarkersCollection>())
+	, owner(owner_)
 {
-    for (const auto& line : collection->getLines())
-    {
-        line->updatedObservable.attach(reinterpret_cast<IObservable::Tag>(this),
-            [this]
-            (const VectorLine* const vectorLine)
-            {
-                rebuildArrows();
-            });
-    }
-    rebuildArrows();
 }
 
 OsmAnd::VectorLineArrowsProvider_P::~VectorLineArrowsProvider_P()
 {
     for (const auto& line : _linesCollection->getLines())
         line->updatedObservable.detach(reinterpret_cast<IObservable::Tag>(this));
+}
+
+void OsmAnd::VectorLineArrowsProvider_P::init()
+{
+    const auto selfWeak = std::weak_ptr<VectorLineArrowsProvider_P>(shared_from_this());
+    for (const auto& line : _linesCollection->getLines())
+    {
+        line->updatedObservable.attach(reinterpret_cast<IObservable::Tag>(this),
+            [selfWeak]
+            (const VectorLine* const vectorLine)
+            {
+                const auto self = selfWeak.lock();
+                if (self)
+                    self->rebuildArrows();
+            });
+    }
+    rebuildArrows();
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::VectorLineArrowsProvider_P::getMarker(int markerId) const

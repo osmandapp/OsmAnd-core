@@ -7,6 +7,7 @@ OsmAnd::VectorLineArrowsProvider::VectorLineArrowsProvider(
     const std::shared_ptr<VectorLinesCollection>& collection)
     : _p(new VectorLineArrowsProvider_P(this, collection))
 {
+    _p->init();
 }
 
 OsmAnd::VectorLineArrowsProvider::~VectorLineArrowsProvider()
