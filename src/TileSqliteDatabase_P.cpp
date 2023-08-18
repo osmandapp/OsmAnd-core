@@ -898,8 +898,8 @@ bool OsmAnd::TileSqliteDatabase_P::getTileIds(
         const auto statement =
             prepareStatement(_database, specification > 0 ? query + QStringLiteral(" AND s=:s") : query);
 
-        if (!statement || !(configureStatement(invertedZoomValue, statement, zoom)
-            && configureStatementSpecification(statement, specification)))
+        if (!statement || !(configureStatement(invertedZoomValue, statement, zoom) ||
+             !(specification > 0 && configureStatementSpecification(statement, specification))))
         {
             LogPrintf(
                     LogSeverityLevel::Error,
@@ -964,7 +964,7 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(
         for (int i = 0; i < tileIds.count(); i++)
         {
             query += QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i);
-            query += tileIds[i] != tileIds.last() ? QStringLiteral(" OR ") : QStringLiteral(")");
+            query += i < tileIds.count() - 1 ? QStringLiteral(" OR ") : QStringLiteral(")");
         }
 
         const auto statement = prepareStatement(_database, query);
