@@ -215,6 +215,7 @@ namespace OsmAnd
             LanguageId languageId;
             bool drawOnPath;
             Placement placement;
+            QList<Placement> additionalPlacements;
             int verticalOffset;
             ColorARGB color;
             int size;

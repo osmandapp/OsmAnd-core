@@ -458,6 +458,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
+                const bool freshlyPublishedGroup = std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
+                    || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
                 if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
                     mapSymbolsGroup->additionalInstancesDiscardOriginal &&
@@ -489,6 +492,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     }
                 }
 
+                QList< std::shared_ptr<const MapSymbol> > plottedMapSymbolsFromGroup;
+
                 // Check if original was discarded
                 if (!mapSymbolsGroup->additionalInstancesDiscardOriginal)
                 {
@@ -499,10 +504,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
 
                         // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
+                        const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
+                        if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
+
+                        if (!applyFiltering && !freshlyPublishedGroup)
+                        {
+                            const auto& plottedSymbolInstances = citSymbolInfo->plottedInstances;
+                            if (!plottedSymbolInstances.contains(nullptr))
+                                continue;
+                        }
+
+                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
 
                         QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
                         obtainRenderablesFromSymbol(
@@ -531,8 +544,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     if (pAcceptedMapSymbols == nullptr)
                                         pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
-                                    (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                                    auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
+                                    plottedSymbolInfo.referenceOrigins = referencesOrigins;
+                                    plottedSymbolInfo.plottedInstances.push_back(nullptr);
                                 }
+                                plottedMapSymbolsFromGroup.push_back(mapSymbol);
                                 atLeastOnePlotted = true;
                             }
 
@@ -557,16 +573,26 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
 
                         // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
+                        const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
+                        if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
+                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
 
                         // If symbol is not references in additional group reference, also skip
                         const auto citAdditionalSymbolInstance = additionalGroupInstance->symbols.constFind(mapSymbol);
                         if (citAdditionalSymbolInstance == additionalGroupInstance->symbols.cend())
                             continue;
                         const auto& additionalSymbolInstance = *citAdditionalSymbolInstance;
+
+                        if (!applyFiltering && !freshlyPublishedGroup)
+                        {
+                            const auto& plottedSymbolInstances = citSymbolInfo->plottedInstances;
+                            if (!plottedSymbolInstances.contains(&additionalSymbolInstance))
+                                continue;
+                        }
+
+                        if (additionalSymbolInstance->discardableByAnotherInstances && plottedMapSymbolsFromGroup.contains(mapSymbol))
+                            continue;
 
                         QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
                         obtainRenderablesFromSymbol(
@@ -595,8 +621,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                     if (pAcceptedMapSymbols == nullptr)
                                         pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
 
-                                    (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                                    auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
+                                    plottedSymbolInfo.referenceOrigins = referencesOrigins;
+                                    plottedSymbolInfo.plottedInstances.push_back(&additionalSymbolInstance);
                                 }
+                                plottedMapSymbolsFromGroup.push_back(mapSymbol);
                                 atLeastOnePlotted = true;
                             }
 
@@ -673,10 +702,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
 
                         // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
+                        const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
+                        if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
+                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
 
                         std::shared_ptr<QList<std::shared_ptr<RenderableSymbol>>> renderableSymbols;
                         renderableSymbols.reset(new QList<std::shared_ptr<RenderableSymbol>>);
@@ -706,10 +735,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
 
                         // If this map symbol is not published yet or is located at different order, skip
-                        const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
-                        if (citReferencesOrigins == mapSymbolsFromGroup.cend())
+                        const auto citSymbolInfo = mapSymbolsFromGroup.constFind(mapSymbol);
+                        if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
-                        const auto& referencesOrigins = *citReferencesOrigins;
+                        const auto& referencesOrigins = citSymbolInfo->referenceOrigins;
 
                         // If symbol is not references in additional group reference, also skip
                         const auto citAdditionalSymbolInstance = additionalGroupInstance->symbols.constFind(mapSymbol);
@@ -743,6 +772,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
         bool firstOrder = true;
         int prevOrder;
+        QList< std::shared_ptr<const MapSymbol> > plottedMapSymbolsFromGroup;
         for (const auto& symbolRenderable : constOf(renderables))
         {
             if (firstOrder)
@@ -778,9 +808,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                 pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
                             }
 
-                            (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(
-                                mapSymbol, *renderableSymbol->referenceOrigins);
+                            auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
+                            plottedSymbolInfo.referenceOrigins = *renderableSymbol->referenceOrigins;
+                            plottedSymbolInfo.plottedInstances.push_back(nullptr);
                         }
+                        plottedMapSymbolsFromGroup.push_back(mapSymbol);
                         atLeastOnePlotted = true;
                     }
 
@@ -797,11 +829,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 bool atLeastOnePlotted = false;
                 for (const auto& renderableSymbol : constOf(*symbolRenderable.second))
                 {
-                    if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
-                        continue;
-
                     const auto mapSymbolsGroup = renderableSymbol->mapSymbolGroup;
                     const auto mapSymbol = renderableSymbol->mapSymbol;
+
+                    const auto& instanceParameters = renderableSymbol->genericInstanceParameters;
+                    const bool discardableByAnotherInstances = instanceParameters && !instanceParameters->discardableByAnotherInstances;
+                    if (discardableByAnotherInstances && plottedMapSymbolsFromGroup.contains(mapSymbol))
+                        continue;
+
+                    if (!plotSymbol(renderableSymbol, outIntersections, applyFiltering, metric))
+                        continue;
 
                     if (!atLeastOnePlotted)
                     {
@@ -815,9 +852,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                                 pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
                             }
 
-                            (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(
-                                mapSymbol, *renderableSymbol->referenceOrigins);
+                            auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
+                            plottedSymbolInfo.referenceOrigins = *renderableSymbol->referenceOrigins;
+                            plottedSymbolInfo.plottedInstances.push_back(&instanceParameters);
                         }
+                        plottedMapSymbolsFromGroup.push_back(mapSymbol);
                         atLeastOnePlotted = true;
                     }
 

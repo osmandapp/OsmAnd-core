@@ -997,7 +997,8 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
 
     auto& publishedMapSymbols = _publishedMapSymbolsByOrder[symbol->order];
     auto& publishedMapSymbolsByGroup = publishedMapSymbols[symbolGroup];
-    auto& symbolReferencedResources = publishedMapSymbolsByGroup[symbol];
+    auto& publishedSymbolInfo = publishedMapSymbolsByGroup[symbol];
+    auto& symbolReferencedResources = publishedSymbolInfo.referenceOrigins;
     if (symbolReferencedResources.isEmpty())
         _publishedMapSymbolsCount.fetchAndAddOrdered(1);
     assert(!symbolReferencedResources.contains(resource));
@@ -1067,13 +1068,13 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     }
     auto& publishedMapSymbols = itPublishedMapSymbols->second;
 
-    const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
-    if (itSymbolReferencedResources == publishedMapSymbols.end())
+    const auto itPublishedSymbolInfo = publishedMapSymbols.find(symbol);
+    if (itPublishedSymbolInfo == publishedMapSymbols.end())
     {
         assert(false);
         return;
     }
-    auto& symbolReferencedResources = *itSymbolReferencedResources;
+    auto& symbolReferencedResources = itPublishedSymbolInfo->referenceOrigins;
 
     if (!symbolReferencedResources.remove(resource))
     {
@@ -1086,7 +1087,7 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     if (symbolReferencedResources.isEmpty())
     {
         _publishedMapSymbolsCount.fetchAndAddOrdered(-1);
-        publishedMapSymbols.erase(itSymbolReferencedResources);
+        publishedMapSymbols.erase(itPublishedSymbolInfo);
     }
     if (publishedMapSymbols.isEmpty())
         publishedMapSymbolsByGroup.erase(itPublishedMapSymbols);

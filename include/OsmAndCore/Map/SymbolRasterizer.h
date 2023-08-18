@@ -14,6 +14,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Callable.h>
@@ -89,6 +90,7 @@ namespace OsmAnd
 
             PointI location31;
             PointI offset;
+            Nullable<PointI> additionalOffset;
             bool drawAlongPath;
             AreaI intersectionBBox;
         };
