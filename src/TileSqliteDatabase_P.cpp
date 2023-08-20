@@ -898,8 +898,8 @@ bool OsmAnd::TileSqliteDatabase_P::getTileIds(
         const auto statement =
             prepareStatement(_database, specification > 0 ? query + QStringLiteral(" AND s=:s") : query);
 
-        if (!statement || !(configureStatement(invertedZoomValue, statement, zoom) ||
-             !(specification > 0 && configureStatementSpecification(statement, specification))))
+        if (!statement || !configureStatement(invertedZoomValue, statement, zoom)
+            || (specification > 0 && !configureStatementSpecification(statement, specification)))
         {
             LogPrintf(
                     LogSeverityLevel::Error,
@@ -953,56 +953,65 @@ bool OsmAnd::TileSqliteDatabase_P::getTilesSize(
 
     bool invertedY = isInvertedY();
     int invertedZoomValue = getInvertedZoomValue();
-
+    uint64_t outSize = 0;
     {
         QReadLocker scopedLocker(&_lock);
 
         int res;
 
-        QString query = QStringLiteral("SELECT sum(length(image)) FROM tiles WHERE z=:z");
-        query += specification > 0 ? QStringLiteral(" AND s=:s AND (") : QStringLiteral(" AND (");
-        for (int i = 0; i < tileIds.count(); i++)
+        int batchSize = 500;
+        int batchesCount = qCeil(tileIds.count() / (double)batchSize);
+        for (int batch = 0; batch < batchesCount; batch++)
         {
-            query += QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i);
-            query += i < tileIds.count() - 1 ? QStringLiteral(" OR ") : QStringLiteral(")");
-        }
+            QList<TileId> batchTileIds(tileIds.mid(batch * batchSize, batchSize));
 
-        const auto statement = prepareStatement(_database, query);
-        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileIds, zoom, specification))
-        {
-            LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to configure tile size query for zoom %d table : %s",
-                    zoom,
-                    qPrintable(owner->filename));
-            return false;
-        }
-
-        if ((res = stepStatement(statement)) < 0)
-        {
-            LogPrintf(
-                    LogSeverityLevel::Error,
-                    "Failed to query for zoom %d data %s: %s",
-                    zoom,
-                    qPrintable(owner->filename),
-                    sqlite3_errmsg(_database.get()));
-            return false;
-        }
-
-        if (res > 0)
-        {
-            const auto sizeValue = readStatementValue(statement, 0);
-            if (!sizeValue.isNull())
+            QString query = QStringLiteral("SELECT sum(length(image)) FROM tiles WHERE z=:z");
+            query += specification > 0 ? QStringLiteral(" AND s=:s AND (") : QStringLiteral(" AND (");
+            int tileIdsCount = batchTileIds.count();
+            for (int i = 0; i < tileIdsCount; i++)
             {
-                bool ok = false;
-                const auto sizeRes = sizeValue.toULongLong(&ok);
-                if (!ok)
+                query += QStringLiteral("(x=:x%1 AND y=:y%1)").arg(i);
+                query += i < tileIdsCount - 1 ? QStringLiteral(" OR ") : QStringLiteral(")");
+            }
+
+            const auto statement = prepareStatement(_database, query);
+            if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, batchTileIds, zoom, specification))
+            {
+                LogPrintf(
+                          LogSeverityLevel::Error,
+                          "Failed to configure tile size query for zoom %d table : %s",
+                          zoom,
+                          qPrintable(owner->filename));
+                return false;
+            }
+
+            if ((res = stepStatement(statement)) < 0)
+            {
+                LogPrintf(
+                          LogSeverityLevel::Error,
+                          "Failed to query for zoom %d data %s: %s",
+                          zoom,
+                          qPrintable(owner->filename),
+                          sqlite3_errmsg(_database.get()));
+                return false;
+            }
+
+            if (res > 0)
+            {
+                const auto sizeValue = readStatementValue(statement, 0);
+                if (!sizeValue.isNull())
                 {
-                    return false;
+                    bool ok = false;
+                    const auto sizeRes = sizeValue.toULongLong(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    outSize += sizeRes;
                 }
-                size = sizeRes;
             }
         }
+        size = outSize;
     }
 
     return true;
