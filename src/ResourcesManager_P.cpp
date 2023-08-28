@@ -639,7 +639,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_TifSQLite(const QStr
                                                                       const ResourceType resourceType) const
 {
     QFileInfoList sqlitedbFileInfos;
-    Utilities::findFiles(storagePath, QStringList() << QLatin1String("*.tifsqlite"), sqlitedbFileInfos, false);
+    Utilities::findFiles(storagePath, QStringList() << filenameMask, sqlitedbFileInfos, false);
     for (const auto& sqlitedbFileInfo : constOf(sqlitedbFileInfos))
     {
         const auto filePath = sqlitedbFileInfo.absoluteFilePath();
@@ -650,7 +650,7 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_TifSQLite(const QStr
         QString resourceId = fileName.toLower();
         auto resourceType = ResourceType::WeatherForecast;
         resourceId = resourceId
-            .remove("weather ").replace(' ', '_');
+                   .remove(QStringLiteral("weather ")).replace(' ', '_');
         // Create local resource entry
         const auto pLocalResource = new InstalledResource(
             resourceId,
