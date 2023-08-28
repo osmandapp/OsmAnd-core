@@ -43,13 +43,13 @@ OsmAnd::ResourcesManager::ResourcesManager(
 
     _p->initialize();
     _p->inflateBuiltInResources();
+    _p->loadRepositoryFromCache();
     _p->scanManagedStoragePath();
     
     if (!_p->isLocalResource("world_basemap.obf"))
         _p->addMiniBasemapToLocalResources();
     
     _p->rescanUnmanagedStoragePaths();
-    _p->loadRepositoryFromCache();
     _p->attachToFileSystem();
 }
 
