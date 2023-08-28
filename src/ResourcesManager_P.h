@@ -81,6 +81,11 @@ namespace OsmAnd
         void loadLocalResourcesFromPath_SQLiteDB(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_TifSQLite(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
+            const QString& filenameMask,
+            const ResourceType resourceType) const;
         void loadLocalResourcesFromPath_GeoTiff(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
@@ -146,6 +151,12 @@ namespace OsmAnd
             const ResourceType resourceType,
             std::shared_ptr<const InstalledResource>& outResource,
             const QString& localPath = QString());
+        bool installTifSQLiteDBFromFile(
+            const QString& id,
+            const QString& filePath,
+            const ResourceType resourceType,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath = QString());
         bool installVoicePackFromFile(
             const QString& id,
             const QString& filePath,
@@ -161,6 +172,7 @@ namespace OsmAnd
 
         bool updateObfFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateTifSQLiteDBFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateGeoTiffFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
