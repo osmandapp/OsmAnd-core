@@ -644,22 +644,26 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_TifSQLite(const QStr
     {
         const auto filePath = sqlitedbFileInfo.absoluteFilePath();
         const auto fileName = sqlitedbFileInfo.fileName();
-
+        
         // Determine resource type and id
         //
         QString resourceId = fileName.toLower();
         auto resourceType = ResourceType::WeatherForecast;
         resourceId = resourceId
-                   .remove(QStringLiteral("weather ")).replace(' ', '_');
-        // Create local resource entry
-        const auto pLocalResource = new InstalledResource(
-            resourceId,
-            resourceType,
-            filePath,
-            sqlitedbFileInfo.size(),
-            std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
-        std::shared_ptr<const LocalResource> localResource(pLocalResource);
-        outResult.insert(resourceId, qMove(localResource));
+            .remove(QStringLiteral("weather ")).replace(' ', '_');
+        const auto res = getResourceInRepository(resourceId);
+        if (res)
+        {
+            // Create local resource entry
+            const auto pLocalResource = new InstalledResource(
+                                                              resourceId,
+                                                              resourceType,
+                                                              filePath,
+                                                              sqlitedbFileInfo.size(),
+                                                              res->timestamp);
+            std::shared_ptr<const LocalResource> localResource(pLocalResource);
+            outResult.insert(resourceId, qMove(localResource));
+        }
     }
 }
 
