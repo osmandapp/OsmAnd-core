@@ -24,6 +24,7 @@
 #include "Utilities.h"
 #include "CachedOsmandIndexes.h"
 #include "IncrementalChangesManager.h"
+#include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 
 OsmAnd::ResourcesManager_P::ResourcesManager_P(
     ResourcesManager* owner_,
@@ -391,6 +392,12 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QStringLiteral("Heightmap *.tif"),
             ResourceType::GeoTiffRegion);
         
+        // Find ResourceType::Weather -> "Weather *.tifsqlite" files
+        loadLocalResourcesFromPath_TifSQLite(storagePath,
+                                             outResult,
+                                             QLatin1String("Weather *.tifsqlite"),
+                                             ResourceType::WeatherForecast);
+        
         // Find ResourceType::OnlineTileSources -> ".metainfo" files
         loadLocalResourcesFromPath_OnlineTileSourcesResource(owner->localCachePath, outResult);
     }
@@ -621,6 +628,38 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_SQLiteDB(
             filePath,
             sqlitedbFileInfo.size(),
             std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
+        std::shared_ptr<const LocalResource> localResource(pLocalResource);
+        outResult.insert(resourceId, qMove(localResource));
+    }
+}
+
+void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_TifSQLite(const QString& storagePath,
+                                                                      QHash< QString, std::shared_ptr<const LocalResource> > &outResult,
+                                                                      const QString& filenameMask,
+                                                                      const ResourceType resourceType) const
+{
+    QFileInfoList sqlitedbFileInfos;
+    Utilities::findFiles(storagePath, QStringList() << filenameMask, sqlitedbFileInfos, false);
+    for (const auto& sqlitedbFileInfo : constOf(sqlitedbFileInfos))
+    {
+        const auto filePath = sqlitedbFileInfo.absoluteFilePath();
+        const auto fileName = sqlitedbFileInfo.fileName();
+        
+        // Determine resource type and id
+        //
+        QString resourceId = fileName.toLower();
+        auto resourceType = ResourceType::WeatherForecast;
+        resourceId = resourceId
+            .remove(QStringLiteral("weather ")).replace(' ', '_');
+        const auto res = getResourceInRepository(resourceId);
+        const auto timestamp = res ? res->timestamp : std::numeric_limits<uint64_t>::max();
+        // Create local resource entry
+        const auto pLocalResource = new InstalledResource(
+                                                          resourceId,
+                                                          resourceType,
+                                                          filePath,
+                                                          sqlitedbFileInfo.size(),
+                                                          timestamp);
         std::shared_ptr<const LocalResource> localResource(pLocalResource);
         outResult.insert(resourceId, qMove(localResource));
     }
@@ -931,6 +970,8 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
         resourceType = ResourceType::GpxFile;
     else if (resourceTypeValue == QLatin1String("sqlite"))
         resourceType = ResourceType::SqliteFile;
+    else if (resourceTypeValue == QLatin1String("weather"))
+        resourceType = ResourceType::WeatherForecast;
     
     return resourceType;
 }
@@ -1102,6 +1143,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                 downloadUrl =
                 owner->repositoryBaseUrl +
                 QLatin1String("/download.php?slope=yes&file=") +
+                QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::WeatherForecast:
+                // 'Weather_[region].tifsqlite' -> '[region].tifsqlite'
+                resourceId = QString(name)
+                    .remove(QLatin1String("Weather_"))
+                    .toLower()
+                    .remove(QLatin1String(".zip"));
+                downloadUrl =
+                owner->repositoryBaseUrl +
+                QLatin1String("/download.php?weather=yes&file=") +
                 QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::HeightmapRegionLegacy:
@@ -1381,6 +1433,9 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         case ResourceType::SlopeRegion:
             ok = uninstallSQLiteDB(installedResource);
             break;
+        case ResourceType::WeatherForecast:
+            ok = uninstallSQLiteDB(installedResource);
+            break;
         case ResourceType::VoicePack:
             ok = uninstallVoicePack(installedResource);
             break;
@@ -1554,6 +1609,9 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
         case ResourceType::SlopeRegion:
             ok = installSQLiteDBFromFile(newName, filePath, resourceType, resource);
             break;
+        case ResourceType::WeatherForecast:
+            ok = installTifSQLiteDBFromFile(newName, filePath, resourceType, resource);
+            break;
         case ResourceType::VoicePack:
             ok = installVoicePackFromFile(newName, filePath, resource);
             break;
@@ -1612,6 +1670,9 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = installSQLiteDBFromFile(id, filePath, resourceType, resource);
+            break;
+        case ResourceType::WeatherForecast:
+            ok = installTifSQLiteDBFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::VoicePack:
             ok = installVoicePackFromFile(id, filePath, resource);
@@ -1734,6 +1795,63 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
         QFile(localFileName).remove();
         return false;
     }
+    
+    // Create local resource entry
+    const auto pLocalResource = new InstalledResource(
+        id,
+        resourceType,
+        localFileName,
+        QFile(localFileName).size(),
+        std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
+    outResource.reset(pLocalResource);
+    _localResources.insert(id, outResource);
+
+    return true;
+}
+
+bool OsmAnd::ResourcesManager_P::installTifSQLiteDBFromFile(
+    const QString& id,
+    const QString& filePath,
+    const ResourceType resourceType,
+    std::shared_ptr<const InstalledResource>& outResource,
+    const QString& localPath_ /*= QString::null*/)
+{
+    assert(id.endsWith(".tifsqlite"));
+    
+    ArchiveReader archive(filePath);
+
+    // List items
+    bool ok = false;
+    const auto archiveItems = archive.getItems(&ok, false);
+    if (!ok)
+        return false;
+
+    // Find the tifsqlite file
+    ArchiveReader::Item obfArchiveItem;
+    for (const auto& archiveItem : constOf(archiveItems))
+    {
+        if (!archiveItem.isValid() || (!archiveItem.name.endsWith(QLatin1String(".tifsqlite"))))
+            continue;
+
+        obfArchiveItem = archiveItem;
+        break;
+    }
+    if (!obfArchiveItem.isValid())
+        return false;
+
+    // Copy that file
+    QString fileName(id);
+    fileName.replace(0, 1, fileName[0].toUpper());
+    fileName = QStringLiteral("Weather ").append(fileName).replace('_', ' ');
+    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(fileName) : localPath_;
+    
+    if (!archive.extractItemToFile(obfArchiveItem.name, localFileName, false))
+        return false;
+    
+    auto weatherResourcesManager = owner->getWeatherResourcesManager();
+    bool success = weatherResourcesManager->importDbCache(localFileName);
+    if (!success)
+        LogPrintf(LogSeverityLevel::Warning, "importDbCache is wrong");
 
     // Create local resource entry
     const auto pLocalResource = new InstalledResource(
@@ -1970,6 +2088,20 @@ bool OsmAnd::ResourcesManager_P::updateSQLiteDBFromFile(
     return ok;
 }
 
+bool OsmAnd::ResourcesManager_P::updateTifSQLiteDBFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
+{
+    if (!resource->_lock.lockForWriting())
+        return false;
+
+    bool ok;
+    ok = uninstallSQLiteDB(resource);
+    ok = installTifSQLiteDBFromFile(resource->id, filePath, resource->type, resource, resource->localPath);
+
+    return ok;
+}
+
 bool OsmAnd::ResourcesManager_P::updateGeoTiffFromFile(
     std::shared_ptr<const InstalledResource>& resource,
     const QString& filePath)
@@ -2028,6 +2160,9 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
         case ResourceType::HeightmapRegionLegacy:
         case ResourceType::SlopeRegion:
             ok = updateSQLiteDBFromFile(installedResource, filePath);
+            break;
+        case ResourceType::WeatherForecast:
+            ok = updateTifSQLiteDBFromFile(installedResource, filePath);
             break;
         case ResourceType::VoicePack:
             ok = updateVoicePackFromFile(installedResource, filePath);
