@@ -659,6 +659,10 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Position text horizontally and vertically
     const auto textArea = positionText(paints, maxLineWidthInPixels, style.textAlignment);
 
+    // Shift text for at least one pixel to avoid aliasing at the left and top edges
+    float offsetLeft = 1.0f;
+    float offsetTop = 1.0f;
+
     // Calculate bitmap size
     auto bitmapWidth = qCeil(textArea.width());
     auto bitmapHeight = qCeil(textArea.height());
@@ -675,15 +679,16 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         bitmapHeight = qMax(bitmapHeight, style.backgroundImage->height());
 
         // Shift text area to proper position in a larger
-        const auto offset = SkPoint::Make(
-            (bitmapWidth - qCeil(textArea.width())) / 2.0f,
-            (bitmapHeight - qCeil(textArea.height())) / 2.0f);
-        for (auto& linePaint : paints)
+        offsetLeft += (bitmapWidth - qCeil(textArea.width())) / 2.0f;
+        offsetTop += (bitmapHeight - qCeil(textArea.height())) / 2.0f;
+    }
+
+    const auto offset = SkPoint::Make(offsetLeft, offsetTop);
+    for (auto& linePaint : paints)
+    {
+        for (auto& textPaint : linePaint.textPaints)
         {
-            for (auto& textPaint : linePaint.textPaints)
-            {
-                textPaint.positionedBounds.offset(offset);
-            }
+            textPaint.positionedBounds.offset(offset);
         }
     }
 
@@ -697,6 +702,10 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             bitmapHeight);
         return false;
     }
+
+    // Extend bitmap to avoid aliasing at the edges
+    bitmapWidth += 2;
+    bitmapHeight += 2;
 
     // Create a bitmap that will be hold entire symbol (if target is empty)
     if (targetBitmap.isNull())
