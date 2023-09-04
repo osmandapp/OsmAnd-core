@@ -39,7 +39,8 @@ namespace OsmAnd
             const QString& background = QString(),
             const ColorARGB color = ColorARGB(),
             const QHash<QString, QString>& extensions = QHash<QString, QString>(),
-            const bool calendarEvent = false) = 0;
+            const bool calendarEvent = false,
+            const QString& amenityOriginName = QString()) = 0;
 
         IFavoriteLocationsCollection();
     public:
@@ -58,7 +59,8 @@ namespace OsmAnd
             const QString& background = QString(),
             const ColorARGB color = ColorARGB(),
             const QHash<QString, QString>& extensions = QHash<QString, QString>(),
-            const bool calendarEvent = false) = 0;
+            const bool calendarEvent = false,
+            const QString& amenityOriginName = QString()) = 0;
 
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other) = 0;
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation) = 0;
