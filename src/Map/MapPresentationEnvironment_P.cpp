@@ -77,7 +77,6 @@ void OsmAnd::MapPresentationEnvironment_P::setLocaleLanguageId(const QString& lo
 {
     QWriteLocker scopedLocker(&_languagePropertiesLock);
 
-    LogPrintf(LogSeverityLevel::Debug, "Set language");
     _localeLanguageId = localeLanguageId;
 }
 
