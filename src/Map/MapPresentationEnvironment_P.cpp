@@ -25,6 +25,8 @@
 
 OsmAnd::MapPresentationEnvironment_P::MapPresentationEnvironment_P(MapPresentationEnvironment* owner_)
     : owner(owner_)
+    , _localeLanguageId(QLatin1String("en"))
+    , _languagePreference(LanguagePreference::LocalizedOrNative)
 {
 }
 
@@ -62,6 +64,35 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _weatherContourLevelsAttribute = owner->mapStyle->getAttribute(QLatin1String("weatherContourLevels"));
 
     _desiredStubsStyle = MapStubStyle::Unspecified;
+}
+
+QString OsmAnd::MapPresentationEnvironment_P::getLocaleLanguageId() const
+{
+    QReadLocker scopedLocker(&_languagePropertiesLock);
+
+    return _localeLanguageId;
+}
+
+void OsmAnd::MapPresentationEnvironment_P::setLocaleLanguageId(const QString& localeLanguageId)
+{
+    QWriteLocker scopedLocker(&_languagePropertiesLock);
+
+    LogPrintf(LogSeverityLevel::Debug, "Set language");
+    _localeLanguageId = localeLanguageId;
+}
+
+OsmAnd::MapPresentationEnvironment::LanguagePreference OsmAnd::MapPresentationEnvironment_P::getLanguagePreference() const
+{
+    QReadLocker scopedLocker(&_languagePropertiesLock);
+
+    return _languagePreference;
+}
+
+void OsmAnd::MapPresentationEnvironment_P::setLanguagePreference(const LanguagePreference languagePreference)
+{
+    QWriteLocker scopedLocker(&_languagePropertiesLock);
+
+    _languagePreference = languagePreference;
 }
 
 QHash< OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const

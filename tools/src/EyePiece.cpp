@@ -863,8 +863,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             mapStyle,
             configuration.displayDensityFactor,
             configuration.mapScale,
-            configuration.symbolsScale,
-            configuration.locale));
+            configuration.symbolsScale));
+        mapPresentationEnvironment->setLocaleLanguageId(configuration.locale);
 
         if (configuration.verbose)
             output << xT("Applying extra style settings to map presentation environment...") << std::endl;
