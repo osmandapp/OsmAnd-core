@@ -587,7 +587,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         if (!applyFiltering && !freshlyPublishedGroup)
                         {
                             const auto& plottedSymbolInstances = citSymbolInfo->plottedInstances;
-                            if (!plottedSymbolInstances.contains(&additionalSymbolInstance))
+                            if (!plottedSymbolInstances.contains(additionalSymbolInstance))
                                 continue;
                         }
 
@@ -623,7 +623,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
                                     auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
                                     plottedSymbolInfo.referenceOrigins = referencesOrigins;
-                                    plottedSymbolInfo.plottedInstances.push_back(&additionalSymbolInstance);
+                                    plottedSymbolInfo.plottedInstances.push_back(additionalSymbolInstance);
                                 }
                                 plottedMapSymbolsFromGroup.push_back(mapSymbol);
                                 atLeastOnePlotted = true;
@@ -854,7 +854,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
                             auto& plottedSymbolInfo = (*pAcceptedMapSymbols)[mapSymbolsGroup][mapSymbol];
                             plottedSymbolInfo.referenceOrigins = *renderableSymbol->referenceOrigins;
-                            plottedSymbolInfo.plottedInstances.push_back(&instanceParameters);
+                            plottedSymbolInfo.plottedInstances.push_back(instanceParameters);
                         }
                         plottedMapSymbolsFromGroup.push_back(mapSymbol);
                         atLeastOnePlotted = true;

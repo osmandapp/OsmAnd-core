@@ -41,7 +41,7 @@ namespace OsmAnd
 
     public:
         typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolReferenceOrigins;
-        typedef QList< const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>* > MapSymbolAdditionalInstances;
+        typedef QList< std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters> > MapSymbolAdditionalInstances;
 
         struct PublishedMapSymbolInfo
         {
