@@ -1771,7 +1771,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const auto citCaptionsEnd = captions.cend();
 
         // Look for localized name
-        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
+        const auto& localeLanguageId = env->getLocaleLanguageId();
+        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
         if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
             localizedNameRuleId = *citLocalizedNameRuleId;
         
@@ -1822,7 +1823,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         
 
         // According to presentation settings, adjust set of captions
-        switch (env->languagePreference)
+        switch (env->getLanguagePreference())
         {
             case MapPresentationEnvironment::LanguagePreference::NativeOnly:
             {

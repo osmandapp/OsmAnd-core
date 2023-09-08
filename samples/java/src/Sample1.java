@@ -150,8 +150,8 @@ public class Sample1 implements GLEventListener {
       _mapStyle,
       _displayDensityFactor,
 	  1.0f,
-	  1.0f,
-      "en"); //TODO: here should be current locale
+	  1.0f);
+    _mapPresentationEnvironment.setLocaleLanguageId("en"); //TODO: here should be current locale
     _mapPrimitiviser = new MapPrimitiviser(
       _mapPresentationEnvironment);
     _obfMapObjectsProvider = new ObfMapObjectsProvider(
