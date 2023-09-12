@@ -1526,7 +1526,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         .arg(qPrintable(symbol->content)));
 
     // Set glyph height
-    glUniform1f(_onPath3dProgram.vs.param.glyphHeight, gpuResource->height*internalState.pixelInWorldProjectionScale);
+    glUniform1f(_onPath3dProgram.vs.param.glyphHeight, gpuResource->height * renderable->pixelSizeInWorld);
     GL_CHECK_RESULT;
 
     // Set distance from camera
@@ -1601,7 +1601,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
             GL_CHECK_RESULT;
 
             // Set glyph width
-            glUniform1f(vsGlyph.width, glyph.width*internalState.pixelInWorldProjectionScale);
+            glUniform1f(vsGlyph.width, glyph.width * renderable->pixelSizeInWorld);
             GL_CHECK_RESULT;
 
             // Set angle

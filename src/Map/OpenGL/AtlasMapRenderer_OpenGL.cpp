@@ -321,6 +321,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
     internalState->fovInRadians = qDegreesToRadians(state.fieldOfView);
     internalState->projectionPlaneHalfHeight = _zNear * qTan(internalState->fovInRadians);
+    internalState->sizeOfPixelInWorld = internalState->projectionPlaneHalfHeight * 2.0f / state.windowSize.y;
     internalState->projectionPlaneHalfWidth = internalState->projectionPlaneHalfHeight * internalState->aspectRatio;
 
     // Setup perspective projection with fake Z-far plane
@@ -526,7 +527,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const glm::vec4 mBR_c(zMidK * nBR_c.x, zMidK * nBR_c.y, -zMid, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto eye_g = internalState->worldCameraPosition;
     const auto mTL_g = internalState->mCameraViewInv * mTL_c;
     const auto mTR_g = internalState->mCameraViewInv * mTR_c;
     const auto mBL_g = internalState->mCameraViewInv * mBL_c;
@@ -610,6 +611,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
+    // Get normals and distances to frustum edges
+    const auto topN = glm::normalize(glm::cross(mTR_g.xyz() - eye_g, mTL_g.xyz() - eye_g));
+    const auto leftN = glm::normalize(glm::cross(mTL_g.xyz() - eye_g, mBL_g.xyz() - eye_g));
+    const auto bottomN = glm::normalize(glm::cross(mBL_g.xyz() - eye_g, mBR_g.xyz() - eye_g));
+    const auto rightN = glm::normalize(glm::cross(mBR_g.xyz() - eye_g, mTR_g.xyz() - eye_g));
+    const auto frontN = glm::normalize(glm::cross(nBL_g.xyz() - nTL_g.xyz(), nTR_g.xyz() - nTL_g.xyz()));
+    const auto backN = glm::normalize(glm::cross(mBR_g.xyz() - mTR_g.xyz(), mTL_g.xyz() - mTR_g.xyz()));
+    internalState->topVisibleEdgeN = topN;
+    internalState->leftVisibleEdgeN = leftN;
+    internalState->bottomVisibleEdgeN = bottomN;
+    internalState->rightVisibleEdgeN = rightN;
+    internalState->frontVisibleEdgeN = frontN;
+    internalState->backVisibleEdgeN = backN;
+    internalState->frontVisibleEdgeP = nTL_g.xyz();
+    internalState->backVisibleEdgeP = mTR_g.xyz();
+    internalState->topVisibleEdgeD = topN.x * eye_g.x + topN.y * eye_g.y + topN.z * eye_g.z;
+    internalState->leftVisibleEdgeD = leftN.x * eye_g.x + leftN.y * eye_g.y + leftN.z * eye_g.z;
+    internalState->bottomVisibleEdgeD = bottomN.x * eye_g.x + bottomN.y * eye_g.y + bottomN.z * eye_g.z;
+    internalState->rightVisibleEdgeD = rightN.x * eye_g.x + rightN.y * eye_g.y + rightN.z * eye_g.z;
+    internalState->frontVisibleEdgeD = frontN.x * nTL_g.x + frontN.y * nTL_g.y + frontN.z * nTL_g.z;
+    internalState->backVisibleEdgeD = backN.x * mTR_g.x + backN.y * mTR_g.y + backN.z * mTR_g.z;
+
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
     internalState->frustum2D31.p0 = PointI64((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
     internalState->frustum2D31.p1 = PointI64((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
@@ -626,12 +649,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     {
         const glm::vec3 planeE(0.0f, maxTerrainHeight, 0.0f);
         if (extraIntersectionsCounter == 2 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBR_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g, mBR_g.xyz(), intersectionPoint))
         {
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
         if (extraIntersectionsCounter == 3 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBL_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g, mBL_g.xyz(), intersectionPoint))
         {
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
@@ -1662,6 +1685,94 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getProjectedLocation(const MapRendererInte
     outLocation31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLastProjectablePoint(const MapRendererInternalState& internalState_,
+    const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    glm::vec3 frontIntersection;
+    if(Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
+        internalState->frontVisibleEdgeP, startPoint, endPoint, frontIntersection))
+    {
+        visiblePoint = frontIntersection;
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLastVisiblePoint(const MapRendererInternalState& internalState_,
+    const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    glm::vec3 topIntersection, leftIntersection, bottomIntersection, rightIntersection, frontIntersection;
+    auto top = std::numeric_limits<float>::infinity();
+    auto left = top;
+    auto bottom = top;
+    auto right = top;
+    auto front = top;
+
+    const auto cameraPosition = internalState->worldCameraPosition;
+    const auto atTop = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->topVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, topIntersection, &top);
+    const auto atLeft = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->leftVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, leftIntersection, &left);
+    const auto atBottom = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->bottomVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, bottomIntersection, &bottom);
+    const auto atRight = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->rightVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, rightIntersection, &right);
+    const auto atFront = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
+        internalState->frontVisibleEdgeP, startPoint, endPoint, frontIntersection, &front);
+
+    if (!atTop && !atLeft && !atBottom && !atRight && !atFront)
+        return false;
+
+    if (atTop && top <= left && top <= bottom && top <= right && top <= front)
+        visiblePoint = topIntersection;
+    else if (atLeft && left <= top && left <= bottom && left <= right && left <= front)
+        visiblePoint = leftIntersection;
+    else if (atBottom && bottom <= top && bottom <= left && bottom <= right && bottom <= front)
+        visiblePoint = bottomIntersection;
+    else if (atRight && right <= top && right <= left && right <= bottom && right <= front)
+        visiblePoint = rightIntersection;
+    else if (atFront && front <= top && front <= left && front <= bottom && front <= right)
+        visiblePoint = frontIntersection;
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPointProjectable(
+    const MapRendererInternalState& internalState_, const glm::vec3& p) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    const auto frontN = internalState->frontVisibleEdgeN;
+    return frontN.x * p.x + frontN.y * p.y + frontN.z * p.z <= internalState->frontVisibleEdgeD;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(
+    const MapRendererInternalState& internalState_, const glm::vec3& p) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    const auto topN = internalState->topVisibleEdgeN;
+    const auto leftN = internalState->leftVisibleEdgeN;
+    const auto bottomN = internalState->bottomVisibleEdgeN;
+    const auto rightN = internalState->rightVisibleEdgeN;
+    const auto frontN = internalState->frontVisibleEdgeN;
+    const auto backN = internalState->backVisibleEdgeN;
+
+    const auto top = topN.x * p.x + topN.y * p.y + topN.z * p.z <= internalState->topVisibleEdgeD;
+    const auto left = leftN.x * p.x + leftN.y * p.y + leftN.z * p.z <= internalState->leftVisibleEdgeD;
+    const auto bottom = bottomN.x * p.x + bottomN.y * p.y + bottomN.z * p.z <= internalState->bottomVisibleEdgeD;
+    const auto right = rightN.x * p.x + rightN.y * p.y + rightN.z * p.z <= internalState->rightVisibleEdgeD;
+    const auto front = frontN.x * p.x + frontN.y * p.y + frontN.z * p.z <= internalState->frontVisibleEdgeD;
+    const auto back = backN.x * p.x + backN.y * p.y + backN.z * p.z <= internalState->backVisibleEdgeD;
+
+    return top && left && bottom && right && front && back;
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
