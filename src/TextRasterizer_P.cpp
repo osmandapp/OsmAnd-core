@@ -610,6 +610,12 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         }
     }
 
+    if (outGlyphWidths)
+    {
+        outGlyphWidths->front() += 1.0f;
+        outGlyphWidths->back() += 1.0f;
+    }
+
     // Set output font ascent
     if (outFontAscent)
     {
@@ -643,7 +649,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             maxTop = qMax(maxTop, linePaint.maxFontTop);
         }
 
-        *outExtraTopSpace = qMax(0.0f, maxTop - paints.first().maxFontTop);
+        *outExtraTopSpace = qMax(0.0f, maxTop - paints.first().maxFontTop) + 1.0f;
     }
     if (outExtraBottomSpace)
     {
@@ -653,7 +659,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
             maxBottom = qMax(maxBottom, linePaint.maxFontBottom);
         }
 
-        *outExtraBottomSpace = qMax(0.0f, maxBottom - paints.last().maxFontBottom);
+        *outExtraBottomSpace = qMax(0.0f, maxBottom - paints.last().maxFontBottom) + 1.0f;
     }
 
     // Position text horizontally and vertically
@@ -670,9 +676,9 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     {
         // Clear extra spacing
         if (outExtraTopSpace)
-            *outExtraTopSpace = 0.0f;
+            *outExtraTopSpace = 1.0f;
         if (outExtraBottomSpace)
-            *outExtraBottomSpace = 0.0f;
+            *outExtraBottomSpace = 1.0f;
 
         // Enlarge bitmap if shield is larger than text
         bitmapWidth = qMax(bitmapWidth, style.backgroundImage->width());
