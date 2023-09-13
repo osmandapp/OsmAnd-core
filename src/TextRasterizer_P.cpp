@@ -610,6 +610,12 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         }
     }
 
+    if (outGlyphWidths)
+    {
+        outGlyphWidths->front() += 1.0f;
+        outGlyphWidths->back() += 1.0f;
+    }
+
     // Set output font ascent
     if (outFontAscent)
     {
