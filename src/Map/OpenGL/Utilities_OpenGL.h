@@ -38,7 +38,8 @@ namespace OsmAnd
             const glm::vec3& planeO,
             const glm::vec3& line0,
             const glm::vec3& line1,
-            glm::vec3& lineX);
+            glm::vec3& lineX,
+            float* distance = nullptr);
     }
 }
 

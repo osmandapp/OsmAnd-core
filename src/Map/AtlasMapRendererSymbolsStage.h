@@ -87,6 +87,7 @@ namespace OsmAnd
             bool is2D;
             glm::vec2 directionInWorld;
             glm::vec2 directionOnScreen;
+            float pixelSizeInWorld;
             double distanceToCamera;
 
             struct GlyphPlacement
@@ -152,9 +153,16 @@ namespace OsmAnd
         struct ComputedPathData
         {
             QVector<glm::vec2> pathInWorld;
+            QVector<glm::vec2> vectorsInWorld;
+            QVector<float> pathSegmentsLengthsOnRelief;
             QVector<float> pathSegmentsLengthsInWorld;
+            QVector<float> pathDistancesInWorld;
+            QVector<float> pathAnglesInWorld;
             QVector<glm::vec2> pathOnScreen;
+            QVector<glm::vec2> vectorsOnScreen;
             QVector<float> pathSegmentsLengthsOnScreen;
+            QVector<float> pathDistancesOnScreen;
+            QVector<float> pathAnglesOnScreen;
         };
         typedef QHash< std::shared_ptr< const QVector<PointI> >, ComputedPathData > ComputedPathsDataCache;
 
@@ -279,39 +287,34 @@ namespace OsmAnd
             const unsigned int startIndex,
             const unsigned int endIndex) const;
 
-        QVector<glm::vec2> projectFromWorldToScreen(
-            const QVector<glm::vec2>& pointsInWorld) const;
-        QVector<glm::vec2> projectFromWorldToScreen(
-            const QVector<glm::vec2>& pointsInWorld,
-            const unsigned int startIndex,
-            const unsigned int endIndex) const;
+        bool projectFromWorldToScreen(
+            ComputedPathData& computedPathData,
+            const QVector<PointI>* points31 = nullptr) const;
+
+        float getWorldPixelSize(const glm::vec3& pinPointInWorld, glm::vec2& pinPointOnScreen) const;
 
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
             const MapRenderer::MapSymbolReferenceOrigins& resources,
             const std::shared_ptr<const MapSymbol>& mapSymbol);
 
-        static QVector<float> computePathSegmentsLengths(const QVector<glm::vec2>& path);
-
         static bool computePointIndexAndOffsetFromOriginAndOffset(
             const QVector<float>& pathSegmentsLengths,
             const unsigned int originPathPointIndex,
-            const float nOffsetFromOriginPathPoint,
+            const float distanceFromOriginPathPoint,
             const float offsetToPoint,
             unsigned int& outPathPointIndex,
             float& outOffsetFromPathPoint);
 
         static glm::vec2 computeExactPointFromOriginAndOffset(
             const QVector<glm::vec2>& path,
+            const QVector<glm::vec2>& vectors,
             const QVector<float>& pathSegmentsLengths,
             const unsigned int originPathPointIndex,
             const float offsetFromOriginPathPoint);
 
-        static glm::vec2 computeExactPointFromOriginAndNormalizedOffset(
-            const QVector<glm::vec2>& path,
-            const unsigned int originPathPointIndex,
-            const float nOffsetFromOriginPathPoint);
         static bool pathRenderableAs2D(
             const QVector<glm::vec2>& pathOnScreen,
+            const QVector<glm::vec2>& vectorsOnScreen,
             const unsigned int startPathPointIndex,
             const glm::vec2& exactStartPointOnScreen,
             const unsigned int endPathPointIndex,
@@ -319,28 +322,62 @@ namespace OsmAnd
 
         static bool segmentValidFor2D(const glm::vec2& vSegment);
 
-        SkPath computePathForGlyphsPlacement(
+        static glm::vec2 computeCorrespondingPoint(
+            const float sourcePointOffset,
+            const float sourceDistance,
+            const float sourceAngle,
+            const glm::vec2& destinationStartPoint,
+            const glm::vec2& destinationVector,
+            const float destinationLength,
+            const float destinationDistance,
+            const float destinationAngle);
+
+        static float findOffsetInSegmentForDistance(
+            const float distance,
+            const QVector<float>& pathSegmentsLengths,
+            const unsigned int startPathPointIndex,
+            const float offsetFromStartPathPoint,
+            const unsigned int endPathPointIndex,
+            unsigned int& segmentIndex);
+
+        QVector<unsigned int> computePathForGlyphsPlacement(
+            const float pathPixelSizeInWorld,
             const bool is2D,
-            const QVector<glm::vec2>& pathOnScreen,
-            const QVector<float>& pathSegmentsLengthsOnScreen,
-            const QVector<glm::vec2>& pathInWorld,
-            const QVector<float>& pathSegmentsLengthsInWorld,
+            const ComputedPathData& computedPathData,
             const unsigned int startPathPointIndex,
             const float offsetFromStartPathPoint,
             const unsigned int endPathPointIndex,
             const glm::vec2& directionOnScreen,
-            const QVector<float>& glyphsWidths) const;
+            const QVector<float>& glyphsWidths,
+            QVector<float>& pathOffsets,
+            float& symmetricOffset) const;
 
-        glm::vec2 computePathDirection(const SkPath& path) const;
+        glm::vec2 computePathDirection(const QVector<glm::vec2>& path) const;
 
-        double computeDistanceFromCameraToPath(const SkPath& pathInWorld) const;
+        double computeDistanceFromCameraToPath(const QVector<glm::vec2>& pathInWorld) const;
 
-        SkPath convertPathOnScreenToWorld(const SkPath& pathOnScreen, bool& outOk) const;
+        QVector<glm::vec2> convertPathOnScreenToWorld(
+            const float screenToWorldFactor,
+            const QVector<unsigned int>& pointIndices,
+            const QVector<float>& pointOffsets,
+            const QVector<float>& pathDistancesOnScreen,
+            const QVector<float>& pathAnglesOnScreen,
+            const QVector<glm::vec2>& pathInWorld,
+            const QVector<glm::vec2>& vectorsInWorld,
+            const QVector<float>& pathSegmentsLengthsInWorld,
+            const QVector<float>& pathDistancesInWorld,
+            const QVector<float>& pathAnglesInWorld) const;
 
-        SkPath projectPathInWorldToScreen(const SkPath& pathInWorld) const;
+        QVector<glm::vec2> getPathInWorldToWorld(
+            const QVector<unsigned int>& pointIndices,
+            const QVector<float>& pointOffsets,
+            const QVector<glm::vec2>& pathInWorld,
+            const QVector<glm::vec2>& vectorsInWorld,
+            const QVector<float>& pathSegmentsLengthsInWorld) const;
 
         bool computePlacementOfGlyphsOnPath(
-            const SkPath& path,
+            const float pathPixelSizeInWorld,
+            const ComputedPathData& computedPathData,
             const bool is2D,
             const glm::vec2& directionInWorld,
             const glm::vec2& directionOnScreen,
@@ -358,6 +395,7 @@ namespace OsmAnd
             QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
             QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
             const float glyphHeight,
+            const float pixelSizeInWorld,
             const glm::vec2& directionInWorld) const;
 
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
@@ -367,6 +405,7 @@ namespace OsmAnd
         QVector<PointF> calculateOnPath3DRotatedBBox(
             const QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
             const float glyphHeight,
+            const float pixelSizeInWorld,
             const glm::vec2& directionInWorld) const;
 
         float getSubsectionOpacityFactor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;

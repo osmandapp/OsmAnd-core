@@ -142,6 +142,12 @@ namespace OsmAnd
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
+        virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
+        virtual bool getLastVisiblePoint(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const = 0;
+        virtual bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
+        virtual bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point) const = 0;
         virtual bool getWorldPointFromScreenPoint(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointF& outWorldPoint) const = 0;
         virtual float getWorldElevationOfLocation(const MapRendererState& state,
