@@ -44,17 +44,25 @@ bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::dvec3& planeN
     return true;
 }
 
-bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& line0, const glm::vec3& line1, glm::vec3& lineX)
+bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(
+    const glm::vec3& planeN, const glm::vec3& planeO,
+    const glm::vec3& line0, const glm::vec3& line1,
+    glm::vec3& lineX, float* distance /* = nullptr */)
 {
     const auto line = line1 - line0;
-    const auto lineD = glm::normalize(line);
+    const auto length = qMax(glm::length(line), 1e-37f);
+    const auto lineD = line / length;
     float d;
     if (!rayIntersectPlane(planeN, planeO, lineD, line0, d))
         return false;
 
     // If point is not in [line0 .. line1]
-    if (d >= 0.0f && d <= glm::length(line))
+    if (d >= 0.0f && d <= length)
+    {
         lineX = line0 + d * lineD;
+        if (distance)
+            *distance = d;
+    }
     else
         return false;
 
