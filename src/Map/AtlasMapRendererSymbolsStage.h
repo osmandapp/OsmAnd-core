@@ -395,7 +395,7 @@ namespace OsmAnd
             QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
             QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
             const float glyphHeight,
-            const float pixelSizeInWorld,
+            const float pathPixelSizeInWorld,
             const glm::vec2& directionInWorld) const;
 
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
@@ -405,7 +405,7 @@ namespace OsmAnd
         QVector<PointF> calculateOnPath3DRotatedBBox(
             const QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
             const float glyphHeight,
-            const float pixelSizeInWorld,
+            const float pathPixelSizeInWorld,
             const glm::vec2& directionInWorld) const;
 
         float getSubsectionOpacityFactor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;

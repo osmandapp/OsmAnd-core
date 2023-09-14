@@ -1699,8 +1699,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
     // Calculate pixel scale factor for 3D
     glm::vec2 pinPointOnScreen;
-    float pixelSizeInWorld = getWorldPixelSize(pinPointInWorld, pinPointOnScreen);
-    if (!(pixelSizeInWorld > 0.0f))
+    float pathPixelSizeInWorld = getWorldPixelSize(pinPointInWorld, pinPointOnScreen);
+    if (!(pathPixelSizeInWorld > 0.0f))
         return;
 
     // Pin-point represents center of symbol
@@ -1768,7 +1768,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     if (!fits || !is2D)
     {
         is2D = false;
-        const auto halfSizeInWorld = halfSizeInPixels * pixelSizeInWorld;
+        const auto halfSizeInWorld = halfSizeInPixels * pathPixelSizeInWorld;
 
         const auto lengthInWorld = computedPathData.pathSegmentsLengthsInWorld[pinPointOnPath.basePathPointIndex];
         fits = !std::isnan(lengthInWorld);
@@ -1835,7 +1835,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     QVector<float> pathOffsets;
     float symmetricOffset;
     auto path = computePathForGlyphsPlacement(
-        pixelSizeInWorld,
+        pathPixelSizeInWorld,
         is2D,
         computedPathData,
         subpathStartIndex,
@@ -1919,7 +1919,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         QVector<RenderableOnPathSymbol::GlyphPlacement> glyphsPlacement;
         QVector<glm::vec3> rotatedElevatedBBoxInWorld;
         bool ok = computePlacementOfGlyphsOnPath(
-            pixelSizeInWorld,
+            pathPixelSizeInWorld,
             symbolPathData,
             is2D,
             directionInWorld,
@@ -1942,7 +1942,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             renderable->distanceToCamera = computeDistanceFromCameraToPath(symbolPathData.pathInWorld);
             renderable->directionInWorld = directionInWorld;
             renderable->directionOnScreen = directionOnScreen;
-            renderable->pixelSizeInWorld = pixelSizeInWorld;
+            renderable->pixelSizeInWorld = pathPixelSizeInWorld;
             renderable->glyphsPlacement = glyphsPlacement;
             renderable->rotatedElevatedBBoxInWorld = rotatedElevatedBBoxInWorld;
             renderable->opacityFactor = opacityFactor;
@@ -2788,12 +2788,15 @@ float OsmAnd::AtlasMapRendererSymbolsStage::findOffsetInSegmentForDistance(
         segmentIndex = startPathPointIndex;
         return distance + offsetFromStartPathPoint;
     }
-    for (segmentIndex = startPathPointIndex + 1; segmentIndex <= endPathPointIndex; segmentIndex++)
+    for (auto index = startPathPointIndex + 1; index <= endPathPointIndex; index++)
     {
-        const auto length = pathSegmentsLengths[segmentIndex];
+        const auto length = pathSegmentsLengths[index];
         remained -= length;
         if (remained < 0.0f)
+        {
+            segmentIndex = index;
             return remained + length;
+        }
     }
     return -1.0f;
 }
@@ -2936,25 +2939,43 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
         totalLength += glm::distance(startPoint, endPoint);
     }
 
+    symmetricOffset = 0.0f;
+
     // Leave room for a possible last glyph
-    const auto lastWidth = qMax((glyphsTotalWidth - totalLength) * 1.1f, *pGlyphWidth * projectionScale * 0.1f);
-    endPointDistance = findOffsetInSegmentForDistance(
+    const auto firstWidth = *pGlyphWidth * projectionScale;
+    const auto lastWidth = qMax((glyphsTotalWidth - totalLength) * 1.1f, firstWidth * 0.1f);
+    unsigned int lastIndex;
+    float lastDistance;
+    if (firstWidth > lastWidth)
+    {
+        lastDistance = findOffsetInSegmentForDistance(
+            firstWidth,
+            is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
+            endPointIndex,
+            endPointDistance,
+            endPathPointIndex,
+            lastIndex);
+        if (lastDistance >= 0.0f)
+        {
+            result.push_back(lastIndex);
+            pathOffsets.push_back(lastDistance);
+            return result;
+        }        
+    }
+    lastDistance = findOffsetInSegmentForDistance(
         lastWidth,
         is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
         endPointIndex,
         endPointDistance,
         endPathPointIndex,
-        endPointIndex);
-    if (endPointDistance < 0.0f)
+        lastIndex);
+    if (lastDistance < 0.0f)
     {
         result.clear();
         return result;
     }
-    result.push_back(endPointIndex);
-    pathOffsets.push_back(endPointDistance);
-
-    symmetricOffset = 0.0f;
-
+    result.push_back(lastIndex);
+    pathOffsets.push_back(lastDistance);
     return result;
 }
 
@@ -3056,7 +3077,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
 {
     const auto& internalState = getInternalState();
 
-    const auto screenToWorldFlatFactor = 2.0f * internalState.projectionPlaneHalfHeight / currentState.windowSize.y;
+    const auto screenToWorldFlatFactor = internalState.sizeOfPixelInWorld;
 
     const auto projectionScale = is2D ? 1.0f : pathPixelSizeInWorld;
     const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
@@ -3230,11 +3251,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
     QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
     const float glyphHeight,
-    const float pixelSizeInWorld,
+    const float pathPixelSizeInWorld,
     const glm::vec2& directionInWorld) const
 {
     const auto& bboxInWorld = calculateOnPath3DRotatedBBox(
-        glyphsPlacement, glyphHeight, pixelSizeInWorld, directionInWorld);
+        glyphsPlacement, glyphHeight, pathPixelSizeInWorld, directionInWorld);
 
     // Elevate bbox vertices and center
     glm::vec3 elevatedVertices[4];
@@ -3486,7 +3507,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(
 QVector<OsmAnd::PointF> OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3DRotatedBBox(
     const QVector<RenderableOnPathSymbol::GlyphPlacement>& glyphsPlacement,
     const float glyphHeight,
-    const float pixelSizeInWorld,
+    const float pathPixelSizeInWorld,
     const glm::vec2& directionInWorld) const
 {
     const auto& internalState = getInternalState();
@@ -3496,12 +3517,12 @@ QVector<OsmAnd::PointF> OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3DR
     const auto negDirectionAngleInWorldSin = qSin(-directionAngleInWorld);
     const auto directionAngleInWorldCos = qCos(directionAngleInWorld);
     const auto directionAngleInWorldSin = qSin(directionAngleInWorld);
-    const auto halfGlyphHeight = (glyphHeight / 2.0f) * pixelSizeInWorld;
+    const auto halfGlyphHeight = (glyphHeight / 2.0f) * pathPixelSizeInWorld;
     auto bboxInWorldInitialized = false;
     AreaF bboxInWorldDirection;
     for (const auto& glyph : constOf(glyphsPlacement))
     {
-        const auto halfGlyphWidth = (glyph.width / 2.0f) * pixelSizeInWorld;
+        const auto halfGlyphWidth = (glyph.width / 2.0f) * pathPixelSizeInWorld;
         const glm::vec2 glyphPoints[4] =
         {
             glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
