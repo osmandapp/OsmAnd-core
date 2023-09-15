@@ -2551,9 +2551,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
             worldLengthOnPlane = glm::distance(
                 glm::vec2(prevPointInWorld.x, prevPointInWorld.z), glm::vec2(pointInWorld.x, pointInWorld.z));
             screenLengthInPixels = glm::distance(prevPointOnScreen, pointOnScreen);
-            worldAngle = std::acosf((prevWorldDistance * prevWorldDistance + worldLength * worldLength
+            worldAngle = qAcos((prevWorldDistance * prevWorldDistance + worldLength * worldLength
                 - worldDistance * worldDistance) / (2.0f * prevWorldDistance * worldLength));            
-            screenAngle = std::acosf((prevScreenDistance * prevScreenDistance + screenLength * screenLength
+            screenAngle = qAcos((prevScreenDistance * prevScreenDistance + screenLength * screenLength
                 - screenDistance * screenDistance) / (2.0f * prevScreenDistance * screenLength));
             computedPathData.pathSegmentsLengthsOnRelief[prevIdx] = worldLength;
             computedPathData.pathSegmentsLengthsInWorld[prevIdx] = worldLengthOnPlane;
@@ -2771,10 +2771,10 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computeCorrespondingPoint(
     const float destinationDistance,
     const float destinationAngle)
 {
-    const auto startAngle =
-        std::atanf(std::sinf(sourceAngle) / (sourceDistance / sourcePointOffset - std::cosf(sourceAngle)));
-    const auto factor =
-        (destinationDistance * std::sinf(startAngle) / std::sinf(startAngle + destinationAngle)) / destinationLength;
+    const float startAngle =
+        qAtan(qSin(sourceAngle) / (sourceDistance / sourcePointOffset - qCos(sourceAngle)));
+    const float factor =
+        (destinationDistance * qSin(startAngle) / qSin(startAngle + destinationAngle)) / destinationLength;
     const auto destinationPoint = destinationStartPoint + destinationVector * factor;
     return destinationPoint;
 }
