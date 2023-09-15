@@ -1700,11 +1700,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     // Calculate pixel scale factor for 3D
     glm::vec2 pinPointOnScreen;
     float pathPixelSizeInWorld = getWorldPixelSize(pinPointInWorld, pinPointOnScreen);
-    if (!(pathPixelSizeInWorld > 0.0f))
+    bool pixelSizeOk = pathPixelSizeInWorld > 0.0f;
+    if (!pixelSizeOk)
         return;
 
     // Pin-point represents center of symbol
     const auto halfSizeInPixels = onPathMapSymbol->size.x / 2.0f;
+    bool halfSizeOk = halfSizeInPixels > 0.0f;
+    if (!halfSizeOk)
+        return;
+
     bool fits = true;
     bool is2D = true;
 
@@ -1717,7 +1722,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     fits = fits && !std::isnan(lengthOnScreen);
     const auto distanceToPinPointOnScreen =
         glm::distance(computedPathData.pathOnScreen[pinPointOnPath.basePathPointIndex], pinPointOnScreen);
-    fits = fits && distanceToPinPointOnScreen <= lengthOnScreen;
+    fits = fits && distanceToPinPointOnScreen >= 0.0f && distanceToPinPointOnScreen <= lengthOnScreen;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
         computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
@@ -1774,7 +1779,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         fits = !std::isnan(lengthInWorld);
         const auto distanceToPinPointInWorld =
             glm::distance(computedPathData.pathInWorld[pinPointOnPath.basePathPointIndex], pinPointInWorld.xz());
-        fits = fits && distanceToPinPointInWorld <= lengthInWorld;
+        fits = fits && distanceToPinPointInWorld >= 0.0f && distanceToPinPointInWorld <= lengthInWorld;
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
             computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
