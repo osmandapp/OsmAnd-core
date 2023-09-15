@@ -854,6 +854,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getMaximalZoomLevelsRangeUpperBound();
     }
 
+    public final boolean getLocationFromScreenPoint(PointD screenPoint, PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getLocationFromScreenPoint(screenPoint, location31);
+    }
+
     public final boolean getLocationFromScreenPoint(PointI screenPoint, PointI location31) {
         NativeCore.checkIfLoaded();
 

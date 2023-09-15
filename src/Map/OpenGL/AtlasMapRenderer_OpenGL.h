@@ -51,6 +51,8 @@ namespace OsmAnd
             const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
+        bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
+            const PointD& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         bool getNearestLocationFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& location31, const PointI& screenPoint,
             PointI64& fixedLocation, PointI64& currentLocation) const;
@@ -126,7 +128,8 @@ namespace OsmAnd
         float getTileSizeOnScreenInPixels() const override;
 
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
-        bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const override;
         bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
         float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const override;

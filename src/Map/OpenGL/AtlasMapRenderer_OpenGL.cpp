@@ -955,13 +955,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     const MapRendererState& state, const PointI& screenPoint, PointD& position,
     const float height /*=0.0f*/, float* distance /*=nullptr*/) const
 {
+    return getPositionFromScreenPoint(internalState, state, PointD(screenPoint), position, height, distance);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
+    const MapRendererState& state, const PointD& screenPoint, PointD& position,
+    const float height /*=0.0f*/, float* distance /*=nullptr*/) const
+{
+    const auto screenPointY = static_cast<double>(state.windowSize.y) - screenPoint.y;
     const auto nearInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
+        glm::dvec3(screenPoint.x, screenPointY, 0.0),
         glm::dmat4(internalState.mCameraView),
         glm::dmat4(internalState.mPerspectiveProjection),
         glm::dvec4(internalState.glmViewport));
     const auto farInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
+        glm::dvec3(screenPoint.x, screenPointY, 1.0),
         glm::dmat4(internalState.mCameraView),
         glm::dmat4(internalState.mPerspectiveProjection),
         glm::dvec4(internalState.glmViewport));
@@ -1196,6 +1204,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getElevationOfLocationInMeters(const MapR
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
 {
     PointI64 location;
+    if (!getLocationFromScreenPoint(PointD(screenPoint), location))
+        return false;
+    location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const
+{
+    PointI64 location;
     if (!getLocationFromScreenPoint(screenPoint, location))
         return false;
     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
@@ -1203,7 +1221,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const
 {
     const auto state = getState();
 
