@@ -27,6 +27,8 @@
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
 
+#define OSMAND_VIA_EGL //Remove to initialize OpenGL via X11
+
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <GL/glew.h>
 #if defined(OSMAND_TARGET_OS_macosx)
@@ -37,6 +39,11 @@
 #elif defined(OSMAND_TARGET_OS_windows)
 #   include <GL/wglew.h>
 #   include <GL/gl.h>
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+#   define EGL_EGLEXT_PROTOTYPES
+#   include <GL/gl.h>
+#   include <EGL/egl.h>
+#   include <EGL/eglext.h>
 #elif defined(OSMAND_TARGET_OS_linux)
 #   include <GL/glxew.h>
 #   include <GL/gl.h>
@@ -427,6 +434,71 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to activate windowless/framebufferless OpenGL context") << std::endl;
         return false;
     }
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+    static const int MAX_DEVICES = 10;
+    EGLDeviceEXT eglDevs[MAX_DEVICES];
+    EGLint numDevices;
+    const auto eglQueryDevicesEXT =
+        (PFNEGLQUERYDEVICESEXTPROC) eglGetProcAddress("eglQueryDevicesEXT");
+
+    if (!eglQueryDevicesEXT)
+    {
+        output << xT("Failed to find eglQueryDevicesEXT() routine") << std::endl;
+        return false;
+    }
+    eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+    if (numDevices > 0)
+        output << xT("Detected ") << numDevices << xT(" GPUs") << std::endl;
+    else
+    {
+        output << xT("No suitable GPU found") << std::endl;
+        return false;
+    }
+    const auto eglGetPlatformDisplayEXT =
+        (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
+
+    if (!eglGetPlatformDisplayEXT)
+    {
+        output << xT("Failed to find eglGetPlatformDisplayEXT routine") << std::endl;
+        return false;
+    }
+    const auto eglDpy = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
+    EGLint major, minor;
+    eglInitialize(eglDpy, &major, &minor);
+    const EGLint configAttribs[] = {
+            EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+            EGL_DEPTH_SIZE, 24,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_NONE
+    };
+    EGLint numConfigs;
+    EGLConfig eglCfg;
+    eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
+    const EGLint pbufferAttribs[] = {
+            EGL_WIDTH, (int) configuration.outputImageWidth,
+            EGL_HEIGHT, (int) configuration.outputImageHeight,
+            EGL_NONE,
+    };    
+    EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs);
+    eglBindAPI(EGL_OPENGL_API);
+    EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);
+    eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_NO_ERROR)
+    {
+        eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglDestroyContext(eglDpy, eglCtx);
+        eglDestroySurface(eglDpy, eglSurf);
+        eglTerminate(eglDpy);
+        output << xT("Failed to initialize GLEW") << std::endl;
+        return false;
+    }
+    // Silence OpenGL errors here, it's inside GLEW, so it's not ours
+    (void)glGetError();
 #elif defined(OSMAND_TARGET_OS_linux)
     // Open default display (specified by DISPLAY environment variable)
     const auto xDisplay = XOpenDisplay(nullptr);
@@ -1116,6 +1188,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         wglReleasePbufferDCEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle), hPBufferDC);
         wglDestroyPbufferEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle));
     }
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+    eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(eglDpy, eglCtx);
+    eglDestroySurface(eglDpy, eglSurf);
+    eglTerminate(eglDpy);
 #elif defined(OSMAND_TARGET_OS_linux)
     glXDestroyPbuffer(xDisplay, pbuffer);
     glXDestroyContext(xDisplay, windowlessContext);
@@ -1322,7 +1399,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         else if (arg.startsWith(QLatin1String("-latLon=")))
         {
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-latLon=")));
-            const auto latLonValues = value.split(QLatin1Char(';'));
+            const auto latLonValues = value.split(QLatin1Char(':'));
             if (latLonValues.size() != 2)
             {
                 outError = QString("'%1' can not be parsed as latitude and longitude").arg(value);
@@ -1351,7 +1428,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         else if (arg.startsWith(QLatin1String("-target31=")))
         {
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-target31=")));
-            const auto target31Values = value.split(QLatin1Char(';'));
+            const auto target31Values = value.split(QLatin1Char(':'));
             if (target31Values.size() != 2)
             {
                 outError = QString("'%1' can not be parsed as target31 point").arg(value);
