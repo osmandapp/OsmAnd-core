@@ -10,6 +10,7 @@
 #include <OsmAndCore/Stopwatch.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+#include <OsmAndCore/GeoTiffCollection.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
@@ -19,6 +20,8 @@
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)
@@ -60,6 +63,8 @@
 
 #include <OsmAndCoreTools.h>
 #include <OsmAndCoreTools/Utilities.h>
+
+std::shared_ptr<const OsmAnd::IGeoTiffCollection> geotiffCollection;
 
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
@@ -692,7 +697,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         kCGLPFAAccelerated,
         kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
         kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
-        kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+        kCGLPFADepthSize, (CGLPixelFormatAttribute)24,
         kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)(coreProfile ? kCGLOGLPVersion_3_2_Core : kCGLOGLPVersion_Legacy),
         (CGLPixelFormatAttribute)0
     };
@@ -1015,6 +1020,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
         mapRenderer->setMapLayerProvider(0, binaryMapRasterTileProvider);
 
+        if (configuration.geotiffCollection)
+            mapRenderer->setElevationDataProvider(std::make_shared<OsmAnd::SqliteHeightmapTileProvider>(
+                configuration.geotiffCollection, mapRenderer->getElevationDataTileSize()));
+
         // Initialize rendering
         if (configuration.verbose)
             output << xT("Initializing rendering...") << std::endl;
@@ -1030,38 +1039,161 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (configuration.verbose)
             output << xT("Rendering frames...") << std::endl;
         OsmAnd::Stopwatch renderingStopwatch(true);
-        auto framesCounter = 0u;
+        auto framesCounter = 1u;
         bool wasInterrupted = false;
         for (;; framesCounter++)
         {
-            // Update must be performed before each frame
-            if (!mapRenderer->update())
-                output << xT("Map renderer: update failed") << std::endl;
-
-            // If frame was prepared, it means there's something to render
-            if (mapRenderer->prepareFrame())
+            for (;;)
             {
-                const auto ok = mapRenderer->renderFrame();
+                // Update must be performed before each frame
+                if (!mapRenderer->update())
+                    output << xT("Map renderer: update failed") << std::endl;
+
+                // If frame was prepared, it means there's something to render
+                if (mapRenderer->prepareFrame())
+                {
+                    const auto ok = mapRenderer->renderFrame();
+                    glVerifyResult(output);
+
+                    if (!ok)
+                        output << xT("Map renderer: frame rendering failed") << std::endl;
+                }
+
+                // Send everything to GPU
+                glFlush();
                 glVerifyResult(output);
 
-                if (!ok)
-                    output << xT("Map renderer: frame rendering failed") << std::endl;
+                // Check if map renderer finished processing
+                if (mapRenderer->isIdle())
+                    break;
+
+                if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+                {
+                    wasInterrupted = true;
+                    break;
+                }
             }
 
-            // Send everything to GPU
-            glFlush();
+            if (wasInterrupted)
+                break;
+
+            // Wait until everything is ready on GPU
+            if (configuration.verbose)
+                output << xT("Waiting for GPU to complete all stuff requested...") << std::endl;
+            glFinish();
             glVerifyResult(output);
 
-            // Check if map renderer finished processing
-            if (mapRenderer->isIdle())
-                break;
+            // Read image from render-target
+            if (configuration.verbose)
+                output << xT("Reading result image from GPU...") << std::endl;
+            SkBitmap outputBitmap;
+            outputBitmap.allocPixels(SkImageInfo::MakeN32Premul(
+                configuration.outputImageWidth, configuration.outputImageHeight));
+            glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight,
+                GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
+            glVerifyResult(output);
 
-            if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+            // Flip image vertically
+            SkBitmap filledOutputBitmap;
+            filledOutputBitmap.allocPixels(
+                SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
+            const auto rowSizeInBytes = outputBitmap.rowBytes();
+            for (int row = 0; row < configuration.outputImageHeight; row++)
             {
-                wasInterrupted = true;
+                const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
+                const auto pDstRow = reinterpret_cast<uint8_t*>(
+                    filledOutputBitmap.getPixels()) + ((configuration.outputImageHeight - row - 1) * rowSizeInBytes);
+                memcpy(pDstRow, pSrcRow, rowSizeInBytes);
+            }
+
+            // Save bitmap to image (if required)
+            if (!configuration.outputImageFilename.isEmpty())
+            {
+                auto fileName = configuration.outputImageFilename;
+                if (configuration.frames > 1)
+                    fileName += (QStringLiteral("000") + QString::number(framesCounter)).right(4);
+                auto encodedImageFormat = SkEncodedImageFormat::kBMP;
+                switch (configuration.outputImageFormat)
+                {
+                    case ImageFormat::PNG:
+                        encodedImageFormat = SkEncodedImageFormat::kPNG;
+                        fileName.append(QStringLiteral(".png"));
+                        break;
+
+                    case ImageFormat::JPEG:
+                        encodedImageFormat = SkEncodedImageFormat::kJPEG;
+                        fileName.append(QStringLiteral(".jpg"));
+                        break;
+
+                    default:
+                        fileName.append(QStringLiteral(".bmp"));
+                }
+
+                if (configuration.verbose)
+                    output << xT("Saving image to '") << QStringToStlString(fileName) << xT("'...") << std::endl;
+
+                const auto imageData = filledOutputBitmap.asImage()->encodeToData(encodedImageFormat, 100);
+                if (!imageData)
+                {
+                    output << xT("Failed to encode image") << std::endl;
+                    success = false;
+                    break;
+                }
+                else
+                {
+                    QFile imageFile(fileName);
+
+                    // Just in case try to create entire path
+                    auto containingDirectory = QFileInfo(imageFile).absoluteDir();
+                    containingDirectory.mkpath(QLatin1String("."));
+                    if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
+                    {
+                        output << xT("'") << QStringToStlString(containingDirectory.absolutePath())
+                            << xT("' is not writable") << std::endl;
+                        success = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                        {
+                            output << xT("Failed to open destination file '")
+                                << QStringToStlString(fileName) << xT("'") << std::endl;
+                            success = false;
+                            break;
+                        }
+                        else
+                        {
+                            if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()),
+                                imageData->size()) != imageData->size())
+                            {
+                                output << xT("Failed to write image to '")
+                                    << QStringToStlString(fileName) << xT("'") << std::endl;
+                                success = false;
+                                break;
+                            }
+                            imageFile.close();
+                        }
+                    }
+                }
+            }
+
+            if (framesCounter >= configuration.frames)
                 break;
+            else
+            {
+                const auto factor = static_cast<float>(framesCounter) / static_cast<float>(configuration.frames - 1);
+                const auto offset = OsmAnd::PointD(configuration.endTarget31 - configuration.target31) * factor;
+                mapRenderer->setTarget(configuration.target31 + OsmAnd::PointI(qFloor(offset.x), qFloor(offset.y)));
+                mapRenderer->setZoom(configuration.zoom
+                    + (configuration.endZoom - configuration.zoom) * factor);
+                mapRenderer->setAzimuth(configuration.azimuth +
+                    (configuration.endAzimuth - configuration.azimuth) * factor);
+                mapRenderer->setElevationAngle(configuration.elevationAngle
+                    + (configuration.endElevationAngle - configuration.elevationAngle) * factor);
             }
         }
+
         const auto timeElapsedOnRendering = renderingStopwatch.elapsed();
         if (configuration.verbose)
             output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
@@ -1075,12 +1207,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             success = false;
         }
 
-        // Wait until everything is ready on GPU
-        if (configuration.verbose)
-            output << xT("Waiting for GPU to complete all stuff requested...") << std::endl;
-        glFinish();
-        glVerifyResult(output);
-
         // Release rendering
         if (configuration.verbose)
             output << xT("Releasing rendering...") << std::endl;
@@ -1093,81 +1219,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         break;
-    }
-
-    // Read image from render-target
-    if (configuration.verbose)
-        output << xT("Reading result image from GPU...") << std::endl;
-    SkBitmap outputBitmap;
-    outputBitmap.allocPixels(SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
-    glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
-    glVerifyResult(output);
-
-    // Flip image vertically
-    SkBitmap filledOutputBitmap;
-    filledOutputBitmap.allocPixels(SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
-    const auto rowSizeInBytes = outputBitmap.rowBytes();
-    for (int row = 0; row < configuration.outputImageHeight; row++)
-    {
-        const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
-        const auto pDstRow = reinterpret_cast<uint8_t*>(filledOutputBitmap.getPixels()) + ((configuration.outputImageHeight - row - 1) * rowSizeInBytes);
-        memcpy(pDstRow, pSrcRow, rowSizeInBytes);
-    }
-
-    // Save bitmap to image (if required)
-    if (!configuration.outputImageFilename.isEmpty())
-    {
-        if (configuration.verbose)
-            output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
-
-        auto encodedImageFormat = SkEncodedImageFormat::kBMP;
-        switch (configuration.outputImageFormat)
-        {
-            case ImageFormat::PNG:
-                encodedImageFormat = SkEncodedImageFormat::kPNG;
-                break;
-
-            case ImageFormat::JPEG:
-                encodedImageFormat = SkEncodedImageFormat::kJPEG;
-                break;
-        }
-
-        const auto imageData = filledOutputBitmap.asImage()->encodeToData(encodedImageFormat, 100);
-        if (!imageData)
-        {
-            output << xT("Failed to encode image") << std::endl;
-            success = false;
-        }
-        else
-        {
-            QFile imageFile(configuration.outputImageFilename);
-
-            // Just in case try to create entire path
-            auto containingDirectory = QFileInfo(imageFile).absoluteDir();
-            containingDirectory.mkpath(QLatin1String("."));
-            if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
-            {
-                output << xT("'") << QStringToStlString(containingDirectory.absolutePath()) << xT("' is not writable") << std::endl;
-                success = false;
-            }
-            else
-            {
-                if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-                {
-                    output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                    success = false;
-                }
-                else
-                {
-                    if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
-                    {
-                        output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                        success = false;
-                    }
-                    imageFile.close();
-                }
-            }
-        }
     }
 
     if (configuration.verbose)
@@ -1248,9 +1299,15 @@ OsmAndTools::EyePiece::Configuration::Configuration()
     , outputImageWidth(0)
     , outputImageHeight(0)
     , outputImageFormat(ImageFormat::PNG)
+    , target31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
     , zoom(15.0f)
     , azimuth(0.0f)
     , elevationAngle(90.0f)
+    , frames(1)
+    , endTarget31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
+    , endZoom(15.0f)
+    , endAzimuth(0.0f)
+    , endElevationAngle(90.0f)
     , fov(16.5f)
     , referenceTileSize(256)
     , displayDensityFactor(1.0f)
@@ -1273,6 +1330,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 
     const std::shared_ptr<OsmAnd::ObfsCollection> obfsCollection(new OsmAnd::ObfsCollection());
     outConfiguration.obfsCollection = obfsCollection;
+    auto geotiffCollection = new OsmAnd::GeoTiffCollection();
 
     const std::shared_ptr<OsmAnd::MapStylesCollection> stylesCollection(new OsmAnd::MapStylesCollection());
     outConfiguration.stylesCollection = stylesCollection;
@@ -1311,6 +1369,32 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             }
 
             obfsCollection->addFile(value);
+        }
+        else if (arg.startsWith(QLatin1String("-geotiffPath=")))
+        {
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-geotiffPath=")));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'%1' path does not exist").arg(value);
+                return false;
+            }
+
+            geotiffCollection->addDirectory(value);
+            if (!outConfiguration.geotiffCollection)
+                outConfiguration.geotiffCollection.reset(geotiffCollection);
+        }
+        else if (arg.startsWith(QLatin1String("-cachePath=")))
+        {
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-cachePath=")));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'%1' path does not exist").arg(value);
+                return false;
+            }
+
+            geotiffCollection->setLocalCache(value);
+            if (!outConfiguration.geotiffCollection)
+                outConfiguration.geotiffCollection.reset(geotiffCollection);
         }
         else if (arg.startsWith(QLatin1String("-stylesPath=")))
         {
@@ -1481,6 +1565,109 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 
             bool ok = false;
             outConfiguration.elevationAngle = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as elevation angle").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-frames=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-frames=")));
+
+            bool ok = false;
+            outConfiguration.frames = value.toUInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as a number of frames").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-endLatLon=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endLatLon=")));
+            const auto latLonValues = value.split(QLatin1Char(':'));
+            if (latLonValues.size() != 2)
+            {
+                outError = QString("'%1' can not be parsed as latitude and longitude").arg(value);
+                return false;
+            }
+
+            OsmAnd::LatLon latLon;
+            bool ok = false;
+            latLon.latitude = latLonValues[0].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as latitude").arg(latLonValues[0]);
+                return false;
+            }
+
+            ok = false;
+            latLon.longitude = latLonValues[1].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as longitude").arg(latLonValues[1]);
+                return false;
+            }
+
+            outConfiguration.endTarget31 = OsmAnd::Utilities::convertLatLonTo31(latLon);
+        }
+        else if (arg.startsWith(QLatin1String("-endTarget31=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endTarget31=")));
+            const auto target31Values = value.split(QLatin1Char(':'));
+            if (target31Values.size() != 2)
+            {
+                outError = QString("'%1' can not be parsed as target31 point").arg(value);
+                return false;
+            }
+
+            bool ok = false;
+            outConfiguration.endTarget31.x = target31Values[0].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as target31.x").arg(target31Values[0]);
+                return false;
+            }
+
+            ok = false;
+            outConfiguration.endTarget31.y = target31Values[1].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as target31.y").arg(target31Values[1]);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-endZoom=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endZoom=")));
+
+            bool ok = false;
+            outConfiguration.endZoom = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as zoom").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-endAzimuth=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endAzimuth=")));
+
+            bool ok = false;
+            outConfiguration.endAzimuth = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as azimuth").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-endElevationAngle=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endElevationAngle=")));
+
+            bool ok = false;
+            outConfiguration.endElevationAngle = value.toFloat(&ok);
             if (!ok)
             {
                 outError = QString("'%1' can not be parsed as elevation angle").arg(value);
