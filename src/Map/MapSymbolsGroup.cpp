@@ -92,6 +92,7 @@ unsigned int OsmAnd::MapSymbolsGroup::AdditionalInstance::numberOfSymbolsWithCon
 
 OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::AdditionalSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
     : groupInstancePtr(groupInstancePtr_)
+    , discardableByAnotherInstances(false)
 {
 }
 

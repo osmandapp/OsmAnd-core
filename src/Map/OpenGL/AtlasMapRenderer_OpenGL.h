@@ -51,6 +51,8 @@ namespace OsmAnd
             const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
+        bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
+            const PointD& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
         bool getNearestLocationFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& location31, const PointI& screenPoint,
             PointI64& fixedLocation, PointI64& currentLocation) const;
@@ -101,6 +103,12 @@ namespace OsmAnd
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
         bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const override;
+        bool getLastProjectablePoint(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
+        bool getLastVisiblePoint(const MapRendererInternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const override;
+        bool isPointProjectable(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
+        bool isPointVisible(const MapRendererInternalState& internalState, const glm::vec3& point) const override;
         bool getWorldPointFromScreenPoint(
             const MapRendererInternalState& internalState,
             const MapRendererState& state,
@@ -120,7 +128,8 @@ namespace OsmAnd
         float getTileSizeOnScreenInPixels() const override;
 
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
-        bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const override;
         bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
         float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const override;

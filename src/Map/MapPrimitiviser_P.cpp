@@ -1771,7 +1771,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const auto citCaptionsEnd = captions.cend();
 
         // Look for localized name
-        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
+        const auto& localeLanguageId = env->getLocaleLanguageId();
+        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
         if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
             localizedNameRuleId = *citLocalizedNameRuleId;
         
@@ -1822,7 +1823,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         
 
         // According to presentation settings, adjust set of captions
-        switch (env->languagePreference)
+        switch (env->getLanguagePreference())
         {
             case MapPresentationEnvironment::LanguagePreference::NativeOnly:
             {
@@ -2048,10 +2049,22 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         TextSymbol::Placement placement = TextSymbol::Placement::Default;
         if (primitive->type == PrimitiveType::Point || primitive->type == PrimitiveType::Polygon)
         {
-            QString placementString;
-            bool ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_PLACEMENT, placementString);
+            QString placementsString;
+            bool ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_PLACEMENT, placementsString);
             if (ok)
-                placement = TextSymbol::placementFromString(placementString); 
+            {
+                const auto placementsList = placementsString.split('|', Qt::SkipEmptyParts);
+                for (int i = 0; i < placementsList.size(); i++)
+                {
+                    const auto& placementName = placementsList[i];
+                    const auto parsedPlacement = TextSymbol::placementFromString(placementName);
+                    
+                    if (i == 0)
+                        placement = parsedPlacement;
+                    else if (parsedPlacement != placement)
+                        text->additionalPlacements.push_back(parsedPlacement);
+                }
+            }
         }
         text->placement = placement;
 

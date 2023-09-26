@@ -9,6 +9,7 @@
 #include <QList>
 #include <QHash>
 #include <QMutex>
+#include <QReadWriteLock>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -44,6 +45,10 @@ namespace OsmAnd
         MapPresentationEnvironment_P(MapPresentationEnvironment* owner);
 
         void initialize();
+
+        mutable QReadWriteLock _languagePropertiesLock;
+        QString _localeLanguageId;
+        LanguagePreference _languagePreference;
 
         mutable QMutex _settingsChangeMutex;
         QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > _settings;
@@ -94,6 +99,12 @@ namespace OsmAnd
         virtual ~MapPresentationEnvironment_P();
 
         ImplementationInterface<MapPresentationEnvironment> owner;
+
+        QString getLocaleLanguageId() const;
+        void setLocaleLanguageId(const QString& localeLanguageId);
+
+        LanguagePreference getLanguagePreference() const ;
+        void setLanguagePreference(const LanguagePreference languagePreference);
 
         QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);

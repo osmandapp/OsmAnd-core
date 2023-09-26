@@ -321,6 +321,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
     internalState->fovInRadians = qDegreesToRadians(state.fieldOfView);
     internalState->projectionPlaneHalfHeight = _zNear * qTan(internalState->fovInRadians);
+    internalState->sizeOfPixelInWorld = internalState->projectionPlaneHalfHeight * 2.0f / state.windowSize.y;
     internalState->projectionPlaneHalfWidth = internalState->projectionPlaneHalfHeight * internalState->aspectRatio;
 
     // Setup perspective projection with fake Z-far plane
@@ -421,7 +422,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         state.visibleDistance) * internalState->scaleToRetainProjectedSize;
     const auto additionalDistanceToZFar =
         qMax(static_cast<double>(farEnd) * elevationCosine, static_cast<double>(deepEnd) * elevationSine);
-    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + additionalDistanceToZFar;
+    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + qMax(0.01, additionalDistanceToZFar);
     internalState->zFar = static_cast<float>(zFar);
     internalState->zNear = _zNear;
 
@@ -438,13 +439,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         static_cast<float>(qSin(internalState->fovInRadians) /
         qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
     const auto visibleDistance = distanceToScreenTop < farEnd ? distanceToScreenTop :
-        static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine);
+        qMin(farEnd, static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine));
     const auto highDetail = static_cast<float>(
         internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize *
         qTan(internalState->fovInRadians) * state.detailedDistance + _detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = highDetail < visibleDistance
-        ? internalState->distanceFromCameraToTarget +
-        static_cast<float>(qMax(0.0, static_cast<double>(highDetail) * elevationCosine))
+        ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget +
+        static_cast<float>(qMax(0.01, static_cast<double>(highDetail) * elevationCosine)))
         : internalState->zFar;
 
     // Recalculate perspective projection
@@ -526,7 +527,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     const glm::vec4 mBR_c(zMidK * nBR_c.x, zMidK * nBR_c.y, -zMid, 1.0f);
 
     // Transform 8 frustum vertices + camera center to global space
-    const auto eye_g = internalState->mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    const auto eye_g = internalState->worldCameraPosition;
     const auto mTL_g = internalState->mCameraViewInv * mTL_c;
     const auto mTR_g = internalState->mCameraViewInv * mTR_c;
     const auto mBL_g = internalState->mCameraViewInv * mBL_c;
@@ -610,6 +611,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
+    // Get normals and distances to frustum edges
+    const auto topN = glm::normalize(glm::cross(mTR_g.xyz() - eye_g, mTL_g.xyz() - eye_g));
+    const auto leftN = glm::normalize(glm::cross(mTL_g.xyz() - eye_g, mBL_g.xyz() - eye_g));
+    const auto bottomN = glm::normalize(glm::cross(mBL_g.xyz() - eye_g, mBR_g.xyz() - eye_g));
+    const auto rightN = glm::normalize(glm::cross(mBR_g.xyz() - eye_g, mTR_g.xyz() - eye_g));
+    const auto frontN = glm::normalize(glm::cross(nBL_g.xyz() - nTL_g.xyz(), nTR_g.xyz() - nTL_g.xyz()));
+    const auto backN = glm::normalize(glm::cross(mBR_g.xyz() - mTR_g.xyz(), mTL_g.xyz() - mTR_g.xyz()));
+    internalState->topVisibleEdgeN = topN;
+    internalState->leftVisibleEdgeN = leftN;
+    internalState->bottomVisibleEdgeN = bottomN;
+    internalState->rightVisibleEdgeN = rightN;
+    internalState->frontVisibleEdgeN = frontN;
+    internalState->backVisibleEdgeN = backN;
+    internalState->frontVisibleEdgeP = nTL_g.xyz();
+    internalState->backVisibleEdgeP = mTR_g.xyz();
+    internalState->topVisibleEdgeD = topN.x * eye_g.x + topN.y * eye_g.y + topN.z * eye_g.z;
+    internalState->leftVisibleEdgeD = leftN.x * eye_g.x + leftN.y * eye_g.y + leftN.z * eye_g.z;
+    internalState->bottomVisibleEdgeD = bottomN.x * eye_g.x + bottomN.y * eye_g.y + bottomN.z * eye_g.z;
+    internalState->rightVisibleEdgeD = rightN.x * eye_g.x + rightN.y * eye_g.y + rightN.z * eye_g.z;
+    internalState->frontVisibleEdgeD = frontN.x * nTL_g.x + frontN.y * nTL_g.y + frontN.z * nTL_g.z;
+    internalState->backVisibleEdgeD = backN.x * mTR_g.x + backN.y * mTR_g.y + backN.z * mTR_g.z;
+
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
     internalState->frustum2D31.p0 = PointI64((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
     internalState->frustum2D31.p1 = PointI64((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
@@ -626,12 +649,12 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     {
         const glm::vec3 planeE(0.0f, maxTerrainHeight, 0.0f);
         if (extraIntersectionsCounter == 2 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBR_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g, mBR_g.xyz(), intersectionPoint))
         {
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
         if (extraIntersectionsCounter == 3 &&
-            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g.xyz(), mBL_g.xyz(), intersectionPoint))
+            Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeE, eye_g, mBL_g.xyz(), intersectionPoint))
         {
             extraIntersections[extraIntersectionsCounter++] = intersectionPoint.xz();
         }
@@ -781,8 +804,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
             tileSize *= 2.0f;
             distanceToLowerDetail += static_cast<float>(_detailDistanceFactor * tileSize);
             const auto zLowerDetail = distanceToLowerDetail < visibleDistance
-                ? internalState->distanceFromCameraToTarget +
-                static_cast<float>(qMax(0.0, static_cast<double>(distanceToLowerDetail) * elevationCosine))
+                ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget +
+                static_cast<float>(qMax(0.01, static_cast<double>(distanceToLowerDetail) * elevationCosine)))
                 : internalState->zFar;
 
             // 4 points of frustum lower detail plane in camera coordinate space
@@ -932,13 +955,21 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     const MapRendererState& state, const PointI& screenPoint, PointD& position,
     const float height /*=0.0f*/, float* distance /*=nullptr*/) const
 {
+    return getPositionFromScreenPoint(internalState, state, PointD(screenPoint), position, height, distance);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
+    const MapRendererState& state, const PointD& screenPoint, PointD& position,
+    const float height /*=0.0f*/, float* distance /*=nullptr*/) const
+{
+    const auto screenPointY = static_cast<double>(state.windowSize.y) - screenPoint.y;
     const auto nearInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 0.0f),
+        glm::dvec3(screenPoint.x, screenPointY, 0.0),
         glm::dmat4(internalState.mCameraView),
         glm::dmat4(internalState.mPerspectiveProjection),
         glm::dvec4(internalState.glmViewport));
     const auto farInWorld = glm::unProject(
-        glm::dvec3(screenPoint.x, state.windowSize.y - screenPoint.y, 1.0f),
+        glm::dvec3(screenPoint.x, screenPointY, 1.0),
         glm::dmat4(internalState.mCameraView),
         glm::dmat4(internalState.mPerspectiveProjection),
         glm::dvec4(internalState.glmViewport));
@@ -954,16 +985,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     auto intersection = nearInWorld + length * rayD;
     auto pointOnPlane = intersection.xz();
 
+    double heightFactor = 0.0;
     if (height != 0.0f)
     {
-        const auto heightFactor = static_cast<double>(height) / nearInWorld.y;
+        heightFactor = static_cast<double>(height) / nearInWorld.y;
         pointOnPlane += (nearInWorld.xz() - pointOnPlane) * heightFactor;
     }
 
     position = pointOnPlane / static_cast<double>(TileSize3D);
 
+    const auto visible = (length > 0.0 && heightFactor < 1.0) || (length < 0.0 && heightFactor > 1.0);
+    
     if (distance)
-        *distance = static_cast<float>(length);
+        *distance = visible ? static_cast<float>(length) : 0.0f;
 
     return true;
 }
@@ -1170,6 +1204,16 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getElevationOfLocationInMeters(const MapR
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
 {
     PointI64 location;
+    if (!getLocationFromScreenPoint(PointD(screenPoint), location))
+        return false;
+    location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const
+{
+    PointI64 location;
     if (!getLocationFromScreenPoint(screenPoint, location))
         return false;
     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
@@ -1177,7 +1221,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const
 {
     const auto state = getState();
 
@@ -1522,9 +1566,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getNewTargetByScreenPoint(const MapRendere
         return false;
 
     PointD position;
-    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height);
+    float distance = 0.0f;
+    ok = getPositionFromScreenPoint(internalState, state, screenPoint, position, height, &distance);
     if (!ok)
         return false;
+
+    // Indicate target is invisible due to terrain elevation
+    if (distance == 0.0f)
+    {
+        target31 = PointI(-1, -1);
+        return true;
+    }
 
     const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
     const auto tileSize31 = (1u << zoomLevelDiff);
@@ -1651,6 +1703,94 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getProjectedLocation(const MapRendererInte
     outLocation31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLastProjectablePoint(const MapRendererInternalState& internalState_,
+    const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    glm::vec3 frontIntersection;
+    if(Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
+        internalState->frontVisibleEdgeP, startPoint, endPoint, frontIntersection))
+    {
+        visiblePoint = frontIntersection;
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLastVisiblePoint(const MapRendererInternalState& internalState_,
+    const glm::vec3& startPoint, const glm::vec3& endPoint, glm::vec3& visiblePoint) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    glm::vec3 topIntersection, leftIntersection, bottomIntersection, rightIntersection, frontIntersection;
+    auto top = std::numeric_limits<float>::infinity();
+    auto left = top;
+    auto bottom = top;
+    auto right = top;
+    auto front = top;
+
+    const auto cameraPosition = internalState->worldCameraPosition;
+    const auto atTop = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->topVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, topIntersection, &top);
+    const auto atLeft = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->leftVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, leftIntersection, &left);
+    const auto atBottom = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->bottomVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, bottomIntersection, &bottom);
+    const auto atRight = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->rightVisibleEdgeN,
+        cameraPosition, startPoint, endPoint, rightIntersection, &right);
+    const auto atFront = Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
+        internalState->frontVisibleEdgeP, startPoint, endPoint, frontIntersection, &front);
+
+    if (!atTop && !atLeft && !atBottom && !atRight && !atFront)
+        return false;
+
+    if (atTop && top <= left && top <= bottom && top <= right && top <= front)
+        visiblePoint = topIntersection;
+    else if (atLeft && left <= top && left <= bottom && left <= right && left <= front)
+        visiblePoint = leftIntersection;
+    else if (atBottom && bottom <= top && bottom <= left && bottom <= right && bottom <= front)
+        visiblePoint = bottomIntersection;
+    else if (atRight && right <= top && right <= left && right <= bottom && right <= front)
+        visiblePoint = rightIntersection;
+    else if (atFront && front <= top && front <= left && front <= bottom && front <= right)
+        visiblePoint = frontIntersection;
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPointProjectable(
+    const MapRendererInternalState& internalState_, const glm::vec3& p) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    const auto frontN = internalState->frontVisibleEdgeN;
+    return frontN.x * p.x + frontN.y * p.y + frontN.z * p.z <= internalState->frontVisibleEdgeD;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPointVisible(
+    const MapRendererInternalState& internalState_, const glm::vec3& p) const
+{
+    const auto internalState = static_cast<const InternalState*>(&internalState_);
+
+    const auto topN = internalState->topVisibleEdgeN;
+    const auto leftN = internalState->leftVisibleEdgeN;
+    const auto bottomN = internalState->bottomVisibleEdgeN;
+    const auto rightN = internalState->rightVisibleEdgeN;
+    const auto frontN = internalState->frontVisibleEdgeN;
+    const auto backN = internalState->backVisibleEdgeN;
+
+    const auto top = topN.x * p.x + topN.y * p.y + topN.z * p.z <= internalState->topVisibleEdgeD;
+    const auto left = leftN.x * p.x + leftN.y * p.y + leftN.z * p.z <= internalState->leftVisibleEdgeD;
+    const auto bottom = bottomN.x * p.x + bottomN.y * p.y + bottomN.z * p.z <= internalState->bottomVisibleEdgeD;
+    const auto right = rightN.x * p.x + rightN.y * p.y + rightN.z * p.z <= internalState->rightVisibleEdgeD;
+    const auto front = frontN.x * p.x + frontN.y * p.y + frontN.z * p.z <= internalState->frontVisibleEdgeD;
+    const auto back = backN.x * p.x + backN.y * p.y + backN.z * p.z <= internalState->backVisibleEdgeD;
+
+    return top && left && bottom && right && front && back;
 }
 
 OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const

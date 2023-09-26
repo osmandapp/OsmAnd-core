@@ -146,16 +146,18 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
     // Perform synchronous download
     const auto tileUrl = getUrlToLoad(tileId.x, tileId.y, zoom);
-    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
-    const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult, nullptr, request.queryController, source->userAgent);
+    IWebClient::DataRequest dataRequest;
+    dataRequest.queryController = request.queryController;
+    const auto& downloadResult = _downloadManager->downloadData(tileUrl, dataRequest, source->userAgent);
 
     // Ensure that all directories are created in path to local tile
     localFile.dir().mkpath(QLatin1String("."));
 
     // If there was error, check what the error was
-    if (requestResult && !requestResult->isSuccessful())
+    if (dataRequest.requestResult && !dataRequest.requestResult->isSuccessful())
     {
-        const auto httpStatus = std::dynamic_pointer_cast<const IWebClient::IHttpRequestResult>(requestResult)->getHttpStatusCode();
+        const auto httpStatus = std::dynamic_pointer_cast<const IWebClient::IHttpRequestResult>(
+            dataRequest.requestResult)->getHttpStatusCode();
 
         LogPrintf(LogSeverityLevel::Warning,
             "Failed to download tile from %s (HTTP status %d)",

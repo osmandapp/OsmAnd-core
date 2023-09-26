@@ -69,6 +69,7 @@ namespace OsmAnd
         float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;
         float pixelInWorldProjectionScale;
+        float sizeOfPixelInWorld;
         PointF skyplaneSize;
         PointF leftMiddlePoint;
         PointF rightMiddlePoint;
@@ -77,6 +78,20 @@ namespace OsmAnd
         Frustum2D31 globalFrustum2D31;
         Frustum2DF extraField2D;
         Frustum2D31 extraFrustum2D31;
+        glm::vec3 topVisibleEdgeN;
+        glm::vec3 leftVisibleEdgeN;
+        glm::vec3 bottomVisibleEdgeN;
+        glm::vec3 rightVisibleEdgeN;
+        glm::vec3 frontVisibleEdgeN;
+        glm::vec3 backVisibleEdgeN;
+        glm::vec3 frontVisibleEdgeP;
+        glm::vec3 backVisibleEdgeP;
+        float topVisibleEdgeD;
+        float leftVisibleEdgeD;
+        float bottomVisibleEdgeD;
+        float rightVisibleEdgeD;
+        float frontVisibleEdgeD;
+        float backVisibleEdgeD;
     };
 }
 

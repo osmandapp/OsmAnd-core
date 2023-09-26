@@ -38,11 +38,12 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const QString& background,
     const ColorARGB color,
     const QHash<QString, QString>& extensions,
-    const bool calendarEvent)
+    const bool calendarEvent,
+	const QString& amenityOriginName)
 {
     QWriteLocker scopedLocker(&_collectionLock);
 
-    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent));
+    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent, amenityOriginName));
     _collection.insert(newItem.get(), newItem);
 
     notifyCollectionChanged();
@@ -63,11 +64,12 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     const QString& background,
     const ColorARGB color,
     const QHash<QString, QString>& extensions,
-    const bool calendarEvent)
+    const bool calendarEvent,
+	const QString& amenityOriginName)
 {
     QWriteLocker scopedLocker(&_collectionLock);
 
-    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent));
+    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent, amenityOriginName));
     _collection.insert(newItem.get(), newItem);
 
     notifyCollectionChanged();
@@ -201,7 +203,8 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
         else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
@@ -220,7 +223,8 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
     }
@@ -251,7 +255,8 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
         else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
@@ -270,7 +275,8 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
     }
@@ -300,7 +306,8 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
         else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
@@ -319,7 +326,8 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
     }
@@ -349,7 +357,8 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
         else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
@@ -368,7 +377,8 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
                 item->getBackground(),
                 item->getColor(),
                 item->getExtensions(),
-                item->getCalendarEvent()));
+                item->getCalendarEvent(),
+                item->getAmenityOriginName()));
             _collection.insert(newItem.get(), newItem);
         }
     }

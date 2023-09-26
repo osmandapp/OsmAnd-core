@@ -8,8 +8,6 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const float displayDensityFactor_ /*= 1.0f*/,
     const float mapScaleFactor_ /*= 1.0f*/,
     const float symbolsScaleFactor_ /*= 1.0f*/,
-    const QString& localeLanguageId_ /*= QLatin1String("en")*/,
-    const LanguagePreference languagePreference_ /*= LanguagePreference::LocalizedOrNative*/,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/,
     const QSet<QString> disabledAttributes /*= QSet<QString>()*/)
     : _p(new MapPresentationEnvironment_P(this))
@@ -18,8 +16,6 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , displayDensityFactor(displayDensityFactor_)
     , mapScaleFactor(mapScaleFactor_)
     , symbolsScaleFactor(symbolsScaleFactor_)
-    , localeLanguageId(localeLanguageId_)
-    , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)
     , disabledAttributes(disabledAttributes)
 {
@@ -28,6 +24,26 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
 
 OsmAnd::MapPresentationEnvironment::~MapPresentationEnvironment()
 {
+}
+
+QString OsmAnd::MapPresentationEnvironment::getLocaleLanguageId() const
+{
+    return _p->getLocaleLanguageId();
+}
+
+void OsmAnd::MapPresentationEnvironment::setLocaleLanguageId(const QString& localeLanguageId)
+{
+    _p->setLocaleLanguageId(localeLanguageId);
+}
+
+OsmAnd::MapPresentationEnvironment::LanguagePreference OsmAnd::MapPresentationEnvironment::getLanguagePreference() const
+{
+    return _p->getLanguagePreference();
+}
+
+void OsmAnd::MapPresentationEnvironment::setLanguagePreference(const LanguagePreference languagePreference)
+{
+    _p->setLanguagePreference(languagePreference);
 }
 
 QHash< OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue >

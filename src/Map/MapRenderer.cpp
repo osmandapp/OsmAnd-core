@@ -997,7 +997,8 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
 
     auto& publishedMapSymbols = _publishedMapSymbolsByOrder[symbol->order];
     auto& publishedMapSymbolsByGroup = publishedMapSymbols[symbolGroup];
-    auto& symbolReferencedResources = publishedMapSymbolsByGroup[symbol];
+    auto& publishedSymbolInfo = publishedMapSymbolsByGroup[symbol];
+    auto& symbolReferencedResources = publishedSymbolInfo.referenceOrigins;
     if (symbolReferencedResources.isEmpty())
         _publishedMapSymbolsCount.fetchAndAddOrdered(1);
     assert(!symbolReferencedResources.contains(resource));
@@ -1067,13 +1068,13 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     }
     auto& publishedMapSymbols = itPublishedMapSymbols->second;
 
-    const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
-    if (itSymbolReferencedResources == publishedMapSymbols.end())
+    const auto itPublishedSymbolInfo = publishedMapSymbols.find(symbol);
+    if (itPublishedSymbolInfo == publishedMapSymbols.end())
     {
         assert(false);
         return;
     }
-    auto& symbolReferencedResources = *itSymbolReferencedResources;
+    auto& symbolReferencedResources = itPublishedSymbolInfo->referenceOrigins;
 
     if (!symbolReferencedResources.remove(resource))
     {
@@ -1086,7 +1087,7 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     if (symbolReferencedResources.isEmpty())
     {
         _publishedMapSymbolsCount.fetchAndAddOrdered(-1);
-        publishedMapSymbols.erase(itSymbolReferencedResources);
+        publishedMapSymbols.erase(itPublishedSymbolInfo);
     }
     if (publishedMapSymbols.isEmpty())
         publishedMapSymbolsByGroup.erase(itPublishedMapSymbols);
@@ -1828,21 +1829,27 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
     bool sameHeight = _requestedState.fixedHeight != 0.0f && _requestedState.fixedLocation31 == location31 &&
         _requestedState.fixedZoomLevel == _requestedState.zoomLevel;
-    const auto height = sameHeight ? _requestedState.fixedHeight : getHeightOfLocation(_requestedState, location31);
+    auto height = sameHeight ? _requestedState.fixedHeight : getHeightOfLocation(_requestedState, location31);
     PointI target31;
     bool haveTarget = getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height);
-    if(!haveTarget)
+    if (!haveTarget)
         return false;
 
-    bool update = forcedUpdate || (_requestedState.target31 != target31) ||
-        (_requestedState.fixedPixel != screenPoint_) || (_requestedState.fixedLocation31 != location31);
-    if (!update)
-        return false;
+    if (target31.x < 0)
+    {
+        height = 0.0f;
+        target31 = location31;
+    }
 
     _requestedState.fixedPixel = screenPoint_;
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = height;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
+
+    bool update = forcedUpdate || _requestedState.target31 != target31;
+    if (!update)
+        return false;
+
     _requestedState.target31 = target31;
     if (disableUpdate)
         return true;
@@ -1878,18 +1885,26 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state, const PointI& lo
     if(!haveTarget)
         return false;
 
+    if (target31.x < 0)
+    {
+        height = 0.0f;
+        target31 = location31;
+        sameHeight = false;
+    }
+
     if (!sameHeight)
     {
         state.fixedHeight = height;
         state.fixedZoomLevel = state.zoomLevel;
     }
 
-    bool update = forcedUpdate || (state.target31 != target31) || (state.fixedLocation31 != location31);
+    state.fixedLocation31 = location31;
+
+    bool update = forcedUpdate || state.target31 != target31;
     if (!update)
         return false;
 
     state.target31 = target31;
-    state.fixedLocation31 = location31;
 
     if (disableUpdate)
         return true;
@@ -1962,12 +1977,18 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
     if(!haveTarget)
         return false;
 
-    bool update = forcedUpdate || (_requestedState.target31 != target31) ||
-        (_requestedState.fixedPixel != screenPoint_);
+    if (target31.x < 0)
+    {
+        _requestedState.fixedHeight = 0.0f;
+        target31 = _requestedState.fixedLocation31;
+    }
+
+    _requestedState.fixedPixel = screenPoint_;
+
+    bool update = forcedUpdate || _requestedState.target31 != target31;
     if (!update)
         return false;
 
-    _requestedState.fixedPixel = screenPoint_;
     _requestedState.target31 = target31;
     if (disableUpdate)
         return true;

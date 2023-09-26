@@ -40,7 +40,8 @@ namespace OsmAnd
             const QString& background,
             const ColorARGB color,
             const QHash<QString, QString>& extensions,
-            const bool calendarEvent);
+            const bool calendarEvent,
+            const QString& amenityOriginName);
 
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
@@ -56,7 +57,8 @@ namespace OsmAnd
             const QString& background,
             const ColorARGB color,
             const QHash<QString, QString>& extensions,
-            const bool calendarEvent);
+            const bool calendarEvent,
+            const QString& amenityOriginName);
 
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
         void detach();

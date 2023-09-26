@@ -27,6 +27,8 @@
 
 namespace OsmAnd
 {
+    class Metric;
+
     class WeatherTileResourcesManager_P;
 
     class OSMAND_CORE_API WeatherTileResourcesManager

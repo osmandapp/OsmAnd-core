@@ -17,7 +17,8 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& background_,
     const ColorARGB color_,
     const QHash<QString, QString>& extensions_,
-    const bool calendarEvent_)
+    const bool calendarEvent_,
+    const QString& amenityOriginName_)
     : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::Point31)
     , position31(position31_)
@@ -35,6 +36,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     setColor(color_);
     setExtensions(extensions_);
     setCalendarEvent(calendarEvent_);
+    setAmenityOriginName(amenityOriginName_);
     attach(containerLink_);
 }
 
@@ -52,7 +54,8 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const QString& background_,
     const ColorARGB color_,
     const QHash<QString, QString>& extensions_,
-    const bool calendarEvent_)
+    const bool calendarEvent_,
+    const QString& amenityOriginName_)
     : _p(new FavoriteLocation_P(this))
     , locationSource(LocationSource::LatLon)
     , position31(Utilities::convertLatLonTo31(latLon_))
@@ -70,6 +73,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     setColor(color_);
     setExtensions(extensions_);
     setCalendarEvent(calendarEvent_);
+    setAmenityOriginName(amenityOriginName_);
     attach(containerLink_);
 }
 

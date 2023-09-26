@@ -17,6 +17,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/IGeoTiffCollection.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 
 #include <OsmAndCoreTools.h>
@@ -39,6 +40,7 @@ namespace OsmAndTools
             Configuration();
 
             std::shared_ptr<OsmAnd::IObfsCollection> obfsCollection;
+            std::shared_ptr<const OsmAnd::IGeoTiffCollection> geotiffCollection;
             std::shared_ptr<OsmAnd::IMapStylesCollection> stylesCollection;
             QString styleName;
             QHash< QString, QString > styleSettings;
@@ -50,6 +52,11 @@ namespace OsmAndTools
             float zoom;
             float azimuth;
             float elevationAngle;
+            unsigned int frames;
+            OsmAnd::PointI endTarget31;
+            float endZoom;
+            float endAzimuth;
+            float endElevationAngle;
             float fov;
             unsigned int referenceTileSize;
             float displayDensityFactor;

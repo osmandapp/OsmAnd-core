@@ -264,9 +264,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     _isSupported_ARB_texture_float = extensions.contains(QStringLiteral("GL_ARB_texture_float"));
     _isSupported_ATI_texture_float = extensions.contains(QStringLiteral("GL_ATI_texture_float"));
-    _isSupported_texture_float = isSupported_ARB_texture_float || isSupported_ATI_texture_float;
+    _isSupported_texture_float = (glVersion >= 30) || isSupported_ARB_texture_float || isSupported_ATI_texture_float;
 
-    _isSupported_texture_rg = _isSupported_ARB_texture_rg = extensions.contains(QLatin1String("GL_ARB_texture_rg"));
+    _isSupported_texture_rg = _isSupported_ARB_texture_rg =
+        (glVersion >= 30) || extensions.contains(QLatin1String("GL_ARB_texture_rg"));
 
     _isSupported_EXT_gpu_shader4 = extensions.contains(QStringLiteral("GL_EXT_gpu_shader4"));
     _isSupported_integerOperations = (glslVersion >= 130) || _isSupported_EXT_gpu_shader4;

@@ -1526,7 +1526,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         .arg(qPrintable(symbol->content)));
 
     // Set glyph height
-    glUniform1f(_onPath3dProgram.vs.param.glyphHeight, gpuResource->height*internalState.pixelInWorldProjectionScale);
+    glUniform1f(_onPath3dProgram.vs.param.glyphHeight, gpuResource->height * renderable->pixelSizeInWorld);
     GL_CHECK_RESULT;
 
     // Set distance from camera
@@ -1601,7 +1601,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
             GL_CHECK_RESULT;
 
             // Set glyph width
-            glUniform1f(vsGlyph.width, glyph.width*internalState.pixelInWorldProjectionScale);
+            glUniform1f(vsGlyph.width, glyph.width * renderable->pixelSizeInWorld);
             GL_CHECK_RESULT;
 
             // Set angle
@@ -2212,7 +2212,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
-        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 0.2;                                ""\n"
+        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + 1.0;                                ""\n"
         "        gl_Position = param_vs_mModelViewProjection * v;                                                           ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"

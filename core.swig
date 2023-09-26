@@ -142,6 +142,7 @@
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include <OsmAndCore/Map/GeoTileObjectsProvider.h>
 #include <OsmAndCore/SingleSkImage.h>
+#include <OsmAndCore/Metrics.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -337,6 +338,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager::DownloadGeoTileRequest)
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
 	%shared_ptr(OsmAnd::GeoTileObjectsProvider)
+	%shared_ptr(OsmAnd::Metric)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -374,6 +376,7 @@ using namespace OsmAnd;
 #endif
 %include <swig/OsmAndCore_Stubs.h>
 %include <OsmAndCore/SingleSkImage.h>
+%include <OsmAndCore/Metrics.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
 %include <OsmAndCore/CommonSWIG.h>

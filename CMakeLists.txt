@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 179
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 180
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -120,6 +120,14 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGL2PLUS_RENDERER_SUPPORTED
 	)
+	if (CMAKE_TARGET_OS STREQUAL "linux")
+		set(target_specific_public_libraries ${target_specific_public_libraries}
+			OpenGL::EGL
+		)
+		set(target_specific_dependencies ${target_specific_dependencies}
+			OpenGL::EGL
+		)
+	endif()
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		OpenGL::GL
 		OpenGL::GLU
