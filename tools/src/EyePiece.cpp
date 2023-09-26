@@ -1328,6 +1328,11 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 {
     outConfiguration = Configuration();
 
+    bool useEndTarget31 = false;
+    bool useEndZoom = false;
+    bool useEndAzimuth = false;
+    bool useEndElevationAngle = false;
+
     const std::shared_ptr<OsmAnd::ObfsCollection> obfsCollection(new OsmAnd::ObfsCollection());
     outConfiguration.obfsCollection = obfsCollection;
     auto geotiffCollection = new OsmAnd::GeoTiffCollection();
@@ -1611,6 +1616,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             }
 
             outConfiguration.endTarget31 = OsmAnd::Utilities::convertLatLonTo31(latLon);
+            useEndTarget31 = true;
         }
         else if (arg.startsWith(QLatin1String("-endTarget31=")))
         {
@@ -1637,6 +1643,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as target31.y").arg(target31Values[1]);
                 return false;
             }
+            useEndTarget31 = true;
         }
         else if (arg.startsWith(QLatin1String("-endZoom=")))
         {
@@ -1649,6 +1656,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as zoom").arg(value);
                 return false;
             }
+            useEndZoom = true;
         }
         else if (arg.startsWith(QLatin1String("-endAzimuth=")))
         {
@@ -1661,6 +1669,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as azimuth").arg(value);
                 return false;
             }
+            useEndAzimuth = true;
         }
         else if (arg.startsWith(QLatin1String("-endElevationAngle=")))
         {
@@ -1673,6 +1682,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as elevation angle").arg(value);
                 return false;
             }
+            useEndElevationAngle = true;
         }
         else if (arg.startsWith(QLatin1String("-fov=")))
         {
@@ -1756,6 +1766,15 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             return false;
         }
     }
+
+    if (!useEndTarget31)
+        outConfiguration.endTarget31 = outConfiguration.target31;
+    if (!useEndZoom)
+        outConfiguration.endZoom = outConfiguration.zoom;
+    if (!useEndAzimuth)
+        outConfiguration.endAzimuth = outConfiguration.azimuth;
+    if (!useEndElevationAngle)
+        outConfiguration.endElevationAngle = outConfiguration.elevationAngle;
 
     // Validate
     if (outConfiguration.styleName.isEmpty())
