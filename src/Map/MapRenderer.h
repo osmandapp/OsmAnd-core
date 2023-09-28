@@ -11,6 +11,7 @@
 #include <QMap>
 #include <QReadWriteLock>
 #include <QSet>
+#include <QJsonDocument>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -130,6 +131,11 @@ namespace OsmAnd
         std::shared_ptr<const MapRendererDebugSettings> _currentDebugSettingsAsConst;
         std::shared_ptr<MapRendererDebugSettings> _requestedDebugSettings;
         bool updateCurrentDebugSettings();
+
+        // Optional JSON report:
+        mutable QReadWriteLock _jsonDocumentLock;
+        std::shared_ptr<const QJsonDocument> _jsonDocument;
+        bool _jsonEnabled;
 
         virtual AreaI getVisibleBBox31(const MapRendererInternalState& internalState) const = 0;
         virtual AreaI getVisibleBBoxShifted(const MapRendererInternalState& internalState) const = 0;
@@ -387,6 +393,12 @@ namespace OsmAnd
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const Q_DECL_OVERRIDE;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) Q_DECL_OVERRIDE;
+
+        virtual void useJSON() Q_DECL_OVERRIDE;
+        virtual bool withJSON() const Q_DECL_OVERRIDE;
+        virtual void setJSON(const QJsonDocument* jsonDocument) Q_DECL_OVERRIDE;
+        virtual QByteArray getJSON() const Q_DECL_OVERRIDE;
+
         virtual void setResourceWorkerThreadsLimit(const unsigned int limit) Q_DECL_OVERRIDE;
         virtual void resetResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual unsigned int getActiveResourceRequestsCount() const Q_DECL_OVERRIDE;

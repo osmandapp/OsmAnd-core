@@ -169,6 +169,11 @@ namespace OsmAnd
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;
 
+        virtual void useJSON() = 0;
+        virtual bool withJSON() const = 0;
+        virtual void setJSON(const QJsonDocument* jsonDocument) = 0;
+        virtual QByteArray getJSON() const = 0;
+
         virtual ZoomLevel getMinZoomLevel() const = 0;
         virtual ZoomLevel getMaxZoomLevel() const = 0;
 

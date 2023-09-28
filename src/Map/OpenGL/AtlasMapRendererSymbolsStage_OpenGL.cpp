@@ -4,6 +4,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "QtExtensions.h"
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+
+#include "Utilities.h"
 #include "AtlasMapRenderer_OpenGL.h"
 #include "AtlasMapRenderer_Metrics.h"
 #include "MapSymbol.h"
@@ -15,6 +21,9 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "Stopwatch.h"
+
+#include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
@@ -68,12 +77,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
+    // Prepare JSON report
+    QJsonArray jsonArray;
+    bool withJson = renderer->withJSON();
+
     for (const auto& renderableSymbol : constOf(renderableSymbols))
     {
         if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
             ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType);
+            if (withJson)
+            {
+                QJsonObject jsonObject;
+                jsonObject.insert(QStringLiteral("type"), QStringLiteral("billboard"));
+                const auto& symbol =
+                    std::static_pointer_cast<const BillboardRasterMapSymbol>(renderableBillboardSymbol->mapSymbol);
+                const auto& position31 = (renderableBillboardSymbol->instanceParameters
+                    && renderableBillboardSymbol->instanceParameters->overridesPosition31)
+                    ? renderableBillboardSymbol->instanceParameters->position31
+                    : symbol->getPosition31();
+                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                reportCommonParameters(jsonObject, *renderableSymbol);
+                jsonArray.append(jsonObject);
+            }
             if (metric)
             {
                 metric->elapsedTimeForBillboardSymbolsRendering += renderBillboardSymbolStopwatch.elapsed();
@@ -84,6 +112,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         {
             Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType);
+            if (withJson)
+            {
+                QJsonObject jsonObject;
+                jsonObject.insert(QStringLiteral("type"),
+                    renderableOnPathSymbol->is2D ? QStringLiteral("on-path-2D") : QStringLiteral("on-path-3D"));
+                const auto& symbol =
+                    std::static_pointer_cast<const OnPathRasterMapSymbol>(renderableOnPathSymbol->mapSymbol);
+                const auto& position31 = (renderableOnPathSymbol->instanceParameters
+                    && renderableOnPathSymbol->instanceParameters->overridesPinPointOnPath)
+                    ? renderableOnPathSymbol->instanceParameters->pinPointOnPath.point31
+                    : symbol->pinPointOnPath.point31;
+                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                reportCommonParameters(jsonObject, *renderableSymbol);
+                jsonArray.append(jsonObject);
+            }
             if (metric)
             {
                 metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
@@ -100,6 +144,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
                 metric->onSurfaceSymbolsRendered += 1;
             }
         }
+    }
+
+    if (withJson)
+    {
+        auto jsonDocument = new QJsonDocument();
+        jsonDocument->setArray(jsonArray);
+        renderer->setJSON(jsonDocument);
     }
 
     // Unbind symbol texture from texture sampler
@@ -3212,5 +3263,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::cancelElevation(
 
         glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
+    }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
+    QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol)
+{
+    const auto& mapSymbol =
+        std::static_pointer_cast<const RasterMapSymbol>(renderableSymbol.mapSymbol);
+    jsonObject.insert(QStringLiteral("class"),
+        mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption ? QStringLiteral("caption")
+            : (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Icon ? QStringLiteral("icon")
+                : QStringLiteral("unknown")));
+    if (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption)
+    {
+        jsonObject.insert(QStringLiteral("content"), mapSymbol->content);
+        jsonObject.insert(QStringLiteral("language"),
+            mapSymbol->languageId == OsmAnd::LanguageId::Native ? QStringLiteral("native")
+            : (mapSymbol->languageId == OsmAnd::LanguageId::Localized ? QStringLiteral("localized")
+                : QStringLiteral("invariant")));
+    }
+    jsonObject.insert(QStringLiteral("width"), mapSymbol->size.x);
+    jsonObject.insert(QStringLiteral("height"), mapSymbol->size.y);
+    jsonObject.insert(QStringLiteral("order"), mapSymbol->order);
+    jsonObject.insert("opacity", renderableSymbol.opacityFactor);
+    if (const auto mapObjectSymbolsGroup =
+        dynamic_cast<MapObjectsSymbolsProvider::MapObjectSymbolsGroup*>(mapSymbol->groupPtr))
+    {
+        if (const auto binaryMapObject =
+            dynamic_cast<const BinaryMapObject*>(&(*(mapObjectSymbolsGroup->mapObject))))
+        {
+            jsonObject.insert(QStringLiteral("id"), binaryMapObject->id.getOsmId());
+        }
     }
 }
