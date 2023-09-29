@@ -56,6 +56,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , publishedMapSymbolsByOrderLock(_publishedMapSymbolsByOrderLock)
     , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
+    , _jsonEnabled(false)
 {
 }
 
@@ -2352,6 +2353,30 @@ void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRender
     _currentDebugSettingsInvalidatedCounter.fetchAndAddOrdered(1);
 
     invalidateFrame();
+}
+
+void OsmAnd::MapRenderer::useJSON()
+{
+    _jsonEnabled = true;
+}
+
+bool OsmAnd::MapRenderer::withJSON() const
+{
+    return _jsonEnabled;
+}
+
+void OsmAnd::MapRenderer::setJSON(const QJsonDocument* jsonDocument)
+{
+    QWriteLocker scopedLocker(&_jsonDocumentLock);
+
+    _jsonDocument.reset(jsonDocument);
+}
+
+QByteArray OsmAnd::MapRenderer::getJSON() const
+{
+    QReadLocker scopedLocker(&_jsonDocumentLock);
+
+    return _jsonDocument ? _jsonDocument->toJson() : QByteArray();
 }
 
 void OsmAnd::MapRenderer::setResourceWorkerThreadsLimit(const unsigned int limit)

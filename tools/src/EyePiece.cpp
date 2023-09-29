@@ -96,9 +96,9 @@ bool OsmAndTools::EyePiece::rasterize(std::wostream& output)
 bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #endif
 {
-    if (configuration.outputImageWidth == 0)
+    if (configuration.outputRasterWidth == 0)
         return false;
-    if (configuration.outputImageHeight == 0)
+    if (configuration.outputRasterHeight == 0)
         return false;
 
     OsmAnd::Stopwatch rasterizationStopwatch(true);
@@ -269,8 +269,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferARB = wglCreatePbufferARB(
             hTempWindowDC,
             tempWindowPixelFormat,
-            configuration.outputImageWidth,
-            configuration.outputImageHeight,
+            configuration.outputRasterWidth,
+            configuration.outputRasterHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferARB;
     }
@@ -280,8 +280,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferEXT = wglCreatePbufferEXT(
             hTempWindowDC,
             tempWindowPixelFormat,
-            configuration.outputImageWidth,
-            configuration.outputImageHeight,
+            configuration.outputRasterWidth,
+            configuration.outputRasterHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferEXT;
     }
@@ -483,8 +483,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     EGLConfig eglCfg;
     eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
     const EGLint pbufferAttribs[] = {
-            EGL_WIDTH, (int) configuration.outputImageWidth,
-            EGL_HEIGHT, (int) configuration.outputImageHeight,
+            EGL_WIDTH, (int) configuration.outputRasterWidth,
+            EGL_HEIGHT, (int) configuration.outputRasterHeight,
             EGL_NONE,
     };    
     EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs);
@@ -601,8 +601,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     // Create pbuffer
     const int pbufferAttribs[] = {
-        GLX_PBUFFER_WIDTH, (int)configuration.outputImageWidth,
-        GLX_PBUFFER_HEIGHT, (int)configuration.outputImageHeight,
+        GLX_PBUFFER_WIDTH, (int)configuration.outputRasterWidth,
+        GLX_PBUFFER_HEIGHT, (int)configuration.outputRasterHeight,
         None
     };
     const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfiguration, pbufferAttribs);
@@ -773,7 +773,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         glBindTexture(GL_TEXTURE_2D, framebufferColorTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, configuration.outputImageWidth, configuration.outputImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, configuration.outputRasterWidth, configuration.outputRasterHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         if (!glVerifyResult(output))
         {
             glDeleteTextures(1, &framebufferColorTexture);
@@ -787,7 +787,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Create depth renderbuffer
         glGenRenderbuffers(1, &framebufferDepthRenderbuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, framebufferDepthRenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, configuration.outputImageWidth, configuration.outputImageHeight);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, configuration.outputRasterWidth, configuration.outputRasterHeight);
         if (!glVerifyResult(output))
         {
             glDeleteTextures(1, &framebufferColorTexture);
@@ -846,7 +846,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     else
     {
-        cglError = CGLCreatePBuffer(configuration.outputImageWidth, configuration.outputImageHeight, GL_TEXTURE_2D, GL_RGBA, 0, &pbuffer);
+        cglError = CGLCreatePBuffer(configuration.outputRasterWidth, configuration.outputRasterHeight, GL_TEXTURE_2D, GL_RGBA, 0, &pbuffer);
         if (cglError != kCGLNoError)
         {
             CGLSetCurrentContext(NULL);
@@ -1010,9 +1010,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         mapRenderer->setZoom(configuration.zoom);
         mapRenderer->setAzimuth(configuration.azimuth);
         mapRenderer->setElevationAngle(configuration.elevationAngle);
-        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputImageWidth, configuration.outputImageHeight));
-        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputImageHeight, configuration.outputImageWidth));
+        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputRasterWidth, configuration.outputRasterHeight));
+        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputRasterHeight, configuration.outputRasterWidth));
         mapRenderer->setFieldOfView(configuration.fov);
+
+        if (!configuration.outputJSONFilename.isEmpty())
+            mapRenderer->useJSON();
 
         // Add providers
         if (configuration.verbose)
@@ -1088,21 +1091,21 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 output << xT("Reading result image from GPU...") << std::endl;
             SkBitmap outputBitmap;
             outputBitmap.allocPixels(SkImageInfo::MakeN32Premul(
-                configuration.outputImageWidth, configuration.outputImageHeight));
-            glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight,
+                configuration.outputRasterWidth, configuration.outputRasterHeight));
+            glReadPixels(0, 0, configuration.outputRasterWidth, configuration.outputRasterHeight,
                 GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
             glVerifyResult(output);
 
             // Flip image vertically
             SkBitmap filledOutputBitmap;
             filledOutputBitmap.allocPixels(
-                SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
+                SkImageInfo::MakeN32Premul(configuration.outputRasterWidth, configuration.outputRasterHeight));
             const auto rowSizeInBytes = outputBitmap.rowBytes();
-            for (int row = 0; row < configuration.outputImageHeight; row++)
+            for (int row = 0; row < configuration.outputRasterHeight; row++)
             {
                 const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
                 const auto pDstRow = reinterpret_cast<uint8_t*>(
-                    filledOutputBitmap.getPixels()) + ((configuration.outputImageHeight - row - 1) * rowSizeInBytes);
+                    filledOutputBitmap.getPixels()) + ((configuration.outputRasterHeight - row - 1) * rowSizeInBytes);
                 memcpy(pDstRow, pSrcRow, rowSizeInBytes);
             }
 
@@ -1174,6 +1177,53 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                             }
                             imageFile.close();
                         }
+                    }
+                }
+            }
+
+            if (!configuration.outputJSONFilename.isEmpty())
+            {
+                auto fileName = configuration.outputJSONFilename;
+                if (configuration.frames > 1)
+                    fileName += (QStringLiteral("000") + QString::number(framesCounter)).right(4);
+
+                fileName += QStringLiteral(".json");
+
+                if (configuration.verbose)
+                    output << xT("Saving data to '") << QStringToStlString(fileName) << xT("'...") << std::endl;
+
+                QFile jsonFile(fileName);
+
+                // Just in case try to create entire path
+                auto containingDirectory = QFileInfo(jsonFile).absoluteDir();
+                containingDirectory.mkpath(QLatin1String("."));
+                if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
+                {
+                    output << xT("'") << QStringToStlString(containingDirectory.absolutePath())
+                        << xT("' is not writable") << std::endl;
+                    success = false;
+                    break;
+                }
+                else
+                {
+                    if (!jsonFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                    {
+                        output << xT("Failed to open destination file '")
+                            << QStringToStlString(fileName) << xT("'") << std::endl;
+                        success = false;
+                        break;
+                    }
+                    else
+                    {
+                        const auto jsonData = mapRenderer->getJSON();
+                        if (jsonFile.write(jsonData) != jsonData.size())
+                        {
+                            output << xT("Failed to write JSON data to '")
+                                << QStringToStlString(fileName) << xT("'") << std::endl;
+                            success = false;
+                            break;
+                        }
+                        jsonFile.close();
                     }
                 }
             }
@@ -1296,8 +1346,8 @@ bool OsmAndTools::EyePiece::rasterize(QString *pLog /*= nullptr*/)
 
 OsmAndTools::EyePiece::Configuration::Configuration()
     : styleName(QLatin1String("default"))
-    , outputImageWidth(0)
-    , outputImageHeight(0)
+    , outputRasterWidth(0)
+    , outputRasterHeight(0)
     , outputImageFormat(ImageFormat::PNG)
     , target31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
     , zoom(15.0f)
@@ -1446,31 +1496,35 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 
             outConfiguration.styleSettings[settingKeyValue[0]] = Utilities::purifyArgumentValue(settingKeyValue[1]);
         }
-        else if (arg.startsWith(QLatin1String("-outputImageWidth=")))
+        else if (arg.startsWith(QLatin1String("-outputRasterWidth=")))
         {
-            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageWidth=")));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputRasterWidth=")));
             bool ok = false;
-            outConfiguration.outputImageWidth = value.toUInt(&ok);
+            outConfiguration.outputRasterWidth = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'%1' can not be parsed as output image width").arg(value);
+                outError = QString("'%1' can not be parsed as output raster width").arg(value);
                 return false;
             }
         }
-        else if (arg.startsWith(QLatin1String("-outputImageHeight=")))
+        else if (arg.startsWith(QLatin1String("-outputRasterHeight=")))
         {
-            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageHeight=")));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputRasterHeight=")));
             bool ok = false;
-            outConfiguration.outputImageHeight = value.toUInt(&ok);
+            outConfiguration.outputRasterHeight = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'%1' can not be parsed as output image height").arg(value);
+                outError = QString("'%1' can not be parsed as output raster height").arg(value);
                 return false;
             }
         }
         else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
         {
             outConfiguration.outputImageFilename = Utilities::resolvePath(arg.mid(strlen("-outputImageFilename=")));
+        }
+        else if (arg.startsWith(QLatin1String("-outputJSONFilename=")))
+        {
+            outConfiguration.outputJSONFilename = Utilities::resolvePath(arg.mid(strlen("-outputJSONFilename=")));
         }
         else if (arg.startsWith(QLatin1String("-outputImageFormat=")))
         {
@@ -1777,19 +1831,24 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         outConfiguration.endElevationAngle = outConfiguration.elevationAngle;
 
     // Validate
+    if (outConfiguration.outputImageFilename.isEmpty() && outConfiguration.outputJSONFilename.isEmpty())
+    {
+        outError = QLatin1String("output filename should be specified");
+        return false;
+    }
     if (outConfiguration.styleName.isEmpty())
     {
         outError = QLatin1String("'styleName' can not be empty");
         return false;
     }
-    if (outConfiguration.outputImageWidth == 0)
+    if (outConfiguration.outputRasterWidth == 0)
     {
-        outError = QLatin1String("'outputImageWidth' can not be 0");
+        outError = QLatin1String("'outputRasterWidth' can not be 0");
         return false;
     }
-    if (outConfiguration.outputImageHeight == 0)
+    if (outConfiguration.outputRasterHeight == 0)
     {
-        outError = QLatin1String("'outputImageHeight' can not be 0");
+        outError = QLatin1String("'outputRasterHeight' can not be 0");
         return false;
     }
 

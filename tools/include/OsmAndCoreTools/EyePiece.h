@@ -44,9 +44,10 @@ namespace OsmAndTools
             std::shared_ptr<OsmAnd::IMapStylesCollection> stylesCollection;
             QString styleName;
             QHash< QString, QString > styleSettings;
-            unsigned int outputImageWidth;
-            unsigned int outputImageHeight;
+            unsigned int outputRasterWidth;
+            unsigned int outputRasterHeight;
             QString outputImageFilename;
+            QString outputJSONFilename;
             ImageFormat outputImageFormat;
             OsmAnd::PointI target31;
             float zoom;
