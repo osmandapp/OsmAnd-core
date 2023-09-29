@@ -3293,7 +3293,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
         if (const auto binaryMapObject =
             dynamic_cast<const BinaryMapObject*>(&(*(mapObjectSymbolsGroup->mapObject))))
         {
-            jsonObject.insert(QStringLiteral("id"), binaryMapObject->id.getOsmId());
+            jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId()));
         }
     }
 }
