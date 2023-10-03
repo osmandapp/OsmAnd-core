@@ -1477,7 +1477,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     const auto zoomedDistance = qSqrt(sqrNeededDistance - sqrRange) + width;
     if (zoomedDistance <= 0.0)
         return false;
-    auto distanceFactor = currentDistance / zoomedDistance;
+
+    const auto currentDistanceNoVisualZoom = currentDistance * state.visualZoom;
+    auto distanceFactor = currentDistanceNoVisualZoom / zoomedDistance;
     auto zoomedRatio = segmentRatio * distanceFactor;
     if (zoomedRatio.x > 1.0 || zoomedRatio.y > 1.0)
     {
@@ -1493,9 +1495,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (zoomLevel > MaxZoomLevel)
         return false;
     const auto zoom = static_cast<double>(1u << static_cast<int>(zoomLevel));
-    const auto neededZoom = upScale ? zoomLevel + factor / zoom - 1.0 : (zoom / factor - 1.0) * 2.0 - zoomLevel;
-    if (neededZoom != neededZoom)
+    const auto deltaZoomForIntZoom = upScale
+        ? zoomLevel + factor / zoom - 1.0
+        : (zoom / factor - 1.0) * 2.0 - zoomLevel;
+    if (qIsNaN(deltaZoomForIntZoom))
         return false;
+    
+    const auto currentZoomFloatPart = state.visualZoom >= 1.0f
+        ? state.visualZoom - 1.0f
+        : (state.visualZoom - 1.0f) * 2.0f;
+    const auto deltaZoom = deltaZoomForIntZoom - currentZoomFloatPart;
+
     const auto actualSegment = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x);
     const auto sqrActualDistance = actualSegment.squareNorm();
@@ -1507,7 +1517,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (neededAngle != neededAngle)
         return false;
 
-    zoomAndRotate.x = neededZoom;
+    zoomAndRotate.x = deltaZoom;
     zoomAndRotate.y = neededAngle;
 
     return true;
