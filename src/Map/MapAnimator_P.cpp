@@ -602,7 +602,7 @@ void OsmAnd::MapAnimator_P::animateMoveWith(
 float OsmAnd::MapAnimator_P::zoomGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     const auto state = _renderer->getState();
-    const auto zoom = state.zoomLevel + (state.visualZoom >= 1.0f ? state.visualZoom - 1.0f : (state.visualZoom - 1.0f) * 2.0f);
+    const auto zoom = state.surfaceZoomLevel + (state.surfaceVisualZoom >= 1.0f ? state.surfaceVisualZoom - 1.0f : (state.surfaceVisualZoom - 1.0f) * 2.0f);
     return zoom;
 }
 

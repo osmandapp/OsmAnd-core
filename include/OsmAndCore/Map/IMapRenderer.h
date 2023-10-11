@@ -142,7 +142,6 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
-        virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool resetMapTarget() = 0;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) = 0;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
@@ -151,6 +150,10 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) = 0;
+        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+        virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
