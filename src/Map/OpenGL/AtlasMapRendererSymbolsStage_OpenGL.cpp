@@ -3290,10 +3290,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
     if (const auto mapObjectSymbolsGroup =
         dynamic_cast<MapObjectsSymbolsProvider::MapObjectSymbolsGroup*>(mapSymbol->groupPtr))
     {
+        if (mapObjectSymbolsGroup->mapObject->points31.size() > 1) {
+            const auto& start = mapObjectSymbolsGroup->mapObject->points31[0];
+            const auto& end = mapObjectSymbolsGroup->mapObject->points31[mapObjectSymbolsGroup->mapObject->points31.size() - 1];
+            QJsonObject startJsonObject;
+            startJsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, start.y));
+            startJsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, start.x));
+            QJsonObject endJsonObject;
+            endJsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, end.y));
+            endJsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, end.x));
+            jsonObject.insert(QStringLiteral("startPoint"), startJsonObject);
+            jsonObject.insert(QStringLiteral("endPoint"), endJsonObject);
+        }
         if (const auto binaryMapObject =
             dynamic_cast<const BinaryMapObject*>(&(*(mapObjectSymbolsGroup->mapObject))))
         {
-            jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId()));
+            jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId() >> 1));
         }
     }
 }
