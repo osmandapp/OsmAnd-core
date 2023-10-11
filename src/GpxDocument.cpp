@@ -563,6 +563,13 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     xmlWriter.writeEndElement();
 }
 
+bool OsmAnd::GpxDocument::saveToString(QString& result, const QString& trackName, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
+{
+    QXmlStreamWriter xmlWriter(&result);
+    xmlWriter.setAutoFormatting(true);
+    return saveTo(xmlWriter, trackName, creatorName);
+}
+
 bool OsmAnd::GpxDocument::saveTo(QIODevice& ioDevice, const QString& filename, const QString& creatorName /* = QStringLiteral("OsmAnd Core") */) const
 {
     QXmlStreamWriter xmlWriter(&ioDevice);
@@ -1232,6 +1239,12 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QIODevice& ioDevice)
 {
     QXmlStreamReader xmlReader(&ioDevice);
+    return loadFrom(xmlReader);
+}
+
+std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFromContent(const QString& fileContent)
+{
+    QXmlStreamReader xmlReader(fileContent);
     return loadFrom(xmlReader);
 }
 
