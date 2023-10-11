@@ -1787,6 +1787,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             -halfSizeInWorld,
             startPathPointIndex3D,
             offsetFromStartPathPoint3D);
+        endPathPointIndex3D = startPathPointIndex3D;
+        offsetFromEndPathPoint3D = offsetFromStartPathPoint3D;
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
             computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
