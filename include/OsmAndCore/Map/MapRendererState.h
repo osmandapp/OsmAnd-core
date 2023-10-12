@@ -75,6 +75,8 @@ namespace OsmAnd
         ZoomLevel fixedZoomLevel;
         ZoomLevel zoomLevel;
         float visualZoom;
+        ZoomLevel surfaceZoomLevel;
+        float surfaceVisualZoom;
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
@@ -119,6 +121,8 @@ namespace OsmAnd
         ZoomLevel fixedZoomLevel;
         ZoomLevel zoomLevel;
         float visualZoom;
+        ZoomLevel surfaceZoomLevel;
+        float surfaceVisualZoom;
         float visualZoomShift;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
