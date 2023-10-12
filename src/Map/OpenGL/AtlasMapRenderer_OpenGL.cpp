@@ -1272,13 +1272,28 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
         / (state.fixedHeight == 0.0f ? 1.0 : static_cast<double>(1u << state.fixedZoomLevel));
     const auto distanceToSurface = baseUnits
         / (state.visualZoom * static_cast<double>(1u << state.zoomLevel) * distanceFactor) - elevation / sinAngle;
+    if (distanceToSurface <= 0.0)
+    {
+        surfaceVisualZoom = state.visualZoom;
+        return state.zoomLevel;
+    }
     const auto scaleFactor = baseUnits / distanceToSurface;
     const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
     const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
-    const auto resultZoom =
-        static_cast<ZoomLevel>(qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom);
-    surfaceVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
-    return resultZoom;
+    auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+    if (resultZoom > MaxZoomLevel)
+    {
+        resultZoom = MaxZoomLevel;
+        surfaceVisualZoom = _maxVisualZoom;
+    }
+    else if (resultZoom < MinZoomLevel)
+    {
+        resultZoom = MinZoomLevel;
+        surfaceVisualZoom = _minVisualZoom;
+    }
+    else
+        surfaceVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    return static_cast<ZoomLevel>(resultZoom);
 }
 
 OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRendererState& state,
@@ -1309,10 +1324,20 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRenderer
     const auto scaleFactor = baseUnits / distanceToCenter;
     const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
     const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
-    const auto resultZoom =
-        static_cast<ZoomLevel>(qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom);
-    flatVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
-    return resultZoom;
+    auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+    if (resultZoom > MaxZoomLevel)
+    {
+        resultZoom = MaxZoomLevel;
+        flatVisualZoom = _maxVisualZoom;
+    }
+    else if (resultZoom < MinZoomLevel)
+    {
+        resultZoom = MinZoomLevel;
+        flatVisualZoom = _minVisualZoom;
+    }
+    else
+        flatVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    return static_cast<ZoomLevel>(resultZoom);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
