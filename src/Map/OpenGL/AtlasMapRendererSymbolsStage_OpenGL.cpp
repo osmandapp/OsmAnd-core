@@ -3287,6 +3287,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
     jsonObject.insert(QStringLiteral("height"), mapSymbol->size.y);
     jsonObject.insert(QStringLiteral("order"), mapSymbol->order);
     jsonObject.insert("opacity", renderableSymbol.opacityFactor);
+    jsonObject.insert(QStringLiteral("zoom"), currentState.surfaceZoomLevel);
     if (const auto mapObjectSymbolsGroup =
         dynamic_cast<MapObjectsSymbolsProvider::MapObjectSymbolsGroup*>(mapSymbol->groupPtr))
     {

@@ -1282,11 +1282,10 @@ bool OsmAnd::GeoTiffCollection_P::calculateHeights(
     {
         PointF offsetInTileN;
         TileId tileId = Utilities::getTileId(point31, zoom, &offsetInTileN);
-        PointF offsetInScaledTileN = offsetInTileN;
         if (lastData && lastData->tileId == tileId)
         {
             float elevationInMeters = 0.0f;
-            if (lastData->getValue(offsetInScaledTileN, elevationInMeters))
+            if (lastData->getValue(offsetInTileN, elevationInMeters))
                 outHeights.append(elevationInMeters);
             else
                 return false;
@@ -1305,7 +1304,7 @@ bool OsmAnd::GeoTiffCollection_P::calculateHeights(
                       pBuffer);
 
                 float elevationInMeters = 0.0f;
-                if (data->getValue(offsetInScaledTileN, elevationInMeters))
+                if (data->getValue(offsetInTileN, elevationInMeters))
                     outHeights.append(elevationInMeters);
                 else
                     return false;

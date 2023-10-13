@@ -1730,8 +1730,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         -halfSizeInPixels,
         startPathPointIndex2D,
         offsetFromStartPathPoint2D);
-    unsigned int endPathPointIndex2D = 0;
-    float offsetFromEndPathPoint2D = 0.0f;
+    unsigned int endPathPointIndex2D = startPathPointIndex2D;
+    float offsetFromEndPathPoint2D = offsetFromStartPathPoint2D;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
         computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
@@ -1787,6 +1787,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             -halfSizeInWorld,
             startPathPointIndex3D,
             offsetFromStartPathPoint3D);
+        endPathPointIndex3D = startPathPointIndex3D;
+        offsetFromEndPathPoint3D = offsetFromStartPathPoint3D;
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
             computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
@@ -2652,7 +2654,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             const auto segmentLength = pathSegmentsLengths[testPathPointIndex];
             if (std::isnan(segmentLength))
                 return false;
-            if (scannedLength + segmentLength > offsetFromOriginPathPoint)
+            if (scannedLength + segmentLength >= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
@@ -2675,7 +2677,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             const auto segmentLength = pathSegmentsLengths[testPathPointIndex];
             if (std::isnan(segmentLength))
                 return false;
-            if (scannedLength - segmentLength < offsetFromOriginPathPoint)
+            if (scannedLength - segmentLength <= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);

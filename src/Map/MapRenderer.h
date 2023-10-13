@@ -82,7 +82,8 @@ namespace OsmAnd
         MapRendererState _currentState;
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        bool setMapTarget(MapRendererState& state, const PointI& location31, const float heightInMeters,
+        bool setMapTarget(MapRendererState& state, bool forcedUpdate = false, bool disableUpdate = false);
+        bool setMapTargetOnly(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
 
         // Resources-related:
@@ -142,6 +143,7 @@ namespace OsmAnd
         virtual double getPixelsToMetersScaleFactor(const MapRendererState& state, const MapRendererInternalState& internalState) const = 0;
         virtual bool getNewTargetByScreenPoint(const MapRendererState& state, const PointI& screenPoint,
             const PointI& location31, PointI& target31, const float height = 0.0f) const = 0;
+        virtual bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const = 0;
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
             const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
@@ -160,6 +162,12 @@ namespace OsmAnd
             const float elevationInMeters, const PointI& location31) const = 0;
         virtual float getElevationOfLocationInMeters(const MapRendererState& state,
             const float elevation, const ZoomLevel zoom, const PointI& location31) const = 0;
+        virtual double getDistanceFactor(const MapRendererState& state, const float tileSize,
+            double& baseUnits, float& sinAngleToPlane) const = 0;
+        virtual OsmAnd::ZoomLevel getSurfaceZoom(const MapRendererState& state, float& surfaceVisualZoom) const = 0;
+        virtual OsmAnd::ZoomLevel getFlatZoom(const MapRendererState& state, const ZoomLevel surfaceZoomLevel,
+            const float surfaceVisualZoom, const double& pointElevation, float& flatVisualZoom) const = 0;
+
     protected:
         MapRenderer(
             GPUAPI* const gpuAPI,
@@ -339,7 +347,6 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
@@ -348,8 +355,14 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatZoom(
+            const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setZoom(
+            const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) Q_DECL_OVERRIDE;
