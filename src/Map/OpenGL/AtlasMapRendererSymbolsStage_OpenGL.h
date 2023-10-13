@@ -112,6 +112,7 @@ namespace OsmAnd
                     // Per-symbol data
                     GLlocation glyphHeight;
                     GLlocation distanceFromCamera;
+                    GLlocation currentOffset;
 
                     // Per-glyph data
                     QVector<Glyph> glyphs;
@@ -159,6 +160,7 @@ namespace OsmAnd
                     // Per-symbol data
                     GLlocation glyphHeight;
                     GLlocation zDistanceFromCamera;
+                    GLlocation currentOffset;
 
                     // Per-glyph data
                     QVector<Glyph> glyphs;
