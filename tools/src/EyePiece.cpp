@@ -1006,13 +1006,15 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto mapRendererConfiguration = std::static_pointer_cast<OsmAnd::AtlasMapRendererConfiguration>(mapRenderer->getConfiguration());
         mapRendererConfiguration->referenceTileSizeOnScreenInPixels = configuration.referenceTileSize;
         mapRenderer->setConfiguration(mapRendererConfiguration);
-        mapRenderer->setTarget(configuration.target31);
+        mapRenderer->setFieldOfView(configuration.fov);
+        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputRasterWidth, configuration.outputRasterHeight));
+        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputRasterHeight, configuration.outputRasterWidth));
+        mapRenderer->setMapTarget(
+            OsmAnd::PointI(configuration.outputRasterWidth / 2, configuration.outputRasterHeight / 2),
+            configuration.target31);
         mapRenderer->setZoom(configuration.zoom);
         mapRenderer->setAzimuth(configuration.azimuth);
         mapRenderer->setElevationAngle(configuration.elevationAngle);
-        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputRasterWidth, configuration.outputRasterHeight));
-        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputRasterHeight, configuration.outputRasterWidth));
-        mapRenderer->setFieldOfView(configuration.fov);
 
         if (!configuration.outputJSONFilename.isEmpty())
             mapRenderer->useJSON();
@@ -1234,7 +1236,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             {
                 const auto factor = static_cast<float>(framesCounter) / static_cast<float>(configuration.frames - 1);
                 const auto offset = OsmAnd::PointD(configuration.endTarget31 - configuration.target31) * factor;
-                mapRenderer->setTarget(configuration.target31 + OsmAnd::PointI(qFloor(offset.x), qFloor(offset.y)));
+                mapRenderer->setMapTargetLocation(
+                    configuration.target31 + OsmAnd::PointI(qFloor(offset.x), qFloor(offset.y)));
                 mapRenderer->setZoom(configuration.zoom
                     + (configuration.endZoom - configuration.zoom) * factor);
                 mapRenderer->setAzimuth(configuration.azimuth +
