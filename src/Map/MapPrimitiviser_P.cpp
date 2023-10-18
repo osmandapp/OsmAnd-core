@@ -37,6 +37,11 @@
 
 #define DEFAULT_TEXT_MIN_DISTANCE 150
 
+// If object's primitive is polygon and order is > 10, add it to polylines list
+// If object's primitive is polyline and order < 11, add it to polygons list
+#define MAX_POLYGON_ORDER_IN_POLYGONS_LIST 10
+#define MIN_POLYLINE_ORDER_IN_POLYLINES_LIST (MAX_POLYGON_ORDER_IN_POLYGONS_LIST + 1)
+
 // Filtering grid dimension in cells per tile side
 #define GRID_CELLS_PER_TILESIDE 32.0
 
@@ -972,7 +977,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     primitive->doubledArea = doubledPolygonArea31;
 
                     // Accept this primitive
-                    constructedGroup->polygons.push_back(qMove(primitive));
+                    if (zOrder <= MAX_POLYGON_ORDER_IN_POLYGONS_LIST)
+                        constructedGroup->polygons.push_back(qMove(primitive));
+                    else
+                        // Add to polylines to respect order while rastering                
+                        constructedGroup->polylines.push_back(qMove(primitive));
 
                     // Update metric
                     if (metric)
@@ -1109,7 +1118,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             primitive->zOrder = zOrder;
 
             // Accept this primitive
-            constructedGroup->polylines.push_back(qMove(primitive));
+            if (zOrder >= MIN_POLYLINE_ORDER_IN_POLYLINES_LIST)
+                constructedGroup->polylines.push_back(qMove(primitive));
+            else
+                // Add to polygons to respect order while rasterizing
+                constructedGroup->polygons.push_back(qMove(primitive));
 
             // Update metric
             if (metric)
