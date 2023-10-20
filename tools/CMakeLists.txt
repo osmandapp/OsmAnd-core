@@ -44,6 +44,14 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
 	CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
+	if (CMAKE_TARGET_OS STREQUAL "linux")
+		set(target_specific_public_libraries ${target_specific_public_libraries}
+			OpenGL::EGL
+		)
+		set(target_specific_dependencies ${target_specific_dependencies}
+			OpenGL::EGL
+		)
+	endif()
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		OpenGL::GL
 		OpenGL::GLU

@@ -37,6 +37,8 @@ namespace OsmAnd
         const static double _maximumDepthFromSeaLevelInMeters;
         const static double _detailDistanceFactor;
         const static float _invalidElevationValue;
+        const static float _minVisualZoom;
+        const static float _maxVisualZoom;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
 
@@ -50,7 +52,11 @@ namespace OsmAnd
         double getRealDistanceToHorizon(const InternalState& internalState, const MapRendererState& state,
             const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
-            const PointI& screenPoint, PointD& position, const float height = 0.0f, float* distance = nullptr) const;
+            const PointI& screenPoint, PointD& position,
+            const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
+        bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
+            const PointD& screenPoint, PointD& position,
+            const float height = 0.0f, float* distance = nullptr, float* sinAngle = nullptr) const;
         bool getNearestLocationFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
             const PointI& location31, const PointI& screenPoint,
             PointI64& fixedLocation, PointI64& currentLocation) const;
@@ -97,6 +103,7 @@ namespace OsmAnd
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
         bool getLocationFromElevatedPoint(const MapRendererState& state, const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
+        bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const override;
         float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const override;
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
         bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
@@ -116,6 +123,12 @@ namespace OsmAnd
             const float elevationInMeters, const PointI& location31) const override;
         float getElevationOfLocationInMeters(const MapRendererState& state,
             const float elevation, const ZoomLevel zoom, const PointI& location31) const override;
+        double getDistanceFactor(const MapRendererState& state, const float tileSize,
+            double& baseUnits, float& sinAngleToPlane) const override;
+        OsmAnd::ZoomLevel getSurfaceZoom(const MapRendererState& state, float& surfaceVisualZoom) const override;
+        OsmAnd::ZoomLevel getFlatZoom(const MapRendererState& state, const ZoomLevel surfaceZoomLevel,
+            const float surfaceVisualZoom, const double& pointElevation, float& flatVisualZoom) const override;
+
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
@@ -126,7 +139,8 @@ namespace OsmAnd
         float getTileSizeOnScreenInPixels() const override;
 
         bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const override;
-        bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const override;
+        bool getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const override;
         bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
         float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const override;

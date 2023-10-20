@@ -10,6 +10,7 @@
 #include <OsmAndCore/Stopwatch.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+#include <OsmAndCore/GeoTiffCollection.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
@@ -19,6 +20,8 @@
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/Map/SqliteHeightmapTileProvider.h>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)
@@ -26,6 +29,8 @@
 #   include <windows.h>
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
+
+#define OSMAND_VIA_EGL //Remove to initialize OpenGL via X11
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <GL/glew.h>
@@ -37,6 +42,11 @@
 #elif defined(OSMAND_TARGET_OS_windows)
 #   include <GL/wglew.h>
 #   include <GL/gl.h>
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+#   define EGL_EGLEXT_PROTOTYPES
+#   include <GL/gl.h>
+#   include <EGL/egl.h>
+#   include <EGL/eglext.h>
 #elif defined(OSMAND_TARGET_OS_linux)
 #   include <GL/glxew.h>
 #   include <GL/gl.h>
@@ -53,6 +63,8 @@
 
 #include <OsmAndCoreTools.h>
 #include <OsmAndCoreTools/Utilities.h>
+
+std::shared_ptr<const OsmAnd::IGeoTiffCollection> geotiffCollection;
 
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
@@ -84,9 +96,9 @@ bool OsmAndTools::EyePiece::rasterize(std::wostream& output)
 bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #endif
 {
-    if (configuration.outputImageWidth == 0)
+    if (configuration.outputRasterWidth == 0)
         return false;
-    if (configuration.outputImageHeight == 0)
+    if (configuration.outputRasterHeight == 0)
         return false;
 
     OsmAnd::Stopwatch rasterizationStopwatch(true);
@@ -257,8 +269,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferARB = wglCreatePbufferARB(
             hTempWindowDC,
             tempWindowPixelFormat,
-            configuration.outputImageWidth,
-            configuration.outputImageHeight,
+            configuration.outputRasterWidth,
+            configuration.outputRasterHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferARB;
     }
@@ -268,8 +280,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferEXT = wglCreatePbufferEXT(
             hTempWindowDC,
             tempWindowPixelFormat,
-            configuration.outputImageWidth,
-            configuration.outputImageHeight,
+            configuration.outputRasterWidth,
+            configuration.outputRasterHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferEXT;
     }
@@ -427,6 +439,71 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to activate windowless/framebufferless OpenGL context") << std::endl;
         return false;
     }
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+    static const int MAX_DEVICES = 10;
+    EGLDeviceEXT eglDevs[MAX_DEVICES];
+    EGLint numDevices;
+    const auto eglQueryDevicesEXT =
+        (PFNEGLQUERYDEVICESEXTPROC) eglGetProcAddress("eglQueryDevicesEXT");
+
+    if (!eglQueryDevicesEXT)
+    {
+        output << xT("Failed to find eglQueryDevicesEXT() routine") << std::endl;
+        return false;
+    }
+    eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+    if (numDevices > 0)
+        output << xT("Detected ") << numDevices << xT(" GPUs") << std::endl;
+    else
+    {
+        output << xT("No suitable GPU found") << std::endl;
+        return false;
+    }
+    const auto eglGetPlatformDisplayEXT =
+        (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
+
+    if (!eglGetPlatformDisplayEXT)
+    {
+        output << xT("Failed to find eglGetPlatformDisplayEXT routine") << std::endl;
+        return false;
+    }
+    const auto eglDpy = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
+    EGLint major, minor;
+    eglInitialize(eglDpy, &major, &minor);
+    const EGLint configAttribs[] = {
+            EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+            EGL_DEPTH_SIZE, 24,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_NONE
+    };
+    EGLint numConfigs;
+    EGLConfig eglCfg;
+    eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
+    const EGLint pbufferAttribs[] = {
+            EGL_WIDTH, (int) configuration.outputRasterWidth,
+            EGL_HEIGHT, (int) configuration.outputRasterHeight,
+            EGL_NONE,
+    };    
+    EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs);
+    eglBindAPI(EGL_OPENGL_API);
+    EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);
+    eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_NO_ERROR)
+    {
+        eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        eglDestroyContext(eglDpy, eglCtx);
+        eglDestroySurface(eglDpy, eglSurf);
+        eglTerminate(eglDpy);
+        output << xT("Failed to initialize GLEW") << std::endl;
+        return false;
+    }
+    // Silence OpenGL errors here, it's inside GLEW, so it's not ours
+    (void)glGetError();
 #elif defined(OSMAND_TARGET_OS_linux)
     // Open default display (specified by DISPLAY environment variable)
     const auto xDisplay = XOpenDisplay(nullptr);
@@ -524,8 +601,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     // Create pbuffer
     const int pbufferAttribs[] = {
-        GLX_PBUFFER_WIDTH, (int)configuration.outputImageWidth,
-        GLX_PBUFFER_HEIGHT, (int)configuration.outputImageHeight,
+        GLX_PBUFFER_WIDTH, (int)configuration.outputRasterWidth,
+        GLX_PBUFFER_HEIGHT, (int)configuration.outputRasterHeight,
         None
     };
     const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfiguration, pbufferAttribs);
@@ -620,7 +697,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         kCGLPFAAccelerated,
         kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
         kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
-        kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+        kCGLPFADepthSize, (CGLPixelFormatAttribute)24,
         kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)(coreProfile ? kCGLOGLPVersion_3_2_Core : kCGLOGLPVersion_Legacy),
         (CGLPixelFormatAttribute)0
     };
@@ -696,7 +773,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         glBindTexture(GL_TEXTURE_2D, framebufferColorTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, configuration.outputImageWidth, configuration.outputImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, configuration.outputRasterWidth, configuration.outputRasterHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         if (!glVerifyResult(output))
         {
             glDeleteTextures(1, &framebufferColorTexture);
@@ -710,7 +787,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Create depth renderbuffer
         glGenRenderbuffers(1, &framebufferDepthRenderbuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, framebufferDepthRenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, configuration.outputImageWidth, configuration.outputImageHeight);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, configuration.outputRasterWidth, configuration.outputRasterHeight);
         if (!glVerifyResult(output))
         {
             glDeleteTextures(1, &framebufferColorTexture);
@@ -769,7 +846,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     else
     {
-        cglError = CGLCreatePBuffer(configuration.outputImageWidth, configuration.outputImageHeight, GL_TEXTURE_2D, GL_RGBA, 0, &pbuffer);
+        cglError = CGLCreatePBuffer(configuration.outputRasterWidth, configuration.outputRasterHeight, GL_TEXTURE_2D, GL_RGBA, 0, &pbuffer);
         if (cglError != kCGLNoError)
         {
             CGLSetCurrentContext(NULL);
@@ -929,19 +1006,28 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto mapRendererConfiguration = std::static_pointer_cast<OsmAnd::AtlasMapRendererConfiguration>(mapRenderer->getConfiguration());
         mapRendererConfiguration->referenceTileSizeOnScreenInPixels = configuration.referenceTileSize;
         mapRenderer->setConfiguration(mapRendererConfiguration);
-        mapRenderer->setTarget(configuration.target31);
+        mapRenderer->setFieldOfView(configuration.fov);
+        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputRasterWidth, configuration.outputRasterHeight));
+        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputRasterHeight, configuration.outputRasterWidth));
+        mapRenderer->setMapTarget(
+            OsmAnd::PointI(configuration.outputRasterWidth / 2, configuration.outputRasterHeight / 2),
+            configuration.target31);
         mapRenderer->setZoom(configuration.zoom);
         mapRenderer->setAzimuth(configuration.azimuth);
         mapRenderer->setElevationAngle(configuration.elevationAngle);
-        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputImageWidth, configuration.outputImageHeight));
-        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputImageHeight, configuration.outputImageWidth));
-        mapRenderer->setFieldOfView(configuration.fov);
+
+        if (!configuration.outputJSONFilename.isEmpty())
+            mapRenderer->useJSON();
 
         // Add providers
         if (configuration.verbose)
             output << xT("Adding providers to map renderer...") << std::endl;
         mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
         mapRenderer->setMapLayerProvider(0, binaryMapRasterTileProvider);
+
+        if (configuration.geotiffCollection)
+            mapRenderer->setElevationDataProvider(std::make_shared<OsmAnd::SqliteHeightmapTileProvider>(
+                configuration.geotiffCollection, mapRenderer->getElevationDataTileSize()));
 
         // Initialize rendering
         if (configuration.verbose)
@@ -958,38 +1044,209 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (configuration.verbose)
             output << xT("Rendering frames...") << std::endl;
         OsmAnd::Stopwatch renderingStopwatch(true);
-        auto framesCounter = 0u;
+        auto framesCounter = 1u;
         bool wasInterrupted = false;
         for (;; framesCounter++)
         {
-            // Update must be performed before each frame
-            if (!mapRenderer->update())
-                output << xT("Map renderer: update failed") << std::endl;
-
-            // If frame was prepared, it means there's something to render
-            if (mapRenderer->prepareFrame())
+            for (;;)
             {
-                const auto ok = mapRenderer->renderFrame();
+                // Update must be performed before each frame
+                if (!mapRenderer->update())
+                    output << xT("Map renderer: update failed") << std::endl;
+
+                // If frame was prepared, it means there's something to render
+                if (mapRenderer->prepareFrame())
+                {
+                    const auto ok = mapRenderer->renderFrame();
+                    glVerifyResult(output);
+
+                    if (!ok)
+                        output << xT("Map renderer: frame rendering failed") << std::endl;
+                }
+
+                // Send everything to GPU
+                glFlush();
                 glVerifyResult(output);
 
-                if (!ok)
-                    output << xT("Map renderer: frame rendering failed") << std::endl;
+                // Check if map renderer finished processing
+                if (mapRenderer->isIdle())
+                    break;
+
+                if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+                {
+                    wasInterrupted = true;
+                    break;
+                }
             }
 
-            // Send everything to GPU
-            glFlush();
+            if (wasInterrupted)
+                break;
+
+            // Wait until everything is ready on GPU
+            if (configuration.verbose)
+                output << xT("Waiting for GPU to complete all stuff requested...") << std::endl;
+            glFinish();
             glVerifyResult(output);
 
-            // Check if map renderer finished processing
-            if (mapRenderer->isIdle())
-                break;
+            // Read image from render-target
+            if (configuration.verbose)
+                output << xT("Reading result image from GPU...") << std::endl;
+            SkBitmap outputBitmap;
+            outputBitmap.allocPixels(SkImageInfo::MakeN32Premul(
+                configuration.outputRasterWidth, configuration.outputRasterHeight));
+            glReadPixels(0, 0, configuration.outputRasterWidth, configuration.outputRasterHeight,
+                GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
+            glVerifyResult(output);
 
-            if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+            // Flip image vertically
+            SkBitmap filledOutputBitmap;
+            filledOutputBitmap.allocPixels(
+                SkImageInfo::MakeN32Premul(configuration.outputRasterWidth, configuration.outputRasterHeight));
+            const auto rowSizeInBytes = outputBitmap.rowBytes();
+            for (int row = 0; row < configuration.outputRasterHeight; row++)
             {
-                wasInterrupted = true;
+                const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
+                const auto pDstRow = reinterpret_cast<uint8_t*>(
+                    filledOutputBitmap.getPixels()) + ((configuration.outputRasterHeight - row - 1) * rowSizeInBytes);
+                memcpy(pDstRow, pSrcRow, rowSizeInBytes);
+            }
+
+            // Save bitmap to image (if required)
+            if (!configuration.outputImageFilename.isEmpty())
+            {
+                auto fileName = configuration.outputImageFilename;
+                if (configuration.frames > 1)
+                    fileName += (QStringLiteral("000") + QString::number(framesCounter)).right(4);
+                auto encodedImageFormat = SkEncodedImageFormat::kBMP;
+                switch (configuration.outputImageFormat)
+                {
+                    case ImageFormat::PNG:
+                        encodedImageFormat = SkEncodedImageFormat::kPNG;
+                        fileName.append(QStringLiteral(".png"));
+                        break;
+
+                    case ImageFormat::JPEG:
+                        encodedImageFormat = SkEncodedImageFormat::kJPEG;
+                        fileName.append(QStringLiteral(".jpg"));
+                        break;
+
+                    default:
+                        fileName.append(QStringLiteral(".bmp"));
+                }
+
+                if (configuration.verbose)
+                    output << xT("Saving image to '") << QStringToStlString(fileName) << xT("'...") << std::endl;
+
+                const auto imageData = filledOutputBitmap.asImage()->encodeToData(encodedImageFormat, 100);
+                if (!imageData)
+                {
+                    output << xT("Failed to encode image") << std::endl;
+                    success = false;
+                    break;
+                }
+                else
+                {
+                    QFile imageFile(fileName);
+
+                    // Just in case try to create entire path
+                    auto containingDirectory = QFileInfo(imageFile).absoluteDir();
+                    containingDirectory.mkpath(QLatin1String("."));
+                    if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
+                    {
+                        output << xT("'") << QStringToStlString(containingDirectory.absolutePath())
+                            << xT("' is not writable") << std::endl;
+                        success = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                        {
+                            output << xT("Failed to open destination file '")
+                                << QStringToStlString(fileName) << xT("'") << std::endl;
+                            success = false;
+                            break;
+                        }
+                        else
+                        {
+                            if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()),
+                                imageData->size()) != imageData->size())
+                            {
+                                output << xT("Failed to write image to '")
+                                    << QStringToStlString(fileName) << xT("'") << std::endl;
+                                success = false;
+                                break;
+                            }
+                            imageFile.close();
+                        }
+                    }
+                }
+            }
+
+            if (!configuration.outputJSONFilename.isEmpty())
+            {
+                auto fileName = configuration.outputJSONFilename;
+                if (configuration.frames > 1)
+                    fileName += (QStringLiteral("000") + QString::number(framesCounter)).right(4);
+
+                fileName += QStringLiteral(".json");
+
+                if (configuration.verbose)
+                    output << xT("Saving data to '") << QStringToStlString(fileName) << xT("'...") << std::endl;
+
+                QFile jsonFile(fileName);
+
+                // Just in case try to create entire path
+                auto containingDirectory = QFileInfo(jsonFile).absoluteDir();
+                containingDirectory.mkpath(QLatin1String("."));
+                if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
+                {
+                    output << xT("'") << QStringToStlString(containingDirectory.absolutePath())
+                        << xT("' is not writable") << std::endl;
+                    success = false;
+                    break;
+                }
+                else
+                {
+                    if (!jsonFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                    {
+                        output << xT("Failed to open destination file '")
+                            << QStringToStlString(fileName) << xT("'") << std::endl;
+                        success = false;
+                        break;
+                    }
+                    else
+                    {
+                        const auto jsonData = mapRenderer->getJSON();
+                        if (jsonFile.write(jsonData) != jsonData.size())
+                        {
+                            output << xT("Failed to write JSON data to '")
+                                << QStringToStlString(fileName) << xT("'") << std::endl;
+                            success = false;
+                            break;
+                        }
+                        jsonFile.close();
+                    }
+                }
+            }
+
+            if (framesCounter >= configuration.frames)
                 break;
+            else
+            {
+                const auto factor = static_cast<float>(framesCounter) / static_cast<float>(configuration.frames - 1);
+                const auto offset = OsmAnd::PointD(configuration.endTarget31 - configuration.target31) * factor;
+                mapRenderer->setMapTargetLocation(
+                    configuration.target31 + OsmAnd::PointI(qFloor(offset.x), qFloor(offset.y)));
+                mapRenderer->setZoom(configuration.zoom
+                    + (configuration.endZoom - configuration.zoom) * factor);
+                mapRenderer->setAzimuth(configuration.azimuth +
+                    (configuration.endAzimuth - configuration.azimuth) * factor);
+                mapRenderer->setElevationAngle(configuration.elevationAngle
+                    + (configuration.endElevationAngle - configuration.elevationAngle) * factor);
             }
         }
+
         const auto timeElapsedOnRendering = renderingStopwatch.elapsed();
         if (configuration.verbose)
             output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
@@ -1003,12 +1260,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             success = false;
         }
 
-        // Wait until everything is ready on GPU
-        if (configuration.verbose)
-            output << xT("Waiting for GPU to complete all stuff requested...") << std::endl;
-        glFinish();
-        glVerifyResult(output);
-
         // Release rendering
         if (configuration.verbose)
             output << xT("Releasing rendering...") << std::endl;
@@ -1021,81 +1272,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         break;
-    }
-
-    // Read image from render-target
-    if (configuration.verbose)
-        output << xT("Reading result image from GPU...") << std::endl;
-    SkBitmap outputBitmap;
-    outputBitmap.allocPixels(SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
-    glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
-    glVerifyResult(output);
-
-    // Flip image vertically
-    SkBitmap filledOutputBitmap;
-    filledOutputBitmap.allocPixels(SkImageInfo::MakeN32Premul(configuration.outputImageWidth, configuration.outputImageHeight));
-    const auto rowSizeInBytes = outputBitmap.rowBytes();
-    for (int row = 0; row < configuration.outputImageHeight; row++)
-    {
-        const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
-        const auto pDstRow = reinterpret_cast<uint8_t*>(filledOutputBitmap.getPixels()) + ((configuration.outputImageHeight - row - 1) * rowSizeInBytes);
-        memcpy(pDstRow, pSrcRow, rowSizeInBytes);
-    }
-
-    // Save bitmap to image (if required)
-    if (!configuration.outputImageFilename.isEmpty())
-    {
-        if (configuration.verbose)
-            output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
-
-        auto encodedImageFormat = SkEncodedImageFormat::kBMP;
-        switch (configuration.outputImageFormat)
-        {
-            case ImageFormat::PNG:
-                encodedImageFormat = SkEncodedImageFormat::kPNG;
-                break;
-
-            case ImageFormat::JPEG:
-                encodedImageFormat = SkEncodedImageFormat::kJPEG;
-                break;
-        }
-
-        const auto imageData = filledOutputBitmap.asImage()->encodeToData(encodedImageFormat, 100);
-        if (!imageData)
-        {
-            output << xT("Failed to encode image") << std::endl;
-            success = false;
-        }
-        else
-        {
-            QFile imageFile(configuration.outputImageFilename);
-
-            // Just in case try to create entire path
-            auto containingDirectory = QFileInfo(imageFile).absoluteDir();
-            containingDirectory.mkpath(QLatin1String("."));
-            if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
-            {
-                output << xT("'") << QStringToStlString(containingDirectory.absolutePath()) << xT("' is not writable") << std::endl;
-                success = false;
-            }
-            else
-            {
-                if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
-                {
-                    output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                    success = false;
-                }
-                else
-                {
-                    if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
-                    {
-                        output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
-                        success = false;
-                    }
-                    imageFile.close();
-                }
-            }
-        }
     }
 
     if (configuration.verbose)
@@ -1116,6 +1292,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         wglReleasePbufferDCEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle), hPBufferDC);
         wglDestroyPbufferEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle));
     }
+#elif defined(OSMAND_TARGET_OS_linux) && defined(OSMAND_VIA_EGL)
+    eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(eglDpy, eglCtx);
+    eglDestroySurface(eglDpy, eglSurf);
+    eglTerminate(eglDpy);
 #elif defined(OSMAND_TARGET_OS_linux)
     glXDestroyPbuffer(xDisplay, pbuffer);
     glXDestroyContext(xDisplay, windowlessContext);
@@ -1168,12 +1349,18 @@ bool OsmAndTools::EyePiece::rasterize(QString *pLog /*= nullptr*/)
 
 OsmAndTools::EyePiece::Configuration::Configuration()
     : styleName(QLatin1String("default"))
-    , outputImageWidth(0)
-    , outputImageHeight(0)
+    , outputRasterWidth(0)
+    , outputRasterHeight(0)
     , outputImageFormat(ImageFormat::PNG)
+    , target31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
     , zoom(15.0f)
     , azimuth(0.0f)
     , elevationAngle(90.0f)
+    , frames(1)
+    , endTarget31(OsmAnd::Utilities::convertLatLonTo31(OsmAnd::LatLon(46.95, 7.45)))
+    , endZoom(15.0f)
+    , endAzimuth(0.0f)
+    , endElevationAngle(90.0f)
     , fov(16.5f)
     , referenceTileSize(256)
     , displayDensityFactor(1.0f)
@@ -1194,8 +1381,14 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 {
     outConfiguration = Configuration();
 
+    bool useEndTarget31 = false;
+    bool useEndZoom = false;
+    bool useEndAzimuth = false;
+    bool useEndElevationAngle = false;
+
     const std::shared_ptr<OsmAnd::ObfsCollection> obfsCollection(new OsmAnd::ObfsCollection());
     outConfiguration.obfsCollection = obfsCollection;
+    auto geotiffCollection = new OsmAnd::GeoTiffCollection();
 
     const std::shared_ptr<OsmAnd::MapStylesCollection> stylesCollection(new OsmAnd::MapStylesCollection());
     outConfiguration.stylesCollection = stylesCollection;
@@ -1234,6 +1427,32 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             }
 
             obfsCollection->addFile(value);
+        }
+        else if (arg.startsWith(QLatin1String("-geotiffPath=")))
+        {
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-geotiffPath=")));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'%1' path does not exist").arg(value);
+                return false;
+            }
+
+            geotiffCollection->addDirectory(value);
+            if (!outConfiguration.geotiffCollection)
+                outConfiguration.geotiffCollection.reset(geotiffCollection);
+        }
+        else if (arg.startsWith(QLatin1String("-cachePath=")))
+        {
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-cachePath=")));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'%1' path does not exist").arg(value);
+                return false;
+            }
+
+            geotiffCollection->setLocalCache(value);
+            if (!outConfiguration.geotiffCollection)
+                outConfiguration.geotiffCollection.reset(geotiffCollection);
         }
         else if (arg.startsWith(QLatin1String("-stylesPath=")))
         {
@@ -1280,31 +1499,35 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 
             outConfiguration.styleSettings[settingKeyValue[0]] = Utilities::purifyArgumentValue(settingKeyValue[1]);
         }
-        else if (arg.startsWith(QLatin1String("-outputImageWidth=")))
+        else if (arg.startsWith(QLatin1String("-outputRasterWidth=")))
         {
-            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageWidth=")));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputRasterWidth=")));
             bool ok = false;
-            outConfiguration.outputImageWidth = value.toUInt(&ok);
+            outConfiguration.outputRasterWidth = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'%1' can not be parsed as output image width").arg(value);
+                outError = QString("'%1' can not be parsed as output raster width").arg(value);
                 return false;
             }
         }
-        else if (arg.startsWith(QLatin1String("-outputImageHeight=")))
+        else if (arg.startsWith(QLatin1String("-outputRasterHeight=")))
         {
-            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageHeight=")));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputRasterHeight=")));
             bool ok = false;
-            outConfiguration.outputImageHeight = value.toUInt(&ok);
+            outConfiguration.outputRasterHeight = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'%1' can not be parsed as output image height").arg(value);
+                outError = QString("'%1' can not be parsed as output raster height").arg(value);
                 return false;
             }
         }
         else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
         {
             outConfiguration.outputImageFilename = Utilities::resolvePath(arg.mid(strlen("-outputImageFilename=")));
+        }
+        else if (arg.startsWith(QLatin1String("-outputJSONFilename=")))
+        {
+            outConfiguration.outputJSONFilename = Utilities::resolvePath(arg.mid(strlen("-outputJSONFilename=")));
         }
         else if (arg.startsWith(QLatin1String("-outputImageFormat=")))
         {
@@ -1322,7 +1545,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         else if (arg.startsWith(QLatin1String("-latLon=")))
         {
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-latLon=")));
-            const auto latLonValues = value.split(QLatin1Char(';'));
+            const auto latLonValues = value.split(QLatin1Char(':'));
             if (latLonValues.size() != 2)
             {
                 outError = QString("'%1' can not be parsed as latitude and longitude").arg(value);
@@ -1351,7 +1574,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         else if (arg.startsWith(QLatin1String("-target31=")))
         {
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-target31=")));
-            const auto target31Values = value.split(QLatin1Char(';'));
+            const auto target31Values = value.split(QLatin1Char(':'));
             if (target31Values.size() != 2)
             {
                 outError = QString("'%1' can not be parsed as target31 point").arg(value);
@@ -1409,6 +1632,114 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as elevation angle").arg(value);
                 return false;
             }
+        }
+        else if (arg.startsWith(QLatin1String("-frames=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-frames=")));
+
+            bool ok = false;
+            outConfiguration.frames = value.toUInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as a number of frames").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-endLatLon=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endLatLon=")));
+            const auto latLonValues = value.split(QLatin1Char(':'));
+            if (latLonValues.size() != 2)
+            {
+                outError = QString("'%1' can not be parsed as latitude and longitude").arg(value);
+                return false;
+            }
+
+            OsmAnd::LatLon latLon;
+            bool ok = false;
+            latLon.latitude = latLonValues[0].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as latitude").arg(latLonValues[0]);
+                return false;
+            }
+
+            ok = false;
+            latLon.longitude = latLonValues[1].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as longitude").arg(latLonValues[1]);
+                return false;
+            }
+
+            outConfiguration.endTarget31 = OsmAnd::Utilities::convertLatLonTo31(latLon);
+            useEndTarget31 = true;
+        }
+        else if (arg.startsWith(QLatin1String("-endTarget31=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endTarget31=")));
+            const auto target31Values = value.split(QLatin1Char(':'));
+            if (target31Values.size() != 2)
+            {
+                outError = QString("'%1' can not be parsed as target31 point").arg(value);
+                return false;
+            }
+
+            bool ok = false;
+            outConfiguration.endTarget31.x = target31Values[0].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as target31.x").arg(target31Values[0]);
+                return false;
+            }
+
+            ok = false;
+            outConfiguration.endTarget31.y = target31Values[1].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as target31.y").arg(target31Values[1]);
+                return false;
+            }
+            useEndTarget31 = true;
+        }
+        else if (arg.startsWith(QLatin1String("-endZoom=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endZoom=")));
+
+            bool ok = false;
+            outConfiguration.endZoom = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as zoom").arg(value);
+                return false;
+            }
+            useEndZoom = true;
+        }
+        else if (arg.startsWith(QLatin1String("-endAzimuth=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endAzimuth=")));
+
+            bool ok = false;
+            outConfiguration.endAzimuth = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as azimuth").arg(value);
+                return false;
+            }
+            useEndAzimuth = true;
+        }
+        else if (arg.startsWith(QLatin1String("-endElevationAngle=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-endElevationAngle=")));
+
+            bool ok = false;
+            outConfiguration.endElevationAngle = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as elevation angle").arg(value);
+                return false;
+            }
+            useEndElevationAngle = true;
         }
         else if (arg.startsWith(QLatin1String("-fov=")))
         {
@@ -1493,20 +1824,34 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
     }
 
+    if (!useEndTarget31)
+        outConfiguration.endTarget31 = outConfiguration.target31;
+    if (!useEndZoom)
+        outConfiguration.endZoom = outConfiguration.zoom;
+    if (!useEndAzimuth)
+        outConfiguration.endAzimuth = outConfiguration.azimuth;
+    if (!useEndElevationAngle)
+        outConfiguration.endElevationAngle = outConfiguration.elevationAngle;
+
     // Validate
+    if (outConfiguration.outputImageFilename.isEmpty() && outConfiguration.outputJSONFilename.isEmpty())
+    {
+        outError = QLatin1String("output filename should be specified");
+        return false;
+    }
     if (outConfiguration.styleName.isEmpty())
     {
         outError = QLatin1String("'styleName' can not be empty");
         return false;
     }
-    if (outConfiguration.outputImageWidth == 0)
+    if (outConfiguration.outputRasterWidth == 0)
     {
-        outError = QLatin1String("'outputImageWidth' can not be 0");
+        outError = QLatin1String("'outputRasterWidth' can not be 0");
         return false;
     }
-    if (outConfiguration.outputImageHeight == 0)
+    if (outConfiguration.outputRasterHeight == 0)
     {
-        outError = QLatin1String("'outputImageHeight' can not be 0");
+        outError = QLatin1String("'outputRasterHeight' can not be 0");
         return false;
     }
 

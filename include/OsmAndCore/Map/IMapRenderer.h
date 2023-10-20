@@ -142,7 +142,6 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
-        virtual bool setMapTarget(bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool resetMapTarget() = 0;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) = 0;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
@@ -151,6 +150,10 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) = 0;
+        virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+        virtual bool setFlatVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
@@ -169,6 +172,11 @@ namespace OsmAnd
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;
 
+        virtual void useJSON() = 0;
+        virtual bool withJSON() const = 0;
+        virtual void setJSON(const QJsonDocument* jsonDocument) = 0;
+        virtual QByteArray getJSON() const = 0;
+
         virtual ZoomLevel getMinZoomLevel() const = 0;
         virtual ZoomLevel getMaxZoomLevel() const = 0;
 
@@ -185,7 +193,8 @@ namespace OsmAnd
 
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
-        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
+        virtual bool getLocationFromScreenPoint(const PointD& screenPoint, PointI& location31) const = 0;
+        virtual bool getLocationFromScreenPoint(const PointD& screenPoint, PointI64& location) const = 0;
         virtual bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const = 0;
         virtual float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const = 0;

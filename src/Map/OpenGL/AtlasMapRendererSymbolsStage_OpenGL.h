@@ -112,6 +112,7 @@ namespace OsmAnd
                     // Per-symbol data
                     GLlocation glyphHeight;
                     GLlocation distanceFromCamera;
+                    GLlocation currentOffset;
 
                     // Per-glyph data
                     QVector<Glyph> glyphs;
@@ -159,6 +160,7 @@ namespace OsmAnd
                     // Per-symbol data
                     GLlocation glyphHeight;
                     GLlocation zDistanceFromCamera;
+                    GLlocation currentOffset;
 
                     // Per-glyph data
                     QVector<Glyph> glyphs;
@@ -340,6 +342,7 @@ namespace OsmAnd
             const OnSurfaceVectorProgram& program,
             const int elevationDataSamplerIndex,
             GLlocation& activeElevationVertexAttribArray);
+        void reportCommonParameters(QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
         ~AtlasMapRendererSymbolsStage_OpenGL() override;

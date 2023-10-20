@@ -4,6 +4,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "QtExtensions.h"
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+
+#include "Utilities.h"
 #include "AtlasMapRenderer_OpenGL.h"
 #include "AtlasMapRenderer_Metrics.h"
 #include "MapSymbol.h"
@@ -15,6 +21,9 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "Stopwatch.h"
+#include "GlmExtensions.h"
+#include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
@@ -68,12 +77,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
+    // Prepare JSON report
+    QJsonArray jsonArray;
+    bool withJson = renderer->withJSON();
+
     for (const auto& renderableSymbol : constOf(renderableSymbols))
     {
         if (const auto& renderableBillboardSymbol = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderableSymbol))
         {
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
             ok = ok && renderBillboardSymbol(renderableBillboardSymbol, currentAlphaChannelType);
+            if (withJson)
+            {
+                QJsonObject jsonObject;
+                jsonObject.insert(QStringLiteral("type"), QStringLiteral("billboard"));
+                const auto& symbol =
+                    std::static_pointer_cast<const BillboardRasterMapSymbol>(renderableBillboardSymbol->mapSymbol);
+                const auto& position31 = (renderableBillboardSymbol->instanceParameters
+                    && renderableBillboardSymbol->instanceParameters->overridesPosition31)
+                    ? renderableBillboardSymbol->instanceParameters->position31
+                    : symbol->getPosition31();
+                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                reportCommonParameters(jsonObject, *renderableSymbol);
+                jsonArray.append(jsonObject);
+            }
             if (metric)
             {
                 metric->elapsedTimeForBillboardSymbolsRendering += renderBillboardSymbolStopwatch.elapsed();
@@ -84,6 +112,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         {
             Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnPathSymbol(renderableOnPathSymbol, currentAlphaChannelType);
+            if (withJson)
+            {
+                QJsonObject jsonObject;
+                jsonObject.insert(QStringLiteral("type"),
+                    renderableOnPathSymbol->is2D ? QStringLiteral("on-path-2D") : QStringLiteral("on-path-3D"));
+                const auto& symbol =
+                    std::static_pointer_cast<const OnPathRasterMapSymbol>(renderableOnPathSymbol->mapSymbol);
+                const auto& position31 = (renderableOnPathSymbol->instanceParameters
+                    && renderableOnPathSymbol->instanceParameters->overridesPinPointOnPath)
+                    ? renderableOnPathSymbol->instanceParameters->pinPointOnPath.point31
+                    : symbol->pinPointOnPath.point31;
+                jsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, position31.y));
+                jsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, position31.x));
+                reportCommonParameters(jsonObject, *renderableSymbol);
+                jsonArray.append(jsonObject);
+            }
             if (metric)
             {
                 metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
@@ -100,6 +144,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
                 metric->onSurfaceSymbolsRendered += 1;
             }
         }
+    }
+
+    if (withJson)
+    {
+        auto jsonDocument = new QJsonDocument();
+        jsonDocument->setArray(jsonArray);
+        renderer->setJSON(jsonDocument);
     }
 
     // Unbind symbol texture from texture sampler
@@ -696,7 +747,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     const auto alreadyOccupiedUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
-        1 /*param_vs_zDistanceFromCamera*/;
+        1 /*param_vs_zDistanceFromCamera*/ +
+        1 /*param_vs_currentOffset*/;
     _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
     if (initializeOnPath2DProgram(_onPathSymbol2dMaxGlyphsPerDrawCall))
     {
@@ -856,6 +908,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         // Parameters: per-symbol data
         "uniform float param_vs_glyphHeight;                                                                                ""\n"
         "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
+        "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-glyph data
         "struct Glyph                                                                                                       ""\n"
@@ -871,7 +924,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
-        "    vec2 anchorPoint = glyph.anchorPoint;                                                                          ""\n"
+        "    vec2 anchorPoint = glyph.anchorPoint + param_vs_currentOffset;                                                 ""\n"
         "    float cos_a = cos(glyph.angle);                                                                                ""\n"
         "    float sin_a = sin(glyph.angle);                                                                                ""\n"
         "                                                                                                                   ""\n"
@@ -971,6 +1024,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.currentOffset, "param_vs_currentOffset", GlslVariableType::Uniform);
     auto& glyphs = _onPath2dProgram.vs.param.glyphs;
     glyphs.resize(maxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -1012,7 +1066,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     const auto alreadyOccupiedUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
-        1 /*param_vs_zDistanceFromCamera*/;
+        1 /*param_vs_zDistanceFromCamera*/ +
+        1 /*param_vs_currentOffset*/;
     _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
     if (initializeOnPath3DProgram(_onPathSymbol3dMaxGlyphsPerDrawCall))
     {
@@ -1172,6 +1227,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         // Parameters: per-symbol data
         "uniform float param_vs_glyphHeight;                                                                                ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+        "uniform vec2 param_vs_currentOffset;                                                                               ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-glyph data
         "struct Glyph                                                                                                       ""\n"
@@ -1216,9 +1272,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
         "    p = rotateY(p, glyph.angle.y);                                                                                 ""\n"
         "    p = rotateXZ(p, glyph.angle.x, glyph.angle.zw);                                                                ""\n"
         "    vec4 v;                                                                                                        ""\n"
-        "    v.x = glyph.anchorPoint.x + p.x;                                                                               ""\n"
+        "    v.x = glyph.anchorPoint.x + p.x - param_vs_currentOffset.x;                                                    ""\n"
         "    v.y = glyph.anchorPoint.y + p.y;                                                                               ""\n"
-        "    v.z = glyph.anchorPoint.z + p.z;                                                                               ""\n"
+        "    v.z = glyph.anchorPoint.z + p.z - param_vs_currentOffset.y;                                                    ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
@@ -1288,6 +1344,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.currentOffset, "param_vs_currentOffset", GlslVariableType::Uniform);
     auto& glyphs = _onPath3dProgram.vs.param.glyphs;
     glyphs.resize(maxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -1419,6 +1476,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         modulationColor.g,
         modulationColor.b,
         modulationColor.a);
+    GL_CHECK_RESULT;
+
+    // Set current offset
+    const auto currentOffset31 = Utilities::shortestVector31(renderable->target31, currentState.target31);
+    const auto currentOffset = Utilities::convert31toFloat(currentOffset31, currentState.zoomLevel)
+        * static_cast<float>(AtlasMapRenderer::TileSize3D);
+    const auto pinPointInWorld = glm::vec3(
+        renderable->pinPointInWorld.x - currentOffset.x,
+        renderable->pinPointInWorld.y,
+        renderable->pinPointInWorld.z - currentOffset.y);
+    const auto pointOnScreen = glm_extensions::project(
+        pinPointInWorld,
+        internalState.mPerspectiveProjectionView,
+        internalState.glmViewport).xy();
+    const auto offsetOnScreen = pointOnScreen - renderable->pinPointOnScreen;
+    glUniform2f(_onPath2dProgram.vs.param.currentOffset, offsetOnScreen.x, offsetOnScreen.y);
     GL_CHECK_RESULT;
 
     // Draw chains of glyphs
@@ -1578,6 +1651,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
     // Apply settings from texture block to texture
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
+
+    // Set current offset
+    const auto currentOffset31 = Utilities::shortestVector31(renderable->target31, currentState.target31);
+    const auto currentOffset = Utilities::convert31toFloat(currentOffset31, currentState.zoomLevel)
+        * static_cast<float>(AtlasMapRenderer::TileSize3D);
+    glUniform2f(_onPath3dProgram.vs.param.currentOffset, currentOffset.x, currentOffset.y);
+    GL_CHECK_RESULT;
 
     // Draw chains of glyphs
     const auto glyphsCount = renderable->glyphsPlacement.size();
@@ -3212,5 +3292,50 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::cancelElevation(
 
         glBindTexture(GL_TEXTURE_2D, 0);
         GL_CHECK_RESULT;
+    }
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
+    QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol)
+{
+    const auto& mapSymbol =
+        std::static_pointer_cast<const RasterMapSymbol>(renderableSymbol.mapSymbol);
+    jsonObject.insert(QStringLiteral("class"),
+        mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption ? QStringLiteral("caption")
+            : (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Icon ? QStringLiteral("icon")
+                : QStringLiteral("unknown")));
+    if (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption)
+    {
+        jsonObject.insert(QStringLiteral("content"), mapSymbol->content);
+        jsonObject.insert(QStringLiteral("language"),
+            mapSymbol->languageId == OsmAnd::LanguageId::Native ? QStringLiteral("native")
+            : (mapSymbol->languageId == OsmAnd::LanguageId::Localized ? QStringLiteral("localized")
+                : QStringLiteral("invariant")));
+    }
+    jsonObject.insert(QStringLiteral("width"), mapSymbol->size.x);
+    jsonObject.insert(QStringLiteral("height"), mapSymbol->size.y);
+    jsonObject.insert(QStringLiteral("order"), mapSymbol->order);
+    jsonObject.insert("opacity", renderableSymbol.opacityFactor);
+    jsonObject.insert(QStringLiteral("zoom"), currentState.surfaceZoomLevel);
+    if (const auto mapObjectSymbolsGroup =
+        dynamic_cast<MapObjectsSymbolsProvider::MapObjectSymbolsGroup*>(mapSymbol->groupPtr))
+    {
+        if (mapObjectSymbolsGroup->mapObject->points31.size() > 1) {
+            const auto& start = mapObjectSymbolsGroup->mapObject->points31[0];
+            const auto& end = mapObjectSymbolsGroup->mapObject->points31[mapObjectSymbolsGroup->mapObject->points31.size() - 1];
+            QJsonObject startJsonObject;
+            startJsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, start.y));
+            startJsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, start.x));
+            QJsonObject endJsonObject;
+            endJsonObject.insert(QStringLiteral("lat"), Utilities::getLatitudeFromTile(ZoomLevel31, end.y));
+            endJsonObject.insert(QStringLiteral("lon"), Utilities::getLongitudeFromTile(ZoomLevel31, end.x));
+            jsonObject.insert(QStringLiteral("startPoint"), startJsonObject);
+            jsonObject.insert(QStringLiteral("endPoint"), endJsonObject);
+        }
+        if (const auto binaryMapObject =
+            dynamic_cast<const BinaryMapObject*>(&(*(mapObjectSymbolsGroup->mapObject))))
+        {
+            jsonObject.insert(QStringLiteral("id"), static_cast<long long>(binaryMapObject->id.getOsmId() >> 1));
+        }
     }
 }

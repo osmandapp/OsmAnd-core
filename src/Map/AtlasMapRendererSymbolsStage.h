@@ -89,6 +89,9 @@ namespace OsmAnd
             glm::vec2 directionOnScreen;
             float pixelSizeInWorld;
             double distanceToCamera;
+            PointI target31;
+            glm::vec2 pinPointOnScreen;
+            glm::vec3 pinPointInWorld;
 
             struct GlyphPlacement
             {
@@ -280,6 +283,8 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const;
 
         // Utilities:
+        const static float _inclineThresholdOnPath2D;
+        const static float _tiltThresholdOnPath3D;
         QVector<glm::vec2> convertPoints31ToWorld(
             const QVector<PointI>& points31) const;
         QVector<glm::vec2> convertPoints31ToWorld(
@@ -383,6 +388,7 @@ namespace OsmAnd
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths,
             const float glyphHeight,
+            bool checkVisibility,
             QVector<RenderableOnPathSymbol::GlyphPlacement>& outGlyphsPlacement,
             QVector<glm::vec3>& outRotatedElevatedBBoxInWorld) const;
 
@@ -396,7 +402,8 @@ namespace OsmAnd
             QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
             const float glyphHeight,
             const float pathPixelSizeInWorld,
-            const glm::vec2& directionInWorld) const;
+            const glm::vec2& directionInWorld,
+            bool checkVisibility) const;
 
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
 

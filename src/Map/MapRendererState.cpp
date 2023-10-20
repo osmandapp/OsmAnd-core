@@ -14,6 +14,8 @@ OsmAnd::MapRendererState::MapRendererState()
     , fixedZoomLevel(MinZoomLevel)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
+    , surfaceZoomLevel(MinZoomLevel)
+    , surfaceVisualZoom(1.0f)
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
@@ -46,6 +48,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.fixedZoomLevel = fixedZoomLevel;
     mapState.zoomLevel = zoomLevel;
     mapState.visualZoom = visualZoom;
+    mapState.surfaceZoomLevel = surfaceZoomLevel;
+    mapState.surfaceVisualZoom = surfaceVisualZoom;
     mapState.visualZoomShift = visualZoomShift;
     mapState.stubsStyle = stubsStyle;
     mapState.backgroundColor = backgroundColor;
@@ -74,6 +78,8 @@ OsmAnd::MapState::MapState()
     , fixedZoomLevel(MinZoomLevel)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
+    , surfaceZoomLevel(MinZoomLevel)
+    , surfaceVisualZoom(1.0f)
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
