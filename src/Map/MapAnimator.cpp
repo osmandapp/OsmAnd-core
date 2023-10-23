@@ -287,3 +287,13 @@ void OsmAnd::MapAnimator::animateMoveWith(
 {
     _p->animateMoveWith(velocity, deceleration, zeroizeAzimuth, invZeroizeElevationAngle, key);
 }
+
+void OsmAnd::MapAnimator::animateLocationFixationOnScreen(
+    const PointI& location31,
+    const PointI& screenPoint,
+    const bool azimuthChangeAllowed,
+    const float duration,
+    const Key key /*= nullptr*/)
+{
+    _p->animateLocationFixationOnScreen(location31, screenPoint, azimuthChangeAllowed, duration, key);
+}

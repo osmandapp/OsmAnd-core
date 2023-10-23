@@ -1576,12 +1576,11 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightAndLocationFromElevatedPoint(
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
+    const MapRendererState& state,
     const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
     const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
     PointD& zoomAndRotate) const
 {
-    const auto state = getState();
-
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)

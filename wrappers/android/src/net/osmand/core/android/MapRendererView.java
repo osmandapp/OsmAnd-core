@@ -41,6 +41,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.lang.annotation.Native;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -678,6 +679,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMapTarget(screenPoint, location31, forcedUpdate, disableUpdate);
     }
 
+    public final boolean setMapTargetForState(MapRendererState state, PointI screenPoint, PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMapTargetForState(state, screenPoint, location31);
+    }
+
     public final boolean resetMapTarget() {
         NativeCore.checkIfLoaded();
 
@@ -909,11 +916,24 @@ public abstract class MapRendererView extends FrameLayout {
     }
 
     public final boolean getZoomAndRotationAfterPinch(PointI firstLocation31, float firstHeight, PointI firstPoint,
-                                                    PointI secondLocation31, float secondHeight, PointI secondPoint,
-                                                    PointD zoomAndRotate) {
+                                                      PointI secondLocation31, float secondHeight, PointI secondPoint,
+                                                      PointD zoomAndRotate) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getZoomAndRotationAfterPinch(firstLocation31, firstHeight, firstPoint,
+        MapRendererState state = getState();
+        return _mapRenderer.getZoomAndRotationAfterPinch(state, 
+                firstLocation31, firstHeight, firstPoint,
+                secondLocation31, secondHeight, secondPoint, zoomAndRotate);
+    }
+
+    public final boolean getZoomAndRotationAfterPinch(MapRendererState state, 
+                                                      PointI firstLocation31, float firstHeight, PointI firstPoint,
+                                                      PointI secondLocation31, float secondHeight, PointI secondPoint,
+                                                      PointD zoomAndRotate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getZoomAndRotationAfterPinch(state, 
+                firstLocation31, firstHeight, firstPoint,
                 secondLocation31, secondHeight, secondPoint, zoomAndRotate);
     }
 

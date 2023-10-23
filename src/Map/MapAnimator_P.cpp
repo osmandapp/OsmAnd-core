@@ -599,6 +599,21 @@ void OsmAnd::MapAnimator_P::animateMoveWith(
     animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, TimingFunction::EaseOutQuadratic, key);
 }
 
+void OsmAnd::MapAnimator_P::animateLocationFixationOnScreen(
+    const PointI& location31,
+    const PointI& screenPoint,
+    const bool azimuthChangeAllowed,
+    const float duration,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructLocationFixOnScreenAnimation(newAnimations, key, location31, screenPoint, azimuthChangeAllowed, duration);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
 float OsmAnd::MapAnimator_P::zoomGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     const auto state = _renderer->getState();
@@ -1079,6 +1094,93 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
         _elevationAngleGetter, _elevationAngleSetter));
 
     outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructLocationFixOnScreenAnimation(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI& location31,
+    const PointI& screenPoint,
+    const bool animateAzimuth,
+    const float duration)
+{
+    if (qFuzzyIsNull(duration))
+        return;
+
+    const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
+    std::shared_ptr<GenericAnimation> zoomAnimation(new Animation<float>(
+        key,
+        AnimatedValue::Zoom,
+        _zoomGetter,
+        [&renderer = _renderer, location31, screenPoint, animateAzimuth]
+        (const Key key, float& outValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> bool
+        {
+            const auto state = renderer->getState();
+
+            PointD zoomAndAzimuth;
+            // todo height
+            bool ok = renderer->getZoomAndRotationAfterPinch(
+                state,
+                state.fixedLocation31, 0.0f, state.fixedPixel,
+                location31, 0.0f, screenPoint, zoomAndAzimuth); 
+
+            if (!ok)
+            {
+                if (animateAzimuth)
+                    sharedContext->storageList.push_back(QVariant(qQNaN()));
+
+                return false;
+            }
+
+            const auto currentZoomFloatPart = state.visualZoom >= 1.0f
+                ? state.visualZoom - 1.0f
+                : (state.visualZoom - 1.0f) * 2.0f;
+            // todo set possible zoom bounds by max zoom change per ...
+            outValue = state.zoomLevel + currentZoomFloatPart + static_cast<float>(zoomAndAzimuth.x);
+
+            if (animateAzimuth)
+            {
+                float azimuthDelta = static_cast<float>(zoomAndAzimuth.y);
+                float targetAzimuth = Utilities::normalizedAngleDegrees(state.azimuth + azimuthDelta);
+                sharedContext->storageList.push_back(QVariant(targetAzimuth));
+            }    
+            
+            return true;
+        },
+        _zoomSetter,
+        duration,
+        0.0f,
+        sharedContext));
+
+    outAnimation.push_back(qMove(zoomAnimation));
+    
+    if (animateAzimuth)
+    {
+        std::shared_ptr<GenericAnimation> azimuthAnimation(new Animation<float>(
+            key,
+            AnimatedValue::Azimuth,
+            _azimuthGetter,
+            [this]
+            (const Key key, float& outValue, AnimationContext& animationContext, const std::shared_ptr<AnimationContext>& sharedContext) -> bool
+            {
+                if (sharedContext->storageList.isEmpty())
+                    return false;
+                    
+                const auto value = sharedContext->storageList.last().toFloat();
+
+                if (qIsNaN(value))
+                    return false;
+
+                outValue = value;
+                return true;
+            },
+            _azimuthSetter,
+            duration,
+            0.0f,
+            sharedContext));
+
+        outAnimation.push_back(qMove(azimuthAnimation));
+    }
 }
 
 std::shared_ptr<OsmAnd::GenericAnimation> OsmAnd::MapAnimator_P::findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection)

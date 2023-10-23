@@ -347,6 +347,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMapTargetForState(MapRendererState& state, const PointI& screenPoint, const PointI& location31) const Q_DECL_OVERRIDE;
         virtual bool resetMapTarget() Q_DECL_OVERRIDE;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) Q_DECL_OVERRIDE;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,

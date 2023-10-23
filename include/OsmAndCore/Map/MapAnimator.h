@@ -168,6 +168,13 @@ namespace OsmAnd
             const bool zeroizeAzimuth,
             const bool invZeroizeElevationAngle,
             const Key key = nullptr);
+
+        void animateLocationFixationOnScreen(
+            const PointI& location31,
+            const PointI& screenPoint,
+            const bool azimuthChangeAllowed,
+            const float duration,
+            const Key key = nullptr);
     };
 }
 

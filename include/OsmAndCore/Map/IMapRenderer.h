@@ -142,6 +142,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setMapTargetForState(MapRendererState& state, const PointI& screenPoint, const PointI& location31) const = 0;
         virtual bool resetMapTarget() = 0;
         virtual bool resetMapTargetPixelCoordinates(const PointI& screenPoint) = 0;
         virtual bool setMapTargetPixelCoordinates(const PointI& screenPoint,
@@ -199,6 +200,7 @@ namespace OsmAnd
             float* heightInMeters = nullptr) const = 0;
         virtual float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getZoomAndRotationAfterPinch(
+            const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
             PointD& zoomAndRotate) const = 0;

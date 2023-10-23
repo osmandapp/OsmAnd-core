@@ -1836,18 +1836,30 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
+    bool ok = setMapTargetForState(_requestedState, screenPoint_, location31_);
+    if (!ok)
+        return false;
+
+    if (!disableUpdate)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMapTargetForState(MapRendererState& state, const PointI& screenPoint_, const PointI& location31_) const
+{
     if (screenPoint_.x < 0 || screenPoint_.y < 0)
     {
-        _requestedState.fixedPixel = screenPoint_;
+        state.fixedPixel = screenPoint_;
         return false;
     }
 
     const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
-    bool sameHeight = _requestedState.fixedHeight != 0.0f && _requestedState.fixedLocation31 == location31 &&
-        _requestedState.fixedZoomLevel == _requestedState.zoomLevel;
-    auto height = sameHeight ? _requestedState.fixedHeight : getHeightOfLocation(_requestedState, location31);
+    bool sameHeight = state.fixedHeight != 0.0f && state.fixedLocation31 == location31 &&
+        state.fixedZoomLevel == state.zoomLevel;
+    auto height = sameHeight ? state.fixedHeight : getHeightOfLocation(state, location31);
     PointI target31;
-    bool haveTarget = getNewTargetByScreenPoint(_requestedState, screenPoint_, location31, target31, height);
+    bool haveTarget = getNewTargetByScreenPoint(state, screenPoint_, location31, target31, height);
     if (!haveTarget)
         return false;
 
@@ -1857,17 +1869,12 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
         target31 = location31;
     }
 
-    _requestedState.fixedPixel = screenPoint_;
-    _requestedState.fixedLocation31 = location31;
-    _requestedState.fixedHeight = height;
-    _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
-    _requestedState.target31 = target31;
-    _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
-
-    if (disableUpdate)
-        return true;
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+    state.fixedPixel = screenPoint_;
+    state.fixedLocation31 = location31;
+    state.fixedHeight = height;
+    state.fixedZoomLevel = state.zoomLevel;
+    state.target31 = target31;
+    state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
 
     return true;
 }

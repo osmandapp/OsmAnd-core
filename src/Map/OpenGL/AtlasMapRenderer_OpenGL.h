@@ -145,6 +145,7 @@ namespace OsmAnd
             float* heightInMeters = nullptr) const override;
         float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getZoomAndRotationAfterPinch(
+            const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
             PointD& zoomAndRotate) const override;

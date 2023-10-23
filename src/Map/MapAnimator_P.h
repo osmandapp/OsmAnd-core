@@ -154,6 +154,14 @@ namespace OsmAnd
             const float duration,
             const TimingFunction timingFunction);
 
+        void constructLocationFixOnScreenAnimation(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI& location31,
+            const PointI& screenPoint,
+            const bool animateAzimuth,
+            const float duration);
+
         const Animation<float>::GetInitialValueMethod _zoomGetter;
         float zoomGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<float>::ApplierMethod _zoomSetter;
@@ -317,6 +325,13 @@ namespace OsmAnd
             const PointD& deceleration,
             const bool zeroizeAzimuth,
             const bool invZeroizeElevationAngle,
+            const Key key);
+
+        void animateLocationFixationOnScreen(
+            const PointI& location31,
+            const PointI& screenPoint,
+            const bool azimuthChangeAllowed,
+            const float duration,
             const Key key);
 
     friend class OsmAnd::MapAnimator;

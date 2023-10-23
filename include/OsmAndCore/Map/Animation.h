@@ -294,6 +294,7 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         typedef std::function<void (const Key key, const T newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> ApplierMethod;
         typedef std::function<T (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetInitialValueMethod;
         typedef std::function<T (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetDeltaValueMethod;
+        typedef std::function<bool (const Key key, T& outValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetCurrentValueMethod;
         typedef std::function<PointI64 (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetPanInitialValueMethod;
         typedef std::function<PointI64 (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetPanDeltaValueMethod;
         typedef std::function<void (const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> PanApplierMethod;
@@ -308,6 +309,33 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         PointI64 _panInitialValue;
         PointI64 _panDelta;
     public:
+        Animation(
+            const Key key_,
+            const AnimatedValue animatedValue_,
+            const GetInitialValueMethod obtainer_,
+            const GetCurrentValueMethod currentValueObtainer_,
+            const ApplierMethod applier_,
+            const float duration_,
+            const float delay_,
+            const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
+            : GenericAnimation(key_, animatedValue_, duration_, delay_, TimingFunction::Invalid, sharedContext_)
+            , _initialValueCaptured(false)
+            , _deltaValueCaptured(false)
+            , _currentValueCalculatedOnce(false)
+            , deltaValue(_deltaValue)
+            , deltaValueObtainer(nullptr)
+            , panDeltaValueObtainer(nullptr)
+            , obtainer(obtainer_)
+            , panObtainer(nullptr)
+            , currentValueObtainer(currentValueObtainer_)
+            , applier(applier_)
+            , panApplier(nullptr)
+        {
+            assert(obtainer != nullptr);
+            assert(currentValueObtainer != nullptr);
+            assert(applier != nullptr);
+        }
+
         Animation(
             const Key key_,
             const AnimatedValue animatedValue_,
@@ -408,6 +436,10 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             {
                 _initialValue = obtainer(key, _ownContext, _sharedContext);
                 _initialValueCaptured = true;
+
+                if (currentValueObtainer)
+                    return false;
+
                 if (deltaValueObtainer)
                 {
                     _deltaValue = deltaValueObtainer(key, _ownContext, _sharedContext);
@@ -427,12 +459,24 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
             // Calculate time
             const auto currentTime = qMin(_timePassed - delay, duration);
            
-            // Obtain current delta
-            calculateValue(currentTime, _initialValue, _deltaValue, duration, timingFunction, _currentValue);
-            _currentValueCalculatedOnce = true;
+            // Obtain current value
+            bool ok;
+            if (currentValueObtainer)
+            {
+                ok = currentValueObtainer(key, _currentValue, _ownContext, _sharedContext);
+            }
+            else
+            {
+                calculateValue(currentTime, _initialValue, _deltaValue, duration, timingFunction, _currentValue);
+                ok = true;
+            }
 
-            // Apply new value
-            applier(key, _currentValue, _ownContext, _sharedContext);
+            if (ok)
+            {
+                _currentValueCalculatedOnce = true;
+                // Apply new value
+                applier(key, _currentValue, _ownContext, _sharedContext);
+            }
 
             // Do panning scaled by zoom if needed
             if (std::is_same<T, float>::value && _initialValueCaptured && panObtainer && panDeltaValueObtainer)
@@ -464,6 +508,7 @@ static T easeOutIn_##name(const float t, const T delta, const float duration)   
         const GetDeltaValueMethod deltaValueObtainer;
         const GetPanDeltaValueMethod panDeltaValueObtainer;
         const GetInitialValueMethod obtainer;
+        const GetCurrentValueMethod currentValueObtainer;
         const ApplierMethod applier;
         const GetPanInitialValueMethod panObtainer;
         const PanApplierMethod panApplier;
