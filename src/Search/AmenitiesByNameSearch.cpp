@@ -53,7 +53,17 @@ void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obfsCollection->obtainDataInterfaceByFilename(filename);
+    QList< std::shared_ptr<const OsmAnd::ObfFile> > files = obfsCollection->getObfFiles();
+    std::shared_ptr<const OsmAnd::ObfFile> res;
+    for (std::shared_ptr<const OsmAnd::ObfFile> file : files)
+    {
+        if (file->filePath.contains(filename, Qt::CaseInsensitive))
+        {
+            res = file;
+            break;
+        }
+    }
+    std::shared_ptr<OsmAnd::ObfDataInterface> dataInterface = obfsCollection->obtainDataInterface(res);
 
     const ObfPoiSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]

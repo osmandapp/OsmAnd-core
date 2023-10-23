@@ -1449,6 +1449,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = uninstallObf(installedResource);
             break;
         case ResourceType::HillshadeRegion:
@@ -1625,6 +1626,7 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = installUnzippedObfFromFile(newName, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
@@ -2370,7 +2372,8 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::WikiMapRegion &&
-            localResource->type != ResourceType::DepthMapRegion)
+            localResource->type != ResourceType::DepthMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }
@@ -2406,7 +2409,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::DepthMapRegion &&
-            localResource->type != ResourceType::WikiMapRegion)
+            localResource->type != ResourceType::WikiMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }
@@ -2465,7 +2469,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::DepthMapRegion &&
-            localResource->type != ResourceType::WikiMapRegion)
+            localResource->type != ResourceType::WikiMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }
@@ -2502,31 +2507,6 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
 
     sortReaders(obfReaders);
     
-    return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
-}
-
-std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterfaceByFilename(
-    const QString filename) const
-{
-    QReadLocker scopedLocker(&owner->_localResourcesLock);
-
-    bool otherBasemapPresent = false;
-    QList< std::shared_ptr<const InstalledResource> > lockedResources;
-    QList< std::shared_ptr<const ObfReader> > obfReaders;
-    for (const auto& localResource : constOf(owner->_localResources))
-    {
-        if (localResource->id != filename)
-        {
-            continue;
-        }
-
-        const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
-        if (!obfMetadata)
-            continue;
-
-        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
-        obfReaders.push_back(qMove(obfReader));
-    }
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 

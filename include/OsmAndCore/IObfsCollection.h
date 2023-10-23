@@ -40,7 +40,6 @@ namespace OsmAnd
             const ZoomLevel minZoomLevel = MinZoomLevel,
             const ZoomLevel maxZoomLevel = MaxZoomLevel,
             const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const = 0;
-        virtual std::shared_ptr<ObfDataInterface> obtainDataInterfaceByFilename( const QString filename = nullptr) const = 0;
     };
 }
 
