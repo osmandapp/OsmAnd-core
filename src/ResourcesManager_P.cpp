@@ -354,6 +354,14 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             QLatin1String("*.wiki.obf"),
             ResourceType::WikiMapRegion);
         
+        // Find ResourceType::Travel -> "*.travel.obf" files
+        loadLocalResourcesFromPath_Obf(
+            storagePath,
+            cachedOsmandIndexes,
+            outResult,
+            QLatin1String("*.travel.obf"),
+            ResourceType::Travel);
+        
         if (outResult.size() > 0)
             cachedOsmandIndexes->writeToFile(indCache.fileName());
     }
@@ -492,6 +500,8 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_Obf(
             resourceType = ResourceType::LiveUpdateRegion;
         else if (fileName.endsWith(".depth.obf"))
             resourceType = ResourceType::DepthMapRegion;
+        else if (fileName.endsWith(".travel.obf"))
+            resourceType = ResourceType::Travel;
         else
         {
             resourceType = ResourceType::MapRegion;
@@ -970,6 +980,8 @@ OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(
         resourceType = ResourceType::GpxFile;
     else if (resourceTypeValue == QLatin1String("sqlite"))
         resourceType = ResourceType::SqliteFile;
+    else if (resourceTypeValue == QLatin1String("travel"))
+        resourceType = ResourceType::Travel;
     else if (resourceTypeValue == QLatin1String("weather"))
         resourceType = ResourceType::WeatherForecast;
     
@@ -1183,6 +1195,17 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .remove(QLatin1String("_0.voice.zip"))
                     .toLower()
                     .append(QLatin1String(".voice"));
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?file=") +
+                    QUrl::toPercentEncoding(name);
+                break;
+            case ResourceType::Travel:
+                // '[resourceName]_2.travel.obf.zip' -> '[resourceName].travel'
+                resourceId = QString(name)
+                    .remove(QLatin1String("_2.travel.obf.zip"))
+                    .toLower()
+                    .append(QLatin1String(".travel.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
                     QLatin1String("/download.php?file=") +
@@ -1426,6 +1449,7 @@ bool OsmAnd::ResourcesManager_P::uninstallResource(const std::shared_ptr<const O
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = uninstallObf(installedResource);
             break;
         case ResourceType::HillshadeRegion:
@@ -1602,6 +1626,7 @@ bool OsmAnd::ResourcesManager_P::installImportedResource(const QString& filePath
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = installUnzippedObfFromFile(newName, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
@@ -1664,6 +1689,7 @@ bool OsmAnd::ResourcesManager_P::installFromFile(const QString& id, const QStrin
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = installObfFromFile(id, filePath, resourceType, resource);
             break;
         case ResourceType::HillshadeRegion:
@@ -2154,6 +2180,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
         case ResourceType::WikiMapRegion:
         case ResourceType::DepthContourRegion:
         case ResourceType::DepthMapRegion:
+        case ResourceType::Travel:
             ok = updateObfFromFile(installedResource, filePath);
             break;
         case ResourceType::HillshadeRegion:
@@ -2345,7 +2372,8 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::WikiMapRegion &&
-            localResource->type != ResourceType::DepthMapRegion)
+            localResource->type != ResourceType::DepthMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }
@@ -2381,7 +2409,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::DepthMapRegion &&
-            localResource->type != ResourceType::WikiMapRegion)
+            localResource->type != ResourceType::WikiMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }
@@ -2440,7 +2469,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             localResource->type != ResourceType::SrtmMapRegion &&
             localResource->type != ResourceType::DepthContourRegion &&
             localResource->type != ResourceType::DepthMapRegion &&
-            localResource->type != ResourceType::WikiMapRegion)
+            localResource->type != ResourceType::WikiMapRegion &&
+            localResource->type != ResourceType::Travel)
         {
             continue;
         }

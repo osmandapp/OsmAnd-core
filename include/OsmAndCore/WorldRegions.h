@@ -43,6 +43,7 @@ namespace OsmAnd
         static const QString RussiaRegionId;
         static const QString SouthAmericaRegionId;
         static const QString NauticalRegionId;
+        static const QString TravelRegionId;
         static const QString OthersRegionId;
 
         bool loadWorldRegions(
