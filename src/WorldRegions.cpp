@@ -11,6 +11,7 @@ const QString OsmAnd::WorldRegions::NorthAmericaRegionId(QLatin1String("northame
 const QString OsmAnd::WorldRegions::RussiaRegionId(QLatin1String("russia"));
 const QString OsmAnd::WorldRegions::SouthAmericaRegionId(QLatin1String("southamerica"));
 const QString OsmAnd::WorldRegions::NauticalRegionId(QLatin1String("nautical"));
+const QString OsmAnd::WorldRegions::TravelRegionId(QLatin1String("travel"));
 const QString OsmAnd::WorldRegions::OthersRegionId(QLatin1String("others"));
 
 OsmAnd::WorldRegions::WorldRegions(const QString& ocbfFileName_)

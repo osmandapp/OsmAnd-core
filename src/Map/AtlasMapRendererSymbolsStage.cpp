@@ -36,15 +36,14 @@
 #include "GlmExtensions.h"
 #include "MapMarker.h"
 #include "VectorLine.h"
-/*
-#define SHORT_GLYPHS_COUNT 4
-#define MEDIUM_GLYPHS_COUNT 10
-#define LONG_GLYPHS_COUNT 15
 
-#define MEDIUM_GLYPHS_MAX_ANGLE 5.0f
-#define LONG_GLYPHS_MAX_ANGLE 2.5f
-#define EXTRA_LONG_GLYPHS_MAX_ANGLE 1.0f
-*/
+// Set maxtimum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
+const float OsmAnd::AtlasMapRendererSymbolsStage::_inclineThresholdOnPath2D =
+    qPow(qSin(qDegreesToRadians(20.0f)), 2.0f);
+
+// Set maxtimum viewing angle when onpath-3D symbols can be displayed (60 deg)
+const float OsmAnd::AtlasMapRendererSymbolsStage::_tiltThresholdOnPath3D = qCos(qDegreesToRadians(60.0f));
+
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
 {
@@ -1193,15 +1192,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
 
+    const auto renderer = getRenderer();
+    const auto pinPoint =
+        Utilities::convert31toFloat(position31 - currentState.target31, currentState.zoomLevel) *
+        static_cast<float>(AtlasMapRenderer::TileSize3D);
+    const auto pinPointInWorld =
+        glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, position31), pinPoint.y);
+
     // Test against visible frustum area (if allowed)
     if (!debugSettings->disableSymbolsFastCheckByFrustum &&
-        allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum &&
-        !internalState.globalFrustum2D31.test(position31) &&
-        !internalState.extraFrustum2D31.test(position31))
+        allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
-        if (metric)
-            metric->billboardSymbolsRejectedByFrustum++;
-        return;
+        if (!renderer->isPointVisible(internalState, pinPointInWorld))
+        {
+            if (metric)
+                metric->billboardSymbolsRejectedByFrustum++;
+            return;
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -1542,7 +1549,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->gpuResource = gpuResource;
         renderable->elevationInMeters = elevationInMeters;
         renderable->tileId = tileId;
-        renderable->offsetInTileN = offsetInTileN;        
+        renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;
         outRenderableSymbols.push_back(renderable);
 
@@ -1653,9 +1660,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, pinPointOnPath.point31), pinPoint.y);
 
     // Test against visible frustum (if allowed)
-    if (!debugSettings->disableSymbolsFastCheckByFrustum &&
-        allowFastCheckByFrustum &&
-        onPathMapSymbol->allowFastCheckByFrustum)
+    bool checkVisibility = !debugSettings->disableSymbolsFastCheckByFrustum && allowFastCheckByFrustum &&
+        onPathMapSymbol->allowFastCheckByFrustum;
+    if (checkVisibility)
     {
         if (!renderer->isPointVisible(internalState, pinPointInWorld))
         {
@@ -1730,8 +1737,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         -halfSizeInPixels,
         startPathPointIndex2D,
         offsetFromStartPathPoint2D);
-    unsigned int endPathPointIndex2D = 0;
-    float offsetFromEndPathPoint2D = 0.0f;
+    unsigned int endPathPointIndex2D = startPathPointIndex2D;
+    float offsetFromEndPathPoint2D = offsetFromStartPathPoint2D;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
         computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
@@ -1787,6 +1794,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             -halfSizeInWorld,
             startPathPointIndex3D,
             offsetFromStartPathPoint3D);
+        endPathPointIndex3D = startPathPointIndex3D;
+        offsetFromEndPathPoint3D = offsetFromStartPathPoint3D;
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
             computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
@@ -1931,9 +1940,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             directionOnScreen,
             onPathMapSymbol->glyphsWidth,
             onPathMapSymbol->size.y,
+            checkVisibility,
             glyphsPlacement,
             rotatedElevatedBBoxInWorld);
-        
+
         if (ok)
         {
             std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
@@ -1944,6 +1954,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
             renderable->gpuResource = gpuResource;
             renderable->is2D = is2D;
+            renderable->target31 = currentState.target31;
+            renderable->pinPointOnScreen = pinPointOnScreen;
+            renderable->pinPointInWorld = pinPointInWorld;
             renderable->distanceToCamera = computeDistanceFromCameraToPath(symbolPathData.pathInWorld);
             renderable->directionInWorld = directionInWorld;
             renderable->directionOnScreen = directionOnScreen;
@@ -2538,7 +2551,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
             internalState.glmViewport);
         screenDistance = glm::distance(internalState.worldCameraPosition, pointNearInWorld);
         if (idx < segmentsCount)
-        {            
+        {
             computedPathData.pathDistancesInWorld[idx] = worldDistance;
             computedPathData.pathDistancesOnScreen[idx] = screenDistance;
         }
@@ -2552,7 +2565,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
                 glm::vec2(prevPointInWorld.x, prevPointInWorld.z), glm::vec2(pointInWorld.x, pointInWorld.z));
             screenLengthInPixels = glm::distance(prevPointOnScreen, pointOnScreen);
             worldAngle = qAcos((prevWorldDistance * prevWorldDistance + worldLength * worldLength
-                - worldDistance * worldDistance) / (2.0f * prevWorldDistance * worldLength));            
+                - worldDistance * worldDistance) / (2.0f * prevWorldDistance * worldLength));
             screenAngle = qAcos((prevScreenDistance * prevScreenDistance + screenLength * screenLength
                 - screenDistance * screenDistance) / (2.0f * prevScreenDistance * screenLength));
             computedPathData.pathSegmentsLengthsOnRelief[prevIdx] = worldLength;
@@ -2652,7 +2665,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             const auto segmentLength = pathSegmentsLengths[testPathPointIndex];
             if (std::isnan(segmentLength))
                 return false;
-            if (scannedLength + segmentLength > offsetFromOriginPathPoint)
+            if (scannedLength + segmentLength >= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
@@ -2675,7 +2688,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             const auto segmentLength = pathSegmentsLengths[testPathPointIndex];
             if (std::isnan(segmentLength))
                 return false;
-            if (scannedLength - segmentLength < offsetFromOriginPathPoint)
+            if (scannedLength - segmentLength <= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);
@@ -2753,10 +2766,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::segmentValidFor2D(const glm::vec2& vS
     // Calculate 'incline' of line and compare to horizontal direction.
     // If any 'incline' is larger than 15 degrees, this line can not be rendered as 2D
 
-    const static float inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
     const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
     const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
-    if (qAbs(inclineSinSq) > inclineThresholdSinSq)
+    if (qAbs(inclineSinSq) > _inclineThresholdOnPath2D)
         return false;
     return true;
 }
@@ -2832,7 +2844,7 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
 
     if (forceDrawGlyphsOnStaright)
     {
-        const auto originalPathSegmentsCount = endPathPointIndex - startPathPointIndex + 1; 
+        const auto originalPathSegmentsCount = endPathPointIndex - startPathPointIndex + 1;
         const auto originalPointsCount = originalPathSegmentsCount + 1;
 
         // New path intersects points on 1/3 and 2/3 of original path
@@ -2897,7 +2909,7 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
         const auto endGlyphWidth = *(pGlyphWidth + endIndex * glyphWidthIncrement);
         const auto endGlyphScaledWidth = endGlyphWidth * projectionScale;
         const auto end = glyphsStartOnStraight[endIndex] + endGlyphScaledWidth;
-        
+
         // Find such segment on original path, so that 1st and 2nd glyphs of triplet will fit
         startPointDistance = findOffsetInSegmentForDistance(
             start,
@@ -2965,7 +2977,7 @@ QVector<unsigned int> OsmAnd::AtlasMapRendererSymbolsStage::computePathForGlyphs
             result.push_back(lastIndex);
             pathOffsets.push_back(lastDistance);
             return result;
-        }        
+        }
     }
     lastDistance = findOffsetInSegmentForDistance(
         lastWidth,
@@ -3077,6 +3089,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const glm::vec2& directionOnScreen,
     const QVector<float>& glyphsWidths,
     const float glyphHeight,
+    bool checkVisibility,
     QVector<RenderableOnPathSymbol::GlyphPlacement>& outGlyphsPlacement,
     QVector<glm::vec3>& outRotatedElevatedBBoxInWorld) const
 {
@@ -3115,7 +3128,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
         const auto glyphStartOnStraight = glyphOffsetOnStraight;
         const auto glyphEndOnStraight = glyphStartOnStraight + glyphWidthScaled;
 
-        // Find such segment on path, so that current glyph will fit 
+        // Find such segment on path, so that current glyph will fit
         unsigned int startPointIndex, endPointIndex;
         const auto lastPathIndex = (is2D ? computedPathData.pathSegmentsLengthsOnScreen.size()
             : computedPathData.pathSegmentsLengthsInWorld.size()) - 1;
@@ -3219,8 +3232,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     if (!is2D)
     {
         // Try to elevate all glyph anchor points
-        bool ok = elevateGlyphAnchorPointsIn3D(
-            outGlyphsPlacement, outRotatedElevatedBBoxInWorld, glyphHeight, pathPixelSizeInWorld, directionInWorld);
+        bool ok = elevateGlyphAnchorPointsIn3D(outGlyphsPlacement, outRotatedElevatedBBoxInWorld,
+            glyphHeight, pathPixelSizeInWorld, directionInWorld, checkVisibility);
         if (!ok)
             return false;
     }
@@ -3257,7 +3270,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     QVector<glm::vec3>& outRotatedElevatedBBoxInWorld,
     const float glyphHeight,
     const float pathPixelSizeInWorld,
-    const glm::vec2& directionInWorld) const
+    const glm::vec2& directionInWorld,
+    bool checkVisibility) const
 {
     const auto& bboxInWorld = calculateOnPath3DRotatedBBox(
         glyphsPlacement, glyphHeight, pathPixelSizeInWorld, directionInWorld);
@@ -3280,7 +3294,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     }
     elevatedBboxCenter /= 4.0f;
 
-    // Calculate normals to all 4 planes of elevated bbox and normal to approximate common bbox plane 
+    // Calculate normals to all 4 planes of elevated bbox and normal to approximate common bbox plane
     glm::vec3 bboxPlanesN[4];
     glm::vec3 approximatedBBoxPlaneN(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < 4; i++)
@@ -3295,37 +3309,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::elevateGlyphAnchorPointsIn3D(
     approximatedBBoxPlaneN /= 4.0f;
     const auto planeLength = glm::length(approximatedBBoxPlaneN);
     if (planeLength > 0.0f)
+    {
         approximatedBBoxPlaneN /= planeLength;
+        if (checkVisibility)
+        {
+            const auto& internalState = getInternalState();
+            const auto viewRayN = glm::normalize(elevatedBboxCenter - internalState.worldCameraPosition);
+            const auto viewAngleCos = static_cast<float>(glm::dot(viewRayN, approximatedBBoxPlaneN));
+            if (viewAngleCos < _tiltThresholdOnPath3D)
+                return false;
+        }
+    }
     else
         approximatedBBoxPlaneN = glm::vec3(0.0f, -1.0f, -1.0f);
 
-/*
-    // Check if angle between planes not too big. The longer text the less angle allowed between planes.
-    // Short texts are displayed unconditionally
-    int glyphsCount = glyphsPlacement.size();
-    if (glyphsCount > SHORT_GLYPHS_COUNT)
-    {
-        float maxAngle;
-        if (glyphsCount <= MEDIUM_GLYPHS_COUNT)
-            maxAngle = MEDIUM_GLYPHS_MAX_ANGLE;
-        else if (glyphsCount <= LONG_GLYPHS_COUNT)
-            maxAngle = LONG_GLYPHS_MAX_ANGLE;      
-        else
-            maxAngle = EXTRA_LONG_GLYPHS_MAX_ANGLE;
-
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = i + 1; j < 4; j++)
-            {
-                const auto planeN1 = bboxPlanesN[i];
-                const auto planeN2 = bboxPlanesN[j];
-                const auto angleBetweenPlanes = qAcos(planeN1.x * planeN2.x + planeN1.y * planeN2.y);
-                if (angleBetweenPlanes > qDegreesToRadians(maxAngle))
-                    return false;
-            }
-        }
-    }
-*/
     // Calculate rotation angle from approximated bbox plane
     const auto angle = static_cast<float>(qAcos(-approximatedBBoxPlaneN.y));
     const auto rotationN = angle > 0.0f ? glm::normalize(

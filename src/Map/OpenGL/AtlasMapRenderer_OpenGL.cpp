@@ -56,6 +56,10 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters 
 const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.8284271247461900976033774484194;
 // Set invalid value for elevation of terrain
 const float OsmAnd::AtlasMapRenderer_OpenGL::_invalidElevationValue = -20000.0f;
+// Set minimum visual zoom
+const float OsmAnd::AtlasMapRenderer_OpenGL::_minVisualZoom = 0.7f; // -0.6 fractional part of float zoom
+// Set maximum visual zoom
+const float OsmAnd::AtlasMapRenderer_OpenGL::_maxVisualZoom = 1.6f; // 0.6 fractional part of float zoom
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
     : AtlasMapRenderer(
@@ -953,14 +957,14 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getRealDistanceToHorizon(
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
     const MapRendererState& state, const PointI& screenPoint, PointD& position,
-    const float height /*=0.0f*/, float* distance /*=nullptr*/) const
+    const float height /*=0.0f*/, float* distance /*=nullptr*/, float* sinAngle /*=nullptr*/) const
 {
-    return getPositionFromScreenPoint(internalState, state, PointD(screenPoint), position, height, distance);
+    return getPositionFromScreenPoint(internalState, state, PointD(screenPoint), position, height, distance, sinAngle);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalState& internalState,
     const MapRendererState& state, const PointD& screenPoint, PointD& position,
-    const float height /*=0.0f*/, float* distance /*=nullptr*/) const
+    const float height /*=0.0f*/, float* distance /*=nullptr*/, float* sinAngle /*=nullptr*/) const
 {
     const auto screenPointY = static_cast<double>(state.windowSize.y) - screenPoint.y;
     const auto nearInWorld = glm::unProject(
@@ -998,6 +1002,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getPositionFromScreenPoint(const InternalS
     
     if (distance)
         *distance = visible ? static_cast<float>(length) : 0.0f;
+
+    if (sinAngle)
+        *sinAngle = visible ? -static_cast<float>(glm::dot(rayD, planeN)) : 0.0f;
 
     return true;
 }
@@ -1168,7 +1175,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getWorldPointFromScreenPoint(
 float OsmAnd::AtlasMapRenderer_OpenGL::getWorldElevationOfLocation(const MapRendererState& state,
     const float elevationInMeters, const PointI& location31_) const
 {
-    if (elevationInMeters != 0.0f)
+    if (elevationInMeters != 0.0f && elevationInMeters > _invalidElevationValue)
     {
         const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
         PointF offsetInTileN;
@@ -1199,6 +1206,138 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getElevationOfLocationInMeters(const MapR
     }
     else
         return 0.0f;
+}
+
+double OsmAnd::AtlasMapRenderer_OpenGL::getDistanceFactor(const MapRendererState& state, const float tileSize,
+    double& baseUnits, float& sinAngleToPlane) const
+{
+    const auto viewportWidth = state.viewport.width();
+    const auto viewportHeight = state.viewport.height();
+    if (viewportWidth == 0 || viewportHeight == 0)
+        return 1.0;
+    InternalState internalState;
+    internalState.glmViewport = glm::vec4(
+        state.viewport.left(),
+        state.windowSize.y - state.viewport.bottom(),
+        state.viewport.width(),
+        state.viewport.height());
+    const auto aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+    const auto projectionPlaneHalfHeight = static_cast<float>(_zNear * qTan(qDegreesToRadians(state.fieldOfView)));
+    const auto projectionPlaneHalfWidth = static_cast<float>(projectionPlaneHalfHeight * aspectRatio);
+    internalState.mPerspectiveProjection = glm::frustum(
+        -projectionPlaneHalfWidth, projectionPlaneHalfWidth,
+        -projectionPlaneHalfHeight, projectionPlaneHalfHeight,
+        _zNear, 1000.0f);
+    baseUnits = static_cast<double>(TileSize3D)
+        * 0.5 * internalState.mPerspectiveProjection[0][0] * state.viewport.width()
+        / ((1.0f + state.visualZoomShift) * tileSize);
+    const auto distanceToTarget = static_cast<float>(baseUnits / state.visualZoom);
+    const auto mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -distanceToTarget));
+    const auto mElevation = glm::rotate(glm::radians(state.elevationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+    const auto mAzimuth = glm::rotate(glm::radians(state.azimuth), glm::vec3(0.0f, 1.0f, 0.0f));
+    internalState.mCameraView = mDistance * mElevation * mAzimuth;
+    PointD position;
+    float distanceToPoint = 0.0f;
+    bool ok = getPositionFromScreenPoint(
+        internalState, state, state.fixedPixel, position, 0.0f, &distanceToPoint, &sinAngleToPlane);
+    if (!ok)
+        return 1.0;
+
+    return static_cast<double>(distanceToTarget) / distanceToPoint;
+}
+
+OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
+    const MapRendererState& state, float& surfaceVisualZoom) const
+{
+    if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0)
+    {
+        surfaceVisualZoom = state.visualZoom;
+        return state.zoomLevel;
+    }
+
+    // Calculate distance factor
+    const auto referenceTileSizeOnScreenInPixels =
+        static_cast<const AtlasMapRendererConfiguration*>(&(*getConfiguration()))->referenceTileSizeOnScreenInPixels;
+    double baseUnits = 0.0;
+    float sinAngle = 0.0f;
+    const auto distanceFactor = getDistanceFactor(state, referenceTileSizeOnScreenInPixels, baseUnits, sinAngle);
+    if (sinAngle == 0.0f)
+    {
+        surfaceVisualZoom = state.visualZoom;
+        return state.zoomLevel;
+    }
+
+    // Calculate zoom to the surface
+    const auto elevation = static_cast<double>(state.fixedHeight)
+        / (state.fixedHeight == 0.0f ? 1.0 : static_cast<double>(1u << state.fixedZoomLevel));
+    const auto distanceToSurface = baseUnits
+        / (state.visualZoom * static_cast<double>(1u << state.zoomLevel) * distanceFactor) - elevation / sinAngle;
+    if (distanceToSurface <= 0.0)
+    {
+        surfaceVisualZoom = state.visualZoom;
+        return state.zoomLevel;
+    }
+    const auto scaleFactor = baseUnits / distanceToSurface;
+    const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
+    const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
+    auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+    if (resultZoom > MaxZoomLevel)
+    {
+        resultZoom = MaxZoomLevel;
+        surfaceVisualZoom = _maxVisualZoom;
+    }
+    else if (resultZoom < MinZoomLevel)
+    {
+        resultZoom = MinZoomLevel;
+        surfaceVisualZoom = _minVisualZoom;
+    }
+    else
+        surfaceVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    return static_cast<ZoomLevel>(resultZoom);
+}
+
+OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRendererState& state,
+    const ZoomLevel surfaceZoomLevel, const float surfaceVisualZoom,
+    const double& pointElevation, float& flatVisualZoom) const
+{
+    if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0)
+    {
+        flatVisualZoom = surfaceVisualZoom;
+        return surfaceZoomLevel;
+    }
+
+    // Calculate distance factor
+    const auto referenceTileSizeOnScreenInPixels =
+        static_cast<const AtlasMapRendererConfiguration*>(&(*getConfiguration()))->referenceTileSizeOnScreenInPixels;
+    double baseUnits = 0.0;
+    float sinAngle = 0.0f;
+    const auto distanceFactor = getDistanceFactor(state, referenceTileSizeOnScreenInPixels, baseUnits, sinAngle);
+    if (sinAngle == 0.0f)
+    {
+        flatVisualZoom = surfaceVisualZoom;
+        return surfaceZoomLevel;
+    }
+
+    // Calculate native zoom on the plane ("flat")
+    const auto distanceToCenter = (baseUnits / (surfaceVisualZoom * static_cast<double>(1u << surfaceZoomLevel))
+        + pointElevation / sinAngle) * distanceFactor;
+    const auto scaleFactor = baseUnits / distanceToCenter;
+    const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
+    const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
+    auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
+    if (resultZoom > MaxZoomLevel)
+    {
+        resultZoom = MaxZoomLevel;
+        flatVisualZoom = _maxVisualZoom;
+    }
+    else if (resultZoom < MinZoomLevel)
+    {
+        resultZoom = MinZoomLevel;
+        flatVisualZoom = _minVisualZoom;
+    }
+    else
+        flatVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+    return static_cast<ZoomLevel>(resultZoom);
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const
@@ -1393,7 +1532,15 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
                         *heightInMeters = exactHeight;
                 }
                 else
+                {
                     location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+                    if (heightInMeters)
+                    {
+                        const auto height = getLocationHeightInMeters(state, location31);
+                        if (height > _invalidElevationValue)
+                            *heightInMeters = height;
+                    }
+                }
                 return true;
             }
         }
@@ -1495,7 +1642,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     const auto zoomedDistance = qSqrt(sqrNeededDistance - sqrRange) + width;
     if (zoomedDistance <= 0.0)
         return false;
-    auto distanceFactor = currentDistance / zoomedDistance;
+
+    const auto currentDistanceNoVisualZoom = currentDistance * state.visualZoom;
+    auto distanceFactor = currentDistanceNoVisualZoom / zoomedDistance;
     auto zoomedRatio = segmentRatio * distanceFactor;
     if (zoomedRatio.x > 1.0 || zoomedRatio.y > 1.0)
     {
@@ -1511,9 +1660,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (zoomLevel > MaxZoomLevel)
         return false;
     const auto zoom = static_cast<double>(1u << static_cast<int>(zoomLevel));
-    const auto neededZoom = upScale ? zoomLevel + factor / zoom - 1.0 : (zoom / factor - 1.0) * 2.0 - zoomLevel;
-    if (neededZoom != neededZoom)
+    const auto deltaZoomForIntZoom = upScale
+        ? zoomLevel + factor / zoom - 1.0
+        : (zoom / factor - 1.0) * 2.0 - zoomLevel;
+    if (qIsNaN(deltaZoomForIntZoom))
         return false;
+    
+    const auto currentZoomFloatPart = state.visualZoom >= 1.0f
+        ? state.visualZoom - 1.0f
+        : (state.visualZoom - 1.0f) * 2.0f;
+    const auto deltaZoom = deltaZoomForIntZoom - currentZoomFloatPart;
+
     const auto actualSegment = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x);
     const auto sqrActualDistance = actualSegment.squareNorm();
@@ -1525,10 +1682,27 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (neededAngle != neededAngle)
         return false;
 
-    zoomAndRotate.x = neededZoom;
+    zoomAndRotate.x = deltaZoom;
     zoomAndRotate.y = neededAngle;
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isLocationHeightAvailable(const MapRendererState& state,
+    const PointI& location31_) const
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);   
+
+    // Get elevation data
+    PointF offsetInTileN;
+    TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    if (getElevationData(state, tileId, state.zoomLevel, offsetInTileN, false, &elevationData) != InvalidZoomLevel &&
+        elevationData)
+    {
+        return true;
+    }
+    return false;
 }
 
 float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRendererState& state,
@@ -1541,11 +1715,10 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getLocationHeightInMeters(const MapRender
     PointF offsetInTileN;
     TileId tileId = Utilities::getTileId(location31, state.zoomLevel, &offsetInTileN);
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    PointF offsetInScaledTileN = offsetInTileN;
-    if (getElevationData(state, tileId, state.zoomLevel, offsetInScaledTileN, false, &elevationData) != InvalidZoomLevel &&
+    if (getElevationData(state, tileId, state.zoomLevel, offsetInTileN, false, &elevationData) != InvalidZoomLevel &&
         elevationData)
     {
-        elevationData->getValue(offsetInScaledTileN, elevationInMeters);
+        elevationData->getValue(offsetInTileN, elevationInMeters);
     }
     return elevationInMeters;
 }
