@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_ARCHIVE_READER_P_H_
-#define _OSMAND_CORE_ARCHIVE_READER_P_H_
+#ifndef _OSMAND_CORE_ARCHIVE_WRITER_P_H_
+#define _OSMAND_CORE_ARCHIVE_WRITER_P_H_
 
 #include "stdlib_common.h"
 #include <functional>
@@ -24,16 +24,27 @@ namespace OsmAnd
     public:
 
     private:
+
+        QByteArray result;
+
+        void setupArchive(struct archive *a, const bool gzip);
+        void writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath);
+
+        int archive_write_open_memory(struct archive *a);
+        static int memory_write_open(struct archive *a, void *writer);
+        static ssize_t memory_write(struct archive *a, void *writer, const void *buff, size_t length);
+
     protected:
         ArchiveWriter_P(ArchiveWriter* const owner);
     public:
         virtual ~ArchiveWriter_P();
 
         ImplementationInterface<ArchiveWriter> owner;
-        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip = false);
+        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip = false);
+        QByteArray createArchive(bool* const ok_, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip = false);
 
     friend class OsmAnd::ArchiveWriter;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_ARCHIVE_READER_P_H_)
+#endif // !defined(_OSMAND_CORE_ARCHIVE_WRITER_P_H_)

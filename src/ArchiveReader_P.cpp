@@ -22,7 +22,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
 {
     QList<Item> result;
 
-    const auto ok = processArchive(owner->fileName,
+    const auto ok = processArchive(
         [&result]
         (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
@@ -30,11 +30,11 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
             item.name = QString::fromUtf8(archive_entry_pathname_utf8(entry));
             item.size = archive_entry_size(entry);
             if (archive_entry_ctime_is_set(entry) != 0)
-                item.creationTime = QDateTime::fromTime_t(archive_entry_ctime(entry));
+                item.creationTime = QDateTime::fromTime_t(static_cast<uint>(archive_entry_ctime(entry)));
             if (archive_entry_mtime_is_set(entry) != 0)
-                item.modificationTime = QDateTime::fromTime_t(archive_entry_mtime(entry));
+                item.modificationTime = QDateTime::fromTime_t(static_cast<uint>(archive_entry_mtime(entry)));
             if (archive_entry_atime_is_set(entry) != 0)
-                item.accessTime = QDateTime::fromTime_t(archive_entry_atime(entry));
+                item.accessTime = QDateTime::fromTime_t(static_cast<uint>(archive_entry_atime(entry)));
 
             result.push_back(item);
             return true;
@@ -54,7 +54,7 @@ bool OsmAnd::ArchiveReader_P::extractItemToDirectory(const QString& itemName, co
 bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes_, const bool isGzip) const
 {
     uint64_t extractedBytes = 0;
-    bool ok = processArchive(owner->fileName, 
+    bool ok = processArchive(
         [itemName, fileName, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
         {
@@ -75,10 +75,62 @@ bool OsmAnd::ArchiveReader_P::extractItemToFile(const QString& itemName, const Q
     return true;
 }
 
+QByteArray OsmAnd::ArchiveReader_P::extractItemToArray(const QString& itemName, uint64_t* const extractedBytes_, const bool isGzip) const
+{
+    QByteArray res;
+    uint64_t extractedBytes = 0;
+    bool ok = processArchive(
+        [itemName, &extractedBytes, &res]
+        (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
+        {
+            const auto currentItemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
+            match = currentItemName == itemName;
+            if (!match)
+                return true;
+
+            // Item was found, so stop on this item regardless of result
+            doStop = true;
+            res = extractArchiveEntryAsArray(archive, entry, extractedBytes);
+            return !res.isNull();
+        }, isGzip);
+    if (!ok)
+        return QByteArray();
+
+    if (extractedBytes_ != nullptr)
+        *extractedBytes_ = extractedBytes;
+    return res;
+}
+
+QString OsmAnd::ArchiveReader_P::extractItemToString(const QString& itemName, uint64_t* const extractedBytes_, const bool isGzip) const
+{
+    QString res;
+    uint64_t extractedBytes = 0;
+    bool ok = processArchive(
+        [itemName, &extractedBytes, &res]
+        (archive* archive, archive_entry* entry, bool& doStop, bool& match) -> bool
+        {
+            const auto currentItemName = QString::fromUtf8(archive_entry_pathname_utf8(entry));
+            match = currentItemName == itemName;
+            if (!match)
+                return true;
+
+            // Item was found, so stop on this item regardless of result
+            doStop = true;
+            res = extractArchiveEntryAsString(archive, entry, extractedBytes);
+            return !res.isNull();
+        }, isGzip);
+    if (!ok)
+        return QString();
+
+    if (extractedBytes_ != nullptr)
+        *extractedBytes_ = extractedBytes;
+    return res;
+}
+
 bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes_) const
 {
     uint64_t extractedBytes = 0;
-    bool ok = processArchive(owner->fileName,
+    bool ok = processArchive(
         [destinationPath, &extractedBytes]
         (archive* archive, archive_entry* entry, bool& /*doStop*/, bool& /*match*/) -> bool
         {
@@ -101,20 +153,34 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
     return true;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isGzip)
+bool OsmAnd::ArchiveReader_P::processArchive(const ArchiveEntryHander handler, const bool isGzip) const
 {
-    QFile archiveFile(fileName);
-    if (!archiveFile.exists())
-        return false;
+    bool ok = false;
+    const auto fileName = owner->fileName;
+    if (!fileName.isEmpty())
+    {
+        QFile archiveFile(fileName);
+        if (!archiveFile.exists())
+            return false;
 
-    bool ok = processArchive(&archiveFile, handler, isGzip);
+        ok = processArchive(&archiveFile, handler, isGzip);
 
-    archiveFile.close();
+        archiveFile.close();
+    }
+    else if (owner->sourceData && owner->sourceDataSize > 0)
+    {
+        QBuffer archiveBuffer;
+        archiveBuffer.setData(owner->sourceData, owner->sourceDataSize);
+        archiveBuffer.open(QIODevice::ReadOnly);
 
+        ok = processArchive(&archiveBuffer, handler, isGzip);
+
+        archiveBuffer.close();
+    }
     return ok;
 }
 
-bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip)
+bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip) const
 {
     auto archive = archive_read_new();
     if (!archive)
@@ -140,7 +206,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
         }
         else
         {
-            res = archive_read_support_compression_all(archive);
+            res = archive_read_support_filter_all(archive);
             if (res != ARCHIVE_OK)
                 break;
         }
@@ -180,7 +246,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     }
     if (res != ARCHIVE_OK)
     {
-        archive_read_finish(archive);
+        archive_read_free(archive);
         delete[] archiveData.buffer;
 
         return false;
@@ -197,7 +263,7 @@ bool OsmAnd::ArchiveReader_P::processArchive(QIODevice* const ioDevice, const Ar
     ok = ok && match;
 
     // Close archive
-    res = archive_read_finish(archive);
+    res = archive_read_free(archive);
     if (res != ARCHIVE_OK)
         ok = false;
     delete[] archiveData.buffer;
@@ -277,6 +343,84 @@ bool OsmAnd::ArchiveReader_P::extractArchiveEntryAsFile(archive* archive, archiv
     bytesExtracted_ = bytesExtracted;
 
     return true;
+}
+
+QByteArray OsmAnd::ArchiveReader_P::extractArchiveEntryAsArray(archive* archive, archive_entry* entry, uint64_t& bytesExtracted)
+{
+    const auto itemType = archive_entry_filetype(entry);
+    if (itemType != S_IFREG)
+        return QByteArray();
+
+    uint64_t fileSize = 0;
+    if (archive_entry_size_is_set(entry) != 0)
+        fileSize = archive_entry_size(entry);
+
+    bool ok = true;
+    QByteArray resArr;
+    {
+        if (fileSize > 0)
+            resArr.reserve(static_cast<int>(fileSize));
+
+        const auto buffer = new uint8_t[BufferSize];
+        for(; ok;)
+        {
+            const auto bytesRead = archive_read_data(archive, buffer, BufferSize);
+            if (bytesRead <= 0)
+            {
+                ok = (bytesRead == 0);
+                break;
+            }
+
+            resArr.append(reinterpret_cast<char*>(buffer), static_cast<int>(bytesRead));
+        }
+        delete[] buffer;
+    }
+    if (!ok)
+    {
+        return QByteArray();
+    }
+
+    bytesExtracted = resArr.size();
+    return resArr;
+}
+
+QString OsmAnd::ArchiveReader_P::extractArchiveEntryAsString(archive* archive, archive_entry* entry, uint64_t& bytesExtracted)
+{
+    const auto itemType = archive_entry_filetype(entry);
+    if (itemType != S_IFREG)
+        return QString();
+
+    uint64_t fileSize = 0;
+    if (archive_entry_size_is_set(entry) != 0)
+        fileSize = archive_entry_size(entry);
+
+    bool ok = true;
+    QByteArray resArr;
+    {
+        if (fileSize > 0)
+            resArr.reserve(static_cast<int>(fileSize));
+
+        const auto buffer = new uint8_t[BufferSize];
+        for(; ok;)
+        {
+            const auto bytesRead = archive_read_data(archive, buffer, BufferSize);
+            if (bytesRead <= 0)
+            {
+                ok = (bytesRead == 0);
+                break;
+            }
+
+            resArr.append(reinterpret_cast<char*>(buffer), static_cast<int>(bytesRead));
+        }
+        delete[] buffer;
+    }
+    if (!ok)
+    {
+        return QString();
+    }
+
+    bytesExtracted = resArr.size();
+    return QString(resArr);
 }
 
 int OsmAnd::ArchiveReader_P::archiveOpen(archive *, void *_client_data)
