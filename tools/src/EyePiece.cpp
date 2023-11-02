@@ -1009,9 +1009,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         mapRenderer->setFieldOfView(configuration.fov);
         mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputRasterWidth, configuration.outputRasterHeight));
         mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputRasterHeight, configuration.outputRasterWidth));
-        mapRenderer->setMapTarget(
-            OsmAnd::PointI(configuration.outputRasterWidth / 2, configuration.outputRasterHeight / 2),
-            configuration.target31);
+        if (configuration.targetOnRelief)
+        {
+            mapRenderer->setMapTarget(
+                OsmAnd::PointI(configuration.outputRasterWidth / 2, configuration.outputRasterHeight / 2),
+                configuration.target31);
+        }
+        else
+            mapRenderer->setTarget(configuration.target31);
         mapRenderer->setZoom(configuration.zoom);
         mapRenderer->setAzimuth(configuration.azimuth);
         mapRenderer->setElevationAngle(configuration.elevationAngle);
@@ -1596,6 +1601,10 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outError = QString("'%1' can not be parsed as target31.y").arg(target31Values[1]);
                 return false;
             }
+        }
+        else if (arg.startsWith(QLatin1String("-targetOnRelief")))
+        {
+            outConfiguration.targetOnRelief = true;
         }
         else if (arg.startsWith(QLatin1String("-zoom=")))
         {
