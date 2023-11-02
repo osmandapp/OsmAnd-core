@@ -300,10 +300,11 @@ namespace OsmAnd
             double R = 6372.8; // for haversine use R = 6372.8 km instead of 6371 km
             double dLat = toRadians(yLatB - yLatA);
             double dLon = toRadians(xLonB - xLonA);
-            double a =
-                qSin(dLat / 2.0) * qSin(dLat / 2.0) +
+            double sinHalfLat = qSin(dLat / 2.0);
+            double sinHalfLon = qSin(dLon / 2.0);
+            double a = sinHalfLat * sinHalfLat +
                 qCos(toRadians(yLatA)) * qCos(toRadians(yLatB)) *
-                qSin(dLon / 2.0) * qSin(dLon / 2.0);
+                sinHalfLon * sinHalfLon;
             //double c = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a));
             //return R * c * 1000.0;
             // simplyfy haversine:
