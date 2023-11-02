@@ -1,6 +1,8 @@
 package net.osmand.core.android;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -41,6 +43,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,24 +61,39 @@ public abstract class MapRendererView extends FrameLayout {
     /**
      * Main GLSurfaceView
      */
-    private final GLSurfaceView _glSurfaceView;
+    private volatile GLSurfaceView _glSurfaceView;
 
     /**
      * Reference to OsmAndCore::IMapRenderer instance
      */
-    protected final IMapRenderer _mapRenderer;
+    protected IMapRenderer _mapRenderer;
+
+    /**
+     * Optional byte buffer for offscreen rendering
+     */
+    private ByteBuffer _byteBuffer;
+
+    /**
+     * Optional bitmap for offscreen rendering
+     */
+    private Bitmap _resultBitmap;
+
+    /**
+     * Offscreen rendering result is ready
+     */
+    private volatile boolean _renderingResultIsReady;
 
     /**
      * Reference to OsmAndCore::MapAnimator instance
      */
-    protected final MapAnimator _mapAnimator;
+    protected MapAnimator _mapAnimator;
     private long _mapAnimationStartTime;
     private boolean _mapAnimationFinished;
 
     /**
      * Reference to OsmAndCore::MapMarkersAnimator instance
      */
-    protected final MapMarkersAnimator _mapMarkersAnimator;
+    protected MapMarkersAnimator _mapMarkersAnimator;
     private long _mapMarkersAnimationStartTime;
     private boolean _mapMarkersAnimationFinished;
 
@@ -141,6 +159,7 @@ public abstract class MapRendererView extends FrameLayout {
 
     public interface MapRendererViewListener {
         void onUpdateFrame(MapRendererView mapRenderer);
+        void onFrameReady(MapRendererView mapRenderer);
     }
 
     public MapRendererView(Context context) {
@@ -153,43 +172,71 @@ public abstract class MapRendererView extends FrameLayout {
 
     public MapRendererView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
+    }
+
+    public void setupRenderer(Context context, int bitmapWidth, int bitmapHeight, MapRendererView oldView) {
         NativeCore.checkIfLoaded();
 
-        // Get display density factor
-        _densityFactor = getResources().getDisplayMetrics().density;
+        boolean inWindow = (bitmapWidth == 0 || bitmapHeight == 0);
 
-        // Create instance of OsmAndCore::IMapRenderer
-        _mapRenderer = createMapRendererInstance();
+        synchronized (this) {
+            if (!inWindow)
+                _byteBuffer = ByteBuffer.allocateDirect(bitmapWidth * bitmapHeight * 4);
 
-        // Create GLSurfaceView and add it to hierarchy
-        _glSurfaceView = new GLSurfaceView(context);
-        addView(_glSurfaceView, new LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT));
+                // Get display density factor
+            _densityFactor = inWindow ? getResources().getDisplayMetrics().density : 1.0f;
 
-        // Configure GLSurfaceView
-        _glSurfaceView.setPreserveEGLContextOnPause(true);
-        _glSurfaceView.setEGLContextClientVersion(3);
-        _glSurfaceView.setEGLConfigChooser(new SimpleEGLConfigChooser(true));
-        _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
-        _glSurfaceView.setRenderer(new RendererProxy());
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            // Create instance of OsmAndCore::IMapRenderer
+            if (oldView == null)
+                _mapRenderer = createMapRendererInstance();
+            else
+                _mapRenderer = oldView.getRenderer();
 
-        // Create map animator for that map
-        _mapAnimator = new MapAnimator(false);
-        _mapAnimator.setMapRenderer(_mapRenderer);
+            // Create GLSurfaceView and add it to hierarchy
+            if (inWindow && _glSurfaceView != null)
+                removeAllViews();
+            _glSurfaceView = new GLSurfaceView(context);
+            if (inWindow)
+                addView(_glSurfaceView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+            else {
+                _windowWidth = bitmapWidth;
+                _windowHeight = bitmapHeight;
+            }
 
-        // Create map markers animator
-        _mapMarkersAnimator = new MapMarkersAnimator();
-        _mapMarkersAnimator.setMapRenderer(_mapRenderer);
+            // Create map animator for that map
+            if (_mapAnimator == null)
+                _mapAnimator = new MapAnimator(false);
+            _mapAnimator.setMapRenderer(_mapRenderer);
+
+            // Create map markers animator
+            if (_mapMarkersAnimator == null)
+                _mapMarkersAnimator = new MapMarkersAnimator();
+            _mapMarkersAnimator.setMapRenderer(_mapRenderer);
+
+            // Configure GLSurfaceView
+            _glSurfaceView.setPreserveEGLContextOnPause(true);
+            _glSurfaceView.setEGLContextClientVersion(3);
+            _glSurfaceView.setEGLConfigChooser(new ComponentSizeChooser(8, 8, 8, 0, 16, 0, inWindow));
+            _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
+            if (!inWindow)
+                _glSurfaceView.setEGLWindowSurfaceFactory(new PixelbufferSurfaceFactory(bitmapWidth, bitmapHeight));
+            _glSurfaceView.setRenderer(new RendererProxy());
+            _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            if (!inWindow) {
+                _glSurfaceView.surfaceCreated(null);
+                _glSurfaceView.surfaceChanged(null, 0, bitmapWidth, bitmapHeight);
+                isPresent = true;
+            }
+        }
     }
 
     @Override
     public void setVisibility(int visibility) {
-        _glSurfaceView.setVisibility(visibility);
+        if (_glSurfaceView != null)
+            _glSurfaceView.setVisibility(visibility);
         super.setVisibility(visibility);
     }
-    
+
     public void addListener(MapRendererViewListener listener) {
         if (!this.listeners.contains(listener)) {
             List<MapRendererViewListener> listeners = new ArrayList<>();
@@ -224,8 +271,51 @@ public abstract class MapRendererView extends FrameLayout {
      */
     protected abstract IMapRenderer createMapRendererInstance();
 
+    public Bitmap getBitmap() {
+        if (_byteBuffer != null) {
+            if (_renderingResultIsReady) {
+                Bitmap bitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+                synchronized (_byteBuffer) {
+                    _byteBuffer.rewind();
+                    bitmap.copyPixelsFromBuffer(_byteBuffer);
+                    _renderingResultIsReady = false;
+                }
+                Matrix matrix = new Matrix();
+                matrix.preScale(1.0f, -1.0f);
+                _resultBitmap = Bitmap.createBitmap(bitmap, 0, 0, _windowWidth, _windowHeight, matrix, true);
+            }
+            if (_resultBitmap == null)
+                _resultBitmap = Bitmap.createBitmap(_windowWidth, _windowHeight, Bitmap.Config.ARGB_8888);
+            return _resultBitmap;
+        }
+        else
+            return null;
+    }
+
+    public IMapRenderer getRenderer() {
+        return _mapRenderer;
+    }
+
+    public void stopRenderer() {
+        Log.v(TAG, "removeRendering()");
+        NativeCore.checkIfLoaded();
+
+        if (isPresent && _glSurfaceView != null) {
+            isPresent = false;
+            Log.v(TAG, "Rendering release due to removeRendering()");
+            _glSurfaceView.onPause();
+            releaseRendering();
+            removeAllViews();
+            _byteBuffer = null;
+            _resultBitmap = null;
+            _mapAnimator = null;
+            _mapMarkersAnimator = null;
+            _glSurfaceView = null;
+        }
+    }
+
     private void releaseRendering() {
-        if(releaseTask == null) {
+        if(releaseTask == null && _glSurfaceView != null) {
             waitRelease = true;
             releaseTask = new Runnable() {
                 @Override
@@ -242,14 +332,16 @@ public abstract class MapRendererView extends FrameLayout {
             };
             _glSurfaceView.queueEvent(releaseTask);
         }
-        synchronized (releaseTask) {
-            long stopTime = System.currentTimeMillis();
-            while(waitRelease){
-                if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT)
-                    return;
-                try {
-                    releaseTask.wait(RELEASE_WAIT_TIMEOUT);
-                } catch (InterruptedException ex) {}
+        if(_glSurfaceView != null) {
+            synchronized (releaseTask) {
+                long stopTime = System.currentTimeMillis();
+                while(waitRelease){
+                    if (System.currentTimeMillis() > stopTime + RELEASE_STOP_TIMEOUT)
+                        return;
+                    try {
+                        releaseTask.wait(RELEASE_WAIT_TIMEOUT);
+                    } catch (InterruptedException ex) {}
+                }
             }
         }
     }
@@ -266,8 +358,7 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "onDetachedFromWindow()");
         NativeCore.checkIfLoaded();
 
-        if(isPresent)
-        {
+        if (isPresent) {
             isPresent = false;
             // Surface and context are going to be destroyed, thus try to release rendering
             // before that will happen
@@ -295,8 +386,7 @@ public abstract class MapRendererView extends FrameLayout {
         Log.v(TAG, "handleOnDestroy()");
         NativeCore.checkIfLoaded();
 
-        if(isPresent)
-        {
+        if (isPresent) {
             isPresent = false;
             // Don't delete map renderer here, since context destruction will happen later.
             // Map renderer will be automatically deleted by GC anyways. But queue
@@ -318,7 +408,8 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Inform GLSurfaceView that activity was paused
-        _glSurfaceView.onPause();
+        if (_glSurfaceView != null)
+            _glSurfaceView.onPause();
     }
 
     public final void handleOnResume() {
@@ -326,7 +417,8 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Inform GLSurfaceView that activity was resumed
-        _glSurfaceView.onResume();
+        if (_glSurfaceView != null)
+            _glSurfaceView.onResume();
     }
 
     public final void requestRender() {
@@ -334,7 +426,8 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         // Request GLSurfaceView render a frame
-        _glSurfaceView.requestRender();
+        if (_glSurfaceView != null)
+            _glSurfaceView.requestRender();
     }
 
     public final MapAnimator getMapAnimator() {
@@ -1121,6 +1214,34 @@ public abstract class MapRendererView extends FrameLayout {
         }
     }
 
+    private class PixelbufferSurfaceFactory implements GLSurfaceView.EGLWindowSurfaceFactory {
+
+        public PixelbufferSurfaceFactory(int width, int height) {
+            surfaceAttributes = new int[] {
+                    EGL10.EGL_WIDTH, width,
+                    EGL10.EGL_HEIGHT, height,
+                    EGL10.EGL_NONE};
+        }
+
+        public EGLSurface createWindowSurface(EGL10 egl, EGLDisplay display,
+                EGLConfig config, Object nativeWindow) {
+            EGLSurface result = null;
+            try {
+                result = egl.eglCreatePbufferSurface(display, config, surfaceAttributes);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "eglCreateWindowSurface", e);
+            }
+            return result;
+        }
+
+        public void destroySurface(EGL10 egl, EGLDisplay display,
+                EGLSurface surface) {
+            egl.eglDestroySurface(display, surface);
+        }
+
+        private int[] surfaceAttributes;
+    }
+
     private abstract class BaseConfigChooser
             implements GLSurfaceView.EGLConfigChooser {
         public BaseConfigChooser(int[] configSpec) {
@@ -1177,8 +1298,9 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private class ComponentSizeChooser extends BaseConfigChooser {
         public ComponentSizeChooser(int redSize, int greenSize, int blueSize,
-                                    int alphaSize, int depthSize, int stencilSize) {
+                                    int alphaSize, int depthSize, int stencilSize, boolean inWindow) {
             super(new int[] {
+                    EGL10.EGL_SURFACE_TYPE, inWindow ? EGL10.EGL_WINDOW_BIT : EGL10.EGL_PBUFFER_BIT,
                     EGL10.EGL_RED_SIZE, redSize,
                     EGL10.EGL_GREEN_SIZE, greenSize,
                     EGL10.EGL_BLUE_SIZE, blueSize,
@@ -1243,17 +1365,6 @@ public abstract class MapRendererView extends FrameLayout {
         protected int mAlphaSize;
         protected int mDepthSize;
         protected int mStencilSize;
-    }
-
-    /**
-     * This class will choose a RGB_888 surface with
-     * or without a depth buffer.
-     *
-     */
-    private class SimpleEGLConfigChooser extends ComponentSizeChooser {
-        public SimpleEGLConfigChooser(boolean withDepthBuffer) {
-            super(8, 8, 8, 0, withDepthBuffer ? 16 : 0, 0);
-        }
     }
 
     /**
@@ -1485,6 +1596,19 @@ public abstract class MapRendererView extends FrameLayout {
 
             // Flush all the commands to GPU
             gl.glFlush();
+
+            // Read the result raster to byte buffer when rendering off-screen
+            if (_byteBuffer != null) {
+                gl.glFinish();
+                synchronized (_byteBuffer) {
+                    _byteBuffer.rewind();
+                    gl.glReadPixels(0, 0, _windowWidth, _windowHeight, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, _byteBuffer);
+                    _renderingResultIsReady = true;
+                }
+                for (MapRendererViewListener listener : listeners) {
+                    listener.onFrameReady(MapRendererView.this);
+                }
+            }
         }
     }
 
@@ -1495,7 +1619,8 @@ public abstract class MapRendererView extends FrameLayout {
             extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
         @Override
         public void method(IMapRenderer mapRenderer) {
-            _glSurfaceView.requestRender();
+            if (_glSurfaceView != null)
+                _glSurfaceView.requestRender();
         }
     }
 
