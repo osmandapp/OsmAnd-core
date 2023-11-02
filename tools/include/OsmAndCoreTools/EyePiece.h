@@ -50,6 +50,7 @@ namespace OsmAndTools
             QString outputJSONFilename;
             ImageFormat outputImageFormat;
             OsmAnd::PointI target31;
+            bool targetOnRelief = false;
             float zoom;
             float azimuth;
             float elevationAngle;
@@ -64,7 +65,7 @@ namespace OsmAndTools
             float mapScale;
             float symbolsScale;
             QString locale;
-            bool verbose;
+            bool verbose = false;
 #if defined(OSMAND_TARGET_OS_linux)
             bool useLegacyContext;
 #endif
