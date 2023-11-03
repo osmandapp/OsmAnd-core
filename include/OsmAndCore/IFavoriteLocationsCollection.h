@@ -28,7 +28,7 @@ namespace OsmAnd
     protected:
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const PointI position31,
-            const QString& elevation = QString(),
+            const double elevation = NAN,
             const QString& time = QString(),
             const QString& creationTime = QString(),
             const QString& title = QString(),
@@ -48,7 +48,7 @@ namespace OsmAnd
 
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
             const LatLon latLon,
-            const QString& elevation = QString(),
+            const double elevation = NAN,
             const QString& time = QString(),
             const QString& creationTime = QString(),
             const QString& title = QString(),

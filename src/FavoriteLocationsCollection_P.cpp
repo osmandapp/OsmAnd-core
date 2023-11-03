@@ -27,7 +27,7 @@ void OsmAnd::FavoriteLocationsCollection_P::notifyFavoriteLocationChanged(Favori
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
     const PointI position,
-    const QString& elevation,
+    const double elevation,
     const QString& time,
     const QString& pickupTime,
     const QString& title,
@@ -53,7 +53,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
     const LatLon latLon,
-    const QString& elevation,
+    const double elevation,
     const QString& time,
     const QString& pickupTime,
     const QString& title,

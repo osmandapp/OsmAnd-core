@@ -32,14 +32,14 @@ void OsmAnd::FavoriteLocation_P::setIsHidden(const bool isHidden)
         link->_p->notifyFavoriteLocationChanged(owner);
 }
 
-QString OsmAnd::FavoriteLocation_P::getElevation() const
+double OsmAnd::FavoriteLocation_P::getElevation() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _elevation;
 }
 
-void OsmAnd::FavoriteLocation_P::setElevation(const QString& newElevation)
+void OsmAnd::FavoriteLocation_P::setElevation(const double newElevation)
 {
     QWriteLocker scopedLocker(&_lock);
 

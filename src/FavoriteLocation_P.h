@@ -33,7 +33,7 @@ namespace OsmAnd
         mutable QReadWriteLock _lock;
 
         bool _isHidden;
-        QString _elevation;
+        double _elevation;
         QString _time;
         QString _pickupTime;
         QString _title;
@@ -58,8 +58,8 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool isHidden);
         
-        QString getElevation() const;
-        void setElevation(const QString& newElevation);
+        double getElevation() const;
+        void setElevation(const double newElevation);
         
         QString getTime() const;
         void setTime(const QString& newTitle);

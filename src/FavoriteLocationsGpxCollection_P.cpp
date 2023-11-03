@@ -101,10 +101,10 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer, 
         writer.writeAttribute(QLatin1String("lat"), QString::number(latLon.latitude, 'f', kFavoriteLatLonPrecision));
         writer.writeAttribute(QLatin1String("lon"), QString::number(latLon.longitude, 'f', kFavoriteLatLonPrecision));
 
-        if (!item->getElevation().isNull() && item->getElevation().toDouble() > 0.)
+        if (!isnan(item->getElevation()))
         {
             // <ele>
-            writer.writeTextElement(QLatin1String("ele"), item->getElevation());
+            writer.writeTextElement(QLatin1String("ele"), QString::number(item->getElevation(), 'f', 1));
         }
         
         if (!item->getComment().isNull())
@@ -254,7 +254,14 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                     return false;
                 }
        
-                newItem->setElevation(xmlReader.readElementText());
+                bool ok = true;
+                double ele = xmlReader.readElementText().toDouble(&ok);
+                if (!ok)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid <ele>");
+                    return false;
+                }
+                newItem->setElevation(ele);
             }
             else if (tagName == QLatin1String("cmt"))
             {

@@ -20,7 +20,7 @@ OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const PointI position31,
-    const QString& elevation /*= QString::null*/,
+    const double elevation /*= QString::null*/,
     const QString& time /*= QString::null*/,
     const QString& pickupTime /*= QString::null*/,
     const QString& title /*= QString::null*/,
@@ -39,7 +39,7 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const LatLon latLon,
-    const QString& elevation /*= QString::null*/,
+    const double elevation /*= QString::null*/,
     const QString& time /*= QString::null*/,
     const QString& pickupTime /*= QString::null*/,
     const QString& title /*= QString::null*/,

@@ -40,8 +40,8 @@ namespace OsmAnd
         virtual bool isHidden() const = 0;
         virtual void setIsHidden(const bool isHidden) = 0;
         
-        virtual QString getElevation() const = 0;
-        virtual void setElevation(const QString& newElevation) = 0;
+        virtual double getElevation() const = 0;
+        virtual void setElevation(const double newElevation) = 0;
         
         virtual QString getTime() const = 0;
         virtual void setTime(const QString& newTime) = 0;
