@@ -1194,8 +1194,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
     const auto renderer = getRenderer();
     const auto pinPoint =
-        Utilities::convert31toFloat(position31 - currentState.target31, currentState.zoomLevel) *
-        static_cast<float>(AtlasMapRenderer::TileSize3D);
+        Utilities::convert31toFloat(Utilities::shortestVector31(currentState.target31, position31),
+        currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
     const auto pinPointInWorld =
         glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, position31), pinPoint.y);
 
@@ -1654,8 +1654,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
     const auto renderer = getRenderer();
     const auto pinPoint =
-        Utilities::convert31toFloat(pinPointOnPath.point31 - currentState.target31, currentState.zoomLevel) *
-        static_cast<float>(AtlasMapRenderer::TileSize3D);
+        Utilities::convert31toFloat(Utilities::shortestVector31(currentState.target31, pinPointOnPath.point31),
+        currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
     const auto pinPointInWorld =
         glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, pinPointOnPath.point31), pinPoint.y);
 
@@ -2049,8 +2049,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
         // Pin-point location
         {
-            const auto pinPointInWorld = Utilities::convert31toFloat(
-                pinPointOnPath.point31 - currentState.target31,
+            const auto pinPointInWorld = Utilities::convert31toFloat(Utilities::shortestVector31(
+                currentState.target31, pinPointOnPath.point31),
                 currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
             const auto pinPointOnScreen = glm_extensions::project(
                 glm::vec3(
@@ -2416,8 +2416,8 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
     for (auto idx = 0u; idx < count; idx++)
     {
         *(pPointInWorld++) =
-            Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomLevel) *
-            static_cast<float>(AtlasMapRenderer::TileSize3D);
+            Utilities::convert31toFloat(Utilities::shortestVector31(currentState.target31, *(pPoint31++)),
+            currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
     }
 
     return result;
@@ -2465,8 +2465,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
         if (points31)
         {
             point31 = (*points31)[idx];
-            sourcePoint = Utilities::convert31toFloat(point31 - currentState.target31, currentState.zoomLevel) *
-                static_cast<float>(AtlasMapRenderer::TileSize3D);
+            sourcePoint = Utilities::convert31toFloat(Utilities::shortestVector31(currentState.target31, point31),
+                currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
         }
         else
         {
