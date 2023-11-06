@@ -12,6 +12,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/FavoriteLocationsCollection.h>
+#include <OsmAndCore/GpxDocument.h>
 
 namespace OsmAnd
 {
@@ -29,12 +30,8 @@ namespace OsmAnd
         FavoriteLocationsGpxCollection();
         virtual ~FavoriteLocationsGpxCollection();
 
-        bool saveTo(const QString& fileName) const;
-        bool saveTo(const QString& fileName, const QString& groupName) const;
-        bool saveTo(QXmlStreamWriter& writer) const;
-        bool saveTo(QXmlStreamWriter& writer, const QString& groupName) const;
-        bool loadFrom(const QString& fileName, bool append = false);
-        bool loadFrom(QXmlStreamReader& reader, bool append = false);
+        std::shared_ptr<GpxDocument> loadFrom(const QString& fileName, bool append = false);
+        std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& reader, bool append = false);
 
         static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(const QString& filename);
         static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(QXmlStreamReader& reader);

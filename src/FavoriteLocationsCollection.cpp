@@ -96,6 +96,11 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     }
 }
 
+void OsmAnd::FavoriteLocationsCollection::addFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
+{
+    _p->addFavoriteLocation(favoriteLocation);
+}
+
 bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
 {
     return _p->removeFavoriteLocation(favoriteLocation);

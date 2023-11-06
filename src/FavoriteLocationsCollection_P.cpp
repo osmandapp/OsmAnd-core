@@ -22,7 +22,8 @@ void OsmAnd::FavoriteLocationsCollection_P::notifyFavoriteLocationChanged(Favori
 {
     QReadLocker scopedLocker(&_collectionLock);
 
-    owner->favoriteLocationChangeObservable.postNotify(owner, constOf(_collection)[pFavoriteLocation]);
+    if (_collection.contains(pFavoriteLocation))
+        owner->favoriteLocationChangeObservable.postNotify(owner, constOf(_collection)[pFavoriteLocation]);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
@@ -44,9 +45,6 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     QWriteLocker scopedLocker(&_collectionLock);
 
     std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, position, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent, amenityOriginName));
-    _collection.insert(newItem.get(), newItem);
-
-    notifyCollectionChanged();
 
     return newItem;
 }
@@ -70,11 +68,18 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
     QWriteLocker scopedLocker(&_collectionLock);
 
     std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, elevation, time, pickupTime, title, description, address, group, icon, background, color, extensions, calendarEvent, amenityOriginName));
-    _collection.insert(newItem.get(), newItem);
-
-    notifyCollectionChanged();
 
     return newItem;
+}
+
+void OsmAnd::FavoriteLocationsCollection_P::addFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
+{
+    QWriteLocker scopedLocker(&_collectionLock);
+
+    std::shared_ptr<FavoriteLocation> _favoriteLocation = std::dynamic_pointer_cast<FavoriteLocation>(favoriteLocation);
+    _collection.insert(_favoriteLocation.get(), _favoriteLocation);
+
+    notifyCollectionChanged();
 }
 
 bool OsmAnd::FavoriteLocationsCollection_P::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)

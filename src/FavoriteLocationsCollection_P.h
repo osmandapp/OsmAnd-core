@@ -77,6 +77,7 @@ namespace OsmAnd
             const QHash<QString, QString>& extensions,
             const bool calendarEvent,
             const QString& amenityOriginName);
+        void addFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
         bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
         bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations);
         void clearFavoriteLocations();

@@ -12,6 +12,7 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "FavoriteLocationsCollection_P.h"
+#include "GpxDocument.h"
 
 namespace OsmAnd
 {
@@ -20,8 +21,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsGpxCollection_P);
 
-    private:
-        void writeExtension(const QString &key, const QString &value, QXmlStreamWriter &writer) const;
     protected:
         FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner);
     public:
@@ -29,18 +28,8 @@ namespace OsmAnd
 
         ImplementationInterface<FavoriteLocationsGpxCollection> owner;
 
-        bool saveTo(const QString& fileName) const;
-        bool saveTo(const QString& fileName, const QString& groupName) const;
-        bool extracted(const QHash<QString, QString>::const_iterator &extension, QXmlStreamWriter &writer) const;
-        
-        bool saveTo(QXmlStreamWriter& writer) const;
-        bool saveTo(QXmlStreamWriter& writer, const QString& groupName) const;
-        bool loadFrom(const QString& fileName, bool append = false);
-        bool loadFrom(QXmlStreamReader& reader, bool append = false);
-        
-        void backup(const QString& backupFile, const QString& externalFile) const;
-        void clearOldBackups(const QString& basePath) const;
-        QString getBackupFile(const QString& basePath) const;
+        std::shared_ptr<GpxDocument> loadFrom(const QString& fileName, bool append = false);
+        std::shared_ptr<GpxDocument> loadFrom(QXmlStreamReader& reader, bool append = false);
 
     friend class OsmAnd::FavoriteLocationsGpxCollection;
     };
