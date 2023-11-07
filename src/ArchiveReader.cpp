@@ -4,6 +4,16 @@
 OsmAnd::ArchiveReader::ArchiveReader(const QString& fileName_)
     : _p(new ArchiveReader_P(this))
     , fileName(fileName_)
+	, sourceData(nullptr)
+	, sourceDataSize(-1)
+{
+}
+
+OsmAnd::ArchiveReader::ArchiveReader(const char *data, int size)
+    : _p(new ArchiveReader_P(this))
+	, fileName(QString())
+    , sourceData(data)
+	, sourceDataSize(size)
 {
 }
 
@@ -24,6 +34,16 @@ bool OsmAnd::ArchiveReader::extractItemToDirectory(const QString& itemName, cons
 bool OsmAnd::ArchiveReader::extractItemToFile(const QString& itemName, const QString& fileName, const bool isGzip, uint64_t* const extractedBytes /*= nullptr*/) const
 {
     return _p->extractItemToFile(itemName, fileName, extractedBytes, isGzip);
+}
+
+QByteArray OsmAnd::ArchiveReader::extractItemToArray(const QString& itemName, const bool isGzip, uint64_t* const extractedBytes) const
+{
+    return _p->extractItemToArray(itemName, extractedBytes, isGzip);
+}
+
+QString OsmAnd::ArchiveReader::extractItemToString(const QString& itemName, const bool isGzip, uint64_t* const extractedBytes) const
+{
+    return _p->extractItemToString(itemName, extractedBytes, isGzip);
 }
 
 bool OsmAnd::ArchiveReader::extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes /*= nullptr*/) const

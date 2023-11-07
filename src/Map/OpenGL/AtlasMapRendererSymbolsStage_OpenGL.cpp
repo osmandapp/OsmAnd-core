@@ -3304,9 +3304,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
         mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption ? QStringLiteral("caption")
             : (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Icon ? QStringLiteral("icon")
                 : QStringLiteral("unknown")));
+    jsonObject.insert(QStringLiteral("content"), mapSymbol->content);
     if (mapSymbol->contentClass == OsmAnd::MapSymbol::ContentClass::Caption)
     {
-        jsonObject.insert(QStringLiteral("content"), mapSymbol->content);
         jsonObject.insert(QStringLiteral("language"),
             mapSymbol->languageId == OsmAnd::LanguageId::Native ? QStringLiteral("native")
             : (mapSymbol->languageId == OsmAnd::LanguageId::Localized ? QStringLiteral("localized")

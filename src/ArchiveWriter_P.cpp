@@ -19,16 +19,49 @@ OsmAnd::ArchiveWriter_P::~ArchiveWriter_P()
 {
 }
 
-void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip /*= false*/)
+void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip /*= false*/)
 {
-    struct archive *a;
-    struct archive_entry *entry;
-    struct stat st;
-    char buff[8192];
-    ssize_t len;
-    int res;
-    
-    a = archive_write_new();
+    struct archive *a = archive_write_new();
+    setupArchive(a, gzip);
+
+    auto filePathArray = filePath.toUtf8();
+    int res = archive_write_open_filename(a, filePathArray.data());
+    if (res != ARCHIVE_OK)
+    {
+        *ok_ = false;
+        return;
+    }
+
+    writeFiles(a, filesToArchive, basePath);
+
+    res = archive_write_close(a);
+    res = archive_write_free(a);
+    *ok_ = res == ARCHIVE_OK;
+}
+
+QByteArray OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip /*= false*/)
+{
+    struct archive *a = archive_write_new();
+    setupArchive(a, gzip);
+
+    int res = archive_write_open_memory(a);
+    if (res != ARCHIVE_OK)
+    {
+        *ok_ = false;
+        return nullptr;
+    }
+
+    writeFiles(a, filesToArchive, basePath);
+
+    res = archive_write_close(a);
+    res = archive_write_free(a);
+    *ok_ = res == ARCHIVE_OK;
+
+    return result;
+}
+
+void OsmAnd::ArchiveWriter_P::setupArchive(struct archive *a, const bool gzip)
+{
     if (gzip)
     {
         archive_write_add_filter_gzip(a);
@@ -40,19 +73,23 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
         archive_write_add_filter_none(a);
     }
     archive_write_zip_set_compression_deflate(a);
-    auto filePathArray = filePath.toUtf8();
-    res = archive_write_open_filename(a, filePathArray.data());
-    if (res != ARCHIVE_OK)
-    {
-        *ok_ = false;
-        return;
-    }
-    for (QString fileName : filesToArcive)
+}
+
+void OsmAnd::ArchiveWriter_P::writeFiles(struct archive *a, const QList<QString>& filesToArchive, const QString& basePath)
+{
+    struct archive_entry *entry;
+    struct stat st;
+
+    int buffSize = 16384;
+    char buff[buffSize];
+    size_t len;
+
+    for (auto fileName : filesToArchive)
     {
         QFile archiveFile(fileName);
         if (!archiveFile.exists())
             continue;
-        
+
         QFileInfo fi(fileName);
         auto fileNameArray = fileName.toUtf8();
         const char* filename = fileNameArray.data();
@@ -65,15 +102,35 @@ void OsmAnd::ArchiveWriter_P::createArchive(bool* const ok_, const QString& file
         archive_entry_set_perm(entry, 0664);
         archive_write_header(a, entry);
         archiveFile.open(QIODevice::ReadOnly);
-        len = archiveFile.read(buff, 8192);
-        while ( len > 0 ) {
+        len = archiveFile.read(buff, buffSize);
+        while (len > 0)
+        {
             archive_write_data(a, buff, len);
-            len = archiveFile.read(buff, 8192);
+            len = archiveFile.read(buff, buffSize);
         }
         archiveFile.close();
         archive_entry_free(entry);
     }
-    res = archive_write_close(a);
-    res = archive_write_free(a);
-    *ok_ = res == ARCHIVE_OK;
 }
+
+int OsmAnd::ArchiveWriter_P::archive_write_open_memory(struct archive *a)
+{
+    return (archive_write_open(a, &result, memory_write_open, memory_write, NULL));
+}
+
+int OsmAnd::ArchiveWriter_P::memory_write_open(struct archive *a, void *result)
+{
+    /* Disable padding if it hasn't been set explicitly. */
+    if (-1 == archive_write_get_bytes_in_last_block(a))
+        archive_write_set_bytes_in_last_block(a, 1);
+    return (ARCHIVE_OK);
+}
+
+ssize_t OsmAnd::ArchiveWriter_P::memory_write(struct archive *a, void *result, const void *buff, size_t length)
+{
+    QByteArray *array = reinterpret_cast<QByteArray *>(result);
+    array->append(reinterpret_cast<const char *>(buff), static_cast<int>(length));
+
+    return (length);
+}
+

@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_ARCHIVE_READER_H_
-#define _OSMAND_CORE_ARCHIVE_READER_H_
+#ifndef _OSMAND_CORE_ARCHIVE_WRITER_H_
+#define _OSMAND_CORE_ARCHIVE_WRITER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -26,8 +26,9 @@ namespace OsmAnd
         ArchiveWriter();
         virtual ~ArchiveWriter();
 
-        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip = false);
+        void createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip = false);
+        QByteArray createArchive(bool* const ok_, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip = false);
     };
 }
 
-#endif // !defined(_OSMAND_CORE_ARCHIVE_READER_H_)
+#endif // !defined(_OSMAND_CORE_ARCHIVE_WRITER_H_)

@@ -8,6 +8,7 @@
 #include <QString>
 #include <QList>
 #include <QIODevice>
+#include <QBuffer>
 
 #include <libarchive/archive.h>
 
@@ -31,10 +32,12 @@ namespace OsmAnd
             uint8_t* buffer;
         };
         typedef std::function<bool(archive* archive, archive_entry* entry, bool& doStop, bool& match)> ArchiveEntryHander;
-        static bool processArchive(const QString& fileName, const ArchiveEntryHander handler, const bool isGzip = false);
-        static bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip = false);
+        bool processArchive(const ArchiveEntryHander handler, const bool isGzip = false) const;
+        bool processArchive(QIODevice* const ioDevice, const ArchiveEntryHander handler, const bool isGzip = false) const;
 
         static bool extractArchiveEntryAsFile(archive* archive, archive_entry* entry, const QString& fileName, uint64_t& bytesExtracted);
+        static QByteArray extractArchiveEntryAsArray(archive* archive, archive_entry* entry, uint64_t& bytesExtracted);
+        static QString extractArchiveEntryAsString(archive* archive, archive_entry* entry, uint64_t& bytesExtracted);
 
         static int archiveOpen(archive *, void *_client_data);
         static __LA_SSIZE_T archiveRead(archive *, void *_client_data, const void **_buffer);
@@ -56,6 +59,8 @@ namespace OsmAnd
 
         bool extractItemToDirectory(const QString& itemName, const QString& destinationPath, const bool keepDirectoryStructure, uint64_t* const extractedBytes) const;
         bool extractItemToFile(const QString& itemName, const QString& fileName, uint64_t* const extractedBytes, const bool isGzip = false) const;
+        QByteArray extractItemToArray(const QString& itemName, uint64_t* const extractedBytes_, const bool isGzip = false) const;
+        QString extractItemToString(const QString& itemName, uint64_t* const extractedBytes_, const bool isGzip = false) const;
         bool extractAllItemsTo(const QString& destinationPath, uint64_t* const extractedBytes) const;
 
     friend class OsmAnd::ArchiveReader;

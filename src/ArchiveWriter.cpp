@@ -10,7 +10,12 @@ OsmAnd::ArchiveWriter::~ArchiveWriter()
 {
 }
 
-void OsmAnd::ArchiveWriter::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArcive, const QString& basePath, const bool gzip /*= false*/)
+void OsmAnd::ArchiveWriter::createArchive(bool* const ok_, const QString& filePath, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip /*= false*/)
 {
-    _p->createArchive(ok_, filePath, filesToArcive, basePath, gzip);
+    _p->createArchive(ok_, filePath, filesToArchive, basePath, gzip);
+}
+
+QByteArray OsmAnd::ArchiveWriter::createArchive(bool* const ok_, const QList<QString>& filesToArchive, const QString& basePath, const bool gzip /*= false*/)
+{
+    return _p->createArchive(ok_, filesToArchive, basePath, gzip);
 }
