@@ -148,6 +148,23 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         }
         extCopy.append(networkRouteExt);
     }
+    if (!pointsGroups.isEmpty())
+    {
+        auto pointsGroupsExt = std::make_shared<GpxExtensions::GpxExtension>();
+        pointsGroupsExt->name = QStringLiteral("points_groups");
+        for (auto it = pointsGroups.begin(); it != pointsGroups.end(); ++it)
+        {
+            const auto pointsGroup = it.value();
+            auto attrsExt = std::make_shared<GpxExtensions::GpxExtension>();
+            attrsExt->name = QStringLiteral("group");
+            attrsExt->attributes["name"] = pointsGroup->name;
+            attrsExt->attributes["color"] = pointsGroup->color.toString();
+            attrsExt->attributes["icon"] = pointsGroup->iconName;
+            attrsExt->attributes["background"] = pointsGroup->backgroundType;
+            pointsGroupsExt->subextensions.append(attrsExt);
+        }
+        extCopy.append(pointsGroupsExt);
+    }
 
     writeExtensions(extCopy, attributes, xmlWriter);
     xmlWriter.writeEndElement();
