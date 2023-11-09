@@ -1643,8 +1643,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (zoomedDistance <= 0.0)
         return false;
 
-    const auto currentDistanceNoVisualZoom = currentDistance * state.visualZoom;
-    auto distanceFactor = currentDistanceNoVisualZoom / zoomedDistance;
+    auto distanceFactor = currentDistance / zoomedDistance;
     auto zoomedRatio = segmentRatio * distanceFactor;
     if (zoomedRatio.x > 1.0 || zoomedRatio.y > 1.0)
     {
@@ -1654,8 +1653,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
 
     // Calculate needed offsets for zoom and azimuth to show the same location
     // using new screen coordinates of the second finger, assuming the first one is a pivot point
-    const auto upScale = distanceFactor > 1.0;
-    const auto factor = upScale ? distanceFactor : 1.0 / distanceFactor;
+    const auto distanceFactorForIntZoom = distanceFactor * state.visualZoom;
+    const auto upScale = distanceFactorForIntZoom > 1.0;
+    const auto factor = upScale ? distanceFactorForIntZoom : 1.0 / distanceFactorForIntZoom;
     const auto zoomLevel = std::floor(std::log2(factor));
     if (zoomLevel > MaxZoomLevel)
         return false;
