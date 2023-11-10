@@ -190,6 +190,7 @@ set(legacy_shared_dirs_public
 file(GLOB common_legacy_sources
 		"${LEGACY_SRC}/multipolygons.h"
 		"${LEGACY_SRC}/multipolygons.cpp"
+		"${LEGACY_SRC}/common.cpp"
 	)
 
 set(target_legacy_shared_public_includes
