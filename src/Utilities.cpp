@@ -22,59 +22,59 @@ OsmAnd::Utilities::~Utilities()
 const uint precisionPower = 10;
 const uint precisionDiv = 1 << (31 - precisionPower);
 
-double coefficientsY[1 << precisionPower];
-bool initializeYArray = false;
+double coeffY[1 << precisionPower];
+bool initYArray = false;
 double OsmAnd::Utilities::y31ToMeters(int y1, int y2, int x)
 {
-    if (!initializeYArray) {
-        coefficientsY[0] = 0;
+    if (!initYArray) {
+        coeffY[0] = 0;
         for (uint i = 0; i < (1 << precisionPower) - 1; i++) {
-            coefficientsY[i + 1] =
-            coefficientsY[i] + measuredDist31(0, i << (31 - precisionPower), 0, ((i + 1) << (31 - precisionPower)));
+            coeffY[i + 1] =
+            coeffY[i] + measuredDist31(0, i << (31 - precisionPower), 0, ((i + 1) << (31 - precisionPower)));
         }
-        initializeYArray = true;
+        initYArray = true;
     }
     uint div1 = y1 / precisionDiv;
     uint mod1 = y1 % precisionDiv;
     uint div2 = y2 / precisionDiv;
     uint mod2 = y2 % precisionDiv;
     double h1;
-    if(div1 + 1 >= sizeof(coefficientsY)/sizeof(*coefficientsY)) {
-        h1 = coefficientsY[div1] + mod1 / ((double)precisionDiv) * (coefficientsY[div1] - coefficientsY[div1 - 1]);
+    if(div1 + 1 >= sizeof(coeffY)/sizeof(*coeffY)) {
+        h1 = coeffY[div1] + mod1 / ((double)precisionDiv) * (coeffY[div1] - coeffY[div1 - 1]);
     } else {
-        h1 = coefficientsY[div1] + mod1 / ((double)precisionDiv) * (coefficientsY[div1 + 1] - coefficientsY[div1]);
+        h1 = coeffY[div1] + mod1 / ((double)precisionDiv) * (coeffY[div1 + 1] - coeffY[div1]);
     }
     double h2 ;
-    if(div2 + 1 >= sizeof(coefficientsY)/sizeof(*coefficientsY)) {
-        h2 = coefficientsY[div2] + mod2 / ((double)precisionDiv) * (coefficientsY[div2] - coefficientsY[div2 - 1]);
+    if(div2 + 1 >= sizeof(coeffY)/sizeof(*coeffY)) {
+        h2 = coeffY[div2] + mod2 / ((double)precisionDiv) * (coeffY[div2] - coeffY[div2 - 1]);
     } else {
-        h2 = coefficientsY[div2] + mod2 / ((double)precisionDiv) * (coefficientsY[div2 + 1] - coefficientsY[div2]);
+        h2 = coeffY[div2] + mod2 / ((double)precisionDiv) * (coeffY[div2 + 1] - coeffY[div2]);
     }
     double res = h1 - h2;
     // OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "ind %f != %f", res,  measuredDist31(x, y1, x, y2));
     return res;
 }
 
- double coefficientsX[1 << precisionPower];
- bool initializeXArray = false;
+ double coeffX[1 << precisionPower];
+ bool initXArray = false;
  double OsmAnd::Utilities::x31ToMeters(int x1, int x2, int y)
  {
-     if (!initializeXArray) {
+     if (!initXArray) {
          for (uint i = 0; i < (1 << precisionPower); i++) {
-             coefficientsX[i] = 0;
+             coeffX[i] = 0;
          }
-         initializeXArray = true;
+         initXArray = true;
      }
      int ind = y / precisionDiv;
-     if (coefficientsX[ind] == 0) {
+     if (coeffX[ind] == 0) {
          double md = measuredDist31(x1, y, x2, y);
          if (md < 10 || x1 == x2) {
              return md;
          }
-         coefficientsX[ind] = md / fabs((double)x1 - (double)x2);
+         coeffX[ind] = md / fabs((double)x1 - (double)x2);
      }
      // translate into meters
-     return ((double)x1 - x2) * coefficientsX[ind];
+     return ((double)x1 - x2) * coeffX[ind];
  }
 
 int OsmAnd::Utilities::extractFirstInteger(const QString& s)
