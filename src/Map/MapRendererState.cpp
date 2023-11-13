@@ -12,6 +12,11 @@ OsmAnd::MapRendererState::MapRendererState()
     , fixedLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
     , fixedHeight(0.0f)
     , fixedZoomLevel(MinZoomLevel)
+    , aimPixel(-1, -1)
+    , aimLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , aimHeight(0.0f)
+    , aimZoomLevel(MinZoomLevel)
+    , aimingActions(0)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
     , surfaceZoomLevel(MinZoomLevel)
@@ -46,6 +51,10 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.fixedLocation31 = fixedLocation31;
     mapState.fixedHeight = fixedHeight;
     mapState.fixedZoomLevel = fixedZoomLevel;
+    mapState.aimPixel = aimPixel;
+    mapState.aimLocation31 = aimLocation31;
+    mapState.aimHeight = aimHeight;
+    mapState.aimZoomLevel = aimZoomLevel;
     mapState.zoomLevel = zoomLevel;
     mapState.visualZoom = visualZoom;
     mapState.surfaceZoomLevel = surfaceZoomLevel;
@@ -76,6 +85,10 @@ OsmAnd::MapState::MapState()
     , fixedLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
     , fixedHeight(0.0f)
     , fixedZoomLevel(MinZoomLevel)
+    , aimPixel(-1, -1)
+    , aimLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , aimHeight(0.0f)
+    , aimZoomLevel(MinZoomLevel)
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
     , surfaceZoomLevel(MinZoomLevel)

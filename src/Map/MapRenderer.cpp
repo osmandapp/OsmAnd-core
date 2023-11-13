@@ -1857,12 +1857,23 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
         target31 = location31;
     }
 
+    bool update = forcedUpdate
+        || _requestedState.fixedPixel != screenPoint_
+        || _requestedState.fixedLocation31 != location31
+        || _requestedState.fixedHeight != height
+        || _requestedState.fixedZoomLevel != _requestedState.zoomLevel
+        || _requestedState.target31 != target31;
+    if (!update)
+        return false;
+
     _requestedState.fixedPixel = screenPoint_;
     _requestedState.fixedLocation31 = location31;
     _requestedState.fixedHeight = height;
     _requestedState.fixedZoomLevel = _requestedState.zoomLevel;
     _requestedState.target31 = target31;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+
+    setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
 
     if (disableUpdate)
         return true;
@@ -1873,7 +1884,7 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
 }
 
 bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
-    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/, bool keepSecondaryTarget /*= false*/)
 {
     auto zoomLevel = state.surfaceZoomLevel;
     auto visualZoom = state.surfaceVisualZoom;
@@ -1889,14 +1900,19 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
         const auto pointElevation = static_cast<double>(height) / static_cast<double>(1u << zoomLevel);
         zoomLevel = getFlatZoom(state, state.surfaceZoomLevel, state.surfaceVisualZoom, pointElevation, visualZoom);
     }
-    if (forcedUpdate || state.zoomLevel != zoomLevel || state.visualZoom != visualZoom)
+    bool update = forcedUpdate || state.zoomLevel != zoomLevel || state.visualZoom != visualZoom;
+    if (update)
     {
         state.zoomLevel = zoomLevel;
         state.visualZoom = visualZoom;
         if (!disableUpdate)
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
-    return setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
+    auto result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
+    if (!keepSecondaryTarget && (result || update))
+        setSecondaryTarget(state, forcedUpdate, disableUpdate);
+
+    return result;
 }
 
 bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
@@ -2028,7 +2044,9 @@ bool OsmAnd::MapRenderer::setMapTargetPixelCoordinates(const PointI& screenPoint
 
     _requestedState.target31 = target31;
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
-    
+
+    setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+
     if (disableUpdate)
         return true;
 
@@ -2059,7 +2077,10 @@ bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_,
     {
         auto result = setMapTargetOnly(_requestedState, location31, 0.0f, forcedUpdate, disableUpdate);
         if (result)
+        {
             _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+            setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+        }
         return result;
     }
 
@@ -2093,7 +2114,10 @@ bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_, const 
     {
         auto result = setMapTargetOnly(_requestedState, location31, heightInMeters, forcedUpdate, disableUpdate);
         if (result)
+        {
             _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+            setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+        }
         return result;
     }
 
@@ -2101,6 +2125,255 @@ bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_, const 
         return true;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    if (state.fixedPixel.x < 0 || state.fixedPixel.y < 0 || state.aimPixel.x < 0 || state.aimPixel.y < 0)
+        return false;
+
+    auto startAzimuth = state.azimuth;
+    auto startElevationAngle = state.elevationAngle;
+
+    auto azimuth = state.azimuth;
+    auto zoomLevel = state.zoomLevel;
+    auto visualZoom = state.visualZoom;
+    auto elevationAngle = state.elevationAngle;
+
+    const auto aimingActions = state.aimingActions;
+    if (aimingActions.none())
+        return false;
+    
+    bool isTiltAndRotation = false;
+    bool isZoomAndRotation = false;
+    PointD tiltAndRotation;
+    PointD zoomAndRotation;
+    if (!aimingActions[AimingAction::Zoom])
+        isTiltAndRotation = getTiltAndRotationForAiming(
+            state,
+            state.fixedLocation31,
+            state.fixedHeight,
+            state.fixedPixel,
+            state.aimLocation31,
+            state.aimHeight,
+            state.aimPixel,
+            tiltAndRotation);
+    else if (!aimingActions[AimingAction::Elevation])
+        isZoomAndRotation = getExtraZoomAndRotationForAiming(
+            state,
+            state.fixedLocation31,
+            getElevationOfLocationInMeters(state, state.fixedHeight, state.fixedZoomLevel, state.fixedLocation31),
+            state.fixedPixel,
+            state.aimLocation31,
+            getElevationOfLocationInMeters(state, state.aimHeight, state.aimZoomLevel, state.aimLocation31),
+            state.aimPixel,
+            zoomAndRotation);
+    else
+    {
+        isTiltAndRotation = getTiltAndRotationForAiming(
+            state,
+            state.fixedLocation31,
+            state.fixedHeight,
+            state.fixedPixel,
+            state.aimLocation31,
+            state.aimHeight,
+            state.aimPixel,
+            tiltAndRotation);
+        if (isTiltAndRotation)
+        {
+            const auto halfTilt = (tiltAndRotation.x - state.elevationAngle) / 2.0 + state.elevationAngle;
+            const auto halfRotation =
+                Utilities::normalizedAngleDegrees((tiltAndRotation.y - state.azimuth) / 2.0 + state.azimuth);
+            state.elevationAngle = static_cast<float>(halfTilt);
+            state.azimuth = static_cast<float>(halfRotation);
+            setMapTarget(state, forcedUpdate, disableUpdate, true);
+            state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+        }
+        isZoomAndRotation = getExtraZoomAndRotationForAiming(
+            state,
+            state.fixedLocation31,
+            getElevationOfLocationInMeters(state, state.fixedHeight, state.fixedZoomLevel, state.fixedLocation31),
+            state.fixedPixel,
+            state.aimLocation31,
+            getElevationOfLocationInMeters(state, state.aimHeight, state.aimZoomLevel, state.aimLocation31),
+            state.aimPixel,
+            zoomAndRotation);
+    }
+
+    if (isTiltAndRotation)
+    {
+        if (aimingActions[AimingAction::Elevation])
+            elevationAngle = static_cast<float>(tiltAndRotation.x);
+        if (aimingActions[AimingAction::Azimuth])
+            azimuth = static_cast<float>(tiltAndRotation.y);
+    }
+
+    if (isZoomAndRotation)
+    {
+        float zoom = visualZoom - 1.0f;
+        if (zoom < 0.0f)
+            zoom *= 2.0f;
+        zoom += static_cast<float>(zoomLevel) + static_cast<float>(zoomAndRotation.x);
+        zoomLevel = qBound(MinZoomLevel, static_cast<ZoomLevel>(qRound(zoom)), MaxZoomLevel);
+        const auto zoomFraction = qBound(-0.5f, zoom - zoomLevel, 0.5f);
+        visualZoom = 1.0f + (zoomFraction >= 0.0f ? zoomFraction : zoomFraction * 0.5f);
+        if (aimingActions[AimingAction::Azimuth])
+            azimuth = static_cast<float>(Utilities::normalizedAngleDegrees(state.azimuth + zoomAndRotation.y));
+    }
+
+    bool azimuthIsModified = startAzimuth != azimuth;
+    bool zoomIsModified = state.zoomLevel != zoomLevel || !qFuzzyCompare(state.visualZoom, visualZoom);
+    bool elevationAngleIsModified = startElevationAngle != elevationAngle;
+    
+    bool result = azimuthIsModified || zoomIsModified || elevationAngleIsModified;
+    bool update = forcedUpdate || result;
+    if (!update)
+        return false;
+
+    if (azimuthIsModified)
+        state.azimuth = azimuth;
+    if (zoomIsModified)
+    {
+        state.zoomLevel = zoomLevel;
+        state.visualZoom = visualZoom;
+    }
+    if (elevationAngleIsModified)
+        state.elevationAngle = elevationAngle;
+
+    if (result)
+    {
+        result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
+        state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+    }
+
+    if (disableUpdate)
+        return result;
+
+    if (azimuthIsModified)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Azimuth);
+    if (zoomIsModified)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    if (elevationAngleIsModified)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::ElevationAngle);
+
+    return result;
+}
+
+bool OsmAnd::MapRenderer::setSecondaryTarget(const PointI& screenPoint_, const PointI& location31_,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (screenPoint_.x < 0 || screenPoint_.y < 0)
+    {
+        _requestedState.aimPixel = screenPoint_;
+        return false;
+    }
+
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
+    bool sameHeight = _requestedState.aimHeight != 0.0f && _requestedState.aimLocation31 == location31 &&
+        _requestedState.aimZoomLevel == _requestedState.zoomLevel;
+    auto height = sameHeight ? _requestedState.aimHeight : getHeightOfLocation(_requestedState, location31);
+
+    bool update = forcedUpdate
+        || _requestedState.aimPixel != screenPoint_
+        || _requestedState.aimLocation31 != location31
+        || _requestedState.aimHeight != height
+        || _requestedState.aimZoomLevel != _requestedState.zoomLevel;
+    if (!update)
+        return false;
+
+    _requestedState.aimPixel = screenPoint_;
+    _requestedState.aimLocation31 = location31;
+    _requestedState.aimHeight = height;
+    _requestedState.aimZoomLevel = _requestedState.zoomLevel;
+
+    setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+
+    if (disableUpdate)
+        return true;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSecondaryTargetPixelCoordinates(const PointI& screenPoint_,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (screenPoint_.x < 0 || screenPoint_.y < 0)
+    {
+        _requestedState.aimPixel = screenPoint_;
+        return false;
+    }
+
+    bool update = forcedUpdate || _requestedState.aimPixel != screenPoint_;
+    if (!update)
+        return false;
+
+    _requestedState.aimPixel = screenPoint_;
+
+    setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+
+    if (disableUpdate)
+        return true;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setSecondaryTargetLocation(const PointI& location31_,
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.aimPixel.x < 0 || _requestedState.aimPixel.y < 0)
+        return false;
+
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
+
+    bool update = forcedUpdate || _requestedState.aimLocation31 != location31;
+    if (!update)
+        return false;
+
+    _requestedState.aimLocation31 = location31;
+
+    setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
+
+    if (disableUpdate)
+        return true;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+int OsmAnd::MapRenderer::getAimingActions()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return static_cast<int>(_requestedState.aimingActions.to_ulong());
+}
+
+bool OsmAnd::MapRenderer::setAimingActions(const int actionBits, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    const auto aimingActions = AimingActions(actionBits);
+
+    bool update = forcedUpdate || _requestedState.aimingActions != aimingActions;
+    if (!update)
+        return false;
+
+    _requestedState.aimingActions = aimingActions;
+
+    setSecondaryTarget(_requestedState, forcedUpdate);
 
     return true;
 }
@@ -2146,6 +2419,8 @@ bool OsmAnd::MapRenderer::setFlatZoom(const ZoomLevel zoomLevel, const float vis
 
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
 
+    setSecondaryTarget(_requestedState, forcedUpdate);
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
     return true;
@@ -2170,6 +2445,8 @@ bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool force
 
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
 
+    setSecondaryTarget(_requestedState, forcedUpdate);
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
     return true;
@@ -2190,6 +2467,8 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
     setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
 
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+
+    setSecondaryTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
@@ -2372,6 +2651,15 @@ bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
         location31 = _requestedState.target31;
     else
         location31 = _requestedState.fixedLocation31;
+    return true;
+}
+
+bool OsmAnd::MapRenderer::getSecondaryTargetLocation(PointI& location31) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    location31 = _requestedState.aimLocation31;
+
     return true;
 }
 

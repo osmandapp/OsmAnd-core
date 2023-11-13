@@ -55,6 +55,15 @@ namespace OsmAnd
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
+    enum AimingAction
+    {
+        NoAction = 0,
+        Azimuth,
+        Zoom,
+        Elevation,
+    };
+    typedef std::bitset<sizeof(int)> AimingActions;
+
     struct OSMAND_CORE_API MapState Q_DECL_FINAL
     {
         MapState();
@@ -73,6 +82,11 @@ namespace OsmAnd
         PointI fixedLocation31;
         float fixedHeight;
         ZoomLevel fixedZoomLevel;
+        PointI aimPixel;
+        PointI aimLocation31;
+        float aimHeight;
+        ZoomLevel aimZoomLevel;
+        AimingActions aimingActions;
         ZoomLevel zoomLevel;
         float visualZoom;
         ZoomLevel surfaceZoomLevel;
@@ -119,6 +133,11 @@ namespace OsmAnd
         PointI fixedLocation31;
         float fixedHeight;
         ZoomLevel fixedZoomLevel;
+        PointI aimPixel;
+        PointI aimLocation31;
+        float aimHeight;
+        ZoomLevel aimZoomLevel;
+        AimingActions aimingActions;
         ZoomLevel zoomLevel;
         float visualZoom;
         ZoomLevel surfaceZoomLevel;

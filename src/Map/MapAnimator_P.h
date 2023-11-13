@@ -90,6 +90,19 @@ namespace OsmAnd
             const float duration,
             const TimingFunction timingFunction);
 
+        void constructSecondaryTargetAnimationByDelta(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction);
+        void constructSecondaryTargetAnimationToValue(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction);
+
         void constructParabolicTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
             const Key key,
@@ -179,6 +192,11 @@ namespace OsmAnd
         const Animation<PointI64>::ApplierMethod _flatTargetSetter;
         void flatTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
 
+        const Animation<PointI64>::GetInitialValueMethod _secondaryTargetGetter;
+        PointI64 secondaryTargetGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+        const Animation<PointI64>::ApplierMethod _secondaryTargetSetter;
+        void secondaryTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+
         static std::shared_ptr<GenericAnimation> findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection);
     public:
         ~MapAnimator_P();
@@ -264,6 +282,21 @@ namespace OsmAnd
             const Key key);
 
         void animateFlatTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key);
+
+        void animateSecondaryTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateSecondaryTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateSecondaryTargetWith(
             const PointD& velocity,
             const PointD& deceleration,
             const Key key);

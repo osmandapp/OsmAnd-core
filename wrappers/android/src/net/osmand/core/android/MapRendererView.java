@@ -813,6 +813,67 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getMapTargetHeightInMeters();
     }
 
+    public final PointI getSecondaryTarget() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getAimLocation31();
+    }
+
+    public final PointI getSecondaryTargetScreenPosition() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getState().getFixedPixel();
+    }
+
+    public final boolean setSecondaryTarget(PointI screenPoint, PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTarget(screenPoint, location31);
+    }
+
+    public final boolean setSecondaryTarget(PointI screenPoint, PointI location31,
+        boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTarget(screenPoint, location31, forcedUpdate, disableUpdate);
+    }
+
+    public final boolean setSecondaryTargetPixelCoordinates(PointI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTargetPixelCoordinates(screenPoint);
+    }
+
+    public final boolean setSecondaryTargetPixelCoordinates(PointI screenPoint, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTargetPixelCoordinates(screenPoint, forcedUpdate, disableUpdate);
+    }
+
+    public final boolean setSecondaryTargetLocation(PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTargetLocation(location31);
+    }
+
+    public final boolean setSecondaryTargetLocation(PointI location31, boolean forcedUpdate, boolean disableUpdate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setSecondaryTargetLocation(location31, forcedUpdate, disableUpdate);
+    }
+
+    public final int getAimingActions() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getAimingActions();
+    }
+
+    public final boolean setAimingActions(int actionBits) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setAimingActions(actionBits);
+    }
+
     public final float getZoom() {
         NativeCore.checkIfLoaded();
 
@@ -1001,13 +1062,24 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getHeightAndLocationFromElevatedPoint(screenPoint, location31);
     }
 
-    public final boolean getZoomAndRotationAfterPinch(PointI firstLocation31, float firstHeight, PointI firstPoint,
-                                                    PointI secondLocation31, float secondHeight, PointI secondPoint,
-                                                    PointD zoomAndRotate) {
+    public final boolean getZoomAndRotationAfterPinch(
+                                            PointI firstLocation31, float firstHeightInMeters, PointI firstPoint,
+                                            PointI secondLocation31, float secondHeightInMeters, PointI secondPoint,
+                                            PointD zoomAndRotate) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getZoomAndRotationAfterPinch(firstLocation31, firstHeight, firstPoint,
-                secondLocation31, secondHeight, secondPoint, zoomAndRotate);
+        return _mapRenderer.getZoomAndRotationAfterPinch(firstLocation31, firstHeightInMeters, firstPoint,
+                secondLocation31, secondHeightInMeters, secondPoint, zoomAndRotate);
+    }
+
+    public final boolean getTiltAndRotationAfterMove(
+                                            PointI firstLocation31, float firstHeightInMeters, PointI firstPoint,
+                                            PointI secondLocation31, float secondHeightInMeters, PointI secondPoint,
+                                            PointD tiltAndRotate) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getTiltAndRotationAfterMove(firstLocation31, firstHeightInMeters, firstPoint,
+                secondLocation31, secondHeightInMeters, secondPoint, tiltAndRotate);
     }
 
     public final float getLocationHeightInMeters(PointI location31) {
