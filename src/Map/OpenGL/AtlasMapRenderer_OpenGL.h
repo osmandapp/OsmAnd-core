@@ -37,8 +37,9 @@ namespace OsmAnd
         const static double _maximumDepthFromSeaLevelInMeters;
         const static double _detailDistanceFactor;
         const static float _invalidElevationValue;
-        const static float _minVisualZoom;
-        const static float _maxVisualZoom;
+        const static float _minimumVisualZoom;
+        const static float _maximumVisualZoom;
+        const static double _minimumElevationAngle;
         std::vector<std::byte> _terrainDepthBuffer;
         PointI _terrainDepthBufferSize;
 
@@ -103,6 +104,14 @@ namespace OsmAnd
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
         bool getLocationFromElevatedPoint(const MapRendererState& state, const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
+        bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+            PointD& zoomAndRotate) const override;
+        bool getTiltAndRotationForAiming(const MapRendererState& state,
+            const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+            PointD& tiltAndRotate) const override;
         bool isLocationHeightAvailable(const MapRendererState& state, const PointI& location31) const override;
         float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const override;
         float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const override;
@@ -145,9 +154,13 @@ namespace OsmAnd
             float* heightInMeters = nullptr) const override;
         float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const override;
         bool getZoomAndRotationAfterPinch(
-            const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
-            const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
             PointD& zoomAndRotate) const override;
+        bool getTiltAndRotationAfterMove(
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+            PointD& tiltAndRotate) const override;
 
         float getLocationHeightInMeters(const PointI& location31) const override;
         bool getNewTargetByScreenPoint(const PointI& screenPoint, const PointI& location31,

@@ -118,6 +118,21 @@ namespace OsmAnd
             const PointD& deceleration,
             const Key key = nullptr);
 
+        void animateSecondaryTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateSecondaryTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateSecondaryTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key = nullptr);
+
         void animateAzimuthBy(
             const float deltaValue,
             const float duration,

@@ -57,9 +57,11 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.82842712
 // Set invalid value for elevation of terrain
 const float OsmAnd::AtlasMapRenderer_OpenGL::_invalidElevationValue = -20000.0f;
 // Set minimum visual zoom
-const float OsmAnd::AtlasMapRenderer_OpenGL::_minVisualZoom = 0.7f; // -0.6 fractional part of float zoom
+const float OsmAnd::AtlasMapRenderer_OpenGL::_minimumVisualZoom = 0.7f; // -0.6 fractional part of float zoom
 // Set maximum visual zoom
-const float OsmAnd::AtlasMapRenderer_OpenGL::_maxVisualZoom = 1.6f; // 0.6 fractional part of float zoom
+const float OsmAnd::AtlasMapRenderer_OpenGL::_maximumVisualZoom = 1.6f; // 0.6 fractional part of float zoom
+// Set minimum elevation angle
+const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumElevationAngle = 10.0f;
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
     : AtlasMapRenderer(
@@ -1278,18 +1280,18 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
         return state.zoomLevel;
     }
     const auto scaleFactor = baseUnits / distanceToSurface;
-    const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
-    const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
+    const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
+    const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
     auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
     if (resultZoom > MaxZoomLevel)
     {
         resultZoom = MaxZoomLevel;
-        surfaceVisualZoom = _maxVisualZoom;
+        surfaceVisualZoom = 1.0f;
     }
     else if (resultZoom < MinZoomLevel)
     {
         resultZoom = MinZoomLevel;
-        surfaceVisualZoom = _minVisualZoom;
+        surfaceVisualZoom = 1.0f;
     }
     else
         surfaceVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
@@ -1322,18 +1324,18 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRenderer
     const auto distanceToCenter = (baseUnits / (surfaceVisualZoom * static_cast<double>(1u << surfaceZoomLevel))
         + pointElevation / sinAngle) * distanceFactor;
     const auto scaleFactor = baseUnits / distanceToCenter;
-    const auto minZoom = qCeil(log2(scaleFactor / _maxVisualZoom));
-    const auto maxZoom = qFloor(log2(scaleFactor / _minVisualZoom));
+    const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
+    const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
     auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
     if (resultZoom > MaxZoomLevel)
     {
         resultZoom = MaxZoomLevel;
-        flatVisualZoom = _maxVisualZoom;
+        flatVisualZoom = 1.0f;
     }
     else if (resultZoom < MinZoomLevel)
     {
         resultZoom = MinZoomLevel;
-        flatVisualZoom = _minVisualZoom;
+        flatVisualZoom = 1.0f;
     }
     else
         flatVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
@@ -1575,19 +1577,17 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getHeightAndLocationFromElevatedPoint(
     return elevationInMeters;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
-    const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
-    const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+bool OsmAnd::AtlasMapRenderer_OpenGL::getExtraZoomAndRotationForAiming(const MapRendererState& state,
+    const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+    const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
     PointD& zoomAndRotate) const
 {
-    const auto state = getState();
-
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
     if (!ok)
         return false;
 
-    // Calculate location on the plane for the first touch
+    // Calculate location on the plane for the first target point
     PointI64 firstNeeded;
     PointI64 firstCurrent;
     ok = getNearestLocationFromScreenPoint(internalState, state,
@@ -1595,7 +1595,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (!ok)
         return false;
         
-    // Calculate location on the plane for the second touch
+    // Calculate location on the plane for the second target point
     PointI64 secondNeeded;
     PointI64 secondCurrent;
     ok = getNearestLocationFromScreenPoint(internalState, state,
@@ -1618,7 +1618,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     const PointD firstSegment(cameraLocation - firstCurrent);
     const PointD secondSegment(cameraLocation - secondCurrent);
     const PointD segmentLength(firstSegment.norm(), secondSegment.norm());
-    PointD segmentRatio(firstHeight, secondHeight);
+    PointD segmentRatio(firstHeightInMeters, secondHeightInMeters);
     segmentRatio /= internalState.distanceFromCameraToGroundInMeters;
     if (segmentRatio.x >= 1.0 || segmentRatio.y >= 1.0)
         segmentRatio = PointD();
@@ -1628,8 +1628,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     if (currentDistance == 0.0)
         return false;
     const PointD currentSegmentN = currentSegment / currentDistance;
-    const auto firstAngle = qAcos(Utilities::dotProduct(firstSegment / segmentLength.x, currentSegmentN));
-    const auto secondAngle = qAcos(Utilities::dotProduct(secondSegment / segmentLength.y, PointD() - currentSegmentN));
+    const auto firstAngle =
+        qAcos(qBound(-1.0, Utilities::dotProduct(firstSegment / segmentLength.x, currentSegmentN), 1.0));
+    const auto secondAngle =
+        qAcos(qBound(-1.0, Utilities::dotProduct(secondSegment / segmentLength.y, PointD() - currentSegmentN), 1.0));
     const PointD neededSegment(secondNeeded - firstNeeded);
     const auto sqrNeededDistance = neededSegment.squareNorm();
     if (sqrNeededDistance == 0.0)
@@ -1652,24 +1654,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     }
 
     // Calculate needed offsets for zoom and azimuth to show the same location
-    // using new screen coordinates of the second finger, assuming the first one is a pivot point
-    const auto distanceFactorForIntZoom = distanceFactor * state.visualZoom;
-    const auto upScale = distanceFactorForIntZoom > 1.0;
-    const auto factor = upScale ? distanceFactorForIntZoom : 1.0 / distanceFactorForIntZoom;
-    const auto zoomLevel = std::floor(std::log2(factor));
-    if (zoomLevel > MaxZoomLevel)
+    // using new screen coordinates of the second target point, assuming the first one is a pivot point
+    const auto totalFactor =
+        distanceFactor * static_cast<double>(1u << static_cast<int>(state.zoomLevel)) * state.visualZoom;
+    if (totalFactor < 1.0 || totalFactor > static_cast<double>(1u << static_cast<int>(MaxZoomLevel)))
         return false;
-    const auto zoom = static_cast<double>(1u << static_cast<int>(zoomLevel));
-    const auto deltaZoomForIntZoom = upScale
-        ? zoomLevel + factor / zoom - 1.0
-        : (zoom / factor - 1.0) * 2.0 - zoomLevel;
-    if (qIsNaN(deltaZoomForIntZoom))
-        return false;
-    
+    const auto zoomLevel = std::floor(std::log2(totalFactor));
+    const auto zoomLevelFactor = static_cast<double>(1u << static_cast<int>(zoomLevel));
+    const auto totalZoom = zoomLevel + std::max(totalFactor / zoomLevelFactor, 1.0) - 1.0;
     const auto currentZoomFloatPart = state.visualZoom >= 1.0f
         ? state.visualZoom - 1.0f
         : (state.visualZoom - 1.0f) * 2.0f;
-    const auto deltaZoom = deltaZoomForIntZoom - currentZoomFloatPart;
+    const auto deltaZoom = totalZoom - static_cast<double>(state.zoomLevel) - currentZoomFloatPart;
 
     const auto actualSegment = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x);
@@ -1679,13 +1675,221 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
     const auto actualSegmentN = actualSegment / qSqrt(sqrActualDistance);
     const auto neededSegmentN = neededSegment / qSqrt(sqrNeededDistance);
     const auto neededAngle = qRadiansToDegrees(Utilities::getSignedAngle(actualSegmentN, neededSegmentN));
-    if (neededAngle != neededAngle)
+    if (qIsNaN(neededAngle))
         return false;
 
     zoomAndRotate.x = deltaZoom;
     zoomAndRotate.y = neededAngle;
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getTiltAndRotationForAiming(const MapRendererState& state,
+    const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
+    const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+    PointD& tiltAndRotate) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), true);
+    if (!ok)
+        return false;
+
+    // Get first (fixed) point in world coordinates
+    auto onPlane = Utilities::convert31toDouble(Utilities::shortestVector31(state.target31, firstLocation31),
+        state.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
+    const auto firstCurrentPoint = glm::dvec3(onPlane.x, firstHeight, onPlane.y);
+
+    // Get camera position in world coordinates
+    const auto cameraPosition = glm::dvec3(internalState.worldCameraPosition);
+    ok = firstCurrentPoint != cameraPosition;
+    if (!ok)
+        return false;
+
+    // Get distance from camera to fixed point
+    const auto camFixDistance = glm::distance(cameraPosition, firstCurrentPoint);
+
+    // Get second point (aim) in world coordinates
+    onPlane = Utilities::convert31toDouble(Utilities::shortestVector31(state.target31, secondLocation31),
+        state.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
+    const auto secondCurrentPoint = glm::dvec3(onPlane.x, secondHeight, onPlane.y);
+    ok = firstCurrentPoint != secondCurrentPoint;
+    if (!ok)
+        return false;
+
+    // Get distance between points
+    const auto distance = glm::distance(firstCurrentPoint, secondCurrentPoint);
+
+    // Get both points projected to near plane
+    ok = isPointProjectable(internalState, firstCurrentPoint) && isPointProjectable(internalState, secondCurrentPoint);
+    if (!ok)
+        return false;
+    const auto mCameraView = glm::dmat4(internalState.mCameraView);
+    const auto mPerspectiveProjection = glm::dmat4(internalState.mPerspectiveProjection);
+    const auto glmViewport = glm::dvec4(internalState.glmViewport);
+    const auto firstPointNear = glm::unProject(glm::dvec3(firstPoint.x, state.windowSize.y - firstPoint.y, 0.0),
+        mCameraView, mPerspectiveProjection, glmViewport);
+    const auto secondPointNear = glm::unProject(glm::dvec3(secondPoint.x, state.windowSize.y - secondPoint.y, 0.0),
+        mCameraView, mPerspectiveProjection, glmViewport);
+    ok = firstPointNear != secondPointNear;
+    if (!ok)
+        return false;
+
+    // Get angle between two rays (from camera to fixed point and to aim)
+    const auto firstVector = firstPointNear - cameraPosition;
+    const auto firstLength = glm::length(firstVector);
+    const auto firstVectorN = firstVector / firstLength;
+    const auto secondVector = secondPointNear - cameraPosition;
+    const auto secondLength = glm::length(secondVector);
+    const auto secondVectorN = secondVector / secondLength;
+    const auto lengthFactor = secondLength / firstLength;
+    const auto camAngleCos = glm::dot(firstVectorN, secondVectorN);
+    ok = camAngleCos > -1.0 && camAngleCos < 1.0;
+    if (!ok)
+        return false;
+
+    // Compute distance to aim
+    const auto firstPart = camFixDistance * camAngleCos;
+    const auto height = camFixDistance * qSin(qAcos(camAngleCos));
+    const auto sqrHeight = height * height;
+    auto sqrDistance = distance * distance;
+    const auto withTilt = sqrDistance > sqrHeight;
+    const auto secondPart = withTilt ? qSqrt(sqrDistance - sqrHeight) : 0.0;
+    auto camAimDistance = firstPart + secondPart;
+    ok = camAimDistance > _zNear;
+    if (!ok)
+        return false;
+
+    // Prepare necessary vectors to get azimuth and elevation angles
+    const auto currentVectorN = (secondCurrentPoint - firstCurrentPoint) / distance;
+    ok = currentVectorN.x != 0.0 || currentVectorN.y != 0.0 || currentVectorN.z != 0.0;
+    if (!ok)
+        return false;
+    const auto firstNeededPoint = cameraPosition + firstVectorN * camFixDistance;
+    double angles[2];
+    double tilts[2];
+    double yaws[2];
+    int count = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        if (i == 2 || !withTilt)
+        {            
+            i = 2;
+            if (count == 0)
+                camAimDistance = camFixDistance * lengthFactor;
+            else
+                break;
+        }
+        else if (i == 1)
+            camAimDistance = firstPart - secondPart;
+
+        ok = camAimDistance > _zNear;
+        if (!ok)
+            continue;
+
+        // Get aiming point coordinates as if necessary world rotation had been made
+        const auto secondNeededPoint = cameraPosition + secondVectorN * camAimDistance;
+        ok = firstNeededPoint != secondNeededPoint;
+        if (!ok)
+            continue;
+        const auto neededVectorN = glm::normalize(secondNeededPoint - firstNeededPoint);
+        ok = neededVectorN.x != 0.0 || neededVectorN.y != 0.0 || neededVectorN.z != 0.0;
+        if (!ok)
+            continue;
+
+        // Get rotation angle
+        const auto rotationAngleCos = qMax(glm::dot(neededVectorN, currentVectorN), -1.0);
+        if (rotationAngleCos >= 1.0)
+        {
+            // Keep same angles
+            angles[count] = 0.0;
+            tilts[count] = state.elevationAngle;
+            yaws[count++] = state.azimuth;
+            break;
+        }
+
+        // Obtain azimuth delta from vector projections on horizontal plane
+        auto deltaAzimuth = 0.0;
+        if ((currentVectorN.x != 0.0 || currentVectorN.z != 0.0) && (neededVectorN.x != 0.0 || neededVectorN.z != 0.0))
+        {
+            const auto currentOnPlaneN = glm::normalize(glm::dvec3(currentVectorN.x, 0.0, currentVectorN.z));
+            const auto neededOnPlaneN = glm::normalize(glm::dvec3(neededVectorN.x, 0.0, neededVectorN.z));
+            deltaAzimuth = (glm::cross(currentOnPlaneN, neededOnPlaneN).y < 0.0 ? -1.0 : 1.0) *
+                qAcos(qBound(-1.0, glm::dot(currentOnPlaneN, neededOnPlaneN), 1.0));
+        }
+        auto currentAzimuth = glm::radians(static_cast<double>(state.azimuth));
+        auto changedAzimuth = Utilities::normalizedAngleRadians(currentAzimuth + deltaAzimuth);
+
+        // Obtain elevation angle delta from vector projections on vertical planes
+        auto deltaElevationAngle = 0.0;
+        auto mAzimuth = glm::rotate(changedAzimuth, glm::dvec3(0.0f, 1.0f, 0.0f));
+        const auto currentReadyN = mAzimuth * glm::dvec4(currentVectorN, 1.0);
+        mAzimuth = glm::rotate(currentAzimuth, glm::dvec3(0.0f, 1.0f, 0.0f));
+        const auto neededReadyN = mAzimuth * glm::dvec4(neededVectorN, 1.0);
+        if ((currentReadyN.y != 0.0 || currentReadyN.z != 0.0) && (neededReadyN.y != 0.0 || neededReadyN.z != 0.0))
+        {
+            const auto currentOnVPlaneN = glm::normalize(glm::dvec3(0.0, currentReadyN.y, currentReadyN.z));
+            const auto neededOnVPlaneN = glm::normalize(glm::dvec3(0.0, neededReadyN.y, neededReadyN.z));
+            deltaElevationAngle = (glm::cross(currentOnVPlaneN, neededOnVPlaneN).x < 0.0 ? -1.0 : 1.0) *
+                qAcos(qBound(-1.0, glm::dot(currentOnVPlaneN, neededOnVPlaneN), 1.0));
+        }
+        auto currentElevationAngleDeg = static_cast<double>(state.elevationAngle);
+        const auto changedElevationAngleDeg =
+            Utilities::normalizedAngleDegrees(currentElevationAngleDeg + glm::degrees(deltaElevationAngle));
+
+        // Ignore irrelevant elevation angles
+        if (changedElevationAngleDeg < 0.0 || changedElevationAngleDeg > (i < 2 ? 90.0 : 90.01))
+            continue;
+
+        angles[count] = qAcos(rotationAngleCos);
+        tilts[count] = changedElevationAngleDeg;
+        yaws[count++] = glm::degrees(changedAzimuth);
+    };
+
+    if (count == 0)
+        return false;
+
+    int resultIndex = count > 1 && qAbs(angles[1]) < qAbs(angles[0]) ? 1 : 0;
+
+    if (tilts[resultIndex] < _minimumElevationAngle)
+        return false;
+
+    tiltAndRotate.x = qMin(tilts[resultIndex], 90.0);
+    tiltAndRotate.y = yaws[resultIndex];
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getZoomAndRotationAfterPinch(
+    const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+    const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+    PointD& zoomAndRotate) const
+{
+    const auto state = getState();
+
+    auto result = getExtraZoomAndRotationForAiming(state,
+        firstLocation31, firstHeightInMeters, firstPoint,
+        secondLocation31, secondHeightInMeters, secondPoint, zoomAndRotate);
+
+    return result;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::getTiltAndRotationAfterMove(
+    const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+    const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+    PointD& tiltAndRotate) const
+{
+    const auto state = getState();
+
+    auto result = getTiltAndRotationForAiming(state,
+        firstLocation31,
+        getWorldElevationOfLocation(state, firstHeightInMeters, firstLocation31),
+        firstPoint,
+        secondLocation31,
+        getWorldElevationOfLocation(state, secondHeightInMeters, secondLocation31),
+        secondPoint,
+        tiltAndRotate);
+
+    return result;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::isLocationHeightAvailable(const MapRendererState& state,
@@ -1884,7 +2088,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLastProjectablePoint(const MapRendererI
     const auto internalState = static_cast<const InternalState*>(&internalState_);
 
     glm::vec3 frontIntersection;
-    if(Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
+    if (Utilities_OpenGL_Common::lineSegmentIntersectPlane(internalState->frontVisibleEdgeN,
         internalState->frontVisibleEdgeP, startPoint, endPoint, frontIntersection))
     {
         visiblePoint = frontIntersection;

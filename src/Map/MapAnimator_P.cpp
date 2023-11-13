@@ -20,6 +20,8 @@ OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     , _targetSetter(std::bind(&MapAnimator_P::targetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
     , _flatTargetGetter(std::bind(&MapAnimator_P::flatTargetGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     , _flatTargetSetter(std::bind(&MapAnimator_P::flatTargetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
+    , _secondaryTargetGetter(std::bind(&MapAnimator_P::secondaryTargetGetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , _secondaryTargetSetter(std::bind(&MapAnimator_P::secondaryTargetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))
     , owner(owner_)
 {
 }
@@ -466,6 +468,47 @@ void OsmAnd::MapAnimator_P::animateFlatTargetWith(
     _animationsByKey[key].append(newAnimations);
 }
 
+void OsmAnd::MapAnimator_P::animateSecondaryTargetBy(
+    const PointI64& deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructSecondaryTargetAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
+void OsmAnd::MapAnimator_P::animateSecondaryTargetTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructSecondaryTargetAnimationToValue(newAnimations, key, value, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
+}
+
+void OsmAnd::MapAnimator_P::animateSecondaryTargetWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const Key key)
+{
+    const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
+    const PointI64 deltaValue(
+        0.5f * velocity.x * duration,
+        0.5f * velocity.y * duration);
+
+    animateSecondaryTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
+}
+
 void OsmAnd::MapAnimator_P::animateAzimuthBy(
     const float deltaValue,
     const float duration,
@@ -656,6 +699,19 @@ void OsmAnd::MapAnimator_P::flatTargetSetter(const Key key, const PointI64 newVa
     _renderer->targetChangedObservable.postNotify(_renderer.get());
 }
 
+OsmAnd::PointI64 OsmAnd::MapAnimator_P::secondaryTargetGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    PointI location31;
+    _renderer->getSecondaryTargetLocation(location31);
+    return location31;
+}
+
+void OsmAnd::MapAnimator_P::secondaryTargetSetter(const Key key, const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+{
+    _renderer->setSecondaryTargetLocation(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    _renderer->targetChangedObservable.postNotify(_renderer.get());
+}
+
 void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
     AnimationsCollection& outAnimation,
     const Key key,
@@ -787,6 +843,49 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
         },
         duration, 0.0f, timingFunction,
         _targetGetter, _targetSetter));
+
+    outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructSecondaryTargetAnimationByDelta(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI64& deltaValue,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    if (qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
+        return;
+
+    std::shared_ptr<GenericAnimation> newAnimation(new Animation<PointI64>(
+        key,
+        AnimatedValue::Target,
+        deltaValue, duration, 0.0f, timingFunction,
+        _secondaryTargetGetter, _secondaryTargetSetter));
+
+    outAnimation.push_back(qMove(newAnimation));
+}
+
+void OsmAnd::MapAnimator_P::constructSecondaryTargetAnimationToValue(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    if (qFuzzyIsNull(duration))
+        return;
+
+    std::shared_ptr<GenericAnimation> newAnimation(new Animation<PointI64>(
+        key,
+        AnimatedValue::Target,
+        [this, value]
+        (const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> PointI64
+        {
+            return PointI64(value) - PointI64(secondaryTargetGetter(key, context, sharedContext));
+        },
+        duration, 0.0f, timingFunction,
+        _secondaryTargetGetter, _secondaryTargetSetter));
 
     outAnimation.push_back(qMove(newAnimation));
 }

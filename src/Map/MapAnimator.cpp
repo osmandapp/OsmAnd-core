@@ -204,6 +204,32 @@ void OsmAnd::MapAnimator::animateFlatTargetWith(
     _p->animateFlatTargetWith(velocity, deceleration, key);
 }
 
+void OsmAnd::MapAnimator::animateSecondaryTargetBy(
+    const PointI64& deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key /*= nullptr*/)
+{
+    _p->animateSecondaryTargetBy(deltaValue, duration, timingFunction, key);
+}
+
+void OsmAnd::MapAnimator::animateSecondaryTargetTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key /*= nullptr*/)
+{
+    _p->animateSecondaryTargetTo(value, duration, timingFunction, key);
+}
+
+void OsmAnd::MapAnimator::animateSecondaryTargetWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const Key key /*= nullptr*/)
+{
+    _p->animateSecondaryTargetWith(velocity, deceleration, key);
+}
+
 void OsmAnd::MapAnimator::animateAzimuthBy(
     const float deltaValue,
     const float duration,

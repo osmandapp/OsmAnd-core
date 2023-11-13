@@ -150,6 +150,14 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
         virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setSecondaryTarget(const PointI& screenPoint, const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setSecondaryTargetPixelCoordinates(const PointI& screenPoint,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual bool setSecondaryTargetLocation(const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) = 0;
+        virtual int getAimingActions() = 0;
+        virtual bool setAimingActions(const int actionBits, bool forcedUpdate = false) = 0;
         virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) = 0;
         virtual bool setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
         virtual bool setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
@@ -167,6 +175,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
         virtual bool getMapTargetLocation(PointI& location31) const = 0;
+        virtual bool getSecondaryTargetLocation(PointI& location31) const = 0;
         virtual float getMapTargetHeightInMeters() const = 0;
 
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
@@ -199,9 +208,13 @@ namespace OsmAnd
             float* heightInMeters = nullptr) const = 0;
         virtual float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getZoomAndRotationAfterPinch(
-            const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
-            const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
             PointD& zoomAndRotate) const = 0;
+        virtual bool getTiltAndRotationAfterMove(
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+            PointD& tiltAndRotate) const = 0;
 
         virtual float getLocationHeightInMeters(const PointI& location31) const = 0;
 

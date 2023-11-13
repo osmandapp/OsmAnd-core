@@ -82,7 +82,9 @@ namespace OsmAnd
         MapRendererState _currentState;
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
-        bool setMapTarget(MapRendererState& state, bool forcedUpdate = false, bool disableUpdate = false);
+        bool setSecondaryTarget(MapRendererState& state, bool forcedUpdate = false, bool disableUpdate = false);
+        bool setMapTarget(MapRendererState& state,
+            bool forcedUpdate = false, bool disableUpdate = false, bool keepSecondaryTarget = false);
         bool setMapTargetOnly(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
 
@@ -147,6 +149,14 @@ namespace OsmAnd
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
             const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
+        virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
+            PointD& zoomAndRotate) const = 0;
+        virtual bool getTiltAndRotationForAiming(const MapRendererState& state,
+            const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
+            const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
+            PointD& tiltAndRotate) const = 0;
         virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
@@ -355,6 +365,14 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSecondaryTarget(const PointI& screenPoint, const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSecondaryTargetPixelCoordinates(const PointI& screenPoint,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setSecondaryTargetLocation(const PointI& location31,
+            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
+        virtual int getAimingActions() Q_DECL_OVERRIDE;
+        virtual bool setAimingActions(const int actionBits, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoom(const float zoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFlatZoom(
             const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
@@ -374,6 +392,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
+        virtual bool getSecondaryTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
         virtual float getMapTargetHeightInMeters() const Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
