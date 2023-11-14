@@ -4,7 +4,6 @@
 #include "Utilities.h"
 
 OsmAnd::FavoriteLocation::FavoriteLocation(
-    const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
     const PointI position31_,
     const QString& elevation_,
     const QString& time_,
@@ -37,11 +36,9 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     setExtensions(extensions_);
     setCalendarEvent(calendarEvent_);
     setAmenityOriginName(amenityOriginName_);
-    attach(containerLink_);
 }
 
 OsmAnd::FavoriteLocation::FavoriteLocation(
-    const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
     const LatLon latLon_,
     const QString& elevation_,
     const QString& time_,
@@ -74,7 +71,6 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     setExtensions(extensions_);
     setCalendarEvent(calendarEvent_);
     setAmenityOriginName(amenityOriginName_);
-    attach(containerLink_);
 }
 
 OsmAnd::FavoriteLocation::FavoriteLocation(const PointI position31_)

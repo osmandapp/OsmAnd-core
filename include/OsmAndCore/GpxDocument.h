@@ -21,6 +21,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Ref.h>
+#include <OsmAndCore/Color.h>
 
 namespace OsmAnd
 {
@@ -158,6 +159,18 @@ namespace OsmAnd
             QString value;
         };
 
+        struct OSMAND_CORE_API PointsGroup
+        {
+            PointsGroup();
+            virtual ~PointsGroup();
+
+            QString name;
+            QString iconName;
+            QString backgroundType;
+            QList< Ref<WptPt> > points;
+            ColorARGB color;
+        };
+
         struct OSMAND_CORE_API TrkSegment : public GpxExtensions
         {
             TrkSegment();
@@ -200,12 +213,19 @@ namespace OsmAnd
         static void writeBounds(QXmlStreamWriter& xmlWriter, const Ref<Bounds>& bounds);
         static std::shared_ptr<RouteSegment> parseRouteSegmentAttributes(QXmlStreamReader& parser);
         static std::shared_ptr<RouteType> parseRouteTypeAttributes(QXmlStreamReader& parser);
+        static std::shared_ptr<PointsGroup> parsePointsGroupAttributes(QXmlStreamReader& parser);
         static QMap<QString, QString> readTextMap(QXmlStreamReader &xmlReader, QString key);
+        static QMap<QString, Ref<PointsGroup> > mergePointsGroups(QList< Ref<PointsGroup> > &groups, QList< Ref<WptPt> > &points);
         static QString readText(QXmlStreamReader& xmlReader, QString key);
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
         static void writeExtensions(const QList< Ref<GpxExtension> > &extensions, const QHash<QString, QString> &attributes, QXmlStreamWriter& xmlWriter);
         static void writeExtension(const std::shared_ptr<const GpxExtension>& extension, QXmlStreamWriter& xmlWriter, const QString &namesp);
+        static void writeMetadata(const Ref<Metadata>& metadata, const QString& filename, QXmlStreamWriter& xmlWriter);
+        static void writePoints(const QList< Ref<WptPt> > &points, QXmlStreamWriter& xmlWriter);
+        static void writeRoutes(const QList< Ref<Route> > &routes, QXmlStreamWriter& xmlWriter);
+        static void writeTracks(const QList< Ref<Track> > &tracks, QXmlStreamWriter& xmlWriter);
+        static void writeWpt(const Ref<WptPt> &p, const QString &elementName, QXmlStreamWriter& xmlWriter);
     public:
         GpxDocument();
         virtual ~GpxDocument();
@@ -216,6 +236,7 @@ namespace OsmAnd
         QList< Ref<Track> > tracks;
         QList< Ref<WptPt> > points;
         QList< Ref<Route> > routes;
+        QMap<QString, Ref<PointsGroup> > pointsGroups;
         QMap<QString, QString> networkRouteKeyTags;
 
         bool hasRtePt() const;

@@ -27,7 +27,6 @@ namespace OsmAnd
         PrivateImplementation<FavoriteLocation_P> _p;
     protected:
         FavoriteLocation(
-            const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const PointI position31,
             const QString& elevation,
             const QString& time,
@@ -44,7 +43,6 @@ namespace OsmAnd
             const QString& amenityOriginName);
 
         FavoriteLocation(
-            const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const LatLon latLon,
             const QString& elevation,
             const QString& time,
