@@ -4,6 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
 #include <array>
+#include <bitset>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
