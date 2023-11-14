@@ -101,6 +101,11 @@ void OsmAnd::FavoriteLocationsCollection::addFavoriteLocation(const std::shared_
     _p->addFavoriteLocation(favoriteLocation);
 }
 
+void OsmAnd::FavoriteLocationsCollection::addFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations, const bool notifyChanged /*= true*/)
+{
+    _p->addFavoriteLocations(favoriteLocations, notifyChanged);
+}
+
 bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
 {
     return _p->removeFavoriteLocation(favoriteLocation);

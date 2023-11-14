@@ -64,6 +64,7 @@ namespace OsmAnd
 
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other);
         virtual void addFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
+        virtual void addFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocationsm, const bool notifyChanged = true);
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
         virtual bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations);
         virtual void clearFavoriteLocations();
