@@ -1399,24 +1399,20 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->sourceObject));
 
         // For each primitive if primitive group, collect symbols from it
-        //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
-        /*
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
             primitivesGroup->polygons,
-            PrimitivesType::Polygons,
             evaluationResult,
             textEvaluator,
-            constructedGroup->symbols,
+            group->symbols,
             queryController,
             metric);
-        */
+
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
             primitivesGroup->polylines,
-            PrimitivesType::Polylines,
             evaluationResult,
             textEvaluator,
             group->symbols,
@@ -1429,7 +1425,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             context,
             primitivisedObjects,
             primitivesGroup->points,
-            PrimitivesType::Points,
             evaluationResult,
             textEvaluator,
             group->symbols,
@@ -1535,15 +1530,12 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const PrimitivesCollection& primitives,
-    const PrimitivesType type,
     MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols,
     const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
-    assert(type != PrimitivesType::Polylines_ShadowOnly);
-
     for (const auto& primitive : constOf(primitives))
     {
         //////////////////////////////////////////////////////////////////////////
@@ -1559,18 +1551,8 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
         if (queryController && queryController->isAborted())
             return;
 
-        if (type == PrimitivesType::Polygons)
-        {
-            obtainSymbolsFromPolygon(
-                context,
-                primitivisedObjects,
-                primitive,
-                evaluationResult,
-                textEvaluator,
-                outSymbols,
-                metric);
-        }
-        else if (type == PrimitivesType::Polylines)
+        //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
+        if (primitive->type == PrimitiveType::Polyline)
         {
             obtainSymbolsFromPolyline(
                 context,
@@ -1581,7 +1563,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 outSymbols,
                 metric);
         }
-        else if (type == PrimitivesType::Points)
+        else if (primitive->type == PrimitiveType::Point)
         {
             const auto& attributeMapping = primitive->sourceObject->attributeMapping;
             const auto attributeId = primitive->sourceObject->attributeIds[primitive->attributeIdIndex];

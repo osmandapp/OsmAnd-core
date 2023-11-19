@@ -125,7 +125,6 @@ namespace OsmAnd
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const PrimitivesCollection& primitives,
-            const PrimitivesType type,
             MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& textEvaluator,
             SymbolsCollection& outSymbols,
