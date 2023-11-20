@@ -634,7 +634,8 @@ QMap<QString, OsmAnd::Ref<OsmAnd::GpxDocument::PointsGroup> > OsmAnd::GpxDocumen
                             it = values.find(QStringLiteral("displaycolour"));
                     }
                 }
-                pointsGroup->color = OsmAnd::Utilities::parseColor(it->toString(), ColorARGB());
+                if (it != values.end())
+                    pointsGroup->color = OsmAnd::Utilities::parseColor(it->toString(), ColorARGB());
             }
             if (pointsGroup->iconName.isEmpty())
             {
