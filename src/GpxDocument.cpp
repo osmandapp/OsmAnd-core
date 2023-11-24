@@ -783,6 +783,8 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         for (QString key : keys)
                         {
                             QString t = key.toLower();
+                            if (t == QStringLiteral("heartrate"))
+                                t = QStringLiteral("hr");
                             QString value = values[key];
                             const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
                             extension->name = t;
