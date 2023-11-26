@@ -110,19 +110,15 @@ QByteArray OsmAnd::WebClient_P::downloadData(
 
     if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if (dataRequest.requestResult)
-        {
-            dataRequest.requestResult.reset(
-                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-        }
+        dataRequest.requestResult.reset(
+            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
         return QByteArray();
     }
 
-    if (dataRequest.requestResult)
-    {
-        dataRequest.requestResult.reset(
-            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-    }
+    dataRequest.requestResult.reset(
+        request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
     return data;
 }
 
@@ -158,7 +154,7 @@ QString OsmAnd::WebClient_P::downloadString(
     _threadPool.start(&request);
     request.waitUntilFinished();
 
-    QString charset = QString::null;
+    QString charset = QString();
     if (request._lastNetworkReply->hasRawHeader("Content-Type"))
     {
         const auto contentTypeParameters = QString(request._lastNetworkReply->rawHeader("Content-Type")).split(';', QString::SkipEmptyParts);
@@ -175,19 +171,15 @@ QString OsmAnd::WebClient_P::downloadString(
 
     if (request._lastNetworkReply == nullptr || request._lastNetworkReply->error() != QNetworkReply::NoError)
     {
-        if (dataRequest.requestResult)
-        {
-            dataRequest.requestResult.reset(
-                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-        }
-        return QString::null;
-    }
-
-    if (dataRequest.requestResult)
-    {
         dataRequest.requestResult.reset(
             request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
+        return QString();
     }
+
+    dataRequest.requestResult.reset(
+        request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
     if (!charset.isNull() && charset.contains(QLatin1String("utf-8")))
         return QString::fromUtf8(data);
     return QString::fromLocal8Bit(data);
@@ -270,22 +262,18 @@ long long OsmAnd::WebClient_P::downloadFile(
         file.close();
         file.remove();
 
-        if (dataRequest.requestResult)
-        {
-            dataRequest.requestResult.reset(
-                request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-        }
+        dataRequest.requestResult.reset(
+            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
         return -1;
     }
 
     file.flush();
     file.close();
 
-    if (dataRequest.requestResult)
-    {
-        dataRequest.requestResult.reset(
-            request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
-    }
+    dataRequest.requestResult.reset(
+        request._lastNetworkReply != nullptr ? new HttpRequestResult(request._lastNetworkReply) : nullptr);
+
     return 1; // TODO: return actual value of 'Last-Modified' header
 }
 
