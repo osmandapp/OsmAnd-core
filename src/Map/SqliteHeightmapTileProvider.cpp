@@ -48,6 +48,13 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
+OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider::getMaxVisibleZoom() const
+{
+    const auto maxVisualZoom =
+        static_cast<ZoomLevel>(qMin(_p->getMaxZoom() + getMaxMissingDataZoomShift(), static_cast<int>(MaxZoomLevel)));
+    return maxVisualZoom;
+}
+
 uint32_t OsmAnd::SqliteHeightmapTileProvider::getTileSize() const
 {
     return outputTileSize;

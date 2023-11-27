@@ -726,7 +726,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             requestNeededTiledResources(
                 tiledResourcesCollection,
                 activeTiles,
-                activeZoom);
+                activeZoom,
+                currentZoom);
     }
     else if (const auto keyedResourcesCollection =
             std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
@@ -741,7 +742,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
 void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
     const QVector<TileId>& activeTiles,
-    const ZoomLevel activeZoom)
+    const ZoomLevel activeZoom,
+    const ZoomLevel currentZoom)
 {
     const auto resourceType = resourcesCollection->type;
     const auto resourceAllocator =
@@ -792,6 +794,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
 
         if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
+            return;
+
+        if (currentZoom > maxVisibleZoom)
             return;
     }
 
@@ -1362,7 +1367,9 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
                 {
                     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
-                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet() && mapState.zoomLevel >=  provider->getMinZoom() && mapState.zoomLevel <= provider->getMaxZoom())
+                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet()
+                        && mapState.zoomLevel >=  provider->getMinZoom()
+                        && mapState.zoomLevel <= provider->getMaxZoom())
                         updatesPresent = true;
                 }
             }
@@ -1819,6 +1826,10 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 };
             for (const auto& tilesEntry : rangeOf(constOf(tiles)))
             {
+                // Don't keep resources if current zoom level is not visible
+                if (currentZoom > maxVisibleZoom)
+                    break;
+
                 const auto activeZoom = tilesEntry.key();
                 bool updateSymbolResources = _clearOldSymbolResources;
                 if (resourcesType == MapRendererResourceType::Symbols)
