@@ -1883,6 +1883,39 @@ bool OsmAnd::MapRenderer::setMapTarget(const PointI& screenPoint_, const PointI&
     return true;
 }
 
+bool OsmAnd::MapRenderer::setMapTargetLocationToState(MapRendererState& state,
+    const PointI& location31_, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
+    const bool toTarget = state.fixedPixel.x < 0 || state.fixedPixel.y < 0;
+    bool update = forcedUpdate ||
+        (location31 != (toTarget ? state.target31 : state.fixedLocation31));
+    if (!update)
+        return false;
+
+    if (toTarget)
+    {
+        state.target31 = location31;
+        state.surfaceZoomLevel = state.zoomLevel;
+        state.surfaceVisualZoom = state.visualZoom;
+
+        if (!disableUpdate)
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+        return true;
+    }
+    else
+    {
+        auto result = setMapTargetOnly(state, location31, 0.0f, forcedUpdate, disableUpdate);
+        if (result)
+        {
+            state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+            setSecondaryTarget(state, forcedUpdate, disableUpdate);
+        }
+        return result;
+    }
+}
+
 bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/, bool keepSecondaryTarget /*= false*/)
 {
@@ -1967,6 +2000,106 @@ bool OsmAnd::MapRenderer::setMapTargetOnly(MapRendererState& state,
         return true;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
+    const float zoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    const auto zoomLevel = qBound(
+        getMinZoomLevel(),
+        static_cast<ZoomLevel>(qRound(zoom)),
+        getMaxZoomLevel());
+
+    const auto zoomFraction = zoom - zoomLevel;
+    if (zoomFraction < -0.5f || zoomFraction > 0.5f)
+        return false;
+    const auto visualZoom = Utilities::zoomFractionToVisual(zoomFraction);
+
+    return setZoomToState(state, zoomLevel, visualZoom, forcedUpdate, disableUpdate);
+}
+
+bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
+    const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+        return false;
+
+    bool update =
+        forcedUpdate ||
+        (state.surfaceZoomLevel != zoomLevel) ||
+        !qFuzzyCompare(state.surfaceVisualZoom, visualZoom);
+    if (!update)
+        return false;
+
+    state.surfaceZoomLevel = zoomLevel;
+    state.surfaceVisualZoom = visualZoom;
+
+    setMapTarget(state, forcedUpdate, disableUpdate);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
+    const float zoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    const auto zoomLevel = qBound(
+        getMinZoomLevel(),
+        static_cast<ZoomLevel>(qRound(zoom)),
+        getMaxZoomLevel());
+
+    const auto zoomFraction = zoom - zoomLevel;
+    if (zoomFraction < -0.5f || zoomFraction > 0.5f)
+        return false;
+    const auto visualZoom = Utilities::zoomFractionToVisual(zoomFraction);
+
+    return setFlatZoomToState(state, zoomLevel, visualZoom, forcedUpdate, disableUpdate);
+}
+
+bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
+    const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+        return false;
+
+    bool update =
+        forcedUpdate ||
+        (state.zoomLevel != zoomLevel) ||
+        !qFuzzyCompare(state.visualZoom, visualZoom);
+    if (!update)
+        return false;
+
+    state.zoomLevel = zoomLevel;
+    state.visualZoom = visualZoom;
+
+    setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
+
+    state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+
+    setSecondaryTarget(state, forcedUpdate, disableUpdate);
+
+    if (!disableUpdate)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setAzimuthToState(MapRendererState& state,
+    const float azimuth, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
+{
+    const float normalizedAzimuth = Utilities::normalizedAngleDegrees(azimuth);
+
+    bool update = forcedUpdate || !qFuzzyCompare(state.azimuth, normalizedAzimuth);
+    if (!update)
+        return false;
+
+    state.azimuth = normalizedAzimuth;
+
+    setMapTarget(state, forcedUpdate, disableUpdate);
+
+    if (!disableUpdate)
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Azimuth);
 
     return true;
 }
@@ -2060,36 +2193,7 @@ bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_,
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
-    const bool toTarget = _requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0;
-    bool update = forcedUpdate ||
-        (location31 != (toTarget ? _requestedState.target31 : _requestedState.fixedLocation31));
-    if (!update)
-        return false;
-
-    if (toTarget)
-    {
-        _requestedState.target31 = location31;
-        _requestedState.surfaceZoomLevel = _requestedState.zoomLevel;
-        _requestedState.surfaceVisualZoom = _requestedState.visualZoom;
-    }
-    else
-    {
-        auto result = setMapTargetOnly(_requestedState, location31, 0.0f, forcedUpdate, disableUpdate);
-        if (result)
-        {
-            _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
-            setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
-        }
-        return result;
-    }
-
-    if (disableUpdate)
-        return true;
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
-
-    return true;
+    return setMapTargetLocationToState(_requestedState, location31_, forcedUpdate, disableUpdate);
 }
 
 bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_, const float heightInMeters,
@@ -2380,50 +2484,16 @@ bool OsmAnd::MapRenderer::setAimingActions(const int actionBits, bool forcedUpda
 
 bool OsmAnd::MapRenderer::setFlatZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
-    const auto zoomLevel = qBound(
-        getMinZoomLevel(),
-        static_cast<ZoomLevel>(qRound(zoom)),
-        getMaxZoomLevel());
+    QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    // In case zoom is being set via single value, calculate optimal visual zoom:
-    // zoomFraction [ 0.0 ... 0.5] scales [1.0x ... 1.5x]
-    // zoomFraction [-0.5 ...-0.0] scales [.75x ... 1.0x]
-    const auto zoomFraction = zoom - zoomLevel;
-    if (zoomFraction < -0.5f || zoomFraction > 0.5f)
-        return false;
-    const auto visualZoom = (zoomFraction >= 0.0f)
-        ? 1.0f + zoomFraction
-        : 1.0f + 0.5f * zoomFraction;
-
-    return setFlatZoom(zoomLevel, visualZoom, forcedUpdate);
+    return setFlatZoomToState(_requestedState, zoom, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setFlatZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
-        return false;
-
-    bool update =
-        forcedUpdate ||
-        (_requestedState.zoomLevel != zoomLevel) ||
-        !qFuzzyCompare(_requestedState.visualZoom, visualZoom);
-    if (!update)
-        return false;
-
-    _requestedState.zoomLevel = zoomLevel;
-    _requestedState.visualZoom = visualZoom;
-
-    setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
-
-    _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
-
-    setSecondaryTarget(_requestedState, forcedUpdate);
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
-
-    return true;
+    return setFlatZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
@@ -2477,44 +2547,16 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
 
 bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
-    const auto zoomLevel = qBound(
-        getMinZoomLevel(),
-        static_cast<ZoomLevel>(qRound(zoom)),
-        getMaxZoomLevel());
+    QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    // In case zoom is being set via single value, calculate optimal visual zoom:
-    // zoomFraction [ 0.0 ... 0.5] scales [1.0x ... 1.5x]
-    // zoomFraction [-0.5 ...-0.0] scales [.75x ... 1.0x]
-    const auto zoomFraction = zoom - zoomLevel;
-    if (zoomFraction < -0.5f || zoomFraction > 0.5f)
-        return false;
-    const auto visualZoom = (zoomFraction >= 0.0f)
-        ? 1.0f + zoomFraction
-        : 1.0f + 0.5f * zoomFraction;
-
-    return setZoom(zoomLevel, visualZoom, forcedUpdate);
+    return setZoomToState(_requestedState, zoom, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
-        return false;
-
-    bool update =
-        forcedUpdate ||
-        (_requestedState.surfaceZoomLevel != zoomLevel) ||
-        !qFuzzyCompare(_requestedState.surfaceVisualZoom, visualZoom);
-    if (!update)
-        return false;
-
-    _requestedState.surfaceZoomLevel = zoomLevel;
-    _requestedState.surfaceVisualZoom = visualZoom;
-
-    setMapTarget(_requestedState, forcedUpdate);
-
-    return true;
+    return setZoomToState(_requestedState, zoomLevel, visualZoom, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
@@ -2674,6 +2716,64 @@ float OsmAnd::MapRenderer::getMapTargetHeightInMeters() const
         return getElevationOfLocationInMeters(_requestedState,
             _requestedState.fixedHeight, _requestedState.fixedZoomLevel, _requestedState.fixedLocation31);
     }
+}
+
+float OsmAnd::MapRenderer::getSurfaceZoomAfterPinch(
+    const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+    const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint)
+{
+    PointD zoomAndRotation;
+    bool ok = getZoomAndRotationAfterPinch(
+        firstLocation31, firstHeightInMeters, firstScreenPoint,
+        secondLocation31, secondHeightInMeters, secondScreenPoint,
+        zoomAndRotation);
+    if (!ok)
+        return -1.0f;
+
+    auto state = getState();
+    const float expectedFlatZoom = state.zoomLevel
+        + Utilities::visualZoomToFraction(state.visualZoom)
+        + static_cast<float>(zoomAndRotation.x);
+    ok = setFlatZoomToState(state, expectedFlatZoom, false, true);
+    if (!ok)
+        return false;
+
+    state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+    return state.surfaceZoomLevel + Utilities::visualZoomToFraction(state.surfaceVisualZoom);
+}
+
+float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
+    const PointI& fixedLocation31, float surfaceZoom, float rotation,
+    const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+    const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint)
+{
+    auto state = getState();
+    bool ok = true;
+
+    ok = ok && setMapTargetLocationToState(state, fixedLocation31, false, true);
+    ok = ok && setZoomToState(state, surfaceZoom, false, true);
+    ok = ok && setAzimuthToState(state, rotation, false, true);
+
+    if (!ok)
+        return -1.0f;
+
+    PointD zoomAndRotation;
+    ok = getExtraZoomAndRotationForAiming(state,
+        firstLocation31, firstHeightInMeters, firstScreenPoint,
+        secondLocation31, secondHeightInMeters, secondScreenPoint,
+        zoomAndRotation);
+    if (!ok)
+        return -1.0f;
+
+    const auto expectedFlatZoom = state.zoomLevel
+        + Utilities::visualZoomToFraction(state.visualZoom)
+        + static_cast<float>(zoomAndRotation.x);
+    ok = setFlatZoomToState(state, expectedFlatZoom, false, true);
+    if (!ok)
+        return -1.0f;
+    
+    state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+    return state.surfaceZoomLevel + Utilities::visualZoomToFraction(state.surfaceVisualZoom);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
