@@ -1208,7 +1208,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".travel.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?file=") +
+                    QLatin1String("/download?&wikivoyage=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             default:
