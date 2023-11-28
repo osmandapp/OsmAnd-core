@@ -83,10 +83,22 @@ namespace OsmAnd
         QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
         bool setSecondaryTarget(MapRendererState& state, bool forcedUpdate = false, bool disableUpdate = false);
+        bool setMapTargetLocationToState(MapRendererState& state,
+            const PointI& location31, const bool forcedUpdate = false, const bool disableUpdate = false);
         bool setMapTarget(MapRendererState& state,
             bool forcedUpdate = false, bool disableUpdate = false, bool keepSecondaryTarget = false);
         bool setMapTargetOnly(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
+        bool setZoomToState(MapRendererState& state,
+            const float zoom, const bool forcedUpdate = false, const bool disableUpdate = false);
+        bool setZoomToState(MapRendererState& state,
+            const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUdpate = false, const bool disableUpdate = false);
+        bool setFlatZoomToState(MapRendererState& state,
+            const float zoom, const bool forcedUpdate = false, const bool disableUpdate = false);
+        bool setFlatZoomToState(MapRendererState& state,
+            const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate = false, const bool disableUpdate = false);
+        bool setAzimuthToState(MapRendererState& state,
+            const float azimuth, const bool forcedUdpate = false, const bool disableUpdate = false);
 
         // Resources-related:
         std::shared_ptr<MapRendererResourcesManager> _resources;
@@ -394,6 +406,13 @@ namespace OsmAnd
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
         virtual bool getSecondaryTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
         virtual float getMapTargetHeightInMeters() const Q_DECL_OVERRIDE;
+        virtual float getSurfaceZoomAfterPinch(
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint) Q_DECL_OVERRIDE;
+        virtual float getSurfaceZoomAfterPinchWithParams(
+            const PointI& fixedLocation31, float surfaceZoom, float rotation,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint) Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;

@@ -2668,8 +2668,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             if (scannedLength + segmentLength >= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
-                outOffsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
-                assert(outOffsetFromPathPoint >= 0.0f);
+                outOffsetFromPathPoint =
+                    qBound(0.0f, offsetFromOriginPathPoint - scannedLength, segmentLength);
             }
             scannedLength += segmentLength;
             testPathPointIndex++;
@@ -2691,8 +2691,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             if (scannedLength - segmentLength <= offsetFromOriginPathPoint)
             {
                 outPathPointIndex = testPathPointIndex;
-                outOffsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);
-                assert(outOffsetFromPathPoint >= 0.0f);
+                outOffsetFromPathPoint =
+                    qBound(0.0f, segmentLength + offsetFromOriginPathPoint - scannedLength, segmentLength);
             }
             scannedLength -= segmentLength;
             if (testPathPointIndex == 0 && scannedLength > offsetFromOriginPathPoint)

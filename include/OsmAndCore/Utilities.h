@@ -247,6 +247,27 @@ namespace OsmAnd
             return qBound(MinZoomLevel, zoom, MaxZoomLevel);
         }
 
+        inline static float zoomFractionToVisual(float zoomFraction)
+        {
+            assert(qAbs(zoomFraction) < 1.0f);
+
+            // [ 0.0f ...  1.0f) -> [1.0f ... 2.0f)
+            // (-1.0f ... -0.0f] -> (0.5f ... 1.0f]
+
+            return zoomFraction >= 0.0f
+                ? 1.0f + zoomFraction
+                : 1.0f + zoomFraction / 2.0f;
+        }
+
+        inline static float visualZoomToFraction(float visualZoom)
+        {
+            assert(visualZoom > 0.5f && visualZoom < 2.0f);
+
+            return visualZoom >= 1.0f
+                ? visualZoom - 1.0f
+                : (visualZoom - 1.0f) * 2.0f;
+        }
+
         inline static double x31toMeters(const int32_t x31)
         {
             return static_cast<double>(x31) * 0.011;

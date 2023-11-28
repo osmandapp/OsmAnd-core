@@ -874,6 +874,14 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setAimingActions(actionBits);
     }
 
+    public final float getFlatZoom() {
+        NativeCore.checkIfLoaded();
+
+        float visualZoom = getFlatVisualZoom();
+        float zoomFloatPart = visualZoom >= 1.0f ? visualZoom - 1.0f : (visualZoom - 1.0f) * 2.0f;
+        return getZoomLevel().ordinal() + zoomFloatPart;
+    }
+
     public final float getZoom() {
         NativeCore.checkIfLoaded();
 
@@ -1061,6 +1069,30 @@ public abstract class MapRendererView extends FrameLayout {
 
         return _mapRenderer.getHeightAndLocationFromElevatedPoint(screenPoint, location31);
     }
+
+    public final float getSurfaceZoomAfterPinch(
+        PointI firstLocation31, float firstHeigthInMeters, PointI firstScreenPoint,
+        PointI secondLocation31, float secondHeightInMeters, PointI secondScreenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSurfaceZoomAfterPinch(
+            firstLocation31, firstHeigthInMeters, firstScreenPoint,
+            secondLocation31, secondHeightInMeters, secondScreenPoint
+        );
+    }
+
+    public final float getSurfaceZoomAfterPinchWithParams(
+        PointI fixedLocation31, float surfaceZoom, float azimuth,
+        PointI firstLocation31, float firstHeightInMeters, PointI firstScreenPoint,
+        PointI secondLocation31, float secondHeightInMeters, PointI secondScreenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSurfaceZoomAfterPinchWithParams(
+            fixedLocation31, surfaceZoom, azimuth,
+            firstLocation31, firstHeightInMeters, firstScreenPoint,
+            secondLocation31, secondHeightInMeters, secondScreenPoint
+        );
+    } 
 
     public final boolean getZoomAndRotationAfterPinch(
                                             PointI firstLocation31, float firstHeightInMeters, PointI firstPoint,

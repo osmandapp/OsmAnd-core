@@ -25,6 +25,7 @@ void protobuf_ShutdownFile_osmand_5findex_2eproto() {
   delete MapPart::default_instance_;
   delete RoutingSubregion::default_instance_;
   delete RoutingPart::default_instance_;
+  delete HHRoutingPart::default_instance_;
   delete TransportPart::default_instance_;
 }
 
@@ -49,6 +50,7 @@ void protobuf_AddDesc_osmand_5findex_2eproto() {
   MapPart::default_instance_ = new MapPart();
   RoutingSubregion::default_instance_ = new RoutingSubregion();
   RoutingPart::default_instance_ = new RoutingPart();
+  HHRoutingPart::default_instance_ = new HHRoutingPart();
   TransportPart::default_instance_ = new TransportPart();
   OsmAndStoredIndex::default_instance_->InitAsDefaultInstance();
   FileIndex::default_instance_->InitAsDefaultInstance();
@@ -59,6 +61,7 @@ void protobuf_AddDesc_osmand_5findex_2eproto() {
   MapPart::default_instance_->InitAsDefaultInstance();
   RoutingSubregion::default_instance_->InitAsDefaultInstance();
   RoutingPart::default_instance_->InitAsDefaultInstance();
+  HHRoutingPart::default_instance_->InitAsDefaultInstance();
   TransportPart::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_osmand_5findex_2eproto);
 }
@@ -329,6 +332,7 @@ const int FileIndex::kTransportIndexFieldNumber;
 const int FileIndex::kPoiIndexFieldNumber;
 const int FileIndex::kMapIndexFieldNumber;
 const int FileIndex::kRoutingIndexFieldNumber;
+const int FileIndex::kHhRoutingIndexFieldNumber;
 #endif  // !_MSC_VER
 
 FileIndex::FileIndex()
@@ -406,6 +410,7 @@ void FileIndex::Clear() {
   poiindex_.Clear();
   mapindex_.Clear();
   routingindex_.Clear();
+  hhroutingindex_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -547,6 +552,21 @@ bool FileIndex::MergePartialFromCodedStream(
           goto handle_uninterpreted;
         }
         if (input->ExpectTag(98)) goto parse_routingIndex;
+        if (input->ExpectTag(106)) goto parse_hhRoutingIndex;
+        break;
+      }
+
+      // repeated .OsmAnd.OBF.HHRoutingPart hhRoutingIndex = 13;
+      case 13: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_hhRoutingIndex:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_hhroutingindex()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(106)) goto parse_hhRoutingIndex;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -617,6 +637,12 @@ void FileIndex::SerializeWithCachedSizes(
   for (int i = 0; i < this->routingindex_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       12, this->routingindex(i), output);
+  }
+
+  // repeated .OsmAnd.OBF.HHRoutingPart hhRoutingIndex = 13;
+  for (int i = 0; i < this->hhroutingindex_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      13, this->hhroutingindex(i), output);
   }
 
 }
@@ -694,6 +720,14 @@ int FileIndex::ByteSize() const {
         this->routingindex(i));
   }
 
+  // repeated .OsmAnd.OBF.HHRoutingPart hhRoutingIndex = 13;
+  total_size += 1 * this->hhroutingindex_size();
+  for (int i = 0; i < this->hhroutingindex_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->hhroutingindex(i));
+  }
+
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = total_size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
@@ -712,6 +746,7 @@ void FileIndex::MergeFrom(const FileIndex& from) {
   poiindex_.MergeFrom(from.poiindex_);
   mapindex_.MergeFrom(from.mapindex_);
   routingindex_.MergeFrom(from.routingindex_);
+  hhroutingindex_.MergeFrom(from.hhroutingindex_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_size()) {
       set_size(from.size());
@@ -752,6 +787,9 @@ bool FileIndex::IsInitialized() const {
   for (int i = 0; i < routingindex_size(); i++) {
     if (!this->routingindex(i).IsInitialized()) return false;
   }
+  for (int i = 0; i < hhroutingindex_size(); i++) {
+    if (!this->hhroutingindex(i).IsInitialized()) return false;
+  }
   return true;
 }
 
@@ -766,6 +804,7 @@ void FileIndex::Swap(FileIndex* other) {
     poiindex_.Swap(&other->poiindex_);
     mapindex_.Swap(&other->mapindex_);
     routingindex_.Swap(&other->routingindex_);
+    hhroutingindex_.Swap(&other->hhroutingindex_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     std::swap(_cached_size_, other->_cached_size_);
   }
@@ -3167,6 +3206,533 @@ void RoutingPart::Swap(RoutingPart* other) {
 
 ::std::string RoutingPart::GetTypeName() const {
   return "OsmAnd.OBF.RoutingPart";
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int HHRoutingPart::kSizeFieldNumber;
+const int HHRoutingPart::kOffsetFieldNumber;
+const int HHRoutingPart::kEditionFieldNumber;
+const int HHRoutingPart::kProfileFieldNumber;
+const int HHRoutingPart::kProfileParamsFieldNumber;
+const int HHRoutingPart::kPointsOffsetFieldNumber;
+const int HHRoutingPart::kPointsLengthFieldNumber;
+const int HHRoutingPart::kLeftFieldNumber;
+const int HHRoutingPart::kRightFieldNumber;
+const int HHRoutingPart::kTopFieldNumber;
+const int HHRoutingPart::kBottomFieldNumber;
+#endif  // !_MSC_VER
+
+HHRoutingPart::HHRoutingPart()
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+}
+
+void HHRoutingPart::InitAsDefaultInstance() {
+}
+
+HHRoutingPart::HHRoutingPart(const HHRoutingPart& from)
+  : ::google::protobuf::MessageLite() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void HHRoutingPart::SharedCtor() {
+  _cached_size_ = 0;
+  size_ = GOOGLE_LONGLONG(0);
+  offset_ = GOOGLE_LONGLONG(0);
+  edition_ = GOOGLE_LONGLONG(0);
+  profile_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  pointsoffset_ = 0;
+  pointslength_ = 0;
+  left_ = 0;
+  right_ = 0;
+  top_ = 0;
+  bottom_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+HHRoutingPart::~HHRoutingPart() {
+  SharedDtor();
+}
+
+void HHRoutingPart::SharedDtor() {
+  if (profile_ != &::google::protobuf::internal::kEmptyString) {
+    delete profile_;
+  }
+  #ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
+  if (this != &default_instance()) {
+  #else
+  if (this != default_instance_) {
+  #endif
+  }
+}
+
+void HHRoutingPart::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const HHRoutingPart& HHRoutingPart::default_instance() {
+#ifdef GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER
+  protobuf_AddDesc_osmand_5findex_2eproto();
+#else
+  if (default_instance_ == NULL) protobuf_AddDesc_osmand_5findex_2eproto();
+#endif
+  return *default_instance_;
+}
+
+HHRoutingPart* HHRoutingPart::default_instance_ = NULL;
+
+HHRoutingPart* HHRoutingPart::New() const {
+  return new HHRoutingPart;
+}
+
+void HHRoutingPart::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    size_ = GOOGLE_LONGLONG(0);
+    offset_ = GOOGLE_LONGLONG(0);
+    edition_ = GOOGLE_LONGLONG(0);
+    if (has_profile()) {
+      if (profile_ != &::google::protobuf::internal::kEmptyString) {
+        profile_->clear();
+      }
+    }
+    pointsoffset_ = 0;
+    pointslength_ = 0;
+    left_ = 0;
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    right_ = 0;
+    top_ = 0;
+    bottom_ = 0;
+  }
+  profileparams_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+bool HHRoutingPart::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // required int64 size = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &size_)));
+          set_has_size();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(16)) goto parse_offset;
+        break;
+      }
+
+      // required int64 offset = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_offset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &offset_)));
+          set_has_offset();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(24)) goto parse_edition;
+        break;
+      }
+
+      // required int64 edition = 3;
+      case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_edition:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &edition_)));
+          set_has_edition();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(34)) goto parse_profile;
+        break;
+      }
+
+      // required string profile = 4;
+      case 4: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_profile:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_profile()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(42)) goto parse_profileParams;
+        break;
+      }
+
+      // repeated string profileParams = 5;
+      case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_profileParams:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_profileparams()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(42)) goto parse_profileParams;
+        if (input->ExpectTag(56)) goto parse_pointsOffset;
+        break;
+      }
+
+      // required int32 pointsOffset = 7;
+      case 7: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_pointsOffset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &pointsoffset_)));
+          set_has_pointsoffset();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(64)) goto parse_pointsLength;
+        break;
+      }
+
+      // required int32 pointsLength = 8;
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_pointsLength:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &pointslength_)));
+          set_has_pointslength();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(72)) goto parse_left;
+        break;
+      }
+
+      // required int32 left = 9;
+      case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_left:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &left_)));
+          set_has_left();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(80)) goto parse_right;
+        break;
+      }
+
+      // required int32 right = 10;
+      case 10: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_right:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &right_)));
+          set_has_right();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(88)) goto parse_top;
+        break;
+      }
+
+      // required int32 top = 11;
+      case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_top:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &top_)));
+          set_has_top();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(96)) goto parse_bottom;
+        break;
+      }
+
+      // required int32 bottom = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_bottom:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &bottom_)));
+          set_has_bottom();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(input, tag));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void HHRoutingPart::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // required int64 size = 1;
+  if (has_size()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->size(), output);
+  }
+
+  // required int64 offset = 2;
+  if (has_offset()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->offset(), output);
+  }
+
+  // required int64 edition = 3;
+  if (has_edition()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->edition(), output);
+  }
+
+  // required string profile = 4;
+  if (has_profile()) {
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      4, this->profile(), output);
+  }
+
+  // repeated string profileParams = 5;
+  for (int i = 0; i < this->profileparams_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      5, this->profileparams(i), output);
+  }
+
+  // required int32 pointsOffset = 7;
+  if (has_pointsoffset()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->pointsoffset(), output);
+  }
+
+  // required int32 pointsLength = 8;
+  if (has_pointslength()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->pointslength(), output);
+  }
+
+  // required int32 left = 9;
+  if (has_left()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->left(), output);
+  }
+
+  // required int32 right = 10;
+  if (has_right()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(10, this->right(), output);
+  }
+
+  // required int32 top = 11;
+  if (has_top()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->top(), output);
+  }
+
+  // required int32 bottom = 12;
+  if (has_bottom()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(12, this->bottom(), output);
+  }
+
+}
+
+int HHRoutingPart::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required int64 size = 1;
+    if (has_size()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
+          this->size());
+    }
+
+    // required int64 offset = 2;
+    if (has_offset()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
+          this->offset());
+    }
+
+    // required int64 edition = 3;
+    if (has_edition()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
+          this->edition());
+    }
+
+    // required string profile = 4;
+    if (has_profile()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->profile());
+    }
+
+    // required int32 pointsOffset = 7;
+    if (has_pointsoffset()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->pointsoffset());
+    }
+
+    // required int32 pointsLength = 8;
+    if (has_pointslength()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->pointslength());
+    }
+
+    // required int32 left = 9;
+    if (has_left()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->left());
+    }
+
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    // required int32 right = 10;
+    if (has_right()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->right());
+    }
+
+    // required int32 top = 11;
+    if (has_top()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->top());
+    }
+
+    // required int32 bottom = 12;
+    if (has_bottom()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->bottom());
+    }
+
+  }
+  // repeated string profileParams = 5;
+  total_size += 1 * this->profileparams_size();
+  for (int i = 0; i < this->profileparams_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->profileparams(i));
+  }
+
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void HHRoutingPart::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const HHRoutingPart*>(&from));
+}
+
+void HHRoutingPart::MergeFrom(const HHRoutingPart& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  profileparams_.MergeFrom(from.profileparams_);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_size()) {
+      set_size(from.size());
+    }
+    if (from.has_offset()) {
+      set_offset(from.offset());
+    }
+    if (from.has_edition()) {
+      set_edition(from.edition());
+    }
+    if (from.has_profile()) {
+      set_profile(from.profile());
+    }
+    if (from.has_pointsoffset()) {
+      set_pointsoffset(from.pointsoffset());
+    }
+    if (from.has_pointslength()) {
+      set_pointslength(from.pointslength());
+    }
+    if (from.has_left()) {
+      set_left(from.left());
+    }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_right()) {
+      set_right(from.right());
+    }
+    if (from.has_top()) {
+      set_top(from.top());
+    }
+    if (from.has_bottom()) {
+      set_bottom(from.bottom());
+    }
+  }
+}
+
+void HHRoutingPart::CopyFrom(const HHRoutingPart& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool HHRoutingPart::IsInitialized() const {
+  if ((_has_bits_[0] & 0x000007ef) != 0x000007ef) return false;
+
+  return true;
+}
+
+void HHRoutingPart::Swap(HHRoutingPart* other) {
+  if (other != this) {
+    std::swap(size_, other->size_);
+    std::swap(offset_, other->offset_);
+    std::swap(edition_, other->edition_);
+    std::swap(profile_, other->profile_);
+    profileparams_.Swap(&other->profileparams_);
+    std::swap(pointsoffset_, other->pointsoffset_);
+    std::swap(pointslength_, other->pointslength_);
+    std::swap(left_, other->left_);
+    std::swap(right_, other->right_);
+    std::swap(top_, other->top_);
+    std::swap(bottom_, other->bottom_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::std::string HHRoutingPart::GetTypeName() const {
+  return "OsmAnd.OBF.HHRoutingPart";
 }
 
 
