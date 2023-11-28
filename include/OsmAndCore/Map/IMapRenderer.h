@@ -207,6 +207,13 @@ namespace OsmAnd
         virtual bool getLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const = 0;
         virtual float getHeightAndLocationFromElevatedPoint(const PointI& screenPoint, PointI& location31) const = 0;
+        virtual float getSurfaceZoomAfterPinch(
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint) = 0;
+        virtual float getSurfaceZoomAfterPinchWithParams(
+            const PointI& fixedLocation31, float surfaceZoom, float rotation,
+            const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
+            const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint) = 0;
         virtual bool getZoomAndRotationAfterPinch(
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,
