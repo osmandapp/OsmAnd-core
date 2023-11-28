@@ -2734,9 +2734,7 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinch(
     const float expectedFlatZoom = state.zoomLevel
         + Utilities::visualZoomToFraction(state.visualZoom)
         + static_cast<float>(zoomAndRotation.x);
-    ok = setFlatZoomToState(state, expectedFlatZoom, false, true);
-    if (!ok)
-        return false;
+    setFlatZoomToState(state, expectedFlatZoom, false, true);
 
     state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
     return state.surfaceZoomLevel + Utilities::visualZoomToFraction(state.surfaceVisualZoom);
@@ -2748,17 +2746,13 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
     const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint)
 {
     auto state = getState();
-    bool ok = true;
 
-    ok = ok && setMapTargetLocationToState(state, fixedLocation31, false, true);
-    ok = ok && setZoomToState(state, surfaceZoom, false, true);
-    ok = ok && setAzimuthToState(state, rotation, false, true);
-
-    if (!ok)
-        return -1.0f;
+    setMapTargetLocationToState(state, fixedLocation31, false, true);
+    setZoomToState(state, surfaceZoom, false, true);
+    setAzimuthToState(state, rotation, false, true);
 
     PointD zoomAndRotation;
-    ok = getExtraZoomAndRotationForAiming(state,
+    const bool ok = getExtraZoomAndRotationForAiming(state,
         firstLocation31, firstHeightInMeters, firstScreenPoint,
         secondLocation31, secondHeightInMeters, secondScreenPoint,
         zoomAndRotation);
@@ -2768,9 +2762,7 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
     const auto expectedFlatZoom = state.zoomLevel
         + Utilities::visualZoomToFraction(state.visualZoom)
         + static_cast<float>(zoomAndRotation.x);
-    ok = setFlatZoomToState(state, expectedFlatZoom, false, true);
-    if (!ok)
-        return -1.0f;
+    setFlatZoomToState(state, expectedFlatZoom, false, true);
     
     state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
     return state.surfaceZoomLevel + Utilities::visualZoomToFraction(state.surfaceVisualZoom);
