@@ -118,6 +118,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     //      creator="OsmAnd"
     //      xmlns="http://www.topografix.com/GPX/1/1"
     //      xmlns:osmand="https://osmand.net"
+    //      xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
     //      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     //      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
     xmlWriter.writeStartElement(QStringLiteral("gpx"));
@@ -125,6 +126,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
     xmlWriter.writeAttribute(QStringLiteral("creator"), creator.isEmpty() ? creatorName : creator);
     xmlWriter.writeAttribute(QStringLiteral("xmlns"), QStringLiteral("http://www.topografix.com/GPX/1/1"));
     xmlWriter.writeNamespace(QStringLiteral("https://osmand.net"), QStringLiteral("osmand"));
+    xmlWriter.writeNamespace(QStringLiteral("http://www.garmin.com/xmlschemas/TrackPointExtension/v1"), QStringLiteral("gpxtpx"));
     xmlWriter.writeAttribute(QStringLiteral("xmlns:xsi"), QStringLiteral("http://www.w3.org/2001/XMLSchema-instance"));
     xmlWriter.writeAttribute(QStringLiteral("xsi:schemaLocation"), QStringLiteral("http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"));
 
@@ -156,6 +158,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             const auto pointsGroup = it.value();
             auto attrsExt = std::make_shared<GpxExtensions::GpxExtension>();
+            attrsExt->prefix = QStringLiteral("");
             attrsExt->name = QStringLiteral("group");
             attrsExt->attributes["name"] = pointsGroup->name;
             attrsExt->attributes["color"] = pointsGroup->color.toString();
@@ -433,7 +436,12 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
     for (const auto& subextension : constOf(extensions))
-        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
+    {
+        QString prefix = !subextension->prefix.isNull() ? subextension->prefix : QStringLiteral("osmand");
+        if (!prefix.isEmpty())
+            prefix += QStringLiteral(":");
+        writeExtension(subextension, xmlWriter, prefix);
+    }
 
     // </extensions>
     xmlWriter.writeEndElement();
@@ -451,7 +459,12 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
         xmlWriter.writeCharacters(extension->value);
 
     for (const auto& subextension : constOf(extension->subextensions))
-        writeExtension(subextension, xmlWriter, QStringLiteral("osmand:"));
+    {
+        QString prefix = !subextension->prefix.isNull() ? subextension->prefix : QStringLiteral("osmand");
+        if (!prefix.isEmpty())
+            prefix += QStringLiteral(":");
+        writeExtension(subextension, xmlWriter, prefix);
+    }
 
     // assignRouteExtensionWriter(segment);
     // </*>
@@ -659,6 +672,7 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
 {
     QXmlStreamReader::TokenType tok;
     QString text;
+    QString prefix;
     QMap<QString, QString> result;
     while ((tok = xmlReader.readNext()) != QXmlStreamReader::TokenType::EndDocument)
     {
@@ -666,13 +680,15 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
         {
             QString tag = xmlReader.name().toString();
             if (!text.isNull() && !text.trimmed().isEmpty())
-                result.insert(tag, text);
+                result.insert(!prefix.isNull() && !prefix.isEmpty() ? prefix + QStringLiteral(":") + tag : tag, text);
             if (tag == key)
                 break;
             text = QStringLiteral("");
+            prefix = QStringLiteral("");
         }
         else if (tok == QXmlStreamReader::TokenType::StartElement)
         {
+            prefix = xmlReader.prefix().toString();
             text = QStringLiteral("");
         }
         else if (tok == QXmlStreamReader::TokenType::Characters)
@@ -782,33 +798,81 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         QList<QString> keys = values.keys();
                         for (QString key : keys)
                         {
-                            QString t = key.toLower();
+                            QString t, p;
+                            if (key.contains(QStringLiteral(":")))
+                            {
+                                QStringList prefixTag = key.split(QStringLiteral(":"));
+                                p = prefixTag.first().toLower();
+                                t = prefixTag.last().toLower();
+                            }
+                            else
+                            {
+                                p = QStringLiteral("");
+                                t = key.toLower();
+                            }
+
                             if (t == QStringLiteral("heartrate"))
                                 t = QStringLiteral("hr");
+                            else if (t == QStringLiteral("temp") && p == QStringLiteral("gpxtpx"))
+                                t = QStringLiteral("wtemp");
+                            else if (t == QStringLiteral("cadence") && p == QStringLiteral("gpxtpx"))
+                                t = QStringLiteral("cad");
+                            else if (t == QStringLiteral("group") && p == QStringLiteral("osmand"))
+                                p = QStringLiteral("");
                             QString value = values[key];
+
                             const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
+                            extension->prefix = p;
                             extension->name = t;
                             extension->value = value;
-                            parse->extensions.append(extension);
 
-                            if (tag == QStringLiteral("speed"))
+                            if (tagName == QStringLiteral("TrackPointExtension").toLower())
                             {
+                                Ref<GpxExtension> trackPointExtension;
                                 if (auto wptPt = std::dynamic_pointer_cast<WptPt>(parse))
                                 {
-                                    bool ok = true;
-                                    auto speed{ value.toDouble(&ok) };
-                                    if (ok)
-                                        wptPt->speed = speed;
+                                    const auto exts = wptPt->extensions;
+                                    for (const auto& ext : exts)
+                                    {
+                                        if (ext->name == QStringLiteral("TrackPointExtension"))
+                                        {
+                                            trackPointExtension = ext;
+                                            break;
+                                        }
+                                    }
+                                    if (trackPointExtension == nullptr)
+                                    {
+                                        trackPointExtension = std::make_shared<GpxExtension>();
+                                        trackPointExtension->prefix = QStringLiteral("gpxtpx");
+                                        trackPointExtension->name = QStringLiteral("TrackPointExtension");
+                                        parse->extensions.append(trackPointExtension);
+                                    }
+                                    trackPointExtension->subextensions.append(extension);
                                 }
                             }
-                            else if (tag == QStringLiteral("heading"))
+                            else
                             {
-                                if (auto wptPt = std::dynamic_pointer_cast<WptPt>(parse))
+                                parse->extensions.append(extension);
+                                
+                                if (tag == QStringLiteral("speed"))
                                 {
-                                    bool ok = true;
-                                    auto heading{ value.toDouble(&ok) };
-                                    if (ok)
-                                        wptPt->heading = heading;
+                                    if (auto wptPt = std::dynamic_pointer_cast<WptPt>(parse))
+                                    {
+                                        bool ok = true;
+                                        auto speed{ value.toDouble(&ok) };
+                                        if (ok)
+                                            wptPt->speed = speed;
+                                    }
+                                }
+                                else if (tag == QStringLiteral("heading"))
+                                {
+                                    if (auto wptPt = std::dynamic_pointer_cast<WptPt>(parse))
+                                    {
+                                        bool ok = true;
+                                        auto heading{ value.toDouble(&ok) };
+                                        if (ok)
+                                            wptPt->heading = heading;
+                                    }
                                 }
                             }
                         }
