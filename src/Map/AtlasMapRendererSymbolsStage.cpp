@@ -37,11 +37,11 @@
 #include "MapMarker.h"
 #include "VectorLine.h"
 
-// Set maxtimum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
+// Set maximum incline angle for using onpath-2D symbols instead of 3D-ones (20 deg)
 const float OsmAnd::AtlasMapRendererSymbolsStage::_inclineThresholdOnPath2D =
     qPow(qSin(qDegreesToRadians(20.0f)), 2.0f);
 
-// Set maxtimum viewing angle when onpath-3D symbols can be displayed (60 deg)
+// Set maximum viewing angle when onpath-3D symbols can be displayed (60 deg)
 const float OsmAnd::AtlasMapRendererSymbolsStage::_tiltThresholdOnPath3D = qCos(qDegreesToRadians(60.0f));
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
