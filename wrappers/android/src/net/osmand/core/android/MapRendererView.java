@@ -879,7 +879,7 @@ public abstract class MapRendererView extends FrameLayout {
 
         float visualZoom = getFlatVisualZoom();
         float zoomFloatPart = visualZoom >= 1.0f ? visualZoom - 1.0f : (visualZoom - 1.0f) * 2.0f;
-        return getZoomLevel().ordinal() + zoomFloatPart;
+        return getFlatZoomLevel().ordinal() + zoomFloatPart;
     }
 
     public final float getZoom() {
