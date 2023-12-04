@@ -2196,43 +2196,6 @@ bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_,
     return setMapTargetLocationToState(_requestedState, location31_, forcedUpdate, disableUpdate);
 }
 
-bool OsmAnd::MapRenderer::setMapTargetLocation(const PointI& location31_, const float heightInMeters,
-    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
-{
-    QMutexLocker scopedLocker(&_requestedStateMutex);
-
-    const auto location31 = Utilities::normalizeCoordinates(location31_, ZoomLevel31);
-    const bool toTarget = _requestedState.fixedPixel.x < 0 || _requestedState.fixedPixel.y < 0;
-    bool update = forcedUpdate ||
-        (location31 != (toTarget ? _requestedState.target31 : _requestedState.fixedLocation31));
-    if (!update)
-        return false;
-
-    if (toTarget)
-    {
-        _requestedState.target31 = location31;
-        _requestedState.surfaceZoomLevel = _requestedState.zoomLevel;
-        _requestedState.surfaceVisualZoom = _requestedState.visualZoom;
-    }
-    else
-    {
-        auto result = setMapTargetOnly(_requestedState, location31, heightInMeters, forcedUpdate, disableUpdate);
-        if (result)
-        {
-            _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
-            setSecondaryTarget(_requestedState, forcedUpdate, disableUpdate);
-        }
-        return result;
-    }
-
-    if (disableUpdate)
-        return true;
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Target);
-
-    return true;
-}
-
 bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
     bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/)
 {
@@ -2613,6 +2576,37 @@ bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool f
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
     return true;
+}
+
+bool OsmAnd::MapRenderer::restoreFlatZoom(const float heightInMeters, bool forcedUpdate /*= false*/)
+{
+    bool result = true;
+
+    if (_requestedState.elevationDataProvider)
+    {
+        QMutexLocker scopedLocker(&_requestedStateMutex);
+
+        // Store current zoom level
+        const auto zoom = _requestedState.zoomLevel; 
+        
+        // Set the safe zoom level
+        _requestedState.zoomLevel = qMax(ZoomLevel10, _requestedState.elevationDataProvider->getMinZoom());
+
+        // Set target pixel elevation
+        setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, heightInMeters, forcedUpdate);
+
+        // Restore current zoom level
+        _requestedState.zoomLevel = zoom;
+
+        // Restore flat zoom
+        result = setMapTarget(_requestedState, forcedUpdate, false, true);
+
+        // Restore target pixel elevation
+        if (result)
+            setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, heightInMeters, forcedUpdate);
+    }
+
+    return result;
 }
 
 bool OsmAnd::MapRenderer::setStubsStyle(const MapStubStyle style, bool forcedUpdate /*= false*/)

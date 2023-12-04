@@ -743,15 +743,6 @@ public abstract class MapRendererView extends FrameLayout {
             return _mapRenderer.setTarget(target31);
     }
 
-    public final boolean setTarget(PointI target31, float heightInMeters) {
-        NativeCore.checkIfLoaded();
-
-        if (_windowWidth > 0 && _windowHeight > 0)
-            return _mapRenderer.setMapTargetLocation(target31, heightInMeters);
-        else
-            return _mapRenderer.setTarget(target31);
-    }
-
     public final boolean setTarget(PointI target31, boolean forcedUpdate, boolean disableUpdate) {
         NativeCore.checkIfLoaded();
 
@@ -966,6 +957,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setVisualZoomShift(visualZoomShift);
+    }
+
+    public final boolean restoreFlatZoom(float heightInMeters) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.restoreFlatZoom(heightInMeters);
     }
 
     public final boolean setStubsStyle(MapStubStyle style) {

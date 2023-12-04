@@ -375,8 +375,6 @@ namespace OsmAnd
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMapTargetLocation(const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
-        virtual bool setMapTargetLocation(const PointI& location31, const float heightInMeters,
-            bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSecondaryTarget(const PointI& screenPoint, const PointI& location31,
             bool forcedUpdate = false, bool disableUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSecondaryTargetPixelCoordinates(const PointI& screenPoint,
@@ -396,6 +394,7 @@ namespace OsmAnd
         virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool restoreFlatZoom(const float heightInMeters, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
