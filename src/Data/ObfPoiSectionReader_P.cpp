@@ -21,7 +21,7 @@
 #include "CollatorStringMatcher.h"
 #include <Logging.h>
 
-const int BUCKET_SEARCH_BY_NAME = 5;
+const int BUCKET_SEARCH_BY_NAME = 15; // should be bigger 100?
 const int BASE_POI_SHIFT = 7;
 const int FINAL_POI_SHIFT = 5;
 const int BASE_POI_ZOOM = 31 - BASE_POI_SHIFT;
@@ -1172,7 +1172,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                scanNameIndex(
+                dataBoxesOffsetsSet = readPoiNameIndex(
                     reader,
                     query,
                     dataBoxesOffsetsSet,
@@ -1254,7 +1254,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
+QMap<uint32_t, uint32_t> OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
     const ObfReader_P& reader,
     const QString& query,
     QMap<uint32_t, uint32_t>& outDataOffsets,
@@ -1264,8 +1264,10 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    uint32_t baseOffset;
-    QVector<uint32_t> intermediateOffsets;
+    QMap<uint32_t, uint32_t> offsets = QMap<uint32_t, uint32_t>();
+    QList<QVector<uint32_t>> listOffsets = QList<QVector<uint32_t>>();
+    QList<QMap<uint32_t, uint32_t>> listOfSepOffsets = QList<QMap<uint32_t, uint32_t>>();
+    uint32_t offset = 0;
 
     for (;;)
     {
@@ -1273,51 +1275,87 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return;
+                return offsets;
 
-                return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
-
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
+                offset = cis->CurrentPosition();
+                
+                QList<QString> queries = QList<QString>();
+                for (QString word : query.split(" "))
+                {
+                    if (word.trimmed().length() > 0)
+                        queries.append(word.trimmed());
+                }
+                
+                QVector<int> charsList = QVector<int>();
+                listOffsets = QList<QVector<uint32_t>>();
+                while (listOffsets.size() < queries.size())
+                {
+                    charsList.append(0);
+                    listOffsets.append(QVector<uint32_t>());
+                }
+                
+                ObfReaderUtilities::readIndexedStringTable(cis, queries, listOffsets, charsList);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
-
-                if (intermediateOffsets.isEmpty())
-                {
-                    cis->Skip(cis->BytesUntilLimit());
-                    return;
-                }
                 break;
             }
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
             {
-                std::sort(intermediateOffsets);
-                for (const auto& intermediateOffset : constOf(intermediateOffsets))
+                if (!listOffsets.isEmpty())
                 {
-                    cis->Seek(baseOffset + intermediateOffset);
-
-                    gpb::uint32 length;
-                    cis->ReadVarint32(&length);
-                    const auto oldLimit = cis->PushLimit(length);
-
-                    readNameIndexData(
-                        reader,
-                        outDataOffsets,
-                        xy31,
-                        bbox31, 
-                        tileFilter);
-                    ObfReaderUtilities::ensureAllDataWasRead(cis);
-
-                    cis->PopLimit(oldLimit);
+                    for (QVector<uint32_t> dataOffsets : listOffsets)
+                    {
+                        QMap<uint32_t, uint32_t> offsetMap = QMap<uint32_t, uint32_t>();
+                        std::sort(dataOffsets); // 1104125
+                        for (const auto& dataOffset : constOf(dataOffsets))
+                        {
+                            cis->Seek(dataOffset + offset);
+                            
+                            gpb::uint32 length;
+                            cis->ReadVarint32(&length);
+                            const auto oldLimit = cis->PushLimit(length);
+                            
+                            readNameIndexData(
+                                reader,
+                                offsetMap,
+                                xy31,
+                                bbox31,
+                                tileFilter);
+                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+                            
+                            cis->PopLimit(oldLimit);
+                           
+                            // TODO: add to params req.isCancelled() ?
+                            // if (req.isCancelled()) {
+                            //     codedIS.skipRawBytes(codedIS.getBytesUntilLimit()); //cis->Skip(cis->BytesUntilLimit());
+                            //     return offsets;
+                            // }
+                        }
+                        listOfSepOffsets.append(offsetMap);
+                    }
+                }
+                if (listOfSepOffsets.size() > 0)
+                {
+                    offsets.insert(listOfSepOffsets[0]);
+                    for (int j = 1; j < listOfSepOffsets.size(); j++)
+                    {
+                        QMap<uint32_t, uint32_t> mp = listOfSepOffsets[j];
+                        for (auto chKey : offsets.keys())
+                        {
+                            if (!mp.contains(chKey))
+                            {
+                                offsets.remove(chKey);
+                            }
+                        }
+                    }
                 }
                 cis->Skip(cis->BytesUntilLimit());
-                return;
+                return offsets;
             }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);

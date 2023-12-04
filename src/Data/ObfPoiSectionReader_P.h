@@ -100,7 +100,7 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
-        static void scanNameIndex(
+        static QMap<uint32_t, uint32_t> readPoiNameIndex(
             const ObfReader_P& reader,
             const QString& query,
             QMap<uint32_t, uint32_t>& outDataOffsets,

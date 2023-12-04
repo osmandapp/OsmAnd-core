@@ -1084,8 +1084,12 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
+                
+                QVector<int> charsList = {0};
+                QList<QString> queries = {query};
+                QList<QVector<uint32_t>> lofsets = {intermediateOffsets};
 
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
+                ObfReaderUtilities::readIndexedStringTable(cis, queries, lofsets, charsList);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);

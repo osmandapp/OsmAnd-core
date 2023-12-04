@@ -84,16 +84,17 @@ void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis,
     }
 }
 
-int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
+void OsmAnd::ObfReaderUtilities::readIndexedStringTable(
     gpb::io::CodedInputStream* cis,
-    const QString& query,
-    QVector<uint32_t>& outValues,
-    const bool strictMatch /*= false*/,
-    const QString& keysPrefix /*= QString::null*/,
-    const int matchedCharactersCount_ /*= 0*/)
+    const QList<QString>& queries,
+    QList<QVector<uint32_t>>& listOffsets,
+    QVector<int>& matchedCharacters,
+    const QString& prefix /*= QString::null*/
+    )
 {
     QString key;
-    auto matchedCharactersCount = matchedCharactersCount_;
+    QVector<bool> matched(matchedCharacters.size());
+    bool shouldWeReadSubtable = false;
 
     for (;;)
     {
@@ -101,78 +102,84 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return matchedCharactersCount;
-
-                return matchedCharactersCount;
+                return;
+                
             case OBF::IndexedStringTable::kKeyFieldNumber:
             {
                 readQString(cis, key);
-                if (!keysPrefix.isEmpty())
-                    key.prepend(keysPrefix);
-
-                bool matchesForward = false;
-                bool matchesBackward = false;
-                if (strictMatch)
-                    matchesForward = key.startsWith(query, Qt::CaseInsensitive);
-                else
-                    matchesForward = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
-
-                if (!matchesForward)
+                if (!prefix.isEmpty())
+                    key.prepend(prefix);
+                
+                shouldWeReadSubtable = false;
+                for (int i = 0; i < queries.size(); i++)
                 {
-                    if (strictMatch)
-                        matchesBackward = query.startsWith(key, Qt::CaseInsensitive);
-                    else
-                        matchesBackward = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
-                }
-
-                if (matchesForward)
-                {
-                    if (query.length() > matchedCharactersCount)
+                    int charMatches = matchedCharacters[i];
+                    QString query = queries[i];
+                    matched[i] = false;
+                    if (query.isNull())
+                        continue;
+                    
+                    // check query is part of key (the best matching)
+                    if (CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
                     {
-                        matchedCharactersCount = query.length();
-                        outValues.clear();
+                        if (query.length() >= charMatches)
+                        {
+                            if (query.length() > charMatches)
+                            {
+                                matchedCharacters[i] = query.length();
+                                listOffsets[i].clear();
+                            }
+                            matched[i] = true;
+                        }
                     }
-                    else if (query.length() < matchedCharactersCount)
+                    // check key is part of query
+                    else if (CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH))
                     {
-                        key = QString::null;
+                        if (key.length() >= charMatches)
+                        {
+                            if (key.length() > charMatches)
+                            {
+                                matchedCharacters[i] = key.length();
+                                listOffsets[i].clear();
+                            }
+                            matched[i] = true;
+                        }
                     }
-                }
-                else if (matchesBackward)
-                {
-                    if (key.length() > matchedCharactersCount)
-                    {
-                        matchedCharactersCount = key.length();
-                        outValues.clear();
-                    }
-                    else if (key.length() < matchedCharactersCount)
-                    {
-                        key = QString::null;
-                    }
-                }
-                else
-                {
-                    key = QString::null;
+                    shouldWeReadSubtable |= matched[i];
                 }
                 break;
             }
             case OBF::IndexedStringTable::kValFieldNumber:
             {
                 const auto value = readBigEndianInt(cis);
-
-                if (!key.isNull())
-                    outValues.push_back(value);
+                for (int i = 0; i < queries.size(); i++)
+                {
+                    if (matched[i])
+                        listOffsets[i].push_back(value);
+                }
                 break;
             }
             case OBF::IndexedStringTable::kSubtablesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
                 const auto oldLimit = cis->PushLimit(length);
-
-                if (!key.isNull())
-                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, strictMatch, key, matchedCharactersCount);
+                
+                if (shouldWeReadSubtable && !key.isNull())
+                {
+                    QList<QString> subqueries = queries;
+                    
+                    // reset query so we don't search what was not matched
+                    for (int i = 0; i < queries.size(); i++)
+                    {
+                        if (!matched[i])
+                            subqueries[i] = QString::null;
+                    }
+                    readIndexedStringTable(cis, subqueries, listOffsets, matchedCharacters, key);
+                }
                 else
+                {
                     cis->Skip(cis->BytesUntilLimit());
+                }
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
