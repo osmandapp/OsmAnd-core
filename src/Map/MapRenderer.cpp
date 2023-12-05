@@ -1377,6 +1377,8 @@ bool OsmAnd::MapRenderer::setElevationDataProvider(
 
     _requestedState.elevationDataProvider = provider;
 
+    setMapTarget(_requestedState, forcedUpdate);
+
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
     return true;
@@ -1391,6 +1393,12 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
         return false;
 
     _requestedState.elevationDataProvider.reset();
+
+    _requestedState.fixedHeight = 0.0f;
+
+    _requestedState.aimHeight = 0.0f;
+
+    setMapTarget(_requestedState, forcedUpdate);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
