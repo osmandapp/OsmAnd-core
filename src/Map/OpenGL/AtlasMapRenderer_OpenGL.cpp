@@ -51,7 +51,7 @@ const double OsmAnd::AtlasMapRenderer_OpenGL::_minimumSkyHeightInKilometers = 8.
 // Set maximum height of terrain to render
 const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumHeightFromSeaLevelInMeters = 10000.0;
 // Set maximum depth of terrain to render
-const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 12000.0;
+const double OsmAnd::AtlasMapRenderer_OpenGL::_maximumDepthFromSeaLevelInMeters = 1000.0;
 // Set minimal distance factor for tiles of each detail level (SQRT(2) * 2)
 const double OsmAnd::AtlasMapRenderer_OpenGL::_detailDistanceFactor = 2.8284271247461900976033774484194;
 // Set invalid value for elevation of terrain
