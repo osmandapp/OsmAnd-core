@@ -52,7 +52,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
         queryController);
 }
 
-void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+void OsmAnd::ObfPoiSectionReader::searchAmenitiyByName(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     const QString& query, QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
@@ -63,7 +63,7 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    ObfPoiSectionReader_P::scanAmenitiesByName(
+    ObfPoiSectionReader_P::searchAmenitiyByName(
         *reader->_p,
         section,
         query,
