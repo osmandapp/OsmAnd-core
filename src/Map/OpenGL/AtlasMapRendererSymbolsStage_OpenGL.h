@@ -251,12 +251,14 @@ namespace OsmAnd
                 // Parameters
                 struct {
                     // Common data
-                    GLlocation mModelViewProjection;
+                    GLlocation mPerspectiveProjectionView;
+                    GLlocation mModel;
                     GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
                     GLlocation tileId;
                     GLlocation offsetInTile;
                     GLlocation lookupOffsetAndScale;
+                    GLlocation cameraPositionAndZfar;
                     GLlocation elevation_scale;
                     GLlocation elevationInMeters;
                     GLlocation elevation_dataSampler;

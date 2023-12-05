@@ -74,6 +74,7 @@ namespace OsmAnd
             PointF offsetFromTarget;
             glm::vec3 positionInWorld;
             double distanceToCamera;
+            PointI target31;
 
             float direction;
         };

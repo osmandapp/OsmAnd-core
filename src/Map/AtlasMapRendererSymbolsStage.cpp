@@ -1551,6 +1551,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;
+        renderable->target31 = currentState.target31;
         outRenderableSymbols.push_back(renderable);
 
         // Calculate location of symbol in world coordinates.
