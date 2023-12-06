@@ -2303,7 +2303,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
         "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
-        "        v.y += min(extraZfar, extraCam);                                                                           ""\n"
+        "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
         "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"
