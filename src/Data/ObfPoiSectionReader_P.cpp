@@ -736,7 +736,7 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiData(
     auto tileId = TileId::zero();
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
     
-    for (;;)
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -760,7 +760,9 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiData(
                 const auto oldLimit = cis->PushLimit(length);
                 
                 std::shared_ptr<const Amenity> am;
-                readAmenity(
+
+//                readPoiPoint()
+                readPoiPoint(
                     reader,
                     section,
                     am,
@@ -803,11 +805,16 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiData(
                     }
                     if (matches)
                     {
-                        if (!visitor || visitor(am))
-                        {
-                            if (outAmenities)
-                                outAmenities->push_back(qMove(am));
-                        }
+                        if (visitor)
+                            visitor(am);
+                        if (outAmenities)
+                            outAmenities->push_back(qMove(am));
+                        
+//                        if (!visitor || visitor(am))
+//                        {
+//                            if (outAmenities)
+//                                outAmenities->push_back(qMove(am));
+//                        }
                     }
                 }
                 break;
@@ -893,7 +900,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
-                readAmenity(
+                readPoiPoint(
                     reader, 
                     section,
                     amenity,
@@ -951,7 +958,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readAmenity(
+void OsmAnd::ObfPoiSectionReader_P::readPoiPoint(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
@@ -981,7 +988,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const CollatorStringMatcher matcher(query, StringMatcherMode::CHECK_STARTS_FROM_SPACE);
     uint32_t precisionXY = 0;
 
-    for (;;)
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -990,6 +997,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             cis->Skip(cis->BytesUntilLimit());
             return;
         }
+//        if (amenityType == null && (tag > OsmandOdb.OsmAndPoiBoxDataAtom.CATEGORIES_FIELD_NUMBER || tag == 0)) {
+//            codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+//            return null;
+//        }
         switch (tag)
         {
             case 0:
@@ -1111,13 +1122,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 }
                 break;
             }
-            case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
-            {
-                ObfPoiCategoryId categoryId;
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&categoryId));
-                categories.push_back(categoryId);
-                break;
-            }
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
                 if (!categoriesFilterChecked &&
@@ -1140,26 +1144,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     : (rawValue >> 6);
 
                 intValues.insert(subtypeIndex, QVariant(intValue));
-                break;
-            }
-            case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
-                ObfReaderUtilities::readQString(cis, nativeName);
-                break;
-            case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
-            {
-                QString name;
-                ObfReaderUtilities::readQString(cis, name);
-                localizedNames.insert(QLatin1String("en"), name);
-
-                break;
-            }
-            case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
-            {
-                gpb::uint64 rawId;
-                cis->ReadVarint64(&rawId);
-                id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
-
-                autogenerateId = false;
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber:
@@ -1200,6 +1184,33 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 }
                 else
                     stringOrDataValues.insert(subtypeIndex, valueString);
+
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
+            {
+                ObfPoiCategoryId categoryId;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&categoryId));
+                categories.push_back(categoryId);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
+            {
+                gpb::uint64 rawId;
+                cis->ReadVarint64(&rawId);
+                id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
+
+                autogenerateId = false;
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
+                ObfReaderUtilities::readQString(cis, nativeName);
+                break;
+            case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
+            {
+                QString name;
+                ObfReaderUtilities::readQString(cis, name);
+                localizedNames.insert(QLatin1String("en"), name);
 
                 break;
             }
@@ -1250,7 +1261,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    const QString& query,
+    const QString& nameQuery,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
     const PointI* const xy31,
     const AreaI* const bbox31,
@@ -1260,9 +1271,12 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
+    QMap<uint32_t, uint32_t> offsets;
+    QString query = normalizeSearchPoiByNameQuery(nameQuery);
+    auto time = QDateTime::currentMSecsSinceEpoch();
     const auto indexOffset = cis->TotalBytesRead();
-    QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
-    for (;;)
+    
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -1274,14 +1288,15 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto oldLimit = cis->PushLimit(length);
-
-                dataBoxesOffsetsSet = readPoiNameIndex(
+                // here offsets are sorted by distance
+                offsets = readPoiNameIndex(
                     reader,
                     query,
-                    dataBoxesOffsetsSet,
+                    offsets,
                     xy31,
                     bbox31,
-                    tileFilter);
+                    tileFilter,
+                    queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -1289,14 +1304,15 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
             }
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
-                auto offKeys = dataBoxesOffsetsSet.keys();
-                if (dataBoxesOffsetsSet.size() > 0)
+                // also offsets can be randomly skipped by limit
+                auto offKeys = offsets.keys();
+                if (offsets.size() > 0)
                 {
                     std::sort(offKeys,
-                              [&dataBoxesOffsetsSet]
+                              [&offsets]
                               (const uint32_t& offset1, const uint32_t& offset2) -> bool
                               {
-                        return dataBoxesOffsetsSet[offset1] < dataBoxesOffsetsSet[offset2];
+                        return offsets[offset1] < offsets[offset2];
                     });
                     
                     int p = BUCKET_SEARCH_BY_NAME * 3;
@@ -1317,6 +1333,8 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
                         }
                     }
                 }
+                
+                LogPrintf(OsmAnd::LogSeverityLevel::Info, "Searched poi structure in %d ms. Found %d subtrees", QDateTime::currentMSecsSinceEpoch() - time, offKeys.size());
                 
                 for (const auto dataOffset : offKeys)
                 {
@@ -1341,10 +1359,14 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
                     cis->PopLimit(oldLimit);
                     if (queryController && queryController->isAborted())
                     {
-                        cis->Skip(cis->BytesUntilLimit());
                         return;
                     }
                 }
+                
+                if (outAmenities)
+                    LogPrintf(OsmAnd::LogSeverityLevel::Info, "Whole poi by name search is done in %d ms. Found %d", QDateTime::currentMSecsSinceEpoch() - time, outAmenities->size());
+                else
+                    LogPrintf(OsmAnd::LogSeverityLevel::Info, "Whole poi by name search is done in %d ms.", QDateTime::currentMSecsSinceEpoch() - time);
 
                 cis->Skip(cis->BytesUntilLimit());
                 return;
@@ -1356,13 +1378,19 @@ void OsmAnd::ObfPoiSectionReader_P::searchPoiByName(
     }
 }
 
+QString OsmAnd::ObfPoiSectionReader_P::normalizeSearchPoiByNameQuery(QString query)
+{
+    return query.replace("\"", "").toLower();
+}
+
 QMap<uint32_t, uint32_t> OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
     const ObfReader_P& reader,
     const QString& query,
     QMap<uint32_t, uint32_t>& outDataOffsets,
     const PointI* const xy31,
     const AreaI* const bbox31,
-    const TileAcceptorFunction tileFilter)
+    const TileAcceptorFunction tileFilter,
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -1371,7 +1399,7 @@ QMap<uint32_t, uint32_t> OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
     QList<QMap<uint32_t, uint32_t>> listOfSepOffsets = QList<QMap<uint32_t, uint32_t>>();
     uint32_t offset = 0;
 
-    for (;;)
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -1386,6 +1414,7 @@ QMap<uint32_t, uint32_t> OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
                 const auto oldLimit = cis->PushLimit(length);
                 offset = cis->TotalBytesRead();
                 
+                // TODO: implement Algorithms.splitByWordsLowercase()
                 QList<QString> queries = QList<QString>();
                 for (QString word : query.split(" "))
                 {
@@ -1432,12 +1461,11 @@ QMap<uint32_t, uint32_t> OsmAnd::ObfPoiSectionReader_P::readPoiNameIndex(
                             ObfReaderUtilities::ensureAllDataWasRead(cis);
                             
                             cis->PopLimit(oldLimit);
-                           
-                            // TODO: add to params req.isCancelled() ?
-                            // if (req.isCancelled()) {
-                            //     codedIS.skipRawBytes(codedIS.getBytesUntilLimit()); //cis->Skip(cis->BytesUntilLimit());
-                            //     return offsets;
-                            // }
+                            if (queryController && queryController->isAborted())
+                            {
+                                cis->Skip(cis->BytesUntilLimit());
+                                return offsets;
+                            }
                         }
                         listOfSepOffsets.append(offsetMap);
                     }
@@ -1476,7 +1504,7 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexData(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    for (;;)
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -1519,7 +1547,7 @@ void OsmAnd::ObfPoiSectionReader_P::readPoiNameIndexDataAtom(
     auto tileId = TileId::zero();
     auto zoom = ZoomLevel15;
 
-    for (;;)
+    while (true)
     {
         const auto t = cis->ReadTag();
         const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
@@ -1610,7 +1638,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     cis->PopLimit(oldLimit);
 }
 
-// searchPoiByName
+// searchPoiByName() in Android
 void OsmAnd::ObfPoiSectionReader_P::searchAmenitiyByName(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
@@ -1623,6 +1651,15 @@ void OsmAnd::ObfPoiSectionReader_P::searchAmenitiyByName(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
+    if (query.isNull() || query.isEmpty())
+    {
+        LogPrintf(OsmAnd::LogSeverityLevel::Error, "ERROR: ObfPoiSectionReader_P::searchAmenitiyByName - query is empty");
+        return;
+    }
+    
+    //  TODO: implement
+    //    for (PoiRegion poiIndex : poiIndexes) {
+    
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
 

@@ -93,7 +93,7 @@ namespace OsmAnd
         static void searchPoiByName(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            const QString& query,
+            const QString& nameQuery,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
             const PointI* const xy31,
             const AreaI* const bbox31,
@@ -108,7 +108,8 @@ namespace OsmAnd
             QMap<uint32_t, uint32_t>& outDataOffsets,
             const PointI* const xy31,
             const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter);
+            const TileAcceptorFunction tileFilter,
+            const std::shared_ptr<const IQueryController>& queryController);
         static void readPoiNameIndexData(
             const ObfReader_P& reader,
             QMap<uint32_t, uint32_t>& outDataOffsets,
@@ -121,6 +122,8 @@ namespace OsmAnd
             const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter);
+        
+        static QString normalizeSearchPoiByNameQuery(QString query);
         
         static void readPoiData(
             const ObfReader_P& reader,
@@ -147,7 +150,7 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController);
-        static void readAmenity(
+        static void readPoiPoint(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const Amenity>& outAmenity,

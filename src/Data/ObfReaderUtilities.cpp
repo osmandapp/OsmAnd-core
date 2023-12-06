@@ -96,7 +96,7 @@ void OsmAnd::ObfReaderUtilities::readIndexedStringTable(
     QVector<bool> matched(matchedCharacters.size());
     bool shouldWeReadSubtable = false;
 
-    for (;;)
+    while (true)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
