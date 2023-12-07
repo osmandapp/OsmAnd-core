@@ -33,6 +33,7 @@ namespace OsmAnd
             GpxExtension();
             virtual ~GpxExtension();
 
+            QString prefix;
             QString name;
             QString value;
             QHash<QString, QString> attributes;
