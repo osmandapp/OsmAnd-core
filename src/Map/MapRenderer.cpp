@@ -2016,9 +2016,9 @@ bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
     const float zoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
     const auto zoomLevel = qBound(
-        getMinZoomLevel(),
+        state.minZoomLimit,
         static_cast<ZoomLevel>(qRound(zoom)),
-        getMaxZoomLevel());
+        state.maxZoomLimit);
 
     const auto zoomFraction = zoom - zoomLevel;
     if (zoomFraction < -0.5f || zoomFraction > 0.5f)
@@ -2031,7 +2031,7 @@ bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
 bool OsmAnd::MapRenderer::setZoomToState(MapRendererState& state,
     const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+    if (zoomLevel < state.minZoomLimit || zoomLevel > state.maxZoomLimit)
         return false;
 
     bool update =
@@ -2053,9 +2053,9 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
     const float zoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
     const auto zoomLevel = qBound(
-        getMinZoomLevel(),
+        state.minZoomLimit,
         static_cast<ZoomLevel>(qRound(zoom)),
-        getMaxZoomLevel());
+        state.maxZoomLimit);
 
     const auto zoomFraction = zoom - zoomLevel;
     if (zoomFraction < -0.5f || zoomFraction > 0.5f)
@@ -2068,7 +2068,7 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
 bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
     const ZoomLevel zoomLevel, const float visualZoom, const bool forcedUpdate /*= false*/, const bool disableUpdate /*= false*/)
 {
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+    if (zoomLevel < state.minZoomLimit || zoomLevel > state.maxZoomLimit)
         return false;
 
     bool update =
@@ -2084,6 +2084,9 @@ bool OsmAnd::MapRenderer::setFlatZoomToState(MapRendererState& state,
     setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
 
     state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+    if (state.surfaceVisualZoom == 1.0
+        && (state.surfaceZoomLevel == state.minZoomLimit || state.surfaceZoomLevel == state.maxZoomLimit))
+        setMapTarget(state, forcedUpdate, disableUpdate, true);
 
     setSecondaryTarget(state, forcedUpdate, disableUpdate);
 
@@ -2292,8 +2295,11 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
         if (zoom < 0.0f)
             zoom *= 2.0f;
         zoom += static_cast<float>(zoomLevel) + static_cast<float>(zoomAndRotation.x);
-        zoomLevel = qBound(MinZoomLevel, static_cast<ZoomLevel>(qRound(zoom)), MaxZoomLevel);
-        const auto zoomFraction = qBound(-0.5f, zoom - zoomLevel, 0.5f);
+        zoomLevel = qBound(state.minZoomLimit, static_cast<ZoomLevel>(qRound(zoom)), state.maxZoomLimit);
+        const auto zoomFraction = qBound(
+            zoomLevel > state.minZoomLimit ? -0.5f : 0.0f,
+            zoom - zoomLevel,
+            zoomLevel < state.maxZoomLimit ? 0.5f : 0.0f);
         visualZoom = 1.0f + (zoomFraction >= 0.0f ? zoomFraction : zoomFraction * 0.5f);
         if (aimingActions[AimingAction::Azimuth])
             azimuth = static_cast<float>(Utilities::normalizedAngleDegrees(state.azimuth + zoomAndRotation.y));
@@ -2322,6 +2328,9 @@ bool OsmAnd::MapRenderer::setSecondaryTarget(MapRendererState& state,
     {
         result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
         state.surfaceZoomLevel = getSurfaceZoom(state, state.surfaceVisualZoom);
+        if (state.surfaceVisualZoom == 1.0
+            && (state.surfaceZoomLevel == state.minZoomLimit || state.surfaceZoomLevel == state.maxZoomLimit))
+            setMapTarget(state, forcedUpdate, disableUpdate, true);
     }
 
     if (disableUpdate)
@@ -2471,7 +2480,7 @@ bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool force
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+    if (zoomLevel < _requestedState.minZoomLimit || zoomLevel > _requestedState.maxZoomLimit)
         return false;
 
     bool update =
@@ -2485,6 +2494,10 @@ bool OsmAnd::MapRenderer::setFlatZoomLevel(const ZoomLevel zoomLevel, bool force
     setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
 
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    if (_requestedState.surfaceVisualZoom == 1.0
+        && (_requestedState.surfaceZoomLevel == _requestedState.minZoomLimit
+        || _requestedState.surfaceZoomLevel == _requestedState.maxZoomLimit))
+        setMapTarget(_requestedState, forcedUpdate, false, true);
 
     setSecondaryTarget(_requestedState, forcedUpdate);
 
@@ -2508,6 +2521,10 @@ bool OsmAnd::MapRenderer::setFlatVisualZoom(const float visualZoom, bool forcedU
     setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, forcedUpdate);
 
     _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+    if (_requestedState.surfaceVisualZoom == 1.0
+        && (_requestedState.surfaceZoomLevel == _requestedState.minZoomLimit
+        || _requestedState.surfaceZoomLevel == _requestedState.maxZoomLimit))
+        setMapTarget(_requestedState, forcedUpdate, false, true);
 
     setSecondaryTarget(_requestedState, forcedUpdate);
 
@@ -2534,7 +2551,7 @@ bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpd
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+    if (zoomLevel < _requestedState.minZoomLimit || zoomLevel > _requestedState.maxZoomLimit)
         return false;
 
     bool update =
@@ -2772,12 +2789,72 @@ float OsmAnd::MapRenderer::getSurfaceZoomAfterPinchWithParams(
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
 {
-    return MinZoomLevel;
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.minZoomLimit;
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaxZoomLevel() const
 {
-    return MaxZoomLevel;
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.maxZoomLimit;
+}
+
+bool OsmAnd::MapRenderer::setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (zoomLevel < MinZoomLevel || zoomLevel > MaxZoomLevel)
+        return false;
+
+    bool update = forcedUpdate || _requestedState.minZoomLimit != zoomLevel;
+    if (!update)
+        return false;
+
+    _requestedState.minZoomLimit = zoomLevel;
+
+    if (_requestedState.zoomLevel < zoomLevel)
+    {
+        _requestedState.zoomLevel = zoomLevel;
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
+    if (_requestedState.surfaceZoomLevel < zoomLevel)
+    {
+        _requestedState.surfaceZoomLevel = zoomLevel;
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (zoomLevel < MinZoomLevel || zoomLevel > MaxZoomLevel)
+        return false;
+
+    bool update = forcedUpdate || _requestedState.maxZoomLimit != zoomLevel;
+    if (!update)
+        return false;
+
+    _requestedState.maxZoomLimit = zoomLevel;
+
+    if (_requestedState.zoomLevel > zoomLevel)
+    {
+        _requestedState.zoomLevel = zoomLevel;
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
+    if (_requestedState.surfaceZoomLevel > zoomLevel)
+    {
+        _requestedState.surfaceZoomLevel = zoomLevel;
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+    }
+
+    return true;
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() const
@@ -2785,9 +2862,9 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() con
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (_requestedState.mapLayersProviders.isEmpty())
-        return getMinZoomLevel();
+        return _requestedState.minZoomLimit;
 
-    auto zoomLevel = getMinZoomLevel();
+    auto zoomLevel = _requestedState.minZoomLimit;
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
         zoomLevel = qMax(zoomLevel, provider->getMinZoom());
     return zoomLevel;
@@ -2798,9 +2875,9 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeUpperBound() con
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (_requestedState.mapLayersProviders.isEmpty())
-        return getMaxZoomLevel();
+        return _requestedState.maxZoomLimit;
 
-    auto zoomLevel = getMaxZoomLevel();
+    auto zoomLevel = _requestedState.maxZoomLimit;
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
         zoomLevel = qMin(zoomLevel, provider->getMaxZoom());
     return zoomLevel;
@@ -2811,9 +2888,9 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeLowerBound() con
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (_requestedState.mapLayersProviders.isEmpty())
-        return getMinZoomLevel();
+        return _requestedState.minZoomLimit;
 
-    auto zoomLevel = getMaxZoomLevel();
+    auto zoomLevel = _requestedState.maxZoomLimit;
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
         zoomLevel = qMin(zoomLevel, provider->getMinZoom());
     return zoomLevel;
@@ -2824,9 +2901,9 @@ OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeUpperBound() con
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (_requestedState.mapLayersProviders.isEmpty())
-        return getMaxZoomLevel();
+        return _requestedState.maxZoomLimit;
 
-    auto zoomLevel = getMinZoomLevel();
+    auto zoomLevel = _requestedState.minZoomLimit;
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
         zoomLevel = qMax(zoomLevel, provider->getMaxZoom());
     return zoomLevel;

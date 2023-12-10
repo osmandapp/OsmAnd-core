@@ -22,6 +22,8 @@ OsmAnd::MapRendererState::MapRendererState()
     , surfaceZoomLevel(MinZoomLevel)
     , surfaceVisualZoom(1.0f)
     , visualZoomShift(0.0f)
+    , minZoomLimit(MinZoomLevel)
+    , maxZoomLimit(MaxZoomLevel)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
@@ -60,6 +62,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.surfaceZoomLevel = surfaceZoomLevel;
     mapState.surfaceVisualZoom = surfaceVisualZoom;
     mapState.visualZoomShift = visualZoomShift;
+    mapState.minZoomLimit = minZoomLimit;
+    mapState.maxZoomLimit = maxZoomLimit;
     mapState.stubsStyle = stubsStyle;
     mapState.backgroundColor = backgroundColor;
     mapState.fogColor = fogColor;
@@ -94,6 +98,8 @@ OsmAnd::MapState::MapState()
     , surfaceZoomLevel(MinZoomLevel)
     , surfaceVisualZoom(1.0f)
     , visualZoomShift(0.0f)
+    , minZoomLimit(MinZoomLevel)
+    , maxZoomLimit(MaxZoomLevel)
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))

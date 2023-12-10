@@ -415,6 +415,8 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;
+        virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const Q_DECL_OVERRIDE;

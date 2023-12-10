@@ -187,6 +187,8 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoomLevel() const = 0;
         virtual ZoomLevel getMaxZoomLevel() const = 0;
+        virtual bool setMinZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+        virtual bool setMaxZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
 
         virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const = 0;
         virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const = 0;

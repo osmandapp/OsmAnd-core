@@ -1283,18 +1283,20 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getSurfaceZoom(
     const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
     const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
     auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
-    if (resultZoom > MaxZoomLevel)
-    {
-        resultZoom = MaxZoomLevel;
-        surfaceVisualZoom = 1.0f;
-    }
-    else if (resultZoom < MinZoomLevel)
-    {
-        resultZoom = MinZoomLevel;
-        surfaceVisualZoom = 1.0f;
-    }
+
+    float visZoom = 1.0f;
+    if (resultZoom > state.maxZoomLimit)
+        resultZoom = state.maxZoomLimit;
+    else if (resultZoom < state.minZoomLimit)
+        resultZoom = state.minZoomLimit;
     else
-        surfaceVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+        visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+    if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f) || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+        surfaceVisualZoom = 1.0f;
+    else
+        surfaceVisualZoom = visZoom;
+
     return static_cast<ZoomLevel>(resultZoom);
 }
 
@@ -1327,18 +1329,20 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getFlatZoom(const MapRenderer
     const auto minZoom = qCeil(log2(scaleFactor / _maximumVisualZoom));
     const auto maxZoom = qFloor(log2(scaleFactor / _minimumVisualZoom));
     auto resultZoom = qAbs(state.zoomLevel - minZoom) < qAbs(state.zoomLevel - maxZoom) ? minZoom : maxZoom;
-    if (resultZoom > MaxZoomLevel)
-    {
-        resultZoom = MaxZoomLevel;
-        flatVisualZoom = 1.0f;
-    }
-    else if (resultZoom < MinZoomLevel)
-    {
-        resultZoom = MinZoomLevel;
-        flatVisualZoom = 1.0f;
-    }
+
+    float visZoom = 1.0f;
+    if (resultZoom > state.maxZoomLimit)
+        resultZoom = state.maxZoomLimit;
+    else if (resultZoom < state.minZoomLimit)
+        resultZoom = state.minZoomLimit;
     else
-        flatVisualZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+        visZoom = static_cast<float>(scaleFactor / static_cast<double>(1u << resultZoom));
+
+    if ((resultZoom == state.maxZoomLimit && visZoom > 1.0f) || (resultZoom == state.minZoomLimit && visZoom < 1.0f))
+        flatVisualZoom = 1.0f;
+    else
+        flatVisualZoom = visZoom;
+
     return static_cast<ZoomLevel>(resultZoom);
 }
 

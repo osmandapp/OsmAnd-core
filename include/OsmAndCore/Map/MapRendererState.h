@@ -93,6 +93,8 @@ namespace OsmAnd
         ZoomLevel surfaceZoomLevel;
         float surfaceVisualZoom;
         float visualZoomShift;
+        ZoomLevel minZoomLimit;
+        ZoomLevel maxZoomLimit;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
         FColorRGB fogColor;
@@ -144,6 +146,8 @@ namespace OsmAnd
         ZoomLevel surfaceZoomLevel;
         float surfaceVisualZoom;
         float visualZoomShift;
+        ZoomLevel minZoomLimit;
+        ZoomLevel maxZoomLimit;
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
         FColorRGB fogColor;

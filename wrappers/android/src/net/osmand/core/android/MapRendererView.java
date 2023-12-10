@@ -1019,6 +1019,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getMaxZoomLevel();
     }
 
+    public final boolean setMinZoomLevel(ZoomLevel zoomLevel) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMinZoomLevel(zoomLevel);
+    }
+
+    public final boolean setMaxZoomLevel(ZoomLevel zoomLevel) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMaxZoomLevel(zoomLevel);
+    }
+
     public final ZoomLevel getMinimalZoomLevelsRangeLowerBound() {
         NativeCore.checkIfLoaded();
 
