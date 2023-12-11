@@ -428,7 +428,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         state.visibleDistance) * internalState->scaleToRetainProjectedSize;
     const auto additionalDistanceToZFar =
         qMax(static_cast<double>(farEnd) * elevationCosine, static_cast<double>(deepEnd) * elevationSine);
-    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + qMax(0.01, additionalDistanceToZFar);
+    auto zFar = static_cast<double>(internalState->distanceFromCameraToTarget) + qMax(0.1, additionalDistanceToZFar);
     internalState->zFar = static_cast<float>(zFar);
     internalState->zNear = _zNear;
 
