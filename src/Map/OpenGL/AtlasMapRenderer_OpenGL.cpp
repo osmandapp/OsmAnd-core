@@ -1395,7 +1395,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
     const PointI& screenPoint, PointI& location31, float* heightInMeters /*=nullptr*/) const
 {
     InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    bool ok = updateInternalState(internalState, state, *getConfiguration(), !state.elevationDataProvider);
     if (!ok)
         return false;
     
@@ -1413,6 +1413,12 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(const MapRend
     PointI64 location;
     location.x = static_cast<int64_t>(position.x)+(internalState.targetTileId.x << zoomLevelDiff);
     location.y = static_cast<int64_t>(position.y)+(internalState.targetTileId.y << zoomLevelDiff);
+
+    if (!state.elevationDataProvider)
+    {
+        location31 = Utilities::normalizeCoordinates(location, ZoomLevel31);
+        return true;
+    }
 
     position = PointD(internalState.groundCameraPosition);
     position /= static_cast<double>(TileSize3D);
