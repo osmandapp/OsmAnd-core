@@ -1979,9 +1979,50 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
                 renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
             }
 
-            if (allowFastCheckByFrustum &&
-                !applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
-                return;
+            if (allowFastCheckByFrustum)
+            {
+                // Make sure the symbol is at least two-thirds visible
+                if (glyphsPlacement.size() > 1)
+                {
+                    glm::vec3 firstPoint, lastPoint;
+                    if (is2D)
+                    {
+                        firstPoint = rotatedElevatedBBoxInWorld[0];
+                        lastPoint = rotatedElevatedBBoxInWorld[rotatedElevatedBBoxInWorld.size() - 1];
+                    }
+                    else
+                    {
+                        auto placement = glyphsPlacement[0];
+                        firstPoint = glm::vec3(placement.anchorPoint.x, placement.elevation, placement.anchorPoint.y);
+                        placement = glyphsPlacement[glyphsPlacement.size() - 1];
+                        lastPoint = glm::vec3(placement.anchorPoint.x, placement.elevation, placement.anchorPoint.y);
+                    }
+                    glm::vec2 pointsOnScreen[4];
+                    pointsOnScreen[0] = glm_extensions::project(
+                        firstPoint,
+                        internalState.mPerspectiveProjectionView,
+                        internalState.glmViewport).xy();
+                    pointsOnScreen[3] = glm_extensions::project(
+                        lastPoint,
+                        internalState.mPerspectiveProjectionView,
+                        internalState.glmViewport).xy();
+                    const auto oneThird = (pointsOnScreen[3] - pointsOnScreen[0]) / 3.0f;
+                    pointsOnScreen[1] = pointsOnScreen[0] + oneThird;
+                    pointsOnScreen[2] = pointsOnScreen[1] + oneThird;
+                    int countPointsOnScreen = 0;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (pointsOnScreen[i].x >= 0 && pointsOnScreen[i].x <= currentState.windowSize.x
+                            && pointsOnScreen[i].y >= 0 && pointsOnScreen[i].y <= currentState.windowSize.y)
+                            countPointsOnScreen++;
+                    }
+                    if (countPointsOnScreen < 3)
+                        return;
+                }
+
+                if (!applyOnScreenVisibilityFiltering(renderable->visibleBBox, intersections, metric))
+                    return;
+            }
 
             const auto pointsCount = rotatedElevatedBBoxInWorld.size();
             const auto p0 = rotatedElevatedBBoxInWorld[0];
