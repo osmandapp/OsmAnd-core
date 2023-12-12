@@ -38,7 +38,8 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const ZoomLevel zoomFilter /*= InvalidZoomLevel*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const std::shared_ptr<SearchRequest<MapDataObject>>& req /*= nullptr*/)
 {
     ObfPoiSectionReader_P::loadAmenities(
         *reader->_p,
@@ -49,7 +50,8 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
         zoomFilter,
         categoriesFilter,
         visitor,
-        queryController);
+        queryController,
+        req);
 }
 
 void OsmAnd::ObfPoiSectionReader::searchAmenitiyByName(
@@ -61,7 +63,8 @@ void OsmAnd::ObfPoiSectionReader::searchAmenitiyByName(
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const std::shared_ptr<SearchRequest<MapDataObject>>& req /*= nullptr*/)
 {
     ObfPoiSectionReader_P::searchAmenitiyByName(
         *reader->_p,
@@ -73,5 +76,6 @@ void OsmAnd::ObfPoiSectionReader::searchAmenitiyByName(
         tileFilter,
         categoriesFilter,
         visitor,
-        queryController);
+        queryController,
+        req);
 }

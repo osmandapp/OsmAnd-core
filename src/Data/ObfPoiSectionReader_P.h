@@ -14,6 +14,7 @@
 #include "DataCommonTypes.h"
 #include "ObfPoiSectionReader.h"
 #include "ObfPoiSectionInfo.h"
+#include "binaryRead.h"
 #include <OsmAndCore/CollatorStringMatcher.h>
 
 namespace OsmAnd
@@ -22,6 +23,7 @@ namespace OsmAnd
     class ObfPoiSectionInfo;
     class Amenity;
     class IQueryController;
+//    class MapDataObject;
 
     class ObfPoiSectionReader;
     class ObfPoiSectionReader_P Q_DECL_FINAL
@@ -75,7 +77,8 @@ namespace OsmAnd
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
         static bool scanTiles(
             const ObfReader_P& reader,
             QMap<uint32_t, uint64_t>& outDataOffsetsMap,
@@ -100,7 +103,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
         
         static QMap<uint32_t, uint32_t> readPoiNameIndex(
             const ObfReader_P& reader,
@@ -136,7 +140,8 @@ namespace OsmAnd
             const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
 
         static bool readAmenitiesDataBox(
             const ObfReader_P& reader,
@@ -149,8 +154,10 @@ namespace OsmAnd
             const std::shared_ptr<QSet<uint64_t>> pTilesToSkip,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
-        static void readPoiPoint(
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
+        
+        static std::shared_ptr<Amenity> readPoiPoint(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const Amenity>& outAmenity,
@@ -159,7 +166,8 @@ namespace OsmAnd
             const ZoomLevel boxZoom,
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
     public:
         static void loadCategories(
             const ObfReader_P& reader,
@@ -182,7 +190,8 @@ namespace OsmAnd
             const ZoomLevel zoomFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
 
         static void searchAmenitiyByName(
             const ObfReader_P& reader,
@@ -194,7 +203,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController);
+            const std::shared_ptr<const IQueryController>& queryController,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req);
 
     friend class OsmAnd::ObfReader_P;
     friend class OsmAnd::ObfPoiSectionReader;

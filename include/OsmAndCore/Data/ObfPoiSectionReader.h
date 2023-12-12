@@ -10,6 +10,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
+#include "binaryRead.h"
 
 namespace OsmAnd
 {
@@ -19,6 +20,7 @@ namespace OsmAnd
     class ObfPoiSectionInfo;
     class Amenity;
     class IQueryController;
+    class MapDataObject;
 
     class OSMAND_CORE_API ObfPoiSectionReader
     {
@@ -51,7 +53,8 @@ namespace OsmAnd
             const ZoomLevel zoomFilter = InvalidZoomLevel,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req = nullptr);
 
         static void searchAmenitiyByName(
             const std::shared_ptr<const ObfReader>& reader,
@@ -63,7 +66,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter = nullptr,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const std::shared_ptr<SearchRequest<MapDataObject>>& req = nullptr);
     };
 }
 
