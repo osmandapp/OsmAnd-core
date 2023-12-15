@@ -30,6 +30,7 @@ OsmAnd::AtlasMapRendererDebugStage_OpenGL::~AtlasMapRendererDebugStage_OpenGL()
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
 {
     bool ok = true;
+    ok = ok && initializePoints2D();
     ok = ok && initializeRects2D();
     ok = ok && initializeLines2D();
     ok = ok && initializeLines3D();
@@ -44,6 +45,11 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
     bool ok = true;
 
     GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
+
+    Stopwatch points2dStopwatch(metric != nullptr);
+    ok = ok && renderPoints2D();
+    if (metric)
+        metric->elapsedTimeForDebugPoints2D = points2dStopwatch.elapsed();
 
     Stopwatch rects2dStopwatch(metric != nullptr);
     ok = ok && renderRects2D();
@@ -73,11 +79,261 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(bool gpuContextLost)
 {
     bool ok = true;
+    ok = ok && releasePoints2D(gpuContextLost);
     ok = ok && releaseRects2D(gpuContextLost);
     ok = ok && releaseLines2D(gpuContextLost);
     ok = ok && releaseLines3D(gpuContextLost);
     ok = ok && releaseQuads3D(gpuContextLost);
     return ok;
+}
+
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializePoints2D()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mProjectionViewModel;                                                                        ""\n"
+        "uniform vec3 param_vs_point;                                                                                       ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 v = param_vs_point.xy + in_vs_vertexPosition * param_vs_point.z;                                          ""\n"
+        "    gl_Position = param_vs_mProjectionViewModel * vec4(v.x, v.y, -1.0, 1.0);                                       ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+        return false;
+    }
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Parameters: common data
+        "uniform lowp vec4 param_fs_color;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = param_fs_color;                                                                        ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    if (fsId == 0)
+    {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+        return false;
+    }
+
+    // Link everything into program object
+    GLuint shaders[] = { vsId, fsId };
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _programPoint2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    if (!_programPoint2D.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+        return false;
+    }
+
+    bool ok = true;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programPoint2D.id, variablesMap);
+    ok = ok && lookup->lookupLocation(_programPoint2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_programPoint2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programPoint2D.vs.param.point, "param_vs_point", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programPoint2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    if (!ok)
+    {
+        glDeleteProgram(_programPoint2D.id);
+        GL_CHECK_RESULT;
+        _programPoint2D.id.reset();
+
+        return false;
+    }
+
+    // Vertex data (x,y)
+    float vertices[9][2] =
+    {
+        {  0.0f,  0.0f },
+        { -0.35f, -0.35f },
+        { -0.5f,  0.0f },
+        { -0.35f,  0.35f },
+        {  0.0f,  0.5f },
+        {  0.35f,  0.35f },
+        {  0.5f,  0.0f },
+        {  0.35f, -0.35f },
+        {  0.0f, -0.5f }
+    };
+    const auto verticesCount = 9;
+
+    // Index data
+    GLushort indices[24] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+        0, 3, 4,
+        0, 4, 5,
+        0, 5, 6,
+        0, 6, 7,
+        0, 7, 8,
+        0, 8, 1
+    };
+    const auto indicesCount = 24;
+
+    _vaoPoint2D = gpuAPI->allocateUninitializedVAO();
+
+    // Create vertex buffer and associate it with VAO
+    glGenBuffers(1, &_vboPoint2D);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ARRAY_BUFFER, _vboPoint2D);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(float)* 2, vertices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+    glEnableVertexAttribArray(*_programPoint2D.vs.in.vertexPosition);
+    GL_CHECK_RESULT;
+    glVertexAttribPointer(*_programPoint2D.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, nullptr);
+    GL_CHECK_RESULT;
+
+    // Create index buffer and associate it with VAO
+    glGenBuffers(1, &_iboPoint2D);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _iboPoint2D);
+    GL_CHECK_RESULT;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
+
+    gpuAPI->initializeVAO(_vaoPoint2D);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderPoints2D()
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glDrawElements);
+
+    gpuAPI->useVAO(_vaoPoint2D);
+
+    // Activate program
+    glUseProgram(_programPoint2D.id);
+    GL_CHECK_RESULT;
+
+    // Set projection*view*model matrix:
+    glUniformMatrix4fv(_programPoint2D.vs.param.mProjectionViewModel,
+        1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+    GL_CHECK_RESULT;
+
+    const auto pointSize =
+        static_cast<float>(std::min(currentState.viewport.width(), currentState.viewport.height())) / 50.0f;
+
+    for(const auto& primitive : constOf(_points2D))
+    {
+        const auto& point = std::get<0>(primitive);
+        const auto& color = std::get<1>(primitive);
+
+        // Set point coordinates and size
+        glUniform3f(_programPoint2D.vs.param.point, point.x, point.y, pointSize);
+        GL_CHECK_RESULT;
+
+        // Set point color
+        glUniform4f(_programPoint2D.fs.param.color,
+            SkColorGetR(color) / 255.0f,
+            SkColorGetG(color) / 255.0f,
+            SkColorGetB(color) / 255.0f,
+            SkColorGetA(color) / 255.0f);
+        GL_CHECK_RESULT;
+
+        // Draw the point actually
+        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, nullptr);
+        GL_CHECK_RESULT;
+    }
+
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    gpuAPI->unuseVAO();
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releasePoints2D(bool gpuContextLost)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteBuffers);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    if (_vaoPoint2D.isValid())
+    {
+        gpuAPI->releaseVAO(_vaoPoint2D, gpuContextLost);
+        _vaoPoint2D.reset();
+    }
+
+    if (_iboPoint2D.isValid())
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_iboPoint2D);
+            GL_CHECK_RESULT;
+        }
+        _iboPoint2D.reset();
+    }
+    if (_vboPoint2D.isValid())
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_vboPoint2D);
+            GL_CHECK_RESULT;
+        }
+        _vboPoint2D.reset();
+    }
+
+    if (_programPoint2D.id.isValid())
+    {
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_programPoint2D.id);
+            GL_CHECK_RESULT;
+        }
+        _programPoint2D = ProgramPoint2D();
+    }
+
+    return true;
 }
 
 bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()

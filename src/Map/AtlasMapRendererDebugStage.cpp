@@ -11,10 +11,16 @@ OsmAnd::AtlasMapRendererDebugStage::~AtlasMapRendererDebugStage()
 
 void OsmAnd::AtlasMapRendererDebugStage::clear()
 {
+    _points2D.clear();
     _rects2D.clear();
     _lines2D.clear();
     _lines3D.clear();
     _quads3D.clear();
+}
+
+void OsmAnd::AtlasMapRendererDebugStage::addPoint2D(const PointF& point, const uint32_t argbColor)
+{
+    _points2D.push_back(qMove(Point2D(point, argbColor)));
 }
 
 void OsmAnd::AtlasMapRendererDebugStage::addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle /*= 0.0f*/)

@@ -21,6 +21,9 @@ namespace OsmAnd
     {
     private:
     protected:
+        typedef std::pair<PointF, uint32_t> Point2D;
+        QList<Point2D> _points2D;
+
         typedef std::tuple<AreaF, uint32_t, float> Rect2D;
         QList<Rect2D> _rects2D;
         
@@ -37,6 +40,7 @@ namespace OsmAnd
         virtual ~AtlasMapRendererDebugStage();
 
         virtual void clear();
+        virtual void addPoint2D(const PointF& point, const uint32_t argbColor);
         virtual void addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle = 0.0f);
         virtual void addLine2D(const QVector<glm::vec2>& line, const uint32_t argbColor);
         virtual void addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor);

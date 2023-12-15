@@ -19,6 +19,37 @@ namespace OsmAnd
     {
     private:
     protected:
+        GLname _vaoPoint2D;
+        GLname _vboPoint2D;
+        GLname _iboPoint2D;
+        struct ProgramPoint2D {
+            GLname id;
+
+            struct {
+                // Input data
+                struct {
+                    GLlocation vertexPosition;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+                    GLlocation mProjectionViewModel;
+                    GLlocation point;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+                    GLlocation color;
+                } param;
+            } fs;
+        } _programPoint2D;
+        bool initializePoints2D();
+        bool renderPoints2D();
+        bool releasePoints2D(bool gpuContextLost);
         GLname _vaoRect2D;
         GLname _vboRect2D;
         GLname _iboRect2D;

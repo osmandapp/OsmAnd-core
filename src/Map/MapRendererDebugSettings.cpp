@@ -5,6 +5,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , excludeOnPathSymbolsFromProcessing(false)
     , excludeBillboardSymbolsFromProcessing(false)
     , excludeOnSurfaceSymbolsFromProcessing(false)
+    , showSymbolsMarksRejectedByViewpoint(false)
     , skipSymbolsIntersectionCheck(false)
     , showSymbolsBBoxesAcceptedByIntersectionCheck(false)
     , showSymbolsBBoxesRejectedByIntersectionCheck(false)
@@ -42,6 +43,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.excludeOnPathSymbolsFromProcessing = excludeOnPathSymbolsFromProcessing;
     other.excludeBillboardSymbolsFromProcessing = excludeBillboardSymbolsFromProcessing;
     other.excludeOnSurfaceSymbolsFromProcessing = excludeOnSurfaceSymbolsFromProcessing;
+    other.showSymbolsMarksRejectedByViewpoint = showSymbolsMarksRejectedByViewpoint;
     other.skipSymbolsIntersectionCheck = skipSymbolsIntersectionCheck;
     other.showSymbolsBBoxesRejectedByIntersectionCheck = showSymbolsBBoxesRejectedByIntersectionCheck;
     other.showSymbolsBBoxesAcceptedByIntersectionCheck = showSymbolsBBoxesAcceptedByIntersectionCheck;

@@ -72,6 +72,7 @@ namespace OsmAnd
                                                                                                                 \
         /* Time elapsed for debug stage */                                                                      \
         FIELD_ACTION(float, elapsedTimeForDebugStage, "s");                                                     \
+        FIELD_ACTION(float, elapsedTimeForDebugPoints2D, "s");                                                  \
         FIELD_ACTION(float, elapsedTimeForDebugRects2D, "s");                                                   \
         FIELD_ACTION(float, elapsedTimeForDebugLines2D, "s");                                                   \
         FIELD_ACTION(float, elapsedTimeForDebugLines3D, "s");                                                   \
