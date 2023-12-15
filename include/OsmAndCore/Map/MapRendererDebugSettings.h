@@ -19,6 +19,7 @@ namespace OsmAnd
         bool excludeOnPathSymbolsFromProcessing;
         bool excludeBillboardSymbolsFromProcessing;
         bool excludeOnSurfaceSymbolsFromProcessing;
+        bool showSymbolsMarksRejectedByViewpoint;
         bool skipSymbolsIntersectionCheck;
         bool showSymbolsBBoxesAcceptedByIntersectionCheck;
         bool showSymbolsBBoxesRejectedByIntersectionCheck;

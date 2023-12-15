@@ -1824,7 +1824,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
     // If this symbol instance doesn't fit in both 2D and 3D, skip it
     if (!fits)
+    {
+        if (Q_UNLIKELY(debugSettings->showSymbolsMarksRejectedByViewpoint))
+            getRenderer()->debugStage->addPoint2D(
+                PointF(pinPointOnScreen.x, pinPointOnScreen.y), SkColorSetARGB(255, 128, 0, 0));
         return;
+    }
 
     // Compute exact points
     if (!is2D)
@@ -1862,7 +1867,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         symmetricOffset);
 
     if (path.size() < 2)
+    {
+        if (Q_UNLIKELY(debugSettings->showSymbolsMarksRejectedByViewpoint))
+            getRenderer()->debugStage->addPoint2D(
+                PointF(pinPointOnScreen.x, pinPointOnScreen.y), SkColorSetARGB(255, 255, 0, 0));
         return;
+    }
 
     ComputedPathData symbolPathData;
 
@@ -2045,7 +2055,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
             outRenderableSymbols.push_back(renderable);
         }
+        else
+        {
+            if (Q_UNLIKELY(debugSettings->showSymbolsMarksRejectedByViewpoint))
+                getRenderer()->debugStage->addPoint2D(
+                    PointF(pinPointOnScreen.x, pinPointOnScreen.y), SkColorSetARGB(255, 255, 128, 64));
+            return;
+        }
     }
+    else
+        return;
 
     if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
     {
@@ -2391,10 +2410,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     if (hasSimilarContent)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
-            addIntersectionDebugBox(renderable, ColorARGB::fromSkColor(SK_ColorRED).withAlpha(128));
+            addIntersectionDebugBox(renderable, ColorARGB(50, 160, 0, 255));
 
         if (Q_UNLIKELY(debugSettings->showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
-            addIntersectionDebugBox(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), ColorARGB::fromSkColor(SK_ColorRED).withAlpha(128), false);
+            addIntersectionDebugBox(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), ColorARGB(50, 160, 0, 255), false);
 
         return false;
     }
