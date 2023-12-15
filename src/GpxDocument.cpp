@@ -363,7 +363,8 @@ void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStream
     {
         // <link>
         xmlWriter.writeStartElement(QStringLiteral("link"));
-        writeNotNullText(xmlWriter, QStringLiteral("href"), link->url.toString());
+        if (!link->url.toString().isEmpty())
+            xmlWriter.writeAttribute(QStringLiteral("href"), link->url.toString());
 
         // <text>
         if (!link->text.isEmpty())
