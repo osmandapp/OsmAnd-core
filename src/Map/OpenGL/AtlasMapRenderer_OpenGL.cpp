@@ -327,7 +327,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
     internalState->fovInRadians = qDegreesToRadians(state.fieldOfView);
     internalState->projectionPlaneHalfHeight = _zNear * qTan(internalState->fovInRadians);
-    internalState->sizeOfPixelInWorld = internalState->projectionPlaneHalfHeight * 2.0f / state.windowSize.y;
+    internalState->sizeOfPixelInWorld = internalState->projectionPlaneHalfHeight * 2.0f / state.viewport.height();
     internalState->projectionPlaneHalfWidth = internalState->projectionPlaneHalfHeight * internalState->aspectRatio;
 
     // Setup perspective projection with fake Z-far plane
@@ -1090,7 +1090,7 @@ OsmAnd::ZoomLevel OsmAnd::AtlasMapRenderer_OpenGL::getElevationData(const MapRen
     for (int absZoomShift = 1; absZoomShift <= maxMissingDataZoomShift; absZoomShift++)
     {
         // Look for underscaled first. Only full match is accepted.
-        // Don't replace tiles of absent zoom levels by the unserscaled ones
+        // Don't replace tiles of absent zoom levels by the underscaled ones
         const auto underscaledZoom = static_cast<int>(zoomLevel) + absZoomShift;
         if (!noUnderscaled && underscaledZoom >= minZoom && underscaledZoom <= maxZoom &&
             absZoomShift <= maxUnderZoomShift && zoomLevel >= minZoom)
