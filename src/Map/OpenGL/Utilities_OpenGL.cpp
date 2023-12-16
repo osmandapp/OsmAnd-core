@@ -56,7 +56,7 @@ bool OsmAnd::Utilities_OpenGL_Common::lineSegmentIntersectPlane(
     if (!rayIntersectPlane(planeN, planeO, lineD, line0, d))
         return false;
 
-    // If point is not in [line0 .. line1]
+    // If point is in [line0 .. line1]
     if (d >= 0.0f && d <= length)
     {
         lineX = line0 + d * lineD;
