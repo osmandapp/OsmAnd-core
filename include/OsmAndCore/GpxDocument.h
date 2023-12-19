@@ -60,7 +60,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(GpxDocument);
     public:
 
-        struct OSMAND_CORE_API Link
+        struct OSMAND_CORE_API Link : public GpxExtensions
         {
             Link();
             virtual ~Link();
@@ -76,7 +76,7 @@ namespace OsmAnd
 
             QString name;
             QString email;
-            QString link;
+            Ref<Link> link;
         };
 
         struct OSMAND_CORE_API Copyright : public GpxExtensions

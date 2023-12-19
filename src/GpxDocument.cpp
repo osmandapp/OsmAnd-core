@@ -363,7 +363,8 @@ void OsmAnd::GpxDocument::writeLinks(const QList< Ref<Link> >& links, QXmlStream
     {
         // <link>
         xmlWriter.writeStartElement(QStringLiteral("link"));
-        writeNotNullText(xmlWriter, QStringLiteral("href"), link->url.toString());
+        if (!link->url.toString().isEmpty())
+            xmlWriter.writeAttribute(QStringLiteral("href"), link->url.toString());
 
         // <text>
         if (!link->text.isEmpty())
@@ -406,7 +407,7 @@ void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Aut
             xmlWriter.writeEndElement();
         }
     }
-    writeNotNullTextWithAttribute(xmlWriter, QStringLiteral("link"), QStringLiteral("href"), author->link);
+    writeLinks({ author->link }, xmlWriter);
 }
 
 void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
@@ -904,6 +905,8 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     if (tag == QStringLiteral("metadata"))
                     {
                         const auto metadata = std::make_shared<Metadata>();
+                        metadata->author = std::make_shared<Author>();
+                        metadata->copyright = std::make_shared<Copyright>();
                         gpxDocument->metadata = metadata;
                         parserState.push(metadata);
                     }
@@ -925,6 +928,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         gpxDocument->points.append(wptPt);
                         parserState.push(wptPt);
                     }
+                }
+                else if (auto link = std::dynamic_pointer_cast<Link>(parse))
+                {
+                    if (tag == QStringLiteral("text"))
+                        link->text = GpxDocument::readText(parser, QStringLiteral("text"));
                 }
                 else if (auto metadata = std::dynamic_pointer_cast<Metadata>(parse))
                 {
@@ -950,8 +958,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     if (tag == QStringLiteral("link"))
                     {
                         const auto link = std::make_shared<Link>();
-                        link->url = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
+                        link->url.setUrl(parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString());
                         metadata->links.append(link);
+                        parserState.push(link);
                     }
                     if (tag == QStringLiteral("time"))
                     {
@@ -983,7 +992,12 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         }
                     }
                     if (tag == QStringLiteral("link"))
-                        author->link = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
+                    {
+                        const auto link = std::make_shared<Link>();
+                        link->url.setUrl(parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString());
+                        author->link = link;
+                        parserState.push(link);
+                    }
                 }
                 else if (auto copyright = std::dynamic_pointer_cast<Copyright>(parse))
                 {
@@ -1111,8 +1125,9 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     else if (tag == QStringLiteral("link"))
                     {
                         const auto link = std::make_shared<Link>();
-                        link->url = parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString();
+                        link->url.setUrl(parser.attributes().value(QStringLiteral(""), QStringLiteral("href")).toString());
                         wptPt->links.append(link);
+                        parserState.push(link);
                     }
                     else if (tag == QStringLiteral("category"))
                     {
@@ -1191,6 +1206,11 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tag == QStringLiteral("copyright"))
             {
                 if (auto copyright = std::dynamic_pointer_cast<Copyright>(parse))
+                    parserState.pop();
+            }
+            else if (tag == QStringLiteral("link"))
+            {
+                if (auto link = std::dynamic_pointer_cast<Link>(parse))
                     parserState.pop();
             }
             else if (tag == QStringLiteral("bounds"))
