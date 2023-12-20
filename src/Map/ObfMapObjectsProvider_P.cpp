@@ -6,6 +6,9 @@
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
+
 #include "MapDataProviderHelpers.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
@@ -646,9 +649,10 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
                 else if (std::dynamic_pointer_cast<const Road>(o1) && std::dynamic_pointer_cast<const BinaryMapObject>(o2))
                     return false;
 
-                const auto& formattedSectionName1 = formatObfSectionName(o1->obfSection, true);
-                const auto& formattedSectionName2 = formatObfSectionName(o2->obfSection, true);
-                return formattedSectionName1.compare(formattedSectionName2) > 0;
+                const auto& sectionDate1 = getObfSectionDate(o1->obfSection);
+                const auto& sectionDate2 = getObfSectionDate(o2->obfSection);
+
+                return sectionDate1.compare(sectionDate2) > 0;
             });
 
         if (addDuplicates)
@@ -765,6 +769,14 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 #endif // OSMAND_PERFORMANCE_METRICS
 
     return true;
+}
+
+QString OsmAnd::ObfMapObjectsProvider_P::getObfSectionDate(const std::shared_ptr<const ObfSectionInfo>& sectionInfo)
+{
+    const auto& formattedSectionName = formatObfSectionName(sectionInfo, true);
+    const QRegularExpression regex("(_[0-9]{2}){3}");
+    const auto& match = regex.match(formattedSectionName);
+    return match.captured(0);
 }
 
 QString OsmAnd::ObfMapObjectsProvider_P::formatObfSectionName(
