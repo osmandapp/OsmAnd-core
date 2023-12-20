@@ -1016,6 +1016,12 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
         if (contentSizeValue.isNull())
             continue;
+        
+        const auto& isHiddenValue = attribs.value(QLatin1String("isHidden"));
+        bool isHidden = false;
+        if (!isHiddenValue.isNull())
+            isHidden = isHiddenValue.toString() == QStringLiteral("true");
+        
         const auto& freeValue = attribs.value(QLatin1String("free"));
         bool free = false;
         if (!freeValue.isNull())
@@ -1237,6 +1243,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             timestamp,
             containerSize,
             free,
+            isHidden,
             message));
         repository.push_back(qMove(resource));
 

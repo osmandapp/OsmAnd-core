@@ -359,6 +359,7 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
     const uint64_t timestamp_,
     const uint64_t packageSize_,
     const bool free_,
+    const bool isHidden_,
     const QString& message_)
     : Resource(id_, type_, ResourceOrigin::Repository)
     , url(url_)
@@ -366,6 +367,7 @@ OsmAnd::ResourcesManager::ResourceInRepository::ResourceInRepository(
     , timestamp(timestamp_)
     , packageSize(packageSize_)
     , free(free_)
+    , isHidden(isHidden_)
     , message(message_)
 {
 }

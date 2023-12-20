@@ -175,6 +175,9 @@ bool OsmAnd::IncrementalChangesManager_P::parseRepository(
         const auto& contentSizeValue = attribs.value(QStringLiteral("contentSize"));
         if (contentSizeValue.isNull())
             continue;
+        const auto& isHiddenValue = attribs.value(QLatin1String("isHidden"));
+        if (isHiddenValue.isNull())
+            continue;
         const auto& timestampValue = attribs.value(QStringLiteral("timestamp"));
         if (timestampValue.isNull())
             continue;
