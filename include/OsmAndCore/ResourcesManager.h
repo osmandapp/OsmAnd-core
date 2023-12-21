@@ -249,6 +249,7 @@ namespace OsmAnd
             const QList<QString>& readonlyExternalStoragePaths = QList<QString>(),
             const QString& miniBasemapFilename = {},
             const QString& localTemporaryPath = {},
+            const QString& hiddenMapsPath = {},
             const QString& localCachePath = {},
             const QString& appVersion = {},
             const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
@@ -263,6 +264,7 @@ namespace OsmAnd
         const QString localTemporaryPath;
         const QString repositoryBaseUrl;
         const QString indexesUrl;
+        const QString hiddenMapsPath;
         const QString localCachePath;
         const QString appVersion;
 

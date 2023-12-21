@@ -13,6 +13,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     const QList<QString>& readonlyExternalStoragePaths_ /*= QList<QString>()*/,
     const QString& miniBasemapFilename_ /*= QString::null*/,
     const QString& localTemporaryPath_ /*= QString::null*/,
+    const QString& hiddenMapsPath_ /*= QString::null*/,
     const QString& localCachePath_ /*= QString::null*/,
     const QString& appVersion_ /*= QString::null*/,
     const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/,
@@ -28,6 +29,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
         : QStandardPaths::writableLocation(QStandardPaths::TempLocation))
     , repositoryBaseUrl(repositoryBaseUrl_)
     , indexesUrl(indexesUrl_)
+    , hiddenMapsPath(hiddenMapsPath_)
     , localCachePath(!localCachePath_.isNull()
         ? localCachePath_
         : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
@@ -40,6 +42,7 @@ OsmAnd::ResourcesManager::ResourcesManager(
     QDir(localStoragePath).mkpath(QLatin1String("."));
     QDir(userStoragePath).mkpath(QLatin1String("."));
     QDir(localTemporaryPath).mkpath(QLatin1String("."));
+    QDir(hiddenMapsPath).mkpath(QLatin1String("."));
 
     _p->initialize();
     _p->inflateBuiltInResources();

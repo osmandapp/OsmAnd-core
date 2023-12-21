@@ -74,6 +74,8 @@ void OsmAnd::ResourcesManager_P::attachToFileSystem()
 
     if (!owner->userStoragePath.isNull())
         _fileSystemWatcher->addPath(owner->userStoragePath);
+    if (!owner->hiddenMapsPath.isNull())
+        _fileSystemWatcher->addPath(owner->hiddenMapsPath);
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
         _fileSystemWatcher->addPath(readonlyExternalStoragePath);
 }
@@ -195,6 +197,11 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths(bool rescanAll /*= 
     if (!owner->userStoragePath.isNull())
     {
         if (!loadLocalResourcesFromPath(owner->userStoragePath, true, unmanagedResources))
+            return false;
+    }
+    if (!owner->hiddenMapsPath.isNull())
+    {
+        if (!loadLocalResourcesFromPath(owner->hiddenMapsPath, true, unmanagedResources))
             return false;
     }
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
