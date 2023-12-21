@@ -407,7 +407,8 @@ void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Aut
             xmlWriter.writeEndElement();
         }
     }
-    writeLinks({ author->link }, xmlWriter);
+    if (author->link != nullptr)
+        writeLinks({ author->link }, xmlWriter);
 }
 
 void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
