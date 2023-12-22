@@ -224,6 +224,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const Road> > referencedRoads;
         };
 
+        static QString getObfSectionDate(const std::shared_ptr<const ObfSectionInfo>& sectionInfo);
         static QString formatObfSectionName(const std::shared_ptr<const ObfSectionInfo>& sectionInfo, const bool withDate);
     public:
         ~ObfMapObjectsProvider_P();
