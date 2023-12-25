@@ -189,7 +189,7 @@ namespace OsmAnd
                 const uint64_t timestamp,
                 const uint64_t packageSize,
                 const bool free,
-                const bool isHidden,
+                const bool hidden,
                 const QString& message);
         public:
             virtual ~ResourceInRepository();
@@ -199,7 +199,7 @@ namespace OsmAnd
             const uint64_t timestamp;
             const uint64_t packageSize;
             const bool free;
-            const bool isHidden;
+            const bool hidden;
             const QString message;
 
         friend class OsmAnd::ResourcesManager_P;
