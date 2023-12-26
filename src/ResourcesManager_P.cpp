@@ -74,6 +74,8 @@ void OsmAnd::ResourcesManager_P::attachToFileSystem()
 
     if (!owner->userStoragePath.isNull())
         _fileSystemWatcher->addPath(owner->userStoragePath);
+    if (!owner->hiddenMapsPath.isNull())
+        _fileSystemWatcher->addPath(owner->hiddenMapsPath);
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
         _fileSystemWatcher->addPath(readonlyExternalStoragePath);
 }
@@ -195,6 +197,11 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths(bool rescanAll /*= 
     if (!owner->userStoragePath.isNull())
     {
         if (!loadLocalResourcesFromPath(owner->userStoragePath, true, unmanagedResources))
+            return false;
+    }
+    if (!owner->hiddenMapsPath.isNull())
+    {
+        if (!loadLocalResourcesFromPath(owner->hiddenMapsPath, true, unmanagedResources))
             return false;
     }
     for (const auto& readonlyExternalStoragePath : constOf(owner->readonlyExternalStoragePaths))
@@ -951,6 +958,21 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
+bool OsmAnd::ResourcesManager_P::isLocalResourceHidden(const QString& id) const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    const auto citResource = _localResources.constFind(id);
+    if (citResource == _localResources.cend())
+        return false;
+    return isLocalResourceHidden(*citResource);
+}
+
+bool OsmAnd::ResourcesManager_P::isLocalResourceHidden(const std::shared_ptr<const LocalResource>& localResource) const
+{
+    return localResource->localPath.startsWith(owner->hiddenMapsPath);
+}
+
 OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(const QStringRef &resourceTypeValue)
 {
     auto resourceType = ResourceType::Unknown;
@@ -1016,6 +1038,12 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         const auto& contentSizeValue = attribs.value(QLatin1String("contentSize"));
         if (contentSizeValue.isNull())
             continue;
+        
+        const auto& isHiddenValue = attribs.value(QLatin1String("isHidden"));
+        bool hidden = false;
+        if (!isHiddenValue.isNull())
+            hidden = isHiddenValue.toString() == QStringLiteral("true");
+        
         const auto& freeValue = attribs.value(QLatin1String("free"));
         bool free = false;
         if (!freeValue.isNull())
@@ -1237,6 +1265,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
             timestamp,
             containerSize,
             free,
+            hidden,
             message));
         repository.push_back(qMove(resource));
 
