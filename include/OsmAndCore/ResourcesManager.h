@@ -282,6 +282,8 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
+        bool isLocalResourceHidden(const QString& id) const;
+        bool isLocalResourceHidden(const std::shared_ptr<const LocalResource>& localResource) const;
 
         // Resources in repository:
         bool isRepositoryAvailable() const;

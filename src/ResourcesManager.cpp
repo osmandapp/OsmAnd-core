@@ -109,6 +109,16 @@ bool OsmAnd::ResourcesManager::isLocalResource(const QString& id) const
     return _p->isLocalResource(id);
 }
 
+bool OsmAnd::ResourcesManager::isLocalResourceHidden(const QString& id) const
+{
+    return _p->isLocalResourceHidden(id);
+}
+
+bool OsmAnd::ResourcesManager::isLocalResourceHidden(const std::shared_ptr<const LocalResource>& localResource) const
+{
+    return _p->isLocalResourceHidden(localResource);
+}
+
 bool OsmAnd::ResourcesManager::isRepositoryAvailable() const
 {
     return _p->isRepositoryAvailable();

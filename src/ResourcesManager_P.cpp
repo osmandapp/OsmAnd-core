@@ -958,6 +958,21 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
+bool OsmAnd::ResourcesManager_P::isLocalResourceHidden(const QString& id) const
+{
+    QReadLocker scopedLocker(&_localResourcesLock);
+
+    const auto citResource = _localResources.constFind(id);
+    if (citResource == _localResources.cend())
+        return false;
+    return isLocalResourceHidden(*citResource);
+}
+
+bool OsmAnd::ResourcesManager_P::isLocalResourceHidden(const std::shared_ptr<const LocalResource>& localResource) const
+{
+    return localResource->localPath.startsWith(owner->hiddenMapsPath);
+}
+
 OsmAnd::ResourcesManager::ResourceType OsmAnd::ResourcesManager_P::getIndexType(const QStringRef &resourceTypeValue)
 {
     auto resourceType = ResourceType::Unknown;
