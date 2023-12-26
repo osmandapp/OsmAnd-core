@@ -189,6 +189,7 @@ namespace OsmAnd
                 const uint64_t timestamp,
                 const uint64_t packageSize,
                 const bool free,
+                const bool hidden,
                 const QString& message);
         public:
             virtual ~ResourceInRepository();
@@ -198,6 +199,7 @@ namespace OsmAnd
             const uint64_t timestamp;
             const uint64_t packageSize;
             const bool free;
+            const bool hidden;
             const QString message;
 
         friend class OsmAnd::ResourcesManager_P;
@@ -247,6 +249,7 @@ namespace OsmAnd
             const QList<QString>& readonlyExternalStoragePaths = QList<QString>(),
             const QString& miniBasemapFilename = {},
             const QString& localTemporaryPath = {},
+            const QString& hiddenMapsPath = {},
             const QString& localCachePath = {},
             const QString& appVersion = {},
             const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
@@ -261,6 +264,7 @@ namespace OsmAnd
         const QString localTemporaryPath;
         const QString repositoryBaseUrl;
         const QString indexesUrl;
+        const QString hiddenMapsPath;
         const QString localCachePath;
         const QString appVersion;
 
@@ -278,6 +282,8 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const LocalResource> > getLocalResources() const;
         std::shared_ptr<const LocalResource> getLocalResource(const QString& id) const;
         bool isLocalResource(const QString& id) const;
+        bool isLocalResourceHidden(const QString& id) const;
+        bool isLocalResourceHidden(const std::shared_ptr<const LocalResource>& localResource) const;
 
         // Resources in repository:
         bool isRepositoryAvailable() const;
