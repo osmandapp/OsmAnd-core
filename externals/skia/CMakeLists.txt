@@ -392,6 +392,11 @@ file(GLOB src_sksl_lex__remove
 )
 list(REMOVE_ITEM src_sksl_lex ${src_sksl_lex__remove})
 file(GLOB src_sksl_transform "upstream.patched/src/sksl/transform/*")
+file(GLOB src_xml "upstream.patched/src/xml/*")
+file(GLOB module_shaper
+		"upstream.patched/modules/skshaper/src/SkShaper.cpp"
+		"upstream.patched/modules/skshaper/src/SkShaper_primitive.cpp")
+file(GLOB module_svg "upstream.patched/modules/svg/src/*")
 file(GLOB src_utils "upstream.patched/src/utils/*")
 file(GLOB src_utils__remove
 )
@@ -438,6 +443,9 @@ add_library(skia_static STATIC
 	${src_sksl_ir}
 	${src_sksl_lex}
 	${src_sksl_transform}
+	${src_xml}
+	${module_shaper}
+	${module_svg}
 	${src_utils}
 	${src_utils_debugger}
 	${target_specific_sources}
@@ -497,6 +505,7 @@ target_include_directories(skia_static
 		#"upstream.patched/include/utils"
 		#"upstream.patched/include/xml"
 		#"upstream.patched/include/gpu"
+		"upstream.patched/modules/svg/include"
 		${target_specific_include_dirs_public}
 
 		"upstream.patched/include/third_party/skcms"

@@ -2,6 +2,9 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkData.h>
+#include <SkStream.h>
+#include <SkSVGSVG.h>
+#include <SkSVGDOM.h>
 #include <SkImage.h>
 #include <SkBitmap.h>
 #include <SkTypeface.h>
@@ -42,6 +45,33 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromData(const QByteArray& data
         [](const void* ptr, void* context) { delete reinterpret_cast<QByteArray*>(context); },
         new QByteArray(data)
     ));
+}
+
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromVectorData(const QByteArray& data, const float scale)
+{
+    if (data.isEmpty())
+        return nullptr;
+
+    const auto stream = SkMemoryStream::MakeDirect(data.constData(), data.size());
+    const auto svgDom = SkSVGDOM::MakeFromStream(*stream);
+
+    const auto originalSize = svgDom->containerSize();
+    const SkSVGTransformType transform(SkMatrix::Scale(scale, scale));
+    svgDom->getRoot()->setTransform(transform);
+
+    SkBitmap bitmap;
+    const int scaledSizeX = qCeil(originalSize.width() * scale);
+    const int scaledSizeY = qCeil(originalSize.height() * scale);
+    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(scaledSizeX, scaledSizeY)))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate pixels");
+        return nullptr;
+    }
+    bitmap.eraseColor(SK_ColorTRANSPARENT);
+    
+    SkCanvas canvas(bitmap);
+    svgDom->render(&canvas);
+    return bitmap.asImage();
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
