@@ -100,10 +100,10 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
-        bool obtainShader(const QString& name, sk_sp<const SkImage>& outShader) const;
-        bool obtainMapIcon(const QString& name, sk_sp<const SkImage>& outIcon) const;
-        bool obtainTextShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
-        bool obtainIconShield(const QString& name, sk_sp<const SkImage>& outIconShield) const;
+        bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
+        bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
+        bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainIconShield(const QString& name, const float scale, sk_sp<const SkImage>& outIconShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;

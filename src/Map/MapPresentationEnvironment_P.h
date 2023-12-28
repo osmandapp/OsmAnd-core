@@ -95,6 +95,11 @@ namespace OsmAnd
         mutable QHash< QString, sk_sp<const SkImage> > _iconShields;
 
         QByteArray obtainResourceByName(const QString& name) const;
+
+        static QString makeIconKey(const QString& name, const float scale)
+        {
+            return QLatin1String("%1_%2").arg(name).arg(scale);
+        }
     public:
         virtual ~MapPresentationEnvironment_P();
 
@@ -114,10 +119,10 @@ namespace OsmAnd
         void applyTo(MapStyleEvaluator& evaluator) const;
         void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
-        bool obtainShader(const QString& name, sk_sp<const SkImage>& outShader) const;
-        bool obtainMapIcon(const QString& name, sk_sp<const SkImage>& outIcon) const;
-        bool obtainTextShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
-        bool obtainIconShield(const QString& name, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
+        bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
+        bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainIconShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;
