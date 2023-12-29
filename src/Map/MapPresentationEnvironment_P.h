@@ -98,7 +98,7 @@ namespace OsmAnd
 
         static QString makeIconKey(const QString& name, const float scale)
         {
-            return QLatin1String("%1_%2").arg(name).arg(scale);
+            return QLatin1String("%1_%2").arg(name).arg(static_cast<int>(scale * 1000));
         }
     public:
         virtual ~MapPresentationEnvironment_P();
