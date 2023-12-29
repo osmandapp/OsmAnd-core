@@ -51,7 +51,7 @@ android {
     // Seems this has no effect at all, since not propagated. So should be inserted in host application
     aaptOptions {
         // Don't compress any resources
-        noCompress "qz", "png", "svg"
+        noCompress "qz", "png"
     }
 
     lintOptions {
