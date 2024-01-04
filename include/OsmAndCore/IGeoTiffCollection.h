@@ -50,6 +50,8 @@ namespace OsmAnd
             const uint32_t overlap,
             const uint32_t bandCount,
             const bool toBytes,
+            float& minValue,
+            float& maxValue,
             void* pBuffer,
             const ProcessingParameters* procParameters = nullptr) const = 0;
 

@@ -18,10 +18,14 @@ OsmAnd::IMapElevationDataProvider::Data::Data(
     const ZoomLevel zoom_,
     const size_t rowLength_,
     const uint32_t size_,
+    const float minValue_,
+    const float maxValue_,
     const float* const pRawData_)
     : IMapTiledDataProvider::Data(tileId_, zoom_)
     , rowLength(rowLength_)
     , size(size_)
+    , minValue(minValue_)
+    , maxValue(maxValue_)
     , pRawData(pRawData_)
     , heixelSizeN(1.0f / (float)size)
     , halfHeixelSizeN(0.5f * heixelSizeN)

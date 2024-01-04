@@ -496,11 +496,15 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         QMutexLocker scopedLocker(&_requestedStateMutex);
 
         bool adjustTarget = 
-        _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0 && _requestedState.fixedHeight == 0.0f
+        _requestedState.fixedPixel.x >= 0 && _requestedState.fixedPixel.y >= 0
+            && (!_targetIsElevated || _requestedState.fixedHeight == 0.0f)
             && _requestedState.elevationDataProvider && _requestedState.fixedLocation31 == _requestedState.target31
             && isLocationHeightAvailable(_requestedState, _requestedState.target31);
         if (adjustTarget)
+        {
+            _targetIsElevated = true;
             setMapTarget(_requestedState);
+        }
     }
 
     // Deal with state

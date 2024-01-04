@@ -744,6 +744,12 @@ namespace OsmAnd
             const TileId tileId,
             const unsigned int absZoomShift)
         {
+            if (absZoomShift == 0)
+            {
+                QVector<TileId> result(1);
+                result[0] = tileId;
+                return result;
+            }
             const auto resultingTilesPerSideCount = (1u << absZoomShift);
             const auto resultingTilesCount = resultingTilesPerSideCount * resultingTilesPerSideCount;
             assert(resultingTilesCount <= std::numeric_limits<uint16_t>::max());

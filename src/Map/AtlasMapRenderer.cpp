@@ -55,7 +55,8 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
         return false;
 
     // Notify resources manager about new active zone
-    getResources().updateActiveZone(internalState->uniqueTiles, internalState->uniqueTilesTargets);
+    getResources().updateActiveZone(internalState->uniqueTiles, internalState->uniqueTilesTargets,
+        internalState->visibleTiles, internalState->zoomLevelOffset, internalState->visibleTilesCount);
 
     return true;
 }
@@ -86,11 +87,7 @@ unsigned int OsmAnd::AtlasMapRenderer::getAllTilesCount() const
 {
     QReadLocker scopedLocker(&_internalStateLock);
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
-    int tilesCount = 0;
-    for (const auto& tiles : constOf(internalState->visibleTiles))
-        tilesCount += tiles.size();
-
-    return tilesCount;
+    return internalState->visibleTilesCount;
 }
 
 unsigned int OsmAnd::AtlasMapRenderer::getDetailLevelsCount() const

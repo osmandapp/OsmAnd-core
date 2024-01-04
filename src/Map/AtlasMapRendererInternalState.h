@@ -26,7 +26,11 @@ namespace OsmAnd
 
         TileId targetTileId;
         PointF targetInTileOffsetN;
+        int zoomLevelOffset;
+        int visibleTilesCount;
         QMap<ZoomLevel, QVector<TileId>> visibleTiles;
+        QMap<ZoomLevel, QSet<TileId>> visibleTilesSet;
+        QMap<ZoomLevel, QVector<TileId>> frustumTiles;
         QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
         QMap<ZoomLevel, TileId> uniqueTilesTargets;
 
@@ -85,7 +89,10 @@ namespace OsmAnd
         glm::vec3 frontVisibleEdgeN;
         glm::vec3 backVisibleEdgeN;
         glm::vec3 frontVisibleEdgeP;
-        glm::vec3 backVisibleEdgeP;
+        glm::vec3 backVisibleEdgeTL;
+        glm::vec3 backVisibleEdgeTR;
+        glm::vec3 backVisibleEdgeBL;
+        glm::vec3 backVisibleEdgeBR;
         float topVisibleEdgeD;
         float leftVisibleEdgeD;
         float bottomVisibleEdgeD;

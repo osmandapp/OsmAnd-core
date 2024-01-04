@@ -66,6 +66,11 @@ bool OsmAnd::MapRendererTiledResourcesCollection::containsResource(
         : true;
 }
 
+bool OsmAnd::MapRendererTiledResourcesCollection::containsResources(const ZoomLevel zoomLevel) const
+{
+    return hasEntries(zoomLevel);
+}
+
 int OsmAnd::MapRendererTiledResourcesCollection::getResourcesCount() const
 {
     return getEntriesCount();
@@ -260,4 +265,13 @@ bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::containsResource(
     }
 
     return false;
+}
+
+bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::containsResources(const ZoomLevel zoomLevel) const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    const auto& storage = _storage[zoomLevel];
+
+    return !storage.isEmpty();
 }

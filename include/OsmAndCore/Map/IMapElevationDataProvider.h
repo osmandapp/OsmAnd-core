@@ -22,11 +22,14 @@ namespace OsmAnd
             inline float getInterpolatedValue(const float x, const float y) const;
         protected:
         public:
-            Data(TileId tileId, ZoomLevel zoom, size_t rowLength, uint32_t size, const float* pRawData);
+            Data(TileId tileId, ZoomLevel zoom, size_t rowLength, uint32_t size, float minValue, float maxValue,
+                const float* pRawData);
             ~Data() override;
 
             const size_t rowLength;
             const uint32_t size;
+            const float minValue;
+            const float maxValue;
             const float* pRawData;
             const float heixelSizeN;
             const float halfHeixelSizeN;

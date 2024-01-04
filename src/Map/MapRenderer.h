@@ -59,6 +59,8 @@ namespace OsmAnd
             MaxMissingDataUnderZoomShift = 2,
             HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
             ElevationDataTileSize = HeixelsPerTileSide + 2,
+            MaxNumberOfTilesToUseUnderscaledOnce = 16, // Maximum number of visible tiles allowed / 4
+            MaxNumberOfTilesToUseUnderscaledTwice = 4 // Maximum number of visible tiles allowed / 16
         };
 
     private:
@@ -122,6 +124,7 @@ namespace OsmAnd
         int _symbolsUpdateInterval;
         volatile bool _updateSymbols;
         volatile bool _freshSymbols;
+        volatile bool _targetIsElevated;
 
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;

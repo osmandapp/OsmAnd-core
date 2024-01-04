@@ -85,6 +85,15 @@ namespace OsmAnd
         {
         }
 
+        virtual bool hasEntries(const ZoomLevel zoom) const
+        {
+            QReadLocker scopedLocker(&_collectionLock);
+
+            const auto& storage = _storage[zoom];
+
+            return !storage.isEmpty();
+        }
+
         virtual bool tryObtainEntry(std::shared_ptr<ENTRY>& outEntry, const TileId tileId, const ZoomLevel zoom) const
         {
             if (!_collectionLock.tryLockForRead())

@@ -27,6 +27,8 @@ namespace OsmAnd
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
 
+        int getMaxMissingDataZoomShift(int defaultMaxMissingDataZoomShift) const;
+
         virtual bool obtainData(
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,

@@ -100,6 +100,7 @@ bool OsmAnd::HillshadeRasterMapLayerProvider_P::obtainData(
     // Extra pixels on both edges give more accurate hillshade calculations
     const int overlap = 4;
     const auto bufferSize = tileSize * tileSize * bandCount;
+    float minValue, maxValue;
     const auto pBuffer = new char[bufferSize];
     const auto result = owner->filesCollection->getGeoTiffData(
         request.tileId,
@@ -108,6 +109,8 @@ bool OsmAnd::HillshadeRasterMapLayerProvider_P::obtainData(
         overlap,
         bandCount,
         true,
+        minValue,
+        maxValue,
         pBuffer,
         &procParameters);
     if (result == GeoTiffCollection::CallResult::Completed)

@@ -62,11 +62,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     GLlocation elevationDataVertexAttribArray;
     bool withElevation = true;
     bool haveElevation = false;
-    auto tilesBegin = internalState.visibleTiles.cbegin();
-    for (auto itTiles = internalState.visibleTiles.cend(); itTiles != tilesBegin; itTiles--)
+    auto tilesBegin = internalState.frustumTiles.cbegin();
+    for (auto itTiles = internalState.frustumTiles.cend(); itTiles != tilesBegin; itTiles--)
     {
         const auto& tilesEntry = itTiles - 1;
-        const auto& batchedLayersByTiles = batchLayersByTiles(tilesEntry.value(), tilesEntry.key());
+        const auto& visibleTilesSet = internalState.visibleTilesSet.constFind(tilesEntry.key());
+        if (visibleTilesSet == internalState.visibleTilesSet.cend())
+            continue;                
+        const auto& batchedLayersByTiles =
+            batchLayersByTiles(tilesEntry.value(), visibleTilesSet.value(), tilesEntry.key());
         for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
         {
             // Any layer or layers batch after first one has to be rendered using blending,
@@ -2050,8 +2054,10 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::cancelElevation(
 }
 
 QList< OsmAnd::Ref<OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::PerTileBatchedLayers> >
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<TileId>& tiles, ZoomLevel zoomLevel)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
+    const QVector<TileId>& tiles, const QSet<TileId>& visibleTilesSet, ZoomLevel zoomLevel)
 {
+    const auto& internalState = getInternalState();
     const auto gpuAPI = getGPUAPI();
 
     QList< Ref<PerTileBatchedLayers> > perTileBatchedLayers;
@@ -2069,6 +2075,10 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<
     for (const auto& tileId : constOf(tiles))
     {
         const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
+
+        // Don't render invisible tiles
+        if (!visibleTilesSet.contains(tileId))
+            continue;
 
         bool atLeastOneNotUnavailable = false;
         MapRendererResourceState resourceState;
@@ -2095,21 +2105,101 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const QVector<
                 layerIndex));
 
             auto maxMissingDataZoomShift = provider->getMaxMissingDataZoomShift();
+            auto maxMissingDataUnderZoomShift = provider->getMaxMissingDataUnderZoomShift();
 
-            // Try to obtain exact match resource
-            const auto exactMatchGpuResource = captureLayerResource(
-                resourcesCollection,
-                tileIdN,
-                zoomLevel,
-                &resourceState);
-            if (resourceState != MapRendererResourceState::Unavailable)
-                atLeastOneNotUnavailable = true;
-            if (exactMatchGpuResource && resourceState == MapRendererResourceState::Uploaded)
+            // Try to obtain more detailed resource (of higher zoom level) if needed and possible
+            int neededZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
+                zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
+            bool haveMatch = false;
+            while (neededZoom > zoomLevel)
             {
-                // Exact match, no zoom shift or offset
-                batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(exactMatchGpuResource));
+                const int absZoomShift = neededZoom - zoomLevel;
+                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                    tileIdN,
+                    absZoomShift);
+                const auto subtilesCount = underscaledTileIdsN.size();
+
+                bool allPresent = true;
+                QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> > gpuResources(subtilesCount);
+                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                auto pGpuResource = gpuResources.data();
+                for (auto tileIdx = 0; tileIdx < subtilesCount; tileIdx++)
+                {
+                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+                    auto& gpuResource = *(pGpuResource++);
+
+                    gpuResource = captureLayerResource(
+                        resourcesCollection,
+                        underscaledTileId,
+                        static_cast<ZoomLevel>(neededZoom));
+                    if (!gpuResource)
+                        allPresent = false;
+                }
+
+                if (allPresent)
+                {
+                    const auto subtilesPerSide = (1u << absZoomShift);
+                    const PointF texCoordsScale(subtilesPerSide, subtilesPerSide);
+
+                    const bool isFirst = batch->containsOriginLayer &&
+                        layerIndex == currentState.mapLayersProviders.firstKey();
+
+                    const auto& stubResource = isFirst ? (atLeastOneNotUnavailable
+                        ? getResources().processingTileStubs[static_cast<int>(stubsStyle)]
+                        : getResources().unavailableTileStubs[static_cast<int>(stubsStyle)])
+                        : getResources().unavailableTileStubs[static_cast<int>(MapStubStyle::Empty)];
+
+                    auto pGpuResource = gpuResources.constData();
+                    for (auto subtileIdx = 0; subtileIdx < subtilesCount; subtileIdx++)
+                    {
+                        const auto& gpuResource = *(pGpuResource++);
+
+                        if (gpuResource)
+                        {
+                            uint16_t xSubtile;
+                            uint16_t ySubtile;
+                            Utilities::decodeMortonCode(subtileIdx, xSubtile, ySubtile);
+
+                            batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(
+                                gpuResource,
+                                absZoomShift,
+                                PointF(-xSubtile, -ySubtile),
+                                texCoordsScale));
+                        }
+                        else
+                        {
+                            // Stub texture requires no texture offset or scaling
+                            batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(
+                                stubResource,
+                                absZoomShift));
+                        }
+                    }
+
+                    haveMatch = true;
+                }
+                if (haveMatch || neededZoom - zoomLevel < maxMissingDataUnderZoomShift)
+                    break;
+                neededZoom--;
             }
-            else
+
+            if (!haveMatch)
+            {
+                // Try to obtain exact match resource
+                const auto exactMatchGpuResource = captureLayerResource(
+                    resourcesCollection,
+                    tileIdN,
+                    zoomLevel,
+                    &resourceState);
+                if (resourceState != MapRendererResourceState::Unavailable)
+                    atLeastOneNotUnavailable = true;
+                if (exactMatchGpuResource)
+                {
+                    // Exact match, no zoom shift or offset
+                    batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(exactMatchGpuResource));
+                    haveMatch = true;
+                }
+            }
+            if (!haveMatch)
             {
                 // Exact match was not found, so now try to look for overscaled/underscaled resources, taking into account
                 // provider's maxMissingDataZoomShift and current zoom. It's better to show Z-"nearest" resource available,
