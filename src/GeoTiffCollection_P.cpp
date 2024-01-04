@@ -1037,7 +1037,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                         if (cacheDatabase && cacheDatabase->isOpened() &&
                             cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
                         {
-                            getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
+                            if (!procParameters)
+                                getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
                             return GeoTiffCollection::CallResult::Completed;
                         }
                     }
