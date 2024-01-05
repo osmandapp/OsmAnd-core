@@ -2641,12 +2641,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getCameraHeightInMeters() const
 
 int OsmAnd::AtlasMapRenderer_OpenGL::getTileZoomOffset() const
 {
-    const auto state = getState();
-
-    InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration(), false, true);
-
-    return ok ? internalState.zoomLevelOffset : 0;
+    return _internalState.zoomLevelOffset;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getTileSizeInMeters() const

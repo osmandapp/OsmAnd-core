@@ -2177,7 +2177,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
 
                     haveMatch = true;
                 }
-                if (haveMatch || neededZoom - zoomLevel < maxMissingDataUnderZoomShift)
+                if (haveMatch)
                     break;
                 neededZoom--;
             }

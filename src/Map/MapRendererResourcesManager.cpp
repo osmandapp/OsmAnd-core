@@ -828,7 +828,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     const auto neededZoom = isElevationData || zoomLevelOffset == 0 ? activeZoom : static_cast<ZoomLevel>(std::min(
         activeZoom + std::min(zoomLevelOffset, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
     // Request all tiles on needed zoom levels
-    const int levelCount = isSymbolData || neededZoom - activeZoom < maxMissingDataUnderZoomShift ? 1 : 2;
+    const int levelCount = 1 + (isSymbolData ? 0 : maxMissingDataUnderZoomShift);
     for (const auto& activeTileId : constOf(activeTiles))
     {
         for (int absZoomShift = 0; absZoomShift < levelCount; absZoomShift++)
@@ -1942,8 +1942,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (!updateSymbolResources)
                         keepOldSymbolResources = true;
                 }
-                const int levelCount = resourcesType == MapRendererResourceType::Symbols
-                    || neededZoom - activeZoom < maxMissingDataUnderZoomShift ? 1 : 2;
+                const int levelCount =
+                    1 + (resourcesType == MapRendererResourceType::Symbols ? 0 : maxMissingDataUnderZoomShift);
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
                     // If resources have complete set or match for this tile, use only that
@@ -2012,18 +2012,6 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
                     if (isComplete)
                         continue;
-                    else if (neededZoom > activeZoom)
-                    {
-                        // If resources have exact match for this tile, use only that
-                        neededTilesMap[activeZoom].insert(activeTileId);
-                        if (tiledResourcesCollection->containsResource(
-                                activeTileId,
-                                activeZoom,
-                                isUsableResource))
-                        {
-                            continue;
-                        }
-                    }
 
                     if (isCustomVisibility && (activeZoom < minVisibleZoom || activeZoom > maxVisibleZoom))
                         continue;
