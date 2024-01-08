@@ -108,7 +108,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!textSymbol->shieldResourceName.isEmpty())
                 {
                     sk_sp<const SkImage> shield;
-                    env->obtainTextShield(textSymbol->shieldResourceName, textSymbol->scaleFactor, shield);
+                    env->obtainTextShield(textSymbol->shieldResourceName, shield);
 
                     if (shield)
                         backgroundLayers.push_back(shield);
@@ -116,13 +116,21 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!textSymbol->underlayIconResourceName.isEmpty())
                 {
                     sk_sp<const SkImage> icon;
-                    env->obtainMapIcon(textSymbol->underlayIconResourceName, textSymbol->scaleFactor, icon);
+                    env->obtainMapIcon(textSymbol->underlayIconResourceName, icon);
                     if (icon)
                         backgroundLayers.push_back(icon);
                 }
 
+                style.backgroundImage = SkiaUtilities::mergeImages(backgroundLayers);
+                if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundImage)
+                {
+                    style.backgroundImage = SkiaUtilities::scaleImage(
+                        style.backgroundImage,
+                        textSymbol->scaleFactor,
+                        textSymbol->scaleFactor);
+                }
+
                 style
-                    .setBackgroundImage(SkiaUtilities::mergeImages(backgroundLayers))
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)
                     .setColor(textSymbol->color)
@@ -320,23 +328,37 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             else if (const auto& iconSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::IconSymbol>(symbol))
             {
                 sk_sp<const SkImage> icon;
-                if (!env->obtainMapIcon(iconSymbol->resourceName, iconSymbol->scaleFactor, icon) || !icon)
+                if (!env->obtainMapIcon(iconSymbol->resourceName, icon) || !icon)
                     continue;
-
-                QList< sk_sp<const SkImage> > layers;
-
-                if (!iconSymbol->shieldResourceName.isEmpty())
+                if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f))
                 {
-                    sk_sp<const SkImage> background;
-                    env->obtainIconShield(iconSymbol->shieldResourceName, iconSymbol->scaleFactor, background);
-                    if (background)
-                        layers.push_back(background);
+                    icon = SkiaUtilities::scaleImage(
+                        icon,
+                        iconSymbol->scaleFactor,
+                        iconSymbol->scaleFactor);
                 }
 
+                sk_sp<const SkImage> background;
+                if (!iconSymbol->shieldResourceName.isEmpty())
+                {
+                    env->obtainIconShield(iconSymbol->shieldResourceName, background);
+
+                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && background)
+                    {
+                        background = SkiaUtilities::scaleImage(
+                            background,
+                            iconSymbol->scaleFactor,
+                            iconSymbol->scaleFactor);
+                    }
+                }
+
+                QList< sk_sp<const SkImage> > layers;
+                if (background)
+                    layers.push_back(background);
                 for (const auto& overlayResourceName : constOf(iconSymbol->underlayResourceNames))
                 {
                     sk_sp<const SkImage> underlay;
-                    if (!env->obtainMapIcon(overlayResourceName, iconSymbol->scaleFactor, underlay) || !underlay)
+                    if (!env->obtainMapIcon(overlayResourceName, underlay) || !underlay)
                         continue;
 
                     layers.push_back(underlay);
@@ -345,7 +367,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 for (const auto& overlayResourceName : constOf(iconSymbol->overlayResourceNames))
                 {
                     sk_sp<const SkImage> overlay;
-                    if (!env->obtainMapIcon(overlayResourceName, iconSymbol->scaleFactor, overlay) || !overlay)
+                    if (!env->obtainMapIcon(overlayResourceName, overlay) || !overlay)
                         continue;
 
                     layers.push_back(overlay);
