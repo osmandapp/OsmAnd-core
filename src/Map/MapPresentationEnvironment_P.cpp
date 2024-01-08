@@ -209,28 +209,26 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
     const QString& name,
-    const float scale,
     sk_sp<const SkImage>& outShader) const
 {
     QMutexLocker scopedLocker(&_shadersMutex);
 
-    const auto key = makeIconKey(name, scale);
-    auto itShader = _shaders.constFind(key);
+    auto itShader = _shaders.constFind(name);
     if (itShader == _shaders.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shaders/%1.svg").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shaders/%1.png").arg(name);
 
         // Get data from embedded resources
         const auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
         }
 
-        itShader = _shaders.insert(key, image);
+        itShader = _shaders.insert(name, image);
     }
 
     // Create shader from that bitmap
@@ -240,28 +238,26 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
     const QString& name,
-    const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
     QMutexLocker scopedLocker(&_mapIconsMutex);
 
-    const auto key = makeIconKey(name, scale);
-    auto itIcon = _mapIcons.constFind(key);
+    auto itIcon = _mapIcons.constFind(name);
     if (itIcon == _mapIcons.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/icons/%1.svg").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/icons/%1.png").arg(name);
 
         // Get data from embedded resources
         auto data = obtainResourceByName(resourcePath);
         
         // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
         }
 
-        itIcon = _mapIcons.insert(key, image);
+        itIcon = _mapIcons.insert(name, image);
     }
 
     outIcon = *itIcon;
@@ -270,28 +266,26 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
     const QString& name,
-    const float scale,
     sk_sp<const SkImage>& outTextShield) const
 {
     QMutexLocker scopedLocker(&_textShieldsMutex);
 
-    const auto key = makeIconKey(name, scale);
-    auto itTextShield = _textShields.constFind(key);
+    auto itTextShield = _textShields.constFind(name);
     if (itTextShield == _textShields.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shields/%1.svg").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
         // Get data from embedded resources
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
         }
 
-        itTextShield = _textShields.insert(key, image);
+        itTextShield = _textShields.insert(name, image);
     }
 
     outTextShield = *itTextShield;
@@ -300,28 +294,26 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
     const QString& name,
-    const float scale,
     sk_sp<const SkImage>& outIconShield) const
 {
     QMutexLocker scopedLocker(&_iconShieldsMutex);
 
-    const auto key = makeIconKey(name, scale);
-    auto itIconShield = _iconShields.constFind(key);
+    auto itIconShield = _iconShields.constFind(name);
     if (itIconShield == _iconShields.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shields/%1.svg").arg(name);
+        const auto resourcePath = QString::fromLatin1("map/shields/%1.png").arg(name);
 
         // Get data from embedded resources
         auto data = obtainResourceByName(resourcePath);
 
         // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
+        const auto image = SkiaUtilities::createImageFromData(data);
         if (!image)
         {
             return false;
         }
 
-        itIconShield = _iconShields.insert(key, image);
+        itIconShield = _iconShields.insert(name, image);
     }
 
     outIconShield = *itIconShield;
@@ -341,7 +333,7 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
     }
 
     // Otherwise obtain from global
-    const auto resource = getCoreResourcesProvider()->getResource(name, &ok);
+    const auto resource = getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok);
     if (!ok)
     {
         LogPrintf(LogSeverityLevel::Warning,

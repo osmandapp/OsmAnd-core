@@ -192,26 +192,95 @@ task copyOsmAndResources(type: Copy) {
         }
     }
 
-    // Map icons
-    from("../../../resources/rendering_styles/style-icons/map-icons-svg") {
-        include "mx_*.svg"
+    // Map icons (Android mdpi == 1.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-mdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/icons/" + fileCopyDetails.path.replaceAll(/mx_(.*)\.svg/, '$1.svg')
+            fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
         }
     }
-    from("../../../resources/rendering_styles/style-icons/map-shaders-svg") {
-        include "h_*shield*.svg"
-        include "h_*osmc*.svg"
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-mdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.svg/, '$1.svg')
+            fileCopyDetails.path = "[ddf=1.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
         }
     }
-    from("../../../resources/rendering_styles/style-icons/map-shaders-svg") {
-        include "h_*.svg"
-        exclude "h_*shield*.svg"
-        exclude "h_*osmc*.svg"
+    from("../../../resources/rendering_styles/style-icons/map-icons-png/drawable-mdpi") {
+        include "mm_*.png"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.svg/, '$1.svg')
+            fileCopyDetails.path = "[ddf=1.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
+
+    // Map icons (Android hdpi == 1.5 ddf):
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-hdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-hdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-icons-png/drawable-hdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
+
+    // Map icons (Android xhdpi == 2.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-xhdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-xhdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-icons-png/drawable-xhdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
+
+    // Map icons (Android xxhdpi == 3.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-xxhdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-shaders-png/drawable-xxhdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/map-icons-png/drawable-xxhdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
         }
     }
 
