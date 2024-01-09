@@ -93,10 +93,13 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection::getGeoTiffData(
     const uint32_t overlap,
     const uint32_t bandCount,
     const bool toBytes,
+    float& minValue,
+    float& maxValue,
     void* pBuffer,
     const ProcessingParameters* procParameters /* = nullptr */) const
 {
-    return _p->getGeoTiffData(tileId, zoom, tileSize, overlap, bandCount, toBytes, pBuffer, procParameters);
+    return _p->getGeoTiffData(
+        tileId, zoom, tileSize, overlap, bandCount, toBytes, minValue, maxValue, pBuffer, procParameters);
 }
 
 bool OsmAnd::GeoTiffCollection::calculateHeights(

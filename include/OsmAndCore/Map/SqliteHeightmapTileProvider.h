@@ -49,6 +49,8 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+        virtual int getMaxMissingDataZoomShift() const Q_DECL_OVERRIDE;
+
         virtual uint32_t getTileSize() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;

@@ -97,7 +97,8 @@ namespace OsmAnd
         private:
             Q_DISABLE_COPY(PerTileBatchedLayers);
         };
-        QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(const QVector<TileId>& tiles, ZoomLevel zoomLevel);
+        QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(
+            const QVector<TileId>& tiles, const QSet<TileId>& visibleTilesSet, ZoomLevel zoomLevel);
 
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;

@@ -1154,6 +1154,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getCameraHeightInMeters();
     }
 
+    public final int getTileZoomOffset() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getTileZoomOffset();
+    }
+
     public final boolean getScreenPointFromLocation(PointI location31, PointI outScreenPoint, boolean checkOffScreen) {
         NativeCore.checkIfLoaded();
 

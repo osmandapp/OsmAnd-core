@@ -242,6 +242,7 @@ namespace OsmAnd
         virtual float getMapTargetDistance(const PointI& location31, bool checkOffScreen = false) const = 0;
 
         virtual float getCameraHeightInMeters() const = 0;
+        virtual int getTileZoomOffset() const = 0;
 
         virtual double getTileSizeInMeters() const = 0;
         virtual double getPixelsToMetersScaleFactor() const = 0;

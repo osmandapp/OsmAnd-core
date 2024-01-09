@@ -363,6 +363,45 @@ inline bool OsmAnd::GeoTiffCollection_P::isDataPresent(
     return value != noData;
 }
 
+inline void OsmAnd::GeoTiffCollection_P::getMinMaxValues(const char* pByteBuffer, const GDALDataType dataType,
+    const double noData, const uint32_t valueCount, float& minValue, float& maxValue) const
+{
+    const auto noDataFloat = static_cast<float>(noData);
+    const auto valueSizeInBytes = dataType == GDT_Byte ? 1 : (dataType == GDT_Int16 ? 2 : 4);
+    auto minData = minValue;
+    auto maxData = maxValue;
+    float value;
+    auto pValues = pByteBuffer;
+    const auto pStop = pValues + valueCount * valueSizeInBytes;
+    while (pValues != pStop)
+    {
+        switch (dataType)
+        {
+        case GDT_Float32:
+            value = *(reinterpret_cast<const float*>(pValues));
+            break;
+        case GDT_Byte:
+            value = *pValues;
+            break;
+        case GDT_Int16:
+            value = *(reinterpret_cast<const short*>(pValues));
+            break;
+        default:
+            return;
+        }
+        if (value != noDataFloat)
+        {
+            if (value < minData)
+                minData = value;
+            if (value > maxData)
+                maxData = value;
+        }
+        pValues += valueSizeInBytes;
+    }
+    minValue = minData;
+    maxValue = maxData;
+}
+
 inline uint64_t OsmAnd::GeoTiffCollection_P::multiplyParts(const uint64_t shade, const uint64_t slope) const
 {
     const uint64_t mask0 = 0xFFULL;
@@ -427,7 +466,7 @@ inline void OsmAnd::GeoTiffCollection_P::mergeHeights(
         if (forceReplace || result[idx] == noData)
         {
             const auto src = source[idx];
-            result[idx] = src == noData ? noData : static_cast<float>(src) * scaleFactor;
+            result[idx] = src == noData ? noData : src * scaleFactor;
         }
     }
 }
@@ -834,6 +873,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
     const uint32_t overlap,
     const uint32_t bandCount,
     const bool toBytes,
+    float& minValue,
+    float& maxValue,
     void* pBuffer,
     const GeoTiffCollection::ProcessingParameters* procParameters) const
 {
@@ -927,6 +968,9 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
     // Some file failed to provide data for this tile
     bool incomplete = false;
 
+    minValue = std::numeric_limits<float>::max();
+    maxValue = std::numeric_limits<float>::min();
+    double noData = TIFF_NODATA;
     for (const auto& collectedSources : constOf(_collectedSources))
     {
         for (const auto& itEntry : rangeOf(constOf(collectedSources)))
@@ -992,7 +1036,11 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                             cacheDatabase = heightmapCache;
                         if (cacheDatabase && cacheDatabase->isOpened() &&
                             cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
+                        {
+                            if (!procParameters)
+                                getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
                             return GeoTiffCollection::CallResult::Completed;
+                        }
                     }
 
                     // Tile is empty
@@ -1091,11 +1139,10 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 numOfBands = 1;
                                 dataType = GDT_Float32;
                             }
-                            auto pixelSizeInBytes = dataType == GDT_Byte ? 1 : (dataType == GDT_Int16 ? 2 : 4);
+                            const auto pixelSizeInBytes = dataType == GDT_Byte ? 1 : (dataType == GDT_Int16 ? 2 : 4);
                             bandSize = valueCount * pixelSizeInBytes;
                             auto pData = pByteBuffer;
                             int pShift = outRaster ? (tileOffset.y * tileSize + tileOffset.x) * pixelSizeInBytes : 0;
-                            double noData = TIFF_NODATA;
                             const auto side = tileSize * pixelSizeInBytes;
                             for (int bandIndex = 1; bandIndex <= numOfBands; bandIndex++)
                             {
@@ -1121,7 +1168,9 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                     pData + pShift, tileLength.x, tileLength.y,
                                     dataType, 0, side, &extraArg) == CE_None;
                                 if (!result) break;
-                                pData += valueCount * pixelSizeInBytes;
+                                if (!procParameters)
+                                    getMinMaxValues(pData, dataType, noData, valueCount, minValue, maxValue);
+                                pData += bandSize;
                             }
                             if (result && tileSize > 1)
                             {
@@ -1292,8 +1341,10 @@ bool OsmAnd::GeoTiffCollection_P::calculateHeights(
         }
         else
         {
+            float minValue, maxValue;
             const auto pBuffer = new float[tileSize * tileSize];
-            const auto result = getGeoTiffData(tileId, zoom, tileSize, 3, 1, false, pBuffer, nullptr);
+            const auto result =
+                getGeoTiffData(tileId, zoom, tileSize, 3, 1, false, minValue, maxValue, pBuffer, nullptr);
             if (result == GeoTiffCollection::CallResult::Completed)
             {
                 auto data = std::make_shared<IMapElevationDataProvider::Data>(
@@ -1301,6 +1352,8 @@ bool OsmAnd::GeoTiffCollection_P::calculateHeights(
                       zoom,
                       sizeof(float)*tileSize,
                       tileSize,
+                      minValue,
+                      maxValue,
                       pBuffer);
 
                 float elevationInMeters = 0.0f;

@@ -33,6 +33,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoomLevel,
             const TiledResourceAcceptorCallback filter = nullptr) const = 0;
+        virtual bool containsResources(const ZoomLevel zoomLevel) const = 0;
     };
 }
 

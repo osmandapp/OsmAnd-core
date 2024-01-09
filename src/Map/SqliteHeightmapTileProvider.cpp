@@ -2,6 +2,7 @@
 #include "SqliteHeightmapTileProvider_P.h"
 
 #include "MapDataProviderHelpers.h"
+#include "MapRenderer.h"
 
 OsmAnd::SqliteHeightmapTileProvider::SqliteHeightmapTileProvider(
     const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection_,
@@ -46,6 +47,11 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider::getMaxZoom() const
 {
     return _p->getMaxZoom();
+}
+
+int OsmAnd::SqliteHeightmapTileProvider::getMaxMissingDataZoomShift() const
+{
+    return _p->getMaxMissingDataZoomShift(MapRenderer::MaxMissingDataZoomShift);
 }
 
 uint32_t OsmAnd::SqliteHeightmapTileProvider::getTileSize() const

@@ -57,6 +57,13 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
         return std::min(maxZoomDatabase, maxZoomTiff);
 }
 
+int OsmAnd::SqliteHeightmapTileProvider_P::getMaxMissingDataZoomShift(int defaultMaxMissingDataZoomShift) const
+{
+    // Set overscale limit for terrain elevation data to make it available on high zoom levels
+    const int maxMissingDataZoomShift = std::max(ZoomLevel22 - getMaxZoom(), defaultMaxMissingDataZoomShift);
+    return maxMissingDataZoomShift;
+}
+
 bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData,
@@ -81,9 +88,10 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
     if (data.isEmpty() && owner->filesCollection)
     {
         // There was no data in db, so try to get it from GeoTIFF file
-        const auto pBuffer = new float[owner->outputTileSize*owner->outputTileSize];
-        const auto result = owner->filesCollection->getGeoTiffData(request.tileId, request.zoom,
-            owner->outputTileSize, 3, 1, false, pBuffer);
+        float minValue, maxValue;
+        const auto pBuffer = new float[owner->outputTileSize * owner->outputTileSize];
+        const auto result = owner->filesCollection->getGeoTiffData(
+            request.tileId, request.zoom, owner->outputTileSize, 3, 1, false, minValue, maxValue, pBuffer);
         if (result == GeoTiffCollection::CallResult::Completed)
         {
             outData = std::make_shared<IMapElevationDataProvider::Data>(
@@ -91,6 +99,8 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
                 request.zoom,
                 sizeof(float)*owner->outputTileSize,
                 owner->outputTileSize,
+                minValue,
+                maxValue,
                 pBuffer);
             return true;
         }
@@ -197,6 +207,8 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
         request.zoom,
         sizeof(float)*owner->outputTileSize,
         owner->outputTileSize,
+        0.0f,
+        0.0f,
         pBuffer);
 
     return true;

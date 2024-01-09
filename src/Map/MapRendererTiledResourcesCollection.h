@@ -55,6 +55,7 @@ namespace OsmAnd
                 const TileId tileId,
                 const ZoomLevel zoomLevel,
                 const TiledResourceAcceptorCallback filter = nullptr) const;
+            virtual bool containsResources(const ZoomLevel zoomLevel) const;
 
         friend class OsmAnd::MapRendererTiledResourcesCollection;
         };
@@ -80,6 +81,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoomLevel,
             const TiledResourceAcceptorCallback filter = nullptr) const;
+        virtual bool containsResources(const ZoomLevel zoomLevel) const;
 
         virtual int getResourcesCount() const;
         virtual void forEachResourceExecute(const ResourceActionCallback action);

@@ -135,6 +135,8 @@ namespace OsmAnd
         GeoTiffProperties getGeoTiffProperties(const QString& filePath) const;
         std::shared_ptr<TileSqliteDatabase> openCacheFile(const QString filename);
         bool isDataPresent(const char* pByteOffset, const GDALDataType dataType, const double noData) const;
+        void getMinMaxValues(const char* pByteBuffer, const GDALDataType dataType, const double noData,
+            const uint32_t valueCount, float& minValue, float& maxValue) const;
         uint64_t multiplyParts(const uint64_t shade, const uint64_t slope) const;
         void blendHillshade(const uint32_t tileSize, uchar* shade, uchar* slope, uchar* blend) const;
         void mergeHeights(const uint32_t tileSize, const float scaleFactor, const bool forceReplace,
@@ -175,6 +177,8 @@ namespace OsmAnd
             const uint32_t overlap,
             const uint32_t bandCount,
             const bool toBytes,
+            float& minValue,
+            float& maxValue,
             void* pBuffer,
             const GeoTiffCollection::ProcessingParameters* procParameters) const;
 

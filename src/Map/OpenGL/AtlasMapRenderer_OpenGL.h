@@ -45,11 +45,26 @@ namespace OsmAnd
 
         void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
         void computeTileset(const TileId targetTileId, const PointF targetInTileOffsetN,
-            const PointF* points, QSet<TileId>* visibleTiles) const;
+            const PointF* points, QSet<TileId>* frustumTiles) const;
         void computeVisibleTileset(InternalState* internalState, const MapRendererState& state, const float highDetail,
             const float visibleDistance, const double elevationCosine, const bool sortTiles) const;
-        void computeUniqueTileset(InternalState* internalState,
+        void computeUniqueTileset(InternalState* internalState, const MapRendererState& state,
             const ZoomLevel zoomLevel, const TileId targetTileId, const bool sortTiles) const;
+        bool isPointVisible(const InternalState& internalState, const glm::vec3& point, bool skipTop,
+            bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const;
+        bool isPointInsideTileBox(const glm::vec3& point, const glm::vec3& minPoint, const glm::vec3& maxPoint,
+            bool skipTop, bool skipLeft, bool skipBottom, bool skipRight, bool skipFront, bool skipBack) const;
+        bool isRayOnTileBox(const glm::vec3& startPoint, const glm::vec3& endPoint,
+            const glm::vec3& minPoint, const glm::vec3& maxPoint) const;
+        bool isEdgeVisible(const InternalState& internalState,
+            const glm::vec3& startPoint, const glm::vec3& endPoint) const;
+        bool isTileVisible(const InternalState& internalState,
+            const glm::vec3& minPoint, const glm::vec3& maxPoint) const;
+        void getElevationDataLimits(const MapRendererState& state,
+            std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,
+            const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
+        bool getHeightLimits(const MapRendererState& state,
+            const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
         double getRealDistanceToHorizon(const InternalState& internalState, const MapRendererState& state,
             const PointD& groundPosition, const double inglobeAngle, const double referenceDistance) const;
         bool getPositionFromScreenPoint(const InternalState& internalState, const MapRendererState& state,
@@ -180,6 +195,7 @@ namespace OsmAnd
         bool obtainElevatedPointFromPosition(const PointI& position31, PointI& outScreenPoint, bool checkOffScreen = false) const override;
 
         float getCameraHeightInMeters() const override;
+        int getTileZoomOffset() const override;
         
         double getTileSizeInMeters() const override;
         double getPixelsToMetersScaleFactor() const override;
