@@ -602,7 +602,7 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
                 return false;
             }
 
-            obfsCollection->addDirectory(value, false);
+            obfsCollection->addDirectory(value, static_cast<QDir*>(nullptr), false);
         }
         else if (arg.startsWith(QLatin1String("-obfsRecursivePath=")))
         {
@@ -613,7 +613,7 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
                 return false;
             }
 
-            obfsCollection->addDirectory(value, true);
+            obfsCollection->addDirectory(value, static_cast<QDir*>(nullptr), true);
         }
         else if (arg.startsWith(QLatin1String("-obfFile=")))
         {

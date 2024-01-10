@@ -16,6 +16,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "ObfsCollection.h"
+#include "Nullable.h"
 
 namespace OsmAnd
 {
@@ -58,6 +59,7 @@ namespace OsmAnd
             }
 
             QDir directory;
+            Nullable<QDir> filterBy;
             bool isRecursive;
 
             mutable QSet<QString> watchedSubdirectories;
@@ -84,6 +86,8 @@ namespace OsmAnd
         mutable QHash< ObfsCollection::SourceOriginId, QHash<QString, std::shared_ptr<ObfFile> > > _collectedSources;
         mutable QReadWriteLock _collectedSourcesLock;
         void collectSources() const;
+
+        static bool filterOutObfFile(const QString& obfFilePath, const std::shared_ptr<const SourceOrigin>& sourceOrigin);
     public:
         virtual ~ObfsCollection_P();
 
@@ -93,7 +97,7 @@ namespace OsmAnd
         void removeDirectory(const QDir& dir);
         bool hasDirectory(const QDir& dir);
         ObfsCollection::SourceOriginId getOriginIdByName(const QDir& dir);
-        ObfsCollection::SourceOriginId addDirectory(const QDir& dir, bool recursive);
+        ObfsCollection::SourceOriginId addDirectory(const QDir& dir, const QDir* const filterBy, bool recursive);
         ObfsCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         void setIndexCacheFile(const QFileInfo& indexCacheFile);
         bool remove(const ObfsCollection::SourceOriginId entryId);

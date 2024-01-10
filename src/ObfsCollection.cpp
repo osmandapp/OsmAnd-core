@@ -25,14 +25,22 @@ void OsmAnd::ObfsCollection::removeDirectory(const QString& dirPath)
     return _p->removeDirectory(QDir(dirPath));
 }
 
-OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addDirectory(const QString& dirPath, bool recursive /*= true*/)
+OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addDirectory(
+    const QString& dirPath,
+    const QString& filterByDirPath /*= QString()*/,
+    bool recursive /*= true*/)
 {
-    return addDirectory(QDir(dirPath), recursive);
+    const auto dir = filterByDirPath.isEmpty() ? QDir() : QDir(filterByDirPath);
+    const auto filterBy = filterByDirPath.isEmpty() ? nullptr : &dir;
+    return addDirectory(QDir(dirPath), filterBy, recursive);
 }
 
-OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addDirectory(const QDir& dir, bool recursive /*= true*/)
+OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addDirectory(
+    const QDir& dir,
+    const QDir* const filterBy /*= nullptr*/,
+    bool recursive /*= true*/)
 {
-    return _p->addDirectory(dir, recursive);
+    return _p->addDirectory(dir, filterBy, recursive);
 }
 
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addFile(const QString& filePath)

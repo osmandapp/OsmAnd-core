@@ -144,7 +144,7 @@ public class Sample1 implements GLEventListener {
     }
 
     _obfsCollection = new ObfsCollection();
-    _obfsCollection.addDirectory("data", false);
+    _obfsCollection.addDirectory("data", "", false);
 
     _mapPresentationEnvironment = new MapPresentationEnvironment(
       _mapStyle,

@@ -113,12 +113,14 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             continue;
         }
 
-        // Check for missing files
+        // Check for missing or filtered out files
         auto itObfFileEntry = mutableIteratorOf(collectedSources);
         while(itObfFileEntry.hasNext())
         {
-            const auto& sourceFilename = itObfFileEntry.next().key();
-            if (QFile::exists(sourceFilename))
+            const auto& sourceFilePath = itObfFileEntry.next().key();
+            const auto& sourceOrigin = itSourceOrigin.value();
+
+            if (QFile::exists(sourceFilePath) && !filterOutObfFile(sourceFilePath, sourceOrigin))
                 continue;
             const auto obfFile = itObfFileEntry.value();
 
@@ -162,6 +164,8 @@ void OsmAnd::ObfsCollection_P::collectSources() const
                     if (obfFileInfo.size() == (*itCollectedObfFile)->fileSize)
                         continue;
                 }
+                else if (filterOutObfFile(obfFilePath, entry))
+                    continue;
 
                 auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
                 collectedSources.insert(obfFilePath, obfFile);
@@ -215,6 +219,30 @@ void OsmAnd::ObfsCollection_P::collectSources() const
     LogPrintf(LogSeverityLevel::Info, "Collected OBF sources in %fs", collectSourcesStopwatch.elapsed());
 }
 
+bool OsmAnd::ObfsCollection_P::filterOutObfFile(const QString& obfFilePath, const std::shared_ptr<const SourceOrigin>& sourceOrigin)
+{
+    if (sourceOrigin->type != SourceOriginType::Directory)
+        return false;
+
+    const auto& dirAsSourceOrigin = std::static_pointer_cast<const DirectoryAsSourceOrigin>(sourceOrigin);
+    if (!dirAsSourceOrigin->filterBy)
+        return false;
+
+    const auto filterBy = *dirAsSourceOrigin->filterBy;
+    const auto masks = QStringList() << QLatin1String("*.obf");
+    QFileInfoList obfFilesInfo;
+    Utilities::findFiles(filterBy, masks, obfFilesInfo, dirAsSourceOrigin->isRecursive);
+
+    for (const auto& obfFileInfo : obfFilesInfo)
+    {
+        const auto formattedFileName = obfFileInfo.baseName().replace(QLatin1String("_2"), QLatin1String(""));
+        if (obfFilePath.contains(formattedFileName))
+            return false;
+    }
+
+    return true;
+}
+
 QList<OsmAnd::ObfsCollection::SourceOriginId> OsmAnd::ObfsCollection_P::getSourceOriginIds() const
 {
     QReadLocker scopedLocker(&_sourcesOriginsLock);
@@ -255,13 +283,18 @@ OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::getOriginIdByNa
     return originId;
 }
 
-OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(const QDir& dir, bool recursive)
+OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(
+    const QDir& dir,
+    const QDir* const filterBy,
+    bool recursive)
 {
     QWriteLocker scopedLocker(&_sourcesOriginsLock);
 
     const auto allocatedId = _lastUnusedSourceOriginId++;
     auto sourceOrigin = new DirectoryAsSourceOrigin();
     sourceOrigin->directory = dir;
+    if (filterBy)
+        sourceOrigin->filterBy = *filterBy;
     sourceOrigin->isRecursive = recursive;
     _sourcesOrigins.insert(allocatedId, qMove(std::shared_ptr<const SourceOrigin>(sourceOrigin)));
 
