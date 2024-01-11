@@ -446,9 +446,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         qMax(0.01, qSin(elevationAngleInRadians - internalState->fovInRadians)));
     const auto visibleDistance = distanceToScreenTop < farEnd ? distanceToScreenTop :
         qMin(farEnd, static_cast<float>((zFar - internalState->distanceFromCameraToTarget) / elevationCosine));
-    const auto highDetail = static_cast<float>(
-        internalState->distanceFromCameraToTarget / internalState->scaleToRetainProjectedSize *
-        qTan(internalState->fovInRadians) * state.detailedDistance + _detailDistanceFactor * TileSize3D);
+    const auto highDetail = static_cast<float>(internalState->distanceFromCameraToTarget /
+        internalState->scaleToRetainProjectedSize * qTan(internalState->fovInRadians)
+        * state.detailedDistance * elevationSine + _detailDistanceFactor * TileSize3D);
     internalState->zLowerDetail = highDetail < visibleDistance
         ? qMin(internalState->zFar, internalState->distanceFromCameraToTarget +
         static_cast<float>(qMax(0.01, static_cast<double>(highDetail) * elevationCosine)))
