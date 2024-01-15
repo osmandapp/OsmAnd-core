@@ -341,7 +341,7 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
     }
 
     // Otherwise obtain from global
-    const auto resource = getCoreResourcesProvider()->getResource(name, &ok);
+    const auto resource = getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok);
     if (!ok)
     {
         LogPrintf(LogSeverityLevel::Warning,

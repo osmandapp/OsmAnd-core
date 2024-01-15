@@ -33,7 +33,11 @@ namespace OsmAnd
         static sk_sp<SkImage> createImageFromVectorData(
             const QByteArray& data,
             const float scale);
-        
+        static sk_sp<SkImage> createImageFromVectorData(
+            const QByteArray& data,
+            const float width,
+            const float height);
+
         static sk_sp<SkImage> createSkImageARGB888With(
             const QByteArray& byteArray,
             int width,

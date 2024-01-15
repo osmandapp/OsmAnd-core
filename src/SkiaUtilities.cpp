@@ -74,6 +74,36 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromVectorData(const QByteArray
     return bitmap.asImage();
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromVectorData(const QByteArray& data, const float width, const float height)
+{
+    if (data.isEmpty())
+        return nullptr;
+
+    const auto stream = SkMemoryStream::MakeDirect(data.constData(), data.size());
+    const auto svgDom = SkSVGDOM::MakeFromStream(*stream);
+
+    const auto originalSize = svgDom->containerSize();
+    auto scaleX = width / originalSize.width();
+    auto scaleY = height / originalSize.height();
+    auto scale = qMin(scaleX, scaleY);
+    const SkSVGTransformType transform(SkMatrix::Scale(scale, scale));
+    svgDom->getRoot()->setTransform(transform);
+
+    SkBitmap bitmap;
+    const int scaledSizeX = qCeil(originalSize.width() * scale);
+    const int scaledSizeY = qCeil(originalSize.height() * scale);
+    if (!bitmap.tryAllocPixels(SkImageInfo::MakeN32Premul(scaledSizeX, scaledSizeY)))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to allocate pixels");
+        return nullptr;
+    }
+    bitmap.eraseColor(SK_ColorTRANSPARENT);
+
+    SkCanvas canvas(bitmap);
+    svgDom->render(&canvas);
+    return bitmap.asImage();
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createSkImageARGB888With(
     const QByteArray& byteArray, int width, int height, SkAlphaType alphaType /* = SkAlphaType::kPremul_SkAlphaType */)
 {
