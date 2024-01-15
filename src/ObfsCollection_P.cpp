@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include <QRegularExpression>
+
 #include "QtCommon.h"
 
 #include "OsmAndCore_private.h"
@@ -127,14 +129,6 @@ void OsmAnd::ObfsCollection_P::collectSources() const
             itObfFileEntry.remove();
             assert(obfFile.use_count() == 1);
         }
-
-        // If all collected sources for current source origin are gone,
-        // remove entire collection attached to source origin ID
-        if (collectedSources.isEmpty())
-        {
-            itCollectedSourcesEntry.remove();
-            continue;
-        }
     }
 
     // Find all files uncollected sources
@@ -201,6 +195,54 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
             auto obfFile = cachedOsmandIndexes->getObfFile(obfFilePath);
             collectedSources.insert(obfFilePath, obfFile);
+        }
+    }
+
+    // Collect all basenames of sources with strict "obf" or "road.obf" suffix
+    QStringList collectedStandardSourcesBasenames;
+    for (const auto& collectedSourcesEntry : rangeOf(constOf(_collectedSources)))
+    {
+        const auto& collectedSources = collectedSourcesEntry.value();
+        for (const auto& obfFileEntry : rangeOf(constOf(collectedSources)))
+        {
+            const auto& obfFilePath = obfFileEntry.key();
+            const QFileInfo obfFileInfo(obfFilePath);
+            const auto& obfFileSuffix = obfFileInfo.completeSuffix();
+            if (obfFileSuffix == QLatin1String("obf") || obfFileSuffix == QLatin1String("road.obf"))
+                collectedStandardSourcesBasenames.push_back(obfFileInfo.baseName());
+        }
+    }
+
+    // Check that for each live udpate sources there is standard source with equal basename
+    // If not, remove such live update sources
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
+    itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
+    while(itCollectedSourcesEntry.hasNext())
+    {
+        const auto& collectedSourcesEntry = itCollectedSourcesEntry.next();
+        auto& collectedSources = collectedSourcesEntry.value();
+
+        auto itObfFileEntry = mutableIteratorOf(collectedSources);
+        while(itObfFileEntry.hasNext())
+        {
+            const auto& obfFileEntry = itObfFileEntry.next();
+            const auto& obfFilePath = obfFileEntry.key();
+            const auto& obfFileName = QFileInfo(obfFilePath).fileName();
+
+            if (!liveUpdateSourceRegex.match(obfFileName).hasMatch())
+                // If this source is not live udpate, other sources in this group are not as well
+                break;
+
+            const auto& obfFileBaseName = QString(obfFileName).replace(liveUpdateSourceRegex, QLatin1String(""));
+
+            // Remove live update source if it has no standard source to update
+            if (!collectedStandardSourcesBasenames.contains(obfFileBaseName))
+            {
+                const auto obfFile = obfFileEntry.value();
+
+                itObfFileEntry.remove();
+                assert(obfFile.use_count() == 1);
+            }
         }
     }
 
