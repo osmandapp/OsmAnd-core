@@ -215,6 +215,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 
     // Check that for each live udpate sources there is standard source with equal basename
     // If not, remove such live update sources
+    const QRegularExpression liveUpdateSourceRegex("(_[0-9]{2}){3}\\.obf");
     itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
     while(itCollectedSourcesEntry.hasNext())
     {
@@ -226,15 +227,13 @@ void OsmAnd::ObfsCollection_P::collectSources() const
         {
             const auto& obfFileEntry = itObfFileEntry.next();
             const auto& obfFilePath = obfFileEntry.key();
-
             const auto& obfFileName = QFileInfo(obfFilePath).fileName();
-            const QRegularExpression regex("(_[0-9]{2}){3}\\.obf");
-            
-            if (!regex.match(obfFileName).hasMatch())
+
+            if (!liveUpdateSourceRegex.match(obfFileName).hasMatch())
                 // If this source is not live udpate, other sources in this group are not as well
                 break;
 
-            const auto& obfFileBaseName = QString(obfFileName).replace(regex, QLatin1String(""));
+            const auto& obfFileBaseName = QString(obfFileName).replace(liveUpdateSourceRegex, QLatin1String(""));
 
             // Remove live update source if it has no standard source to update
             if (!collectedStandardSourcesBasenames.contains(obfFileBaseName))
