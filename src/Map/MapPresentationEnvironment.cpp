@@ -70,30 +70,34 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
 
 bool OsmAnd::MapPresentationEnvironment::obtainShader(
     const QString& name,
+    const float scale,
     sk_sp<const SkImage>& outShader) const
 {
-    return _p->obtainShader(name, outShader);
+    return _p->obtainShader(name, scale, outShader);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(
     const QString& name,
+    const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
-    return _p->obtainMapIcon(name, outIcon);
+    return _p->obtainMapIcon(name, scale, outIcon);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainTextShield(
     const QString& name,
+    const float scale,
     sk_sp<const SkImage>& outTextShield) const
 {
-    return _p->obtainTextShield(name, outTextShield);
+    return _p->obtainTextShield(name, scale, outTextShield);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainIconShield(
     const QString& name,
+    const float scale,
     sk_sp<const SkImage>& outIconShield) const
 {
-    return _p->obtainIconShield(name, outIconShield);
+    return _p->obtainIconShield(name, scale, outIconShield);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(
