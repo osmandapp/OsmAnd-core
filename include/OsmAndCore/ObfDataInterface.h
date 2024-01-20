@@ -100,7 +100,7 @@ namespace OsmAnd
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool scanAmenitiesByName(
+        bool searchAmenitiesByName(
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
             const PointI* const xy31 = nullptr,

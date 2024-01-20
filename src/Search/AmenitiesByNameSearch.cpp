@@ -34,7 +34,7 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
             return true;
         };
 
-    dataInterface->scanAmenitiesByName(
+    dataInterface->searchAmenitiesByName(
         criteria.name,
         nullptr,
         criteria.xy31.getValuePtrOrNullptr(),
@@ -76,7 +76,7 @@ void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
             return true;
         };
 
-    dataInterface->scanAmenitiesByName(
+    dataInterface->searchAmenitiesByName(
         criteria.name,
         nullptr,
         criteria.xy31.getValuePtrOrNullptr(),

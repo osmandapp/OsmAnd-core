@@ -32,13 +32,13 @@ namespace OsmAnd
         static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
         static uint32_t readLength(gpb::io::CodedInputStream* cis);
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
-        static int scanIndexedStringTable(
+        static void readIndexedStringTable(
             gpb::io::CodedInputStream* cis,
-            const QString& query,
-            QVector<uint32_t>& outValues,
-            const bool strictMatch = false,
-            const QString& keysPrefix = QString(),
-            const int matchedCharactersCount = 0);
+            const QList<QString>& queries,
+            QList<QVector<uint32_t>>& listOffsets,
+            QVector<int>& matchedCharacters,
+            const QString& prefix = QString());
+        
         static void readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea);
 
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);

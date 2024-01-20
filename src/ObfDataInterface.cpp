@@ -575,7 +575,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
     return true;
 }
 
-bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
+bool OsmAnd::ObfDataInterface::searchAmenitiesByName(
     const QString& query,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
     const PointI* const xy31 /*= nullptr*/,
@@ -685,7 +685,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             }
         }
 
-        OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+        OsmAnd::ObfPoiSectionReader::searchAmenitiyByName(
             obfReader,
             poiSection,
             query,
