@@ -251,12 +251,15 @@ QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResource(const QString& nam
         {
             if (ok)
                 *ok = true;
-            if (!name.endsWith(QString(".png")))
-                return qUncompress(resourceData.data, resourceData.size);
-            else {
-                return QByteArray(reinterpret_cast<const char*>(resourceData.data) + 4, resourceData.size - 4);
-            }
+            return getResourceBytes(name, resourceData);
         }
+    }
+
+    if (resourceEntry.defaultVariant.data)
+    {
+        if (ok)
+            *ok = true;
+        return getResourceBytes(name, resourceEntry.defaultVariant);
     }
 
     if (ok)
@@ -283,10 +286,7 @@ QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResource(const QString& nam
 
     if (ok)
         *ok = true;
-    if (!name.endsWith(QString(".png")))
-        return qUncompress(resourceEntry.defaultVariant.data, resourceEntry.defaultVariant.size);
-    else
-        return QByteArray(reinterpret_cast<const char*>(resourceEntry.defaultVariant.data) + 4, resourceEntry.defaultVariant.size - 4);
+    return getResourceBytes(name, resourceEntry.defaultVariant);
 }
 
 bool OsmAnd::CoreResourcesEmbeddedBundle_P::containsResource(const QString& name, const float displayDensityFactor) const
@@ -320,4 +320,14 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::containsResource(const QString& name
         return false;
     const auto& resourceEntry = *citResourceEntry;
     return (resourceEntry.defaultVariant.data != nullptr);
+}
+
+QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResourceBytes(const QString& resourceName, const ResourceData& resourceData) const
+{
+    assert(resourceData.data);
+
+    if (resourceName.endsWith(QString(".png")))
+        return QByteArray(reinterpret_cast<const char*>(resourceData.data) + 4, resourceData.size - 4);
+    else
+        return qUncompress(resourceData.data, resourceData.size);
 }
