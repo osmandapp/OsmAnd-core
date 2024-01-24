@@ -898,12 +898,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     const auto& mapSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.key();
                     auto& plottedSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.value();
 
+                    const auto presentationMode = mapSymbolsGroupInstance
+                        ? mapSymbolsGroupInstance->presentationMode
+                        : mapSymbolsGroup->presentationMode;
+
                     // Just skip all rules
-                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
+                    if (presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
                         continue;
 
                     // Rule: show all symbols or no symbols
-                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
+                    if (presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
                     {
                         const auto symbolsCount = mapSymbolsGroupInstance
                             ? mapSymbolsGroupInstance->symbols.size()
@@ -922,7 +926,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     }
 
                     // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
-                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
+                    if (presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
                     {
                         const auto symbolWithIconContentClass = mapSymbolsGroupInstance
                             ? mapSymbolsGroupInstance->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon)
@@ -954,7 +958,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     }
 
                     // Rule: if at least one caption was not shown, discard all other captions
-                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
+                    if (presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
                     {
                         const auto captionsCount = mapSymbolsGroupInstance
                             ? mapSymbolsGroupInstance->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption)
@@ -987,7 +991,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     }
 
                     // Rule: show anything until first map symbol from group was not plotted
-                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap)
+                    if (presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap)
                     {
                         const auto& mapSymbols = mapSymbolsGroupInstance
                             ? mapSymbolsGroupInstance->symbols.keys()
@@ -2296,16 +2300,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     Stopwatch stopwatch(metric != nullptr);
 
     // Check intersections
-    const auto checkIntersectionsWithinGroup = renderable->mapSymbolGroup->intersectionProcessingMode.isSet(
+    const auto symbolGroupInstancePtr = renderable->genericInstanceParameters
+        ? renderable->genericInstanceParameters->groupInstancePtr
+        : nullptr;
+    const auto intersectionProcessingMode = symbolGroupInstancePtr
+        ? symbolGroupInstancePtr->intersectionProcessingMode
+        : renderable->mapSymbolGroup->intersectionProcessingMode;
+    const auto checkIntersectionsWithinGroup = intersectionProcessingMode.isSet(
         MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup);
     const auto& intersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     const auto& symbolIntersectsWithClasses = symbol->intersectsWithClasses;
     const auto anyIntersectionClass = intersectionClassesRegistry.anyClass;
     const auto symbolIntersectsWithAnyClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
     const auto symbolGroupPtr = symbol->groupPtr;
-    const auto symbolGroupInstancePtr = renderable->genericInstanceParameters
-        ? renderable->genericInstanceParameters->groupInstancePtr
-        : nullptr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
         [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr, checkIntersectionsWithinGroup]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const ScreenQuadTree::BBox& otherBBox) -> bool

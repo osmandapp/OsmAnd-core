@@ -3,6 +3,7 @@
 OsmAnd::BillboardRasterMapSymbol::BillboardRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : RasterMapSymbol(group_)
+    , drawAlongPath(false)
 {
 }
 

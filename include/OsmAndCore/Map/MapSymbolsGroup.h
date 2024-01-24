@@ -54,6 +54,9 @@ namespace OsmAnd
 
             const std::weak_ptr<MapSymbolsGroup> originalGroup;
 
+            PresentationMode presentationMode;
+            IntersectionProcessingMode intersectionProcessingMode;
+
             QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<const AdditionalSymbolInstanceParameters> > symbols;
             std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;
             unsigned int numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const;
