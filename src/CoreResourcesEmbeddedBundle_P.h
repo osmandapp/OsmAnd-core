@@ -63,6 +63,7 @@ namespace OsmAnd
 
         bool loadFromCurrentExecutable();
         bool loadFromLibrary(const QString& libraryNameOrFilename);
+        QByteArray getResourceBytes(const QString& resourceName, const ResourceData& resourceData) const;
     public:
         ~CoreResourcesEmbeddedBundle_P();
 
