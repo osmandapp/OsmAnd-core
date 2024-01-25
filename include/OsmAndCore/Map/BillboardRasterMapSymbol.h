@@ -24,6 +24,8 @@ namespace OsmAnd
             const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~BillboardRasterMapSymbol();
 
+        bool drawAlongPath;
+
         PointI offset;
         virtual PointI getOffset() const;
         virtual void setOffset(const PointI offset);

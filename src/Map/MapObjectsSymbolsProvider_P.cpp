@@ -142,6 +142,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
+                billboardRasterSymbol->drawAlongPath = rasterizedSpriteSymbol->drawAlongPath;
                 if (rasterizedSpriteSymbol->intersectionBBox.width() > 0 || rasterizedSpriteSymbol->intersectionBBox.height() > 0)
                 {
                     const auto halfWidth = billboardRasterSymbol->size.x / 2;
@@ -200,7 +201,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         }
 
         // If there's at least one on-path symbol or along-path symbol, this group needs special post-processing:
-        //  - Compute pin-points for all symbols in group (including billboard ones)
+        //  - Compute pin-points for all on-path symbols and along-path billboard symbols
         //  - Split path between them
         if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
@@ -218,6 +219,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             {
                 if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                 {
+                    if (!billboardSymbol->drawAlongPath)
+                        continue;
+
                     // Get larger bbox, to take into account possible rotation
                     const auto maxSize = qMax(billboardSymbol->size.x, billboardSymbol->size.y);
                     *(pSymbolWidthInPixels++) = static_cast<float>(qSqrt(2 * maxSize * maxSize));
@@ -256,6 +260,9 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                     std::shared_ptr<MapSymbolsGroup::AdditionalSymbolInstanceParameters> additionalSymbolInstance;
                     if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                     {
+                        if (!billboardSymbol->drawAlongPath)
+                            continue;
+
                         const auto billboardSymbolInstance =
                             new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters(additionalGroupInstance.get());
                         billboardSymbolInstance->overridesPosition31 = true;
@@ -280,11 +287,37 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                         additionalGroupInstance->symbols.insert(symbol, qMove(additionalSymbolInstance));
                 }
 
+                // This group instance needs intersection check among its symbols
+                additionalGroupInstance->intersectionProcessingMode |= MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup;
+
+                additionalGroupInstance->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
+
                 group->additionalInstances.push_back(qMove(additionalGroupInstance));
             }
 
-            // This group needs intersection check inside group
-            group->intersectionProcessingMode |= MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup;
+            // Now add all simple billboard symbols
+            if (hasAtLeastOneSimpleBillboard)
+            {
+                const auto additionalGroupInstance = std::make_shared<MapSymbolsGroup::AdditionalInstance>(group);
+
+                for (const auto& symbol : constOf(group->symbols))
+                {
+                    if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                    {
+                        if (billboardSymbol->drawAlongPath)
+                            continue;
+
+                        const auto billboardSymbolInstance =
+                            std::make_shared<MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>(additionalGroupInstance.get());
+                        additionalGroupInstance->symbols.insert(symbol, qMove(billboardSymbolInstance));
+                    }
+                }
+
+                additionalGroupInstance->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
+                additionalGroupInstance->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap;
+
+                group->additionalInstances.push_back(qMove(additionalGroupInstance));
+            }
 
             // Finally there's no need in original, so turn it off
             group->additionalInstancesDiscardOriginal = true;
@@ -305,23 +338,22 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                     billboardSymbolInstance->discardableByAnotherInstances = true;
                     billboardSymbolInstance->overridesOffset = true;
                     billboardSymbolInstance->offset = offset;
+                    
                     additionalGroupInstance->symbols.insert(symbol, qMove(billboardSymbolInstance));
+                    additionalGroupInstance->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
+                    additionalGroupInstance->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap;
                     group->additionalInstances.push_back(additionalGroupInstance);
                 }
             }
         }
 
         // Configure group
-        if (!group->symbols.isEmpty())
+        if (!group->symbols.isEmpty() && !group->additionalInstancesDiscardOriginal)
         {
             if (hasAtLeastOneSimpleBillboard && !(hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard))
             {
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap;
-            }
-            else if (!hasAtLeastOneSimpleBillboard && (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard))
-            {
-                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
             else
             {
