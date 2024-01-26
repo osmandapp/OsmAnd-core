@@ -39,6 +39,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "inters
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_2, Output, String, "icon_2", false)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", false)
@@ -59,7 +60,10 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_PLACEMENT, Output, String, "textPlacement",
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__3, Output, String, "icon__3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__2, Output, String, "icon__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__1, Output, String, "icon__1", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_2, Output, String, "icon_2", false)
+
+// Alredy declared above, under Text&Icon properties
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_2, Output, String, "icon_2", false)
+
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_3, Output, String, "icon_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_4, Output, String, "icon_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_5, Output, String, "icon_5", false)

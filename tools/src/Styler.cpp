@@ -503,8 +503,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                             << QStringToStlString(textSymbol->shieldResourceName)
                             << std::endl;
                         output
-                            << xT("\t\tUnderlay icon name: ")
-                            << QStringToStlString(textSymbol->underlayIconResourceName)
+                            << xT("\t\tUnderlay icons names: ")
+                            << QStringToStlString(QStringList(textSymbol->underlayIconResourceNames).join(QLatin1String(", ")))
                             << std::endl;
                     }
                     else if (iconSymbol)

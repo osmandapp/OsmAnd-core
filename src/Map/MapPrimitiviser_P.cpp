@@ -2166,13 +2166,13 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             text->minDistance = DEFAULT_TEXT_MIN_DISTANCE * env->displayDensityFactor * env->symbolsScaleFactor;
 
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
-
-        evaluationResult.getStringValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_ICON,
-            text->underlayIconResourceName);
-        
         text->shieldResourceName = prepareIconValue(primitive->sourceObject,text->shieldResourceName);
-        text->underlayIconResourceName = prepareIconValue(primitive->sourceObject,text->underlayIconResourceName);
+
+        QString iconResourceName;
+        if (evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName))
+            text->underlayIconResourceNames.push_back(prepareIconValue(mapObject, iconResourceName));
+        if (evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_2, iconResourceName))
+            text->underlayIconResourceNames.push_back(prepareIconValue(mapObject, iconResourceName));
         
         QString intersectsWith;
         ok = evaluationResult.getStringValue(

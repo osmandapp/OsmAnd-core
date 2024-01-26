@@ -252,7 +252,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator==(const TextSymbol& that) con
         this->isBold == that.isBold &&
         this->isItalic == that.isItalic &&
         this->shieldResourceName == that.shieldResourceName &&
-        this->underlayIconResourceName == that.underlayIconResourceName;
+        this->underlayIconResourceNames == that.underlayIconResourceNames;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) const
@@ -273,7 +273,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) con
         this->isBold != that.isBold ||
         this->isItalic != that.isItalic ||
         this->shieldResourceName != that.shieldResourceName ||
-        this->underlayIconResourceName != that.underlayIconResourceName;
+        this->underlayIconResourceNames != that.underlayIconResourceNames;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& that) const
@@ -293,7 +293,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& tha
         this->isBold == that.isBold &&
         this->isItalic == that.isItalic &&
         this->shieldResourceName == that.shieldResourceName &&
-        this->underlayIconResourceName == that.underlayIconResourceName;
+        this->underlayIconResourceNames == that.underlayIconResourceNames;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol& that) const
@@ -313,7 +313,7 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol
         this->isBold != that.isBold ||
         this->isItalic != that.isItalic ||
         this->shieldResourceName != that.shieldResourceName ||
-        this->underlayIconResourceName != that.underlayIconResourceName;
+        this->underlayIconResourceNames != that.underlayIconResourceNames;
 }
 
 OsmAnd::MapPrimitiviser::TextSymbol::Placement OsmAnd::MapPrimitiviser::TextSymbol::placementFromString(const QString& placement)
