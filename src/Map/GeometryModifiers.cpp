@@ -4,23 +4,24 @@ OsmAnd::GeometryModifiers::GeometryModifiers() {}
 
 OsmAnd::GeometryModifiers::~GeometryModifiers() {}
 
-// Cut the mesh by tiles and grid lines (+ optional mesh optimization)
-bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
+// Cut the mesh by tiles and grid cells (+ optional mesh optimization)
+bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
 		const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
 		const VectorMapSymbol::PrimitiveType& primitiveType,
 		std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
-		const double& tileSize, const PointD& tilePosN, const int32_t& cellsPerTileSize,
-		const float& minDistance, const float& maxBreakTangent, const bool diagonals, const bool simplify)
+		const ZoomLevel zoomLevel, const PointD& tilePosN, const int32_t cellsPerTileSize,
+		const float minDistance, const float maxBreakTangent, const bool diagonals, const bool simplify)
 {
 	if (!partSizes)
         return false;
-	if (tileSize <= 0.0 || minDistance <= 0.0f)
+	if (minDistance <= 0.0f)
         return false;
 	auto verticesCount = vertices.size();
 	if (verticesCount < 3)
         return false;
 	auto indicesCount = indices != nullptr ? indices->size() : 0;
 	float minDist = minDistance;
+    auto tileSize = Utilities::getPowZoom(MaxZoomLevel - zoomLevel);
 	float gridStepXY = tileSize / static_cast<double>(cellsPerTileSize);
 	float gridPosX = -(tilePosN.x - std::floor(tilePosN.x)) * tileSize;
 	float gridPosY = -(tilePosN.y - std::floor(tilePosN.y)) * tileSize;
@@ -53,10 +54,10 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 								pv = &vertices[v];
 								pvt = pv;
 								if (simplify)
-                                    ccwTriangle(pvf, pvs, pvt);
-								inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-								inObj.push_back({pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color});
-								inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+									ccwTriangle(pvf, pvs, pvt);
+								getVertex(pvf, inObj);
+								getVertex(pvs, inObj);
+								getVertex(pvt, inObj);
 								pvs = pv;
 							}
 							else
@@ -78,10 +79,10 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 					pvs = pv - 1;
 					pvt = pv;
 					if (simplify)
-                        ccwTriangle(pvf, pvs, pvt);
-					inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-					inObj.push_back({pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color});
-					inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+						ccwTriangle(pvf, pvs, pvt);
+					getVertex(pvf, inObj);
+					getVertex(pvs, inObj);
+					getVertex(pvt, inObj);
 					pv++;
 				}
 			}
@@ -107,10 +108,10 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 								pvd = pvs;
 								pvt = pv;
 								if (simplify)
-                                    ccwTriangle(pvf, pvd, pvt);
-								inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-								inObj.push_back({pvd->positionXY[0], pvd->positionXY[1], 0, pvd->color});
-								inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+									ccwTriangle(pvf, pvd, pvt);
+								getVertex(pvf, inObj);
+								getVertex(pvd, inObj);
+								getVertex(pvt, inObj);
 								if (v % 2)
 									pvs = pv;
 								else
@@ -143,10 +144,10 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 					}
 					pvt = pv;
 					if (simplify)
-                        ccwTriangle(pvf, pvs, pvt);
-					inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-					inObj.push_back({pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color});
-					inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+						ccwTriangle(pvf, pvs, pvt);
+					getVertex(pvf, inObj);
+					getVertex(pvs, inObj);
+					getVertex(pvt, inObj);
 					pv++;
 				}
 			}
@@ -169,10 +170,10 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 							{
 								pvt = &vertices[v];
 								if (simplify)
-                                    ccwTriangle(pvf, pvs, pvt);
-								inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-								inObj.push_back({pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color});
-								inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+									ccwTriangle(pvf, pvs, pvt);
+								getVertex(pvf, inObj);
+								getVertex(pvs, inObj);
+								getVertex(pvt, inObj);
 							}
 							else
 								return false;
@@ -189,10 +190,11 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 					pvf = pv++;
 					pvs = pv++;
 					pvt = pv++;
-					if (simplify) ccwTriangle(pvf, pvs, pvt);
-					inObj.push_back({pvf->positionXY[0], pvf->positionXY[1], 0, pvf->color});
-					inObj.push_back({pvs->positionXY[0], pvs->positionXY[1], 0, pvs->color});
-					inObj.push_back({pvt->positionXY[0], pvt->positionXY[1], 0, pvt->color});
+					if (simplify)
+						ccwTriangle(pvf, pvs, pvt);
+					getVertex(pvf, inObj);
+					getVertex(pvs, inObj);
+					getVertex(pvt, inObj);
 				}
 			break;
 		default:
@@ -259,7 +261,8 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 		i = 3 - iMinX - iMaxX;
 		if (rod >= xMin + minDist && rod <= xMax - minDist)
 		{
-			if (rod >= tgl[i].x - minDist && rod <= tgl[i].x + minDist) prev = 2;
+			if (rod >= tgl[i].x - minDist && rod <= tgl[i].x + minDist)
+                prev = 2;
 			cell = c * 10;
 			cell += cell < 0 ? -1 : 1;
 			next = 1;
@@ -431,20 +434,23 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 				prev = iMinX + iMaxX != 2 ? std::min(iMinX, iMaxX) : 2;
 				next = iMinX + iMaxX != 2 ? std::max(iMinX, iMaxX) : 0;
 				rate = (rod - xMin) / (xMax - xMin);
-				point1 = {rod, tgl[iMinX].y + (tgl[iMaxX].y - tgl[iMinX].y) * rate, 0,
-						  middleColor(tgl[iMinX], tgl[iMaxX], rate)};
+				point1 = {rod, tgl[iMinX].y + (tgl[iMaxX].y - tgl[iMinX].y) * rate,
+					tgl[iMinX].z + (tgl[iMaxX].z - tgl[iMinX].z) * rate, 0,
+                    middleColor(tgl[iMinX].color, tgl[iMaxX].color, rate)};
 				intoTwo = false;
 				if (rod < tgl[i].x - minDist)
 				{
 					rate = (rod - xMin) / (tgl[i].x - xMin);
-					point2 = {rod, tgl[iMinX].y + (tgl[i].y - tgl[iMinX].y) * rate, 0,
-							  middleColor(tgl[iMinX], tgl[i], rate)};
+					point2 = {rod, tgl[iMinX].y + (tgl[i].y - tgl[iMinX].y) * rate,
+						tgl[iMinX].z + (tgl[i].z - tgl[iMinX].z) * rate, 0,
+                        middleColor(tgl[iMinX].color, tgl[i].color, rate)};
 				}
 				else if (rod > tgl[i].x + minDist)
 				{
 					rate = (rod - tgl[i].x) / (xMax - tgl[i].x);
-					point2 = {rod, tgl[i].y + (tgl[iMaxX].y - tgl[i].y) * rate, 0,
-							  middleColor(tgl[i], tgl[iMaxX], rate)};
+					point2 = {rod, tgl[i].y + (tgl[iMaxX].y - tgl[i].y) * rate,
+						tgl[i].z + (tgl[iMaxX].z - tgl[i].z) * rate, 0,
+                        middleColor(tgl[i].color, tgl[iMaxX].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -459,20 +465,23 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 				prev = iMinY + iMaxY != 2 ? std::min(iMinY, iMaxY) : 2;
 				next = iMinY + iMaxY != 2 ? std::max(iMinY, iMaxY) : 0;
 				rate = (rod - yMin) / (yMax - yMin);
-				point1 = {tgl[iMinY].x + (tgl[iMaxY].x - tgl[iMinY].x) * rate, rod, 0,
-						  middleColor(tgl[iMinY], tgl[iMaxY], rate)};
+				point1 = {tgl[iMinY].x + (tgl[iMaxY].x - tgl[iMinY].x) * rate, rod,
+					tgl[iMinY].z + (tgl[iMaxY].z - tgl[iMinY].z) * rate, 0,
+                    middleColor(tgl[iMinY].color, tgl[iMaxY].color, rate)};
 				intoTwo = false;
 				if (rod < tgl[i].y - minDist)
 				{
 					rate = (rod - yMin) / (tgl[i].y - yMin);
-					point2 = {tgl[iMinY].x + (tgl[i].x - tgl[iMinY].x) * rate, rod, 0,
-							  middleColor(tgl[iMinY], tgl[i], rate)};
+					point2 = {tgl[iMinY].x + (tgl[i].x - tgl[iMinY].x) * rate, rod,
+						tgl[iMinY].z + (tgl[i].z - tgl[iMinY].z) * rate, 0,
+                        middleColor(tgl[iMinY].color, tgl[i].color, rate)};
 				}
 				else if (rod > tgl[i].y + minDist)
 				{
 					rate = (rod - tgl[i].y) / (yMax - tgl[i].y);
-					point2 = {tgl[i].x + (tgl[iMaxY].x - tgl[i].x) * rate, rod, 0,
-							  middleColor(tgl[i], tgl[iMaxY], rate)};
+					point2 = {tgl[i].x + (tgl[iMaxY].x - tgl[i].x) * rate, rod,
+						tgl[i].z + (tgl[iMaxY].z - tgl[i].z) * rate, 0,
+                        middleColor(tgl[i].color, tgl[iMaxY].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -488,22 +497,26 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 				next = iMinW + iMaxW != 2 ? std::max(iMinW, iMaxW) : 0;
 				rate = (rod - wMin) / (wMax - wMin);
 				point1 = {tgl[iMinW].x + (tgl[iMaxW].x - tgl[iMinW].x) * rate,
-						  tgl[iMinW].y + (tgl[iMaxW].y - tgl[iMinW].y) * rate, 0,
-						  middleColor(tgl[iMinW], tgl[iMaxW], rate)};
+					tgl[iMinW].y + (tgl[iMaxW].y - tgl[iMinW].y) * rate,
+					tgl[iMinW].z + (tgl[iMaxW].z - tgl[iMinW].z) * rate, 0,
+                    middleColor(tgl[iMinW].color, tgl[iMaxW].color, rate)};
 				w = (tgl[i].x - tgl[i].y) * RSQRT2;
 				intoTwo = false;
 				if (rod < w - minDist)
 				{
 					rate = (rod - wMin) / (w - wMin);
 					point2 = {tgl[iMinW].x + (tgl[i].x - tgl[iMinW].x) * rate,
-							  tgl[iMinW].y + (tgl[i].y - tgl[iMinW].y) * rate, 0,
-							  middleColor(tgl[iMinW], tgl[i], rate)};
+						tgl[iMinW].y + (tgl[i].y - tgl[iMinW].y) * rate,
+						tgl[iMinW].z + (tgl[i].z - tgl[iMinW].z) * rate, 0,
+                        middleColor(tgl[iMinW].color, tgl[i].color, rate)};
 				}
 				else if (rod > w + minDist)
 				{
 					rate = (rod - w) / (wMax - w);
-					point2 = {tgl[i].x + (tgl[iMaxW].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxW].y - tgl[i].y) * rate,
-							  0, middleColor(tgl[i], tgl[iMaxW], rate)};
+					point2 = {tgl[i].x + (tgl[iMaxW].x - tgl[i].x) * rate,
+						tgl[i].y + (tgl[iMaxW].y - tgl[i].y) * rate,
+						tgl[i].z + (tgl[iMaxW].z - tgl[i].z) * rate, 0,
+                        middleColor(tgl[i].color, tgl[iMaxW].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -519,22 +532,26 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 				next = iMinU + iMaxU != 2 ? std::max(iMinU, iMaxU) : 0;
 				rate = (rod - uMin) / (uMax - uMin);
 				point1 = {tgl[iMinU].x + (tgl[iMaxU].x - tgl[iMinU].x) * rate,
-						  tgl[iMinU].y + (tgl[iMaxU].y - tgl[iMinU].y) * rate, 0,
-						  middleColor(tgl[iMinU], tgl[iMaxU], rate)};
+					tgl[iMinU].y + (tgl[iMaxU].y - tgl[iMinU].y) * rate,
+					tgl[iMinU].z + (tgl[iMaxU].z - tgl[iMinU].z) * rate, 0,
+                    middleColor(tgl[iMinU].color, tgl[iMaxU].color, rate)};
 				u = (tgl[i].x + tgl[i].y) * RSQRT2;
 				intoTwo = false;
 				if (rod < u - minDist)
 				{
 					rate = (rod - uMin) / (u - uMin);
 					point2 = {tgl[iMinU].x + (tgl[i].x - tgl[iMinU].x) * rate,
-							  tgl[iMinU].y + (tgl[i].y - tgl[iMinU].y) * rate, 0,
-							  middleColor(tgl[iMinU], tgl[i], rate)};
+						tgl[iMinU].y + (tgl[i].y - tgl[iMinU].y) * rate,
+						tgl[iMinU].z + (tgl[i].z - tgl[iMinU].z) * rate, 0,
+                        middleColor(tgl[iMinU].color, tgl[i].color, rate)};
 				}
 				else if (rod > u + minDist)
 				{
 					rate = (rod - u) / (uMax - u);
-					point2 = {tgl[i].x + (tgl[iMaxU].x - tgl[i].x) * rate, tgl[i].y + (tgl[iMaxU].y - tgl[i].y) * rate,
-							  0, middleColor(tgl[i], tgl[iMaxU], rate)};
+					point2 = {tgl[i].x + (tgl[iMaxU].x - tgl[i].x) * rate,
+						tgl[i].y + (tgl[iMaxU].y - tgl[i].y) * rate,
+						tgl[i].z + (tgl[iMaxU].z - tgl[i].z) * rate, 0,
+                        middleColor(tgl[i].color, tgl[iMaxU].color, rate)};
 				}
 				else
 					intoTwo = true;
@@ -546,7 +563,7 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 					threeParts(inObj, tgl[next], point2, tgl[i], tgl[prev], point1, cell, simplify);
 				continue;
 		}
-		// output the produced triangle (to the map of fragments or to results)
+		// put the produced triangle (to the map of fragments or to results)
 		intoTwo = !simplify || (tgl[0].g == 0 && tgl[1].g == 0 && tgl[2].g == 0) ||
 				  (tgl[0].g != 0 && tgl[1].g != 0 && tgl[2].g != 0);
 		if (!intoTwo)
@@ -635,5 +652,230 @@ bool OsmAnd::GeometryModifiers::overGrid(std::vector<VectorMapSymbol::Vertex>& v
 		vertices.insert(vertices.end(), mesh.second.begin(), mesh.second.end());
 		partSizes->push_back({mesh.first, mesh.second.size()});
 	}
+	return true;
+}
+
+// Create vertical plane for path, cutting it by tiles and grid cells
+bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::Vertex>& vertices,
+		const std::vector<OsmAnd::PointD>& points,
+		QList<float>& heights,
+		FColorARGB& fillColor,
+		FColorARGB& topColor,
+		FColorARGB& bottomColor,
+		QList<FColorARGB>& colorizationMapping,
+		QList<FColorARGB>& traceColorizationMapping,
+        const float roofHeight,
+		const ZoomLevel zoomLevel,
+		const PointD& tilePosN,
+		const int32_t cellsPerTileSize,
+		const float minDistance,
+		const bool diagonals,
+        const bool solidColors)
+{
+	if (minDistance <= 0.0f)
+        return false;
+	auto pointsCount = points.size();
+	if (pointsCount < 2)
+        return false;
+	float minDist = minDistance;
+    auto tileSize = Utilities::getPowZoom(MaxZoomLevel - zoomLevel);
+	float gridStepXY = tileSize / static_cast<double>(cellsPerTileSize);
+	float gridPosX = -(tilePosN.x - std::floor(tilePosN.x)) * tileSize;
+	float gridPosY = -(tilePosN.y - std::floor(tilePosN.y)) * tileSize;
+	int32_t i, j;
+	std::deque<VertexForPath> inObj;
+    int shift = solidColors ? 0 : 1;
+    for (i = 0; i < pointsCount - 1; i++)
+    {
+        auto &point1 = points[i];
+        auto &point2 = points[i + 1];
+        auto &height1 = heights[i];
+        auto &height2 = heights[i + 1];
+        auto &roofColor1 = i < colorizationMapping.size() ? colorizationMapping[i] : fillColor;
+        auto &roofColor2 = i < colorizationMapping.size() - shift ? colorizationMapping[i + shift] : fillColor;
+        auto &topColor1 = i < traceColorizationMapping.size() ? traceColorizationMapping[i] : topColor;
+        auto &topColor2 = i < traceColorizationMapping.size() - shift ? traceColorizationMapping[i + shift] : topColor;
+        inObj.push_back({static_cast<float>(point1.x), static_cast<float>(point1.y), height1, roofColor1, topColor1});
+        inObj.push_back({static_cast<float>(point2.x), static_cast<float>(point2.y), height2, roofColor2, topColor2});
+    }
+	VertexForPath seg[2], point1;
+	float RSQRT2 = 0.70710678118654752440084436210485L;
+	float gridPosW = (gridPosX - gridPosY) * RSQRT2;
+	float gridPosU = (gridPosX + gridPosY) * RSQRT2;
+	float gridStepWU = gridStepXY * RSQRT2;
+	float w, u, rod, rate, xMin, xMax, yMin, yMax, wMin, wMax, uMin, uMax;
+	int32_t prev, next, c, iMinX, iMaxX, iMinY, iMaxY, iMinW, iMaxW, iMinU, iMaxU;
+	bool withTraceColorMap = !traceColorizationMapping.isEmpty();
+	float noHeight = std::numeric_limits<float>::quiet_NaN();
+	while (inObj.size() > 0)
+	{
+		xMin = std::numeric_limits<float>::max();
+		xMax = -std::numeric_limits<float>::max();
+		yMin = xMin;
+		yMax = xMax;
+		wMin = xMin;
+		wMax = xMax;
+		uMin = xMin;
+		uMax = xMax;
+		// get a triangle and find its boundaries:
+		for (i = 0; i < 2; i++)
+		{
+			if (inObj.empty()) return false;
+			seg[i] = inObj.front();
+			xMin = fmin(seg[i].x, xMin);
+			if (xMin == seg[i].x) iMinX = i;
+			xMax = fmax(seg[i].x, xMax);
+			if (xMax == seg[i].x) iMaxX = i;
+			yMin = fmin(seg[i].y, yMin);
+			if (yMin == seg[i].y) iMinY = i;
+			yMax = fmax(seg[i].y, yMax);
+			if (yMax == seg[i].y) iMaxY = i;
+			if (diagonals)
+			{
+				w = (seg[i].x - seg[i].y) * RSQRT2;
+				wMin = fmin(w, wMin);
+				if (wMin == w) iMinW = i;
+				wMax = fmax(w, wMax);
+				if (wMax == w) iMaxW = i;
+				u = (seg[i].x + seg[i].y) * RSQRT2;
+				uMin = fmin(u, uMin);
+				if (uMin == u) iMinU = i;
+				uMax = fmax(u, uMax);
+				if (uMax == u) iMaxU = i;
+			}
+			inObj.pop_front();
+		}
+		// increase minimal distance in accordance to precission of float:
+		minDist = fmax(fmax(fmax(fabs(xMin), fabs(xMax)), fmax(fabs(yMin), fabs(yMax))) / 1000000.0f, minDist);
+		next = 0;
+		rate = xMax - xMin;
+		// median vertical line to cut:
+		c = static_cast<int32_t>(round(((xMin + xMax) * 0.5f - gridPosX) / gridStepXY));
+		rod = c * gridStepXY + gridPosX;
+		if (rod >= xMin + minDist && rod <= xMax - minDist)
+			next = 1;
+		// median horizontal line to cut:
+		c = static_cast<int32_t>(round(((yMin + yMax) * 0.5f - gridPosY) / gridStepXY));
+		w = c * gridStepXY + gridPosY;
+		if (w >= yMin + minDist && w <= yMax - minDist && (next == 0 || rate < yMax - yMin))
+		{
+			rate = yMax - yMin;
+			rod = w;
+			next = 2;
+		}
+		if (diagonals)
+		{
+			// median diagonal line to cut (y=x):
+			c = static_cast<int32_t>(round(((wMin + wMax) * 0.5f - gridPosW) / gridStepWU));
+			w = c * gridStepWU + gridPosW;
+			if (w >= wMin + minDist && w <= wMax - minDist)
+			{
+				if (next == 0 || rate < wMax - wMin)
+				{
+					rate = wMax - wMin;
+					rod = w;
+					next = 3;
+				}
+			}
+			// median diagonal line to cut (y=-x):
+			c = static_cast<int32_t>(round(((uMin + uMax) * 0.5f - gridPosU) / gridStepWU));
+			w = c * gridStepWU + gridPosU;
+			if (w >= uMin + minDist && w <= uMax - minDist)
+			{
+				if (next == 0 || rate < uMax - uMin)
+				{
+					rod = w;
+					next = 4;
+				}
+			}
+		}
+		switch (next)
+		{
+			case 1:
+				prev = std::min(iMinX, iMaxX);
+				next = std::max(iMinX, iMaxX);
+				rate = (rod - xMin) / (xMax - xMin);
+				point1 = {rod, seg[iMinX].y + (seg[iMaxX].y - seg[iMinX].y) * rate,
+					seg[iMinX].z + (seg[iMaxX].z - seg[iMinX].z) * rate,
+                    middleColor(seg[iMinX].color, seg[iMaxX].color, rate),
+                    middleColor(seg[iMinX].traceColor, seg[iMaxX].traceColor, rate)};
+				break;
+			case 2:
+				prev = std::min(iMinY, iMaxY);
+				next = std::max(iMinY, iMaxY);
+				rate = (rod - yMin) / (yMax - yMin);
+				point1 = {seg[iMinY].x + (seg[iMaxY].x - seg[iMinY].x) * rate, rod,
+					seg[iMinY].z + (seg[iMaxY].z - seg[iMinY].z) * rate,
+                    middleColor(seg[iMinY].color, seg[iMaxY].color, rate),
+                    middleColor(seg[iMinY].traceColor, seg[iMaxY].traceColor, rate)};
+				break;
+			case 3:
+				prev = std::min(iMinW, iMaxW);
+				next = std::max(iMinW, iMaxW);
+				rate = (rod - wMin) / (wMax - wMin);
+				point1 = {seg[iMinW].x + (seg[iMaxW].x - seg[iMinW].x) * rate,
+					seg[iMinW].y + (seg[iMaxW].y - seg[iMinW].y) * rate,
+					seg[iMinW].z + (seg[iMaxW].z - seg[iMinW].z) * rate,
+                    middleColor(seg[iMinW].color, seg[iMaxW].color, rate),
+                    middleColor(seg[iMinW].traceColor, seg[iMaxW].traceColor, rate)};
+				break;
+			case 4:
+				prev = std::min(iMinU, iMaxU);
+				next = std::max(iMinU, iMaxU);
+				rate = (rod - uMin) / (uMax - uMin);
+				point1 = {seg[iMinU].x + (seg[iMaxU].x - seg[iMinU].x) * rate,
+					seg[iMinU].y + (seg[iMaxU].y - seg[iMinU].y) * rate,
+					seg[iMinU].z + (seg[iMaxU].z - seg[iMinU].z) * rate,
+                    middleColor(seg[iMinU].color, seg[iMaxU].color, rate),
+                    middleColor(seg[iMinU].traceColor, seg[iMaxU].traceColor, rate)};
+				break;
+			default:
+                // generate result triangles
+                auto topHeight0 = seg[0].z;
+                auto topHeight1 = seg[1].z;
+                if (roofHeight > 0.0f)
+                {
+                    auto yCoord = static_cast<double>(seg[0].y + seg[1].y) / 2.0 / tileSize + tilePosN.y;
+                    auto tileIdY = static_cast<int32_t>(floor(yCoord));
+                    auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(zoomLevel, tileIdY, tileSize);
+                    auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoomLevel, tileIdY + 1, tileSize);
+                    auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, yCoord - tileIdY);
+                    auto heightInMeters = static_cast<float>(roofHeight * metersPerUnit);
+                    topHeight0 -= heightInMeters;
+                    topHeight1 -= heightInMeters;
+                    vertices.push_back({{seg[0].x, seg[0].z, seg[0].y}, seg[0].color});
+                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, seg[1].color});
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
+                    vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
+                }
+                if (topColor.a > 0.0f || topColor.b > 0.0f)
+                {
+                    auto topColor0 = seg[0].traceColor;
+                    auto topColor1 = seg[1].traceColor;
+                    auto bottomColor0 = bottomColor;
+                    auto bottomColor1 = bottomColor;
+                    if (withTraceColorMap)
+                    {
+                        bottomColor0 *= topColor0;
+                        bottomColor1 *= topColor1;
+                        topColor0 *= topColor;
+                        topColor1 *= topColor;
+                    }
+                    vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, topColor0});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, topColor1});
+                    vertices.push_back({{seg[0].x, noHeight, seg[0].y}, bottomColor0});
+                    vertices.push_back({{seg[1].x, noHeight, seg[1].y}, bottomColor1});
+                    vertices.push_back({{seg[0].x, noHeight, seg[0].y}, bottomColor0});
+                    vertices.push_back({{seg[1].x, topHeight1, seg[1].y}, topColor1});
+                }
+                continue;
+		}
+        inObj.push_back(seg[prev]);
+        inObj.push_back(point1);
+        inObj.push_back(point1);
+        inObj.push_back(seg[next]);
+}
 	return true;
 }

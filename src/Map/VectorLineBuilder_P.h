@@ -40,15 +40,19 @@ namespace OsmAnd
         int _colorizationScheme;
         
         VectorLine::EndCapStyle _endCapStyle;
+        VectorLine::JointStyle _jointStyle;
         
         double _outlineWidth;
-        FColorARGB _outlineColor;
+        FColorARGB _nearOutlineColor;
+        FColorARGB _farOutlineColor;
         double _lineWidth;
         FColorARGB _fillColor;
         std::vector<double> _dashPattern;
 
         QVector<PointI> _points;
+        QVector<float> _heights;
         QList<FColorARGB> _colorizationMapping;
+        QList<FColorARGB> _outlineColorizationMapping;
 
         float _direction;
 
@@ -88,6 +92,12 @@ namespace OsmAnd
         FColorARGB getOutlineColor() const;
         void setOutlineColor(const FColorARGB color);
 
+        FColorARGB getNearOutlineColor() const;
+        void setNearOutlineColor(const FColorARGB color);
+
+        FColorARGB getFarOutlineColor() const;
+        void setFarOutlineColor(const FColorARGB color);
+
         double getLineWidth() const;
         void setLineWidth(const double width);
         
@@ -98,10 +108,16 @@ namespace OsmAnd
         void setLineDash(const std::vector<double> dashPattern);
         
         QVector<PointI> getPoints() const;
-        void setPoints(const QVector<PointI> poinst);
+        void setPoints(const QVector<PointI> points);
         
+        QVector<float> getHeights() const;
+        void setHeights(const QVector<float> heights);
+
         QList<OsmAnd::FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
+
+        QList<OsmAnd::FColorARGB> getOutlineColorizationMapping() const;
+        void setOutlineColorizationMapping(const QList<OsmAnd::FColorARGB>& colorizationMapping);
 
         sk_sp<const SkImage> getPathIcon() const;
         void setPathIcon(const SingleSkImage& image);
@@ -122,7 +138,8 @@ namespace OsmAnd
         void setScreenScale(const float screenScale);
 
         void setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);
-        void setEndCapStyle(const int endCapStyle);
+
+        void setJointStyle(const VectorLine::JointStyle jointStyle);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

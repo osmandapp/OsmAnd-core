@@ -104,6 +104,15 @@ namespace OsmAnd
                 !qFuzzyCompare(g, other.g) ||
                 !qFuzzyCompare(b, other.b);
         }
+
+        inline FColorARGB& operator*=(const FColorARGB& other)
+        {
+            a *= other.a;
+            r *= other.r;
+            g *= other.g;
+            b *= other.b;
+            return *this;
+        }
 #endif // !defined(SWIG)
 
         inline FColorARGB withAlpha(const float newAlpha) const

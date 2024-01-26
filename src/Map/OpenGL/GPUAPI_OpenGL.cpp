@@ -1359,7 +1359,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     
     // Create mesh resource
     resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes,
-        verticesAndIndices->zoomLevel, position31));
+        verticesAndIndices->zoomLevel, verticesAndIndices->isDenseObject, position31));
 
     return true;
 }

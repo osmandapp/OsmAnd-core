@@ -2240,7 +2240,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
         // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT vec3 in_vs_vertexPosition;                                                                                   ""\n"
         "INPUT vec4 in_vs_vertexColor;                                                                                      ""\n"
         "                                                                                                                   ""\n"
         // Output data to next shader stages
@@ -2287,9 +2287,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = in_vs_vertexPosition.x;                                                                                  ""\n"
         "    v.y = 0.0;                                                                                                     ""\n"
-        "    v.z = in_vs_vertexPosition.y;                                                                                  ""\n"
+        "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
-        "    if (abs(param_vs_elevation_scale.w) > 0.0 && abs(param_vs_elevationInMeters) == 0.0)                           ""\n"
+        "    if (in_vs_vertexPosition.y > -12000000.0)                                                                                         ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
+        "        v.y = in_vs_vertexPosition.y / metersPerUnit;                                                              ""\n"
+        "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
+        "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
+        "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
+        "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
+        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "    }                                                                                                              ""\n"
+        "    else if (abs(param_vs_elevation_scale.w) > 0.0 && param_vs_elevationInMeters == 0.0)                           ""\n"
         "    {                                                                                                              ""\n"
         "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
         "        v = param_vs_mModel * v;                                                                                   ""\n"
@@ -2299,7 +2312,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
-        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                      ""\n"
+        "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                       ""\n"
         "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
         "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
@@ -2557,9 +2570,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
         GL_CHECK_RESULT;
         glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
-            2, GL_FLOAT, GL_FALSE,
+            3, GL_FLOAT, GL_FALSE,
             sizeof(VectorMapSymbol::Vertex),
-            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXY)));
+            reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXYZ)));
         GL_CHECK_RESULT;
 
         glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
@@ -2630,6 +2643,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
     else
     {
+        // Enable writing depth buffer for dense (opaque) vector objects
+        if (gpuResource->isDenseObject)
+        {
+            glDepthMask(GL_TRUE);
+            GL_CHECK_RESULT;
+        }
+
         // Reset common elevation
         glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, 0.0f);
         GL_CHECK_RESULT;
@@ -2688,7 +2708,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         double tileSize;
         for (const auto partSizes : *gpuResource->partSizes)
         {
-            
             auto baseTileId = partSizes.first;
             const auto zoomLevel = gpuResource->zoomLevel;
             const auto tileIdN = Utilities::normalizeTileId(baseTileId, zoomLevel);
@@ -2780,16 +2799,27 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             }
             if (!elevationResource)
             {
-                glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomLevel,
+                    renderable->tileId.y,
+                    AtlasMapRenderer::TileSize3D);
+                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomLevel,
+                    renderable->tileId.y + 1,
+                    AtlasMapRenderer::TileSize3D);
+                glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale,
+                    static_cast<float>(upperMetersPerUnit),
+                    static_cast<float>(lowerMetersPerUnit),
+                    0.0f, 0.0f);
                 GL_CHECK_RESULT;
             }
 
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
             GL_CHECK_RESULT;
             glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
-                2, GL_FLOAT, GL_FALSE,
+                3, GL_FLOAT, GL_FALSE,
                 sizeof(VectorMapSymbol::Vertex),
-                reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXY)));
+                reinterpret_cast<GLvoid*>(partOffset + offsetof(VectorMapSymbol::Vertex, positionXYZ)));
             GL_CHECK_RESULT;
 
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
@@ -2815,6 +2845,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+
+        // Cancel possible enabled depth buffer writing
+        glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
     }
 

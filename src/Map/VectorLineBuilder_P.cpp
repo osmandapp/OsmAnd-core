@@ -17,6 +17,7 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _baseOrder(std::numeric_limits<int>::min())
     , _colorizationScheme(0)
     , _endCapStyle(VectorLine::EndCapStyle::ROUND)
+    , _jointStyle(VectorLine::JointStyle::ROUND)
     , _outlineWidth(0)
     , _lineWidth(3.0)
     , _direction(0.0f)
@@ -134,14 +135,43 @@ OsmAnd::FColorARGB OsmAnd::VectorLineBuilder_P::getOutlineColor() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _outlineColor;
+    return _nearOutlineColor;
 }
 
 void OsmAnd::VectorLineBuilder_P::setOutlineColor(const FColorARGB color)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _outlineColor = color;
+    _nearOutlineColor = color;
+    _farOutlineColor = color;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder_P::getNearOutlineColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _nearOutlineColor;
+}
+
+void OsmAnd::VectorLineBuilder_P::setNearOutlineColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _nearOutlineColor = color;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder_P::getFarOutlineColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _farOutlineColor;
+}
+
+void OsmAnd::VectorLineBuilder_P::setFarOutlineColor(const FColorARGB color)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _farOutlineColor = color;
 }
 
 double OsmAnd::VectorLineBuilder_P::getLineWidth() const
@@ -200,6 +230,20 @@ void OsmAnd::VectorLineBuilder_P::setPoints(const QVector<OsmAnd::PointI> points
     _points = points;
 }
 
+QVector<float> OsmAnd::VectorLineBuilder_P::getHeights() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _heights;
+}
+
+void OsmAnd::VectorLineBuilder_P::setHeights(const QVector<float> heights)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _heights = heights;
+}
+
 QList<OsmAnd::FColorARGB> OsmAnd::VectorLineBuilder_P::getColorizationMapping() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -212,6 +256,20 @@ void OsmAnd::VectorLineBuilder_P::setColorizationMapping(const QList<OsmAnd::FCo
     QWriteLocker scopedLocker(&_lock);
 
     _colorizationMapping = colorizationMapping;
+}
+
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLineBuilder_P::getOutlineColorizationMapping() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _outlineColorizationMapping;
+}
+
+void OsmAnd::VectorLineBuilder_P::setOutlineColorizationMapping(const QList<OsmAnd::FColorARGB> &colorizationMapping)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _outlineColorizationMapping = colorizationMapping;
 }
 
 sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
@@ -305,6 +363,13 @@ void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const VectorLine::EndCapStyle e
     _endCapStyle = endCapStyle;
 }
 
+void OsmAnd::VectorLineBuilder_P::setJointStyle(const VectorLine::JointStyle jointStyle)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _jointStyle = jointStyle;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<VectorLinesCollection>& collection)
 {
@@ -332,17 +397,21 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _specialPathIcon,
                                                           _pathIconOnSurface,
                                                           _screenScale,
-                                                          _endCapStyle));
+                                                          _endCapStyle,
+                                                          _jointStyle));
     line->setLineWidth(_lineWidth);
     line->setShowArrows(_showArrows);
     line->setFillColor(_fillColor);
     line->setIsHidden(_isHidden);
     line->setApproximationEnabled(_isApproximationEnabled);
     line->setPoints(_points);
+    line->setHeights(_heights);
     line->setColorizationMapping(_colorizationMapping);
+    line->setOutlineColorizationMapping(_outlineColorizationMapping);
     line->setLineDash(_dashPattern);
     line->setOutlineWidth(_outlineWidth);
-    line->setOutlineColor(_outlineColor);
+    line->setNearOutlineColor(_nearOutlineColor);
+    line->setFarOutlineColor(_farOutlineColor);
     line->setPathIconStep(_pathIconStep);
     line->setSpecialPathIconStep(_specialPathIconStep);
     line->setColorizationScheme(_colorizationScheme);
