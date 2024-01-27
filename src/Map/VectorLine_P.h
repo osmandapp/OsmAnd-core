@@ -34,7 +34,9 @@ namespace OsmAnd
             std::vector<OsmAnd::PointD> &original,
             double radius,
             FColorARGB &fillColor,
-            QList<FColorARGB>& colorMapping) const;
+            QList<FColorARGB>& colorMapping,
+            QList<FColorARGB>& outlineColorMapping,
+            QList<float>& heights) const;
                 
         void addArrowsOnSegmentPath(
             const std::vector<PointI>& segmentPoints,
@@ -49,6 +51,8 @@ namespace OsmAnd
         double getPointStepPx() const;
         
         bool hasColorizationMapping() const;
+        bool hasOutlineColorizationMapping() const;
+        bool hasHeights() const;
     protected:
         VectorLine_P(VectorLine* const owner);
 
@@ -62,12 +66,15 @@ namespace OsmAnd
         bool _showArrows;
 
         QVector<PointI> _points;
+        QVector<float> _heights;
         QList<FColorARGB> _colorizationMapping;
-        int _colorizationSceme;
+        QList<FColorARGB> _outlineColorizationMapping;
+        int _colorizationScheme;
         double _lineWidth;
         double _outlineWidth;
         FColorARGB _fillColor;
-        FColorARGB _outlineColor;
+        FColorARGB _nearOutlineColor;
+        FColorARGB _farOutlineColor;
         float _pathIconStep;
         float _specialPathIconStep;
         bool _dash;
@@ -76,7 +83,9 @@ namespace OsmAnd
         double _metersPerPixel;
         AreaI _visibleBBoxShifted;
         ZoomLevel _mapZoomLevel;
+        ZoomLevel _surfaceZoomLevel;
         float _mapVisualZoom;
+        float _surfaceVisualZoom;
         float _mapVisualZoomShift;
         bool _hasElevationDataProvider;
 
@@ -116,7 +125,11 @@ namespace OsmAnd
         bool forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const;
         bool isBigDiff(const ColorARGB& firstColor, const ColorARGB& secondColor) const;
         inline FColorARGB middleColor(const FColorARGB& first, const FColorARGB& last, const float factor) const;
-        void calculateVisibleSegments(std::vector<std::vector<PointI>>& segments, QList<QList<FColorARGB>>& segmentColors) const;
+        void calculateVisibleSegments(
+            std::vector<std::vector<PointI>>& segments,
+            QList<QList<FColorARGB>>& segmentColors,
+            QList<QList<FColorARGB>>& segmentOutlineColors,
+            QList<QList<float>>& segmentHeights) const;
         static bool calculateIntersection(const PointI& p1, const PointI& p0, const AreaI& bbox, PointI& pX);
 
     public:
@@ -136,9 +149,15 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
         
+        QVector<float> getHeights() const;
+        void setHeights(const QVector<float>& heights);
+        
         QList<FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);
-        
+
+        QList<FColorARGB> getOutlineColorizationMapping() const;
+        void setOutlineColorizationMapping(const QList<FColorARGB>& colorizationMapping);
+
         double getLineWidth() const;
         void setLineWidth(const double width);
 
@@ -159,6 +178,12 @@ namespace OsmAnd
 
         FColorARGB getOutlineColor() const;
         void setOutlineColor(const FColorARGB color);
+
+        FColorARGB getNearOutlineColor() const;
+        void setNearOutlineColor(const FColorARGB color);
+
+        FColorARGB getFarOutlineColor() const;
+        void setFarOutlineColor(const FColorARGB color);
 
         void setColorizationScheme(const int colorizationScheme);
 

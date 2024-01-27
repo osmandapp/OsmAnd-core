@@ -8,7 +8,8 @@ OsmAnd::VectorLine::VectorLine(
     const sk_sp<const SkImage>& specialPathIcon_/* = nullptr*/,
     const bool pathIconOnSurface_/* = true*/,
     const float screenScale_/* = 2*/,
-    const VectorLine::EndCapStyle endCapStlye_/* = LineEndCapStyle::ROUND*/)
+    const VectorLine::EndCapStyle endCapStyle_/* = EndCapStyle::ROUND*/,
+    const VectorLine::JointStyle jointStyle_/* = JointStyle::ROUND*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
@@ -16,7 +17,8 @@ OsmAnd::VectorLine::VectorLine(
     , specialPathIcon(specialPathIcon_)
     , pathIconOnSurface(pathIconOnSurface_)
     , screenScale(screenScale_)
-    , endCapStyle(endCapStlye_)
+    , endCapStyle(endCapStyle_)
+    , jointStyle(jointStyle_)
 {
 }
 
@@ -61,7 +63,17 @@ QVector<OsmAnd::PointI> OsmAnd::VectorLine::getPoints() const
 
 void OsmAnd::VectorLine::setPoints(const QVector<OsmAnd::PointI>& points)
 {
-    _p->setPoints(points);    
+    _p->setPoints(points);
+}
+
+QVector<float> OsmAnd::VectorLine::getHeights() const
+{
+    return _p->getHeights();
+}
+
+void OsmAnd::VectorLine::setHeights(const QVector<float>& heights)
+{
+    _p->setHeights(heights);
 }
 
 QList<OsmAnd::FColorARGB> OsmAnd::VectorLine::getColorizationMapping() const
@@ -72,6 +84,16 @@ QList<OsmAnd::FColorARGB> OsmAnd::VectorLine::getColorizationMapping() const
 void OsmAnd::VectorLine::setColorizationMapping(const QList<FColorARGB> &colorizationMapping)
 {
     _p->setColorizationMapping(colorizationMapping);
+}
+
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLine::getOutlineColorizationMapping() const
+{
+    return _p->getOutlineColorizationMapping();
+}
+
+void OsmAnd::VectorLine::setOutlineColorizationMapping(const QList<FColorARGB> &colorizationMapping)
+{
+    _p->setOutlineColorizationMapping(colorizationMapping);
 }
 
 double OsmAnd::VectorLine::getLineWidth() const
@@ -102,6 +124,26 @@ OsmAnd::FColorARGB OsmAnd::VectorLine::getOutlineColor() const
 void OsmAnd::VectorLine::setOutlineColor(const FColorARGB color)
 {
     _p->setOutlineColor(color);
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine::getNearOutlineColor() const
+{
+    return _p->getNearOutlineColor();
+}
+
+void OsmAnd::VectorLine::setNearOutlineColor(const FColorARGB color)
+{
+    _p->setNearOutlineColor(color);
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLine::getFarOutlineColor() const
+{
+    return _p->getFarOutlineColor();
+}
+
+void OsmAnd::VectorLine::setFarOutlineColor(const FColorARGB color)
+{
+    _p->setFarOutlineColor(color);
 }
 
 void OsmAnd::VectorLine::setColorizationScheme(const int colorizationScheme)

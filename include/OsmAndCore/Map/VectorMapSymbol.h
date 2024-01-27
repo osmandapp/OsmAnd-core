@@ -21,8 +21,8 @@ namespace OsmAnd
 #pragma pack(push, 1)
         struct Vertex
         {
-            // XY coordinates: Y up, X right
-            float positionXY[2];
+            // Coordinates
+            float positionXYZ[3];
 
             // Color
             FColorARGB color;
@@ -46,6 +46,7 @@ namespace OsmAnd
 
             std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             ZoomLevel zoomLevel;
+            bool isDenseObject;
         };
         
         enum class PrimitiveType

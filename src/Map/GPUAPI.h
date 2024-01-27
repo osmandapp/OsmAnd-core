@@ -250,6 +250,7 @@ namespace OsmAnd
                 const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer,
                 const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
                 const ZoomLevel zoomLevel,
+                const bool isDenseObject,
                 const PointI* position31 = nullptr);
 
             virtual ~MeshInGPU();
@@ -259,6 +260,7 @@ namespace OsmAnd
             const std::shared_ptr<std::vector<std::pair<TileId, int32_t>>> partSizes;
             const ZoomLevel zoomLevel;
             const PointI* position31;
+            const bool isDenseObject;
 
             void lostRefInGPU() const override;
         };

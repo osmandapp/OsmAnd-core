@@ -7,7 +7,9 @@
 #include <unordered_map>
 
 #include "AtlasMapRenderer.h"
-#include "VectorMapSymbol.h"
+#include "Utilities.h"
+#include <OsmAndCore/Map/VectorMapSymbol.h>
+#include <OsmAndCore/Color.h>
 
 namespace OsmAnd
 {
@@ -15,15 +17,30 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 {
 	struct VertexAdv
 	{
-		// XY coordinates: Y up, X right
+		// Coordinates
 		float x;
 		float y;
+		float z; // height
 
 		// Grid line code
 		int32_t g;
 
 		// Color
 		FColorARGB color;
+	};
+
+	struct VertexForPath
+	{
+		// Coordinates
+		float x;
+		float y;
+		float z; // height
+
+		// Color
+		FColorARGB color;
+
+		// Trace color
+		FColorARGB traceColor;
 	};
 
 	// Triangle
@@ -74,10 +91,10 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 	}
 
 	// Simple color interpolation
-	inline static FColorARGB middleColor(const VertexAdv& A, const VertexAdv& B, const float& Nt)
+	inline static FColorARGB middleColor(const FColorARGB& color1, const FColorARGB& color2, const float& Nt)
 	{
-		return {(B.color.a - A.color.a) * Nt + A.color.a, (B.color.r - A.color.r) * Nt + A.color.r,
-				(B.color.g - A.color.g) * Nt + A.color.g, (B.color.b - A.color.b) * Nt + A.color.b};
+		return {(color2.a - color1.a) * Nt + color1.a, (color2.r - color1.r) * Nt + color1.r,
+				(color2.g - color1.g) * Nt + color1.g, (color2.b - color1.b) * Nt + color1.b};
 	}
 
 	// Paving with two triangles
@@ -85,11 +102,11 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 								const VertexAdv& C, const VertexAdv& D, const int32_t& rodCode)
 	{
 		inObj.push_back(A);
-		inObj.push_back({B.x, B.y, rodCode, B.color});	// TODO: Set calculated color
+		inObj.push_back({B.x, B.y, B.z, rodCode, B.color});
 		inObj.push_back(D);
 		inObj.push_back(C);
-		inObj.push_back({D.x, D.y, rodCode, D.color});
-		inObj.push_back({B.x, B.y, A.g, B.color});	// TODO: Set calculated color
+		inObj.push_back({D.x, D.y, D.z, rodCode, D.color});
+		inObj.push_back({B.x, B.y, B.z, A.g, B.color});
 	}
 
 	// Paving with three triangles
@@ -119,13 +136,13 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 			rewire = m < r;
 		}
 		inObj.push_back(A);
-		inObj.push_back({B.x, B.y, rodCode, B.color});
-		inObj.push_back({E.x, E.y, D.g, E.color});
+		inObj.push_back({B.x, B.y, B.z, rodCode, B.color});
+		inObj.push_back({E.x, E.y, E.z, D.g, E.color});
 		if (rewire)
 		{
-			inObj.push_back({B.x, B.y, A.g, B.color});
-			inObj.push_back({C.x, C.y, 0, C.color});
-			inObj.push_back({E.x, E.y, rodCode, E.color});
+			inObj.push_back({B.x, B.y, B.z, A.g, B.color});
+			inObj.push_back({C.x, C.y, C.z, 0, C.color});
+			inObj.push_back({E.x, E.y, E.z, rodCode, E.color});
 			inObj.push_back(C);
 			inObj.push_back(D);
 			inObj.push_back(E);
@@ -134,10 +151,10 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		{
 			inObj.push_back(B);
 			inObj.push_back(D);
-			inObj.push_back({E.x, E.y, rodCode, E.color});
+			inObj.push_back({E.x, E.y, E.z, rodCode, E.color});
 			inObj.push_back(C);
-			inObj.push_back({D.x, D.y, 0, D.color});
-			inObj.push_back({B.x, B.y, A.g, B.color});
+			inObj.push_back({D.x, D.y, D.z, 0, D.color});
+			inObj.push_back({B.x, B.y, B.z, A.g, B.color});
 		}
 	}
 
@@ -162,15 +179,21 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 	// Test triangles for CCW and rewire if not
 	inline static void ccwTriangle(VectorMapSymbol::Vertex* A, VectorMapSymbol::Vertex* B, VectorMapSymbol::Vertex* C)
 	{
-		float s = A->positionXY[0] * B->positionXY[1] - A->positionXY[1] * B->positionXY[0];
-		s += B->positionXY[0] * C->positionXY[1] - B->positionXY[1] * C->positionXY[0];
-		s += C->positionXY[0] * A->positionXY[1] - C->positionXY[1] * A->positionXY[0];
+		float s = A->positionXYZ[0] * B->positionXYZ[2] - A->positionXYZ[2] * B->positionXYZ[0];
+		s += B->positionXYZ[0] * C->positionXYZ[2] - B->positionXYZ[2] * C->positionXYZ[0];
+		s += C->positionXYZ[0] * A->positionXYZ[2] - C->positionXYZ[2] * A->positionXYZ[0];
 		if (s < 0.0f)
 		{
 			VectorMapSymbol::Vertex* D = B;
 			B = C;
 			C = D;
 		}
+	}
+
+	// Get triange from vertex
+	inline static void getVertex(VectorMapSymbol::Vertex* vertex, std::deque<VertexAdv>& outQueue)
+	{
+        outQueue.push_back({vertex->positionXYZ[0], vertex->positionXYZ[2], vertex->positionXYZ[1], 0, vertex->color});
 	}
 
 	// Put triangle to the tile list
@@ -188,27 +211,45 @@ struct OSMAND_CORE_API GeometryModifiers Q_DECL_FINAL
 		auto ftile = meshes.find(tileId);
 		if (ftile != meshes.end())
 		{
-			ftile->second.push_back({{A.x, A.y}, A.color});
-			ftile->second.push_back({{B.x, B.y}, B.color});
-			ftile->second.push_back({{C.x, C.y}, C.color});
+			ftile->second.push_back({{A.x, A.z, A.y}, A.color});
+			ftile->second.push_back({{B.x, B.z, B.y}, B.color});
+			ftile->second.push_back({{C.x, C.z, C.y}, C.color});
 		}
 		else
 		{
 			std::vector<VectorMapSymbol::Vertex> tvec;
-			tvec.push_back({{A.x, A.y}, A.color});
-			tvec.push_back({{B.x, B.y}, B.color});
-			tvec.push_back({{C.x, C.y}, C.color});
+			tvec.push_back({{A.x, A.z, A.y}, A.color});
+			tvec.push_back({{B.x, B.z, B.y}, B.color});
+			tvec.push_back({{C.x, C.z, C.y}, C.color});
 			meshes.insert({tileId, tvec});
 		}
 	}
 
-	// Cut the mesh by tiles and grid lines (+ optional mesh optimization)
-	static bool overGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
+	// Cut the mesh by tiles and grid cells (+ optional mesh optimization)
+	static bool cutMeshWithGrid(std::vector<VectorMapSymbol::Vertex>& vertices,
 						const std::shared_ptr<std::vector<VectorMapSymbol::Index>>& indices,
 						const VectorMapSymbol::PrimitiveType& primitiveType,
-						std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes, const double& tileSize,
-						const PointD& tilePosN, const int32_t& cellsPerTileSize, const float& minDistance,
-						const float& maxBreakTangent, const bool diagonals, const bool simplify);
+						std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>& partSizes,
+						const ZoomLevel zoomLevel,
+						const PointD& tilePosN, const int32_t cellsPerTileSize, const float minDistance,
+						const float maxBreakTangent, const bool diagonals, const bool simplify);
+
+	// Create vertical faces for path, cutting it by tiles and grid cells
+	static bool getTesselatedPlane(std::vector<VectorMapSymbol::Vertex>& vertices,
+						const std::vector<OsmAnd::PointD>& points,
+						QList<float>& heights,
+						FColorARGB& fillColor,
+						FColorARGB& topColor,
+						FColorARGB& bottomColor,
+						QList<FColorARGB>& colorizationMapping,
+						QList<FColorARGB>& traceColorizationMapping,
+						const float roofHeight,
+						const ZoomLevel zoomLevel,
+						const PointD& tilePosN,
+						const int32_t cellsPerTileSize,
+						const float minDistance,
+						const bool diagonals,
+						const bool solidColors);
 
    private:
 	GeometryModifiers();

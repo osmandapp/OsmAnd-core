@@ -118,6 +118,19 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setColorizationMapping(con
     return *this;
 }
 
+QList<OsmAnd::FColorARGB> OsmAnd::VectorLineBuilder::getOutlineColorizationMapping() const
+{
+    return _p->getOutlineColorizationMapping();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setOutlineColorizationMapping(
+    const QList<OsmAnd::FColorARGB>& colorizationMapping)
+{
+    _p->setOutlineColorizationMapping(colorizationMapping);
+
+    return *this;
+}
+
 QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder::getPoints() const
 {
     return _p->getPoints();
@@ -126,6 +139,18 @@ QVector<OsmAnd::PointI> OsmAnd::VectorLineBuilder::getPoints() const
 OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPoints(const QVector<OsmAnd::PointI>& points)
 {
     _p->setPoints(points);
+
+    return *this;
+}
+
+QVector<float> OsmAnd::VectorLineBuilder::getHeights() const
+{
+    return _p->getHeights();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setHeights(const QVector<float>& heights)
+{
+    _p->setHeights(heights);
 
     return *this;
 }
@@ -216,6 +241,20 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const int e
     return *this;
 }
 
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setJointStyle(const VectorLine::JointStyle jointStyle)
+{
+    _p->setJointStyle(jointStyle);
+    
+    return *this;
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setJointStyle(const int jointStyle)
+{
+    _p->setJointStyle(static_cast<VectorLine::JointStyle>(jointStyle));
+    
+    return *this;
+}
+
 int OsmAnd::VectorLineBuilder::getColorizationScheme() const
 {
     return _p->getColorizationScheme();
@@ -248,6 +287,30 @@ OsmAnd::FColorARGB OsmAnd::VectorLineBuilder::getOutlineColor() const
 OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setOutlineColor(const FColorARGB color)
 {
     _p->setOutlineColor(color);
+
+    return *this;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder::getNearOutlineColor() const
+{
+    return _p->getNearOutlineColor();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setNearOutlineColor(const FColorARGB color)
+{
+    _p->setNearOutlineColor(color);
+
+    return *this;
+}
+
+OsmAnd::FColorARGB OsmAnd::VectorLineBuilder::getFarOutlineColor() const
+{
+    return _p->getFarOutlineColor();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setFarOutlineColor(const FColorARGB color)
+{
+    _p->setFarOutlineColor(color);
 
     return *this;
 }

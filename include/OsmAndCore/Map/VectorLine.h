@@ -66,7 +66,13 @@ namespace OsmAnd
             float direction;
         };
 
-        enum EndCapStyle {
+        enum class JointStyle {
+            MITER,
+            BEVEL,
+            ROUND
+        };
+
+        enum class EndCapStyle {
             BUTT,
             SQUARE,
             ROUND,
@@ -84,7 +90,8 @@ namespace OsmAnd
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const bool pathIconOnSurface = true,
             const float screenScale = 2,
-            const EndCapStyle endCapStyle = EndCapStyle::ROUND
+            const EndCapStyle endCapStyle = EndCapStyle::ROUND,
+            const JointStyle jointStyle = JointStyle::ROUND
         );
 
         bool applyChanges();
@@ -98,6 +105,7 @@ namespace OsmAnd
         const bool pathIconOnSurface;
         const float screenScale;
         EndCapStyle endCapStyle;
+        JointStyle jointStyle;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
@@ -111,8 +119,14 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
 
+        QVector<float> getHeights() const;
+        void setHeights(const QVector<float>& heights);
+
         QList<FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);
+
+        QList<FColorARGB> getOutlineColorizationMapping() const;
+        void setOutlineColorizationMapping(const QList<FColorARGB>& colorizationMapping);
 
         double getLineWidth() const;
         void setLineWidth(const double width);
@@ -122,6 +136,12 @@ namespace OsmAnd
 
         FColorARGB getOutlineColor() const;
         void setOutlineColor(const FColorARGB color);
+
+        FColorARGB getNearOutlineColor() const;
+        void setNearOutlineColor(const FColorARGB color);
+
+        FColorARGB getFarOutlineColor() const;
+        void setFarOutlineColor(const FColorARGB color);
 
         float getPathIconStep() const;
         void setPathIconStep(const float step);

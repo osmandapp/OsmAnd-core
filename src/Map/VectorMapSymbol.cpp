@@ -23,6 +23,7 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::VerticesAndIndices()
 , indicesCount(0)
 , partSizes(nullptr)
 , zoomLevel(InvalidZoomLevel)
+, isDenseObject(false)
 {
 }
 
@@ -51,6 +52,7 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::~VerticesAndIndices()
         partSizes = nullptr;
     
     zoomLevel = InvalidZoomLevel;
+    isDenseObject = false;
 }
 
 const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndices> OsmAnd::VectorMapSymbol::getVerticesAndIndices() const
@@ -100,8 +102,9 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     auto pVertex = verticesAndIndices->vertices;
 
     // First vertex is the center
-    pVertex->positionXY[0] = 0.0f;
-    pVertex->positionXY[1] = 0.0f;
+    pVertex->positionXYZ[0] = 0.0f;
+    pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+    pVertex->positionXYZ[2] = 0.0f;
     pVertex->color = color;
     pVertex += 1;
 
@@ -110,16 +113,18 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;
-        pVertex->positionXY[0] = radius * qCos(angle);
-        pVertex->positionXY[1] = radius * qSin(angle);
+        pVertex->positionXYZ[0] = radius * qCos(angle);
+        pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+        pVertex->positionXYZ[2] = radius * qSin(angle);
         pVertex->color = color;
 
         pVertex += 1;
     }
 
     // Close the fan
-    pVertex->positionXY[0] = verticesAndIndices->vertices[1].positionXY[0];
-    pVertex->positionXY[1] = verticesAndIndices->vertices[1].positionXY[1];
+    pVertex->positionXYZ[0] = verticesAndIndices->vertices[1].positionXYZ[0];
+    pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+    pVertex->positionXYZ[2] = verticesAndIndices->vertices[1].positionXYZ[2];
     pVertex->color = color;
     
     mapSymbol.setVerticesAndIndices(verticesAndIndices);
@@ -155,8 +160,9 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;
-        pVertex->positionXY[0] = radius * qCos(angle);
-        pVertex->positionXY[1] = radius * qSin(angle);
+        pVertex->positionXYZ[0] = radius * qCos(angle);
+        pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+        pVertex->positionXYZ[2] = radius * qSin(angle);
         pVertex->color = color;
 
         pVertex += 1;
