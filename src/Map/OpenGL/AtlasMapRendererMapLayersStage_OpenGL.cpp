@@ -2077,7 +2077,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
         const auto tileIdN = Utilities::normalizeTileId(tileId, zoomLevel);
 
         // Don't render invisible tiles
-        if (!visibleTilesSet.contains(tileId))
+        if (!visibleTilesSet.contains(tileIdN))
             continue;
 
         bool atLeastOneNotUnavailable = false;
