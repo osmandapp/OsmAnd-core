@@ -677,6 +677,9 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 	auto pointsCount = points.size();
 	if (pointsCount < 2)
         return false;
+	bool withTrace = topColor.a > 0.0f || topColor.b > 0.0f;
+    if (roofHeight <= 0.0f && !withTrace)
+        return false;
 	float minDist = minDistance;
     auto tileSize = Utilities::getPowZoom(MaxZoomLevel - zoomLevel);
 	float gridStepXY = tileSize / static_cast<double>(cellsPerTileSize);
@@ -850,7 +853,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
                     vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
                     vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
                 }
-                if (topColor.a > 0.0f || topColor.b > 0.0f)
+                if (withTrace)
                 {
                     auto topColor0 = seg[0].traceColor;
                     auto topColor1 = seg[1].traceColor;

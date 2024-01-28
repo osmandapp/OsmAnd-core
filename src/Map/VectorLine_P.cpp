@@ -625,9 +625,6 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(
 
 bool OsmAnd::VectorLine_P::forceIncludePoint(const QList<FColorARGB>& pointsColors, const uint pointIndex) const
 {
-    if (!hasColorizationMapping())
-        return false;
-
     const auto currColor = pointsColors[pointIndex];
 
     const auto pPrevColor = pointIndex == 0 ? nullptr : &pointsColors[pointIndex - 1];
@@ -1063,8 +1060,10 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
         {
             // If color is lost after approximation, restore it
-            if (approximate && !include[pointIdx])
+            if (approximate && !include[pointIdx] && hasColorizationMapping())
                 include[pointIdx] = forceIncludePoint(colorsForSegment, pointIdx);
+            if (approximate && !include[pointIdx] && hasOutlineColorizationMapping())
+                include[pointIdx] = forceIncludePoint(colorsForSegmentOutline, pointIdx);
 
             if (include[pointIdx])
             {
