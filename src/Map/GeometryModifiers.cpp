@@ -838,14 +838,15 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
                 auto topHeight1 = seg[1].z;
                 if (roofHeight > 0.0f)
                 {
-                    auto yCoord = static_cast<double>(seg[0].y + seg[1].y) / 2.0 / tileSize + tilePosN.y;
-                    auto tileIdY = static_cast<int32_t>(floor(yCoord));
+                    auto tileIdY = floor(static_cast<double>(seg[0].y + seg[1].y) / 2.0 / tileSize + tilePosN.y);
+                    auto offset0 = static_cast<double>(seg[0].y) / tileSize + tilePosN.y - tileIdY;
+                    auto offset1 = static_cast<double>(seg[1].y) / tileSize + tilePosN.y - tileIdY;
                     auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(zoomLevel, tileIdY, tileSize);
-                    auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoomLevel, tileIdY + 1, tileSize);
-                    auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, yCoord - tileIdY);
-                    auto heightInMeters = static_cast<float>(roofHeight * metersPerUnit);
-                    topHeight0 -= heightInMeters;
-                    topHeight1 -= heightInMeters;
+                    auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(zoomLevel, tileIdY + 1.0, tileSize);
+                    auto metersPerUnit0 = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offset0);
+                    auto metersPerUnit1 = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offset1);
+                    topHeight0 -= roofHeight * static_cast<float>(metersPerUnit0);
+                    topHeight1 -= roofHeight * static_cast<float>(metersPerUnit1);
                     vertices.push_back({{seg[0].x, seg[0].z, seg[0].y}, seg[0].color});
                     vertices.push_back({{seg[1].x, seg[1].z, seg[1].y}, seg[1].color});
                     vertices.push_back({{seg[0].x, topHeight0, seg[0].y}, seg[0].color});
