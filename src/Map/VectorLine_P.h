@@ -66,7 +66,7 @@ namespace OsmAnd
         bool _showArrows;
 
         QVector<PointI> _points;
-        QVector<float> _heights;
+        QList<float> _heights;
         QList<FColorARGB> _colorizationMapping;
         QList<FColorARGB> _outlineColorizationMapping;
         int _colorizationScheme;
@@ -149,8 +149,8 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
         
-        QVector<float> getHeights() const;
-        void setHeights(const QVector<float>& heights);
+        QList<float> getHeights() const;
+        void setHeights(const QList<float>& heights);
         
         QList<FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);

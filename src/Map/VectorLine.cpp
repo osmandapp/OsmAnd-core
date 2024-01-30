@@ -66,12 +66,12 @@ void OsmAnd::VectorLine::setPoints(const QVector<OsmAnd::PointI>& points)
     _p->setPoints(points);
 }
 
-QVector<float> OsmAnd::VectorLine::getHeights() const
+QList<float> OsmAnd::VectorLine::getHeights() const
 {
     return _p->getHeights();
 }
 
-void OsmAnd::VectorLine::setHeights(const QVector<float>& heights)
+void OsmAnd::VectorLine::setHeights(const QList<float>& heights)
 {
     _p->setHeights(heights);
 }

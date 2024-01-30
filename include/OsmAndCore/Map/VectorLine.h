@@ -119,8 +119,8 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
 
-        QVector<float> getHeights() const;
-        void setHeights(const QVector<float>& heights);
+        QList<float> getHeights() const;
+        void setHeights(const QList<float>& heights);
 
         QList<FColorARGB> getColorizationMapping() const;
         void setColorizationMapping(const QList<FColorARGB>& colorizationMapping);

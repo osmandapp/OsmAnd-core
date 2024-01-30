@@ -230,14 +230,14 @@ void OsmAnd::VectorLineBuilder_P::setPoints(const QVector<OsmAnd::PointI> points
     _points = points;
 }
 
-QVector<float> OsmAnd::VectorLineBuilder_P::getHeights() const
+QList<float> OsmAnd::VectorLineBuilder_P::getHeights() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _heights;
 }
 
-void OsmAnd::VectorLineBuilder_P::setHeights(const QVector<float> heights)
+void OsmAnd::VectorLineBuilder_P::setHeights(const QList<float> heights)
 {
     QWriteLocker scopedLocker(&_lock);
 

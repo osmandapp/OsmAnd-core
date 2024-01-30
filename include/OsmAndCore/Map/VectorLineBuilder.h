@@ -68,8 +68,8 @@ namespace OsmAnd
         VectorLineBuilder& setPoints(const QVector<PointI>& points);
         
         // Get/set elevation of path points (in meters from sea level) for 3D vector line
-        QVector<float> getHeights() const;
-        VectorLineBuilder& setHeights(const QVector<float>& heights);
+        QList<float> getHeights() const;
+        VectorLineBuilder& setHeights(const QList<float>& heights);
         
         // Get/set color map (see get/set colorization scheme) for the path line
         QList<OsmAnd::FColorARGB> getColorizationMapping() const;
