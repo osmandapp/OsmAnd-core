@@ -113,11 +113,11 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     if (shield)
                         backgroundLayers.push_back(shield);
                 }
-                if (!textSymbol->underlayIconResourceName.isEmpty())
+
+                for (const auto& underlayIconResourceName : textSymbol->underlayIconResourceNames)
                 {
                     sk_sp<const SkImage> icon;
-                    env->obtainMapIcon(textSymbol->underlayIconResourceName, textSymbol->scaleFactor, icon);
-                    if (icon)
+                    if (env->obtainMapIcon(underlayIconResourceName, textSymbol->scaleFactor, icon) && icon)
                         backgroundLayers.push_back(icon);
                 }
 
@@ -189,9 +189,6 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
                 else
                 {
-                    if (mapObject->toString().contains("18446743747269496317"))
-                        auto stop = 1;
-
                     // Calculate offset. Since offset specifies center, it's a sum of
                     //  - top/bottom offset
                     //  - extra top/bottom space (which should be in texture, but not rendered, since transparent)

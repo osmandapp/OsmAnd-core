@@ -225,7 +225,7 @@ namespace OsmAnd
             bool isBold;
             bool isItalic;
             QString shieldResourceName;
-            QString underlayIconResourceName;
+            QList<QString> underlayIconResourceNames;
 
             bool operator==(const TextSymbol& that) const;
             bool operator!=(const TextSymbol& that) const;
