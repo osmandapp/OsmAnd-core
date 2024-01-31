@@ -331,7 +331,7 @@ namespace OsmAnd
         bool applyTerrainVisibilityFiltering(const int queryIndex,
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
         bool releaseVisibilityCheck(bool gpuContextLost);
-        void configureElevationData(
+        bool configureElevationData(
             const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
             const OnSurfaceVectorProgram& program,
             const TileId tileIdN,
