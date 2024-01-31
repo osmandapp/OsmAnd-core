@@ -2721,6 +2721,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                             static_cast<float>(baseTileId.x - startTileId.x),
                             static_cast<float>(baseTileId.y - startTileId.y));
             GL_CHECK_RESULT;
+            bool useElevationData = false;
             const auto baseTileIdN = Utilities::normalizeTileId(baseTileId, currentState.zoomLevel);
             std::shared_ptr<const GPUAPI::ResourceInGPU> elevationResource;
             if (zoomShift >= 0)
@@ -2728,7 +2729,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                 tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D);
                 if (elevationResource = captureElevationDataResource(baseTileIdN, currentState.zoomLevel))
                 {
-                    configureElevationData(elevationResource, _onSurfaceVectorProgram,
+                    useElevationData = configureElevationData(elevationResource, _onSurfaceVectorProgram,
                         baseTileIdN,
                         currentState.zoomLevel,
                         PointF(0.0f, 0.0f),
@@ -2758,7 +2759,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                                 (tileId.y >> absZoomShift << absZoomShift) - tileId.y);
                             tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) /
                                 static_cast<double>(subtilesPerSide);
-                            configureElevationData(elevationResource, _onSurfaceVectorProgram,
+                            useElevationData = configureElevationData(elevationResource, _onSurfaceVectorProgram,
                                 tileId,
                                 underscaledZoomLevel,
                                 texCoordsOffset,
@@ -2785,7 +2786,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                         {
                             tileSize = AtlasMapRenderer::TileSize3D *
                                 static_cast<double>(1ull << currentState.zoomLevel - overscaledZoomLevel);
-                            configureElevationData(elevationResource, _onSurfaceVectorProgram,
+                            useElevationData = configureElevationData(elevationResource, _onSurfaceVectorProgram,
                                 overscaledTileIdN,
                                 overscaledZoomLevel,
                                 texCoordsOffset,
@@ -2797,20 +2798,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                     }
                 }
             }
-            if (!elevationResource)
+            if (!elevationResource || useElevationData)
             {
+                // Per-tile elevation data configuration
                 const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
                     currentState.zoomLevel,
-                    renderable->tileId.y,
+                    baseTileIdN.y,
                     AtlasMapRenderer::TileSize3D);
                 const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
                     currentState.zoomLevel,
-                    renderable->tileId.y + 1,
+                    baseTileIdN.y + 1,
                     AtlasMapRenderer::TileSize3D);
                 glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale,
                     static_cast<float>(upperMetersPerUnit),
                     static_cast<float>(lowerMetersPerUnit),
-                    0.0f, 0.0f);
+                    useElevationData ? currentState.elevationConfiguration.zScaleFactor : 0.0f,
+                    useElevationData ? currentState.elevationConfiguration.dataScaleFactor : 0.0f);
                 GL_CHECK_RESULT;
             }
 
@@ -3223,7 +3226,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFilterin
     return result;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
     const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
     const OnSurfaceVectorProgram& program,
     const TileId tileIdN,
@@ -3241,23 +3244,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
-
-    // Per-tile elevation data configuration
-    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y,
-        tileSize);
-    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y + 1,
-        tileSize);
-    glUniform4f(
-        program.vs.param.elevation_scale,
-        (float)upperMetersPerUnit,
-        (float)lowerMetersPerUnit,
-        currentState.elevationConfiguration.zScaleFactor,
-        currentState.elevationConfiguration.dataScaleFactor);
-    GL_CHECK_RESULT;
 
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
@@ -3328,11 +3314,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
                 texture->vHalfTexelSizeN);
             GL_CHECK_RESULT;
         }
+        return true;
     }
     else
     {
         glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
         GL_CHECK_RESULT;
+        return false;
     }
 }
 
