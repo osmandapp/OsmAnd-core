@@ -46,6 +46,37 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
     return ok;
 }
 
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
+    QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
+{
+    bool ok = true;
+
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
+
+    for (const auto& renderableSymbol : constOf(preRenderableSymbols))
+    {
+        if (const auto& renderableOnSurfaceSymbol =
+            std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
+        {
+            if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderableOnSurfaceSymbol->mapSymbol))
+            {
+                const auto& gpuResource =
+                    std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderableOnSurfaceSymbol->gpuResource);
+                if (gpuResource->isDenseObject)
+                {
+                    Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
+                    ok = ok && renderOnSurfaceVectorSymbol(renderableOnSurfaceSymbol, currentAlphaChannelType);
+                    if (metric)
+                        metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
+                }
+            }
+        }
+    }
+
+    return ok;
+}
+
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* metric_)
 {
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
@@ -2289,7 +2320,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    v.y = 0.0;                                                                                                     ""\n"
         "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
-        "    if (in_vs_vertexPosition.y > -12000000.0)                                                                                         ""\n"
+        "    if (in_vs_vertexPosition.y > -12000000.0)                                                                      ""\n"
         "    {                                                                                                              ""\n"
         "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
         "        v = param_vs_mModel * v;                                                                                   ""\n"
