@@ -20,6 +20,7 @@ namespace OsmAnd
 
     private:
     protected:
+        bool _renderDepthOnly;
         GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,

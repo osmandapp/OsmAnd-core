@@ -203,21 +203,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 {
     bool result = false;
     
-    // Obtain and pre-render depths for volumetric symbols
-    QList<std::shared_ptr<const RenderableSymbol>> preRenderableSymbols;
+    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+        return false;
+
+    // Obtain volumetric symbols to pre-render their depths
+    QList<std::shared_ptr<const RenderableSymbol>> volumetricSymbols;
     ScreenQuadTree dummyIntersections;
     result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             true,
-            preRenderableSymbols,
+            volumetricSymbols,
             dummyIntersections,
             nullptr,
             metric);
 
-    if (!result)
-        return false;
+    publishedMapSymbolsByOrderLock.unlock();
 
-    preRender(preRenderableSymbols, metric);
+    preRender(volumetricSymbols, metric);
     
     Stopwatch stopwatch(metric != nullptr);
 

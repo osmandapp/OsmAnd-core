@@ -97,8 +97,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     GL_CHECK_RESULT;
     
+    _renderDepthOnly = true;
+
     prepare(metric);
     
+    _renderDepthOnly = false;
+
     // Resume drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
@@ -2332,6 +2336,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
         "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
         "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "        gl_Position.z += param_vs_lookupOffsetAndScale.w;                                                          ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevation_scale.w) > 0.0 && param_vs_elevationInMeters == 0.0)                           ""\n"
         "    {                                                                                                              ""\n"
@@ -2349,6 +2354,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
         "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
         "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "        gl_Position.z += param_vs_lookupOffsetAndScale.w;                                                          ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"
         "    {                                                                                                              ""\n"
@@ -2695,7 +2701,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             startPosition.x,
             startPosition.y,
             scaleFactor,
-            scaleFactor);
+            _renderDepthOnly ? internalState.zNear * 1.0001f : 0.0f);
         GL_CHECK_RESULT;
 
         // Set camera position and zFar distance to compute suitable elevation shift (against z-fighting)
