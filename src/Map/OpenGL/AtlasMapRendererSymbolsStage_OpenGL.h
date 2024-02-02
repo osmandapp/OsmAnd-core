@@ -20,6 +20,7 @@ namespace OsmAnd
 
     private:
     protected:
+        bool _renderDepthOnly;
         GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
@@ -350,6 +351,8 @@ namespace OsmAnd
         ~AtlasMapRendererSymbolsStage_OpenGL() override;
 
         bool initialize() override;
+        bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool release(bool gpuContextLost) override;
     };

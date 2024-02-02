@@ -140,6 +140,7 @@ namespace OsmAnd
             bool forceUpdate = false);
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+            const bool preRenderDenseSymbolsDepth,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
@@ -256,6 +257,8 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
 
         // Terrain-related:
+        virtual bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
         virtual void clearTerrainVisibilityFiltering() = 0;
         virtual int startTerrainVisibilityFiltering(
             const PointF& pointOnScreen,

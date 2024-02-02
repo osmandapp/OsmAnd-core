@@ -201,6 +201,26 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric,
     bool forceUpdate /*= false*/)
 {
+    bool result = false;
+    
+    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+        return false;
+
+    // Obtain volumetric symbols to pre-render their depths
+    QList<std::shared_ptr<const RenderableSymbol>> volumetricSymbols;
+    ScreenQuadTree dummyIntersections;
+    result = obtainRenderableSymbols(
+            publishedMapSymbolsByOrder,
+            true,
+            volumetricSymbols,
+            dummyIntersections,
+            nullptr,
+            metric);
+
+    publishedMapSymbolsByOrderLock.unlock();
+
+    preRender(volumetricSymbols, metric);
+    
     Stopwatch stopwatch(metric != nullptr);
 
     // Overscaled/underscaled symbol resources were removed
@@ -213,8 +233,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             return false;
 
         _lastAcceptedMapSymbolsByOrder.clear();
-        const auto result = obtainRenderableSymbols(
+        result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
+            false,
             outRenderableSymbols,
             outIntersections,
             &_lastAcceptedMapSymbolsByOrder,
@@ -310,8 +331,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 
     // Otherwise, use last accepted map symbols by order
-    const auto result = obtainRenderableSymbols(
+    result = obtainRenderableSymbols(
         filteredLastAcceptedMapSymbols,
+        false,
         outRenderableSymbols,
         outIntersections,
         nullptr,
@@ -324,6 +346,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+    const bool preRenderDenseSymbolsDepth,
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     ScreenQuadTree& outIntersections,
     MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
@@ -457,6 +480,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
+                const bool isDenseSymbolGroup = preRenderDenseSymbolsDepth
+                    && std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+
+                if (preRenderDenseSymbolsDepth && !isDenseSymbolGroup)
+                    continue;
+
                 const bool freshlyPublishedGroup = std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
                     || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
 
@@ -525,7 +554,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             computedPathsDataCache,
                             renderableSymbols,
                             outIntersections,
-                            applyFiltering,
+                            applyFiltering || preRenderDenseSymbolsDepth,
                             metric);
 
                         bool atLeastOnePlotted = false;
@@ -602,7 +631,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             computedPathsDataCache,
                             renderableSymbols,
                             outIntersections,
-                            applyFiltering,
+                            applyFiltering || preRenderDenseSymbolsDepth,
                             metric);
 
                         bool atLeastOnePlotted = false;
