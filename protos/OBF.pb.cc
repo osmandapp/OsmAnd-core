@@ -1140,10 +1140,11 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndRoutingIndex_RouteDataBlock));
   OsmAndHHRoutingIndex_descriptor_ = file->message_type(40);
-  static const int OsmAndHHRoutingIndex_offsets_[5] = {
+  static const int OsmAndHHRoutingIndex_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, edition_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, profile_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, profileparams_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, tagvaluestable_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, pointboxes_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex, pointsegments_),
   };
@@ -1179,7 +1180,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(OsmAndHHRoutingIndex_HHRoutePointsBox));
   OsmAndHHRoutingIndex_HHRouteNetworkPoint_descriptor_ = OsmAndHHRoutingIndex_descriptor_->nested_type(1);
-  static const int OsmAndHHRoutingIndex_HHRouteNetworkPoint_offsets_[11] = {
+  static const int OsmAndHHRoutingIndex_HHRouteNetworkPoint_offsets_[12] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, dx_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, dy_),
@@ -1191,6 +1192,7 @@ void protobuf_AssignDesc_OBF_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, dualclusterid_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, profileids_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, partialind_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndHHRoutingIndex_HHRouteNetworkPoint, tagvalueids_),
   };
   OsmAndHHRoutingIndex_HHRouteNetworkPoint_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -1695,34 +1697,36 @@ void protobuf_AddDesc_OBF_2eproto() {
     "ataObjects\030\006 \003(\0132\025.OsmAnd.OBF.RouteData\022"
     "1\n\014restrictions\030\007 \003(\0132\033.OsmAnd.OBF.Restr"
     "ictionData\022,\n\013stringTable\030\010 \001(\0132\027.OsmAnd"
-    ".OBF.StringTable\"\317\007\n\024OsmAndHHRoutingInde"
+    ".OBF.StringTable\"\225\010\n\024OsmAndHHRoutingInde"
     "x\022\017\n\007edition\030\001 \002(\003\022\017\n\007profile\030\002 \002(\t\022\025\n\rp"
-    "rofileParams\030\003 \003(\t\022E\n\npointBoxes\030\005 \002(\01321"
-    ".OsmAnd.OBF.OsmAndHHRoutingIndex.HHRoute"
-    "PointsBox\022L\n\rpointSegments\030\006 \003(\01325.OsmAn"
-    "d.OBF.OsmAndHHRoutingIndex.HHRouteBlockS"
-    "egments\032\324\001\n\020HHRoutePointsBox\022\014\n\004left\030\002 \002"
-    "(\021\022\r\n\005right\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022\016\n\006bottom"
-    "\030\005 \002(\021\022@\n\005boxes\030\006 \003(\01321.OsmAnd.OBF.OsmAn"
-    "dHHRoutingIndex.HHRoutePointsBox\022D\n\006poin"
-    "ts\030\007 \003(\01324.OsmAnd.OBF.OsmAndHHRoutingInd"
-    "ex.HHRouteNetworkPoint\032\335\001\n\023HHRouteNetwor"
-    "kPoint\022\n\n\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002"
-    "(\021\022\020\n\010globalId\030\004 \002(\005\022\016\n\006roadId\030\005 \002(\003\022\031\n\021"
-    "roadStartEndIndex\030\006 \002(\005\022\021\n\tclusterId\030\007 \001"
-    "(\005\022\023\n\013dualPointId\030\010 \001(\005\022\025\n\rdualClusterId"
-    "\030\t \001(\005\022\022\n\nprofileIds\030\n \003(\005\022\022\n\npartialInd"
-    "\030\013 \001(\005\032\360\001\n\024HHRouteBlockSegments\022\024\n\014idRan"
-    "geStart\030\001 \002(\005\022\025\n\ridRangeLength\030\002 \002(\005\022\021\n\t"
-    "profileId\030\003 \001(\005\022J\n\013innerBlocks\030\006 \003(\01325.O"
-    "smAnd.OBF.OsmAndHHRoutingIndex.HHRouteBl"
-    "ockSegments\022L\n\rpointSegments\030\004 \003(\01325.Osm"
-    "And.OBF.OsmAndHHRoutingIndex.HHRoutePoin"
-    "tSegments\032\?\n\024HHRoutePointSegments\022\022\n\nseg"
-    "mentsIn\030\002 \002(\014\022\023\n\013segmentsOut\030\003 \002(\014\"T\n\013Os"
-    "mAndOwner\022\014\n\004name\030\001 \002(\t\022\020\n\010resource\030\002 \001("
-    "\t\022\023\n\013description\030\003 \001(\t\022\020\n\010pluginid\030\004 \001(\t"
-    "B\036\n\021net.osmand.binaryB\tOsmandOdb", 8832);
+    "rofileParams\030\003 \003(\t\022/\n\016tagValuesTable\030\004 \001"
+    "(\0132\027.OsmAnd.OBF.StringTable\022E\n\npointBoxe"
+    "s\030\005 \002(\01321.OsmAnd.OBF.OsmAndHHRoutingInde"
+    "x.HHRoutePointsBox\022L\n\rpointSegments\030\006 \003("
+    "\01325.OsmAnd.OBF.OsmAndHHRoutingIndex.HHRo"
+    "uteBlockSegments\032\324\001\n\020HHRoutePointsBox\022\014\n"
+    "\004left\030\002 \002(\021\022\r\n\005right\030\003 \002(\021\022\013\n\003top\030\004 \002(\021\022"
+    "\016\n\006bottom\030\005 \002(\021\022@\n\005boxes\030\006 \003(\01321.OsmAnd."
+    "OBF.OsmAndHHRoutingIndex.HHRoutePointsBo"
+    "x\022D\n\006points\030\007 \003(\01324.OsmAnd.OBF.OsmAndHHR"
+    "outingIndex.HHRouteNetworkPoint\032\362\001\n\023HHRo"
+    "uteNetworkPoint\022\n\n\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022"
+    "\n\n\002dy\030\003 \002(\021\022\020\n\010globalId\030\004 \002(\005\022\016\n\006roadId\030"
+    "\005 \002(\003\022\031\n\021roadStartEndIndex\030\006 \002(\005\022\021\n\tclus"
+    "terId\030\007 \001(\005\022\023\n\013dualPointId\030\010 \001(\005\022\025\n\rdual"
+    "ClusterId\030\t \001(\005\022\022\n\nprofileIds\030\n \003(\005\022\022\n\np"
+    "artialInd\030\013 \001(\005\022\023\n\013tagValueIds\030\014 \003(\005\032\360\001\n"
+    "\024HHRouteBlockSegments\022\024\n\014idRangeStart\030\001 "
+    "\002(\005\022\025\n\ridRangeLength\030\002 \002(\005\022\021\n\tprofileId\030"
+    "\003 \001(\005\022J\n\013innerBlocks\030\006 \003(\01325.OsmAnd.OBF."
+    "OsmAndHHRoutingIndex.HHRouteBlockSegment"
+    "s\022L\n\rpointSegments\030\004 \003(\01325.OsmAnd.OBF.Os"
+    "mAndHHRoutingIndex.HHRoutePointSegments\032"
+    "\?\n\024HHRoutePointSegments\022\022\n\nsegmentsIn\030\002 "
+    "\002(\014\022\023\n\013segmentsOut\030\003 \002(\014\"T\n\013OsmAndOwner\022"
+    "\014\n\004name\030\001 \002(\t\022\020\n\010resource\030\002 \001(\t\022\023\n\013descr"
+    "iption\030\003 \001(\t\022\020\n\010pluginid\030\004 \001(\tB\036\n\021net.os"
+    "mand.binaryB\tOsmandOdb", 8902);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -21977,6 +21981,7 @@ const int OsmAndHHRoutingIndex_HHRouteNetworkPoint::kDualPointIdFieldNumber;
 const int OsmAndHHRoutingIndex_HHRouteNetworkPoint::kDualClusterIdFieldNumber;
 const int OsmAndHHRoutingIndex_HHRouteNetworkPoint::kProfileIdsFieldNumber;
 const int OsmAndHHRoutingIndex_HHRouteNetworkPoint::kPartialIndFieldNumber;
+const int OsmAndHHRoutingIndex_HHRouteNetworkPoint::kTagValueIdsFieldNumber;
 #endif  // !_MSC_VER
 
 OsmAndHHRoutingIndex_HHRouteNetworkPoint::OsmAndHHRoutingIndex_HHRouteNetworkPoint()
@@ -22054,6 +22059,7 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::Clear() {
     partialind_ = 0;
   }
   profileids_.Clear();
+  tagvalueids_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -22241,6 +22247,28 @@ bool OsmAndHHRoutingIndex_HHRouteNetworkPoint::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(96)) goto parse_tagValueIds;
+        break;
+      }
+
+      // repeated int32 tagValueIds = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_tagValueIds:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 1, 96, input, this->mutable_tagvalueids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, this->mutable_tagvalueids())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(96)) goto parse_tagValueIds;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -22319,6 +22347,12 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->partialind(), output);
   }
 
+  // repeated int32 tagValueIds = 12;
+  for (int i = 0; i < this->tagvalueids_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(
+      12, this->tagvalueids(i), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -22381,6 +22415,12 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::SerializeWithCachedSizes(
   // optional int32 partialInd = 11;
   if (has_partialind()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(11, this->partialind(), target);
+  }
+
+  // repeated int32 tagValueIds = 12;
+  for (int i = 0; i < this->tagvalueids_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteInt32ToArray(12, this->tagvalueids(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -22477,6 +22517,16 @@ int OsmAndHHRoutingIndex_HHRouteNetworkPoint::ByteSize() const {
     total_size += 1 * this->profileids_size() + data_size;
   }
 
+  // repeated int32 tagValueIds = 12;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->tagvalueids_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        Int32Size(this->tagvalueids(i));
+    }
+    total_size += 1 * this->tagvalueids_size() + data_size;
+  }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -22503,6 +22553,7 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::MergeFrom(const ::google::protobu
 void OsmAndHHRoutingIndex_HHRouteNetworkPoint::MergeFrom(const OsmAndHHRoutingIndex_HHRouteNetworkPoint& from) {
   GOOGLE_CHECK_NE(&from, this);
   profileids_.MergeFrom(from.profileids_);
+  tagvalueids_.MergeFrom(from.tagvalueids_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_id()) {
       set_id(from.id());
@@ -22571,6 +22622,7 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::Swap(OsmAndHHRoutingIndex_HHRoute
     std::swap(dualclusterid_, other->dualclusterid_);
     profileids_.Swap(&other->profileids_);
     std::swap(partialind_, other->partialind_);
+    tagvalueids_.Swap(&other->tagvalueids_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -23232,6 +23284,7 @@ void OsmAndHHRoutingIndex_HHRoutePointSegments::Swap(OsmAndHHRoutingIndex_HHRout
 const int OsmAndHHRoutingIndex::kEditionFieldNumber;
 const int OsmAndHHRoutingIndex::kProfileFieldNumber;
 const int OsmAndHHRoutingIndex::kProfileParamsFieldNumber;
+const int OsmAndHHRoutingIndex::kTagValuesTableFieldNumber;
 const int OsmAndHHRoutingIndex::kPointBoxesFieldNumber;
 const int OsmAndHHRoutingIndex::kPointSegmentsFieldNumber;
 #endif  // !_MSC_VER
@@ -23242,6 +23295,7 @@ OsmAndHHRoutingIndex::OsmAndHHRoutingIndex()
 }
 
 void OsmAndHHRoutingIndex::InitAsDefaultInstance() {
+  tagvaluestable_ = const_cast< ::OsmAnd::OBF::StringTable*>(&::OsmAnd::OBF::StringTable::default_instance());
   pointboxes_ = const_cast< ::OsmAnd::OBF::OsmAndHHRoutingIndex_HHRoutePointsBox*>(&::OsmAnd::OBF::OsmAndHHRoutingIndex_HHRoutePointsBox::default_instance());
 }
 
@@ -23255,6 +23309,7 @@ void OsmAndHHRoutingIndex::SharedCtor() {
   _cached_size_ = 0;
   edition_ = GOOGLE_LONGLONG(0);
   profile_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  tagvaluestable_ = NULL;
   pointboxes_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -23268,6 +23323,7 @@ void OsmAndHHRoutingIndex::SharedDtor() {
     delete profile_;
   }
   if (this != default_instance_) {
+    delete tagvaluestable_;
     delete pointboxes_;
   }
 }
@@ -23300,6 +23356,9 @@ void OsmAndHHRoutingIndex::Clear() {
       if (profile_ != &::google::protobuf::internal::kEmptyString) {
         profile_->clear();
       }
+    }
+    if (has_tagvaluestable()) {
+      if (tagvaluestable_ != NULL) tagvaluestable_->::OsmAnd::OBF::StringTable::Clear();
     }
     if (has_pointboxes()) {
       if (pointboxes_ != NULL) pointboxes_->::OsmAnd::OBF::OsmAndHHRoutingIndex_HHRoutePointsBox::Clear();
@@ -23364,6 +23423,20 @@ bool OsmAndHHRoutingIndex::MergePartialFromCodedStream(
           goto handle_uninterpreted;
         }
         if (input->ExpectTag(26)) goto parse_profileParams;
+        if (input->ExpectTag(34)) goto parse_tagValuesTable;
+        break;
+      }
+
+      // optional .OsmAnd.OBF.StringTable tagValuesTable = 4;
+      case 4: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_tagValuesTable:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_tagvaluestable()));
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectTag(42)) goto parse_pointBoxes;
         break;
       }
@@ -23438,6 +23511,12 @@ void OsmAndHHRoutingIndex::SerializeWithCachedSizes(
       3, this->profileparams(i), output);
   }
 
+  // optional .OsmAnd.OBF.StringTable tagValuesTable = 4;
+  if (has_tagvaluestable()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->tagvaluestable(), output);
+  }
+
   // required .OsmAnd.OBF.OsmAndHHRoutingIndex.HHRoutePointsBox pointBoxes = 5;
   if (has_pointboxes()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -23482,6 +23561,13 @@ void OsmAndHHRoutingIndex::SerializeWithCachedSizes(
       WriteStringToArray(3, this->profileparams(i), target);
   }
 
+  // optional .OsmAnd.OBF.StringTable tagValuesTable = 4;
+  if (has_tagvaluestable()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        4, this->tagvaluestable(), target);
+  }
+
   // required .OsmAnd.OBF.OsmAndHHRoutingIndex.HHRoutePointsBox pointBoxes = 5;
   if (has_pointboxes()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -23519,6 +23605,13 @@ int OsmAndHHRoutingIndex::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->profile());
+    }
+
+    // optional .OsmAnd.OBF.StringTable tagValuesTable = 4;
+    if (has_tagvaluestable()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->tagvaluestable());
     }
 
     // required .OsmAnd.OBF.OsmAndHHRoutingIndex.HHRoutePointsBox pointBoxes = 5;
@@ -23578,6 +23671,9 @@ void OsmAndHHRoutingIndex::MergeFrom(const OsmAndHHRoutingIndex& from) {
     if (from.has_profile()) {
       set_profile(from.profile());
     }
+    if (from.has_tagvaluestable()) {
+      mutable_tagvaluestable()->::OsmAnd::OBF::StringTable::MergeFrom(from.tagvaluestable());
+    }
     if (from.has_pointboxes()) {
       mutable_pointboxes()->::OsmAnd::OBF::OsmAndHHRoutingIndex_HHRoutePointsBox::MergeFrom(from.pointboxes());
     }
@@ -23598,7 +23694,7 @@ void OsmAndHHRoutingIndex::CopyFrom(const OsmAndHHRoutingIndex& from) {
 }
 
 bool OsmAndHHRoutingIndex::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000000b) != 0x0000000b) return false;
+  if ((_has_bits_[0] & 0x00000013) != 0x00000013) return false;
 
   if (has_pointboxes()) {
     if (!this->pointboxes().IsInitialized()) return false;
@@ -23614,6 +23710,7 @@ void OsmAndHHRoutingIndex::Swap(OsmAndHHRoutingIndex* other) {
     std::swap(edition_, other->edition_);
     std::swap(profile_, other->profile_);
     profileparams_.Swap(&other->profileparams_);
+    std::swap(tagvaluestable_, other->tagvaluestable_);
     std::swap(pointboxes_, other->pointboxes_);
     pointsegments_.Swap(&other->pointsegments_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
