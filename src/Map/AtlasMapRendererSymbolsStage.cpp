@@ -204,22 +204,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     bool result = false;
     
     if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+    {
+        preRender(denseSymbols, metric);
         return false;
+    }
 
     // Obtain volumetric symbols to pre-render their depths
-    QList<std::shared_ptr<const RenderableSymbol>> volumetricSymbols;
     ScreenQuadTree dummyIntersections;
     result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
             true,
-            volumetricSymbols,
+            denseSymbols,
             dummyIntersections,
             nullptr,
             metric);
 
-    publishedMapSymbolsByOrderLock.unlock();
-
-    preRender(volumetricSymbols, metric);
+    preRender(denseSymbols, metric);
     
     Stopwatch stopwatch(metric != nullptr);
 
@@ -229,9 +229,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // In case symbols update was not suspended, process published symbols
     if (!renderer->isSymbolsUpdateSuspended() || forceUpdate || needUpdatedSymbols)
     {
-        if (!publishedMapSymbolsByOrderLock.tryLockForRead())
-            return false;
-
         _lastAcceptedMapSymbolsByOrder.clear();
         result = obtainRenderableSymbols(
             publishedMapSymbolsByOrder,
@@ -265,9 +262,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 
     // Do not suspend MapMarker and VectorLine objects
-
-    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
-        return false;
 
     // Acquire fresh MapMarker and VectorLine objects from publishedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
@@ -462,6 +456,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const auto treeDepth = 32u - SkCLZ(viewportMaxDimension >> 6);
     outIntersections = ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u));
     ComputedPathsDataCache computedPathsDataCache;
+    clearTerrainVisibilityFiltering();
     bool applyFiltering = pOutAcceptedMapSymbolsByOrder != nullptr;
     if (!applyFiltering || !withTerrainFilter())
     {
@@ -677,7 +672,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         typedef std::pair<const std::shared_ptr<MapSymbolsGroup::AdditionalInstance>*,
             std::shared_ptr<QList<std::shared_ptr<RenderableSymbol>>>> SymbolRenderables;
         QList<SymbolRenderables> renderables;
-        clearTerrainVisibilityFiltering();
 
         // Collect renderable symbols for rendering
         for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
@@ -1176,7 +1170,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     const std::shared_ptr<RenderableSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     Stopwatch stopwatch(metric != nullptr);
 
@@ -1347,7 +1341,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     bool plotted = false;
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
@@ -1366,7 +1360,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     auto visibleBBox = renderable->visibleBBox.asAABB;
 
@@ -1416,7 +1410,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardVectorSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     assert(false);
     return false;
@@ -1618,7 +1612,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -1637,7 +1631,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     const auto& internalState = getInternalState();
 
@@ -1651,7 +1645,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     const auto& internalState = getInternalState();
 
@@ -2179,7 +2173,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const std::shared_ptr<RenderableOnPathSymbol>& renderable,
     ScreenQuadTree& intersections,
     bool applyFiltering /*= true*/,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     const auto& internalState = getInternalState();
 

@@ -74,6 +74,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
         }
     }
 
+    // Disable actual drawing for symbol preparation phase
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    GL_CHECK_RESULT;
+
     return ok;
 }
 
@@ -93,23 +97,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
     _lastUsedProgram = 0;
 
-    // Disable actual drawing for symbol preparation phase
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    GL_CHECK_RESULT;
-    
-    _renderDepthOnly = true;
-
-    prepare(metric);
-    
-    _renderDepthOnly = false;
-
-    // Resume drawing
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    GL_CHECK_RESULT;
-
     // Initially, configure for straight alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Straight;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    prepare(metric);
+
+    // Resume drawing
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     GL_CHECK_RESULT;
 
     // Prepare JSON report
@@ -2336,7 +2332,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
         "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
         "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
-        "        gl_Position.z += param_vs_lookupOffsetAndScale.w;                                                          ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevation_scale.w) > 0.0 && param_vs_elevationInMeters == 0.0)                           ""\n"
         "    {                                                                                                              ""\n"
@@ -2354,7 +2349,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
         "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
         "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
-        "        gl_Position.z += param_vs_lookupOffsetAndScale.w;                                                          ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"
         "    {                                                                                                              ""\n"
@@ -2701,7 +2695,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             startPosition.x,
             startPosition.y,
             scaleFactor,
-            _renderDepthOnly ? internalState.zNear * 1.0001f : 0.0f);
+            scaleFactor);
         GL_CHECK_RESULT;
 
         // Set camera position and zFar distance to compute suitable elevation shift (against z-fighting)
@@ -3098,6 +3092,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::clearTerrainVisibilityFilterin
     _queryResultsCount = 0;
     _queryMapEven.clear();
     _queryMapOdd.clear();
+    _queryResultsMap.clear();
 }
 
 int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering(
@@ -3124,14 +3119,14 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
     if (filterQuery)
     {
         scaledPoint = pointOnScreen / _querySizeFactor;
-        evenCode = static_cast<int>(scaledPoint.y) * 10000 + static_cast<int>(scaledPoint.x);
-        oddCode = static_cast<int>(scaledPoint.y + 0.5f) * 10000 + static_cast<int>(scaledPoint.x + 0.5f);
+        evenCode = static_cast<int>(scaledPoint.y) * 1000 + static_cast<int>(scaledPoint.x);
+        oddCode = static_cast<int>(scaledPoint.y + 0.5f) * 1000 + static_cast<int>(scaledPoint.x + 0.5f);
         auto citQueryIndex = _queryMapEven.constFind(evenCode);
         if (citQueryIndex != _queryMapEven.cend())
-            return *citQueryIndex;
+            return citQueryIndex.value();
         citQueryIndex = _queryMapOdd.constFind(oddCode);
         if (citQueryIndex != _queryMapOdd.cend())
-            return *citQueryIndex;
+            return citQueryIndex.value();
 
         // The larger checking point of symbol requires the more distinctive visible terrain location
         const auto cameraVectorN = internalState.worldCameraPosition / internalState.distanceFromCameraToTarget;
@@ -3236,7 +3231,7 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFiltering(const int queryIndex,
-    AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const
+    AtlasMapRenderer_Metrics::Metric_renderFrame* metric)
 {
     Stopwatch stopwatch(metric != nullptr);
 
@@ -3246,8 +3241,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::applyTerrainVisibilityFilterin
         result = _queryResults[queryIndex];
     else
     {
-        const auto gpuAPI = getGPUAPI();
-        result = gpuAPI->elementIsVisible(queryIndex - _queryResultsCount);
+        auto citQueryIndex = _queryResultsMap.constFind(queryIndex);
+        if (citQueryIndex != _queryResultsMap.cend())
+            result = citQueryIndex.value();
+        else
+        {
+            const auto gpuAPI = getGPUAPI();
+            result = gpuAPI->elementIsVisible(queryIndex - _queryResultsCount);
+            _queryResultsMap.insert(queryIndex, result);
+        }
     }
 
     if (metric)
