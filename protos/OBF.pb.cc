@@ -1697,7 +1697,7 @@ void protobuf_AddDesc_OBF_2eproto() {
     "ataObjects\030\006 \003(\0132\025.OsmAnd.OBF.RouteData\022"
     "1\n\014restrictions\030\007 \003(\0132\033.OsmAnd.OBF.Restr"
     "ictionData\022,\n\013stringTable\030\010 \001(\0132\027.OsmAnd"
-    ".OBF.StringTable\"\225\010\n\024OsmAndHHRoutingInde"
+    ".OBF.StringTable\"\231\010\n\024OsmAndHHRoutingInde"
     "x\022\017\n\007edition\030\001 \002(\003\022\017\n\007profile\030\002 \002(\t\022\025\n\rp"
     "rofileParams\030\003 \003(\t\022/\n\016tagValuesTable\030\004 \001"
     "(\0132\027.OsmAnd.OBF.StringTable\022E\n\npointBoxe"
@@ -1709,24 +1709,24 @@ void protobuf_AddDesc_OBF_2eproto() {
     "\016\n\006bottom\030\005 \002(\021\022@\n\005boxes\030\006 \003(\01321.OsmAnd."
     "OBF.OsmAndHHRoutingIndex.HHRoutePointsBo"
     "x\022D\n\006points\030\007 \003(\01324.OsmAnd.OBF.OsmAndHHR"
-    "outingIndex.HHRouteNetworkPoint\032\362\001\n\023HHRo"
+    "outingIndex.HHRouteNetworkPoint\032\366\001\n\023HHRo"
     "uteNetworkPoint\022\n\n\002id\030\001 \002(\005\022\n\n\002dx\030\002 \002(\021\022"
     "\n\n\002dy\030\003 \002(\021\022\020\n\010globalId\030\004 \002(\005\022\016\n\006roadId\030"
     "\005 \002(\003\022\031\n\021roadStartEndIndex\030\006 \002(\005\022\021\n\tclus"
     "terId\030\007 \001(\005\022\023\n\013dualPointId\030\010 \001(\005\022\025\n\rdual"
     "ClusterId\030\t \001(\005\022\022\n\nprofileIds\030\n \003(\005\022\022\n\np"
-    "artialInd\030\013 \001(\005\022\023\n\013tagValueIds\030\014 \003(\005\032\360\001\n"
-    "\024HHRouteBlockSegments\022\024\n\014idRangeStart\030\001 "
-    "\002(\005\022\025\n\ridRangeLength\030\002 \002(\005\022\021\n\tprofileId\030"
-    "\003 \001(\005\022J\n\013innerBlocks\030\006 \003(\01325.OsmAnd.OBF."
-    "OsmAndHHRoutingIndex.HHRouteBlockSegment"
-    "s\022L\n\rpointSegments\030\004 \003(\01325.OsmAnd.OBF.Os"
-    "mAndHHRoutingIndex.HHRoutePointSegments\032"
-    "\?\n\024HHRoutePointSegments\022\022\n\nsegmentsIn\030\002 "
-    "\002(\014\022\023\n\013segmentsOut\030\003 \002(\014\"T\n\013OsmAndOwner\022"
-    "\014\n\004name\030\001 \002(\t\022\020\n\010resource\030\002 \001(\t\022\023\n\013descr"
-    "iption\030\003 \001(\t\022\020\n\010pluginid\030\004 \001(\tB\036\n\021net.os"
-    "mand.binaryB\tOsmandOdb", 8902);
+    "artialInd\030\013 \001(\005\022\027\n\013tagValueIds\030\014 \003(\005B\002\020\001"
+    "\032\360\001\n\024HHRouteBlockSegments\022\024\n\014idRangeStar"
+    "t\030\001 \002(\005\022\025\n\ridRangeLength\030\002 \002(\005\022\021\n\tprofil"
+    "eId\030\003 \001(\005\022J\n\013innerBlocks\030\006 \003(\01325.OsmAnd."
+    "OBF.OsmAndHHRoutingIndex.HHRouteBlockSeg"
+    "ments\022L\n\rpointSegments\030\004 \003(\01325.OsmAnd.OB"
+    "F.OsmAndHHRoutingIndex.HHRoutePointSegme"
+    "nts\032\?\n\024HHRoutePointSegments\022\022\n\nsegmentsI"
+    "n\030\002 \002(\014\022\023\n\013segmentsOut\030\003 \002(\014\"T\n\013OsmAndOw"
+    "ner\022\014\n\004name\030\001 \002(\t\022\020\n\010resource\030\002 \001(\t\022\023\n\013d"
+    "escription\030\003 \001(\t\022\020\n\010pluginid\030\004 \001(\tB\036\n\021ne"
+    "t.osmand.binaryB\tOsmandOdb", 8906);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -22247,28 +22247,27 @@ bool OsmAndHHRoutingIndex_HHRouteNetworkPoint::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(96)) goto parse_tagValueIds;
+        if (input->ExpectTag(98)) goto parse_tagValueIds;
         break;
       }
 
-      // repeated int32 tagValueIds = 12;
+      // repeated int32 tagValueIds = 12 [packed = true];
       case 12: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_tagValueIds:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 1, 96, input, this->mutable_tagvalueids())));
-        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
-                   == ::google::protobuf::internal::WireFormatLite::
-                      WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, this->mutable_tagvalueids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 1, 98, input, this->mutable_tagvalueids())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(96)) goto parse_tagValueIds;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -22347,10 +22346,14 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->partialind(), output);
   }
 
-  // repeated int32 tagValueIds = 12;
+  // repeated int32 tagValueIds = 12 [packed = true];
+  if (this->tagvalueids_size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteTag(12, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(_tagvalueids_cached_byte_size_);
+  }
   for (int i = 0; i < this->tagvalueids_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(
-      12, this->tagvalueids(i), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32NoTag(
+      this->tagvalueids(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -22417,10 +22420,18 @@ void OsmAndHHRoutingIndex_HHRouteNetworkPoint::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(11, this->partialind(), target);
   }
 
-  // repeated int32 tagValueIds = 12;
+  // repeated int32 tagValueIds = 12 [packed = true];
+  if (this->tagvalueids_size() > 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
+      12,
+      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
+      _tagvalueids_cached_byte_size_, target);
+  }
   for (int i = 0; i < this->tagvalueids_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteInt32ToArray(12, this->tagvalueids(i), target);
+      WriteInt32NoTagToArray(this->tagvalueids(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -22517,14 +22528,21 @@ int OsmAndHHRoutingIndex_HHRouteNetworkPoint::ByteSize() const {
     total_size += 1 * this->profileids_size() + data_size;
   }
 
-  // repeated int32 tagValueIds = 12;
+  // repeated int32 tagValueIds = 12 [packed = true];
   {
     int data_size = 0;
     for (int i = 0; i < this->tagvalueids_size(); i++) {
       data_size += ::google::protobuf::internal::WireFormatLite::
         Int32Size(this->tagvalueids(i));
     }
-    total_size += 1 * this->tagvalueids_size() + data_size;
+    if (data_size > 0) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(data_size);
+    }
+    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+    _tagvalueids_cached_byte_size_ = data_size;
+    GOOGLE_SAFE_CONCURRENT_WRITES_END();
+    total_size += data_size;
   }
 
   if (!unknown_fields().empty()) {

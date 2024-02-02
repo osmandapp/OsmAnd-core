@@ -7093,7 +7093,7 @@ class OsmAndHHRoutingIndex_HHRouteNetworkPoint : public ::google::protobuf::Mess
   inline ::google::protobuf::int32 partialind() const;
   inline void set_partialind(::google::protobuf::int32 value);
 
-  // repeated int32 tagValueIds = 12;
+  // repeated int32 tagValueIds = 12 [packed = true];
   inline int tagvalueids_size() const;
   inline void clear_tagvalueids();
   static const int kTagValueIdsFieldNumber = 12;
@@ -7141,6 +7141,7 @@ class OsmAndHHRoutingIndex_HHRouteNetworkPoint : public ::google::protobuf::Mess
   ::google::protobuf::int32 dualclusterid_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > profileids_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > tagvalueids_;
+  mutable int _tagvalueids_cached_byte_size_;
   ::google::protobuf::int32 partialind_;
 
   mutable int _cached_size_;
@@ -17072,7 +17073,7 @@ inline void OsmAndHHRoutingIndex_HHRouteNetworkPoint::set_partialind(::google::p
   partialind_ = value;
 }
 
-// repeated int32 tagValueIds = 12;
+// repeated int32 tagValueIds = 12 [packed = true];
 inline int OsmAndHHRoutingIndex_HHRouteNetworkPoint::tagvalueids_size() const {
   return tagvalueids_.size();
 }
