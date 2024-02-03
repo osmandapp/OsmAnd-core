@@ -186,7 +186,7 @@ namespace OsmAnd
             const std::shared_ptr<RenderableSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         // Billboard symbols:
         void obtainRenderablesFromBillboardSymbol(
@@ -202,17 +202,17 @@ namespace OsmAnd
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotBillboardRasterSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotBillboardVectorSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         // On-surface symbols:
         void obtainRenderablesFromOnSurfaceSymbol(
@@ -227,17 +227,17 @@ namespace OsmAnd
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotOnSurfaceRasterSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         // On-path symbols:
         void obtainRenderablesFromOnPathSymbol(
@@ -254,7 +254,7 @@ namespace OsmAnd
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
             ScreenQuadTree& intersections,
             bool applyFiltering = true,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr) const;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric = nullptr);
 
         // Terrain-related:
         virtual bool preRender(QList< std::shared_ptr<const RenderableSymbol> >& preRenderableSymbols,
@@ -267,7 +267,7 @@ namespace OsmAnd
             const glm::vec3& thirdPointInWorld,
             const glm::vec3& fourthPointInWorld) = 0;
         virtual bool applyTerrainVisibilityFiltering(const int queryIndex,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const = 0;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) = 0;
 
         // Intersection-related:
         bool applyOnScreenVisibilityFiltering(
@@ -440,6 +440,7 @@ namespace OsmAnd
             const QList< std::shared_ptr<const RenderableSymbol> >& input,
             QList<IMapRenderer::MapSymbolInformation>& output);
     protected:
+        QList< std::shared_ptr<const RenderableSymbol> > denseSymbols;
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
         void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);

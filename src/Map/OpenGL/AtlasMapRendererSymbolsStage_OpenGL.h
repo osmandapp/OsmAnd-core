@@ -20,7 +20,6 @@ namespace OsmAnd
 
     private:
     protected:
-        bool _renderDepthOnly;
         GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
@@ -290,6 +289,7 @@ namespace OsmAnd
         QVector<bool> _queryResults;
         QHash<int, int> _queryMapEven;
         QHash<int, int> _queryMapOdd;
+        QHash<int, bool> _queryResultsMap;
         float _querySizeFactor;
         GLname _visibilityCheckVAO;
         GLname _visibilityCheckVBO;
@@ -330,7 +330,7 @@ namespace OsmAnd
             const glm::vec3& thirdPointInWorld,
             const glm::vec3& fourthPointInWorld) override;
         bool applyTerrainVisibilityFiltering(const int queryIndex,
-            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) const override;
+            AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool releaseVisibilityCheck(bool gpuContextLost);
         bool configureElevationData(
             const std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU>& elevationDataResource,
