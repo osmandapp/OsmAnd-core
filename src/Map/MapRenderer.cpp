@@ -630,11 +630,6 @@ bool OsmAnd::MapRenderer::releaseRendering(bool gpuContextLost)
     if (gpuContextLost)
         gpuContextIsLost = true;
 
-    _setupOptions.gpuWorkerThreadEnabled = false;
-    _setupOptions.gpuWorkerThreadPrologue = nullptr;
-    _setupOptions.gpuWorkerThreadEpilogue = nullptr;
-    _setupOptions.frameUpdateRequestCallback = nullptr;
-
     bool ok;
 
     ok = preReleaseRendering(gpuContextLost);
