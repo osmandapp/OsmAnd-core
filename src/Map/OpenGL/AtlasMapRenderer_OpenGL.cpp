@@ -1149,7 +1149,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
             const int subCount = 1 << absZoomShift;
             const auto scaleFactor = static_cast<float>(subCount);
             minimum = std::numeric_limits<float>::max();
-            maximum = std::numeric_limits<float>::min();
+            maximum = std::numeric_limits<float>::lowest();
             bool complete = true;
             for (int yShift = 0; yShift < subCount; yShift++)
             {

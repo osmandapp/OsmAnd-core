@@ -336,6 +336,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::GeoTiffCollection_P::openCac
             meta.setSpecificated(QStringLiteral("yes"));
             cacheDb->storeMeta(meta);
             cacheDb->enableTileTimeSupport();
+            cacheDb->enableValueRangeSupport();
         }
         return cacheDb;
     }
@@ -969,7 +970,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
     bool incomplete = false;
 
     minValue = std::numeric_limits<float>::max();
-    maxValue = std::numeric_limits<float>::min();
+    maxValue = std::numeric_limits<float>::lowest();
     double noData = TIFF_NODATA;
     for (const auto& collectedSources : constOf(_collectedSources))
     {
@@ -1035,10 +1036,13 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                         else
                             cacheDatabase = heightmapCache;
                         if (cacheDatabase && cacheDatabase->isOpened() &&
-                            cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
+                            cacheDatabase->obtainTileData(tileId, zoom, pBuffer, minValue, maxValue))
                         {
-                            if (!procParameters)
+                            if (!procParameters && (minValue == std::numeric_limits<float>::max()
+                                || maxValue == std::numeric_limits<float>::lowest()))
+                            {
                                 getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
+                            }
                             return GeoTiffCollection::CallResult::Completed;
                         }
                     }
@@ -1259,8 +1263,18 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                             if (result && !empty && !compose && cacheDatabase && cacheDatabase->isOpened())
                             {
                                 const auto currentTime = QDateTime::currentMSecsSinceEpoch();
-                                cacheDatabase->storeTileData(tileId, zoom, specification,
-                                    QByteArray::fromRawData(pByteBuffer, bandCount * bandSize), currentTime);
+                                if (!procParameters && minValue != std::numeric_limits<float>::max()
+                                    && maxValue != std::numeric_limits<float>::lowest())
+                                {
+                                    cacheDatabase->storeTileData(tileId, zoom, specification,
+                                        QByteArray::fromRawData(pByteBuffer, bandCount * bandSize),
+                                        currentTime, minValue, maxValue);
+                                }
+                                else
+                                {
+                                    cacheDatabase->storeTileData(tileId, zoom, specification,
+                                        QByteArray::fromRawData(pByteBuffer, bandCount * bandSize), currentTime);
+                                }
                             }
                         }
                         GDALClose(dataset);

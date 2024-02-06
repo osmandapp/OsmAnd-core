@@ -42,6 +42,7 @@ namespace OsmAnd
         mutable QAtomicInt _cachedInvertedY;
         mutable QAtomicInt _cachedIsTileTimeSupported;
         mutable QAtomicInt _cachedIsTileSpecificationSupported;
+        mutable QAtomicInt _cachedIsTileValueRangeSupported;
         mutable QReadWriteLock _cachedBboxes31Lock;
         mutable AreaI _cachedBbox31;
         mutable std::array<AreaI, ZoomLevelsCount> _cachedBboxes31;
@@ -95,6 +96,10 @@ namespace OsmAnd
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
 
+        bool isTileValueRangeSupported() const;
+        bool hasValueRangeColumn() const;
+        bool enableValueRangeSupport(bool force = false);
+
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
         
@@ -124,11 +129,12 @@ namespace OsmAnd
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, float& minValue, float& maxValue) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
         bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
-            const QByteArray& data, int64_t time = 0);
+            const QByteArray& data, int64_t time = 0, float minValue = 0, float maxValue = 0);
         bool updateTileDataFrom(const QString& dbFilePath, const QString* specName = nullptr);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
         bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);
