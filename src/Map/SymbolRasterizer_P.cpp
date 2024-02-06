@@ -399,8 +399,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 else if (!qIsNaN(iconSymbol->intersectionSize))
                 {
                     rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
-                        static_cast<int>(iconSymbol->intersectionSize),
-                        static_cast<int>(iconSymbol->intersectionSize)));
+                        static_cast<int>(iconSymbol->intersectionSize * iconSymbol->scaleFactor),
+                        static_cast<int>(iconSymbol->intersectionSize * iconSymbol->scaleFactor)));
                 }
                 else if (!qIsNaN(iconSymbol->intersectionMargin))
                 {
