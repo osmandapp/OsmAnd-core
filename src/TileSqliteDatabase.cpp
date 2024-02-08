@@ -64,6 +64,21 @@ bool OsmAnd::TileSqliteDatabase::hasSpecificationColumn() const
     return _p->hasSpecificationColumn();
 }
 
+bool OsmAnd::TileSqliteDatabase::isTileValueRangeSupported() const
+{
+    return _p->isTileValueRangeSupported();
+}
+
+bool OsmAnd::TileSqliteDatabase::hasValueRangeColumn() const
+{
+    return _p->hasValueRangeColumn();
+}
+
+bool OsmAnd::TileSqliteDatabase::enableValueRangeSupport(bool force /* = false */)
+{
+    return _p->enableValueRangeSupport(force);
+}
+
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase::getMinZoom() const
 {
     return _p->getMinZoom();
@@ -184,6 +199,16 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    float& minValue,
+    float& maxValue) const
+{
+    return _p->obtainTileData(tileId, zoom, outData, minValue, maxValue);
+}
+
+bool OsmAnd::TileSqliteDatabase::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int64_t specification,
     void* outData,
     int64_t* pOutTime /* = nullptr*/) const
@@ -205,9 +230,11 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
     const QByteArray& data,
-    int64_t time /* = 0*/)
+    int64_t time /* = 0*/,
+    float minValue /* = 0*/,
+    float maxValue /* = 0*/)
 {
-    return _p->storeTileData(tileId, zoom, specification, data, time);
+    return _p->storeTileData(tileId, zoom, specification, data, time, minValue, maxValue);
 }
 
 bool OsmAnd::TileSqliteDatabase::updateTileDataFrom(
@@ -559,6 +586,27 @@ QString OsmAnd::TileSqliteDatabase::Meta::getSpecificated(bool* outOk /* = nullp
 void OsmAnd::TileSqliteDatabase::Meta::setSpecificated(QString specificated)
 {
     values.insert(SPECIFICATED, QVariant(qMove(specificated)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::VALUE_RANGE(QStringLiteral("valuerange"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getValueRange(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itValueRange = values.constFind(VALUE_RANGE);
+    if (itValueRange == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itValueRange->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setValueRange(QString valueRange)
+{
+    values.insert(VALUE_RANGE, QVariant(qMove(valueRange)));
 }
 
 const QString OsmAnd::TileSqliteDatabase::Meta::EXPIRE_MINUTES(QStringLiteral("expireminutes"));

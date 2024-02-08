@@ -29,6 +29,7 @@ void OsmAnd::TileSqliteDatabase_P::resetCachedInfo()
     _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedIsTileTimeSupported.storeRelease(std::numeric_limits<int>::min());
     _cachedIsTileSpecificationSupported.storeRelease(std::numeric_limits<int>::min());
+    _cachedIsTileValueRangeSupported.storeRelease(std::numeric_limits<int>::min());
 
     {
         QWriteLocker scopedLocker(&_cachedBboxes31Lock);
@@ -406,7 +407,113 @@ bool OsmAnd::TileSqliteDatabase_P::hasSpecificationColumn() const
     QReadLocker scopedLocker(&_lock);
 
     return execStatement(_database, QStringLiteral("SELECT s FROM tiles LIMIT 1"));
- }
+}
+
+bool OsmAnd::TileSqliteDatabase_P::isTileValueRangeSupported() const
+{
+    int isSupported;
+    if ((isSupported = _cachedIsTileValueRangeSupported.loadAcquire()) >= 0)
+    {
+        return isSupported > 0;
+    }
+
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        _cachedIsTileValueRangeSupported.storeRelease(0);
+        return false;
+    }
+
+    bool ok = false;
+    const auto valueRangeColumn = meta.getValueRange(&ok);
+    if (!ok)
+    {
+        _cachedIsTileValueRangeSupported.storeRelease(0);
+        return false;
+    }
+
+    QReadLocker scopedLocker(&_lock);
+
+    isSupported = QString::compare(valueRangeColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"));
+    
+    _cachedIsTileValueRangeSupported.storeRelease(isSupported);
+    return isSupported > 0;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::hasValueRangeColumn() const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    QReadLocker scopedLocker(&_lock);
+
+    return execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1"));
+}
+
+bool OsmAnd::TileSqliteDatabase_P::enableValueRangeSupport(bool force /* = false */)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (isTileValueRangeSupported() && !force)
+    {
+        return true;
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        if (!execStatement(_database, QStringLiteral("SELECT minvalue FROM tiles LIMIT 1")))
+        {
+            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN minvalue REAL")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to add minvalue column: %s",
+                    sqlite3_errmsg(_database.get()));
+                return false;
+            }
+        }
+        if (!execStatement(_database, QStringLiteral("SELECT maxvalue FROM tiles LIMIT 1")))
+        {
+            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN maxvalue REAL")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to add maxvalue column: %s",
+                    sqlite3_errmsg(_database.get()));
+                return false;
+            }
+        }
+    }
+
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return false;
+    }
+
+    meta.setValueRange(QStringLiteral("yes"));
+
+    if (!storeMeta(meta))
+    {
+        return false;
+    }
+
+    _cachedIsTileValueRangeSupported.storeRelease(1);
+
+    return true;
+}
 
 OsmAnd::ZoomLevel OsmAnd::TileSqliteDatabase_P::getMinZoom() const
 {
@@ -1411,6 +1518,96 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
+    void* outData,
+    float& minValue,
+    float& maxValue) const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    {
+        return false;
+    }
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
+    const auto valueRangeSupported = isTileValueRangeSupported();
+
+    {
+        QReadLocker scopedLocker(&_lock);
+
+        int res;
+
+        const auto statement = prepareStatement(_database, valueRangeSupported
+            ? QStringLiteral("SELECT image, minvalue, maxvalue FROM tiles WHERE x=:x AND y=:y AND z=:z")
+            : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z")
+        );
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for %dx%d@%d",
+                tileId.x,
+                tileId.y,
+                zoom);
+            return false;
+        }
+        if ((res = stepStatement(statement)) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to query for %dx%d@%d data: %s",
+                tileId.x,
+                tileId.y,
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+
+        if (res > 0)
+        {
+            readStatementValue(statement, 0, outData);
+
+            if (valueRangeSupported)
+            {
+                auto sqlValue = readStatementValue(statement, 1);
+                if (!sqlValue.isNull())
+                {
+                    bool ok = false;
+                    const auto value = sqlValue.toDouble(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    minValue = static_cast<float>(value);
+                }
+                sqlValue = readStatementValue(statement, 2);
+                if (!sqlValue.isNull())
+                {
+                    bool ok = false;
+                    const auto value = sqlValue.toDouble(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    maxValue = static_cast<float>(value);
+                }
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
     int64_t specification,
     void* outData,
     int64_t* pOutTime /* = nullptr */) const
@@ -1573,7 +1770,9 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
     const QByteArray& data,
-    int64_t time /* = 0 */)
+    int64_t time /* = 0 */,
+    float minValue /* = 0 */,
+    float maxValue /* = 0 */)
 {
     if (!isOpened())
     {
@@ -1585,13 +1784,26 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
 
     const auto timeSupported = isTileTimeSupported();
 
+    const auto valueRangeSupported = isTileValueRangeSupported();
+
     {
         QWriteLocker scopedLocker(&_lock);
 
-        const auto statement = prepareStatement(_database, timeSupported
-            ? QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, s, image, time) VALUES(:x, :y, :z, :s, :data, :time)")
-            : QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, s, image) VALUES(:x, :y, :z, :s, :data)")
-        );
+        QString head =
+            QStringLiteral("INSERT OR REPLACE INTO tiles(x, y, z, s, image");
+        QString tail =
+            QStringLiteral(") VALUES(:x, :y, :z, :s, :data");
+        if (timeSupported)
+        {
+            head += QStringLiteral(", time");
+            tail += QStringLiteral(", :time");
+        }
+        if (valueRangeSupported)
+        {
+            head += QStringLiteral(", minvalue, maxvalue");
+            tail += QStringLiteral(", :minvalue, :maxvalue");
+        }
+        const auto statement = prepareStatement(_database, head + tail + QStringLiteral(")"));
         if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
@@ -1620,6 +1832,30 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
             LogPrintf(
                 LogSeverityLevel::Error,
                 "Failed to bind time for %dx%d@%d,%lld",
+                tileId.x,
+                tileId.y,
+                zoom,
+                specification);
+            return false;
+        }
+        if (valueRangeSupported && !bindStatementParameter(
+            statement, QStringLiteral(":minvalue"), QVariant(static_cast<double>(minValue))))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to bind minvalue for %dx%d@%d,%lld",
+                tileId.x,
+                tileId.y,
+                zoom,
+                specification);
+            return false;
+        }
+        if (valueRangeSupported && !bindStatementParameter(
+            statement, QStringLiteral(":maxvalue"), QVariant(static_cast<double>(maxValue))))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to bind maxvalue for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
                 zoom,
