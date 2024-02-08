@@ -252,6 +252,13 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
 
+		"${LEGACY_SRC}/hhRouteDataStructure.h"
+		"${LEGACY_SRC}/hhRouteDataStructure.cpp"
+		"${LEGACY_SRC}/hhRoutePlanner.h"
+		"${LEGACY_SRC}/hhRoutePlanner.cpp"
+		"${LEGACY_SRC}/NetworkDBPointRouteInfo.h"
+		"${LEGACY_SRC}/NetworkDBPointRouteInfo.cpp"
+
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/coded_stream.cc \
