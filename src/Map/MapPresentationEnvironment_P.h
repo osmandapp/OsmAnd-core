@@ -94,6 +94,10 @@ namespace OsmAnd
         mutable QMutex _iconShieldsMutex;
         mutable QHash< QString, sk_sp<const SkImage> > _iconShields;
 
+        QString getShaderResourcePath(const QString& name) const;
+        QString getMapIconResourcePath(const QString& name) const;
+        QString getShieldResourcePath(const QString& name) const;
+        bool containsResourceByName(const QString& name) const;
         QByteArray obtainResourceByName(const QString& name) const;
 
         static QString makeIconKey(const QString& name, const float scale)
@@ -119,6 +123,7 @@ namespace OsmAnd
         void applyTo(MapStyleEvaluator& evaluator) const;
         void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
+        bool obtainIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
         bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
         bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
         bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
