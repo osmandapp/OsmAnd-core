@@ -1575,7 +1575,10 @@ bool OsmAnd::ResourcesManager_P::uninstallGeoTiff(const std::shared_ptr<const In
 
 bool OsmAnd::ResourcesManager_P::uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource)
 {
-    return QDir(resource->localPath).removeRecursively();
+    if (!resource->localPath.isEmpty())
+        return QDir(resource->localPath).removeRecursively();
+    else
+        return false;
 }
 
 bool OsmAnd::ResourcesManager_P::installObfFile(const QString &filePath, const QString &id, const QString &localFileName, std::shared_ptr<const InstalledResource> &outResource, OsmAnd::ResourcesManager_P::ResourceType resourceType)
