@@ -185,9 +185,9 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     return output;
 }
 
-OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::isRightToLeft(const QString& input)
+OSMAND_CORE_API OsmAnd::ICU::TextDirection OSMAND_CORE_CALL OsmAnd::ICU::getTextDirection(const QString& input)
 {
-    bool result = false;
+    auto result = MIXED;
     const auto len = input.length();
     UErrorCode icuError = U_ZERO_ERROR;
     bool ok = true;
@@ -197,7 +197,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::isRightToLeft(const QString& 
     if (pContext == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-        return false;
+        return result;
     }
 
     // Configure context to reorder from logical to visual
@@ -207,8 +207,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::isRightToLeft(const QString& 
     ok = U_SUCCESS(icuError);
     if (ok)
     {
-        auto const direction = ubidi_getDirection(pContext);
-        result = direction != UBIDI_LTR;
+        auto const dir = ubidi_getDirection(pContext);
+        result = dir == UBIDI_LTR ? LTR : (dir == UBIDI_RTL ? RTL : (dir == UBIDI_MIXED ? MIXED : NEUTRAL));
     }
     else
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);

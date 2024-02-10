@@ -16,8 +16,14 @@ namespace OsmAnd
 {
     namespace ICU
     {
+        enum TextDirection {
+            LTR,
+            RTL,
+            MIXED,
+            NEUTRAL
+        };
         OSMAND_CORE_API QString OSMAND_CORE_CALL convertToVisualOrder(const QString& input);
-        OSMAND_CORE_API bool OSMAND_CORE_CALL isRightToLeft(const QString& input);
+        OSMAND_CORE_API TextDirection OSMAND_CORE_CALL getTextDirection(const QString& input);
         OSMAND_CORE_API QString OSMAND_CORE_CALL transliterateToLatin(
             const QString& input,
             const bool keepAccentsAndDiacriticsInInput = true,

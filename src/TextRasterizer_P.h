@@ -103,8 +103,32 @@ namespace OsmAnd
             QVector<LinePaint>& paints,
             const SkScalar maxLineWidth,
             const Style::TextAlignment textAlignment) const;
-        bool drawPart(SkCanvas& canvas, const TextPaint& textPaint, QString text, bool rtl, SkPoint& origin) const;
+        bool drawPart(SkCanvas& canvas, const TextPaint& textPaint, const QString& text, bool rtl,
+            const std::shared_ptr<hb_buffer_t>& hbBuffer, SkPoint& origin) const;
         bool drawText(SkCanvas& canvas, const TextPaint& textPaint) const;
+        inline bool isRtlChar(const QChar& ch) const
+        {
+            auto d = ch.direction();
+            bool result = d == QChar::DirR
+                || d == QChar::DirAL
+                || d == QChar::DirRLE
+                || d == QChar::DirRLO
+                || d == QChar::DirRLI;
+            return result;
+        }
+        inline bool isNotRtlChar(const QChar& ch) const
+        {
+            return !isRtlChar(ch) && ch.direction() != QChar::DirAN;
+        }
+        inline bool isNotLtrChar(const QChar& ch) const
+        {
+            auto d = ch.direction();
+            bool result = d == QChar::DirB
+                || d == QChar::DirS
+                || d == QChar::DirWS
+                || d == QChar::DirON;
+            return result;
+        }
 
     protected:
         TextRasterizer_P(TextRasterizer* const owner);
