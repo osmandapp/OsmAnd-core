@@ -470,20 +470,10 @@ sk_sp<SkImage> OsmAnd::TextRasterizer_P::rasterize(
     return target.asImage();
 }
 
-bool OsmAnd::TextRasterizer_P::drawPart(SkCanvas& canvas, const TextPaint& textPaint,
-    QString text, bool rtl, SkPoint& origin) const
+bool OsmAnd::TextRasterizer_P::drawPart(SkCanvas& canvas, const TextPaint& textPaint, const QString& text, bool rtl,
+    const std::shared_ptr<hb_buffer_t>& hbBuffer, SkPoint& origin) const
 {
-    const auto pHbBuffer = hb_buffer_create();
-    if (pHbBuffer == hb_buffer_get_empty())
-    {
-        return false;
-    }
-    std::shared_ptr<hb_buffer_t> hbBuffer(pHbBuffer, hb_buffer_destroy);
-    if (!hb_buffer_allocation_successful(hbBuffer.get()))
-    {
-        return false;
-    }
-
+    hb_buffer_reset(hbBuffer.get());
     hb_buffer_add_utf16(hbBuffer.get(), reinterpret_cast<const uint16_t*>(text.constData()), text.size(), 0, -1);
     hb_buffer_set_direction(hbBuffer.get(), rtl ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(hbBuffer.get());
@@ -539,35 +529,74 @@ bool OsmAnd::TextRasterizer_P::drawText(SkCanvas& canvas, const TextPaint& textP
     if (text.isEmpty())
         return true;
 
+    const auto pHbBuffer = hb_buffer_create();
+    if (pHbBuffer == hb_buffer_get_empty())
+        return false;
+    const std::shared_ptr<hb_buffer_t> hbBuffer(pHbBuffer, hb_buffer_destroy);
+    if (!hb_buffer_allocation_successful(hbBuffer.get()))
+        return false;
+
     // Detect parts that have different text directions
-    const auto rightToLeft = ICU::isRightToLeft(text);
+    auto origin = SkPoint::Make(0.0f, 0.0f);
+    auto direction = ICU::getTextDirection(text);
+    if (direction != ICU::TextDirection::MIXED)
+        return drawPart(canvas, textPaint, text, direction == ICU::TextDirection::RTL, hbBuffer, origin);
     const auto len = text.length();
-    int countLeft = 0;
-    int countRight = 0;
-    if (rightToLeft)
+    bool result = true;
+    int i, j, k, l;
+    i = 0;
+    bool prevRtl, nextRtl;
+    while (result && i < len)
     {
-        for (countLeft = 0; countLeft < len - 1; countLeft++)
+        j = i;
+        while (j < len && isNotRtlChar(text[j]))
+            j++;
+        if (j > i)
         {
-            if (ICU::isRightToLeft(text.left(countLeft + 1)))
+            result = drawPart(canvas, textPaint, text.mid(i, j - i), false, hbBuffer, origin);
+            if (!result || j == len)
+                return result;
+            i = j;
+        }
+        k = j;
+        while (k < len)
+        {
+            if (!isNotRtlChar(text[k]))
+            {
+                k++;
+                j = k;
+            }
+            else if (isNotLtrChar(text[k]))
+                k++;
+            else
                 break;
         }
-        for (countRight = 0; countRight < len - 1; countRight++)
+        if (j > i)
         {
-            if (ICU::isRightToLeft(text.right(countRight + 1)))
-                break;
+            l = j;
+            k = j - 1;
+            while (result && k >= i)
+            {
+                nextRtl = isRtlChar(text[k]) || isNotLtrChar(text[k]);
+                if (k == j - 1)
+                    prevRtl = nextRtl;
+                if (nextRtl != prevRtl || k == i)
+                {
+                    if (nextRtl != prevRtl)
+                        k++;
+                    result = drawPart(canvas, textPaint, text.mid(k, j - k), prevRtl, hbBuffer, origin);
+                    j = k;
+                    if (k > i + 1)
+                    {
+                        prevRtl = nextRtl;
+                        k--;
+                    }
+                }
+                k--;
+            }
+            i = l;
         }
     }
-
-    // Draw parts
-    auto origin = SkPoint::Make(0.0f, 0.0f);
-    bool result = true;
-    if (countLeft > 0)
-        result = drawPart(canvas, textPaint, text.left(countLeft), !rightToLeft, origin);
-    if (result)
-        result = drawPart(canvas, textPaint, text.mid(countLeft, len - countLeft - countRight), rightToLeft, origin);
-    if (result && countRight > 0)
-        result = drawPart(canvas, textPaint, text.right(countRight), !rightToLeft, origin);
-
     return result;
 }
 
