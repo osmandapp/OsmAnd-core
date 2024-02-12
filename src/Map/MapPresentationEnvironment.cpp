@@ -68,6 +68,14 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
+bool OsmAnd::MapPresentationEnvironment::obtainIcon(
+    const QString& name,
+    const float scale,
+    sk_sp<const SkImage>& outIcon) const
+{
+    return _p->obtainIcon(name, scale, outIcon);
+}
+
 bool OsmAnd::MapPresentationEnvironment::obtainShader(
     const QString& name,
     const float scale,
