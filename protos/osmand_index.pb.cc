@@ -847,7 +847,7 @@ void AddressPart::SharedCtor() {
   offset_ = GOOGLE_LONGLONG(0);
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   nameen_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  indexnameoffset_ = 0;
+  indexnameoffset_ = GOOGLE_LONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -904,7 +904,7 @@ void AddressPart::Clear() {
         nameen_->clear();
       }
     }
-    indexnameoffset_ = 0;
+    indexnameoffset_ = GOOGLE_LONGLONG(0);
   }
   cities_.Clear();
   additionaltags_.Clear();
@@ -976,13 +976,13 @@ bool AddressPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 indexNameOffset = 5;
+      // optional int64 indexNameOffset = 5;
       case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_indexNameOffset:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &indexnameoffset_)));
           set_has_indexnameoffset();
         } else {
@@ -1061,9 +1061,9 @@ void AddressPart::SerializeWithCachedSizes(
       4, this->nameen(), output);
   }
 
-  // optional int32 indexNameOffset = 5;
+  // optional int64 indexNameOffset = 5;
   if (has_indexnameoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->indexnameoffset(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->indexnameoffset(), output);
   }
 
   // repeated .OsmAnd.OBF.CityBlock cities = 8;
@@ -1112,10 +1112,10 @@ int AddressPart::ByteSize() const {
           this->nameen());
     }
 
-    // optional int32 indexNameOffset = 5;
+    // optional int64 indexNameOffset = 5;
     if (has_indexnameoffset()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->indexnameoffset());
     }
 
@@ -2554,7 +2554,7 @@ void RoutingSubregion::SharedCtor() {
   right_ = 0;
   top_ = 0;
   bottom_ = 0;
-  shiftodata_ = 0u;
+  shiftodata_ = GOOGLE_LONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2600,7 +2600,7 @@ void RoutingSubregion::Clear() {
     right_ = 0;
     top_ = 0;
     bottom_ = 0;
-    shiftodata_ = 0u;
+    shiftodata_ = GOOGLE_LONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -2722,13 +2722,13 @@ bool RoutingSubregion::MergePartialFromCodedStream(
         break;
       }
 
-      // required uint32 shifToData = 8;
+      // required int64 shifToData = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_shifToData:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &shiftodata_)));
           set_has_shiftodata();
         } else {
@@ -2790,9 +2790,9 @@ void RoutingSubregion::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
 
-  // required uint32 shifToData = 8;
+  // required int64 shifToData = 8;
   if (has_shiftodata()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(8, this->shiftodata(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(8, this->shiftodata(), output);
   }
 
 }
@@ -2848,10 +2848,10 @@ int RoutingSubregion::ByteSize() const {
           this->bottom());
     }
 
-    // required uint32 shifToData = 8;
+    // required int64 shifToData = 8;
     if (has_shiftodata()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->shiftodata());
     }
 
@@ -3245,8 +3245,8 @@ void HHRoutingPart::SharedCtor() {
   offset_ = GOOGLE_LONGLONG(0);
   edition_ = GOOGLE_LONGLONG(0);
   profile_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  pointsoffset_ = 0;
-  pointslength_ = 0;
+  pointsoffset_ = GOOGLE_LONGLONG(0);
+  pointslength_ = GOOGLE_LONGLONG(0);
   left_ = 0;
   right_ = 0;
   top_ = 0;
@@ -3300,8 +3300,8 @@ void HHRoutingPart::Clear() {
         profile_->clear();
       }
     }
-    pointsoffset_ = 0;
-    pointslength_ = 0;
+    pointsoffset_ = GOOGLE_LONGLONG(0);
+    pointslength_ = GOOGLE_LONGLONG(0);
     left_ = 0;
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
@@ -3395,13 +3395,13 @@ bool HHRoutingPart::MergePartialFromCodedStream(
         break;
       }
 
-      // required int32 pointsOffset = 7;
+      // required int64 pointsOffset = 7;
       case 7: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_pointsOffset:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &pointsoffset_)));
           set_has_pointsoffset();
         } else {
@@ -3411,13 +3411,13 @@ bool HHRoutingPart::MergePartialFromCodedStream(
         break;
       }
 
-      // required int32 pointsLength = 8;
+      // required int64 pointsLength = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_pointsLength:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &pointslength_)));
           set_has_pointslength();
         } else {
@@ -3535,14 +3535,14 @@ void HHRoutingPart::SerializeWithCachedSizes(
       5, this->profileparams(i), output);
   }
 
-  // required int32 pointsOffset = 7;
+  // required int64 pointsOffset = 7;
   if (has_pointsoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->pointsoffset(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(7, this->pointsoffset(), output);
   }
 
-  // required int32 pointsLength = 8;
+  // required int64 pointsLength = 8;
   if (has_pointslength()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->pointslength(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(8, this->pointslength(), output);
   }
 
   // required int32 left = 9;
@@ -3599,17 +3599,17 @@ int HHRoutingPart::ByteSize() const {
           this->profile());
     }
 
-    // required int32 pointsOffset = 7;
+    // required int64 pointsOffset = 7;
     if (has_pointsoffset()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->pointsoffset());
     }
 
-    // required int32 pointsLength = 8;
+    // required int64 pointsLength = 8;
     if (has_pointslength()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->pointslength());
     }
 
@@ -3777,12 +3777,12 @@ void TransportPart::SharedCtor() {
   right_ = 0;
   top_ = 0;
   bottom_ = 0;
-  stringtableoffset_ = 0u;
-  stringtablelength_ = 0u;
-  stopstableoffset_ = 0u;
-  stopstablelength_ = 0u;
-  incompleteroutesoffset_ = 0u;
-  incompleterouteslength_ = 0u;
+  stringtableoffset_ = GOOGLE_LONGLONG(0);
+  stringtablelength_ = 0;
+  stopstableoffset_ = GOOGLE_LONGLONG(0);
+  stopstablelength_ = GOOGLE_LONGLONG(0);
+  incompleteroutesoffset_ = GOOGLE_LONGLONG(0);
+  incompleterouteslength_ = GOOGLE_LONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -3835,14 +3835,14 @@ void TransportPart::Clear() {
     right_ = 0;
     top_ = 0;
     bottom_ = 0;
-    stringtableoffset_ = 0u;
+    stringtableoffset_ = GOOGLE_LONGLONG(0);
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    stringtablelength_ = 0u;
-    stopstableoffset_ = 0u;
-    stopstablelength_ = 0u;
-    incompleteroutesoffset_ = 0u;
-    incompleterouteslength_ = 0u;
+    stringtablelength_ = 0;
+    stopstableoffset_ = GOOGLE_LONGLONG(0);
+    stopstablelength_ = GOOGLE_LONGLONG(0);
+    incompleteroutesoffset_ = GOOGLE_LONGLONG(0);
+    incompleterouteslength_ = GOOGLE_LONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -3962,13 +3962,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 stringTableOffset = 8;
+      // optional int64 stringTableOffset = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_stringTableOffset:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &stringtableoffset_)));
           set_has_stringtableoffset();
         } else {
@@ -3978,13 +3978,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 stringTableLength = 9;
+      // optional int32 stringTableLength = 9;
       case 9: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_stringTableLength:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &stringtablelength_)));
           set_has_stringtablelength();
         } else {
@@ -3994,13 +3994,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 stopsTableOffset = 10;
+      // optional int64 stopsTableOffset = 10;
       case 10: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_stopsTableOffset:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &stopstableoffset_)));
           set_has_stopstableoffset();
         } else {
@@ -4010,13 +4010,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 stopsTableLength = 11;
+      // optional int64 stopsTableLength = 11;
       case 11: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_stopsTableLength:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &stopstablelength_)));
           set_has_stopstablelength();
         } else {
@@ -4026,13 +4026,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 incompleteRoutesOffset = 12;
+      // optional int64 incompleteRoutesOffset = 12;
       case 12: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_incompleteRoutesOffset:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &incompleteroutesoffset_)));
           set_has_incompleteroutesoffset();
         } else {
@@ -4042,13 +4042,13 @@ bool TransportPart::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 incompleteRoutesLength = 13;
+      // optional int64 incompleteRoutesLength = 13;
       case 13: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_incompleteRoutesLength:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &incompleterouteslength_)));
           set_has_incompleterouteslength();
         } else {
@@ -4111,34 +4111,34 @@ void TransportPart::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->bottom(), output);
   }
 
-  // optional uint32 stringTableOffset = 8;
+  // optional int64 stringTableOffset = 8;
   if (has_stringtableoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(8, this->stringtableoffset(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(8, this->stringtableoffset(), output);
   }
 
-  // optional uint32 stringTableLength = 9;
+  // optional int32 stringTableLength = 9;
   if (has_stringtablelength()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(9, this->stringtablelength(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->stringtablelength(), output);
   }
 
-  // optional uint32 stopsTableOffset = 10;
+  // optional int64 stopsTableOffset = 10;
   if (has_stopstableoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(10, this->stopstableoffset(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(10, this->stopstableoffset(), output);
   }
 
-  // optional uint32 stopsTableLength = 11;
+  // optional int64 stopsTableLength = 11;
   if (has_stopstablelength()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->stopstablelength(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(11, this->stopstablelength(), output);
   }
 
-  // optional uint32 incompleteRoutesOffset = 12;
+  // optional int64 incompleteRoutesOffset = 12;
   if (has_incompleteroutesoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(12, this->incompleteroutesoffset(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(12, this->incompleteroutesoffset(), output);
   }
 
-  // optional uint32 incompleteRoutesLength = 13;
+  // optional int64 incompleteRoutesLength = 13;
   if (has_incompleterouteslength()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(13, this->incompleterouteslength(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(13, this->incompleterouteslength(), output);
   }
 
 }
@@ -4196,47 +4196,47 @@ int TransportPart::ByteSize() const {
           this->bottom());
     }
 
-    // optional uint32 stringTableOffset = 8;
+    // optional int64 stringTableOffset = 8;
     if (has_stringtableoffset()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->stringtableoffset());
     }
 
   }
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    // optional uint32 stringTableLength = 9;
+    // optional int32 stringTableLength = 9;
     if (has_stringtablelength()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->stringtablelength());
     }
 
-    // optional uint32 stopsTableOffset = 10;
+    // optional int64 stopsTableOffset = 10;
     if (has_stopstableoffset()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->stopstableoffset());
     }
 
-    // optional uint32 stopsTableLength = 11;
+    // optional int64 stopsTableLength = 11;
     if (has_stopstablelength()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->stopstablelength());
     }
 
-    // optional uint32 incompleteRoutesOffset = 12;
+    // optional int64 incompleteRoutesOffset = 12;
     if (has_incompleteroutesoffset()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->incompleteroutesoffset());
     }
 
-    // optional uint32 incompleteRoutesLength = 13;
+    // optional int64 incompleteRoutesLength = 13;
     if (has_incompleterouteslength()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
           this->incompleterouteslength());
     }
 

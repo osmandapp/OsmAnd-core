@@ -440,12 +440,12 @@ class AddressPart : public ::google::protobuf::MessageLite {
   inline ::std::string* release_nameen();
   inline void set_allocated_nameen(::std::string* nameen);
 
-  // optional int32 indexNameOffset = 5;
+  // optional int64 indexNameOffset = 5;
   inline bool has_indexnameoffset() const;
   inline void clear_indexnameoffset();
   static const int kIndexNameOffsetFieldNumber = 5;
-  inline ::google::protobuf::int32 indexnameoffset() const;
-  inline void set_indexnameoffset(::google::protobuf::int32 value);
+  inline ::google::protobuf::int64 indexnameoffset() const;
+  inline void set_indexnameoffset(::google::protobuf::int64 value);
 
   // repeated .OsmAnd.OBF.CityBlock cities = 8;
   inline int cities_size() const;
@@ -492,9 +492,9 @@ class AddressPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 offset_;
   ::std::string* name_;
   ::std::string* nameen_;
+  ::google::protobuf::int64 indexnameoffset_;
   ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlock > cities_;
   ::google::protobuf::RepeatedPtrField< ::std::string> additionaltags_;
-  ::google::protobuf::int32 indexnameoffset_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
@@ -1139,12 +1139,12 @@ class RoutingSubregion : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 bottom() const;
   inline void set_bottom(::google::protobuf::int32 value);
 
-  // required uint32 shifToData = 8;
+  // required int64 shifToData = 8;
   inline bool has_shiftodata() const;
   inline void clear_shiftodata();
   static const int kShifToDataFieldNumber = 8;
-  inline ::google::protobuf::uint32 shiftodata() const;
-  inline void set_shiftodata(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 shiftodata() const;
+  inline void set_shiftodata(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.RoutingSubregion)
  private:
@@ -1171,8 +1171,8 @@ class RoutingSubregion : public ::google::protobuf::MessageLite {
   ::google::protobuf::int32 left_;
   ::google::protobuf::int32 right_;
   ::google::protobuf::int32 top_;
+  ::google::protobuf::int64 shiftodata_;
   ::google::protobuf::int32 bottom_;
-  ::google::protobuf::uint32 shiftodata_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
@@ -1413,19 +1413,19 @@ class HHRoutingPart : public ::google::protobuf::MessageLite {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& profileparams() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_profileparams();
 
-  // required int32 pointsOffset = 7;
+  // required int64 pointsOffset = 7;
   inline bool has_pointsoffset() const;
   inline void clear_pointsoffset();
   static const int kPointsOffsetFieldNumber = 7;
-  inline ::google::protobuf::int32 pointsoffset() const;
-  inline void set_pointsoffset(::google::protobuf::int32 value);
+  inline ::google::protobuf::int64 pointsoffset() const;
+  inline void set_pointsoffset(::google::protobuf::int64 value);
 
-  // required int32 pointsLength = 8;
+  // required int64 pointsLength = 8;
   inline bool has_pointslength() const;
   inline void clear_pointslength();
   static const int kPointsLengthFieldNumber = 8;
-  inline ::google::protobuf::int32 pointslength() const;
-  inline void set_pointslength(::google::protobuf::int32 value);
+  inline ::google::protobuf::int64 pointslength() const;
+  inline void set_pointslength(::google::protobuf::int64 value);
 
   // required int32 left = 9;
   inline bool has_left() const;
@@ -1483,8 +1483,8 @@ class HHRoutingPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int64 edition_;
   ::std::string* profile_;
   ::google::protobuf::RepeatedPtrField< ::std::string> profileparams_;
-  ::google::protobuf::int32 pointsoffset_;
-  ::google::protobuf::int32 pointslength_;
+  ::google::protobuf::int64 pointsoffset_;
+  ::google::protobuf::int64 pointslength_;
   ::google::protobuf::int32 left_;
   ::google::protobuf::int32 right_;
   ::google::protobuf::int32 top_;
@@ -1613,47 +1613,47 @@ class TransportPart : public ::google::protobuf::MessageLite {
   inline ::google::protobuf::int32 bottom() const;
   inline void set_bottom(::google::protobuf::int32 value);
 
-  // optional uint32 stringTableOffset = 8;
+  // optional int64 stringTableOffset = 8;
   inline bool has_stringtableoffset() const;
   inline void clear_stringtableoffset();
   static const int kStringTableOffsetFieldNumber = 8;
-  inline ::google::protobuf::uint32 stringtableoffset() const;
-  inline void set_stringtableoffset(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 stringtableoffset() const;
+  inline void set_stringtableoffset(::google::protobuf::int64 value);
 
-  // optional uint32 stringTableLength = 9;
+  // optional int32 stringTableLength = 9;
   inline bool has_stringtablelength() const;
   inline void clear_stringtablelength();
   static const int kStringTableLengthFieldNumber = 9;
-  inline ::google::protobuf::uint32 stringtablelength() const;
-  inline void set_stringtablelength(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int32 stringtablelength() const;
+  inline void set_stringtablelength(::google::protobuf::int32 value);
 
-  // optional uint32 stopsTableOffset = 10;
+  // optional int64 stopsTableOffset = 10;
   inline bool has_stopstableoffset() const;
   inline void clear_stopstableoffset();
   static const int kStopsTableOffsetFieldNumber = 10;
-  inline ::google::protobuf::uint32 stopstableoffset() const;
-  inline void set_stopstableoffset(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 stopstableoffset() const;
+  inline void set_stopstableoffset(::google::protobuf::int64 value);
 
-  // optional uint32 stopsTableLength = 11;
+  // optional int64 stopsTableLength = 11;
   inline bool has_stopstablelength() const;
   inline void clear_stopstablelength();
   static const int kStopsTableLengthFieldNumber = 11;
-  inline ::google::protobuf::uint32 stopstablelength() const;
-  inline void set_stopstablelength(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 stopstablelength() const;
+  inline void set_stopstablelength(::google::protobuf::int64 value);
 
-  // optional uint32 incompleteRoutesOffset = 12;
+  // optional int64 incompleteRoutesOffset = 12;
   inline bool has_incompleteroutesoffset() const;
   inline void clear_incompleteroutesoffset();
   static const int kIncompleteRoutesOffsetFieldNumber = 12;
-  inline ::google::protobuf::uint32 incompleteroutesoffset() const;
-  inline void set_incompleteroutesoffset(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 incompleteroutesoffset() const;
+  inline void set_incompleteroutesoffset(::google::protobuf::int64 value);
 
-  // optional uint32 incompleteRoutesLength = 13;
+  // optional int64 incompleteRoutesLength = 13;
   inline bool has_incompleterouteslength() const;
   inline void clear_incompleterouteslength();
   static const int kIncompleteRoutesLengthFieldNumber = 13;
-  inline ::google::protobuf::uint32 incompleterouteslength() const;
-  inline void set_incompleterouteslength(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int64 incompleterouteslength() const;
+  inline void set_incompleterouteslength(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportPart)
  private:
@@ -1691,12 +1691,12 @@ class TransportPart : public ::google::protobuf::MessageLite {
   ::google::protobuf::int32 right_;
   ::google::protobuf::int32 top_;
   ::google::protobuf::int32 bottom_;
-  ::google::protobuf::uint32 stringtableoffset_;
-  ::google::protobuf::uint32 stringtablelength_;
-  ::google::protobuf::uint32 stopstableoffset_;
-  ::google::protobuf::uint32 stopstablelength_;
-  ::google::protobuf::uint32 incompleteroutesoffset_;
-  ::google::protobuf::uint32 incompleterouteslength_;
+  ::google::protobuf::int64 stringtableoffset_;
+  ::google::protobuf::int64 stopstableoffset_;
+  ::google::protobuf::int64 stopstablelength_;
+  ::google::protobuf::int64 incompleteroutesoffset_;
+  ::google::protobuf::int64 incompleterouteslength_;
+  ::google::protobuf::int32 stringtablelength_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
@@ -2266,7 +2266,7 @@ inline void AddressPart::set_allocated_nameen(::std::string* nameen) {
   }
 }
 
-// optional int32 indexNameOffset = 5;
+// optional int64 indexNameOffset = 5;
 inline bool AddressPart::has_indexnameoffset() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
@@ -2277,13 +2277,13 @@ inline void AddressPart::clear_has_indexnameoffset() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void AddressPart::clear_indexnameoffset() {
-  indexnameoffset_ = 0;
+  indexnameoffset_ = GOOGLE_LONGLONG(0);
   clear_has_indexnameoffset();
 }
-inline ::google::protobuf::int32 AddressPart::indexnameoffset() const {
+inline ::google::protobuf::int64 AddressPart::indexnameoffset() const {
   return indexnameoffset_;
 }
-inline void AddressPart::set_indexnameoffset(::google::protobuf::int32 value) {
+inline void AddressPart::set_indexnameoffset(::google::protobuf::int64 value) {
   set_has_indexnameoffset();
   indexnameoffset_ = value;
 }
@@ -3114,7 +3114,7 @@ inline void RoutingSubregion::set_bottom(::google::protobuf::int32 value) {
   bottom_ = value;
 }
 
-// required uint32 shifToData = 8;
+// required int64 shifToData = 8;
 inline bool RoutingSubregion::has_shiftodata() const {
   return (_has_bits_[0] & 0x00000080u) != 0;
 }
@@ -3125,13 +3125,13 @@ inline void RoutingSubregion::clear_has_shiftodata() {
   _has_bits_[0] &= ~0x00000080u;
 }
 inline void RoutingSubregion::clear_shiftodata() {
-  shiftodata_ = 0u;
+  shiftodata_ = GOOGLE_LONGLONG(0);
   clear_has_shiftodata();
 }
-inline ::google::protobuf::uint32 RoutingSubregion::shiftodata() const {
+inline ::google::protobuf::int64 RoutingSubregion::shiftodata() const {
   return shiftodata_;
 }
-inline void RoutingSubregion::set_shiftodata(::google::protobuf::uint32 value) {
+inline void RoutingSubregion::set_shiftodata(::google::protobuf::int64 value) {
   set_has_shiftodata();
   shiftodata_ = value;
 }
@@ -3463,7 +3463,7 @@ HHRoutingPart::mutable_profileparams() {
   return &profileparams_;
 }
 
-// required int32 pointsOffset = 7;
+// required int64 pointsOffset = 7;
 inline bool HHRoutingPart::has_pointsoffset() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
@@ -3474,18 +3474,18 @@ inline void HHRoutingPart::clear_has_pointsoffset() {
   _has_bits_[0] &= ~0x00000020u;
 }
 inline void HHRoutingPart::clear_pointsoffset() {
-  pointsoffset_ = 0;
+  pointsoffset_ = GOOGLE_LONGLONG(0);
   clear_has_pointsoffset();
 }
-inline ::google::protobuf::int32 HHRoutingPart::pointsoffset() const {
+inline ::google::protobuf::int64 HHRoutingPart::pointsoffset() const {
   return pointsoffset_;
 }
-inline void HHRoutingPart::set_pointsoffset(::google::protobuf::int32 value) {
+inline void HHRoutingPart::set_pointsoffset(::google::protobuf::int64 value) {
   set_has_pointsoffset();
   pointsoffset_ = value;
 }
 
-// required int32 pointsLength = 8;
+// required int64 pointsLength = 8;
 inline bool HHRoutingPart::has_pointslength() const {
   return (_has_bits_[0] & 0x00000040u) != 0;
 }
@@ -3496,13 +3496,13 @@ inline void HHRoutingPart::clear_has_pointslength() {
   _has_bits_[0] &= ~0x00000040u;
 }
 inline void HHRoutingPart::clear_pointslength() {
-  pointslength_ = 0;
+  pointslength_ = GOOGLE_LONGLONG(0);
   clear_has_pointslength();
 }
-inline ::google::protobuf::int32 HHRoutingPart::pointslength() const {
+inline ::google::protobuf::int64 HHRoutingPart::pointslength() const {
   return pointslength_;
 }
-inline void HHRoutingPart::set_pointslength(::google::protobuf::int32 value) {
+inline void HHRoutingPart::set_pointslength(::google::protobuf::int64 value) {
   set_has_pointslength();
   pointslength_ = value;
 }
@@ -3801,7 +3801,7 @@ inline void TransportPart::set_bottom(::google::protobuf::int32 value) {
   bottom_ = value;
 }
 
-// optional uint32 stringTableOffset = 8;
+// optional int64 stringTableOffset = 8;
 inline bool TransportPart::has_stringtableoffset() const {
   return (_has_bits_[0] & 0x00000080u) != 0;
 }
@@ -3812,18 +3812,18 @@ inline void TransportPart::clear_has_stringtableoffset() {
   _has_bits_[0] &= ~0x00000080u;
 }
 inline void TransportPart::clear_stringtableoffset() {
-  stringtableoffset_ = 0u;
+  stringtableoffset_ = GOOGLE_LONGLONG(0);
   clear_has_stringtableoffset();
 }
-inline ::google::protobuf::uint32 TransportPart::stringtableoffset() const {
+inline ::google::protobuf::int64 TransportPart::stringtableoffset() const {
   return stringtableoffset_;
 }
-inline void TransportPart::set_stringtableoffset(::google::protobuf::uint32 value) {
+inline void TransportPart::set_stringtableoffset(::google::protobuf::int64 value) {
   set_has_stringtableoffset();
   stringtableoffset_ = value;
 }
 
-// optional uint32 stringTableLength = 9;
+// optional int32 stringTableLength = 9;
 inline bool TransportPart::has_stringtablelength() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
@@ -3834,18 +3834,18 @@ inline void TransportPart::clear_has_stringtablelength() {
   _has_bits_[0] &= ~0x00000100u;
 }
 inline void TransportPart::clear_stringtablelength() {
-  stringtablelength_ = 0u;
+  stringtablelength_ = 0;
   clear_has_stringtablelength();
 }
-inline ::google::protobuf::uint32 TransportPart::stringtablelength() const {
+inline ::google::protobuf::int32 TransportPart::stringtablelength() const {
   return stringtablelength_;
 }
-inline void TransportPart::set_stringtablelength(::google::protobuf::uint32 value) {
+inline void TransportPart::set_stringtablelength(::google::protobuf::int32 value) {
   set_has_stringtablelength();
   stringtablelength_ = value;
 }
 
-// optional uint32 stopsTableOffset = 10;
+// optional int64 stopsTableOffset = 10;
 inline bool TransportPart::has_stopstableoffset() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
@@ -3856,18 +3856,18 @@ inline void TransportPart::clear_has_stopstableoffset() {
   _has_bits_[0] &= ~0x00000200u;
 }
 inline void TransportPart::clear_stopstableoffset() {
-  stopstableoffset_ = 0u;
+  stopstableoffset_ = GOOGLE_LONGLONG(0);
   clear_has_stopstableoffset();
 }
-inline ::google::protobuf::uint32 TransportPart::stopstableoffset() const {
+inline ::google::protobuf::int64 TransportPart::stopstableoffset() const {
   return stopstableoffset_;
 }
-inline void TransportPart::set_stopstableoffset(::google::protobuf::uint32 value) {
+inline void TransportPart::set_stopstableoffset(::google::protobuf::int64 value) {
   set_has_stopstableoffset();
   stopstableoffset_ = value;
 }
 
-// optional uint32 stopsTableLength = 11;
+// optional int64 stopsTableLength = 11;
 inline bool TransportPart::has_stopstablelength() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
@@ -3878,18 +3878,18 @@ inline void TransportPart::clear_has_stopstablelength() {
   _has_bits_[0] &= ~0x00000400u;
 }
 inline void TransportPart::clear_stopstablelength() {
-  stopstablelength_ = 0u;
+  stopstablelength_ = GOOGLE_LONGLONG(0);
   clear_has_stopstablelength();
 }
-inline ::google::protobuf::uint32 TransportPart::stopstablelength() const {
+inline ::google::protobuf::int64 TransportPart::stopstablelength() const {
   return stopstablelength_;
 }
-inline void TransportPart::set_stopstablelength(::google::protobuf::uint32 value) {
+inline void TransportPart::set_stopstablelength(::google::protobuf::int64 value) {
   set_has_stopstablelength();
   stopstablelength_ = value;
 }
 
-// optional uint32 incompleteRoutesOffset = 12;
+// optional int64 incompleteRoutesOffset = 12;
 inline bool TransportPart::has_incompleteroutesoffset() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
@@ -3900,18 +3900,18 @@ inline void TransportPart::clear_has_incompleteroutesoffset() {
   _has_bits_[0] &= ~0x00000800u;
 }
 inline void TransportPart::clear_incompleteroutesoffset() {
-  incompleteroutesoffset_ = 0u;
+  incompleteroutesoffset_ = GOOGLE_LONGLONG(0);
   clear_has_incompleteroutesoffset();
 }
-inline ::google::protobuf::uint32 TransportPart::incompleteroutesoffset() const {
+inline ::google::protobuf::int64 TransportPart::incompleteroutesoffset() const {
   return incompleteroutesoffset_;
 }
-inline void TransportPart::set_incompleteroutesoffset(::google::protobuf::uint32 value) {
+inline void TransportPart::set_incompleteroutesoffset(::google::protobuf::int64 value) {
   set_has_incompleteroutesoffset();
   incompleteroutesoffset_ = value;
 }
 
-// optional uint32 incompleteRoutesLength = 13;
+// optional int64 incompleteRoutesLength = 13;
 inline bool TransportPart::has_incompleterouteslength() const {
   return (_has_bits_[0] & 0x00001000u) != 0;
 }
@@ -3922,13 +3922,13 @@ inline void TransportPart::clear_has_incompleterouteslength() {
   _has_bits_[0] &= ~0x00001000u;
 }
 inline void TransportPart::clear_incompleterouteslength() {
-  incompleterouteslength_ = 0u;
+  incompleterouteslength_ = GOOGLE_LONGLONG(0);
   clear_has_incompleterouteslength();
 }
-inline ::google::protobuf::uint32 TransportPart::incompleterouteslength() const {
+inline ::google::protobuf::int64 TransportPart::incompleterouteslength() const {
   return incompleterouteslength_;
 }
-inline void TransportPart::set_incompleterouteslength(::google::protobuf::uint32 value) {
+inline void TransportPart::set_incompleterouteslength(::google::protobuf::int64 value) {
   set_has_incompleterouteslength();
   incompleterouteslength_ = value;
 }
