@@ -47,6 +47,8 @@ namespace OsmAnd
             static void copy(Request& dst, const IMapDataProvider::Request& src);
             virtual std::shared_ptr<IMapDataProvider::Request> clone() const Q_DECL_OVERRIDE;
 
+        private:
+            typedef IMapDataProvider::Request super;
         protected:
             Request(const Request& that);
         };
@@ -65,6 +67,8 @@ namespace OsmAnd
         
         virtual int getMaxMissingDataZoomShift() const;
         virtual int getMaxMissingDataUnderZoomShift() const;
+
+        virtual bool isMetaTiled() const;
 
         virtual bool obtainTiledData(
             const Request& request,

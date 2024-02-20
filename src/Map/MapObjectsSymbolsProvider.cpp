@@ -9,12 +9,14 @@ OsmAnd::MapObjectsSymbolsProvider::MapObjectsSymbolsProvider(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const float referenceTileSizeOnScreenInPixels_,
     const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer_ /*= std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer())*/,
-    const bool forceObtainDataAsync_ /* = false */)
+    const bool forceObtainDataAsync_ /* = false */,
+    const bool combineTilesData_ /* = false*/)
     : _p(new MapObjectsSymbolsProvider_P(this))
     , primitivesProvider(primitivesProvider_)
     , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
     , symbolRasterizer(symbolRasterizer_ ? symbolRasterizer_ : std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()))
     , forceObtainDataAsync(forceObtainDataAsync_)
+    , combineTilesData(combineTilesData_)
 {
 }
 
@@ -32,6 +34,10 @@ OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMaxZoom() const
     return primitivesProvider->getMaxZoom();
 }
 
+bool OsmAnd::MapObjectsSymbolsProvider::isMetaTiled() const
+{
+    return combineTilesData;
+}
 
 bool OsmAnd::MapObjectsSymbolsProvider::supportsNaturalObtainData() const
 {

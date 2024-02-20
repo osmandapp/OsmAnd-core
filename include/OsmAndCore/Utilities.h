@@ -869,6 +869,15 @@ namespace OsmAnd
             return n - (n >> 1);
         }
 
+        inline static int commonDivisor(const int x, const int y)
+        {
+            assert(x != 0 || y != 0);
+            
+            return y == 0
+                ? qAbs(x)
+                : commonDivisor(y, x % y);
+        }
+
         inline static double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
         {
             // Equatorial circumference of the Earth in meters
@@ -902,17 +911,23 @@ namespace OsmAnd
 
         inline static PointI shortestVector31(const PointI& offset)
         {
-            const int intHalf = INT32_MAX / 2 + 1;
-            PointI offset31 = offset;
-            if (offset31.x >= intHalf)
-                offset31.x = offset31.x - INT32_MAX - 1;
-            else if (offset31.x < -intHalf)
-                offset31.x = offset31.x + INT32_MAX + 1;
-            if (offset31.y >= intHalf)
-                offset31.y = offset31.y - INT32_MAX - 1;
-            else if (offset31.y < -intHalf)
-                offset31.y = offset31.y + INT32_MAX + 1;
-            return offset31;
+            return shortestVector(offset, ZoomLevel::ZoomLevel31);
+        }
+
+        inline static PointI shortestVector(const PointI& offset_, const ZoomLevel zoomLevel)
+        {
+            const int32_t maxTileNumber = static_cast<int32_t>((1u << zoomLevel) - 1);
+            const int middleTileNumber = maxTileNumber / 2 + 1;
+            PointI offset = offset_;
+            if (offset.x >= middleTileNumber)
+                offset.x = offset.x - maxTileNumber - 1;
+            else if (offset.x < -middleTileNumber)
+                offset.x = offset.x + maxTileNumber + 1;
+            if (offset.y >= middleTileNumber)
+                offset.y = offset.y - maxTileNumber - 1;
+            else if (offset.y < -middleTileNumber)
+                offset.y = offset.y + maxTileNumber + 1;
+            return offset;
         }
 
         inline static PointI shortestVector31(const PointI& p0, const PointI& p1)

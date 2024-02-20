@@ -8,6 +8,7 @@ OsmAnd::MapRendererBaseTiledResource::MapRendererBaseTiledResource(
     const ZoomLevel zoom_)
     : MapRendererBaseResource(owner_, type_)
     , TiledEntriesCollectionEntryWithState(collection_, tileId_, zoom_)
+    , isMetaTiled(false)
 {
 }
 

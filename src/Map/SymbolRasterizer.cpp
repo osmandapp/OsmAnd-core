@@ -13,12 +13,13 @@ OsmAnd::SymbolRasterizer::~SymbolRasterizer()
 }
 
 void OsmAnd::SymbolRasterizer::rasterize(
-    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+    const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+    const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    const FilterByMapObject filter /*= nullptr*/,
+    const FilterBySymbolsGroup filter /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    _p->rasterize(primitivisedObjects, outSymbolsGroups, filter, queryController);
+    _p->rasterize(symbolsGroups, mapPresentationEnvironment, outSymbolsGroups, filter, queryController);
 }
 
 OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject_)

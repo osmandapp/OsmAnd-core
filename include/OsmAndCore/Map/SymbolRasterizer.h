@@ -110,7 +110,7 @@ namespace OsmAnd
         };
 
         //NOTE: This won't work due to directors+shared_ptr are not supported. To summarize: it's currently impossible to use any %shared_ptr-marked type in a director declaration
-        typedef std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> FilterByMapObject;
+        typedef std::function<bool(const std::shared_ptr<const MapPrimitiviser::SymbolsGroup>& symbolsGroup)> FilterBySymbolsGroup;
         /*OSMAND_CALLABLE(FilterByMapObject,
             bool,
             const std::shared_ptr<const MapObject>& mapObject);*/
@@ -126,9 +126,10 @@ namespace OsmAnd
         const std::shared_ptr<const TextRasterizer> textRasterizer;
 
         virtual void rasterize(
-            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+            const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+            const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            const FilterByMapObject filter = nullptr,
+            const FilterBySymbolsGroup filter = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }

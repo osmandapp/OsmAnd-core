@@ -104,6 +104,7 @@ OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::Additional
     : AdditionalSymbolInstanceParameters(groupInstancePtr_)
     , overridesPosition31(false)
     , overridesOffset(false)
+    , overridesMinDistance(false)
 {
 }
 
@@ -125,6 +126,7 @@ OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::~Additiona
 OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::AdditionalOnPathSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
     : AdditionalSymbolInstanceParameters(groupInstancePtr_)
     , overridesPinPointOnPath(false)
+    , overridesMinDistance(false)
 {
 }
 

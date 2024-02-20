@@ -2405,8 +2405,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     const auto symbolGroupInstancePtr = renderable->genericInstanceParameters
         ? renderable->genericInstanceParameters->groupInstancePtr
         : nullptr;
+
+    auto symbolMinDistance = symbol->minDistance;
+    if (const auto billboardInstanceParameters
+            = std::dynamic_pointer_cast<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>(renderable->genericInstanceParameters))
+    {
+        if (billboardInstanceParameters->overridesMinDistance)
+            symbolMinDistance = billboardInstanceParameters->minDistance;
+    }
+    else if (const auto onPathInstanceParameters
+            = std::dynamic_pointer_cast<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>(renderable->genericInstanceParameters))
+    {
+        if (onPathInstanceParameters->overridesMinDistance)
+            symbolMinDistance = onPathInstanceParameters->minDistance;
+    }
     const auto& symbolContent = symbol->content;
-    const auto hasSimilarContent = intersections.test(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), false,
+
+    const auto hasSimilarContent = intersections.test(renderable->intersectionBBox.getEnlargedBy(symbolMinDistance), false,
         [symbolContent, symbolGroupPtr, symbolGroupInstancePtr]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const ScreenQuadTree::BBox& otherBBox) -> bool
         {
