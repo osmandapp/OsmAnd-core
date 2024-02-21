@@ -23,6 +23,8 @@
 #define MAX_GAP_BETWEEN_PATHS 45
 #define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
 
+#define BLOCK_LENGTH_COEFF 4.0f / 3.0f
+
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
 {
@@ -303,9 +305,12 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
             const auto& windowSize = request.mapState.windowSize;
             const auto minWindowSize = qMin(windowSize.x, windowSize.y);
+            const auto minBlockSpacingInPixels = minWindowSize / 10.0f;
+            const auto maxBlockSpacingInPixels = minWindowSize / 2.0f;
             const auto completeBlockLengthInPixels = std::accumulate(symbolsWidthsInPixels, 0.0f)
                 + (symbolsWidthsInPixels.size() - 1) * symbolSpacingInPixels;
-            const auto completeBlockSpacingInPixels = qMin(minWindowSize / 2.0f, minWindowSize - completeBlockLengthInPixels * 4.0f / 3.0f);
+            const auto completeBlockSpacingInPixels =
+                qBound(minBlockSpacingInPixels, minWindowSize - completeBlockLengthInPixels * BLOCK_LENGTH_COEFF, maxBlockSpacingInPixels);
 
             const auto computedPinPoints = computePinPoints(
                 path31,
@@ -328,7 +333,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 const auto symbolsInBlock = computedPinPoints.size();
                 actualBlockLengthInPixels = std::accumulate(pFirstSymbolWidthInPixels, pFirstSymbolWidthInPixels + symbolsInBlock, 0.0f)
                     + (symbolsInBlock - 1) * symbolSpacingInPixels;
-                actualBlockSpacingInPixels = qMin(minWindowSize / 2.0f, minWindowSize - actualBlockLengthInPixels * 4.0f / 3.0f);
+                actualBlockSpacingInPixels =
+                    qBound(minBlockSpacingInPixels, minWindowSize - actualBlockLengthInPixels * BLOCK_LENGTH_COEFF, maxBlockSpacingInPixels);
             }    
 
             // After pin-points were computed, assign them to symbols in the same order
