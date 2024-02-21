@@ -100,6 +100,7 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
+        bool obtainIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
         bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
         bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
         bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;

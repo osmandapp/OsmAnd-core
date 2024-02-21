@@ -76,6 +76,10 @@ namespace OsmAnd
             QString getSpecificated(bool* outOk = nullptr) const;
             void setSpecificated(QString specificated);
 
+            static const QString VALUE_RANGE;
+            QString getValueRange(bool* outOk = nullptr) const;
+            void setValueRange(QString valueRange);
+
             static const QString EXPIRE_MINUTES;
             int64_t getExpireMinutes(bool* outOk = nullptr) const;
             void setExpireMinutes(int64_t expireMinutes);
@@ -110,6 +114,10 @@ namespace OsmAnd
         bool isTileSpecificationSupported() const;
         bool hasSpecificationColumn() const;
 
+        bool isTileValueRangeSupported() const;
+        bool hasValueRangeColumn() const;
+        bool enableValueRangeSupport(bool force = false);
+
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
         bool recomputeMinMaxZoom();
@@ -138,11 +146,12 @@ namespace OsmAnd
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             QByteArray& outData, int64_t* pOutTime = nullptr) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, int64_t* pOutTime = nullptr) const;
+        bool obtainTileData(TileId tileId, ZoomLevel zoom, void* outData, float& minValue, float& maxValue) const;
         bool obtainTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
             void* outData, int64_t* pOutTime = nullptr) const;
         bool storeTileData(TileId tileId, ZoomLevel zoom, const QByteArray& data, int64_t time = 0);
         bool storeTileData(TileId tileId, ZoomLevel zoom, int64_t specification,
-            const QByteArray& data, int64_t time = 0);
+            const QByteArray& data, int64_t time = 0, float minValue = 0, float maxValue = 0);
         bool updateTileDataFrom(const QString& dbFilePath, const QString* specName = nullptr);
         bool removeTileData(TileId tileId, ZoomLevel zoom, int64_t specification = 0);
         bool removeTilesData(QList<TileId>& tileIds, ZoomLevel zoom, int64_t specification = 0);

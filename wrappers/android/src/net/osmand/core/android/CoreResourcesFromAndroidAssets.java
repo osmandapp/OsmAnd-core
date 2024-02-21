@@ -154,13 +154,7 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
 
 		ResourceData resourceData = getResourceData(name, displayDensityFactor);
         if (resourceData == null) {
-            ResourceEntry resourceEntry = _resources.get(name);
-            if (resourceEntry != null) {
-                resourceData = resourceEntry.defaultVariant;
-            }
-        }
-        if (resourceData == null) {
-            Log.w(TAG, "Requested resource [ddf=" + displayDensityFactor + "]'" + name + "' was not found, as well as '" + name + "'");
+            Log.w(TAG, "Requested resource [ddf=" + displayDensityFactor + "]'" + name + "' was not found");
             if (ok != null)
                 ok.assign(false);
             return SwigUtilities.emptyQByteArray();

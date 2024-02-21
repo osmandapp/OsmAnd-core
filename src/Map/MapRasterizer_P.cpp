@@ -731,7 +731,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     const auto iconScale = context.env->mapScaleFactor * legacyScale;
 
     sk_sp<const SkImage> pathIcon;
-    ok = context.env->obtainMapIcon(pathIconName, iconScale, pathIcon);
+    ok = context.env->obtainIcon(pathIconName, iconScale, pathIcon);
     if (!ok || !pathIcon)
         return;
 
@@ -897,7 +897,7 @@ bool OsmAnd::MapRasterizer_P::obtainImageShader(
     sk_sp<SkShader> &outShader)
 {
     sk_sp<const SkImage> image;
-    if (!env->obtainShader(name, 1.0f, image))
+    if (!env->obtainIcon(name, 1.0f, image))
     {
         LogPrintf(LogSeverityLevel::Warning,
             "Failed to get '%s' shader image",

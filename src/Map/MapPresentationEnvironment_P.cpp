@@ -207,6 +207,25 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
     applyTo(evaluator, _settings);
 }
 
+bool OsmAnd::MapPresentationEnvironment_P::obtainIcon(
+    const QString& name,
+    const float scale,
+    sk_sp<const SkImage>& outIcon) const
+{
+    if (containsResourceByName(getShaderResourcePath(name)))
+        return obtainShader(name, scale, outIcon);
+    
+    if (containsResourceByName(getShieldResourcePath(name)))
+        return obtainTextShield(name, scale, outIcon);
+
+    if (containsResourceByName(getMapIconResourcePath(name)))
+        return obtainMapIcon(name, scale, outIcon);
+
+    LogPrintf(LogSeverityLevel::Warning, "Resource '%s' (requested by MapPresentationEnvironment) was not found", qPrintable(name));
+
+    return false;
+}
+
 bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
     const QString& name,
     const float scale,
@@ -218,10 +237,8 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
     auto itShader = _shaders.constFind(key);
     if (itShader == _shaders.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shaders/%1.svg").arg(name);
-
         // Get data from embedded resources
-        const auto data = obtainResourceByName(resourcePath);
+        const auto data = obtainResourceByName(getShaderResourcePath(name));
         
         // Decode bitmap for a shader
         const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
@@ -249,10 +266,8 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
     auto itIcon = _mapIcons.constFind(key);
     if (itIcon == _mapIcons.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/icons/%1.svg").arg(name);
-
         // Get data from embedded resources
-        auto data = obtainResourceByName(resourcePath);
+        auto data = obtainResourceByName(getMapIconResourcePath(name));
         
         // Decode bitmap for a shader
         const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
@@ -279,10 +294,8 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
     auto itTextShield = _textShields.constFind(key);
     if (itTextShield == _textShields.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shields/%1.svg").arg(name);
-
         // Get data from embedded resources
-        auto data = obtainResourceByName(resourcePath);
+        auto data = obtainResourceByName(getShieldResourcePath(name));
 
         // Decode bitmap for a shader
         const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
@@ -309,10 +322,8 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
     auto itIconShield = _iconShields.constFind(key);
     if (itIconShield == _iconShields.cend())
     {
-        const auto resourcePath = QString::fromLatin1("map/shields/%1.svg").arg(name);
-
         // Get data from embedded resources
-        auto data = obtainResourceByName(resourcePath);
+        auto data = obtainResourceByName(getShieldResourcePath(name));
 
         // Decode bitmap for a shader
         const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
@@ -328,6 +339,31 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
     return true;
 }
 
+QString OsmAnd::MapPresentationEnvironment_P::getShaderResourcePath(const QString& name) const
+{
+    return QString::fromLatin1("map/shaders/%1.svg").arg(name);
+}
+
+QString OsmAnd::MapPresentationEnvironment_P::getMapIconResourcePath(const QString& name) const
+{
+    return QString::fromLatin1("map/icons/%1.svg").arg(name);
+}
+
+QString OsmAnd::MapPresentationEnvironment_P::getShieldResourcePath(const QString& name) const
+{
+    return QString::fromLatin1("map/shields/%1.svg").arg(name);
+}
+
+bool OsmAnd::MapPresentationEnvironment_P::containsResourceByName(const QString& name) const
+{
+    bool ok = false;
+    ok = ok || owner->externalResourcesProvider && owner->externalResourcesProvider->containsResource(name, owner->displayDensityFactor);
+    ok = ok || owner->externalResourcesProvider && owner->externalResourcesProvider->containsResource(name);
+    ok = ok || getCoreResourcesProvider()->containsResource(name, owner->displayDensityFactor);
+    ok = ok || getCoreResourcesProvider()->containsResource(name);
+    return ok;
+}
+
 QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
 {
     bool ok = false;
@@ -335,13 +371,17 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
     {
-        const auto resource = owner->externalResourcesProvider->getResource(name, owner->displayDensityFactor, &ok);
+        const auto resource = owner->externalResourcesProvider->containsResource(name, owner->displayDensityFactor)
+            ? owner->externalResourcesProvider->getResource(name, owner->displayDensityFactor, &ok)
+            : owner->externalResourcesProvider->getResource(name, &ok);
         if (ok)
             return resource;
     }
 
     // Otherwise obtain from global
-    const auto resource = getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok);
+    const auto resource = getCoreResourcesProvider()->containsResource(name, owner->displayDensityFactor)
+        ? getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok)
+        : getCoreResourcesProvider()->getResource(name, &ok);
     if (!ok)
     {
         LogPrintf(LogSeverityLevel::Warning,
