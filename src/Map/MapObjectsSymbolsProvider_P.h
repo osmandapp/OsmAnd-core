@@ -30,7 +30,6 @@ namespace OsmAnd
         typedef MapObjectsSymbolsProvider::MapObjectSymbolsGroup MapObjectSymbolsGroup;
 
     private:
-        typedef MapObjectsSymbolsProvider::Request Request;
         typedef OsmAnd::MapPrimitiviser::PrimitivisedObjects PrimitivisedObjects;
         typedef OsmAnd::MapPrimitiviser::Symbol PrimitivisedSymbol;
 

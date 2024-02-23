@@ -64,8 +64,6 @@ OsmAnd::IMapKeyedDataProvider::Request::~Request()
 
 void OsmAnd::IMapKeyedDataProvider::Request::copy(Request& dst, const IMapDataProvider::Request& src_)
 {
-    super::copy(dst, src_);
-
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
     dst.key = src.key;    

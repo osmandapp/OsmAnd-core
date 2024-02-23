@@ -84,8 +84,6 @@ OsmAnd::IMapTiledDataProvider::Request::~Request()
 
 void OsmAnd::IMapTiledDataProvider::Request::copy(Request& dst, const IMapDataProvider::Request& src_)
 {
-    super::copy(dst, src_);
-
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
     dst.tileId = src.tileId;
