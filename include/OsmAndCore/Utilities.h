@@ -740,6 +740,26 @@ namespace OsmAnd
             outY = deinterleaveBy1(code >> 1);
         }
 
+        static QVector<TileId> getAllMetaTileIds(const TileId anyMetaTileId)
+        {
+            return getMetaTileIds(TileId::fromXY(anyMetaTileId.x >> 1, anyMetaTileId.y >> 1));
+        }
+
+        static QVector<TileId> getMetaTileIds(const TileId overscaledTileId)
+        {
+            assert(overscaledTileId.x <= std::numeric_limits<int32_t>::max() >> 2);
+            assert(overscaledTileId.y <= std::numeric_limits<int32_t>::max() >> 2);
+
+            const auto unevenTileId = TileId::fromXY(overscaledTileId.x << 1, overscaledTileId.y << 1);
+            QVector<TileId> metaTileIds(4);
+            metaTileIds[0] = unevenTileId + TileId::fromXY(0, 0);
+            metaTileIds[1] = unevenTileId + TileId::fromXY(1, 0);
+            metaTileIds[2] = unevenTileId + TileId::fromXY(0, 1);
+            metaTileIds[3] = unevenTileId + TileId::fromXY(1, 1);
+
+            return metaTileIds;
+        }
+
         static QVector<TileId> getTileIdsUnderscaledByZoomShift(
             const TileId tileId,
             const unsigned int absZoomShift)
@@ -773,26 +793,31 @@ namespace OsmAnd
             PointF* outNSizeInTile = nullptr)
         {
             TileId shiftedTileId = tileId;
-            PointF nOffsetInTile;
-            PointF nSizeInTile;
             shiftedTileId.x >>= absZoomShift;
             shiftedTileId.y >>= absZoomShift;
-            if (absZoomShift < 20)
+
+            if (outNOffsetInTile || outNSizeInTile)
             {
-                nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
-                nOffsetInTile.x = static_cast<float>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
-                nOffsetInTile.y = static_cast<float>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                PointF nOffsetInTile;
+                PointF nSizeInTile;
+                if (absZoomShift < 20)
+                {
+                    nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
+                    nOffsetInTile.x = static_cast<float>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                    nOffsetInTile.y = static_cast<float>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                }
+                else
+                {
+                    nSizeInTile.x = nSizeInTile.y = 1.0 / static_cast<double>(1ull << absZoomShift);
+                    nOffsetInTile.x = static_cast<double>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                    nOffsetInTile.y = static_cast<double>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                }
+                if (outNOffsetInTile)
+                    *outNOffsetInTile = nOffsetInTile;
+                if (outNSizeInTile)
+                    *outNSizeInTile = nSizeInTile;
             }
-            else
-            {
-                nSizeInTile.x = nSizeInTile.y = 1.0 / static_cast<double>(1ull << absZoomShift);
-                nOffsetInTile.x = static_cast<double>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
-                nOffsetInTile.y = static_cast<double>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
-            }
-            if (outNOffsetInTile)
-                *outNOffsetInTile = nOffsetInTile;
-            if (outNSizeInTile)
-                *outNSizeInTile = nSizeInTile;
+
             return shiftedTileId;
         }
 

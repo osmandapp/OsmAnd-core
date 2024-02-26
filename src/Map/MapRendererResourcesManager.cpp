@@ -1171,7 +1171,7 @@ void OsmAnd::MapRendererResourcesManager::addCombinedTilesToRequest(
 
     for (TileId overscaledTileId : overscaledTilesIds)
     {
-        const auto& underscaledTilesIds = Utilities::getTileIdsUnderscaledByZoomShift(overscaledTileId, 1);
+        const auto& underscaledTilesIds = Utilities::getMetaTileIds(overscaledTileId);
 
         // Try to find meta tile resource
         TileId metaTileId = TileId::zero();
@@ -2344,7 +2344,7 @@ void OsmAnd::MapRendererResourcesManager::addCombinedTilesToAvoidCleanup(
 
         for (const auto overscaledTileId : overscaledTileIds)
         {
-            const auto metaTileIds = Utilities::getTileIdsUnderscaledByZoomShift(overscaledTileId, 1);
+            const auto metaTileIds = Utilities::getMetaTileIds(overscaledTileId);
             
             for (const auto tileId : metaTileIds)
             {

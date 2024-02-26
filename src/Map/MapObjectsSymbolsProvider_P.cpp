@@ -51,10 +51,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 
     QVector<TileId> tilesIds;
     if (request.combineTilesData)
-    {
-        const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(request.tileId, 1);
-        tilesIds = Utilities::getTileIdsUnderscaledByZoomShift(overscaledTileId, 1);
-    }
+        tilesIds = Utilities::getAllMetaTileIds(request.tileId);
     else
         tilesIds.push_back(request.tileId);
 
