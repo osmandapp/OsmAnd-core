@@ -31,6 +31,11 @@ int OsmAnd::IMapTiledDataProvider::getMaxMissingDataUnderZoomShift() const
     return MapRenderer::MaxMissingDataUnderZoomShift;
 }
 
+bool OsmAnd::IMapTiledDataProvider::isMetaTiled() const
+{
+    return false;
+}
+
 bool OsmAnd::IMapTiledDataProvider::obtainTiledData(
     const Request& request,
     std::shared_ptr<Data>& outTiledData,

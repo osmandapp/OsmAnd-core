@@ -86,15 +86,17 @@ namespace OsmAnd
         };
 
         CombinePathsResult combineOnPathSymbols(
-            const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+            const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+            const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
+            const PointD& scaleDivisor31ToPixel,
             const std::shared_ptr<const IQueryController>& queryController) const;
 
         QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
             const float globalPaddingInPixels,
+            const float blockSpacingInPixels,
             const float symbolSpacingInPixels,
             const QVector<float>& symbolsWidthsInPixels,
-            const PointI& windowSize,
             const ZoomLevel neededZoom) const;
 
         void computeSymbolsPinPoints(
@@ -105,6 +107,19 @@ namespace OsmAnd
             const QVector<PointI>& path31,
             const float symbolSpacingN,
             QList<ComputedPinPoint>& outComputedPinPoints) const;
+
+        static bool hasOnPathSymbol(const std::shared_ptr<const MapPrimitiviser::SymbolsGroup>& symbolsGroup)
+        {
+            return std::any_of(symbolsGroup->symbols,
+                []
+                (const std::shared_ptr<const PrimitivisedSymbol>& symbol) -> bool
+                {
+                    if (const auto textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
+                        return textSymbol->drawOnPath;
+
+                    return false;
+                });
+        }
 
     protected:
         MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner);

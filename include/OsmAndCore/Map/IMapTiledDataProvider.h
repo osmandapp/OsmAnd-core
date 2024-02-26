@@ -66,6 +66,8 @@ namespace OsmAnd
         virtual int getMaxMissingDataZoomShift() const;
         virtual int getMaxMissingDataUnderZoomShift() const;
 
+        virtual bool isMetaTiled() const;
+
         virtual bool obtainTiledData(
             const Request& request,
             std::shared_ptr<Data>& outTiledData,

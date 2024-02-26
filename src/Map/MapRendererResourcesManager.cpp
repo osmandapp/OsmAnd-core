@@ -705,9 +705,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             continue;
 
         if (resourcesCollection->type != MapRendererResourceType::ElevationData)
-            requestNeededResources(resourcesCollection, visibleTiles, activeZoom, currentZoom, zoomLevelOffset);
+            requestNeededResources(resourcesCollection, centerTileId, visibleTiles, activeZoom, currentZoom, zoomLevelOffset);
         else
-            requestNeededResources(resourcesCollection, activeTiles, activeZoom, currentZoom, zoomLevelOffset);
+            requestNeededResources(resourcesCollection, centerTileId, activeTiles, activeZoom, currentZoom, zoomLevelOffset);
     }
 
     _resourcesRequestWorkerPool.enqueue(
@@ -727,6 +727,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
+    const TileId centerTileId,
     const QVector<TileId>& activeTiles,
     const ZoomLevel activeZoom,
     const ZoomLevel currentZoom,
@@ -744,6 +745,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
         if (tiledResourcesCollection->type != MapRendererResourceType::Symbols || activeZoom == currentZoom)
             requestNeededTiledResources(
                 tiledResourcesCollection,
+                centerTileId,
                 activeTiles,
                 activeZoom,
                 currentZoom,
@@ -761,6 +763,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
 
 void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+    const TileId centerTileId,
     const QVector<TileId>& activeTiles,
     const ZoomLevel activeZoom,
     const ZoomLevel currentZoom,
@@ -796,11 +799,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     bool isElevationData = resourceType == MapRendererResourceType::ElevationData;
     bool isSymbolData = resourceType == MapRendererResourceType::Symbols;
 
+    std::shared_ptr<IMapDataProvider> provider_;
+    obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
+    const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
+
     if (isMapLayer || isElevationData)
     {
-        std::shared_ptr<IMapDataProvider> provider_;
-        obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(resourcesCollection.get()), provider_);
-        const auto& tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(provider_);
         if (tiledProvider)
         {
             minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
@@ -823,7 +827,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         if (!isCustomVisibility && currentZoomShift > maxMissingDataZoomShift)
             return;
     }
-
+    bool metaTiled = tiledProvider && tiledProvider->isMetaTiled();
     // Prepare to request more detailed resource (of higher zoom level) if needed and possible
     const auto neededZoom = isElevationData || zoomLevelOffset == 0 ? activeZoom : static_cast<ZoomLevel>(std::min(
         activeZoom + std::min(zoomLevelOffset, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
@@ -836,7 +840,11 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             const int underZoom = neededZoom - absZoomShift;
             if (underZoom < activeZoom)
                 break;
-            const auto underTiles = Utilities::getTileIdsUnderscaledByZoomShift(activeTileId, underZoom - activeZoom);
+
+            auto underTiles = Utilities::getTileIdsUnderscaledByZoomShift(activeTileId, underZoom - activeZoom);
+            if (metaTiled)
+                addCombinedTilesToRequest(resourcesCollection, resourceAllocator, activeZoom, centerTileId, static_cast<ZoomLevel>(underZoom), underTiles);
+
             for (const auto& neededTileId : constOf(underTiles))
             {
                 // Obtain a resource entry and if it's state is "Unknown", create a task that will
@@ -1142,6 +1150,84 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
 
         // Finally start the request in a proper workers pool
         _requestedResourcesTasks.push_back(asyncTask);
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::addCombinedTilesToRequest(
+    const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+    const TiledResourceAllocator resourceAllocator,
+    const ZoomLevel activeZoom,
+    const TileId centerTileId,
+    const ZoomLevel zoom,
+    QVector<TileId>& tiles)
+{
+    if (zoom == ZoomLevel::MinZoomLevel)
+        return;
+
+    // Collect all overscaled tiles
+    QSet<TileId> overscaledTilesIds;
+    for (TileId underscledTile : tiles)
+        overscaledTilesIds.insert(Utilities::getTileIdOverscaledByZoomShift(underscledTile, 1));
+
+    for (TileId overscaledTileId : overscaledTilesIds)
+    {
+        const auto& underscaledTilesIds = Utilities::getMetaTileIds(overscaledTileId);
+
+        // Try to find meta tile resource
+        TileId metaTileId = TileId::zero();
+        for (const auto tileId : underscaledTilesIds)
+        {
+            std::shared_ptr<MapRendererBaseTiledResource> resource;
+            if (resourcesCollection->obtainEntry(resource, tileId, zoom) && resource->isMetaTiled)
+            {
+                metaTileId = tileId;
+                break;
+            }
+        }
+
+        const bool markMetaTile = metaTileId == TileId::zero();
+
+        // Meta tile is not selected yet
+        // Firstly try to find unrequested tile to mark as meta tile
+        if (metaTileId == TileId::zero())
+        {
+            for (const auto tileId : underscaledTilesIds)
+            {
+                if (!tiles.contains(tileId))
+                {
+                    metaTileId = tileId;
+                    break;
+                }
+            }
+        }
+        // If there is no unrequested tile, mark farthest tile as meta tile
+        if (metaTileId == TileId::zero())
+        {
+            uint32_t maxDistance = 0;
+            for (const auto tileId : underscaledTilesIds)
+            {
+                const auto& activeZoomTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - activeZoom);
+                const PointI offset(activeZoomTileId.x - centerTileId.x, activeZoomTileId.y - centerTileId.y);
+                const auto& normalizedOffset = Utilities::shortestVector(offset, activeZoom);
+                const auto distance = static_cast<uint32_t>(normalizedOffset.squareNorm());
+                if (distance > maxDistance || metaTileId == TileId::zero())
+                {
+                    metaTileId = tileId;
+                    maxDistance = distance;
+                }
+            }
+        }
+
+        if (markMetaTile)
+        {
+            std::shared_ptr<MapRendererBaseTiledResource> resource;
+            resourcesCollection->obtainOrAllocateEntry(resource, metaTileId, zoom, resourceAllocator);
+            resource->isMetaTiled = true;
+        }
+
+        // Add meta tile if not added yet
+        if (!tiles.contains(metaTileId))
+            tiles.push_back(metaTileId);
     }
 }
 
@@ -1736,12 +1822,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
         // Some checks are only valid for tiled resources
         if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<IMapRendererTiledResourcesCollection>(resourcesCollection))
         {
-            std::shared_ptr<IMapTiledDataProvider> tiledProvider = nullptr;
+            const auto tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
             const auto resourcesType = resourcesCollection->getType();
-            if (dataProvider != nullptr && (resourcesType == MapRendererResourceType::MapLayer ||
-                resourcesType == MapRendererResourceType::ElevationData))
+            const bool checkVisible = resourcesType != MapRendererResourceType::ElevationData;
+
+            if (tiledProvider && tiledProvider->isMetaTiled())
             {
-                tiledProvider = std::dynamic_pointer_cast<IMapTiledDataProvider>(dataProvider);
+                assert(checkVisible);
+                addCombinedTilesToAvoidCleanup(tiledResourcesCollection, visibleTiles);
             }
 
             auto minZoom = MinZoomLevel;
@@ -1753,7 +1841,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             int maxMissingDataZoomShift = MapRenderer::MaxMissingDataZoomShift;
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
-            if (tiledProvider)
+            if (tiledProvider && (resourcesType == MapRendererResourceType::MapLayer || resourcesType == MapRendererResourceType::ElevationData))
             {
                 minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
                 maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());
@@ -1767,7 +1855,6 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
             bool isCustomVisibility = minZoom != minVisibleZoom || maxZoom != maxVisibleZoom;
 
-            const bool checkVisible = resourcesType != MapRendererResourceType::ElevationData;
             resourcesCollection->removeResources(
                 [this, currentZoom, tiles, visibleTiles, checkVisible,
                 maxMissingDataUnderZoomShift, &needsResourcesUploadOrUnload]
@@ -2236,6 +2323,41 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
     //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
     // should be retained, since they are being processed. So try to next time
     return false;
+}
+
+void OsmAnd::MapRendererResourcesManager::addCombinedTilesToAvoidCleanup(
+    const std::shared_ptr<IMapRendererTiledResourcesCollection>& resourcesCollection,
+    QMap< ZoomLevel, QVector<TileId> >& tilesByZoom)
+{
+    for (auto itTilesEntry = tilesByZoom.begin(); itTilesEntry != tilesByZoom.end(); itTilesEntry++)
+    {
+        const auto zoom = itTilesEntry.key();
+        auto& tiles = itTilesEntry.value();
+
+        if (zoom == ZoomLevel::MinZoomLevel)
+            continue;
+
+        // Collect all overscaled tiles
+        QSet<TileId> overscaledTileIds;
+        for (const auto tileId : tiles)
+            overscaledTileIds.insert(Utilities::getTileIdOverscaledByZoomShift(tileId, 1));
+
+        for (const auto overscaledTileId : overscaledTileIds)
+        {
+            const auto metaTileIds = Utilities::getMetaTileIds(overscaledTileId);
+            
+            for (const auto tileId : metaTileIds)
+            {
+                // Add meta tile if it isn't present
+                if (!tiles.contains(tileId))
+                {
+                    std::shared_ptr<MapRendererBaseTiledResource> resource;
+                    if (resourcesCollection->obtainResource(tileId, zoom, resource) && resource->isMetaTiled)
+                        tiles.push_back(tileId);
+                }
+            }
+        }
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(

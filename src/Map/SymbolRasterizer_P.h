@@ -33,7 +33,7 @@ namespace OsmAnd
         typedef SymbolRasterizer::RasterizedSymbol RasterizedSymbol;
         typedef SymbolRasterizer::RasterizedSpriteSymbol RasterizedSpriteSymbol;
         typedef SymbolRasterizer::RasterizedOnPathSymbol RasterizedOnPathSymbol;
-        typedef SymbolRasterizer::FilterByMapObject FilterByMapObject;
+        typedef SymbolRasterizer::FilterBySymbolsGroup FilterBySymbolsGroup;
         typedef MapPrimitiviser::TextSymbol::Placement TextSymbolPlacement;
 
     private:
@@ -45,9 +45,10 @@ namespace OsmAnd
         ImplementationInterface<SymbolRasterizer> owner;
 
         void rasterize(
-            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+            const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+            const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            const FilterByMapObject filter,
+            const FilterBySymbolsGroup filter,
             const std::shared_ptr<const IQueryController>& queryController) const;
 
     friend class OsmAnd::SymbolRasterizer;

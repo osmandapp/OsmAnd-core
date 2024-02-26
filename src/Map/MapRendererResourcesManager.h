@@ -65,6 +65,8 @@ namespace OsmAnd
 
     private:
         // Resource-requests related:
+        typedef std::function<MapRendererBaseTiledResource* (const TiledEntriesCollection<MapRendererBaseTiledResource>&, const TileId, const ZoomLevel)> TiledResourceAllocator;
+        
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         Concurrent::WorkerPool _resourcesRequestWorkerPool;
         QAtomicInt _resourcesRequestTasksCounter;
@@ -163,12 +165,14 @@ namespace OsmAnd
             const int zoomLevelOffset);
         void requestNeededResources(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
+            const TileId centerTileId,
             const QVector<TileId>& tiles,
             const ZoomLevel zoom,
             const ZoomLevel currentZoom,
             const int zoomLevelOffset);
         void requestNeededTiledResources(
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+            const TileId centerTileId,
             const QVector<TileId>& tiles,
             const ZoomLevel zoom,
             const ZoomLevel currentZoom,
@@ -178,6 +182,13 @@ namespace OsmAnd
             const ZoomLevel zoom);
         void requestNeededResource(
             const std::shared_ptr<MapRendererBaseResource>& resource);
+        void addCombinedTilesToRequest(
+            const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+            const TiledResourceAllocator resourceAllocator,
+            const ZoomLevel activeZoom,
+            const TileId centerTileId,
+            const ZoomLevel zoom,
+            QVector<TileId>& tiles);
         bool beginResourceRequestProcessing(const std::shared_ptr<MapRendererBaseResource>& resource);
         void endResourceRequestProcessing(
             const std::shared_ptr<MapRendererBaseResource>& resource,
@@ -192,6 +203,9 @@ namespace OsmAnd
         bool cleanupJunkResource(
             const std::shared_ptr<MapRendererBaseResource>& resource,
             bool& needsResourcesUploadOrUnload);
+        void addCombinedTilesToAvoidCleanup(
+            const std::shared_ptr<IMapRendererTiledResourcesCollection>& resourcesCollection,
+            QMap< ZoomLevel, QVector<TileId> >& tiles);
         unsigned int unloadResources();
         void unloadResourcesFrom(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,

@@ -87,6 +87,9 @@ namespace OsmAnd
             bool overridesOffset;
             PointI offset;
 
+            bool overridesMinDistance;
+            float minDistance;
+
         private:
             Q_DISABLE_COPY(AdditionalBillboardSymbolInstanceParameters);
         };
@@ -114,6 +117,8 @@ namespace OsmAnd
             bool overridesPinPointOnPath;
             IOnPathMapSymbol::PinPoint pinPointOnPath;
 
+            bool overridesMinDistance;
+            float minDistance;
         private:
             Q_DISABLE_COPY(AdditionalOnPathSymbolInstanceParameters);
         };

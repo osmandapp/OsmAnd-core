@@ -740,6 +740,26 @@ namespace OsmAnd
             outY = deinterleaveBy1(code >> 1);
         }
 
+        static QVector<TileId> getAllMetaTileIds(const TileId anyMetaTileId)
+        {
+            return getMetaTileIds(TileId::fromXY(anyMetaTileId.x >> 1, anyMetaTileId.y >> 1));
+        }
+
+        static QVector<TileId> getMetaTileIds(const TileId overscaledTileId)
+        {
+            assert(overscaledTileId.x <= std::numeric_limits<int32_t>::max() >> 2);
+            assert(overscaledTileId.y <= std::numeric_limits<int32_t>::max() >> 2);
+
+            const auto unevenTileId = TileId::fromXY(overscaledTileId.x << 1, overscaledTileId.y << 1);
+            QVector<TileId> metaTileIds(4);
+            metaTileIds[0] = unevenTileId + TileId::fromXY(0, 0);
+            metaTileIds[1] = unevenTileId + TileId::fromXY(1, 0);
+            metaTileIds[2] = unevenTileId + TileId::fromXY(0, 1);
+            metaTileIds[3] = unevenTileId + TileId::fromXY(1, 1);
+
+            return metaTileIds;
+        }
+
         static QVector<TileId> getTileIdsUnderscaledByZoomShift(
             const TileId tileId,
             const unsigned int absZoomShift)
@@ -773,26 +793,31 @@ namespace OsmAnd
             PointF* outNSizeInTile = nullptr)
         {
             TileId shiftedTileId = tileId;
-            PointF nOffsetInTile;
-            PointF nSizeInTile;
             shiftedTileId.x >>= absZoomShift;
             shiftedTileId.y >>= absZoomShift;
-            if (absZoomShift < 20)
+
+            if (outNOffsetInTile || outNSizeInTile)
             {
-                nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
-                nOffsetInTile.x = static_cast<float>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
-                nOffsetInTile.y = static_cast<float>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                PointF nOffsetInTile;
+                PointF nSizeInTile;
+                if (absZoomShift < 20)
+                {
+                    nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
+                    nOffsetInTile.x = static_cast<float>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                    nOffsetInTile.y = static_cast<float>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                }
+                else
+                {
+                    nSizeInTile.x = nSizeInTile.y = 1.0 / static_cast<double>(1ull << absZoomShift);
+                    nOffsetInTile.x = static_cast<double>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
+                    nOffsetInTile.y = static_cast<double>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
+                }
+                if (outNOffsetInTile)
+                    *outNOffsetInTile = nOffsetInTile;
+                if (outNSizeInTile)
+                    *outNSizeInTile = nSizeInTile;
             }
-            else
-            {
-                nSizeInTile.x = nSizeInTile.y = 1.0 / static_cast<double>(1ull << absZoomShift);
-                nOffsetInTile.x = static_cast<double>(tileId.x - (shiftedTileId.x << absZoomShift)) * nSizeInTile.x;
-                nOffsetInTile.y = static_cast<double>(tileId.y - (shiftedTileId.y << absZoomShift)) * nSizeInTile.y;
-            }
-            if (outNOffsetInTile)
-                *outNOffsetInTile = nOffsetInTile;
-            if (outNSizeInTile)
-                *outNSizeInTile = nSizeInTile;
+
             return shiftedTileId;
         }
 
@@ -869,6 +894,15 @@ namespace OsmAnd
             return n - (n >> 1);
         }
 
+        inline static int commonDivisor(const int x, const int y)
+        {
+            assert(x != 0 || y != 0);
+            
+            return y == 0
+                ? qAbs(x)
+                : commonDivisor(y, x % y);
+        }
+
         inline static double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
         {
             // Equatorial circumference of the Earth in meters
@@ -902,17 +936,23 @@ namespace OsmAnd
 
         inline static PointI shortestVector31(const PointI& offset)
         {
-            const int intHalf = INT32_MAX / 2 + 1;
-            PointI offset31 = offset;
-            if (offset31.x >= intHalf)
-                offset31.x = offset31.x - INT32_MAX - 1;
-            else if (offset31.x < -intHalf)
-                offset31.x = offset31.x + INT32_MAX + 1;
-            if (offset31.y >= intHalf)
-                offset31.y = offset31.y - INT32_MAX - 1;
-            else if (offset31.y < -intHalf)
-                offset31.y = offset31.y + INT32_MAX + 1;
-            return offset31;
+            return shortestVector(offset, ZoomLevel::ZoomLevel31);
+        }
+
+        inline static PointI shortestVector(const PointI& offset_, const ZoomLevel zoomLevel)
+        {
+            const int32_t maxTileNumber = static_cast<int32_t>((1u << zoomLevel) - 1);
+            const int middleTileNumber = maxTileNumber / 2 + 1;
+            PointI offset = offset_;
+            if (offset.x >= middleTileNumber)
+                offset.x = offset.x - maxTileNumber - 1;
+            else if (offset.x < -middleTileNumber)
+                offset.x = offset.x + maxTileNumber + 1;
+            if (offset.y >= middleTileNumber)
+                offset.y = offset.y - maxTileNumber - 1;
+            else if (offset.y < -middleTileNumber)
+                offset.y = offset.y + maxTileNumber + 1;
+            return offset;
         }
 
         inline static PointI shortestVector31(const PointI& p0, const PointI& p1)

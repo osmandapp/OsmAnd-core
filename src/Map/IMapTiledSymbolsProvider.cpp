@@ -58,6 +58,7 @@ void OsmAnd::IMapTiledSymbolsProvider::Request::copy(Request& dst, const IMapDat
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
     dst.filterCallback = src.filterCallback;
+    dst.combineTilesData = src.combineTilesData;
 }
 
 std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapTiledSymbolsProvider::Request::clone() const

@@ -29,7 +29,15 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-#define DRAW_AREA_BOUNDS 0
+// #define DRAW_AREA_BOUNDS 1
+#ifndef DRAW_AREA_BOUNDS
+#   define DRAW_AREA_BOUNDS 0
+#endif // !defined(DRAW_AREA_BOUNDS)
+
+// #define DRAW_OVERSCALED_TILE_BOUNDS 1
+#ifndef DRAW_OVERSCALED_TILE_BOUNDS
+#   define DRAW_OVERSCALED_TILE_BOUNDS 0
+#endif // !defined(DRAW_OVERSCALED_TILE_BOUNDS)
 
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
@@ -110,13 +118,52 @@ void OsmAnd::MapRasterizer_P::rasterize(
 #if DRAW_AREA_BOUNDS
     {
         SkPaint paint;
-        paint.setColor(SK_ColorRED);
-        paint.setStrokeWidth(context.env->mapScaleFactor);
         paint.setStyle(SkPaint::kStroke_Style);
-        const auto& rect = SkRect::MakeLTRB(0, 0, context.pixelArea.right(), context.pixelArea.bottom());
+        paint.setStrokeWidth(context.env->displayDensityFactor);
+        paint.setColor(SK_ColorRED);
+
+        const auto rect = SkRect::MakeLTRB(0, 0, context.pixelArea.right(), context.pixelArea.bottom());
         canvas.drawRect(rect, paint);
     }
-#endif // DRAW_AREA_BOUND
+#endif // DRAW_AREA_BOUNDS
+
+#if DRAW_OVERSCALED_TILE_BOUNDS
+    if (primitivisedObjects->zoom != ZoomLevel::MinZoomLevel)
+    {
+        SkPaint paint;
+        paint.setStyle(SkPaint::kStroke_Style);
+        paint.setStrokeWidth(2 * context.env->displayDensityFactor);
+        paint.setColor(SK_ColorBLACK);
+
+        const auto tileId31 = TileId::fromXY(area31.left(), area31.top());
+        const auto tileId = Utilities::getTileIdOverscaledByZoomShift(tileId31, ZoomLevel::ZoomLevel31 - primitivisedObjects->zoom);
+
+        QVector<PointI> points;
+        points.push_back(context.pixelArea.bottomLeft());
+        points.push_back(context.pixelArea.topLeft);
+        points.push_back(context.pixelArea.topRight());
+        points.push_back(context.pixelArea.bottomRight);
+
+        SkPath path;
+
+        for (int i = 0; i < 4; i++)
+        {
+            bool draw = i % 2 == 0 && (tileId.x + i / 2) >> 1 << 1 == tileId.x + i / 2
+                || i % 2 == 1 && (tileId.y + i / 2) >> 1 << 1 == tileId.y + i / 2;
+
+            if (draw)
+            {
+                const auto& start = points[i];
+                const auto& end = points[(i + 1) % 4];
+
+                path.reset();
+                path.moveTo(SkPoint::Make(start.x, start.y));
+                path.lineTo(SkPoint::Make(end.x, end.y));
+                canvas.drawPath(path, paint);
+            }
+        }
+    }
+#endif // DRAW_OVERSCALED_TILE_BOUNDS
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();

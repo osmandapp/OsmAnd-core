@@ -38,14 +38,13 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 }
 
 void OsmAnd::SymbolRasterizer_P::rasterize(
-    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+    const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+    const std::shared_ptr<const MapPresentationEnvironment>& env,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    const FilterByMapObject filter,
+    const FilterBySymbolsGroup filter,
     const std::shared_ptr<const IQueryController>& queryController) const
 {
-    const auto& env = primitivisedObjects->mapPresentationEnvironment;
-
-    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
+    for (const auto& symbolGroupEntry : rangeOf(constOf(symbolsGroups)))
     {
         if (queryController && queryController->isAborted())
             return;
@@ -61,7 +60,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         //////////////////////////////////////////////////////////////////////////
 
         // Apply filter, if it's present
-        if (filter && !filter(mapObject))
+        if (filter && !filter(symbolsGroup))
             continue;
 
         // Create group

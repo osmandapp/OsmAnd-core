@@ -33,6 +33,8 @@ namespace OsmAnd
             TileId tileId,
             ZoomLevel zoom);
 
+        bool isMetaTiled;
+
         void detach() override;
 
         void removeSelfFromCollection() override;

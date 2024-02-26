@@ -20,9 +20,10 @@
 #include "Utilities.h"
 
 #define MAX_PATHS_TO_ATTACH 20
-#define MAX_PATH_LENGTH_TO_COMBINE 500
 #define MAX_GAP_BETWEEN_PATHS 45
 #define MAX_ANGLE_BETWEEN_VECTORS M_PI_2
+
+#define BLOCK_LENGTH_COEFF 4.0f / 3.0f
 
 OsmAnd::MapObjectsSymbolsProvider_P::MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner_)
     : owner(owner_)
@@ -42,47 +43,117 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         pOutMetric->reset();
     const auto& request = MapDataProviderHelpers::castRequest<MapObjectsSymbolsProvider::Request>(request_);
     const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
+    const auto bbox31 = owner->isMetaTiled() && request.zoom > ZoomLevel::MinZoomLevel
+        ? Utilities::roundBoundingBox31(tileBBox31, static_cast<ZoomLevel>(request.zoom - 1))
+        : tileBBox31;
 
-    // Obtain offline map primitives tile
+    assert(owner->isMetaTiled() || !request.combineTilesData);
+
+    QVector<TileId> tilesIds;
+    if (request.combineTilesData)
+        tilesIds = Utilities::getAllMetaTileIds(request.tileId);
+    else
+        tilesIds.push_back(request.tileId);
+
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
-    owner->primitivesProvider->obtainTiledPrimitives(request, primitivesTile);
+    MapPrimitiviser::SymbolsGroupsCollection primitivisedSymbolsGroups;
+    std::shared_ptr<const MapPresentationEnvironment> mapPresentationEnvironment;
+    PointD scaleDivisor31ToPixel;
+    bool anyTilePrimitivesObtained = false;
+
+    QSet<MapObject::SharingKey> addedObjectsSymbolsKeys;
+    for (const auto tileId : tilesIds)
+    {
+        bool originalTile = tileId == request.tileId;
+
+        const auto requestClone = request.clone();
+        auto& tileRequest = *dynamic_cast<MapObjectsSymbolsProvider::Request*>(requestClone.get());
+        tileRequest.tileId = tileId;
+
+        std::shared_ptr<MapPrimitivesProvider::Data> tilePrimitives;
+        owner->primitivesProvider->obtainTiledPrimitives(tileRequest, tilePrimitives); 
+
+        if (tilePrimitives)
+        {
+            if (!anyTilePrimitivesObtained)
+            {
+                anyTilePrimitivesObtained = true;
+                mapPresentationEnvironment = tilePrimitives->primitivisedObjects->mapPresentationEnvironment;
+                scaleDivisor31ToPixel = tilePrimitives->primitivisedObjects->scaleDivisor31ToPixel;
+            }
+
+            const auto& symbolsGroups = tilePrimitives->primitivisedObjects->symbolsGroups;
+            for (const auto& symbolsGroupEntry : rangeOf(constOf(symbolsGroups)))
+            {
+                const auto& mapObject = symbolsGroupEntry.key();
+                const auto& symbolsGroup = symbolsGroupEntry.value();
+
+                MapObject::SharingKey key;
+                bool accept = false;
+                if (owner->isMetaTiled())
+                {
+                    const bool hasOnPathSymbol = MapObjectsSymbolsProvider_P::hasOnPathSymbol(symbolsGroup);
+                    accept = accept || request.combineTilesData && (originalTile || hasOnPathSymbol);
+                    accept = accept || !request.combineTilesData && !hasOnPathSymbol;
+                }
+                else
+                    accept = true;
+                accept = accept && (!mapObject->obtainSharingKey(key) || !addedObjectsSymbolsKeys.contains(key));
+
+                if (!accept)
+                    continue;
+
+                addedObjectsSymbolsKeys.insert(key);
+                primitivisedSymbolsGroups.insert(mapObject, symbolsGroup);
+            }
+        }
+
+        if (originalTile)
+            primitivesTile = tilePrimitives;
+    }
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
+    if (!anyTilePrimitivesObtained || primitivisedSymbolsGroups.isEmpty())
     {
         // Mark tile as empty
         outData.reset();
         return true;
     }
 
-    const auto& combinePathsResult = combineOnPathSymbols(primitivesTile->primitivisedObjects, request.queryController);
+    CombinePathsResult combinePathsResult;
+    if (!owner->isMetaTiled() || request.combineTilesData)
+        combinePathsResult = combineOnPathSymbols(primitivisedSymbolsGroups,
+            mapPresentationEnvironment,
+            scaleDivisor31ToPixel,
+            request.queryController);
 
     // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const SymbolRasterizer::RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
     QHash< std::shared_ptr<const MapObject>, std::shared_ptr<MapObjectSymbolsGroup> > preallocatedSymbolsGroups;
     const auto filterCallback = request.filterCallback;
     const auto rasterizationFilter =
-        [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups, &combinePathsResult]
-        (const std::shared_ptr<const MapObject>& mapObject) -> bool
+        [this, filterCallback, &preallocatedSymbolsGroups, &combinePathsResult]
+        (const std::shared_ptr<const MapPrimitiviser::SymbolsGroup>& symbolsGroup) -> bool
         {
+            const auto& mapObject = symbolsGroup->sourceObject;
+
             if (combinePathsResult.mapObjectToSkip.contains(mapObject))
                 return false;
 
             const std::shared_ptr<MapObjectSymbolsGroup> preallocatedGroup(new MapObjectSymbolsGroup(mapObject));
 
-            ObfObjectId id = ObfObjectId::invalidId();
-            if (const auto obfMapObject = std::dynamic_pointer_cast<const ObfMapObject>(mapObject))
-                id = obfMapObject->id;
-
-            if (!filterCallback || filterCallback(owner, preallocatedGroup, id))
+            // Do not filter groups with on-path symbols
+            if (hasOnPathSymbol(symbolsGroup) || !filterCallback || filterCallback(owner, preallocatedGroup))
             {
                 preallocatedSymbolsGroups.insert(mapObject, qMove(preallocatedGroup));
                 return true;
             }
             return false;
         };
+
     owner->symbolRasterizer->rasterize(
-        primitivesTile->primitivisedObjects,
+        primitivisedSymbolsGroups,
+        mapPresentationEnvironment,
         rasterizedSymbolsGroups,
         rasterizationFilter,
         nullptr);
@@ -107,13 +178,6 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         const auto group = *citPreallocatedGroup;
 
         auto path31 = combinePathsResult.getCombinedOrOriginalPath(mapObject);
-
-        const auto visibleBBox = request.mapState.visibleBBox31;
-        const auto start = path31.front();
-        const auto end = path31.back();
-        // Reverse path to reduce placing on-path or along-path symbols out of visibleBBox
-        if (!visibleBBox.contains(start) && visibleBBox.contains(end))
-            std::reverse(path31.begin(), path31.end());
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
@@ -233,13 +297,42 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
 
             const auto& env = owner->primitivesProvider->primitiviser->environment;
+            // Temp fix to avoid intersections of street names vs road shields on map
+            const auto symbolSpacingInPixels = env->getDefaultSymbolPathSpacing() * 20;
+
+            const auto& windowSize = request.mapState.windowSize;
+            const auto minWindowSize = qMin(windowSize.x, windowSize.y);
+            const auto minBlockSpacingInPixels = minWindowSize / 10.0f;
+            const auto maxBlockSpacingInPixels = minWindowSize / 2.0f;
+            const auto completeBlockLengthInPixels = std::accumulate(symbolsWidthsInPixels, 0.0f)
+                + (symbolsWidthsInPixels.size() - 1) * symbolSpacingInPixels;
+            const auto completeBlockSpacingInPixels =
+                qBound(minBlockSpacingInPixels, minWindowSize - completeBlockLengthInPixels * BLOCK_LENGTH_COEFF, maxBlockSpacingInPixels);
+
             const auto computedPinPoints = computePinPoints(
                 path31,
                 env->getGlobalPathPadding(),
-                env->getDefaultSymbolPathSpacing() * 20, // Temp fix to avoid intersections of street names vs road shields on map
+                completeBlockSpacingInPixels,
+                symbolSpacingInPixels,
                 symbolsWidthsInPixels,
-                request.mapState.windowSize,
                 request.zoom);
+
+            float actualBlockLengthInPixels;
+            float actualBlockSpacingInPixels;
+            if (computedPinPoints.size() >= group->symbols.size())
+            {
+                actualBlockLengthInPixels = completeBlockLengthInPixels;
+                actualBlockSpacingInPixels = completeBlockSpacingInPixels;
+            }
+            else
+            {
+                const auto pFirstSymbolWidthInPixels = symbolsWidthsInPixels.constBegin();
+                const auto symbolsInBlock = computedPinPoints.size();
+                actualBlockLengthInPixels = std::accumulate(pFirstSymbolWidthInPixels, pFirstSymbolWidthInPixels + symbolsInBlock, 0.0f)
+                    + (symbolsInBlock - 1) * symbolSpacingInPixels;
+                actualBlockSpacingInPixels =
+                    qBound(minBlockSpacingInPixels, minWindowSize - actualBlockLengthInPixels * BLOCK_LENGTH_COEFF, maxBlockSpacingInPixels);
+            }    
 
             // After pin-points were computed, assign them to symbols in the same order
             auto citComputedPinPoint = computedPinPoints.cbegin();
@@ -250,12 +343,20 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 std::shared_ptr<MapSymbolsGroup::AdditionalInstance> additionalGroupInstance(
                     new MapSymbolsGroup::AdditionalInstance(group));
                     
-                for (const auto& symbol : constOf(group->symbols))
+                for (int symbolIndex = 0; symbolIndex < group->symbols.size(); symbolIndex++)
                 {
+                    const auto& symbol = group->symbols[symbolIndex];
+                    const auto symbolWidthInPixels = symbolsWidthsInPixels[symbolIndex];
+                    const auto symbolMinDistance = actualBlockSpacingInPixels + actualBlockLengthInPixels - symbolWidthInPixels;
+
                     // Stop in case no more pin-points left
                     if (citComputedPinPoint == citComputedPinPointsEnd)
                         break;
                     const auto& computedPinPoint = *(citComputedPinPoint++);
+
+                    // Reject symbol with pin-point outside of bbox
+                    if (!bbox31.contains(computedPinPoint.point31))
+                        continue;
 
                     std::shared_ptr<MapSymbolsGroup::AdditionalSymbolInstanceParameters> additionalSymbolInstance;
                     if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
@@ -267,6 +368,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                             new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters(additionalGroupInstance.get());
                         billboardSymbolInstance->overridesPosition31 = true;
                         billboardSymbolInstance->position31 = computedPinPoint.point31;
+                        billboardSymbolInstance->overridesMinDistance = true;
+                        billboardSymbolInstance->minDistance = symbolMinDistance;
                         additionalSymbolInstance.reset(billboardSymbolInstance);
                     }
                     else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathRasterMapSymbol>(symbol))
@@ -280,6 +383,8 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                             new MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters(additionalGroupInstance.get());
                         onPathSymbolInstance->overridesPinPointOnPath = true;
                         onPathSymbolInstance->pinPointOnPath = pinPoint;
+                        onPathSymbolInstance->overridesMinDistance = true;
+                        onPathSymbolInstance->minDistance = symbolMinDistance;
                         additionalSymbolInstance.reset(onPathSymbolInstance);
                     }
 
@@ -374,7 +479,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         request.zoom,
         symbolsGroups,
         primitivesTile,
-        new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata)));
+        primitivesTile ? new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata) : nullptr));
 
     return true;
 }
@@ -384,13 +489,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
 // length of path to draw full text of symbol. That's why paths
 // are combined, to fit full text of symbol 
 OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbolsProvider_P::combineOnPathSymbols(
-    const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
+    const MapPrimitiviser::SymbolsGroupsCollection& symbolsGroups,
+    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const PointD& divisor31ToPixels,
     const std::shared_ptr<const IQueryController>& queryController) const
 {
     // Firstly, collect all on-path text symbols with same content and order
-    const auto& divisor31ToPixels = primitivisedObjects->scaleDivisor31ToPixel;
     QHash< QString, QList < std::shared_ptr<СombinedPath> > > combinedPathsMap;
-    for (const auto& mapObjectSymbolsGroup : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
+    for (const auto& mapObjectSymbolsGroup : rangeOf(constOf(symbolsGroups)))
     {
         if (queryController && queryController->isAborted())
             return CombinePathsResult();
@@ -437,8 +543,6 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
 
     CombinePathsResult result;
 
-    const auto& env = primitivisedObjects->mapPresentationEnvironment;
-    const auto maxPathLengthInPixels = MAX_PATH_LENGTH_TO_COMBINE * env->displayDensityFactor;
     const auto maxGapBetweenPaths = MAX_GAP_BETWEEN_PATHS * env->displayDensityFactor;
 
     for (auto& pathsToCombine : combinedPathsMap)
@@ -467,9 +571,6 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
                 if (path->isAttachedToAnotherPath())
                     continue;
 
-                if (path->getLengthInPixels() > maxPathLengthInPixels)
-                    continue;
-
                 auto minGapBetweenPaths = maxGapBetweenPaths;
                 std::shared_ptr<СombinedPath> mainPath;
                 std::shared_ptr<СombinedPath> pathToAttach;
@@ -480,9 +581,6 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
                     auto& otherPath = pathsToCombine[otherPathIndex];
 
                     if (otherPath->isAttachedToAnotherPath())
-                        continue;
-                    
-                    if (otherPath->getLengthInPixels() > maxPathLengthInPixels)
                         continue;
 
                     // Try to connect 1st path to 2nd and 2nd to 1st, choose best connection
@@ -525,9 +623,9 @@ OsmAnd::MapObjectsSymbolsProvider_P::CombinePathsResult OsmAnd::MapObjectsSymbol
 QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalPaddingInPixels,
+    const float blockSpacingInPixels,
     const float symbolSpacingInPixels,
     const QVector<float>& symbolsWidthsInPixels,
-    const PointI& windowSize,
     const ZoomLevel neededZoom) const
 {
     QList<ComputedPinPoint> computedPinPoints;
@@ -578,9 +676,6 @@ QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsS
     for (auto pathSegmentIdx = 0; pathSegmentIdx < pathSegmentsCount; pathSegmentIdx++)
         *(pPathSegmentLengthN++) = *(pPathSegmentLengthInPixels++) / pathLengthInPixels;
 
-    const auto minWindowSize = qMin(windowSize.x, windowSize.y);
-    const auto blockSpacingInPixels = qMax(minWindowSize / 2.0f, minWindowSize - blockLengthInPixels * 1.5f);
-
     auto blockPinPoints = Utilities::calculateItemPointsOnPath(
         pathLengthInPixels,
         blockLengthInPixels,
@@ -621,6 +716,42 @@ QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> OsmAnd::MapObjectsS
         
         return computedPinPoints;
     }
+
+    const auto globalPaddingN = globalPaddingInPixels / pathLengthInPixels;
+    const auto blockSpacingN = blockSpacingInPixels / pathLengthInPixels;
+
+    // Provide more potential pin-points than in standard pin-points positioning
+    int power = static_cast<int>(std::log2f(blockPinPoints.size() + 1)) + 3;
+    int segments = 1 << power;
+    int middleIndex = segments >> 1;
+
+    // Try to position pin-points more tightly and less evenly (but still on negative powers of 2)
+    QList<Utilities::ItemPointOnPath> alternativeBlockPinPoints;
+    alternativeBlockPinPoints.push_back(blockPinPoints.first());
+    for (int offset = 1; offset < middleIndex - 1; offset++)
+    {
+        const auto segmentIndex = middleIndex + offset;
+        const auto blockCenterN = segmentIndex / static_cast<float>(segments);
+
+        // There is no more space on path, finish positioning
+        if (blockCenterN + blockLengthN / 2.0f + globalPaddingN > 1.0f)
+            break;
+
+        // Add pin-points if they are sufficiently faw away from previously added pin-points
+        const auto lastBlockCenterN = alternativeBlockPinPoints.back().itemCenterN;
+        const auto gap = blockCenterN - lastBlockCenterN - blockLengthN;
+        if (gap >= blockSpacingN)
+        {
+            const auto denominator = segments / Utilities::commonDivisor(segmentIndex, segments);
+            const auto priority = static_cast<int>(std::log2l(denominator) - 1);
+
+            alternativeBlockPinPoints.push_back({priority, (1.0f - blockCenterN) * pathLengthInPixels, 1.0f - blockCenterN});
+            alternativeBlockPinPoints.push_back({priority, blockCenterN * pathLengthInPixels, blockCenterN});
+        }
+    }
+
+    if (alternativeBlockPinPoints.size() > blockPinPoints.size())
+        blockPinPoints = alternativeBlockPinPoints;
 
     std::sort(blockPinPoints, Utilities::ItemPointOnPath::PriorityComparator());
     for (const auto& blockPinPoint : constOf(blockPinPoints))
