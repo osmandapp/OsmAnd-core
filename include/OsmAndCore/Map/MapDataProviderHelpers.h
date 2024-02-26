@@ -37,12 +37,6 @@ namespace OsmAnd
             return *dynamic_cast<const T*>(&request);
         }
 
-        template<class T>
-        static T& castRequest(IMapDataProvider::Request& request)
-        {
-            return *dynamic_cast<T*>(&request);
-        }
-
         static bool nonNaturalObtainData(
             IMapDataProvider* const provider,
             const IMapDataProvider::Request& request,

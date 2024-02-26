@@ -108,7 +108,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
         const auto minZoom = getMinZoom();
         const auto zoomCount = request.zoom - minZoom > maxZoomShift ? maxZoomShift : request.zoom - minZoom;
         const auto requestCopy = request.clone();
-        auto& r = MapDataProviderHelpers::castRequest<Request>(*requestCopy);
+        auto& r = *dynamic_cast<Request*>(requestCopy.get());
         if (!image && request.cacheOnly)
         {
             // Search for overscale images in cache for the first requests (cache only)

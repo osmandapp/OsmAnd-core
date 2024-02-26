@@ -70,7 +70,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
         bool originalTile = tileId == request.tileId;
 
         const auto requestClone = request.clone();
-        auto& tileRequest = MapDataProviderHelpers::castRequest<MapObjectsSymbolsProvider::Request>(*requestClone);
+        auto& tileRequest = *dynamic_cast<MapObjectsSymbolsProvider::Request*>(requestClone.get());
         tileRequest.tileId = tileId;
 
         std::shared_ptr<MapPrimitivesProvider::Data> tilePrimitives;
