@@ -24,6 +24,7 @@ namespace OsmAnd
         AtlasMapRendererInternalState();
         virtual ~AtlasMapRendererInternalState();
 
+        int64_t dateTime;
         TileId targetTileId;
         PointF targetInTileOffsetN;
         int zoomLevelOffset;

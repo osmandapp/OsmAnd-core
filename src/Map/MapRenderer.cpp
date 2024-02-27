@@ -2713,6 +2713,21 @@ float OsmAnd::MapRenderer::getSymbolsOpacity() const
     return _requestedState.symbolsOpacity;
 }
 
+bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.dateTime != dateTime;
+    if (!update)
+        return false;
+
+    _requestedState.dateTime = dateTime;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::DateTime);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

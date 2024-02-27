@@ -198,7 +198,7 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
     const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
     std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU);
+    return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime);
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
@@ -469,7 +469,7 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount)
+    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount, int64_t dateTime)
 {
     // Check if update needed
     bool update = true; //NOTE: So far this won't work, since resources won't be updated
@@ -489,6 +489,7 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
         _visibleTiles = visibleTiles;
         _activeTiles = activeTiles;
         _activeTilesTargets = activeTilesTargets;
+        _tileDateTime = dateTime;
 
         // Wake up the worker
         _workerThreadWakeup.wakeAll();
@@ -1007,6 +1008,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                         {
                             const auto tiledResources =
                                 static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
+                            auto itImage = cachedResource->_sourceData->images.find(0);
                             if (cachedResource->_sourceData->zoom != InvalidZoomLevel)
                             {
                                 // Create a resource for existing overscale (or underscale) cached tile
@@ -1034,7 +1036,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     requestResourcesUploadOrUnload();
                                 }
                             }
-                            else
+                            else if (itImage != cachedResource->_sourceData->images.end())
                             {
                                 // Create four underscale resources of higher zoom level
                                 const auto zoomLevel = cachedResource->zoom;
@@ -1055,7 +1057,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     if (!underscaledTilePresent)
                                     {
                                         atLeastOneAbsent = true;
-                                        auto image = cachedResource->_sourceData->image;
+                                        auto image = itImage.value();
                                         if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
                                             image = SkiaUtilities::getUpperLeft(image);
                                         else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)

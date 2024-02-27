@@ -790,11 +790,12 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    int64_t dateTime /*= 0*/)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU);
+        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU, dateTime);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
@@ -885,7 +886,8 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    int64_t dateTime /*= 0*/)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -902,7 +904,28 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     sk_sp<const SkImage> image;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        image = rasterMapLayerData->image;
+        if (rasterMapLayerData->images.size() == 1)
+        {
+            auto itImage = rasterMapLayerData->images.begin();
+            if (itImage.key() == 0 || itImage.key() == dateTime)
+                image = itImage.value();
+            else
+                return false;
+        }
+        else
+        {
+            auto itImage = rasterMapLayerData->images.find(dateTime);
+            if (itImage != rasterMapLayerData->images.end())
+                image = itImage.value();
+            else
+            {
+                itImage = rasterMapLayerData->images.constFind(0);
+                if (itImage != rasterMapLayerData->images.end())
+                    image = itImage.value();
+                else
+                    return false;
+            }
+        }
 
         switch (image->alphaType())
         {
@@ -953,8 +976,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         assert(false);
         return false;
     }
-    const auto textureFormat = getTextureFormat(tile);
-    const auto sourceFormat = getSourceFormat(tile);
+    const auto textureFormat = getTextureFormat(tile, image->colorType());
+    const auto sourceFormat = getSourceFormat(tile, image->colorType());
 
     // Calculate texture size. Tiles are always stored in square textures.
     // Also, since atlas-texture support for tiles was deprecated, only 1 tile per texture is allowed.
@@ -1393,11 +1416,12 @@ void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextL
 }
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
-    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+    const SkColorType colorType /*= SkColorType::kRGBA_8888_SkColorType*/)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return getTextureFormat(rasterMapLayerData->image->colorType());
+        return getTextureFormat(colorType);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
@@ -1476,11 +1500,12 @@ GLenum OsmAnd::GPUAPI_OpenGL::getBaseInternalTextureFormat(const TextureFormat t
 }
 
 OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
-    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+    const SkColorType colorType /*= SkColorType::kRGBA_8888_SkColorType*/)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return getSourceFormat(rasterMapLayerData->image->colorType());
+        return getSourceFormat(colorType);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {

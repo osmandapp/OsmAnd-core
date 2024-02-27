@@ -15,6 +15,7 @@
 #include <OsmAndCore/Map/GeoCommonTypes.h>
 #include <OsmAndCore/Map/WeatherCommonTypes.h>
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
+#include "OsmAndCore/Utilities.h"
 
 namespace OsmAnd
 {
@@ -29,7 +30,8 @@ namespace OsmAnd
         
         mutable QReadWriteLock _lock;
 
-        int64_t _dateTime;
+        int64_t _dateTimeFirst;
+        int64_t _dateTimeLast;
         QList<BandIndex> _bands;
         bool _localData;
 
@@ -37,15 +39,17 @@ namespace OsmAnd
     public:
         WeatherRasterLayerProvider(const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
                                    const WeatherLayer weatherLayer,
-                                   const int64_t dateTime,
+                                   const int64_t dateTimeFirst,
+                                   const int64_t dateTimeLast,
                                    const QList<BandIndex> bands,
                                    const bool localData);
         virtual ~WeatherRasterLayerProvider();
         
         const WeatherLayer weatherLayer;
 
-        const int64_t getDateTime() const;
-        void setDateTime(int64_t dateTime);
+        const int64_t getDateTimeFirst() const;
+        const int64_t getDateTimeLast() const;
+        void setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast);
         const QList<BandIndex> getBands() const;
         void setBands(const QList<BandIndex>& bands);
         const bool getLocalData() const;

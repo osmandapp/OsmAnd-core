@@ -63,7 +63,8 @@ namespace OsmAnd
             TileRequest(const TileRequest& that);
             virtual ~TileRequest();
 
-            int64_t dateTime;
+            int64_t dateTimeFirst;
+            int64_t dateTimeLast;
             WeatherType weatherType;
             TileId tileId;
             ZoomLevel zoom;
@@ -111,13 +112,20 @@ namespace OsmAnd
                 float densityFactor,
                 sk_sp<const SkImage> image,
                 QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap = QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>());
+            Data(
+                TileId tileId,
+                ZoomLevel zoom,
+                AlphaChannelPresence alphaChannelPresence,
+                float densityFactor,
+                QHash<int64_t, sk_sp<const SkImage>>& images,
+                QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap = QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>());
             virtual ~Data();
 
             TileId tileId;
             ZoomLevel zoom;
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
-            sk_sp<const SkImage> image;
+            QHash<int64_t, sk_sp<const SkImage>> images;
             QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
         };
 

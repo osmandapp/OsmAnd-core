@@ -115,7 +115,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         {
             if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
             {
-                image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
+                const auto itImage = data->images.constFind(0);
+                if (itImage != data->images.constEnd())
+                    image = OsmAnd::SkiaUtilities::createTileImage(itImage.value(), image, offsetY);
             }
         }
         
@@ -246,7 +248,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     {
         if (auto data = std::dynamic_pointer_cast<OnlineRasterMapLayerProvider::Data>(outData))
         {
-            image = OsmAnd::SkiaUtilities::createTileImage(data->image, image, offsetY);
+            const auto itImage = data->images.constFind(0);
+            if (itImage != data->images.constEnd())
+                image = OsmAnd::SkiaUtilities::createTileImage(itImage.value(), image, offsetY);
         }
     }
 

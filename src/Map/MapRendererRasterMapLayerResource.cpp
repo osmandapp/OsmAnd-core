@@ -72,9 +72,11 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     // Convert data if such is present
     if (_sourceData)
     {
-        _sourceData->image = resourcesManager->adjustImageToConfiguration(
-            _sourceData->image,
-            _sourceData->alphaChannelPresence);
+        for (auto image : _sourceData->images)
+        {
+            image.reset(resourcesManager->adjustImageToConfiguration(
+                image, _sourceData->alphaChannelPresence).get());
+        }
     }
 
     return true;
@@ -137,9 +139,11 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
                     // Convert data if such is present
                     if (self->_sourceData)
                     {
-                        self->_sourceData->image = resourcesManager->adjustImageToConfiguration(
-                            self->_sourceData->image,
-                            self->_sourceData->alphaChannelPresence);
+                        for (auto image : self->_sourceData->images)
+                        {
+                            image.reset(resourcesManager->adjustImageToConfiguration(
+                                image, self->_sourceData->alphaChannelPresence).get());
+                        }
                     }
                 }
                 else

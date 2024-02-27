@@ -58,7 +58,7 @@ namespace OsmAnd
             Collection& collection;
         };
 
-        typedef std::array< QHash< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > Storage;
+        typedef std::array< QHash< TileId, QHash< int64_t, std::shared_ptr<ENTRY> > >, ZoomLevelsCount > Storage;
 
     private:
     protected:
@@ -100,13 +100,17 @@ namespace OsmAnd
                 return false;
 
             const auto& storage = _storage[zoom];
-            const auto& itEntry = storage.constFind(tileId);
-            if (itEntry != storage.cend())
+            const auto& itBatch = storage.constFind(tileId);
+            if (itBatch != storage.cend())
             {
-                outEntry = *itEntry;
+                const auto& itEntry = itBatch->constFind(0);
+                if (itEntry != itBatch->cend())
+                {
+                    outEntry = *itEntry;
 
-                _collectionLock.unlock();
-                return true;
+                    _collectionLock.unlock();
+                    return true;
+                }
             }
 
             _collectionLock.unlock();
@@ -118,12 +122,16 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             const auto& storage = _storage[zoom];
-            const auto& itEntry = storage.constFind(tileId);
-            if (itEntry != storage.cend())
+            const auto& itBatch = storage.constFind(tileId);
+            if (itBatch != storage.cend())
             {
-                outEntry = *itEntry;
+                const auto& itEntry = itBatch->constFind(0);
+                if (itEntry != itBatch->cend())
+                {
+                    outEntry = *itEntry;
 
-                return true;
+                    return true;
+                }
             }
 
             return false;
@@ -136,16 +144,27 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_collectionLock);
 
             auto& storage = _storage[zoom];
-            auto itEntry = storage.constFind(tileId);
-            if (itEntry != storage.cend())
+            auto itBatch = storage.find(tileId);
+            if (itBatch != storage.end())
             {
-                outEntry = *itEntry;
-                return;
+                auto itEntry = itBatch->constFind(0);
+                if (itEntry != itBatch->cend())
+                {
+                    outEntry = *itEntry;
+                    return;
+                }
+                auto newEntry = allocator(*this, tileId, zoom);
+                outEntry.reset(newEntry);
+                itBatch->insert(0, outEntry);
             }
-
-            auto newEntry = allocator(*this, tileId, zoom);
-            outEntry.reset(newEntry);
-            itEntry = storage.insert(tileId, outEntry);
+            else
+            {
+                auto newEntry = allocator(*this, tileId, zoom);
+                outEntry.reset(newEntry);
+                QHash<int64_t, std::shared_ptr<ENTRY>> newMap;
+                newMap.insert(0, outEntry);
+                storage.insert(tileId, qMove(newMap));
+            }
 
             onCollectionModified();
         }
@@ -157,16 +176,19 @@ namespace OsmAnd
             bool doCancel = false;
             for (const auto& storage : constOf(_storage))
             {
-                for (const auto& entry : constOf(storage))
+                for (const auto& batch : constOf(storage))
                 {
-                    if (!filter || (filter && filter(entry, doCancel)))
+                    for (const auto& entry : constOf(batch))
                     {
-                        if (outList)
-                            outList->push_back(entry);
-                    }
+                        if (!filter || (filter && filter(entry, doCancel)))
+                        {
+                            if (outList)
+                                outList->push_back(entry);
+                        }
 
-                    if (doCancel)
-                        return;
+                        if (doCancel)
+                            return;
+                    }
                 }
             }
         }
@@ -178,11 +200,14 @@ namespace OsmAnd
             auto modified = false;
             for (auto& storage : _storage)
             {
-                for (const auto& entry : constOf(storage))
-                    entry->unlink();
+                for (auto& batch : storage)
+                {
+                    for (const auto& entry : constOf(batch))
+                        entry->unlink();
 
-                if (!modified && !storage.isEmpty())
-                    modified = true;
+                    if (!modified && !batch.isEmpty())
+                        modified = true;
+                }
                 storage.clear();
             }
 
@@ -195,12 +220,15 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_collectionLock);
 
             auto& storage = _storage[zoom];
-            const auto& itEntry = storage.find(tileId);
-            if (itEntry == storage.end())
+            auto itBatch = storage.find(tileId);
+            if (itBatch == storage.end())
+                return;
+            auto itEntry = itBatch->find(0);
+            if (itEntry == itBatch->end())
                 return;
 
             itEntry.value()->unlink();
-            storage.erase(itEntry);
+            itBatch->erase(itEntry);
 
             onCollectionModified();
         }
@@ -213,22 +241,25 @@ namespace OsmAnd
             bool doCancel = false;
             for (auto& storage : _storage)
             {
-                auto itEntryPair = mutableIteratorOf(storage);
-                while (itEntryPair.hasNext())
+                for (auto& itBatch : storage)
                 {
-                    const auto& value = itEntryPair.next().value();
-
-                    const auto doRemove = (filter == nullptr) || filter(value, doCancel);
-                    if (doRemove)
+                    auto itEntry = mutableIteratorOf(itBatch);
+                    while (itEntry.hasNext())
                     {
-                        value->unlink();
-                        itEntryPair.remove();
+                        const auto& value = itEntry.next().value();
 
-                        modified = true;
+                        const auto doRemove = (filter == nullptr) || filter(value, doCancel);
+                        if (doRemove)
+                        {
+                            value->unlink();
+                            itEntry.remove();
+
+                            modified = true;
+                        }
+
+                        if (doCancel)
+                            break;
                     }
-
-                    if (doCancel)
-                        break;
                 }
 
                 if (doCancel)
@@ -246,12 +277,15 @@ namespace OsmAnd
             bool doCancel = false;
             for (const auto& storage : constOf(_storage))
             {
-                for (const auto& entry : constOf(storage))
+                for (const auto& batch : constOf(storage))
                 {
-                    action(entry, doCancel);
+                    for (const auto& entry : constOf(batch))
+                    {
+                        action(entry, doCancel);
 
-                    if (doCancel)
-                        return;
+                        if (doCancel)
+                            return;
+                    }
                 }
             }
         }
@@ -262,7 +296,12 @@ namespace OsmAnd
 
             unsigned int count = 0;
             for (const auto& storage : constOf(_storage))
-                count += storage.size();
+            {
+                for (const auto& batch : constOf(storage))
+                {
+                    count += batch.size();
+                }
+            }
 
             return count;
         }

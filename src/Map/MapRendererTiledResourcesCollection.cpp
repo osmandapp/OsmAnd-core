@@ -197,12 +197,15 @@ void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::forEachResourceExecu
     bool doCancel = false;
     for (const auto& storage : constOf(_storage))
     {
-        for (const auto& entry : constOf(storage))
+        for (const auto& batch : constOf(storage))
         {
-            action(entry, doCancel);
+            for (const auto& entry : constOf(batch))
+            {
+                action(entry, doCancel);
 
-            if (doCancel)
-                return;
+                if (doCancel)
+                    return;
+            }
         }
     }
 }
@@ -214,16 +217,19 @@ void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResources(QLis
     bool doCancel = false;
     for (const auto& storage : constOf(_storage))
     {
-        for (const auto& entry : constOf(storage))
+        for (const auto& batch : constOf(storage))
         {
-            if (!filter || (filter && filter(entry, doCancel)))
+            for (const auto& entry : constOf(batch))
             {
-                if (outList)
-                    outList->push_back(entry);
-            }
+                if (!filter || (filter && filter(entry, doCancel)))
+                {
+                    if (outList)
+                        outList->push_back(entry);
+                }
 
-            if (doCancel)
-                return;
+                if (doCancel)
+                    return;
+            }
         }
     }
 }
@@ -236,14 +242,17 @@ bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResource(
     QReadLocker scopedLocker(&_lock);
 
     const auto& storage = _storage[zoomLevel];
-    const auto& itEntry = storage.constFind(tileId);
-    if (itEntry != storage.cend())
+    const auto& itBatch = storage.constFind(tileId);
+    if (itBatch != storage.cend())
     {
-        outResource = *itEntry;
+        const auto& itEntry = itBatch->constFind(0);
+        if (itEntry != itBatch->cend())
+        {
+            outResource = *itEntry;
 
-        return true;
+            return true;
+        }
     }
-
     return false;
 }
 
@@ -255,15 +264,18 @@ bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::containsResource(
     QReadLocker scopedLocker(&_lock);
 
     const auto& storage = _storage[zoomLevel];
-    const auto& itEntry = storage.constFind(tileId);
-    if (itEntry != storage.cend())
+    const auto& itBatch = storage.constFind(tileId);
+    if (itBatch != storage.cend())
     {
-        if (!filter)
-            return true;
-        
-        return filter(*itEntry);
+        const auto& itEntry = itBatch->constFind(0);
+        if (itEntry != itBatch->cend())
+        {
+            if (!filter)
+                return true;
+            
+            return filter(*itEntry);
+        }
     }
-
     return false;
 }
 

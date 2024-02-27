@@ -917,6 +917,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
         if (zoomLevelOffset > 0 && internalState->visibleTilesCount > MaxNumberOfTilesToUseUnderscaledOnce)
             zoomLevelOffset = 0;
         internalState->zoomLevelOffset = zoomLevelOffset;
+        internalState->dateTime = state.dateTime;
     }
 }
 

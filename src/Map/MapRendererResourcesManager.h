@@ -144,6 +144,7 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
+        int64_t _tileDateTime;
         int _zoomLevelOffset;
         int _visibleTilesCount;
         QMap<ZoomLevel, QVector<TileId>> _visibleTiles;
@@ -259,7 +260,8 @@ namespace OsmAnd
 
         void updateActiveZone(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-            QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount);
+            QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount,
+            int64_t dateTime);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

@@ -346,7 +346,8 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
-        rr.dateTime = request.dateTime;
+        rr.dateTimeFirst = request.dateTimeFirst;
+        rr.dateTimeLast = request.dateTimeLast;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
@@ -367,7 +368,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
                         data->zoom,
                         data->alphaChannelPresence,
                         data->densityFactor,
-                        data->image,
+                        data->images,
                         data->contourMap
                     );
                     callback(requestSucceeded, d, metric);
@@ -395,7 +396,8 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
     if (resourceProvider)
     {
         WeatherTileResourceProvider::TileRequest rr;
-        rr.dateTime = request.dateTime;
+        rr.dateTimeFirst = request.dateTimeFirst;
+        rr.dateTimeLast = request.dateTimeLast;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
@@ -417,7 +419,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
                         data->zoom,
                         data->alphaChannelPresence,
                         data->densityFactor,
-                        data->image,
+                        data->images,
                         data->contourMap
                     );
                     callback(requestSucceeded, d, metric);

@@ -28,13 +28,28 @@ OsmAnd::IRasterMapLayerProvider::Data::Data(
     : IMapLayerProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , image(qMove(image_))
+    , images(QHash<int64_t, sk_sp<const SkImage>>())
+{
+    images.insert(0, qMove(image_));
+}
+
+OsmAnd::IRasterMapLayerProvider::Data::Data(
+    TileId tileId_,
+    ZoomLevel zoom_,
+    AlphaChannelPresence alphaChannelPresence_,
+    float densityFactor_,
+    QHash<int64_t, sk_sp<const SkImage>>& images_,
+    const RetainableCacheMetadata* pRetainableCacheMetadata_ /*= nullptr*/)
+    : IMapLayerProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
+    , alphaChannelPresence(alphaChannelPresence_)
+    , densityFactor(densityFactor_)
+    , images(images_)
 {
 }
 
 OsmAnd::IRasterMapLayerProvider::Data::~Data()
 {
-    if (image)
+    for (auto& image : images)
         image.reset();
     release();
 }
