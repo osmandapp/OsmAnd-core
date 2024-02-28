@@ -43,7 +43,7 @@ OsmAnd::IRasterMapLayerProvider::Data::Data(
     : IMapLayerProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , images(images_)
+    , images(qMove(images_))
 {
 }
 

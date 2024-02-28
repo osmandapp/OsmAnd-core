@@ -398,7 +398,7 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , images(images_)
+    , images(qMove(images_))
     , contourMap(contourMap_)
 {
 }
