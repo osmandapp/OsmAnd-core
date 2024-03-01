@@ -20,6 +20,7 @@
 #include "VectorMapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include "SkiaUtilities.h"
 #include "QKeyValueIterator.h"
 
 #undef GL_CHECK_RESULT
@@ -907,14 +908,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         if (rasterMapLayerData->images.size() == 1)
         {
             auto itImage = rasterMapLayerData->images.begin();
-            if (itImage.key() == 0 || itImage.key() == dateTime)
+            if (itImage.key() == 0 || itImage.key() == Utilities::floorMillisecondsToHours(dateTime))
                 image = itImage.value();
             else
-                return false;
+                image = SkiaUtilities::getEmptyImage(1, 1);
         }
         else
         {
-            auto itImage = rasterMapLayerData->images.find(dateTime);
+            auto itImage = rasterMapLayerData->images.find(Utilities::floorMillisecondsToHours(dateTime));
             if (itImage != rasterMapLayerData->images.end())
                 image = itImage.value();
             else
@@ -923,7 +924,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 if (itImage != rasterMapLayerData->images.end())
                     image = itImage.value();
                 else
-                    return false;
+                    image = SkiaUtilities::getEmptyImage(1, 1);
             }
         }
 

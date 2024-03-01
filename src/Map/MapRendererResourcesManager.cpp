@@ -198,7 +198,10 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
     const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
     std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime);
+    QReadLocker scopedLocker(&_tileDateTimeLock);
+
+    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime);
+    return ok;
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
@@ -235,7 +238,8 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-bool OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask)
+bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
+    const MapRendererState& state, const MapRendererStateChanges updatedMask)
 {
     assert(renderer->isInRenderThread());
 
@@ -279,6 +283,45 @@ bool OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
     if (wasLocked)
         _resourcesStoragesLock.unlock();
+
+    if (updatedMask.isSet(MapRendererStateChange::DateTime))
+    {
+        {
+            QWriteLocker scopedLocker(&_tileDateTimeLock);
+
+            _tileDateTime = state.dateTime;
+        }
+
+        // Mark tile resources as needed to reupload in accordance to changed tile time
+        const auto mapLayerType = static_cast<int>(MapRendererResourceType::MapLayer);
+        const auto& resourcesCollections = _storageByType[mapLayerType];
+        const auto& bindings = _bindings[mapLayerType];
+
+        bool atLeastOneMarked = false;
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!bindings.collectionsToProviders.contains(resourcesCollection))
+                continue;
+
+            resourcesCollection->forEachResourceExecute(
+                [&atLeastOneMarked]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
+                {
+                    if (auto resource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(entry))
+                    {
+                        if (resource->_sourceData && resource->_sourceData->images.size() > 1)
+                        {
+                            if (resource->setStateIf(MapRendererResourceState::Uploaded,
+                                MapRendererResourceState::PreparedRenew))
+                                atLeastOneMarked = true;
+                        }
+                    }
+                });
+        }
+        if (atLeastOneMarked)
+            requestResourcesUploadOrUnload();
+
+    }
 
     return true;
 }
@@ -469,7 +512,7 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount, int64_t dateTime)
+    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount)
 {
     // Check if update needed
     bool update = true; //NOTE: So far this won't work, since resources won't be updated
@@ -489,7 +532,6 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
         _visibleTiles = visibleTiles;
         _activeTiles = activeTiles;
         _activeTilesTargets = activeTilesTargets;
-        _tileDateTime = dateTime;
 
         // Wake up the worker
         _workerThreadWakeup.wakeAll();
@@ -1008,7 +1050,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                         {
                             const auto tiledResources =
                                 static_cast<MapRendererTiledResourcesCollection*>(&link_->collection);
-                            auto itImage = cachedResource->_sourceData->images.find(0);
                             if (cachedResource->_sourceData->zoom != InvalidZoomLevel)
                             {
                                 // Create a resource for existing overscale (or underscale) cached tile
@@ -1036,7 +1077,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     requestResourcesUploadOrUnload();
                                 }
                             }
-                            else if (itImage != cachedResource->_sourceData->images.end())
+                            else if (!cachedResource->_sourceData->images.isEmpty())
                             {
                                 // Create four underscale resources of higher zoom level
                                 const auto zoomLevel = cachedResource->zoom;
@@ -1057,18 +1098,24 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     if (!underscaledTilePresent)
                                     {
                                         atLeastOneAbsent = true;
-                                        auto image = itImage.value();
-                                        if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
-                                            image = SkiaUtilities::getUpperLeft(image);
-                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
-                                            image = SkiaUtilities::getUpperRight(image);
-                                        else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
-                                            image = SkiaUtilities::getLowerLeft(image);
-                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
-                                            image = SkiaUtilities::getLowerRight(image);
-                                        image = adjustImageToConfiguration(image, alphaChannelPresence);
+                                        QHash<int64_t, sk_sp<const SkImage>> images;
+                                        for (auto itImage = cachedResource->_sourceData->images.constBegin();
+                                            itImage != cachedResource->_sourceData->images.constEnd(); itImage++)
+                                        {
+                                            sk_sp<const SkImage> image;
+                                            if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
+                                                image = SkiaUtilities::getUpperLeft(itImage.value());
+                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
+                                                image = SkiaUtilities::getUpperRight(itImage.value());
+                                            else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
+                                                image = SkiaUtilities::getLowerLeft(itImage.value());
+                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
+                                                image = SkiaUtilities::getLowerRight(itImage.value());
+                                            image = adjustImageToConfiguration(image, alphaChannelPresence);
+                                            images.insert(itImage.key(), image);
+                                        }
                                         const auto resourceAllocator =
-                                            [this, alphaChannelPresence, densityFactor, image]
+                                            [this, alphaChannelPresence, densityFactor, images]
                                             (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
                                                 const TileId tileId,
                                                 const ZoomLevel zoom) -> MapRendererBaseTiledResource*
@@ -1080,7 +1127,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                                     zoom,
                                                     alphaChannelPresence,
                                                     densityFactor,
-                                                    image));
+                                                    images));
                                                 resource->setState(MapRendererResourceState::Ready);
                                                 return resource;
                                             };

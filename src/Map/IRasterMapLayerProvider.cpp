@@ -30,7 +30,7 @@ OsmAnd::IRasterMapLayerProvider::Data::Data(
     , densityFactor(densityFactor_)
     , images(QHash<int64_t, sk_sp<const SkImage>>())
 {
-    images.insert(0, qMove(image_));
+    images.insert(0, image_);
 }
 
 OsmAnd::IRasterMapLayerProvider::Data::Data(
@@ -38,12 +38,12 @@ OsmAnd::IRasterMapLayerProvider::Data::Data(
     ZoomLevel zoom_,
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
-    QHash<int64_t, sk_sp<const SkImage>>& images_,
+    const QHash<int64_t, sk_sp<const SkImage>>& images_,
     const RetainableCacheMetadata* pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapLayerProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , images(qMove(images_))
+    , images(images_)
 {
 }
 

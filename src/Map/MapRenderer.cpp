@@ -740,7 +740,7 @@ bool OsmAnd::MapRenderer::handleStateChange(const MapRendererState& state, MapRe
     bool ok = true;
 
     // Process updating of providers
-    ok = ok && _resources->updateBindings(state, mask);
+    ok = ok && _resources->updateBindingsAndTime(state, mask);
 
     return ok;
 }

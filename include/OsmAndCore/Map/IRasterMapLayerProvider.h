@@ -40,7 +40,7 @@ namespace OsmAnd
                 ZoomLevel zoom,
                 AlphaChannelPresence alphaChannelPresence,
                 float densityFactor,
-                QHash<int64_t, sk_sp<const SkImage>>& images,
+                const QHash<int64_t, sk_sp<const SkImage>>& images,
                 const RetainableCacheMetadata* pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 

@@ -144,6 +144,7 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
+        mutable QReadWriteLock _tileDateTimeLock;
         int64_t _tileDateTime;
         int _zoomLevelOffset;
         int _visibleTilesCount;
@@ -253,15 +254,14 @@ namespace OsmAnd
             const AlphaChannelPresence alphaChannelPresence) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
-        bool updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
+        bool updateBindingsAndTime(const MapRendererState& state, const MapRendererStateChanges updatedMask);
         void updateElevationDataProviderBindings(const MapRendererState& state);
         void updateMapLayerProviderBindings(const MapRendererState& state);
         void updateSymbolProviderBindings(const MapRendererState& state);
 
         void updateActiveZone(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-            QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount,
-            int64_t dateTime);
+            QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

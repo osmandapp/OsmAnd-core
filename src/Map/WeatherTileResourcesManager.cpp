@@ -384,7 +384,7 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     , images(QHash<int64_t, sk_sp<const SkImage>>())
     , contourMap(contourMap_)
 {
-    images.insert(0, qMove(image_));
+    images.insert(0, image_);
 }
 
 OsmAnd::WeatherTileResourcesManager::Data::Data(
@@ -392,13 +392,13 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     ZoomLevel zoom_,
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
-    QHash<int64_t, sk_sp<const SkImage>>& images_,
+    const QHash<int64_t, sk_sp<const SkImage>>& images_,
     QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>()*/)
     : tileId(tileId_)
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , images(qMove(images_))
+    , images(images_)
     , contourMap(contourMap_)
 {
 }

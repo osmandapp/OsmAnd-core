@@ -74,8 +74,8 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     {
         for (auto image : _sourceData->images)
         {
-            image.reset(resourcesManager->adjustImageToConfiguration(
-                image, _sourceData->alphaChannelPresence).get());
+            image = resourcesManager->adjustImageToConfiguration(
+                image, _sourceData->alphaChannelPresence);
         }
     }
 
@@ -141,8 +141,8 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
                     {
                         for (auto image : self->_sourceData->images)
                         {
-                            image.reset(resourcesManager->adjustImageToConfiguration(
-                                image, self->_sourceData->alphaChannelPresence).get());
+                            image = resourcesManager->adjustImageToConfiguration(
+                                image, self->_sourceData->alphaChannelPresence);
                         }
                     }
                 }
@@ -161,7 +161,9 @@ bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 
     // Since content was uploaded to GPU, it's safe to release it keeping retainable data
     _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
-    _sourceData.reset();
+    // Remove data in case it contains constant (single) raster image only
+    if (_sourceData && _sourceData->images.size() <= 1)
+        _sourceData.reset();
 
     return true;
 }

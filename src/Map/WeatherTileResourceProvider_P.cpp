@@ -1151,7 +1151,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     {
         auto image = createTileImage(images, bands);
         if (image)
-            return image;
+            return image; // without "success" to initiate second reqiuest for a fresh data
         else
         {
             LogPrintf(LogSeverityLevel::Error,
@@ -1183,9 +1183,9 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto image = obtainRasterImage(dateTime, success);
         if (image)
         {
-            images.insert(dateTime, qMove(image));
+            images.insert(dateTime, image);
             if (cacheOnly && !success)
-                zoom = InvalidZoomLevel;
+                zoom = InvalidZoomLevel; // indicate, that recent data should be requested
         }
         else if (!success)
         {
@@ -1205,8 +1205,20 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         );
         callback(true, data, nullptr);
     }
+    else if (!cacheOnly)
+    {
+        const auto emptyImage = SkiaUtilities::getEmptyImage(provider->tileSize, provider->tileSize);
+        auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
+            tileId,
+            zoom,
+            AlphaChannelPresence::Present,
+            provider->densityFactor,
+            emptyImage
+        );
+        callback(true, data, nullptr);
+    }
     else
-        callback(cacheOnly, nullptr, nullptr);
+        callback(true, nullptr, nullptr);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
