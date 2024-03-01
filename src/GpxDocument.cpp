@@ -158,7 +158,6 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter, const QString& fil
         {
             const auto pointsGroup = it.value();
             auto attrsExt = std::make_shared<GpxExtensions::GpxExtension>();
-            attrsExt->prefix = QStringLiteral("");
             attrsExt->name = QStringLiteral("group");
             attrsExt->attributes["name"] = pointsGroup->name;
             attrsExt->attributes["color"] = pointsGroup->color.toString();
@@ -439,9 +438,7 @@ void OsmAnd::GpxDocument::writeExtensions(const QList< Ref<GpxExtension> > &exte
 
     for (const auto& subextension : constOf(extensions))
     {
-        QString prefix = !subextension->prefix.isNull() ? subextension->prefix : QStringLiteral("osmand");
-        if (!prefix.isEmpty())
-            prefix += QStringLiteral(":");
+        QString prefix = (!subextension->prefix.isEmpty() ? subextension->prefix : QStringLiteral("osmand")) + QStringLiteral(":");
         writeExtension(subextension, xmlWriter, prefix);
     }
 
@@ -462,9 +459,7 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
 
     for (const auto& subextension : constOf(extension->subextensions))
     {
-        QString prefix = !subextension->prefix.isNull() ? subextension->prefix : QStringLiteral("osmand");
-        if (!prefix.isEmpty())
-            prefix += QStringLiteral(":");
+        QString prefix = (!subextension->prefix.isEmpty() ? subextension->prefix : QStringLiteral("osmand")) + QStringLiteral(":");
         writeExtension(subextension, xmlWriter, prefix);
     }
 
@@ -682,7 +677,7 @@ QMap<QString, QString> OsmAnd::GpxDocument::readTextMap(QXmlStreamReader& xmlRea
         {
             QString tag = xmlReader.name().toString();
             if (!text.isNull() && !text.trimmed().isEmpty())
-                result.insert(!prefix.isNull() && !prefix.isEmpty() ? prefix + QStringLiteral(":") + tag : tag, text);
+                result.insert((!prefix.isEmpty() ? prefix : QStringLiteral("osmand")) + QStringLiteral(":") + tag, text);
             if (tag == key)
                 break;
             text = QStringLiteral("");
@@ -819,8 +814,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                                 t = QStringLiteral("wtemp");
                             else if (t == QStringLiteral("cadence") && p == QStringLiteral("gpxtpx"))
                                 t = QStringLiteral("cad");
-                            else if (t == QStringLiteral("group") && p == QStringLiteral("osmand"))
-                                p = QStringLiteral("");
+
                             QString value = values[key];
 
                             const auto extension = std::make_shared<GpxExtensions::GpxExtension>();
