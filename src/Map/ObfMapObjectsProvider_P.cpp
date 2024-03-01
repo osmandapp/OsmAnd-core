@@ -750,9 +750,9 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalTimeStopwatch.elapsed());
 #else
     LogPrintf(LogSeverityLevel::Info,
@@ -760,11 +760,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalTimeStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
 

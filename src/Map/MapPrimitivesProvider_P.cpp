@@ -227,9 +227,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         primitivisedObjects->polygons.size(),
         primitivisedObjects->polylines.size(),
         primitivisedObjects->polygons.size(),
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalStopwatch.elapsed());
 #else
     LogPrintf(LogSeverityLevel::Info,
@@ -237,11 +237,11 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
         primitivisedObjects->polygons.size(),
         primitivisedObjects->polylines.size(),
         primitivisedObjects->polygons.size(),
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
     
