@@ -905,28 +905,37 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     sk_sp<const SkImage> image;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        if (rasterMapLayerData->images.size() == 1)
+        if (rasterMapLayerData->images.isEmpty())
+            image = SkiaUtilities::getEmptyImage(1, 1);
+        else if (rasterMapLayerData->images.size() > 1)
         {
-            auto itImage = rasterMapLayerData->images.begin();
-            if (itImage.key() == 0 || itImage.key() == Utilities::floorMillisecondsToHours(dateTime))
-                image = itImage.value();
-            else
+            auto itFirstImage = rasterMapLayerData->images.constBegin();
+            auto itSecondImage = itFirstImage;
+            itSecondImage++;
+            auto timeGap = itSecondImage.key() - itFirstImage.key();
+            if (timeGap == 0)
                 image = SkiaUtilities::getEmptyImage(1, 1);
-        }
-        else
-        {
-            auto itImage = rasterMapLayerData->images.find(Utilities::floorMillisecondsToHours(dateTime));
-            if (itImage != rasterMapLayerData->images.end())
-                image = itImage.value();
             else
             {
-                itImage = rasterMapLayerData->images.constFind(0);
-                if (itImage != rasterMapLayerData->images.end())
+                auto imgTime = dateTime / timeGap * timeGap;
+                auto itImage = rasterMapLayerData->images.constFind(imgTime);
+                if (itImage != rasterMapLayerData->images.constEnd())
+                {
                     image = itImage.value();
+                    //itImage++;
+                    //if (itImage != rasterMapLayerData->images.constEnd())
+                    //{
+                        //image = itImage.value();
+                    //}
+                    //else
+                    //    image = SkiaUtilities::getEmptyImage(1, 1);
+                }
                 else
                     image = SkiaUtilities::getEmptyImage(1, 1);
             }
         }
+        else
+            image = rasterMapLayerData->images.constBegin().value();
 
         switch (image->alphaType())
         {

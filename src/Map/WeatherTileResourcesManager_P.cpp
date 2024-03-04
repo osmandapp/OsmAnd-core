@@ -348,6 +348,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainData(
         WeatherTileResourceProvider::TileRequest rr;
         rr.dateTimeFirst = request.dateTimeFirst;
         rr.dateTimeLast = request.dateTimeLast;
+        rr.dateTimeGap = request.dateTimeGap;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;
@@ -398,6 +399,7 @@ void OsmAnd::WeatherTileResourcesManager_P::obtainDataAsync(
         WeatherTileResourceProvider::TileRequest rr;
         rr.dateTimeFirst = request.dateTimeFirst;
         rr.dateTimeLast = request.dateTimeLast;
+        rr.dateTimeGap = request.dateTimeGap;
         rr.weatherType = request.weatherType;
         rr.tileId = request.tileId;
         rr.zoom = request.zoom;

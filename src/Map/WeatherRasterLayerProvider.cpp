@@ -7,6 +7,7 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const WeatherLayer weatherLayer_,
     const int64_t dateTimeFirst,
     const int64_t dateTimeLast,
+    const int64_t dateTimeGap,
     const QList<BandIndex> bands,
     const bool localData)
     : _resourcesManager(resourcesManager)
@@ -14,7 +15,7 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     , _localData(localData)
     , weatherLayer(weatherLayer_)
 {
-    setDateTime(dateTimeFirst, dateTimeLast);
+    setDateTime(dateTimeFirst, dateTimeLast, dateTimeGap);
 }
 
 OsmAnd::WeatherRasterLayerProvider::~WeatherRasterLayerProvider()
@@ -35,12 +36,20 @@ const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeLast() const
     return _dateTimeLast;
 }
 
-void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast)
+const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeGap() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _dateTimeGap;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast, int64_t dateTimeGap)
 {
     QWriteLocker scopedLocker(&_lock);
     
     _dateTimeFirst = Utilities::roundMillisecondsToHours(dateTimeFirst);
     _dateTimeLast = Utilities::roundMillisecondsToHours(dateTimeLast);
+    _dateTimeGap = Utilities::roundMillisecondsToHours(dateTimeGap);
 }
 
 const QList<OsmAnd::BandIndex> OsmAnd::WeatherRasterLayerProvider::getBands() const
@@ -116,6 +125,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
     _request.weatherLayer = weatherLayer;
     _request.dateTimeFirst = getDateTimeFirst();
     _request.dateTimeLast = getDateTimeLast();
+    _request.dateTimeGap = getDateTimeGap();
     _request.tileId = request.tileId;
     _request.zoom = request.zoom;
     _request.bands = getBands();

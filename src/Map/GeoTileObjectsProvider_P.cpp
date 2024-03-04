@@ -129,6 +129,7 @@ bool OsmAnd::GeoTileObjectsProvider_P::obtainData(
     _request.weatherType = WeatherType::Contour;
     _request.dateTimeFirst = owner->dateTime;
     _request.dateTimeLast = owner->dateTime;
+    _request.dateTimeGap = 0;
     _request.tileId = tileId;
     _request.zoom = zoom;
     _request.bands = bands;

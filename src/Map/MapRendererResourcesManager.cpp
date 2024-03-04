@@ -1098,7 +1098,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     if (!underscaledTilePresent)
                                     {
                                         atLeastOneAbsent = true;
-                                        QHash<int64_t, sk_sp<const SkImage>> images;
+                                        QMap<int64_t, sk_sp<const SkImage>> images;
                                         for (auto itImage = cachedResource->_sourceData->images.constBegin();
                                             itImage != cachedResource->_sourceData->images.constEnd(); itImage++)
                                         {

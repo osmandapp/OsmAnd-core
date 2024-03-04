@@ -65,6 +65,7 @@ namespace OsmAnd
 
             int64_t dateTimeFirst;
             int64_t dateTimeLast;
+            int64_t dateTimeGap;
             WeatherType weatherType;
             TileId tileId;
             ZoomLevel zoom;
@@ -117,7 +118,7 @@ namespace OsmAnd
                 ZoomLevel zoom,
                 AlphaChannelPresence alphaChannelPresence,
                 float densityFactor,
-                const QHash<int64_t, sk_sp<const SkImage>>& images,
+                const QMap<int64_t, sk_sp<const SkImage>>& images,
                 QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap = QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>());
             virtual ~Data();
 
@@ -125,7 +126,7 @@ namespace OsmAnd
             ZoomLevel zoom;
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
-            QHash<int64_t, sk_sp<const SkImage>> images;
+            QMap<int64_t, sk_sp<const SkImage>> images;
             QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap;
         };
 

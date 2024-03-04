@@ -328,6 +328,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
     dst.weatherType = src.weatherType;
     dst.dateTimeFirst = src.dateTimeFirst;
     dst.dateTimeLast = src.dateTimeLast;
+    dst.dateTimeGap = src.dateTimeGap;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;
@@ -381,7 +382,7 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , images(QHash<int64_t, sk_sp<const SkImage>>())
+    , images(QMap<int64_t, sk_sp<const SkImage>>())
     , contourMap(contourMap_)
 {
     images.insert(0, image_);
@@ -392,7 +393,7 @@ OsmAnd::WeatherTileResourcesManager::Data::Data(
     ZoomLevel zoom_,
     AlphaChannelPresence alphaChannelPresence_,
     float densityFactor_,
-    const QHash<int64_t, sk_sp<const SkImage>>& images_,
+    const QMap<int64_t, sk_sp<const SkImage>>& images_,
     QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>()*/)
     : tileId(tileId_)
     , zoom(zoom_)

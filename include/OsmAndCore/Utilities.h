@@ -52,13 +52,6 @@ namespace OsmAnd
             return timeOfHour + (dateTime - timeOfHour < (oneHour >> 1) ? 0 : oneHour);
         }
 
-        inline static int64_t floorMillisecondsToHours(int64_t dateTime)
-        {
-            const int64_t oneHour = 1000 * 60 * 60;
-            const int64_t timeOfHour = dateTime / oneHour * oneHour;
-            return timeOfHour;
-        }
-
         inline static QString getDateTimeString(int64_t dateTime)
         {
             QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);

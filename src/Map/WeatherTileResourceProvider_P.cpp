@@ -1173,11 +1173,13 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     if (!provider)
         return;
     auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
+    auto timeGap = request->dateTimeGap;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     bool cacheOnly = request->cacheOnly;
-    QHash<int64_t, sk_sp<const SkImage>> images;
+    QMap<int64_t, sk_sp<const SkImage>> images;
     bool success;
+    int count = 0;
     while (dateTime <= request->dateTimeLast)
     {
         auto image = obtainRasterImage(dateTime, success);
@@ -1192,9 +1194,17 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             callback(false, nullptr, nullptr);
             return;
         }
-        dateTime += 3600000; // One hour in milliseconds
+        else if (cacheOnly)
+        {
+            zoom = InvalidZoomLevel; // indicate, that recent data should be requested
+            auto emptyImage = SkiaUtilities::getEmptyImage(provider->tileSize, provider->tileSize);
+            if (emptyImage)
+                images.insert(dateTime, emptyImage);
+        }
+        dateTime += timeGap;
+        count++;
     }
-    if (!images.isEmpty())
+    if (images.size() == count)
     {
         auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
             tileId,
@@ -1205,20 +1215,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         );
         callback(true, data, nullptr);
     }
-    else if (!cacheOnly)
-    {
-        const auto emptyImage = SkiaUtilities::getEmptyImage(provider->tileSize, provider->tileSize);
-        auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
-            tileId,
-            zoom,
-            AlphaChannelPresence::Present,
-            provider->densityFactor,
-            emptyImage
-        );
-        callback(true, data, nullptr);
-    }
     else
-        callback(true, nullptr, nullptr);
+        callback(false, nullptr, nullptr);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
