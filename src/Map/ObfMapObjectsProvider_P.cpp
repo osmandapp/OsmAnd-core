@@ -482,12 +482,31 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
             metric->submetrics.push_back(loadMapObjectsMetric);
         }
+
+        QSet<ObfObjectId> loadedCoastlineObjectsIds;
+        const auto coastlineObjectsFilteringFunctor =
+            [&loadedCoastlineObjectsIds]
+            (const std::shared_ptr<const ObfMapSectionInfo>& section,
+                const ObfMapSectionReader::DataBlockId& blockId,
+                const ObfObjectId objectId,
+                const AreaI& bbox,
+                const ZoomLevel firstZoomLevel,
+                const ZoomLevel lastZoomLevel,
+                const ZoomLevel requestedZoom) -> bool
+            {
+                if (loadedCoastlineObjectsIds.contains(objectId))
+                    return false;
+                loadedCoastlineObjectsIds.insert(objectId);
+
+                return true;
+            };
+
         dataInterface->loadBinaryMapObjects(
             &loadedCoastlineMapObjects,
             &coastlineTileSurfaceType,
             _coastlineZoom,
             &coastlineTileBBox31,
-            nullptr,
+            coastlineObjectsFilteringFunctor,
             nullptr,
             nullptr,
             nullptr,// query queryController
