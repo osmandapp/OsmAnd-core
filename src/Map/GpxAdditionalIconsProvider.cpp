@@ -169,7 +169,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
                 continue;
             }
         }
-        if (containsStart)
+        if (containsStart && startIcon)
         {
             const auto mapSymbol = std::make_shared<OsmAnd::BillboardRasterMapSymbol>(mapSymbolsGroup);
             mapSymbol->order = baseOrder;
@@ -179,7 +179,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
             mapSymbol->position31 = startPos31;
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
-        if (containsFinish)
+        if (containsFinish && finishIcon)
         {
             const auto mapSymbol = std::make_shared<OsmAnd::BillboardRasterMapSymbol>(mapSymbolsGroup);
             mapSymbol->order = baseOrder;
