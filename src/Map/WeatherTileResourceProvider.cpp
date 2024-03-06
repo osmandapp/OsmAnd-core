@@ -242,7 +242,7 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::ValueRequest> OsmAnd::Weath
 OsmAnd::WeatherTileResourceProvider::TileRequest::TileRequest()
     : dateTimeFirst(0)
     , dateTimeLast(0)
-    , dateTimeGap(0)
+    , dateTimeStep(0)
     , weatherType(WeatherType::Raster)
     , tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
@@ -264,7 +264,7 @@ void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, co
 {
     dst.dateTimeFirst = src.dateTimeFirst;
     dst.dateTimeLast = src.dateTimeLast;
-    dst.dateTimeGap = src.dateTimeGap;
+    dst.dateTimeStep = src.dateTimeStep;
     dst.weatherType = src.weatherType;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;

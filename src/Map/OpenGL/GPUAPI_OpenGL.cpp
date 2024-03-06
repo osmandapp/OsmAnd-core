@@ -791,12 +791,12 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
-    int64_t dateTime /*= 0*/)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime /*= 0*/,
+    const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU, dateTime);
+        return uploadTiledDataAsTextureToGPU(tile, resourceInGPU, dateTime, resource);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
@@ -887,8 +887,8 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
-    int64_t dateTime /*= 0*/)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime /*= 0*/,
+    const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -897,6 +897,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
 
     // Depending on tile type, determine texture properties:
     auto alphaChannelType = AlphaChannelType::Invalid;
+    int64_t dateTimeFirst = 0;
+    int64_t dateTimeLast = 0;
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
     uint32_t tileSize = 0;
@@ -912,23 +914,51 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             auto itFirstImage = rasterMapLayerData->images.constBegin();
             auto itSecondImage = itFirstImage;
             itSecondImage++;
-            auto timeGap = itSecondImage.key() - itFirstImage.key();
-            if (timeGap == 0)
+            const auto timeStep = itSecondImage.key() - itFirstImage.key();
+            if (timeStep == 0)
                 image = SkiaUtilities::getEmptyImage(1, 1);
             else
             {
-                auto imgTime = dateTime / timeGap * timeGap;
-                auto itImage = rasterMapLayerData->images.constFind(imgTime);
+                const auto imgTimeFirst = dateTime / timeStep * timeStep;
+                const auto imgTimeLast = imgTimeFirst + timeStep;
+                if (resource && resource->getState() == MapRendererResourceState::PreparedRenew)
+                {
+                    const auto currentResourceInGPU = resourceInGPU;
+                    if (currentResourceInGPU
+                        && currentResourceInGPU->dateTimeFirst == imgTimeFirst
+                        && currentResourceInGPU->dateTimeLast == imgTimeLast
+                        && resource->setStateIf(
+                            MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+                    {
+                        return true;
+                    }
+                }
+                auto itImage = rasterMapLayerData->images.constFind(imgTimeFirst);
                 if (itImage != rasterMapLayerData->images.constEnd())
                 {
-                    image = itImage.value();
-                    //itImage++;
-                    //if (itImage != rasterMapLayerData->images.constEnd())
-                    //{
-                        //image = itImage.value();
-                    //}
-                    //else
-                    //    image = SkiaUtilities::getEmptyImage(1, 1);
+                    auto firstImage = itImage.value();
+                    if (++itImage != rasterMapLayerData->images.constEnd())
+                    {
+                        auto secondImage = itImage.value();
+                        image = SkiaUtilities::createTileImage(firstImage, secondImage);
+                        dateTimeFirst = imgTimeFirst;
+                        dateTimeLast = imgTimeLast;
+                    }
+                    else if (imgTimeFirst == dateTime)
+                    {
+                        itImage = rasterMapLayerData->images.constFind(imgTimeFirst - timeStep);
+                        if (itImage != rasterMapLayerData->images.constEnd())
+                        {
+                            auto secondImage = itImage.value();
+                            image = SkiaUtilities::createTileImage(secondImage, firstImage);
+                            dateTimeFirst = imgTimeFirst - timeStep;
+                            dateTimeLast = imgTimeFirst;
+                        }
+                        else
+                            image = SkiaUtilities::getEmptyImage(1, 1);
+                    }
+                    else
+                        image = SkiaUtilities::getEmptyImage(1, 1);
                 }
                 else
                     image = SkiaUtilities::getEmptyImage(1, 1);
@@ -1039,13 +1069,27 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         GL_CHECK_RESULT;
 
         // Create resource-in-GPU descriptor
-        resourceInGPU.reset(new TextureInGPU(
+        const auto textureInGPU = std::make_shared<TextureInGPU>(
             this,
             reinterpret_cast<RefInGPU>(texture),
             textureSize,
             textureSize,
             mipmapLevels,
-            alphaChannelType));
+            alphaChannelType,
+            dateTimeFirst,
+            dateTimeLast);
+
+        bool canUpdate = true;
+        if (resource)
+        {
+            canUpdate = resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading)
+            || resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
+        }
+
+        if (canUpdate)
+            resourceInGPU = textureInGPU;
+        else
+            return false;
 
         return true;
     }
@@ -1060,7 +1104,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         return false;
 
     // Get free slot from that pool
-    const auto slotInGPU = allocateTileInAltasTexture(alphaChannelType, atlasTexturesPool,
+    const auto slotInGPU = allocateTileInAltasTexture(
+        alphaChannelType, dateTimeFirst, dateTimeLast, atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
         () -> AtlasTextureInGPU*
         {
@@ -1117,7 +1162,17 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
 
-    resourceInGPU = slotInGPU;
+    bool canUpdate = true;
+    if (resource)
+    {
+        canUpdate = resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading)
+            || resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
+    }
+
+    if (canUpdate)
+        resourceInGPU = slotInGPU;
+    else
+        return false;
 
     return true;
 }

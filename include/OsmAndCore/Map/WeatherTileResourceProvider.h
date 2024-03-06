@@ -65,7 +65,7 @@ namespace OsmAnd
 
             int64_t dateTimeFirst;
             int64_t dateTimeLast;
-            int64_t dateTimeGap;
+            int64_t dateTimeStep;
             WeatherType weatherType;
             TileId tileId;
             ZoomLevel zoom;

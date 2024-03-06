@@ -155,7 +155,7 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 {
-    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU);
+    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU, shared_from_this());
     if (!ok)
         return false;
 

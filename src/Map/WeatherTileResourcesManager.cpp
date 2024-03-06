@@ -328,7 +328,7 @@ void OsmAnd::WeatherTileResourcesManager::TileRequest::copy(TileRequest& dst, co
     dst.weatherType = src.weatherType;
     dst.dateTimeFirst = src.dateTimeFirst;
     dst.dateTimeLast = src.dateTimeLast;
-    dst.dateTimeGap = src.dateTimeGap;
+    dst.dateTimeStep = src.dateTimeStep;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
     dst.bands = src.bands;

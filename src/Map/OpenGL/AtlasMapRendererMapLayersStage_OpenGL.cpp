@@ -158,7 +158,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     const auto vsUniformsPerLayer =
         1 /*texCoordsOffsetAndScale*/;
     const auto fsUniformsPerLayer =
-        1 /*opacity*/ +
+        1 /*opacityFactor*/ +
+        1 /*transitionPhase*/ +
         1 /*isPremultipliedAlpha*/ +
         1 /*sampler*/;
     const auto vsOtherUniforms =
@@ -674,6 +675,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp float opacityFactor;                                                                                      ""\n"
+        "    lowp float transitionPhase;                                                                                    ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
@@ -713,15 +715,30 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         //   Mix colors of all layers.
         //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
+        "    vec2 leftCoords_0 = v2f_texCoordsPerLayer_0;                                                                   ""\n"
+        "    vec2 rightCoords_0 = leftCoords_0;                                                                             ""\n"
+        "    if (param_fs_rasterTileLayer_0.transitionPhase >= 0.0)                                                         ""\n"
+        "    {                                                                                                              ""\n"
+        "        leftCoords_0 *= 0.5;                                                                                       ""\n"
+        "        rightCoords_0 *= 0.5;                                                                                      ""\n"
+        "        rightCoords_0.x += 0.5;                                                                                    ""\n"
+        "    }                                                                                                              ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    finalColor = SAMPLE_TEXTURE_2D_LOD(                                                                            ""\n"
+        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        v2f_texCoordsPerLayer_0, v2f_mipmapLOD);                                                                   ""\n"
+        "        leftCoords_0, v2f_mipmapLOD);                                                                              ""\n"
+        "    lowp vec4 finalColorRight = SAMPLE_TEXTURE_2D_LOD(                                                             ""\n"
+        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
+        "        rightCoords_0, v2f_mipmapLOD);                                                                             ""\n"
         "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    finalColor = SAMPLE_TEXTURE_2D(                                                                                ""\n"
+        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D(                                                                  ""\n"
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
+        "        leftCoords_0);                                                                                             ""\n"
+        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
+        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
+        "        rightCoords_0, v2f_mipmapLOD);                                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "    finalColor = mix(finalColorLeft, finalColorRight, clamp(param_fs_rasterTileLayer_0.transitionPhase, 0.0, 1.0));""\n"
         "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
         "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
@@ -756,16 +773,32 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
+        "        vec2 leftCoords = v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                ""\n"
+        "        vec2 rightCoords = leftCoords;                                                                             ""\n"
+        "        if (param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase >= 0.0)                                    ""\n"
+        "        {                                                                                                          ""\n"
+        "            leftCoords *= 0.5;                                                                                     ""\n"
+        "            rightCoords *= 0.5;                                                                                    ""\n"
+        "            rightCoords.x += 0.5;                                                                                  ""\n"
+        "        }                                                                                                          ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
+        "        lowp vec4 layerColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                          ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            v2f_texCoordsPerLayer_%rasterLayerIndex%, v2f_mipmapLOD);                                              ""\n"
+        "            leftCoords, v2f_mipmapLOD);                                                                            ""\n"
+        "        lowp vec4 layerColorRight = SAMPLE_TEXTURE_2D_LOD(                                                         ""\n"
+        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
+        "            rightCoords, v2f_mipmapLOD);                                                                           ""\n"
         "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D(                                                                  ""\n"
+        "        lowp vec4 layerColorLeft = SAMPLE_TEXTURE_2D(                                                              ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
+        "            leftCoords);                                                                                           ""\n"
+        "        lowp vec4 layerColorRight = SAMPLE_TEXTURE_2D(                                                             ""\n"
+        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
+        "            rightCoords);                                                                                          ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
+        "        lowp float transitionFactor = param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase;                 ""\n"
+        "        lowp vec4 layerColor = mix(layerColorLeft, layerColorRight, clamp(transitionFactor, 0.0, 1.0));            ""\n"
         "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                       ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
         "        mixColors(finalColor, layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);       ""\n"
@@ -1059,6 +1092,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".opacityFactor",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
+                layerStruct.transitionPhase,
+                layerStructName + ".transitionPhase",
+                GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(
                 layerStruct.isPremultipliedAlpha,
                 layerStructName + ".isPremultipliedAlpha",
                 GlslVariableType::Uniform);
@@ -1332,6 +1369,26 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 default:
                     break;
             }
+
+            // Calculate texture part-to-part transition phase
+            auto dateTimeFirst = batchedResourceInGPU->resourceInGPU->dateTimeFirst;
+            auto dateTimeLast = batchedResourceInGPU->resourceInGPU->dateTimeLast;
+            auto dateTimeStep = dateTimeLast - dateTimeFirst;
+            float transitionPhase;
+            if (dateTimeStep == 0)
+                transitionPhase = -1.0f; // No transition needed
+            else if (currentState.dateTime <= dateTimeFirst)
+                transitionPhase = 0.0f;
+            else if (currentState.dateTime >= dateTimeLast)
+                transitionPhase = 1.0f;
+            else
+            {
+                transitionPhase = static_cast<float>(
+                    static_cast<double>(currentState.dateTime % dateTimeStep) / static_cast<double>(dateTimeStep));
+            }
+
+            glUniform1f(perTile_fs.transitionPhase, transitionPhase);
+            GL_CHECK_RESULT;
 
             glBindTexture(GL_TEXTURE_2D,
                 static_cast<GLuint>(reinterpret_cast<intptr_t>(batchedResourceInGPU->resourceInGPU->refInGPU)));
@@ -1631,6 +1688,28 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
             if (outState != nullptr)
                 *outState = MapRendererResourceState::Uploaded;
             return gpuResource;
+        }
+        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::IsBeingUsed))
+        {
+            // Capture GPU resource
+            auto gpuResource = resource->resourceInGPU;
+
+            resource->setState(MapRendererResourceState::PreparedRenew);
+
+            if (outState != nullptr)
+                *outState = MapRendererResourceState::PreparedRenew;
+            return gpuResource;
+        }
+        else if (resource->getState() == MapRendererResourceState::Renewing)
+        {
+            // Capture GPU resource (if any)
+            auto gpuResource = resource->resourceInGPU;
+            if (gpuResource)
+            {
+                if (outState != nullptr)
+                    *outState = MapRendererResourceState::Renewing;
+                return gpuResource;
+            }
         }
 
         if (outState != nullptr)

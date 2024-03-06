@@ -196,11 +196,12 @@ bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources(bool gpuContex
 
 bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
     const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
-    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+    const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
     QReadLocker scopedLocker(&_tileDateTimeLock);
 
-    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime);
+    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime, resource);
     return ok;
 }
 
@@ -885,8 +886,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
                 break;
 
             auto underTiles = Utilities::getTileIdsUnderscaledByZoomShift(activeTileId, underZoom - activeZoom);
-            if (metaTiled)
-                addCombinedTilesToRequest(resourcesCollection, resourceAllocator, activeZoom, centerTileId, static_cast<ZoomLevel>(underZoom), underTiles);
+            //if (metaTiled)
+            //    addCombinedTilesToRequest(resourcesCollection, resourceAllocator, activeZoom, centerTileId, static_cast<ZoomLevel>(underZoom), underTiles);
 
             for (const auto& neededTileId : constOf(underTiles))
             {
@@ -1692,18 +1693,30 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         if (renderer->gpuContextIsLost)
             return;
 
+        bool isNotRasterMapLayerResource = true;
+        if (std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource))
+            isNotRasterMapLayerResource = false;
+
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-        if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+        if (isNotRasterMapLayerResource
+            && resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
         {
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
         }
-        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+        else if (isNotRasterMapLayerResource
+            && resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
         {
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
         }
-        else
+        else if (isNotRasterMapLayerResource)
         {
             continue;
+        }
+        else
+        {
+            auto state = resource->getState();
+            if (state != MapRendererResourceState::Ready && state != MapRendererResourceState::PreparedRenew)
+                continue;
         }
 
         // Actually upload resource to GPU
@@ -1878,7 +1891,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             if (tiledProvider && tiledProvider->isMetaTiled())
             {
                 assert(checkVisible);
-                addCombinedTilesToAvoidCleanup(tiledResourcesCollection, visibleTiles);
+                //addCombinedTilesToAvoidCleanup(tiledResourcesCollection, visibleTiles);
             }
 
             auto minZoom = MinZoomLevel;

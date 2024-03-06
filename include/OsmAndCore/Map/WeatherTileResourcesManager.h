@@ -69,7 +69,7 @@ namespace OsmAnd
             WeatherType weatherType;
             int64_t dateTimeFirst;
             int64_t dateTimeLast;
-            int64_t dateTimeGap;
+            int64_t dateTimeStep;
             TileId tileId;
             ZoomLevel zoom;
             QList<BandIndex> bands;

@@ -32,7 +32,7 @@ namespace OsmAnd
 
         int64_t _dateTimeFirst;
         int64_t _dateTimeLast;
-        int64_t _dateTimeGap;
+        int64_t _dateTimeStep;
         QList<BandIndex> _bands;
         bool _localData;
 
@@ -42,7 +42,7 @@ namespace OsmAnd
                                    const WeatherLayer weatherLayer,
                                    const int64_t dateTimeFirst,
                                    const int64_t dateTimeLast,
-                                   const int64_t dateTimeGap,
+                                   const int64_t dateTimeStep,
                                    const QList<BandIndex> bands,
                                    const bool localData);
         virtual ~WeatherRasterLayerProvider();
@@ -51,8 +51,8 @@ namespace OsmAnd
 
         const int64_t getDateTimeFirst() const;
         const int64_t getDateTimeLast() const;
-        const int64_t getDateTimeGap() const;
-        void setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast, int64_t dateTimeGap);
+        const int64_t getDateTimeStep() const;
+        void setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast, int64_t dateTimeStep);
         const QList<BandIndex> getBands() const;
         void setBands(const QList<BandIndex>& bands);
         const bool getLocalData() const;

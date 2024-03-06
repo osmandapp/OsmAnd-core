@@ -243,7 +243,9 @@ namespace OsmAnd
         MapRendererResourcesManager(MapRenderer* const owner);
 
         // Resources management:
-        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
+            std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,

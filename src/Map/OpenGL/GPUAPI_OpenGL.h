@@ -57,6 +57,7 @@
 #include "SmartPOD.h"
 #include "GPUAPI.h"
 #include "Logging.h"
+#include "MapRendererBaseResource.h"
 
 #if !defined(OSMAND_GPU_DEBUG)
 #   define OSMAND_GPU_DEBUG OSMAND_DEBUG
@@ -246,7 +247,8 @@ namespace OsmAnd
         };
     private:
         bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0);
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
         bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
             std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
@@ -424,8 +426,8 @@ namespace OsmAnd
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
         bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile,
-            std::shared_ptr<const ResourceInGPU>& resourceInGPU,
-            int64_t dateTime = 0) override;
+            std::shared_ptr<const ResourceInGPU>& resourceInGPU, int64_t dateTime = 0,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr) override;
         bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) override;
 
         void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;

@@ -1173,7 +1173,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     if (!provider)
         return;
     auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
-    auto timeGap = request->dateTimeGap;
+    auto timeGap = request->dateTimeStep;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     bool cacheOnly = request->cacheOnly;
