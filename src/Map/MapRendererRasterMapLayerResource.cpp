@@ -72,9 +72,11 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     // Convert data if such is present
     if (_sourceData)
     {
-        _sourceData->image = resourcesManager->adjustImageToConfiguration(
-            _sourceData->image,
-            _sourceData->alphaChannelPresence);
+        for (auto image : _sourceData->images)
+        {
+            image = resourcesManager->adjustImageToConfiguration(
+                image, _sourceData->alphaChannelPresence);
+        }
     }
 
     return true;
@@ -137,9 +139,11 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
                     // Convert data if such is present
                     if (self->_sourceData)
                     {
-                        self->_sourceData->image = resourcesManager->adjustImageToConfiguration(
-                            self->_sourceData->image,
-                            self->_sourceData->alphaChannelPresence);
+                        for (auto image : self->_sourceData->images)
+                        {
+                            image = resourcesManager->adjustImageToConfiguration(
+                                image, self->_sourceData->alphaChannelPresence);
+                        }
                     }
                 }
                 else
@@ -151,13 +155,15 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 {
-    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU);
+    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU, shared_from_this());
     if (!ok)
         return false;
 
     // Since content was uploaded to GPU, it's safe to release it keeping retainable data
     _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
-    _sourceData.reset();
+    // Remove data in case it contains constant (single) raster image only
+    if (_sourceData && _sourceData->images.size() <= 1)
+        _sourceData.reset();
 
     return true;
 }

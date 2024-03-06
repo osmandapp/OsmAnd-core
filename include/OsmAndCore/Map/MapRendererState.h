@@ -52,7 +52,8 @@ namespace OsmAnd
         StubsStyle,
         BackgroundColor,
         FogColor,
-        SymbolsOpacity
+        SymbolsOpacity,
+        DateTime
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
@@ -99,6 +100,7 @@ namespace OsmAnd
         FColorRGB backgroundColor;
         FColorRGB fogColor;
         float symbolsOpacity;
+        int64_t dateTime;
         
         double metersPerPixel;
         AreaI visibleBBox31;
@@ -152,6 +154,7 @@ namespace OsmAnd
         FColorRGB backgroundColor;
         FColorRGB fogColor;
         float symbolsOpacity;
+        int64_t dateTime;
         
         double metersPerPixel;
         AreaI visibleBBox31;

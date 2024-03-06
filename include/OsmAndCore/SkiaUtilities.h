@@ -71,6 +71,10 @@ namespace OsmAnd
             const sk_sp<const SkImage>& second,
             float yOffset);
 
+        static sk_sp<SkImage> createTileImage(
+            const sk_sp<const SkImage>& left,
+            const sk_sp<const SkImage>& right);
+
         static sk_sp<SkTypeface> createTypefaceFromData(
             const QByteArray& data);
 

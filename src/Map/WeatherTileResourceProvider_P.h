@@ -64,6 +64,7 @@ namespace OsmAnd
                 const QHash<BandIndex, sk_sp<const SkImage>>& bandImages,
                 const QList<BandIndex>& bands);
 
+            sk_sp<const SkImage> obtainRasterImage(int64_t dateTime, bool& success);
             void obtainRasterTile();
             void obtainContourTile();
 

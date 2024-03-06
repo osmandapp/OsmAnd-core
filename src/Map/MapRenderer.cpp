@@ -740,7 +740,7 @@ bool OsmAnd::MapRenderer::handleStateChange(const MapRendererState& state, MapRe
     bool ok = true;
 
     // Process updating of providers
-    ok = ok && _resources->updateBindings(state, mask);
+    ok = ok && _resources->updateBindingsAndTime(state, mask);
 
     return ok;
 }
@@ -2711,6 +2711,21 @@ float OsmAnd::MapRenderer::getSymbolsOpacity() const
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return _requestedState.symbolsOpacity;
+}
+
+bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.dateTime != dateTime;
+    if (!update)
+        return false;
+
+    _requestedState.dateTime = dateTime;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::DateTime);
+
+    return true;
 }
 
 bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const

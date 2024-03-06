@@ -35,11 +35,18 @@ namespace OsmAnd
                 float densityFactor,
                 sk_sp<const SkImage> image,
                 const RetainableCacheMetadata* pRetainableCacheMetadata = nullptr);
+            Data(
+                TileId tileId,
+                ZoomLevel zoom,
+                AlphaChannelPresence alphaChannelPresence,
+                float densityFactor,
+                const QMap<int64_t, sk_sp<const SkImage>>& images,
+                const RetainableCacheMetadata* pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
             AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
-            sk_sp<const SkImage> image;
+            QMap<int64_t, sk_sp<const SkImage>> images;
         };
 
     private:
