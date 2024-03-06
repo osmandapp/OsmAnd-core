@@ -144,6 +144,8 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
+        mutable QReadWriteLock _tileDateTimeLock;
+        int64_t _tileDateTime;
         int _zoomLevelOffset;
         int _visibleTilesCount;
         QMap<ZoomLevel, QVector<TileId>> _visibleTiles;
@@ -241,7 +243,9 @@ namespace OsmAnd
         MapRendererResourcesManager(MapRenderer* const owner);
 
         // Resources management:
-        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
+            std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         bool adjustImageToConfiguration(
             const sk_sp<const SkImage>& input,
@@ -252,7 +256,7 @@ namespace OsmAnd
             const AlphaChannelPresence alphaChannelPresence) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
-        bool updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
+        bool updateBindingsAndTime(const MapRendererState& state, const MapRendererStateChanges updatedMask);
         void updateElevationDataProviderBindings(const MapRendererState& state);
         void updateMapLayerProviderBindings(const MapRendererState& state);
         void updateSymbolProviderBindings(const MapRendererState& state);

@@ -57,6 +57,7 @@
 #include "SmartPOD.h"
 #include "GPUAPI.h"
 #include "Logging.h"
+#include "MapRendererBaseResource.h"
 
 #if !defined(OSMAND_GPU_DEBUG)
 #   define OSMAND_GPU_DEBUG OSMAND_DEBUG
@@ -245,8 +246,11 @@ namespace OsmAnd
             ProgramPipeline,
         };
     private:
-        bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
+        bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -369,9 +373,11 @@ namespace OsmAnd
             const bool autoReleaseShaders = true,
             QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            const SkColorType colorType = SkColorType::kRGBA_8888_SkColorType);
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            const SkColorType colorType = SkColorType::kRGBA_8888_SkColorType);
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
@@ -419,7 +425,9 @@ namespace OsmAnd
             const QHash<QString, GlslProgramVariable>& variablesMap);
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
-        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile, std::shared_ptr<const ResourceInGPU>& resourceInGPU) override;
+        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile,
+            std::shared_ptr<const ResourceInGPU>& resourceInGPU, int64_t dateTime = 0,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr) override;
         bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) override;
 
         void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;

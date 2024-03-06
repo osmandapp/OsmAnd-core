@@ -17,6 +17,7 @@
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
 #include "IMapTiledDataProvider.h"
+#include "MapRendererBaseResource.h"
 
 namespace OsmAnd
 {
@@ -44,7 +45,8 @@ namespace OsmAnd
             };
         private:
         protected:
-            ResourceInGPU(const Type type, GPUAPI* api, const RefInGPU& refInGPU);
+            ResourceInGPU(const Type type, GPUAPI* api, const RefInGPU& refInGPU,
+                const int64_t dateTimeFirst = 0, const int64_t dateTimeLast = 0);
 
             mutable RefInGPU _refInGPU;
         public:
@@ -53,6 +55,8 @@ namespace OsmAnd
             GPUAPI* const api;
             const Type type;
             const RefInGPU& refInGPU;
+            const int64_t dateTimeFirst;
+            const int64_t dateTimeLast;
 
             virtual void lostRefInGPU() const;
         };
@@ -79,7 +83,9 @@ namespace OsmAnd
                 const unsigned int width,
                 const unsigned int height,
                 const unsigned int mipmapLevels,
-                const AlphaChannelType alphaChannelType);
+                const AlphaChannelType alphaChannelType,
+                const int64_t dateTimeFirst = 0,
+                const int64_t dateTimeLast = 0);
             virtual ~TextureInGPU();
 
             const unsigned int width;
@@ -180,6 +186,8 @@ namespace OsmAnd
 
             std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(
                 const AlphaChannelType alphaChannelType,
+                const int64_t dateTimeFirst,
+                const int64_t dateTimeLast,
                 AtlasTextureAllocator atlasTextureAllocator);
         public:
             virtual ~AtlasTexturesPool();
@@ -230,7 +238,9 @@ namespace OsmAnd
             SlotOnAtlasTextureInGPU(
                 const std::shared_ptr<AtlasTextureInGPU>& atlas,
                 const unsigned int slotIndex,
-                const AlphaChannelType alphaChannelType);
+                const AlphaChannelType alphaChannelType,
+                const int64_t dateTimeFirst = 0,
+                const int64_t dateTimeLast = 0);
             virtual ~SlotOnAtlasTextureInGPU();
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
@@ -281,6 +291,8 @@ namespace OsmAnd
         std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
         std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTileInAltasTexture(
             const AlphaChannelType alphaChannelType,
+            const int64_t dateTimeFirst,
+            const int64_t dateTimeLast,
             const std::shared_ptr<AtlasTexturesPool>& pool,
             AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator);
 
@@ -299,7 +311,8 @@ namespace OsmAnd
 
         virtual bool uploadTiledDataToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0,
+            const std::shared_ptr<MapRendererBaseResource>& resource = nullptr) = 0;
         virtual bool uploadSymbolToGPU(
             const std::shared_ptr< const MapSymbol >& symbol,
             std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;

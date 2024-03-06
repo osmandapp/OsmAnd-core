@@ -240,7 +240,9 @@ std::shared_ptr<OsmAnd::WeatherTileResourceProvider::ValueRequest> OsmAnd::Weath
 }
 
 OsmAnd::WeatherTileResourceProvider::TileRequest::TileRequest()
-    : dateTime(0)
+    : dateTimeFirst(0)
+    , dateTimeLast(0)
+    , dateTimeStep(0)
     , weatherType(WeatherType::Raster)
     , tileId(TileId::zero())
     , zoom(InvalidZoomLevel)
@@ -260,7 +262,9 @@ OsmAnd::WeatherTileResourceProvider::TileRequest::~TileRequest()
 
 void OsmAnd::WeatherTileResourceProvider::TileRequest::copy(TileRequest& dst, const TileRequest& src)
 {
-    dst.dateTime = src.dateTime;
+    dst.dateTimeFirst = src.dateTimeFirst;
+    dst.dateTimeLast = src.dateTimeLast;
+    dst.dateTimeStep = src.dateTimeStep;
     dst.weatherType = src.weatherType;
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
@@ -319,7 +323,24 @@ OsmAnd::WeatherTileResourceProvider::Data::Data(
     , zoom(zoom_)
     , alphaChannelPresence(alphaChannelPresence_)
     , densityFactor(densityFactor_)
-    , image(image_)
+    , images(QMap<int64_t, sk_sp<const SkImage>>())
+    , contourMap(contourMap_)
+{
+    images.insert(0, image_);
+}
+
+OsmAnd::WeatherTileResourceProvider::Data::Data(
+    TileId tileId_,
+    ZoomLevel zoom_,
+    AlphaChannelPresence alphaChannelPresence_,
+    float densityFactor_,
+    const QMap<int64_t, sk_sp<const SkImage>>& images_,
+    QHash<BandIndex, QList<std::shared_ptr<GeoContour>>> contourMap_ /*= QHash<BandIndex, QList<std::shared_ptr<GeoContour>>>()*/)
+    : tileId(tileId_)
+    , zoom(zoom_)
+    , alphaChannelPresence(alphaChannelPresence_)
+    , densityFactor(densityFactor_)
+    , images(images_)
     , contourMap(contourMap_)
 {
 }

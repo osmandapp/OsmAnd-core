@@ -262,6 +262,31 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createTileImage(
     return target.asImage();
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createTileImage(
+    const sk_sp<const SkImage>& left,
+    const sk_sp<const SkImage>& right)
+{
+    SkImageInfo imageInfo;
+    if (!left || left->width() <= 0 || left->height() <= 0)
+        return nullptr;
+
+    if (!right || right->width() <= 0 || right->height() <= 0)
+        return nullptr;
+
+    SkBitmap target;
+    if (!target.tryAllocPixels(
+        left->imageInfo().makeWH(left->width() + right->width(), left->height() + right->height())))
+        return nullptr;
+    target.eraseColor(SK_ColorTRANSPARENT);
+
+    SkCanvas canvas(target);
+    canvas.drawImage(left.get(), 0, 0);
+    canvas.drawImage(right.get(), left->width(), 0);
+    canvas.flush();
+
+    return target.asImage();
+}
+
 sk_sp<SkTypeface> OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray& data)
 {
     return SkTypeface::MakeFromData(SkData::MakeWithCopy(data.constData(), data.length()));

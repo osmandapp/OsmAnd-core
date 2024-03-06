@@ -995,6 +995,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getSymbolsOpacity();
     }
 
+    public final boolean setDateTime(long dateTime) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setDateTime(dateTime);
+    }
+
     public final MapRendererDebugSettings getDebugSettings() {
         NativeCore.checkIfLoaded();
 
