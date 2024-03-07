@@ -905,6 +905,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     size_t dataRowLength = 0;
     const void* tileData = nullptr;
     sk_sp<const SkImage> image;
+    auto colorType = SkColorType::kUnknown_SkColorType;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
         if (rasterMapLayerData->images.isEmpty())
@@ -967,6 +968,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         else
             image = rasterMapLayerData->images.constBegin().value();
 
+        colorType = image->colorType();
+        
         switch (image->alphaType())
         {
             case SkAlphaType::kPremul_SkAlphaType:
@@ -983,7 +986,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 return false;
         }
 
-        sourcePixelByteSize = SkColorTypeBytesPerPixel(image->colorType());
+        sourcePixelByteSize = SkColorTypeBytesPerPixel(colorType);
 
         SkPixmap imagePixmap;
         if (!image->peekPixels(&imagePixmap))
@@ -1016,8 +1019,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         assert(false);
         return false;
     }
-    const auto textureFormat = getTextureFormat(tile, image->colorType());
-    const auto sourceFormat = getSourceFormat(tile, image->colorType());
+    const auto textureFormat = getTextureFormat(tile, colorType);
+    const auto sourceFormat = getSourceFormat(tile, colorType);
 
     // Calculate texture size. Tiles are always stored in square textures.
     // Also, since atlas-texture support for tiles was deprecated, only 1 tile per texture is allowed.
