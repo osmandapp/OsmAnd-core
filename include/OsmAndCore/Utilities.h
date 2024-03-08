@@ -1060,6 +1060,7 @@ namespace OsmAnd
 
         static QString resolveColorFromPalette(const QString& input, const bool usePalette6);
         static LatLon rhumbDestinationPoint(LatLon latLon, double distance, double bearing);
+        static LatLon rhumbDestinationPoint(double lat, double lon, double distance, double bearing);
         static std::pair<int, int> calculateFinalXYFromBaseAndPrecisionXY(int bazeZoom, int finalZoom, int precisionXY,
                                                                           int xBase, int yBase, bool ignoreNotEnoughPrecision);
         static bool isPointInsidePolygon(const PointI point,
