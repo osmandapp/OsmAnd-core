@@ -5,7 +5,9 @@
 OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     const std::shared_ptr<WeatherTileResourcesManager> resourcesManager,
     const WeatherLayer weatherLayer_,
-    const int64_t dateTime,
+    const int64_t dateTimeFirst,
+    const int64_t dateTimeLast,
+    const int64_t dateTimeStep,
     const QList<BandIndex> bands,
     const bool localData)
     : _resourcesManager(resourcesManager)
@@ -13,28 +15,41 @@ OsmAnd::WeatherRasterLayerProvider::WeatherRasterLayerProvider(
     , _localData(localData)
     , weatherLayer(weatherLayer_)
 {
-    setDateTime(dateTime);
+    setDateTime(dateTimeFirst, dateTimeLast, dateTimeStep);
 }
 
 OsmAnd::WeatherRasterLayerProvider::~WeatherRasterLayerProvider()
 {
 }
 
-const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTime() const
+const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeFirst() const
 {
     QReadLocker scopedLocker(&_lock);
     
-    return _dateTime;
+    return _dateTimeFirst;
 }
 
-void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTime)
+const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeLast() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _dateTimeLast;
+}
+
+const int64_t OsmAnd::WeatherRasterLayerProvider::getDateTimeStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _dateTimeStep;
+}
+
+void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int64_t dateTimeLast, int64_t dateTimeStep)
 {
     QWriteLocker scopedLocker(&_lock);
     
-    // Clamp milliseconds to the nearest hour
-    const int64_t oneHour = 1000 * 60 * 60;
-    const int64_t timeOfHour = dateTime / oneHour * oneHour;
-    _dateTime = timeOfHour + (dateTime - timeOfHour < (oneHour >> 1) ? 0 : oneHour);
+    _dateTimeFirst = Utilities::roundMillisecondsToHours(dateTimeFirst);
+    _dateTimeLast = Utilities::roundMillisecondsToHours(dateTimeLast);
+    _dateTimeStep = Utilities::roundMillisecondsToHours(dateTimeStep);
 }
 
 const QList<OsmAnd::BandIndex> OsmAnd::WeatherRasterLayerProvider::getBands() const
@@ -108,7 +123,9 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
     WeatherTileResourcesManager::TileRequest _request;
     _request.weatherType = WeatherType::Raster;
     _request.weatherLayer = weatherLayer;
-    _request.dateTime = getDateTime();
+    _request.dateTimeFirst = getDateTimeFirst();
+    _request.dateTimeLast = getDateTimeLast();
+    _request.dateTimeStep = getDateTimeStep();
     _request.tileId = request.tileId;
     _request.zoom = request.zoom;
     _request.bands = getBands();
@@ -129,7 +146,7 @@ void OsmAnd::WeatherRasterLayerProvider::obtainDataAsync(
                     data->zoom,
                     data->alphaChannelPresence,
                     data->densityFactor,
-                    data->image
+                    data->images
                 );
                 callback(this, requestSucceeded, d, metric);
             }

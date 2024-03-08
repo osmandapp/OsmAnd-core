@@ -196,9 +196,13 @@ bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources(bool gpuContex
 
 bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
     const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
-    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU,
+    const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
-    return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU);
+    QReadLocker scopedLocker(&_tileDateTimeLock);
+
+    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime, resource);
+    return ok;
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
@@ -235,7 +239,8 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-bool OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask)
+bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
+    const MapRendererState& state, const MapRendererStateChanges updatedMask)
 {
     assert(renderer->isInRenderThread());
 
@@ -279,6 +284,45 @@ bool OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
     if (wasLocked)
         _resourcesStoragesLock.unlock();
+
+    if (updatedMask.isSet(MapRendererStateChange::DateTime))
+    {
+        {
+            QWriteLocker scopedLocker(&_tileDateTimeLock);
+
+            _tileDateTime = state.dateTime;
+        }
+
+        // Mark tile resources as needed to reupload in accordance to changed tile time
+        const auto mapLayerType = static_cast<int>(MapRendererResourceType::MapLayer);
+        const auto& resourcesCollections = _storageByType[mapLayerType];
+        const auto& bindings = _bindings[mapLayerType];
+
+        bool atLeastOneMarked = false;
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!bindings.collectionsToProviders.contains(resourcesCollection))
+                continue;
+
+            resourcesCollection->forEachResourceExecute(
+                [&atLeastOneMarked]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
+                {
+                    if (auto resource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(entry))
+                    {
+                        if (resource->_sourceData && resource->_sourceData->images.size() > 1)
+                        {
+                            if (resource->setStateIf(MapRendererResourceState::Uploaded,
+                                MapRendererResourceState::PreparedRenew))
+                                atLeastOneMarked = true;
+                        }
+                    }
+                });
+        }
+        if (atLeastOneMarked)
+            requestResourcesUploadOrUnload();
+
+    }
 
     return true;
 }
@@ -1034,7 +1078,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     requestResourcesUploadOrUnload();
                                 }
                             }
-                            else
+                            else if (!cachedResource->_sourceData->images.isEmpty())
                             {
                                 // Create four underscale resources of higher zoom level
                                 const auto zoomLevel = cachedResource->zoom;
@@ -1055,18 +1099,24 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                     if (!underscaledTilePresent)
                                     {
                                         atLeastOneAbsent = true;
-                                        auto image = cachedResource->_sourceData->image;
-                                        if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
-                                            image = SkiaUtilities::getUpperLeft(image);
-                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
-                                            image = SkiaUtilities::getUpperRight(image);
-                                        else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
-                                            image = SkiaUtilities::getLowerLeft(image);
-                                        else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
-                                            image = SkiaUtilities::getLowerRight(image);
-                                        image = adjustImageToConfiguration(image, alphaChannelPresence);
+                                        QMap<int64_t, sk_sp<const SkImage>> images;
+                                        for (auto itImage = cachedResource->_sourceData->images.constBegin();
+                                            itImage != cachedResource->_sourceData->images.constEnd(); itImage++)
+                                        {
+                                            sk_sp<const SkImage> image;
+                                            if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
+                                                image = SkiaUtilities::getUpperLeft(itImage.value());
+                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
+                                                image = SkiaUtilities::getUpperRight(itImage.value());
+                                            else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
+                                                image = SkiaUtilities::getLowerLeft(itImage.value());
+                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
+                                                image = SkiaUtilities::getLowerRight(itImage.value());
+                                            image = adjustImageToConfiguration(image, alphaChannelPresence);
+                                            images.insert(itImage.key(), image);
+                                        }
                                         const auto resourceAllocator =
-                                            [this, alphaChannelPresence, densityFactor, image]
+                                            [this, alphaChannelPresence, densityFactor, images]
                                             (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
                                                 const TileId tileId,
                                                 const ZoomLevel zoom) -> MapRendererBaseTiledResource*
@@ -1078,7 +1128,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                                                     zoom,
                                                     alphaChannelPresence,
                                                     densityFactor,
-                                                    image));
+                                                    images));
                                                 resource->setState(MapRendererResourceState::Ready);
                                                 return resource;
                                             };
@@ -1643,18 +1693,30 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         if (renderer->gpuContextIsLost)
             return;
 
+        bool isNotRasterMapLayerResource = true;
+        if (std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource))
+            isNotRasterMapLayerResource = false;
+
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-        if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+        if (isNotRasterMapLayerResource
+            && resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
         {
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
         }
-        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+        else if (isNotRasterMapLayerResource
+            && resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
         {
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
         }
-        else
+        else if (isNotRasterMapLayerResource)
         {
             continue;
+        }
+        else
+        {
+            auto state = resource->getState();
+            if (state != MapRendererResourceState::Ready && state != MapRendererResourceState::PreparedRenew)
+                continue;
         }
 
         // Actually upload resource to GPU

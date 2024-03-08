@@ -276,6 +276,8 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     {
         const auto key = itOnMapSurfaceIcon.key();
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
+        if (!onMapSurfaceIcon)
+            continue;
 
         // Get direction
         float direction = 0.0f;

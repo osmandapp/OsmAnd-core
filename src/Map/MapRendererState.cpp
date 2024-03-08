@@ -28,6 +28,7 @@ OsmAnd::MapRendererState::MapRendererState()
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
     , symbolsOpacity(1.0f)
+    , dateTime(0)
     , metersPerPixel(1.0)
 {
 }
@@ -57,6 +58,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.aimLocation31 = aimLocation31;
     mapState.aimHeight = aimHeight;
     mapState.aimZoomLevel = aimZoomLevel;
+    mapState.aimingActions = aimingActions;
     mapState.zoomLevel = zoomLevel;
     mapState.visualZoom = visualZoom;
     mapState.surfaceZoomLevel = surfaceZoomLevel;
@@ -68,6 +70,7 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.backgroundColor = backgroundColor;
     mapState.fogColor = fogColor;
     mapState.symbolsOpacity = symbolsOpacity;
+    mapState.dateTime = dateTime;
     
     mapState.metersPerPixel = metersPerPixel;
     mapState.visibleBBox31 = visibleBBox31;
@@ -104,6 +107,7 @@ OsmAnd::MapState::MapState()
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
     , symbolsOpacity(1.0f)
+    , dateTime(0)
     , metersPerPixel(1.0)
     , hasElevationDataProvider(false)
 {

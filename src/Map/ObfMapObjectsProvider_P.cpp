@@ -482,12 +482,31 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
             metric->submetrics.push_back(loadMapObjectsMetric);
         }
+
+        QSet<ObfObjectId> loadedCoastlineObjectsIds;
+        const auto coastlineObjectsFilteringFunctor =
+            [&loadedCoastlineObjectsIds]
+            (const std::shared_ptr<const ObfMapSectionInfo>& section,
+                const ObfMapSectionReader::DataBlockId& blockId,
+                const ObfObjectId objectId,
+                const AreaI& bbox,
+                const ZoomLevel firstZoomLevel,
+                const ZoomLevel lastZoomLevel,
+                const ZoomLevel requestedZoom) -> bool
+            {
+                if (loadedCoastlineObjectsIds.contains(objectId))
+                    return false;
+                loadedCoastlineObjectsIds.insert(objectId);
+
+                return true;
+            };
+
         dataInterface->loadBinaryMapObjects(
             &loadedCoastlineMapObjects,
             &coastlineTileSurfaceType,
             _coastlineZoom,
             &coastlineTileBBox31,
-            nullptr,
+            coastlineObjectsFilteringFunctor,
             nullptr,
             nullptr,
             nullptr,// query queryController
@@ -750,9 +769,9 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalTimeStopwatch.elapsed());
 #else
     LogPrintf(LogSeverityLevel::Info,
@@ -760,11 +779,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
-        tileId.x,
-        tileId.y,
-        zoom,
+        request.tileId.x,
+        request.tileId.y,
+        request.zoom,
         totalTimeStopwatch.elapsed(),
-        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+        qPrintable(metric ? metric->toString(false, QLatin1String("\t - ")) : QLatin1String("(null)")));
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
 

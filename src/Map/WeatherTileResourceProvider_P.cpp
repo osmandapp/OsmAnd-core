@@ -934,13 +934,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
     }
 }
 
-void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
+sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterImage(
+    int64_t dateTime, bool& success)
 {
+    success = false;
     const auto provider = _provider.lock();
     if (!provider)
-        return;
+        return nullptr;
 
-    const auto dateTime = request->dateTime;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
@@ -953,16 +954,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             "Stop creating tile image of weather tile %dx%dx%d. Version changed %d:%d",
             tileId.x, tileId.y, zoom, request->version, provider->getCurrentRequestVersion());
 
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
     if (request->queryController && request->queryController->isAborted())
     {
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
 
     if (!localData)
@@ -979,8 +978,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         LogPrintf(LogSeverityLevel::Error,
             "Failed to resolve geoTileId for weather tile %dx%dx%d. Geo tile zoom (%d) > tile zoom (%d).",
             tileId.x, tileId.y, zoom, geoTileZoom, zoom);
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
     else if (zoom > geoTileZoom)
         geoTileId = Utilities::getTileIdOverscaledByZoomShift(tileId, zoom - geoTileZoom);
@@ -1024,22 +1022,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto image = createTileImage(images, bands);
         if (image)
         {
-            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
-                tileId,
-                zoom,
-                AlphaChannelPresence::Present,
-                provider->densityFactor,
-                image
-            );
-            callback(true, data, nullptr);
-            return;
+            success = true;
+            return image;
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to create tile image of weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
-            callback(false, nullptr, nullptr);
-            return;
+            return nullptr;
         }
     }
 
@@ -1057,8 +1047,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             LogPrintf(LogSeverityLevel::Error,
                 "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
         }
-        callback(cacheOnly, nullptr, nullptr);
-        return;
+        success = cacheOnly;
+        return nullptr;
     }
     if (request->queryController && request->queryController->isAborted())
     {
@@ -1068,8 +1058,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
 
     if (missingBands.empty() && minRasterizedTime >= geoTileTime)
@@ -1079,22 +1068,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         auto image = createTileImage(images, bands);
         if (image)
         {
-            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
-                tileId,
-                zoom,
-                AlphaChannelPresence::Present,
-                provider->densityFactor,
-                image
-            );
-            callback(true, data, nullptr);
-            return;
+            success = true;
+            return image;
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to create tile image of weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
-            callback(false, nullptr, nullptr);
-            return;
+            return nullptr;
         }
     }
 
@@ -1128,8 +1109,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         LogPrintf(LogSeverityLevel::Debug,
             "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
 
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
 
     auto itBandImageData = iteratorOf(encImgData);
@@ -1159,8 +1139,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
             "Cancel rasterization tile image of weather tile %dx%dx%d. Version changed %d:%d",
             tileId.x, tileId.y, zoom, request->version, provider->getCurrentRequestVersion());
 
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
     if (rasterizedImages.empty())
     {
@@ -1172,32 +1151,72 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     {
         auto image = createTileImage(images, bands);
         if (image)
-        {
-            auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
-                tileId,
-                cacheOnly ? InvalidZoomLevel : zoom,
-                AlphaChannelPresence::Present,
-                provider->densityFactor,
-                image
-            );
-            callback(true, data, nullptr);
-            return;
-        }
+            return image; // without "success" to initiate second reqiuest for a fresh data
         else
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to create tile image of rasterized weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
-            callback(false, nullptr, nullptr);
-            return;
+            return nullptr;
         }
     }
     else
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to create tile image of non rasterized weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
-        callback(false, nullptr, nullptr);
-        return;
+        return nullptr;
     }
+}
+
+void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
+{
+    const auto provider = _provider.lock();
+    if (!provider)
+        return;
+    auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
+    auto timeGap = request->dateTimeStep;
+    TileId tileId = request->tileId;
+    ZoomLevel zoom = request->zoom;
+    bool cacheOnly = request->cacheOnly;
+    QMap<int64_t, sk_sp<const SkImage>> images;
+    bool success;
+    int count = 0;
+    while (dateTime <= request->dateTimeLast)
+    {
+        auto image = obtainRasterImage(dateTime, success);
+        if (image)
+        {
+            images.insert(dateTime, image);
+            if (cacheOnly && !success)
+                zoom = InvalidZoomLevel; // indicate, that recent data should be requested
+        }
+        else if (!success)
+        {
+            callback(false, nullptr, nullptr);
+            return;
+        }
+        else if (cacheOnly)
+        {
+            zoom = InvalidZoomLevel; // indicate, that recent data should be requested
+            auto emptyImage = SkiaUtilities::getEmptyImage(provider->tileSize, provider->tileSize);
+            if (emptyImage)
+                images.insert(dateTime, emptyImage);
+        }
+        dateTime += timeGap;
+        count++;
+    }
+    if (images.size() == count)
+    {
+        auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
+            tileId,
+            zoom,
+            AlphaChannelPresence::Present,
+            provider->densityFactor,
+            images
+        );
+        callback(true, data, nullptr);
+    }
+    else
+        callback(false, nullptr, nullptr);
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
@@ -1206,7 +1225,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     if (!provider)
         return;
 
-    const auto dateTime = request->dateTime;
+    const auto dateTime = request->dateTimeFirst;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;

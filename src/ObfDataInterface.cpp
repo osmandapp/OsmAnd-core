@@ -276,9 +276,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     {
         const auto& obfInfo = obfReader->obtainInfo();
         QFileInfo fileInfo(obfReader->obfFile->filePath);
-        if (!obfReader->obfFile->filePath.contains(QStringLiteral(".road")))
+        if (fileInfo.completeSuffix() == QStringLiteral("obf"))
             regularMapNames << fileInfo.baseName();
-        else
+        else if (fileInfo.completeSuffix().startsWith("road"))
             roadMapsCount++;
 
         // Handle basemap
