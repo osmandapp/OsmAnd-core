@@ -19,7 +19,6 @@
 #include "CoreResourcesEmbeddedBundle.h"
 #include "ICoreResourcesProvider.h"
 #include "QKeyValueIterator.h"
-#include "SkiaUtilities.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -36,6 +35,9 @@ OsmAnd::MapPresentationEnvironment_P::~MapPresentationEnvironment_P()
 
 void OsmAnd::MapPresentationEnvironment_P::initialize()
 {
+    _mapIcons.reset(new IconsCache(("map/icons/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor));
+    _shadersAndShields.reset(new IconsCache(QLatin1String("map/shaders_and_shields/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor));
+
     _defaultBackgroundColorAttribute = owner->mapStyle->getAttribute(QLatin1String("defaultColor"));
     _defaultBackgroundColor = ColorRGB(0xf1, 0xee, 0xe8);
 
@@ -207,52 +209,142 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
     applyTo(evaluator, _settings);
 }
 
+OsmAnd::LayeredIconData OsmAnd::MapPresentationEnvironment_P::getLayeredIconData(
+    const QString& tag,
+    const QString& value,
+    const ZoomLevel zoom,
+    const int textLength,
+    const QString* const additional) const
+{
+    float scale = 1.0f;
+    MapStyleEvaluator pointEvaluator(owner->mapStyle, owner->displayDensityFactor);
+    applyTo(pointEvaluator);
+
+    auto mapObject = std::make_shared<MapObject>();
+
+    pointEvaluator.setStringValue(owner->styleBuiltinValueDefs->id_INPUT_TAG, tag);
+    pointEvaluator.setStringValue(owner->styleBuiltinValueDefs->id_INPUT_VALUE, value);
+    pointEvaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+    pointEvaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
+    pointEvaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, textLength);
+    if (additional)
+    {
+        auto attributeMapping = std::make_shared<MapObject::AttributeMapping>();
+        const auto additionals = additional->split(";", QString::SkipEmptyParts);
+        for (uint32_t attributeIdIndex = 0; attributeIdIndex < additionals.size(); attributeIdIndex++)
+        {
+            const auto& additionalAttribute = additionals[attributeIdIndex];
+            const auto additionalTagValue = additionalAttribute.split("=", QString::SkipEmptyParts);
+            if (additionalTagValue.size() < 1 || additionalTagValue.size() > 2)
+                continue;
+
+            const auto& additionalTag = additionalTagValue[0];
+            const auto& additionalValue = additionalTagValue.size() == 2 ? additionalTagValue[1] : QString();
+            
+            mapObject->additionalAttributeIds.push_back(attributeIdIndex);
+            attributeMapping->registerMapping(attributeIdIndex, additionalTag, additionalValue);
+        }
+        mapObject->attributeMapping = attributeMapping;   
+    }
+
+    MapStyleEvaluationResult evaluationResult;
+    pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
+
+    LayeredIconData layeredIconData;
+    IconData iconLayerData;
+    if (!obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON, scale, iconLayerData))
+        return layeredIconData;
+    layeredIconData.main = iconLayerData;
+    
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_SHIELD, scale, iconLayerData))
+        layeredIconData.background = iconLayerData;
+
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON__3, scale, iconLayerData))
+        layeredIconData.underlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON__2, scale, iconLayerData))
+        layeredIconData.underlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON__1, scale, iconLayerData))
+        layeredIconData.underlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON_2, scale, iconLayerData))
+        layeredIconData.overlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON_3, scale, iconLayerData))
+        layeredIconData.overlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON_4, scale, iconLayerData))
+        layeredIconData.overlay.push_back(iconLayerData);
+    if (obtainIconLayerData(mapObject, evaluationResult, owner->styleBuiltinValueDefs->id_OUTPUT_ICON_5, scale, iconLayerData))
+        layeredIconData.overlay.push_back(iconLayerData);
+
+    return layeredIconData;
+}
+
+bool OsmAnd::MapPresentationEnvironment_P::obtainIconLayerData(
+    const std::shared_ptr<const MapObject>& mapObject,
+    const MapStyleEvaluationResult& evaluationResult,
+    const IMapStyle::ValueDefinitionId valueDefId,
+    const float scale,
+    IconData& outIconData) const
+{
+    QString iconName;
+    if (evaluationResult.getStringValue(valueDefId, iconName) && !iconName.isEmpty())
+    {
+        auto iconData = getIconData(iconName);
+        // if (!iconData.bytes.isEmpty())
+        if (iconData.height > 0 && iconData.width > 0)
+        {
+            outIconData = iconData;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+OsmAnd::IconData OsmAnd::MapPresentationEnvironment_P::getIconData(const QString& name) const
+{
+    if (_shadersAndShields->containsResource(name))
+        return getShaderOrShieldData(name);
+    
+    if (_mapIcons->containsResource(name))
+        return getMapIconData(name);
+
+    LogPrintf(LogSeverityLevel::Warning, "Resource '%s' (requested by MapPresentationEnvironment) was not found", qPrintable(name));
+
+    return IconData();
+}   
+
+OsmAnd::IconData OsmAnd::MapPresentationEnvironment_P::getMapIconData(const QString& name) const
+{
+    IconData iconData;
+    sk_sp<const SkImage> image;
+    _mapIcons->obtainIcon(name, 1.0f, image);
+    iconData.isColorable = false;
+    iconData.width = image->width();
+    iconData.height = image->height();
+    image->asLegacyBitmap(&iconData.bitmap);
+    return iconData;
+}
+
+OsmAnd::IconData OsmAnd::MapPresentationEnvironment_P::getShaderOrShieldData(const QString& name) const
+{
+    IconData iconData;
+    _shadersAndShields->obtainResourceByName(name, iconData.bytes, iconData.isColorable);
+    return iconData;
+}
+
 bool OsmAnd::MapPresentationEnvironment_P::obtainIcon(
     const QString& name,
     const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
-    if (containsResourceByName(getShaderResourcePath(name)))
-        return obtainShader(name, scale, outIcon);
-    
-    if (containsResourceByName(getShieldResourcePath(name)))
-        return obtainTextShield(name, scale, outIcon);
+    if (_shadersAndShields->containsResource(name))
+        return _shadersAndShields->obtainIcon(name, scale, outIcon);
 
-    if (containsResourceByName(getMapIconResourcePath(name)))
-        return obtainMapIcon(name, scale, outIcon);
+    if (_mapIcons->containsResource(name))
+        return _mapIcons->obtainIcon(name, scale, outIcon);
 
     LogPrintf(LogSeverityLevel::Warning, "Resource '%s' (requested by MapPresentationEnvironment) was not found", qPrintable(name));
 
     return false;
-}
-
-bool OsmAnd::MapPresentationEnvironment_P::obtainShader(
-    const QString& name,
-    const float scale,
-    sk_sp<const SkImage>& outShader) const
-{
-    QMutexLocker scopedLocker(&_shadersMutex);
-
-    const auto key = makeIconKey(name, scale);
-    auto itShader = _shaders.constFind(key);
-    if (itShader == _shaders.cend())
-    {
-        // Get data from embedded resources
-        const auto data = obtainResourceByName(getShaderResourcePath(name));
-        
-        // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
-        if (!image)
-        {
-            return false;
-        }
-
-        itShader = _shaders.insert(key, image);
-    }
-
-    // Create shader from that bitmap
-    outShader = *itShader;
-    return true;
 }
 
 bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
@@ -260,136 +352,15 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(
     const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
-    QMutexLocker scopedLocker(&_mapIconsMutex);
-
-    const auto key = makeIconKey(name, scale);
-    auto itIcon = _mapIcons.constFind(key);
-    if (itIcon == _mapIcons.cend())
-    {
-        // Get data from embedded resources
-        auto data = obtainResourceByName(getMapIconResourcePath(name));
-        
-        // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
-        if (!image)
-        {
-            return false;
-        }
-
-        itIcon = _mapIcons.insert(key, image);
-    }
-
-    outIcon = *itIcon;
-    return true;
+    return _mapIcons->obtainIcon(name, scale, outIcon);
 }
 
-bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(
+bool OsmAnd::MapPresentationEnvironment_P::obtainShaderOrShield(
     const QString& name,
     const float scale,
-    sk_sp<const SkImage>& outTextShield) const
+    sk_sp<const SkImage>& outIcon) const
 {
-    QMutexLocker scopedLocker(&_textShieldsMutex);
-
-    const auto key = makeIconKey(name, scale);
-    auto itTextShield = _textShields.constFind(key);
-    if (itTextShield == _textShields.cend())
-    {
-        // Get data from embedded resources
-        auto data = obtainResourceByName(getShieldResourcePath(name));
-
-        // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
-        if (!image)
-        {
-            return false;
-        }
-
-        itTextShield = _textShields.insert(key, image);
-    }
-
-    outTextShield = *itTextShield;
-    return true;
-}
-
-bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(
-    const QString& name,
-    const float scale,
-    sk_sp<const SkImage>& outIconShield) const
-{
-    QMutexLocker scopedLocker(&_iconShieldsMutex);
-
-    const auto key = makeIconKey(name, scale);
-    auto itIconShield = _iconShields.constFind(key);
-    if (itIconShield == _iconShields.cend())
-    {
-        // Get data from embedded resources
-        auto data = obtainResourceByName(getShieldResourcePath(name));
-
-        // Decode bitmap for a shader
-        const auto image = SkiaUtilities::createImageFromVectorData(data, scale * owner->displayDensityFactor);
-        if (!image)
-        {
-            return false;
-        }
-
-        itIconShield = _iconShields.insert(key, image);
-    }
-
-    outIconShield = *itIconShield;
-    return true;
-}
-
-QString OsmAnd::MapPresentationEnvironment_P::getShaderResourcePath(const QString& name) const
-{
-    return QString::fromLatin1("map/shaders/%1.svg").arg(name);
-}
-
-QString OsmAnd::MapPresentationEnvironment_P::getMapIconResourcePath(const QString& name) const
-{
-    return QString::fromLatin1("map/icons/%1.svg").arg(name);
-}
-
-QString OsmAnd::MapPresentationEnvironment_P::getShieldResourcePath(const QString& name) const
-{
-    return QString::fromLatin1("map/shields/%1.svg").arg(name);
-}
-
-bool OsmAnd::MapPresentationEnvironment_P::containsResourceByName(const QString& name) const
-{
-    bool ok = false;
-    ok = ok || owner->externalResourcesProvider && owner->externalResourcesProvider->containsResource(name, owner->displayDensityFactor);
-    ok = ok || owner->externalResourcesProvider && owner->externalResourcesProvider->containsResource(name);
-    ok = ok || getCoreResourcesProvider()->containsResource(name, owner->displayDensityFactor);
-    ok = ok || getCoreResourcesProvider()->containsResource(name);
-    return ok;
-}
-
-QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
-{
-    bool ok = false;
-
-    // Try to obtain from external resources first
-    if (static_cast<bool>(owner->externalResourcesProvider))
-    {
-        const auto resource = owner->externalResourcesProvider->containsResource(name, owner->displayDensityFactor)
-            ? owner->externalResourcesProvider->getResource(name, owner->displayDensityFactor, &ok)
-            : owner->externalResourcesProvider->getResource(name, &ok);
-        if (ok)
-            return resource;
-    }
-
-    // Otherwise obtain from global
-    const auto resource = getCoreResourcesProvider()->containsResource(name, owner->displayDensityFactor)
-        ? getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok)
-        : getCoreResourcesProvider()->getResource(name, &ok);
-    if (!ok)
-    {
-        LogPrintf(LogSeverityLevel::Warning,
-            "Resource '%s' (requested by MapPresentationEnvironment) was not found",
-            qPrintable(name));
-        return QByteArray();
-    }
-    return resource;
+    return _shadersAndShields->obtainIcon(name, scale, outIcon);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColor(const ZoomLevel zoom) const

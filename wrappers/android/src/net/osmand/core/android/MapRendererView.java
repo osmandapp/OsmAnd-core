@@ -35,6 +35,8 @@ import net.osmand.core.jni.MapMarkersAnimator;
 import net.osmand.core.jni.MapRendererFramePreparedObservable;
 import net.osmand.core.jni.MapRendererTargetChangedObservable;
 
+import net.osmand.core.jni.OsmAndCore;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGL11;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -1242,6 +1244,12 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.getElevationDataTileSize();
+    }
+
+    public final boolean copyPixels(Object from, Object to) {
+        NativeCore.checkIfLoaded();
+
+        return OsmAndCore.copyPixels(from, to);
     }
 
     public final void dumpResourcesInfo() {

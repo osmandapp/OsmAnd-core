@@ -142,6 +142,7 @@
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include <OsmAndCore/Map/GeoTileObjectsProvider.h>
 #include <OsmAndCore/SingleSkImage.h>
+#include <OsmAndCore/Icons.h>
 #include <OsmAndCore/Metrics.h>
 #include "SwigUtilities.h"
 
@@ -376,6 +377,8 @@ using namespace OsmAnd;
 #endif
 %include <swig/OsmAndCore_Stubs.h>
 %include <OsmAndCore/SingleSkImage.h>
+%include <OsmAndCore/Icons.h>
+	%template(QListIconData) QList<OsmAnd::IconData>;
 %include <OsmAndCore/Metrics.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
@@ -685,3 +688,55 @@ $action
     }
 };
 
+%{
+#include <android/bitmap.h>
+
+//JNIEXPORT jboolean JNICALL Java_net_osmand_core_jni_OsmAndCoreJNI_IconData_1copyPixels(JNIEnv *jenv, jclass jCls, jlong jSourceBitmapPtr, jobject jSourceBitmap, jlong jTargetBitmapPtr, jobject jTargetBitmap)
+JNIEXPORT jboolean JNICALL Java_net_osmand_core_jni_OsmAndCoreJNI_copyPixels(JNIEnv *jenv, jclass jCls, jobject jSourceBitmap, jobject jTargetBitmap)
+{
+	//SkBitmap* pSourceBitmap = (SkBitmap *) 0 ;
+
+	(void)jenv;
+	(void)jCls;
+	(void)jSourceBitmap;
+	(void)jTargetBitmap;
+
+	//pSourceBitmap = *(SkBitmap**) &jSourceBitmapPtr;
+	SkBitmap* pSourceBitmap = (SkBitmap*) &jSourceBitmap;
+
+	AndroidBitmapInfo androidBitmapInfo;
+	if (AndroidBitmap_getInfo(jenv, jTargetBitmap, &androidBitmapInfo) != ANDROID_BITMAP_RESULT_SUCCESS)
+	{
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to get bitmap info");
+		return (jboolean) 0;
+	}
+
+	if (androidBitmapInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888)
+	{
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Expected RGBA_8888 format");	
+		return false;
+	}
+	if (androidBitmapInfo.width != pSourceBitmap->width() || androidBitmapInfo.height != pSourceBitmap->height())
+	{
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Expected android bitmap %dx%d pixels", pSourceBitmap->width(), pSourceBitmap->height());	
+		return false;
+	}
+
+	void* addr = NULL;
+	if (AndroidBitmap_lockPixels(jenv, jTargetBitmap, &addr) != ANDROID_BITMAP_RESULT_SUCCESS || !addr)
+	{
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to lock pixels");
+		return (jboolean) 0;
+	}
+
+	SkImageInfo imageInfo = SkImageInfo::Make(pSourceBitmap->width(), pSourceBitmap->height(), kN32_SkColorType, kPremul_SkAlphaType);
+	pSourceBitmap->installPixels(imageInfo, addr, androidBitmapInfo.stride);
+
+	int unlockResult = AndroidBitmap_unlockPixels(jenv, jTargetBitmap);
+	if (unlockResult != ANDROID_BITMAP_RESULT_SUCCESS)
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to unlock pixels");
+
+	return (jboolean) 1;
+}
+%}
+%native (copyPixels) jboolean copyPixels(/*jlong jSourceBitmapPtr, */jobject jSourceBitmap, /*jlong jTargetBitmapPtr, */jobject jTargetBitmap);
