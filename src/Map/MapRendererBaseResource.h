@@ -67,9 +67,9 @@ namespace OsmAnd
         MapRendererResourcesManager* const resourcesManager;
         const MapRendererResourceType type;
 
-        const bool& isJunk;
-        const bool& isOld;
-        const bool& isOldInGPU;
+        const volatile bool& isJunk;
+        const volatile bool& isOld;
+        const volatile bool& isOldInGPU;
 
         virtual bool isRenewing();
 
