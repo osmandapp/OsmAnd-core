@@ -26,9 +26,9 @@ namespace OsmAnd
         void markAsFreshInGPU();
 
     private:
-        bool _isJunk;
-        bool _isOld;
-        bool _isOldInGPU;
+        volatile bool _isJunk;
+        volatile bool _isOld;
+        volatile bool _isOldInGPU;
     protected:
         MapRendererBaseResource(MapRendererResourcesManager* owner, MapRendererResourceType type);
 
