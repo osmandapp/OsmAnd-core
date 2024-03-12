@@ -255,7 +255,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 dataRequest.queryController = queryController;
             auto generatedTime =
                 webClient->downloadFile(geoTileUrl, filePathGz, obtainedTime, dataRequest);
-            if (generatedTime > 0)
+            if (generatedTime > 0 && !(queryController && queryController->isAborted()))
             {
                 ArchiveReader archive(filePathGz);
                 bool ok = false;
@@ -1037,6 +1037,16 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     const auto geoTileTime = provider->obtainGeoTile(
         geoTileId, geoTileZoom, dateTime, geoTileData, false, localData, request->queryController);
+    if (request->queryController && request->queryController->isAborted())
+    {
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Debug,
+            "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        return nullptr;
+    }
     if (geoTileTime <= 0)
     {
         if (!localData)
@@ -1063,7 +1073,8 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     if (missingBands.empty() && minRasterizedTime >= geoTileTime)
     {
-        provider->unlockRasterTile(tileId, zoom);
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
 
         auto image = createTileImage(images, bands);
         if (image)
@@ -1173,14 +1184,15 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     if (!provider)
         return;
     auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
+    auto dateTimeLast = std::max(request->dateTimeFirst, request->dateTimeLast);
     auto timeGap = request->dateTimeStep;
+    timeGap = timeGap > 0 ? timeGap : 1;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     bool cacheOnly = request->cacheOnly;
     QMap<int64_t, sk_sp<const SkImage>> images;
     bool success;
-    int count = 0;
-    while (dateTime <= request->dateTimeLast)
+    while (dateTime <= dateTimeLast)
     {
         auto image = obtainRasterImage(dateTime, success);
         if (image)
@@ -1202,9 +1214,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
                 images.insert(dateTime, emptyImage);
         }
         dateTime += timeGap;
-        count++;
     }
-    if (images.size() == count)
+    if (images.size() > 0)
     {
         auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
             tileId,

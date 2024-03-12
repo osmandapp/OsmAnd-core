@@ -1375,7 +1375,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             auto dateTimeLast = batchedResourceInGPU->resourceInGPU->dateTimeLast;
             auto dateTimeStep = dateTimeLast - dateTimeFirst;
             float transitionPhase;
-            if (dateTimeStep == 0)
+            if (dateTimeStep <= 0)
                 transitionPhase = -1.0f; // No transition needed
             else if (currentState.dateTime <= dateTimeFirst)
                 transitionPhase = 0.0f;
@@ -1384,7 +1384,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             else
             {
                 transitionPhase = static_cast<float>(
-                    static_cast<double>(currentState.dateTime % dateTimeStep) / static_cast<double>(dateTimeStep));
+                    static_cast<double>(currentState.dateTime - dateTimeFirst) / static_cast<double>(dateTimeStep));
             }
 
             glUniform1f(perTile_fs.transitionPhase, transitionPhase);
@@ -1678,6 +1678,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
         const auto resource = std::static_pointer_cast<MapRendererRasterMapLayerResource>(resource_);
 
         // Check state and obtain GPU resource
+        auto state = resource->getState();
         if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
         {
             // Capture GPU resource
@@ -1700,14 +1701,27 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
                 *outState = MapRendererResourceState::PreparedRenew;
             return gpuResource;
         }
-        else if (resource->getState() == MapRendererResourceState::Renewing)
+        else if (resource->setStateIf(MapRendererResourceState::Outdated, MapRendererResourceState::IsBeingUsed))
+        {
+            // Capture GPU resource
+            auto gpuResource = resource->resourceInGPU;
+
+            resource->setState(MapRendererResourceState::Outdated);
+
+            if (outState != nullptr)
+                *outState = MapRendererResourceState::Outdated;
+            return gpuResource;
+        }
+        else if (state == MapRendererResourceState::Renewing || state == MapRendererResourceState::Updating
+            || state == MapRendererResourceState::RequestedUpdate
+            || state == MapRendererResourceState::ProcessingUpdate)
         {
             // Capture GPU resource (if any)
             auto gpuResource = resource->resourceInGPU;
             if (gpuResource)
             {
                 if (outState != nullptr)
-                    *outState = MapRendererResourceState::Renewing;
+                    *outState = state;
                 return gpuResource;
             }
         }

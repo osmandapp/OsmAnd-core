@@ -1001,6 +1001,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setDateTime(dateTime);
     }
 
+    public final boolean changeTimePeriod() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.changeTimePeriod();
+    }
+
     public final MapRendererDebugSettings getDebugSettings() {
         NativeCore.checkIfLoaded();
 

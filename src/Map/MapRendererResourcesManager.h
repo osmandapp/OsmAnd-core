@@ -157,6 +157,8 @@ namespace OsmAnd
         void updateResources(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
             QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset);
+        void requestOutdatedResources(
+            const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections);
         void requestNeededResources(
             const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
             const TileId centerTileId,
@@ -264,6 +266,7 @@ namespace OsmAnd
         void updateActiveZone(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
             QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount);
+        void requestOutdatedResources();
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

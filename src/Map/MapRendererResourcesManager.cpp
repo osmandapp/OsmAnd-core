@@ -285,7 +285,9 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
     if (wasLocked)
         _resourcesStoragesLock.unlock();
 
-    if (updatedMask.isSet(MapRendererStateChange::DateTime))
+    auto isPeriodChanged = updatedMask.isSet(MapRendererStateChange::TimePeriod);
+    auto newState = isPeriodChanged ? MapRendererResourceState::Outdated : MapRendererResourceState::PreparedRenew;
+    if (isPeriodChanged || updatedMask.isSet(MapRendererStateChange::DateTime))
     {
         {
             QWriteLocker scopedLocker(&_tileDateTimeLock);
@@ -299,27 +301,50 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
         const auto& bindings = _bindings[mapLayerType];
 
         bool atLeastOneMarked = false;
+        bool needsResourcesUploadOrUnload = false;
         for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if (!bindings.collectionsToProviders.contains(resourcesCollection))
                 continue;
 
             resourcesCollection->forEachResourceExecute(
-                [&atLeastOneMarked]
+                [&atLeastOneMarked, &needsResourcesUploadOrUnload, isPeriodChanged, newState]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
                     if (auto resource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(entry))
                     {
-                        if (resource->_sourceData && resource->_sourceData->images.size() > 1)
+                        bool withData = resource->_sourceData && resource->_sourceData->images.size() > 1;
+                        auto state = resource->getState();
+                        if (withData && resource->setStateIf(MapRendererResourceState::Uploaded, newState))
                         {
-                            if (resource->setStateIf(MapRendererResourceState::Uploaded,
-                                MapRendererResourceState::PreparedRenew))
-                                atLeastOneMarked = true;
+                            atLeastOneMarked = true;
+                            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploaded, newState);
+                        }
+                        else if (withData && isPeriodChanged
+                            && resource->setStateIf(MapRendererResourceState::PreparedRenew, newState))
+                            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, newState);
+                        else if (isPeriodChanged && (state == MapRendererResourceState::ProcessingRequest
+                            || state == MapRendererResourceState::Unavailable))
+                        {
+                            resource->markAsJunk();
+                        }
+                        else if (withData && isPeriodChanged
+                            && (state == MapRendererResourceState::Ready
+                            || state == MapRendererResourceState::Uploading
+                            || state == MapRendererResourceState::Uploaded
+                            || state == MapRendererResourceState::IsBeingUsed
+                            || state == MapRendererResourceState::PreparedRenew
+                            || state == MapRendererResourceState::Renewing
+                            || state == MapRendererResourceState::ProcessingUpdate))
+                        {
+                            resource->markAsJunk();
                         }
                     }
                 });
         }
-        if (atLeastOneMarked)
+        if (isPeriodChanged)
+            requestOutdatedResources();
+        else if (atLeastOneMarked)
             requestResourcesUploadOrUnload();
 
     }
@@ -539,6 +564,15 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     }
 }
 
+void OsmAnd::MapRendererResourcesManager::requestOutdatedResources()
+{
+        // Lock worker wakeup mutex
+        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+
+        // Wake up the worker
+        _workerThreadWakeup.wakeAll();
+}
+
 void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
     _resourcesRequestWorkerPool.setMaxThreadCount(limit);
@@ -731,6 +765,54 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
     }
 
     _workerThreadId = nullptr;
+}
+
+void OsmAnd::MapRendererResourcesManager::requestOutdatedResources(
+    const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections)
+{
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
+    {
+        if (!resourcesCollection)
+            continue;
+
+        if (resourcesCollection->type != MapRendererResourceType::MapLayer)
+            continue;
+
+        if (const auto tiledResourcesCollection =
+                std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
+        {
+            std::shared_ptr<IMapDataProvider> mapDataProvider;
+            if (!obtainProviderFor(resourcesCollection.get(), mapDataProvider))
+                continue;
+
+            // Select all resources with "Outdated" state
+            QList< std::shared_ptr<MapRendererBaseResource> > resources;
+            resourcesCollection->obtainResources(&resources,
+                []
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+                {
+                    // Skip not-"Outdated" resources
+                    if (entry->getState() != MapRendererResourceState::Outdated)
+                        return false;
+
+                    // Accept this resource
+                    return true;
+                });
+            if (resources.isEmpty())
+                continue;
+
+            // Request up-to-date data for each outdated resource
+            for (const auto& resource : constOf(resources))
+            {
+                if (resource->setStateIf(MapRendererResourceState::Outdated, MapRendererResourceState::Updating))
+                {
+                    requestNeededResource(resource);
+                    LOG_RESOURCE_STATE_CHANGE(
+                        resource, MapRendererResourceState::Outdated, MapRendererResourceState::Updating);
+                }
+            }
+        }
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResources(
@@ -1011,17 +1093,28 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     // Only if tile entry has "Unknown" state proceed to "Requesting" state
-    if (!resource->setStateIf(MapRendererResourceState::Unknown, MapRendererResourceState::Requesting))
-        return;
-    LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unknown, MapRendererResourceState::Requesting);
+    if (resource->getState() != MapRendererResourceState::Updating)
+    {
+        if (!resource->setStateIf(MapRendererResourceState::Unknown, MapRendererResourceState::Requesting))
+            return;
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unknown, MapRendererResourceState::Requesting);
+    }
 
     if (resource->supportsObtainDataAsync())
     {
         // Since resource supports natural async, there's no need to use workers pool
 
-        assert(resource->getState() == MapRendererResourceState::Requesting);
-        resource->setState(MapRendererResourceState::Requested);
-        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+        if (resource->getState() == MapRendererResourceState::Requesting)
+        {
+            resource->setState(MapRendererResourceState::Requested);
+            LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+        }
+        else if (resource->getState() == MapRendererResourceState::Updating)
+        {
+            resource->setState(MapRendererResourceState::RequestedUpdate);
+            LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::RequestedUpdate);
+        }
+
 
         if (beginResourceRequestProcessing(resource))
         {
@@ -1034,6 +1127,23 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                     queryController->abort();
                 };
 
+            if (resource->isOld)
+            {
+                // Try to access remote data this time
+                resource->markAsFresh();
+                const MapRendererBaseResource::ObtainDataAsyncCallback callback =
+                    [this, resource, queryController]
+                    (const bool requestSucceeded, const bool dataAvailable)
+                    {
+                        endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
+                        if (queryController->isAborted())
+                            processResourceRequestCancellation(resource);
+                    };
+                // Request data accessible locally or remotely
+                resource->obtainDataAsync(callback, queryController, false);
+                return;
+            }
+
             const MapRendererBaseResource::ObtainDataAsyncCallback callback =
                 [this, resource, queryController]
                 (const bool requestSucceeded, const bool dataAvailable)
@@ -1042,7 +1152,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                     const auto cachedResource = std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource);                    
                     if (cachedResource && requestSucceeded &&
                         (!dataAvailable || cachedResource->zoom != cachedResource->_sourceData->zoom) &&
-                        cachedResource->getState() == MapRendererResourceState::ProcessingRequest &&
+                        (cachedResource->getState() == MapRendererResourceState::ProcessingUpdate ||
+                        cachedResource->getState() == MapRendererResourceState::ProcessingRequest) &&
                         !queryController->isAborted())
                     {
                         // Create a complete resource for received data that has different zoom level
@@ -1080,68 +1191,12 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                             }
                             else if (!cachedResource->_sourceData->images.isEmpty())
                             {
-                                // Create four underscale resources of higher zoom level
-                                const auto zoomLevel = cachedResource->zoom;
-                                const auto underscaledZoom = static_cast<ZoomLevel>(zoomLevel + 1);
-                                const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
-                                    cachedResource->_sourceData->tileId, 1);
-                                const auto tilesCount = underscaledTileIdsN.size();
-                                auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                                auto alphaChannelPresence = cachedResource->_sourceData->alphaChannelPresence;
-                                auto densityFactor = cachedResource->_sourceData->densityFactor;
-                                bool atLeastOneAbsent = false;
-                                for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
-                                {
-                                    const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-                                    const auto underscaledTilePresent = tiledResources->containsResource(
-                                        underscaledTileId,
-                                        underscaledZoom);
-                                    if (!underscaledTilePresent)
-                                    {
-                                        atLeastOneAbsent = true;
-                                        QMap<int64_t, sk_sp<const SkImage>> images;
-                                        for (auto itImage = cachedResource->_sourceData->images.constBegin();
-                                            itImage != cachedResource->_sourceData->images.constEnd(); itImage++)
-                                        {
-                                            sk_sp<const SkImage> image;
-                                            if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) == 0)
-                                                image = SkiaUtilities::getUpperLeft(itImage.value());
-                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) == 0)
-                                                image = SkiaUtilities::getUpperRight(itImage.value());
-                                            else if ((underscaledTileId.x & 1) == 0 && (underscaledTileId.y & 1) > 0)
-                                                image = SkiaUtilities::getLowerLeft(itImage.value());
-                                            else if ((underscaledTileId.x & 1) > 0 && (underscaledTileId.y & 1) > 0)
-                                                image = SkiaUtilities::getLowerRight(itImage.value());
-                                            image = adjustImageToConfiguration(image, alphaChannelPresence);
-                                            images.insert(itImage.key(), image);
-                                        }
-                                        const auto resourceAllocator =
-                                            [this, alphaChannelPresence, densityFactor, images]
-                                            (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-                                                const TileId tileId,
-                                                const ZoomLevel zoom) -> MapRendererBaseTiledResource*
-                                            {
-                                                auto resource = new MapRendererRasterMapLayerResource(
-                                                    this, collection, tileId, zoom);
-                                                resource->_sourceData.reset(new IRasterMapLayerProvider::Data(
-                                                    tileId,
-                                                    zoom,
-                                                    alphaChannelPresence,
-                                                    densityFactor,
-                                                    images));
-                                                resource->setState(MapRendererResourceState::Ready);
-                                                return resource;
-                                            };
-                                        std::shared_ptr<MapRendererBaseTiledResource> completeResource;
-                                        tiledResources->obtainOrAllocateEntry(
-                                            completeResource,
-                                            underscaledTileId,
-                                            underscaledZoom,
-                                            resourceAllocator);
-                                    }
-                                }
-                                if (atLeastOneAbsent)
-                                    requestResourcesUploadOrUnload();
+                                cachedResource->_sourceData->zoom = cachedResource->zoom;
+                                cachedResource->markAsOld();
+                                endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
+                                if (queryController->isAborted())
+                                    processResourceRequestCancellation(resource);
+                                return;
                             }
                         }
                         // Continue requesting data for the same resource (last time)
@@ -1194,9 +1249,16 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                     }
                 }
             };
-        assert(resource->getState() == MapRendererResourceState::Requesting);
-        resource->setState(MapRendererResourceState::Requested);
-        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+        if (resource->getState() == MapRendererResourceState::Requesting)
+        {
+            resource->setState(MapRendererResourceState::Requested);
+            LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+        }
+        else if (resource->getState() == MapRendererResourceState::Updating)
+        {
+            resource->setState(MapRendererResourceState::RequestedUpdate);
+            LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::RequestedUpdate);
+        }
 
         // Finally start the request in a proper workers pool
         _requestedResourcesTasks.push_back(asyncTask);
@@ -1285,21 +1347,30 @@ bool OsmAnd::MapRendererResourcesManager::beginResourceRequestProcessing(
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
-    if (!resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::ProcessingRequest))
-    {
-        // This actually can happen in following situation(s):
-        //   - if request task was canceled before has started it's execution,
-        //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
-        //     In this case entry will be removed in post-execute handler.
-        assert(resource->getState() == MapRendererResourceState::JustBeforeDeath);
-        return false;
-    }
-    else
+    if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::ProcessingRequest))
     {
         LOG_RESOURCE_STATE_CHANGE(
             resource,
             MapRendererResourceState::Requested,
             MapRendererResourceState::ProcessingRequest);
+    }
+    else if (resource->setStateIf(MapRendererResourceState::RequestedUpdate,
+        MapRendererResourceState::ProcessingUpdate))
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource,
+            MapRendererResourceState::RequestedUpdate,
+            MapRendererResourceState::ProcessingUpdate);
+    }
+    else
+    {
+        // This actually can happen in following situation(s):
+        //   - if request task was canceled before has started it's execution,
+        //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
+        //     In this case entry will be removed in post-execute handler.
+        //   - if update request task was cancelled before has started it's execution,
+        //     since in that case a state change "RequestedUpdate => ProcessingUpdate" must have happend.
+        return false;
     }
 
     return true;
@@ -1313,23 +1384,37 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
     // If failed to obtain resource data, remove resource entry to repeat try later
     if (!requestSucceeded)
     {
-        // It's safe to simply remove entry, since it's not yet uploaded
-        resource->removeSelfFromCollection();
+        if (resource->setStateIf(MapRendererResourceState::ProcessingUpdate, MapRendererResourceState::Outdated))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource,
+                MapRendererResourceState::ProcessingUpdate, MapRendererResourceState::Outdated);
+            resource->_cancelRequestCallback = nullptr;
+            requestOutdatedResources();
+        }
+        else
+        {
+            // It's safe to simply remove entry, since it's not yet uploaded
+            resource->removeSelfFromCollection();
+        }
         return;
     }
 
     // Finalize execution of task
-    const auto nextState = dataAvailable ? MapRendererResourceState::Ready : MapRendererResourceState::Unavailable;
-    if (!resource->setStateIf(MapRendererResourceState::ProcessingRequest, nextState))
+    if (!resource->setStateIf(MapRendererResourceState::ProcessingRequest,
+        dataAvailable ? MapRendererResourceState::Ready : MapRendererResourceState::Unavailable)
+        && !resource->setStateIf(MapRendererResourceState::ProcessingUpdate,
+        dataAvailable ? MapRendererResourceState::PreparedRenew : MapRendererResourceState::Uploaded))
     {
-        assert(resource->getState() == MapRendererResourceState::RequestCanceledWhileBeingProcessed);
+        assert(resource->getState() == MapRendererResourceState::RequestCanceledWhileBeingProcessed
+            || resource->getState() == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed);
 
         // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
+        // or "UpdatingCancelledWhileBeingProcessed"
         processResourceRequestCancellation(resource);
         return;
     }
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
-    else
+    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingRequest)
     {
         if (dataAvailable)
         {
@@ -1344,6 +1429,23 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
                 resource,
                 MapRendererResourceState::ProcessingRequest,
                 MapRendererResourceState::Unavailable);
+        }
+    }
+    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingUpdate)
+    {
+        if (dataAvailable)
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingUpdate,
+                MapRendererResourceState::PreparedRenew);
+        }
+        else
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingUpdate,
+                MapRendererResourceState::Uploaded);
         }
     }
 #endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
@@ -1377,6 +1479,10 @@ void OsmAnd::MapRendererResourcesManager::processResourceRequestCancellation(
 
         resource->removeSelfFromCollection();
     }
+    else if (resource->setStateIf(MapRendererResourceState::RequestedUpdate, MapRendererResourceState::UnloadPending)
+        || resource->setStateIf(MapRendererResourceState::UpdatingCancelledWhileBeingProcessed,
+            MapRendererResourceState::UnloadPending))
+        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::UnloadPending);
 
     // All other cases must be handled in other places, since here there is no access to GPU
 }
@@ -1561,8 +1667,11 @@ void OsmAnd::MapRendererResourcesManager::updateResources(
             const auto& targetTileId = activeTilesTargets.constFind(zoomLevel);
             const auto& visibleTileIds = visibleTiles.constFind(zoomLevel);
             if (targetTileId != activeTilesTargets.cend() && visibleTileIds != visibleTiles.cend())
+            {
                 requestNeededResources(otherResourcesCollections, targetTileId.value(), tilesEntry.value(),
-                zoomLevel, currentZoom, visibleTileIds.value(), zoomLevelOffset);
+                    zoomLevel, currentZoom, visibleTileIds.value(), zoomLevelOffset);
+                requestOutdatedResources(otherResourcesCollections);
+            }
         }
     }
 }
@@ -1749,7 +1858,13 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         // Mark as uploaded
         assert(resource->getState() == MapRendererResourceState::Uploading || resource->getState() == MapRendererResourceState::Renewing);
 
-        resource->setState(MapRendererResourceState::Uploaded);
+        if (resource->isOld)
+        {
+            resource->setState(MapRendererResourceState::Outdated);
+            requestOutdatedResources();            
+        }
+        else
+            resource->setState(MapRendererResourceState::Uploaded);
 
         // Count uploaded resources
         totalUploaded++;
@@ -2321,6 +2436,28 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
         needsResourcesUploadOrUnload = true;
         return false;
     }
+    else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::UnloadPending))
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::UnloadPending);
+
+        // If resource is not needed anymore, change its state to "UnloadPending",
+        // but keep the resource entry, since it must be unload from GPU in another place
+
+        needsResourcesUploadOrUnload = true;
+        return false;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::Outdated, MapRendererResourceState::UnloadPending))
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource, MapRendererResourceState::Outdated, MapRendererResourceState::UnloadPending);
+
+        // If resource is not needed anymore, change its state to "UnloadPending",
+        // but keep the resource entry, since it must be unload from GPU in another place
+
+        needsResourcesUploadOrUnload = true;
+        return false;
+    }
     else if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath))
     {
         LOG_RESOURCE_STATE_CHANGE(
@@ -2349,9 +2486,41 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 
         return false;
     }
+    else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdate,
+        MapRendererResourceState::UpdatingCancelledWhileBeingProcessed))
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource,
+            MapRendererResourceState::ProcessingUpdate,
+            MapRendererResourceState::UpdatingCancelledWhileBeingProcessed);
+
+        // If resource request is being processed, keep the entry until processing is complete.
+
+        // Cancel the task
+        if (resource->type == MapRendererResourceType::MapLayer && resource->supportsObtainDataAsync())
+        {
+            assert(resource->_cancelRequestCallback != nullptr);
+            resource->_cancelRequestCallback();
+        }
+
+        return false;
+    }
     else if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))
     {
         LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
+
+        // If resource was just requested, cancel its task and remove the entry.
+
+        // Cancel the task
+        assert(resource->_cancelRequestCallback != nullptr);
+        resource->_cancelRequestCallback();
+
+        return true;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::RequestedUpdate, MapRendererResourceState::UnloadPending))
+    {
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::RequestedUpdate,
+            MapRendererResourceState::UnloadPending);
 
         // If resource was just requested, cancel its task and remove the entry.
 
@@ -2380,9 +2549,12 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 
     // Resources with states
     //  - Uploading (to allow finish uploading)
+    //  - PreparingRenew (to allow finish preparation)
+    //  - Renewing (to allow finish uploading)
     //  - UnloadPending (to allow start unloading from GPU)
     //  - Unloading (to allow finish unloading)
     //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
+    //  - UpdatingCancelledWhileBeingProcessed (to allow cleanup of the process)
     // should be retained, since they are being processed. So try to next time
     return false;
 }
@@ -2441,9 +2613,13 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 // This limits set of possible states of the entries to:
                 // - Requested
                 // - ProcessingRequest
+                // - RequestedUpdate
+                // - ProcessingUpdate
                 // - Ready
                 // - Unloaded
                 // - Uploaded
+                // - Outdated
+                // - PreparedRenew
                 // - Unavailable
                 // All other states are considered invalid.
 
@@ -2466,6 +2642,44 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                         entry,
                         MapRendererResourceState::ProcessingRequest,
                         MapRendererResourceState::RequestCanceledWhileBeingProcessed);
+
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
+                else if (entry->setStateIf(MapRendererResourceState::RequestedUpdate,
+                    MapRendererResourceState::UnloadPending))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::RequestedUpdate,
+                        MapRendererResourceState::UnloadPending);
+
+                    // In case context was lost, it's impossible to unload anything, so just remove the resource
+                    if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
+                        return true;
+                    }
+
+                    // Cancel the task
+                    assert(entry->_cancelRequestCallback != nullptr);
+                    entry->_cancelRequestCallback();
+
+                    // If resource is not needed anymore, change its state to "UnloadPending",
+                    // but keep the resource entry, since it must be unload from GPU in another place
+                    needsResourcesUploadOrUnload = true;
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
+                else if (entry->setStateIf(MapRendererResourceState::ProcessingUpdate,
+                    MapRendererResourceState::UpdatingCancelledWhileBeingProcessed))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::ProcessingUpdate,
+                        MapRendererResourceState::pdatingCancelledWhileBeingProcessed);
 
                     containedUnprocessableResources = true;
 
@@ -2510,6 +2724,50 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
 
                     return false;
                 }
+                else if (entry->setStateIf(MapRendererResourceState::Outdated,
+                    MapRendererResourceState::UnloadPending))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::Outdated,
+                        MapRendererResourceState::UnloadPending);
+
+                    // In case context was lost, it's impossible to unload anything, so just remove the resource
+                    if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
+                        return true;
+                    }
+
+                    // If resource is not needed anymore, change its state to "UnloadPending",
+                    // but keep the resource entry, since it must be unload from GPU in another place
+                    needsResourcesUploadOrUnload = true;
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
+                else if (entry->setStateIf(MapRendererResourceState::PreparedRenew,
+                    MapRendererResourceState::UnloadPending))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::PreparedRenew,
+                        MapRendererResourceState::UnloadPending);
+
+                    // In case context was lost, it's impossible to unload anything, so just remove the resource
+                    if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
+                        return true;
+                    }
+
+                    // If resource is not needed anymore, change its state to "UnloadPending",
+                    // but keep the resource entry, since it must be unload from GPU in another place
+                    needsResourcesUploadOrUnload = true;
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
                 else if (entry->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath))
                 {
                     LOG_RESOURCE_STATE_CHANGE(
@@ -2531,9 +2789,9 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
 
                 // Resources with states
                 //  - Uploading (to allow finish uploading)
+                //  - Renewing (to allow finish uploading)
                 //  - UnloadPending (to allow start unloading from GPU)
                 //  - Unloading (to allow finish unloading)
-                //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
                 // should be retained, since they are being processed. So try to next time
                 if (state == MapRendererResourceState::Uploading ||
                     state == MapRendererResourceState::Renewing ||
@@ -2826,6 +3084,15 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     resourceStateMap.insert(MapRendererResourceState::UnloadPending, QLatin1String("UnloadPending"));
     resourceStateMap.insert(MapRendererResourceState::Unloading, QLatin1String("Unloading"));
     resourceStateMap.insert(MapRendererResourceState::Unloaded, QLatin1String("Unloaded"));
+    resourceStateMap.insert(MapRendererResourceState::PreparingRenew, QLatin1String("PreparingRenew"));
+    resourceStateMap.insert(MapRendererResourceState::PreparedRenew, QLatin1String("PreparedRenew"));
+    resourceStateMap.insert(MapRendererResourceState::Renewing, QLatin1String("Renewing"));
+    resourceStateMap.insert(MapRendererResourceState::Outdated, QLatin1String("Outdated"));
+    resourceStateMap.insert(MapRendererResourceState::Updating, QLatin1String("Updating"));
+    resourceStateMap.insert(MapRendererResourceState::RequestedUpdate, QLatin1String("RequestedUpdate"));
+    resourceStateMap.insert(MapRendererResourceState::ProcessingUpdate, QLatin1String("ProcessingUpdate"));
+    resourceStateMap.insert(MapRendererResourceState::UpdatingCancelledWhileBeingProcessed,
+        QLatin1String("UpdatingCancelledWhileBeingProcessed"));
     resourceStateMap.insert(MapRendererResourceState::JustBeforeDeath, QLatin1String("JustBeforeDeath"));
 
     QString dump;

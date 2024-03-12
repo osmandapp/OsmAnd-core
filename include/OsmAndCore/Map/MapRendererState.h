@@ -53,7 +53,8 @@ namespace OsmAnd
         BackgroundColor,
         FogColor,
         SymbolsOpacity,
-        DateTime
+        DateTime,
+        TimePeriod
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 

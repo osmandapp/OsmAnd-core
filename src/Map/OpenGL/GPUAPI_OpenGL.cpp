@@ -906,6 +906,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const void* tileData = nullptr;
     sk_sp<const SkImage> image;
     auto colorType = SkColorType::kUnknown_SkColorType;
+    bool isOldInGPU = false;
+    if (resource && resource->isOldInGPU)
+        isOldInGPU = true;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
         if (rasterMapLayerData->images.isEmpty())
@@ -913,16 +916,19 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         else if (rasterMapLayerData->images.size() > 1)
         {
             auto itFirstImage = rasterMapLayerData->images.constBegin();
+            const auto timeFirst = itFirstImage.key();
             auto itSecondImage = itFirstImage;
             itSecondImage++;
-            const auto timeStep = itSecondImage.key() - itFirstImage.key();
+            const auto timeStep = itSecondImage.key() - timeFirst;
             if (timeStep == 0)
+                image = rasterMapLayerData->images.constBegin().value();
+            else if (dateTime < timeFirst)
                 image = SkiaUtilities::getEmptyImage(1, 1);
             else
             {
-                const auto imgTimeFirst = dateTime / timeStep * timeStep;
+                const auto imgTimeFirst = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
                 const auto imgTimeLast = imgTimeFirst + timeStep;
-                if (resource && resource->getState() == MapRendererResourceState::PreparedRenew)
+                if (!isOldInGPU && !resource && resource->getState() == MapRendererResourceState::PreparedRenew)
                 {
                     const auto currentResourceInGPU = resourceInGPU;
                     if (currentResourceInGPU
@@ -1090,7 +1096,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         }
 
         if (canUpdate)
+        {
             resourceInGPU = textureInGPU;
+            if (isOldInGPU)
+                resource->markAsFreshInGPU();
+        }
         else
             return false;
 
@@ -1173,7 +1183,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     }
 
     if (canUpdate)
+    {
         resourceInGPU = slotInGPU;
+        if (isOldInGPU)
+            resource->markAsFreshInGPU();
+    }
     else
         return false;
 

@@ -16,6 +16,13 @@ OsmAnd::MapRendererBaseTiledResource::~MapRendererBaseTiledResource()
 {
     const volatile auto state = getState();
     if (state == MapRendererResourceState::Uploading ||
+        state == MapRendererResourceState::PreparedRenew ||
+        state == MapRendererResourceState::Renewing ||
+        state == MapRendererResourceState::Outdated ||
+        state == MapRendererResourceState::Updating ||
+        state == MapRendererResourceState::RequestedUpdate ||
+        state == MapRendererResourceState::ProcessingUpdate ||
+        state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed ||
         state == MapRendererResourceState::Uploaded ||
         state == MapRendererResourceState::IsBeingUsed ||
         state == MapRendererResourceState::Unloading)

@@ -28,6 +28,13 @@ void OsmAnd::MapRendererTiledResourcesCollection::verifyNoUploadedResourcesPrese
         {
             const auto state = tileEntry->getState();
             if (state == MapRendererResourceState::Uploading ||
+                state == MapRendererResourceState::PreparedRenew ||
+                state == MapRendererResourceState::Renewing ||
+                state == MapRendererResourceState::Outdated ||
+                state == MapRendererResourceState::Updating ||
+                state == MapRendererResourceState::RequestedUpdate ||
+                state == MapRendererResourceState::ProcessingUpdate ||
+                state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed ||
                 state == MapRendererResourceState::Uploaded ||
                 state == MapRendererResourceState::IsBeingUsed ||
                 state == MapRendererResourceState::Unloading)
