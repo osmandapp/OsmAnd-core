@@ -2693,10 +2693,6 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapS
     if (!style)
         return nullptr;
 
-    // Put style addons in chain first
-    auto styleAddons = getEditableStyleAddons();
-    stylesChain << styleAddons;
-
     while (style)
     {
         stylesChain.push_back(style);
@@ -2717,6 +2713,10 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapS
         }
         style = parentStyle;
     }
+
+    // Put style addons in chain after standalone style
+    auto styleAddons = getEditableStyleAddons();
+    stylesChain << styleAddons;
 
     // From top-most parent to style, load it
     auto itStyle = iteratorOf(stylesChain);
