@@ -223,7 +223,6 @@ namespace OsmAnd
             bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost);
         void requestResourcesUploadOrUnload();
-        void notifyNewResourceAvailableForDrawing();
         void releaseAllResources(bool gpuContextLost);
 
         // Worker thread:
@@ -266,7 +265,6 @@ namespace OsmAnd
         void updateActiveZone(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
             QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount);
-        void requestOutdatedResources();
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

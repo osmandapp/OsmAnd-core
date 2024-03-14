@@ -28,6 +28,7 @@ void OsmAnd::TileSqliteDatabase_P::resetCachedInfo()
     _cachedMinZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedMaxZoom.storeRelease(ZoomLevel::InvalidZoomLevel);
     _cachedIsTileTimeSupported.storeRelease(std::numeric_limits<int>::min());
+    _cachedIsTileTimestampSupported.storeRelease(std::numeric_limits<int>::min());
     _cachedIsTileSpecificationSupported.storeRelease(std::numeric_limits<int>::min());
     _cachedIsTileValueRangeSupported.storeRelease(std::numeric_limits<int>::min());
 
@@ -356,6 +357,101 @@ bool OsmAnd::TileSqliteDatabase_P::enableTileTimeSupport(bool force /* = false *
     }
 
     _cachedIsTileTimeSupported.storeRelease(1);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::isTileTimestampSupported() const
+{
+    int isSupported;
+    if ((isSupported = _cachedIsTileTimestampSupported.loadAcquire()) >= 0)
+    {
+        return isSupported > 0;
+    }
+
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        _cachedIsTileTimestampSupported.storeRelease(0);
+        return false;
+    }
+
+    bool ok = false;
+    const auto timestampColumn = meta.getTimestamp(&ok);
+    if (!ok)
+    {
+        _cachedIsTileTimestampSupported.storeRelease(0);
+        return false;
+    }
+
+    QReadLocker scopedLocker(&_lock);
+
+    isSupported = QString::compare(timestampColumn, QStringLiteral("yes"), Qt::CaseInsensitive) == 0;
+    isSupported = isSupported && execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"));
+    
+    _cachedIsTileTimestampSupported.storeRelease(isSupported);
+    return isSupported > 0;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::hasTimestampColumn() const
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    QReadLocker scopedLocker(&_lock);
+
+    return execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1"));
+ }
+
+bool OsmAnd::TileSqliteDatabase_P::enableTileTimestampSupport(bool force /* = false */)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (isTileTimestampSupported() && !force)
+    {
+        return true;
+    }
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        if (!execStatement(_database, QStringLiteral("SELECT timestamp FROM tiles LIMIT 1")))
+        {
+            if (!execStatement(_database, QStringLiteral("ALTER TABLE tiles ADD COLUMN timestamp INTEGER")))
+            {
+                LogPrintf(
+                    LogSeverityLevel::Error,
+                    "Failed to add timestamp column: %s",
+                    sqlite3_errmsg(_database.get()));
+                return false;
+            }
+        }
+    }
+
+    Meta meta;
+    if (!obtainMeta(meta))
+    {
+        return false;
+    }
+
+    meta.setTimestamp(QStringLiteral("yes"));
+
+    if (!storeMeta(meta))
+    {
+        return false;
+    }
+
+    _cachedIsTileTimestampSupported.storeRelease(1);
 
     return true;
 }
@@ -1357,7 +1453,8 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
     QByteArray& outData,
-    int64_t* pOutTime /* = nullptr */) const
+    int64_t* pOutTime /* = nullptr */,
+    int64_t* pOutTimestamp /* = nullptr */) const
 {
     if (!isOpened())
     {
@@ -1373,16 +1470,17 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
     int invertedZoomValue = getInvertedZoomValue();
 
     const auto timeSupported = isTileTimeSupported();
+    const auto timestampSupported = isTileTimestampSupported();
 
     {
         QReadLocker scopedLocker(&_lock);
 
         int res;
 
-        const auto statement = prepareStatement(_database, timeSupported
-            ? QStringLiteral("SELECT image, time FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s")
-            : QStringLiteral("SELECT image FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s")
-        );
+        const auto statement = prepareStatement(_database, QStringLiteral("SELECT image")
+            + (timeSupported ? QStringLiteral(", time") : QStringLiteral(""))
+            + (timestampSupported ? QStringLiteral(", timestamp") : QStringLiteral(""))
+            + QStringLiteral(" FROM tiles WHERE x=:x AND y=:y AND z=:z AND s=:s"));
         if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom, specification))
         {
             LogPrintf(
@@ -1426,6 +1524,23 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                     time = static_cast<int64_t>(timeLL);
                 }
                 *pOutTime = time;
+            }
+
+            if (timestampSupported && pOutTimestamp)
+            {
+                int64_t timestamp = 0;
+                const auto timestampValue = readStatementValue(statement, 2);
+                if (!timestampValue.isNull())
+                {
+                    bool ok = false;
+                    const auto timestampLL = timestampValue.toLongLong(&ok);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+                    timestamp = static_cast<int64_t>(timestampLL);
+                }
+                *pOutTimestamp = timestamp;
             }
 
             return true;
@@ -1771,6 +1886,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     int64_t specification,
     const QByteArray& data,
     int64_t time /* = 0 */,
+    int64_t timestamp /* = 0 */,
     float minValue /* = 0 */,
     float maxValue /* = 0 */)
 {
@@ -1783,6 +1899,7 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
     int invertedZoomValue = getInvertedZoomValue();
 
     const auto timeSupported = isTileTimeSupported();
+    const auto timestampSupported = isTileTimestampSupported();
 
     const auto valueRangeSupported = isTileValueRangeSupported();
 
@@ -1797,6 +1914,11 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         {
             head += QStringLiteral(", time");
             tail += QStringLiteral(", :time");
+        }
+        if (timestampSupported)
+        {
+            head += QStringLiteral(", timestamp");
+            tail += QStringLiteral(", :timestamp");
         }
         if (valueRangeSupported)
         {
@@ -1832,6 +1954,18 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
             LogPrintf(
                 LogSeverityLevel::Error,
                 "Failed to bind time for %dx%d@%d,%lld",
+                tileId.x,
+                tileId.y,
+                zoom,
+                specification);
+            return false;
+        }
+        if (timestampSupported && !bindStatementParameter(
+            statement, QStringLiteral(":timestamp"), QVariant(static_cast<qint64>(timestamp))))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to bind timestamp for %dx%d@%d,%lld",
                 tileId.x,
                 tileId.y,
                 zoom,
@@ -1882,6 +2016,65 @@ bool OsmAnd::TileSqliteDatabase_P::storeTileData(
         recomputeMinMaxZoom();
     }
     recomputeBBox31(zoom);
+
+    return true;
+}
+
+bool OsmAnd::TileSqliteDatabase_P::updateTileTimestamp(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
+    int64_t timestamp)
+{
+    if (!isOpened())
+    {
+        return false;
+    }
+
+    if (!isTileTimestampSupported())
+        return false;
+
+    bool invertedY = isInvertedY();
+    int invertedZoomValue = getInvertedZoomValue();
+
+    {
+        QWriteLocker scopedLocker(&_lock);
+
+        const auto statement = prepareStatement(_database,
+            QStringLiteral("UPDATE tiles SET timestamp=:timestamp WHERE x=:x AND y=:y AND z=:z"));
+        if (!statement || !configureStatement(invertedY, invertedZoomValue, statement, tileId, zoom))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to configure query for %dx%d@%d",
+                tileId.x,
+                tileId.y,
+                zoom);
+            return false;
+        }
+        if (!bindStatementParameter(
+            statement, QStringLiteral(":timestamp"), QVariant(static_cast<qint64>(timestamp))))
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to bind timestamp for %dx%d@%d",
+                tileId.x,
+                tileId.y,
+                zoom);
+            return false;
+        }
+        
+        if (stepStatement(statement) < 0)
+        {
+            LogPrintf(
+                LogSeverityLevel::Error,
+                "Failed to update timestamp for %dx%d@%d: %s",
+                tileId.x,
+                tileId.y,
+                zoom,
+                sqlite3_errmsg(_database.get()));
+            return false;
+        }
+    }
 
     return true;
 }

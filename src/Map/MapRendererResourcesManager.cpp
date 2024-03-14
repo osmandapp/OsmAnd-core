@@ -343,7 +343,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                 });
         }
         if (isPeriodChanged)
-            requestOutdatedResources();
+            renderer->invalidateFrame();
         else if (atLeastOneMarked)
             requestResourcesUploadOrUnload();
 
@@ -564,15 +564,6 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::requestOutdatedResources()
-{
-        // Lock worker wakeup mutex
-        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
-
-        // Wake up the worker
-        _workerThreadWakeup.wakeAll();
-}
-
 void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
 {
     _resourcesRequestWorkerPool.setMaxThreadCount(limit);
@@ -724,11 +715,6 @@ void OsmAnd::MapRendererResourcesManager::batchUnpublishMapSymbols(
     const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish)
 {
     renderer->batchUnpublishMapSymbols(mapSymbolsToUnublish);
-}
-
-void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()
-{
-    renderer->invalidateFrame();
 }
 
 void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
@@ -1388,14 +1374,22 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
         {
             LOG_RESOURCE_STATE_CHANGE(resource,
                 MapRendererResourceState::ProcessingUpdate, MapRendererResourceState::Outdated);
-            resource->_cancelRequestCallback = nullptr;
-            requestOutdatedResources();
+        }
+        else if (resource->setStateIf(
+            MapRendererResourceState::UpdatingCancelledWhileBeingProcessed, MapRendererResourceState::UnloadPending))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UpdatingCancelledWhileBeingProcessed,
+                MapRendererResourceState::UnloadPending);
+            if (!resource->leaveQuietly)
+                requestResourcesUploadOrUnload();
         }
         else
         {
             // It's safe to simply remove entry, since it's not yet uploaded
             resource->removeSelfFromCollection();
         }
+        if (!resource->leaveQuietly)
+            renderer->invalidateFrame();
         return;
     }
 
@@ -1452,10 +1446,13 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
     resource->_cancelRequestCallback = nullptr;
 
     // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
-    if (dataAvailable)
-        requestResourcesUploadOrUnload();
-    else
-        notifyNewResourceAvailableForDrawing();
+    if (!resource->leaveQuietly)
+    {
+        if (dataAvailable)
+            requestResourcesUploadOrUnload();
+        else
+            renderer->invalidateFrame();
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::processResourceRequestCancellation(
@@ -1861,7 +1858,8 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         if (resource->isOld)
         {
             resource->setState(MapRendererResourceState::Outdated);
-            requestOutdatedResources();            
+            if (!resource->leaveQuietly)
+                renderer->invalidateFrame();
         }
         else
             resource->setState(MapRendererResourceState::Uploaded);
@@ -2609,6 +2607,9 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
             [&needsResourcesUploadOrUnload, &containedUnprocessableResources, gpuContextLost]
             (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
             {
+                // Block poddible attempts to access renderer in finishing async tasks
+                entry->shouldLeaveQuietly();
+
                 // When resources are released, it's a termination process, so all entries have to be removed.
                 // This limits set of possible states of the entries to:
                 // - Requested

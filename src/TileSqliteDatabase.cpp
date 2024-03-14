@@ -54,6 +54,21 @@ bool OsmAnd::TileSqliteDatabase::enableTileTimeSupport(bool force /* = false */)
     return _p->enableTileTimeSupport(force);
 }
 
+bool OsmAnd::TileSqliteDatabase::isTileTimestampSupported() const
+{
+    return _p->isTileTimestampSupported();
+}
+
+bool OsmAnd::TileSqliteDatabase::hasTimestampColumn() const
+{
+    return _p->hasTimestampColumn();
+}
+
+bool OsmAnd::TileSqliteDatabase::enableTileTimestampSupport(bool force /* = false */)
+{
+    return _p->enableTileTimestampSupport(force);
+}
+
 bool OsmAnd::TileSqliteDatabase::isTileSpecificationSupported() const
 {
     return _p->isTileSpecificationSupported();
@@ -182,9 +197,10 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
     QByteArray& outData,
-    int64_t* pOutTime /* = nullptr*/) const
+    int64_t* pOutTime /* = nullptr*/,
+    int64_t* pOutTimestamp /* = nullptr*/) const
 {
-    return _p->obtainTileData(tileId, zoom, specification, outData, pOutTime);
+    return _p->obtainTileData(tileId, zoom, specification, outData, pOutTime, pOutTimestamp);
 }
 
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
@@ -231,10 +247,19 @@ bool OsmAnd::TileSqliteDatabase::storeTileData(
     int64_t specification,
     const QByteArray& data,
     int64_t time /* = 0*/,
+    int64_t timestamp /* = 0*/,
     float minValue /* = 0*/,
     float maxValue /* = 0*/)
 {
-    return _p->storeTileData(tileId, zoom, specification, data, time, minValue, maxValue);
+    return _p->storeTileData(tileId, zoom, specification, data, time, timestamp, minValue, maxValue);
+}
+
+bool OsmAnd::TileSqliteDatabase::updateTileTimestamp(
+    OsmAnd::TileId tileId,
+    OsmAnd::ZoomLevel zoom,
+    int64_t timestamp)
+{
+    return _p->updateTileTimestamp(tileId, zoom, timestamp);
 }
 
 bool OsmAnd::TileSqliteDatabase::updateTileDataFrom(
@@ -565,6 +590,27 @@ QString OsmAnd::TileSqliteDatabase::Meta::getTimeColumn(bool* outOk /* = nullptr
 void OsmAnd::TileSqliteDatabase::Meta::setTimeColumn(QString timeColumn)
 {
     values.insert(TIME_COLUMN, QVariant(qMove(timeColumn)));
+}
+
+const QString OsmAnd::TileSqliteDatabase::Meta::TIMESTAMP(QStringLiteral("timestamp"));
+
+QString OsmAnd::TileSqliteDatabase::Meta::getTimestamp(bool* outOk /* = nullptr*/) const
+{
+    if (outOk)
+        *outOk = false;
+
+    const auto itTimestamp = values.constFind(TIMESTAMP);
+    if (itTimestamp == values.cend())
+        return QString();
+
+    if (outOk)
+        *outOk = true;
+    return itTimestamp->toString();
+}
+
+void OsmAnd::TileSqliteDatabase::Meta::setTimestamp(QString timestamp)
+{
+    values.insert(TIMESTAMP, QVariant(qMove(timestamp)));
 }
 
 const QString OsmAnd::TileSqliteDatabase::Meta::SPECIFICATED(QStringLiteral("specificated"));

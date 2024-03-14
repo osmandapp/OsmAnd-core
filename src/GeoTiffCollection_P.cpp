@@ -1268,7 +1268,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 {
                                     cacheDatabase->storeTileData(tileId, zoom, specification,
                                         QByteArray::fromRawData(pByteBuffer, bandCount * bandSize),
-                                        currentTime, minValue, maxValue);
+                                        currentTime, 0, minValue, maxValue);
                                 }
                                 else
                                 {

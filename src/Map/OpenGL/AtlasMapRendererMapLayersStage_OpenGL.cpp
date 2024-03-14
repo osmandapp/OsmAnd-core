@@ -1714,7 +1714,8 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
         }
         else if (state == MapRendererResourceState::Renewing || state == MapRendererResourceState::Updating
             || state == MapRendererResourceState::RequestedUpdate
-            || state == MapRendererResourceState::ProcessingUpdate)
+            || state == MapRendererResourceState::ProcessingUpdate
+            || state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed)
         {
             // Capture GPU resource (if any)
             auto gpuResource = resource->resourceInGPU;
