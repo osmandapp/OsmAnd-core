@@ -157,6 +157,8 @@ namespace OsmAnd
         void updateResources(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
             QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset);
+        void requestOutdatedResources(
+            const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections);
         void requestNeededResources(
             const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
             const TileId centerTileId,
@@ -221,7 +223,6 @@ namespace OsmAnd
             bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection, bool gpuContextLost);
         void requestResourcesUploadOrUnload();
-        void notifyNewResourceAvailableForDrawing();
         void releaseAllResources(bool gpuContextLost);
 
         // Worker thread:

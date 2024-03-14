@@ -13,6 +13,9 @@
 
 static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
 
+// During this time period raster data in cache will represent an actual online data (5 min)
+static const int64_t RASTER_FRESHNESS_PERIOD = 300000;
+
 OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     WeatherTileResourceProvider* const owner_,
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings_,
@@ -187,6 +190,7 @@ std::shared_ptr<OsmAnd::TileSqliteDatabase> OsmAnd::WeatherTileResourceProvider_
             meta.setSpecificated(QStringLiteral("yes"));
             db->storeMeta(meta);
             db->enableTileTimeSupport();
+            db->enableTileTimestampSupport();
         }
         return db;
     }
@@ -987,7 +991,9 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     QList<BandIndex> missingBands;
     QHash<BandIndex, sk_sp<const SkImage>> images;
-    int64_t minRasterizedTime = INT64_MAX;
+    int64_t minTimeOfRaster = INT64_MAX;
+    int64_t minTimestampOfRaster = INT64_MAX;
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
 
     for (auto band : bands)
     {
@@ -995,14 +1001,16 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         if (db && db->isOpened())
         {
             QByteArray data;
-            int64_t rasterizedTime = 0;
-            if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterizedTime) && !data.isEmpty())
+            int64_t rasterTime = 0;
+            int64_t rasterTimestamp = 0;
+            if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
             {
                 int64_t geoTileTime = 0;
                 if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
-                    && rasterizedTime >= geoTileTime)
+                    && rasterTime >= geoTileTime)
                 {
-                    minRasterizedTime = std::min(minRasterizedTime, rasterizedTime);
+                    minTimeOfRaster = std::min(minTimeOfRaster, rasterTime);
+                    minTimestampOfRaster = std::min(minTimestampOfRaster, rasterTimestamp);
                     const auto image = SkiaUtilities::createImageFromData(data);
                     if (image)
                         images.insert(band, image);
@@ -1017,12 +1025,17 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         }
     }
 
-    if (missingBands.empty() && localData)
+    bool isFreshRaster = currentTime - minTimestampOfRaster < RASTER_FRESHNESS_PERIOD;
+
+    if (!images.empty() && missingBands.empty() && (localData || isFreshRaster))
     {
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
+
         auto image = createTileImage(images, bands);
         if (image)
         {
-            success = true;
+            success = isFreshRaster; // without "success" to initiate second reqiuest for a fresh data
             return image;
         }
         else
@@ -1047,23 +1060,22 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             LogPrintf(LogSeverityLevel::Error,
                 "GeoTile %dx%dx%d is empty", geoTileId.x, geoTileId.y, geoTileZoom);
         }
-        success = cacheOnly;
+        success = cacheOnly; // without "success" to initiate second reqiuest for a fresh data
         return nullptr;
     }
-    if (request->queryController && request->queryController->isAborted())
+
+    if (!images.empty() && missingBands.empty() && minTimeOfRaster >= geoTileTime)
     {
+        // Refresh timestamp in raster cache
+        for (auto band : bands)
+        {
+            auto db = provider->getRasterTilesDatabase(band);
+            if (db && db->isOpened())
+                db->updateTileTimestamp(tileId, zoom, currentTime);
+        }
+
         if (!localData)
             provider->unlockRasterTile(tileId, zoom);
-
-        LogPrintf(LogSeverityLevel::Debug,
-            "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
-
-        return nullptr;
-    }
-
-    if (missingBands.empty() && minRasterizedTime >= geoTileTime)
-    {
-        provider->unlockRasterTile(tileId, zoom);
 
         auto image = createTileImage(images, bands);
         if (image)
@@ -1101,17 +1113,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     const auto rasterizedImages = rasterizer->rasterize(encImgData, nullptr, rasterizeQueryController);
     delete rasterizer;
 
-    if (request->queryController && request->queryController->isAborted())
-    {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
-        LogPrintf(LogSeverityLevel::Debug,
-            "Stop creating tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
-
-        return nullptr;
-    }
-
     auto itBandImageData = iteratorOf(encImgData);
     while (itBandImageData.hasNext())
     {
@@ -1121,7 +1122,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         auto db = provider->getRasterTilesDatabase(band);
         if (db && db->isOpened())
         {
-            if (!db->storeTileData(tileId, zoom, dateTime, data, geoTileTime))
+            if (!db->storeTileData(tileId, zoom, dateTime, data, geoTileTime, currentTime))
             {
                 LogPrintf(LogSeverityLevel::Error,
                     "Failed to store tile image of rasterized weather tile %dx%dx%d for time %lld",
@@ -1129,7 +1130,18 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
             }
         }
     }
-    
+
+    if (request->queryController && request->queryController->isAborted())
+    {
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
+
+        LogPrintf(LogSeverityLevel::Debug,
+            "Stop requesting tile image of weather tile %dx%dx%d.", tileId.x, tileId.y, zoom);
+
+        return nullptr;
+    }
+
     if (!localData)
         provider->unlockRasterTile(tileId, zoom);
     
@@ -1173,14 +1185,15 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     if (!provider)
         return;
     auto dateTime = std::min(request->dateTimeFirst, request->dateTimeLast);
+    auto dateTimeLast = std::max(request->dateTimeFirst, request->dateTimeLast);
     auto timeGap = request->dateTimeStep;
+    timeGap = timeGap > 0 ? timeGap : 1;
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     bool cacheOnly = request->cacheOnly;
     QMap<int64_t, sk_sp<const SkImage>> images;
     bool success;
-    int count = 0;
-    while (dateTime <= request->dateTimeLast)
+    while (dateTime <= dateTimeLast)
     {
         auto image = obtainRasterImage(dateTime, success);
         if (image)
@@ -1202,9 +1215,8 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
                 images.insert(dateTime, emptyImage);
         }
         dateTime += timeGap;
-        count++;
     }
-    if (images.size() == count)
+    if (images.size() > 0)
     {
         auto data = std::make_shared<OsmAnd::WeatherTileResourceProvider::Data>(
             tileId,

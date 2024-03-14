@@ -2728,6 +2728,13 @@ bool OsmAnd::MapRenderer::setDateTime(const int64_t dateTime, bool forcedUpdate 
     return true;
 }
 
+bool OsmAnd::MapRenderer::changeTimePeriod()
+{
+    notifyRequestedStateWasUpdated(MapRendererStateChange::TimePeriod);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::getMapTargetLocation(PointI& location31) const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

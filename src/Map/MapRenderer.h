@@ -406,6 +406,7 @@ namespace OsmAnd
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool changeTimePeriod() Q_DECL_OVERRIDE;
         virtual bool getMapTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
         virtual bool getSecondaryTargetLocation(PointI& location31) const Q_DECL_OVERRIDE;
         virtual float getMapTargetHeightInMeters() const Q_DECL_OVERRIDE;

@@ -23,9 +23,13 @@ namespace OsmAnd
 
     public:
         typedef std::function<void()> CancelResourceRequestSignature;
+        void markAsFreshInGPU();
 
     private:
-        bool _isJunk;
+        volatile bool _isJunk;
+        volatile bool _isOld;
+        volatile bool _isOldInGPU;
+        volatile bool _leaveQuietly;
     protected:
         MapRendererBaseResource(MapRendererResourcesManager* owner, MapRendererResourceType type);
 
@@ -34,6 +38,9 @@ namespace OsmAnd
         std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> _retainableCacheMetadata;
 
         void markAsJunk();
+        void markAsOld();
+        void markAsFresh();
+        void shouldLeaveQuietly();
 
         virtual bool updatesPresent();
         virtual bool checkForUpdatesAndApply(const MapState& mapState);
@@ -62,7 +69,10 @@ namespace OsmAnd
         MapRendererResourcesManager* const resourcesManager;
         const MapRendererResourceType type;
 
-        const bool& isJunk;
+        const volatile bool& isJunk;
+        const volatile bool& isOld;
+        const volatile bool& isOldInGPU;
+        const volatile bool& leaveQuietly;
 
         virtual bool isRenewing();
 

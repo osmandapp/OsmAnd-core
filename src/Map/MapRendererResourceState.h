@@ -16,7 +16,11 @@ namespace OsmAnd
     // ... => RequestCanceledWhileBeingProcessed => JustBeforeDeath
 
     // State chain for renew:
-    // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => PreparingRenew => PreparedRenew => Renewing => Uploaded
+    // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] [=> PreparingRenew] => PreparedRenew => Renewing => Uploaded
+
+    // State chain for update:
+    // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => Outdated => Updating => PreparedRenew => Renewing => Uploaded
+    // ... => Updating => Uploaded
 
     enum class MapRendererResourceState
     {
@@ -67,6 +71,21 @@ namespace OsmAnd
 
         // Resource data is being renewed (reuploaded to GPU)
         Renewing,
+
+        // Resource data is already in GPU, but not up-to-date
+        Outdated,
+
+        // Up-to-date data for resource is being requested
+        Updating,
+
+        // Up-to-date data was requested and should arrive soon
+        RequestedUpdate,
+
+        // Up-to-date data request is being processed
+        ProcessingUpdate,
+
+        // Up-to-date data request was canceled while being processed
+        UpdatingCancelledWhileBeingProcessed,
 
         // JustBeforeDeath state is installed just before resource is deallocated completely
         JustBeforeDeath
