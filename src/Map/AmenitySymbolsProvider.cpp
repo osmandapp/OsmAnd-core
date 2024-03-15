@@ -37,6 +37,11 @@ OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMaxZoom() const
     return MaxZoomLevel;
 }
 
+int OsmAnd::AmenitySymbolsProvider::getMaxMissingDataUnderZoomShift() const
+{
+    return 0;
+}
+
 bool OsmAnd::AmenitySymbolsProvider::supportsNaturalObtainData() const
 {
     return true;
