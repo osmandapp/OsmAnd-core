@@ -2016,7 +2016,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             int maxMissingDataZoomShift = MapRenderer::MaxMissingDataZoomShift;
             int maxMissingDataUnderZoomShift = MapRenderer::MaxMissingDataUnderZoomShift;
 
-            if (tiledProvider && (resourcesType == MapRendererResourceType::MapLayer || resourcesType == MapRendererResourceType::ElevationData))
+            if (tiledProvider)
             {
                 minZoom = Utilities::clipZoomLevel(tiledProvider->getMinZoom());
                 maxZoom = Utilities::clipZoomLevel(tiledProvider->getMaxZoom());
