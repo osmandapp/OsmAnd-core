@@ -1766,7 +1766,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const auto citCaptionsEnd = captions.cend();
 
         // Look for localized name
-        const auto& localeLanguageId = env->getLocaleLanguageId();
+        const auto& localeLanguageId = env->getLocaleLanguageId().toLower();
         const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&localeLanguageId);
         if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
             localizedNameRuleId = *citLocalizedNameRuleId;
