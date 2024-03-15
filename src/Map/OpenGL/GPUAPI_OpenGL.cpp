@@ -367,7 +367,6 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
             outVariablesMap->insert(name, { GlslVariableType::In, name, attributeType, attributeSize });
         }
     }
-    delete[] attributeName;
 
     GLint uniformsCount = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
@@ -413,6 +412,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
             outVariablesMap->insert(name, { GlslVariableType::Uniform, name, uniformType, uniformSize });
         }
     }
+    delete[] attributeName;
     delete[] uniformName;
 
     return program;
