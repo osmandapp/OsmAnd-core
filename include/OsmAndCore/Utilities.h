@@ -677,8 +677,8 @@ namespace OsmAnd
 
             output.top() = tileId.y << zoomShift;
             output.left() = tileId.x << zoomShift;
-            output.bottom() = ((tileId.y + 1) << zoomShift) - 1;
-            output.right() = ((tileId.x + 1) << zoomShift) - 1;
+            output.bottom() = (((int64_t)tileId.y + 1) << zoomShift) - 1;
+            output.right() = (((int64_t)tileId.x + 1) << zoomShift) - 1;
 
             assert(output.top() >= 0 && output.top() <= std::numeric_limits<int32_t>::max());
             assert(output.left() >= 0 && output.left() <= std::numeric_limits<int32_t>::max());
