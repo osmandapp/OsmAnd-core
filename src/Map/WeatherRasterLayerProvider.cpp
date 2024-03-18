@@ -82,7 +82,7 @@ void OsmAnd::WeatherRasterLayerProvider::setLocalData(const bool localData)
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const
 {
-    return MapStubStyle::Unspecified;
+    return MapStubStyle::Empty;
 }
 
 float OsmAnd::WeatherRasterLayerProvider::getTileDensityFactor() const
