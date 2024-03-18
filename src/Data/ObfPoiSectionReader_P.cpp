@@ -903,7 +903,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     if (tag.contains(QLatin1String("_name")))
                     {
                         additionalNames.append(entry.value().toString());
-                        itStringOrDataValue.remove();
                     }
                     else if (tag == QLatin1String("name"))
                     {
