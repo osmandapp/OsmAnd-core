@@ -160,6 +160,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     const auto fsUniformsPerLayer =
         1 /*opacityFactor*/ +
         1 /*transitionPhase*/ +
+        1 /*texelSize*/ +
         1 /*isPremultipliedAlpha*/ +
         1 /*sampler*/;
     const auto vsOtherUniforms =
@@ -676,6 +677,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp float opacityFactor;                                                                                      ""\n"
         "    lowp float transitionPhase;                                                                                    ""\n"
+        "    lowp float texelSize;                                                                                          ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
@@ -719,8 +721,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    vec2 rightCoords_0 = leftCoords_0;                                                                             ""\n"
         "    if (param_fs_rasterTileLayer_0.transitionPhase >= 0.0)                                                         ""\n"
         "    {                                                                                                              ""\n"
+        "        float halfTexelSize = param_fs_rasterTileLayer_0.texelSize / 2.0;                                          ""\n"
         "        leftCoords_0 *= 0.5;                                                                                       ""\n"
-        "        rightCoords_0 *= 0.5;                                                                                      ""\n"
+        "        leftCoords_0.x = clamp(leftCoords_0.x, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
+        "        leftCoords_0.y = clamp(leftCoords_0.y, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
+        "        rightCoords_0 = leftCoords_0;                                                                              ""\n"
         "        rightCoords_0.x += 0.5;                                                                                    ""\n"
         "    }                                                                                                              ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -777,8 +782,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        vec2 rightCoords = leftCoords;                                                                             ""\n"
         "        if (param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase >= 0.0)                                    ""\n"
         "        {                                                                                                          ""\n"
+        "            float halfTexelSize = param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize / 2.0;                     ""\n"
         "            leftCoords *= 0.5;                                                                                     ""\n"
-        "            rightCoords *= 0.5;                                                                                    ""\n"
+        "            leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
+        "            leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
+        "            rightCoords = leftCoords;                                                                              ""\n"
         "            rightCoords.x += 0.5;                                                                                  ""\n"
         "        }                                                                                                          ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -1096,6 +1104,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".transitionPhase",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
+                layerStruct.texelSize,
+                layerStructName + ".texelSize",
+                GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(
                 layerStruct.isPremultipliedAlpha,
                 layerStructName + ".isPremultipliedAlpha",
                 GlslVariableType::Uniform);
@@ -1388,6 +1400,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             }
 
             glUniform1f(perTile_fs.transitionPhase, transitionPhase);
+            GL_CHECK_RESULT;
+
+            auto texelSize = gpuAPI->getGpuResourceTexelSize(batchedResourceInGPU->resourceInGPU);
+            glUniform1f(perTile_fs.texelSize, texelSize);
             GL_CHECK_RESULT;
 
             glBindTexture(GL_TEXTURE_2D,

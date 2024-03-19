@@ -1128,7 +1128,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         return false;
 
     // Get free slot from that pool
-    const auto slotInGPU = allocateTileInAltasTexture(
+    const auto slotInGPU = allocateTileInAltasTexture(tileSize,
         alphaChannelType, dateTimeFirst, dateTimeLast, dateTimePrevious, dateTimeNext, atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
         () -> AtlasTextureInGPU*
