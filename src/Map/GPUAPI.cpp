@@ -94,10 +94,13 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocat
     const AlphaChannelType alphaChannelType,
     const int64_t dateTimeFirst,
     const int64_t dateTimeLast,
+    const int64_t dateTimePrevious,
+    const int64_t dateTimeNext,
     const std::shared_ptr<AtlasTexturesPool>& pool,
     AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator)
 {
-    return pool->allocateTile(alphaChannelType, dateTimeFirst, dateTimeLast, atlasTextureAllocator);
+    return pool->allocateTile(
+        alphaChannelType, dateTimeFirst, dateTimeLast, dateTimePrevious, dateTimeNext, atlasTextureAllocator);
 }
 
 OsmAnd::AlphaChannelType OsmAnd::GPUAPI::getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource)
@@ -109,13 +112,16 @@ OsmAnd::AlphaChannelType OsmAnd::GPUAPI::getGpuResourceAlphaChannelType(const st
 }
 
 OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_,
-    const int64_t dateTimeFirst_ /*= 0*/, const int64_t dateTimeLast_ /*= 0*/)
+    const int64_t dateTimeFirst_ /*= 0*/, const int64_t dateTimeLast_ /*= 0*/,
+    const int64_t dateTimePrevious_ /*= 0*/, const int64_t dateTimeNext_ /*= 0*/)
     : _refInGPU(refInGPU_)
     , api(api_)
     , type(type_)
     , refInGPU(_refInGPU)
     , dateTimeFirst(dateTimeFirst_)
     , dateTimeLast(dateTimeLast_)
+    , dateTimePrevious(dateTimePrevious_)
+    , dateTimeNext(dateTimeNext_)
 {
     // Add this object to allocated resources list
     {
@@ -167,8 +173,10 @@ OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(
     const unsigned int mipmapLevels_,
     const AlphaChannelType alphaChannelType_,
     const int64_t dateTimeFirst_ /*= 0*/,
-    const int64_t dateTimeLast_ /*= 0*/)
-    : ResourceInGPU(Type::Texture, api_, refInGPU_, dateTimeFirst_, dateTimeLast_)
+    const int64_t dateTimeLast_ /*= 0*/,
+    const int64_t dateTimePrevious_ /*= 0*/,
+    const int64_t dateTimeNext_ /*= 0*/)
+    : ResourceInGPU(Type::Texture, api_, refInGPU_, dateTimeFirst_, dateTimeLast_, dateTimePrevious_, dateTimeNext_)
     , width(width_)
     , height(height_)
     , mipmapLevels(mipmapLevels_)
@@ -258,8 +266,11 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(
     const unsigned int slotIndex_,
     const AlphaChannelType alphaChannelType_,
     const int64_t dateTimeFirst_ /*= 0*/,
-    const int64_t dateTimeLast_ /*= 0*/)
-    : ResourceInGPU(Type::SlotOnAtlasTexture, atlas_->api, atlas_->refInGPU, dateTimeFirst_, dateTimeLast_)
+    const int64_t dateTimeLast_ /*= 0*/,
+    const int64_t dateTimePrevious_ /*= 0*/,
+    const int64_t dateTimeNext_ /*= 0*/)
+    : ResourceInGPU(Type::SlotOnAtlasTexture, atlas_->api, atlas_->refInGPU,
+        dateTimeFirst_, dateTimeLast_, dateTimePrevious_, dateTimeNext_)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
     , alphaChannelType(alphaChannelType_)
@@ -314,6 +325,8 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
     const AlphaChannelType alphaChannelType,
     const int64_t dateTimeFirst,
     const int64_t dateTimeLast,
+    const int64_t dateTimePrevious,
+    const int64_t dateTimeNext,
     AtlasTextureAllocator atlasTextureAllocator)
 {
     // First look for freed slots
@@ -336,7 +349,9 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
                 slotIndex,
                 alphaChannelType,
                 dateTimeFirst,
-                dateTimeLast));
+                dateTimeLast,
+                dateTimePrevious,
+                dateTimeNext));
         }
     }
 

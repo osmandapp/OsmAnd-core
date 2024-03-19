@@ -899,6 +899,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     auto alphaChannelType = AlphaChannelType::Invalid;
     int64_t dateTimeFirst = 0;
     int64_t dateTimeLast = 0;
+    int64_t dateTimePrevious = 0;
+    int64_t dateTimeNext = 0;
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
     uint32_t tileSize = 0;
@@ -926,21 +928,24 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 image = SkiaUtilities::getEmptyImage(1, 1);
             else
             {
-                const auto imgTimeFirst = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
-                const auto imgTimeLast = imgTimeFirst + timeStep;
-                if (!isOldInGPU && !resource && resource->getState() == MapRendererResourceState::PreparedRenew)
+                const auto imgTimePrevious = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
+                const auto imgTimeNext = imgTimePrevious + timeStep;
+                const auto timeLast = rasterMapLayerData->images.lastKey();
+                if (!isOldInGPU && resource && resource->getState() == MapRendererResourceState::PreparedRenew)
                 {
                     const auto currentResourceInGPU = resourceInGPU;
                     if (currentResourceInGPU
-                        && currentResourceInGPU->dateTimeFirst == imgTimeFirst
-                        && currentResourceInGPU->dateTimeLast == imgTimeLast
+                        && currentResourceInGPU->dateTimeFirst == timeFirst
+                        && currentResourceInGPU->dateTimeLast == timeLast
+                        && currentResourceInGPU->dateTimePrevious == imgTimePrevious
+                        && currentResourceInGPU->dateTimeNext == imgTimeNext
                         && resource->setStateIf(
                             MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
                     {
                         return true;
                     }
                 }
-                auto itImage = rasterMapLayerData->images.constFind(imgTimeFirst);
+                auto itImage = rasterMapLayerData->images.constFind(imgTimePrevious);
                 if (itImage != rasterMapLayerData->images.constEnd())
                 {
                     auto firstImage = itImage.value();
@@ -948,18 +953,22 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                     {
                         auto secondImage = itImage.value();
                         image = SkiaUtilities::createTileImage(firstImage, secondImage);
-                        dateTimeFirst = imgTimeFirst;
-                        dateTimeLast = imgTimeLast;
+                        dateTimeFirst = timeFirst;
+                        dateTimeLast = timeLast;
+                        dateTimePrevious = imgTimePrevious;
+                        dateTimeNext = imgTimeNext;
                     }
-                    else if (imgTimeFirst == dateTime)
+                    else if (imgTimePrevious == dateTime)
                     {
-                        itImage = rasterMapLayerData->images.constFind(imgTimeFirst - timeStep);
+                        itImage = rasterMapLayerData->images.constFind(imgTimePrevious - timeStep);
                         if (itImage != rasterMapLayerData->images.constEnd())
                         {
                             auto secondImage = itImage.value();
                             image = SkiaUtilities::createTileImage(secondImage, firstImage);
-                            dateTimeFirst = imgTimeFirst - timeStep;
-                            dateTimeLast = imgTimeFirst;
+                            dateTimeFirst = timeFirst;
+                            dateTimeLast = timeLast;
+                            dateTimePrevious = imgTimePrevious - timeStep;
+                            dateTimeNext = imgTimePrevious;
                         }
                         else
                             image = SkiaUtilities::getEmptyImage(1, 1);
@@ -1086,7 +1095,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             mipmapLevels,
             alphaChannelType,
             dateTimeFirst,
-            dateTimeLast);
+            dateTimeLast,
+            dateTimePrevious,
+            dateTimeNext);
 
         bool canUpdate = true;
         if (resource)
@@ -1118,7 +1129,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
 
     // Get free slot from that pool
     const auto slotInGPU = allocateTileInAltasTexture(
-        alphaChannelType, dateTimeFirst, dateTimeLast, atlasTexturesPool,
+        alphaChannelType, dateTimeFirst, dateTimeLast, dateTimePrevious, dateTimeNext, atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
         () -> AtlasTextureInGPU*
         {

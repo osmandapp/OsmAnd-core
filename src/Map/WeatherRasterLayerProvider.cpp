@@ -47,9 +47,11 @@ void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int6
 {
     QWriteLocker scopedLocker(&_lock);
     
-    _dateTimeFirst = Utilities::roundMillisecondsToHours(dateTimeFirst);
-    _dateTimeLast = Utilities::roundMillisecondsToHours(dateTimeLast);
     _dateTimeStep = Utilities::roundMillisecondsToHours(dateTimeStep);
+    _dateTimeFirst = dateTimeFirst / _dateTimeStep * _dateTimeStep;
+    _dateTimeLast = dateTimeLast / _dateTimeStep * _dateTimeStep;
+    if (dateTimeLast > _dateTimeLast || (dateTimeFirst > _dateTimeFirst && _dateTimeLast == _dateTimeFirst))
+        _dateTimeLast += _dateTimeStep;
 }
 
 const QList<OsmAnd::BandIndex> OsmAnd::WeatherRasterLayerProvider::getBands() const
@@ -82,7 +84,7 @@ void OsmAnd::WeatherRasterLayerProvider::setLocalData(const bool localData)
 
 OsmAnd::MapStubStyle OsmAnd::WeatherRasterLayerProvider::getDesiredStubsStyle() const
 {
-    return MapStubStyle::Unspecified;
+    return MapStubStyle::Empty;
 }
 
 float OsmAnd::WeatherRasterLayerProvider::getTileDensityFactor() const

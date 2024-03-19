@@ -1371,20 +1371,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             }
 
             // Calculate texture part-to-part transition phase
-            auto dateTimeFirst = batchedResourceInGPU->resourceInGPU->dateTimeFirst;
-            auto dateTimeLast = batchedResourceInGPU->resourceInGPU->dateTimeLast;
-            auto dateTimeStep = dateTimeLast - dateTimeFirst;
+            auto dateTimePrevious = batchedResourceInGPU->resourceInGPU->dateTimePrevious;
+            auto dateTimeNext = batchedResourceInGPU->resourceInGPU->dateTimeNext;
+            auto dateTimeStep = dateTimeNext - dateTimePrevious;
             float transitionPhase;
             if (dateTimeStep <= 0)
                 transitionPhase = -1.0f; // No transition needed
-            else if (currentState.dateTime <= dateTimeFirst)
+            else if (currentState.dateTime <= dateTimePrevious)
                 transitionPhase = 0.0f;
-            else if (currentState.dateTime >= dateTimeLast)
+            else if (currentState.dateTime >= dateTimeNext)
                 transitionPhase = 1.0f;
             else
             {
                 transitionPhase = static_cast<float>(
-                    static_cast<double>(currentState.dateTime - dateTimeFirst) / static_cast<double>(dateTimeStep));
+                    static_cast<double>(currentState.dateTime - dateTimePrevious) / static_cast<double>(dateTimeStep));
             }
 
             glUniform1f(perTile_fs.transitionPhase, transitionPhase);
@@ -1678,39 +1678,37 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
         const auto resource = std::static_pointer_cast<MapRendererRasterMapLayerResource>(resource_);
 
         // Check state and obtain GPU resource
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         auto state = resource->getState();
         if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
         {
             // Capture GPU resource
-            auto gpuResource = resource->resourceInGPU;
+            gpuResource = resource->resourceInGPU;
 
             resource->setState(MapRendererResourceState::Uploaded);
 
             if (outState != nullptr)
                 *outState = MapRendererResourceState::Uploaded;
-            return gpuResource;
         }
         else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::IsBeingUsed))
         {
             // Capture GPU resource
-            auto gpuResource = resource->resourceInGPU;
+            gpuResource = resource->resourceInGPU;
 
             resource->setState(MapRendererResourceState::PreparedRenew);
 
             if (outState != nullptr)
                 *outState = MapRendererResourceState::PreparedRenew;
-            return gpuResource;
         }
         else if (resource->setStateIf(MapRendererResourceState::Outdated, MapRendererResourceState::IsBeingUsed))
         {
             // Capture GPU resource
-            auto gpuResource = resource->resourceInGPU;
+            gpuResource = resource->resourceInGPU;
 
             resource->setState(MapRendererResourceState::Outdated);
 
             if (outState != nullptr)
                 *outState = MapRendererResourceState::Outdated;
-            return gpuResource;
         }
         else if (state == MapRendererResourceState::Renewing || state == MapRendererResourceState::Updating
             || state == MapRendererResourceState::RequestedUpdate
@@ -1718,16 +1716,17 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
             || state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed)
         {
             // Capture GPU resource (if any)
-            auto gpuResource = resource->resourceInGPU;
-            if (gpuResource)
-            {
-                if (outState != nullptr)
-                    *outState = state;
-                return gpuResource;
-            }
+            gpuResource = resource->resourceInGPU;
+
+            if (outState != nullptr)
+                *outState = state;
         }
 
-        if (outState != nullptr)
+        if (gpuResource
+            && (gpuResource->dateTimeFirst == 0 || currentState.dateTime >= gpuResource->dateTimeFirst)
+            && (gpuResource->dateTimeLast == 0 || currentState.dateTime <= gpuResource->dateTimeLast))
+            return gpuResource;
+        else if (outState != nullptr)
             *outState = resource->getState();
     }
 
