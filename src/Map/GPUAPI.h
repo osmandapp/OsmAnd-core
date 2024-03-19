@@ -190,6 +190,7 @@ namespace OsmAnd
             AtlasTexturesPool(GPUAPI* api, const AtlasTypeId& typeId);
 
             std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(
+                const unsigned int tileSize,
                 const AlphaChannelType alphaChannelType,
                 const int64_t dateTimeFirst,
                 const int64_t dateTimeLast,
@@ -245,6 +246,7 @@ namespace OsmAnd
             SlotOnAtlasTextureInGPU(
                 const std::shared_ptr<AtlasTextureInGPU>& atlas,
                 const unsigned int slotIndex,
+                const unsigned int tileSize,
                 const AlphaChannelType alphaChannelType,
                 const int64_t dateTimeFirst = 0,
                 const int64_t dateTimeLast = 0,
@@ -254,6 +256,7 @@ namespace OsmAnd
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
             const unsigned int slotIndex;
+            const unsigned int tileSize;
             const AlphaChannelType alphaChannelType;
         };
 
@@ -299,6 +302,7 @@ namespace OsmAnd
 
         std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
         std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTileInAltasTexture(
+            const unsigned int tileSize,
             const AlphaChannelType alphaChannelType,
             const int64_t dateTimeFirst,
             const int64_t dateTimeLast,
@@ -331,6 +335,7 @@ namespace OsmAnd
         virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
 
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
+        float getGpuResourceTexelSize(const std::shared_ptr<const ResourceInGPU> gpuResource);
 
     friend OsmAnd::GPUAPI::ResourceInGPU;
     };

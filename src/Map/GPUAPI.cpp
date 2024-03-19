@@ -91,6 +91,7 @@ std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTe
 }
 
 std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTileInAltasTexture(
+    const unsigned int tileSize,
     const AlphaChannelType alphaChannelType,
     const int64_t dateTimeFirst,
     const int64_t dateTimeLast,
@@ -99,8 +100,8 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocat
     const std::shared_ptr<AtlasTexturesPool>& pool,
     AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator)
 {
-    return pool->allocateTile(
-        alphaChannelType, dateTimeFirst, dateTimeLast, dateTimePrevious, dateTimeNext, atlasTextureAllocator);
+    return pool->allocateTile(tileSize, alphaChannelType,
+        dateTimeFirst, dateTimeLast, dateTimePrevious, dateTimeNext, atlasTextureAllocator);
 }
 
 OsmAnd::AlphaChannelType OsmAnd::GPUAPI::getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource)
@@ -109,6 +110,14 @@ OsmAnd::AlphaChannelType OsmAnd::GPUAPI::getGpuResourceAlphaChannelType(const st
         return std::static_pointer_cast<const SlotOnAtlasTextureInGPU>(gpuResource)->alphaChannelType;
     else //if (gpuResource->type == ResourceInGPU::Type::Texture)
         return std::static_pointer_cast<const TextureInGPU>(gpuResource)->alphaChannelType;
+}
+
+float OsmAnd::GPUAPI::getGpuResourceTexelSize(const std::shared_ptr<const ResourceInGPU> gpuResource)
+{
+    auto tileSize = gpuResource->type == ResourceInGPU::Type::SlotOnAtlasTexture
+        ? std::static_pointer_cast<const SlotOnAtlasTextureInGPU>(gpuResource)->tileSize
+        : std::static_pointer_cast<const TextureInGPU>(gpuResource)->width;
+    return 1.0f / static_cast<float>(tileSize);
 }
 
 OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_,
@@ -264,6 +273,7 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(
     const std::shared_ptr<AtlasTextureInGPU>& atlas_,
     const unsigned int slotIndex_,
+    const unsigned int tileSize_,
     const AlphaChannelType alphaChannelType_,
     const int64_t dateTimeFirst_ /*= 0*/,
     const int64_t dateTimeLast_ /*= 0*/,
@@ -273,6 +283,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(
         dateTimeFirst_, dateTimeLast_, dateTimePrevious_, dateTimeNext_)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
+    , tileSize(tileSize_)
     , alphaChannelType(alphaChannelType_)
 {
     // Add reference of this tile to atlas texture
@@ -322,6 +333,7 @@ OsmAnd::GPUAPI::AtlasTexturesPool::~AtlasTexturesPool()
 }
 
 std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile(
+    const unsigned int tileSize,
     const AlphaChannelType alphaChannelType,
     const int64_t dateTimeFirst,
     const int64_t dateTimeLast,
@@ -347,6 +359,7 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
             return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(
                 atlasTexture.lock(),
                 slotIndex,
+                tileSize,
                 alphaChannelType,
                 dateTimeFirst,
                 dateTimeLast,
@@ -378,6 +391,7 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
         return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(
             atlasTexture,
             _firstUnusedSlotIndex++,
+            tileSize,
             alphaChannelType));
     }
 }
