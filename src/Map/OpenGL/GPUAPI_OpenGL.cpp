@@ -914,7 +914,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
         if (rasterMapLayerData->images.isEmpty())
-            image = SkiaUtilities::getEmptyImage(1, 1);
+            image = SkiaUtilities::getEmptyImage();
         else if (rasterMapLayerData->images.size() > 1)
         {
             auto itFirstImage = rasterMapLayerData->images.constBegin();
@@ -925,7 +925,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             if (timeStep == 0)
                 image = rasterMapLayerData->images.constBegin().value();
             else if (dateTime < timeFirst)
-                image = SkiaUtilities::getEmptyImage(1, 1);
+                image = SkiaUtilities::getEmptyImage();
             else
             {
                 const auto imgTimePrevious = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
@@ -971,13 +971,13 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                             dateTimeNext = imgTimePrevious;
                         }
                         else
-                            image = SkiaUtilities::getEmptyImage(1, 1);
+                            image = SkiaUtilities::getEmptyImage();
                     }
                     else
-                        image = SkiaUtilities::getEmptyImage(1, 1);
+                        image = SkiaUtilities::getEmptyImage();
                 }
                 else
-                    image = SkiaUtilities::getEmptyImage(1, 1);
+                    image = SkiaUtilities::getEmptyImage();
             }
         }
         else
