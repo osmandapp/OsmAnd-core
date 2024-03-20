@@ -626,7 +626,7 @@ QPair<QString, uint32_t> OsmAnd::MapPresentationEnvironment_P::getRoadRenderingA
 QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttributes(const QString& renderAttrName) const
 {
     int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
-    float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
+    float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f, strokeWidth_0 = -1.0f;
     
     MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
     applyTo(evaluator);
@@ -642,6 +642,7 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
             evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
             evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2, strokeWidth_2);
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_0, strokeWidth_0);
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_2, color_2);
             evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3, strokeWidth_3);
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_COLOR_3, color_3);
@@ -653,6 +654,7 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
     map.insert(QStringLiteral("shadowRadius"), shadowRadius);
     map.insert(QStringLiteral("shadowColor"), shadowColor);
     map.insert(QStringLiteral("strokeWidth_2"), strokeWidth_2);
+    map.insert(QStringLiteral("strokeWidth_0"), strokeWidth_0);
     map.insert(QStringLiteral("color_2"), color_2);
     map.insert(QStringLiteral("strokeWidth_3"), strokeWidth_3);
     map.insert(QStringLiteral("color_3"), color_3);
