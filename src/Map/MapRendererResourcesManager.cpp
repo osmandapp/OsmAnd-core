@@ -156,7 +156,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
 bool OsmAnd::MapRendererResourcesManager::initializeEmptyStub(
     std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource)
 {
-    const auto image = SkiaUtilities::getEmptyImage(1, 1);
+    const auto image = SkiaUtilities::getEmptyImage();
 
     if (!image)
         return false;

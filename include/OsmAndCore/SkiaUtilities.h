@@ -24,6 +24,8 @@ namespace OsmAnd
             int width,
             int height);
 
+        static sk_sp<SkImage> getEmptyImage();
+
         static sk_sp<SkImage> createImageFromFile(
             const QFileInfo& fileInfo);
 

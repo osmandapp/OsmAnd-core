@@ -32,6 +32,11 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::getEmptyImage(int width, int height)
     return nullptr;
 }
 
+sk_sp<SkImage> OsmAnd::SkiaUtilities::getEmptyImage()
+{
+    return getEmptyImage(16, 16);
+}
+
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromFile(const QFileInfo& fileInfo)
 {
     return SkImage::MakeFromEncoded(SkData::MakeFromFileName(qPrintable(fileInfo.absoluteFilePath())));
