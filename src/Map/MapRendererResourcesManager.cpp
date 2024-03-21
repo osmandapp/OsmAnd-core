@@ -1799,31 +1799,16 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         if (renderer->gpuContextIsLost)
             return;
 
-        bool isNotRasterMapLayerResource = true;
-        if (std::dynamic_pointer_cast<MapRendererRasterMapLayerResource>(resource))
-            isNotRasterMapLayerResource = false;
-
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-        if (isNotRasterMapLayerResource
-            && resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
-        {
+        if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
-        }
-        else if (isNotRasterMapLayerResource
-            && resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
         {
-            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
-        }
-        else if (isNotRasterMapLayerResource)
-        {
-            continue;
+            LOG_RESOURCE_STATE_CHANGE(
+                resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
         }
         else
-        {
-            auto state = resource->getState();
-            if (state != MapRendererResourceState::Ready && state != MapRendererResourceState::PreparedRenew)
-                continue;
-        }
+            continue;
 
         // Actually upload resource to GPU
         const auto didUpload = resource->uploadToGPU();

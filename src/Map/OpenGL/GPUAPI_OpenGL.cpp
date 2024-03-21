@@ -796,17 +796,17 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return uploadTiledDataAsTextureToGPU(tile, resourceInGPU, dateTime, resource);
+        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU, dateTime, resource);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
         if (isSupported_vertexShaderTextureLookup)
         {
-            return uploadTiledDataAsTextureToGPU(tile, resourceInGPU);
+            return uploadTiledDataAsTextureToGPU(elevationData, resourceInGPU);
         }
         else
         {
-            return uploadTiledDataAsArrayBufferToGPU(tile, resourceInGPU);
+            return uploadTiledDataAsArrayBufferToGPU(elevationData, resourceInGPU);
         }
     }
 
@@ -931,16 +931,14 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                 const auto imgTimePrevious = (dateTime - timeFirst) / timeStep * timeStep + timeFirst;
                 const auto imgTimeNext = imgTimePrevious + timeStep;
                 const auto timeLast = rasterMapLayerData->images.lastKey();
-                if (!isOldInGPU && resource && resource->getState() == MapRendererResourceState::PreparedRenew)
+                if (!isOldInGPU && resource && resource->getState() == MapRendererResourceState::Renewing)
                 {
                     const auto currentResourceInGPU = resourceInGPU;
                     if (currentResourceInGPU
                         && currentResourceInGPU->dateTimeFirst == timeFirst
                         && currentResourceInGPU->dateTimeLast == timeLast
                         && currentResourceInGPU->dateTimePrevious == imgTimePrevious
-                        && currentResourceInGPU->dateTimeNext == imgTimeNext
-                        && resource->setStateIf(
-                            MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+                        && currentResourceInGPU->dateTimeNext == imgTimeNext)
                     {
                         return true;
                     }
@@ -1099,21 +1097,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             dateTimePrevious,
             dateTimeNext);
 
-        bool canUpdate = true;
-        if (resource)
-        {
-            canUpdate = resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading)
-            || resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
-        }
-
-        if (canUpdate)
-        {
-            resourceInGPU = textureInGPU;
-            if (isOldInGPU)
-                resource->markAsFreshInGPU();
-        }
-        else
-            return false;
+        resourceInGPU = textureInGPU;
+        if (isOldInGPU)
+            resource->markAsFreshInGPU();
 
         return true;
     }
@@ -1186,21 +1172,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
 
-    bool canUpdate = true;
-    if (resource)
-    {
-        canUpdate = resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading)
-            || resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
-    }
-
-    if (canUpdate)
-    {
-        resourceInGPU = slotInGPU;
-        if (isOldInGPU)
-            resource->markAsFreshInGPU();
-    }
-    else
-        return false;
+    resourceInGPU = slotInGPU;
+    if (isOldInGPU)
+        resource->markAsFreshInGPU();
 
     return true;
 }
