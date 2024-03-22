@@ -20,6 +20,7 @@
 #include "Utilities.h"
 #include "CollatorStringMatcher.h"
 #include <Logging.h>
+#include <OsmAndCore/ICU.h>
 
 const int BUCKET_SEARCH_BY_NAME = 5;
 const int BASE_POI_SHIFT = 7;
@@ -925,7 +926,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 if (!query.isNull())
                 {
                     bool accept = false;
-                    accept = accept || matcher.matches(nativeName);
+                    accept = accept || matcher.matches(nativeName) || matcher.matches(OsmAnd::ICU::transliterateToLatin(nativeName));
                     for (const auto& localizedName : constOf(localizedNames))
                     {
                         accept = accept || matcher.matches(localizedName);
