@@ -677,7 +677,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 	auto pointsCount = points.size();
 	if (pointsCount < 2)
         return false;
-	bool withTrace = topColor.a > 0.0f || topColor.b > 0.0f;
+	bool withTrace = topColor.a > 0.0f || bottomColor.a > 0.0f;
     if (roofHeight <= 0.0f && !withTrace)
         return false;
 	float minDist = minDistance;
