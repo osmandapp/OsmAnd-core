@@ -797,13 +797,19 @@ OsmAnd::PointI OsmAnd::Utilities::normalizeCoordinates(const PointI64& input, co
  * @example
  *     rhumbDestinationPoint(LatLon(51.127, 1.338), 40300, 116.7); // 50.9642°N, 001.8530°E
  */
+
 OsmAnd::LatLon OsmAnd::Utilities::rhumbDestinationPoint(LatLon latLon, double distance, double bearing)
+{
+    return rhumbDestinationPoint(latLon.latitude, latLon.longitude, distance, bearing);
+}
+
+OsmAnd::LatLon OsmAnd::Utilities::rhumbDestinationPoint(double lat, double lon, double distance, double bearing)
 {
     double radius = 6371e3;
 
     double d = distance / radius; // angular distance in radians
-    double phi1 = qDegreesToRadians(latLon.latitude);
-    double lambda1 = qDegreesToRadians(latLon.longitude);
+    double phi1 = qDegreesToRadians(lat);
+    double lambda1 = qDegreesToRadians(lon);
     double theta = qDegreesToRadians(bearing);
 
     double deltaPhi = d * cos(theta);
