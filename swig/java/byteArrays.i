@@ -14,3 +14,21 @@
 
 /* Prevent default freearg typemap from being used */
 %typemap(freearg) (char *BYTE, size_t LENGTH) ""
+
+// Use it with function like this: char* func(size_t* LENGTH)
+%typemap(jni) signed char* getBytesArray "jbyteArray"
+%typemap(jtype) signed char* getBytesArray "byte[]"
+%typemap(jstype) signed char* getBytesArray "byte[]"
+%typemap(javaout) signed char* getBytesArray {
+  return $jnicall;
+}
+
+%typemap(in,numinputs=0,noblock=1) size_t* LENGTH { 
+  size_t length=0;
+  $1 = &length;
+}
+
+%typemap(out) signed char* getBytesArray {
+  $result = JCALL1(NewByteArray, jenv, length);
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, length, $1);
+}

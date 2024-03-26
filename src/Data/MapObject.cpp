@@ -199,6 +199,29 @@ bool OsmAnd::MapObject::containsTag(const QStringRef& tagRef, const bool checkAd
     return false;
 }
 
+QString OsmAnd::MapObject::formatWithAdditionalAttributes(const QString& value) const
+{
+    if (!value.contains('?'))
+        return value;
+
+    int startIndex = value.indexOf('?');
+    int endIndex = value.lastIndexOf('?');
+
+    QString formatted = value.left(startIndex);
+    QString tag = value.mid(startIndex + 1, endIndex - startIndex - 1);
+    for (uint32_t attrIdIndex = 0; attrIdIndex < additionalAttributeIds.size(); attrIdIndex++) {
+        const auto& attribute = resolveAttributeByIndex(attrIdIndex, true);
+        if (attribute && attribute->tag == tag)
+        {
+            formatted.append(attribute->value);
+            break;
+        }
+    }
+    formatted.append(value.mid(endIndex + 1));
+
+    return formatted;
+}
+
 OsmAnd::MapObject::LayerType OsmAnd::MapObject::getLayerType() const
 {
     return LayerType::Zero;
