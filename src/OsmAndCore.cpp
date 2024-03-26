@@ -130,6 +130,10 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
     }
 
     std::setlocale(LC_CTYPE, "UTF-8");
+#if defined(OSMAND_TARGET_OS_linux) || defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_windows)
+    // Fix parsing SVG via SkParse on desktop
+    std::setlocale(LC_NUMERIC, "C");
+#endif // defined(OSMAND_TARGET_OS_linux) || defined(OSMAND_TARGET_OS_macosx) || defined(OSMAND_TARGET_OS_windows)
 
     GDALAllRegister();
     if (!SKIA::initialize())
