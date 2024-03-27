@@ -253,7 +253,6 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
                     GLlocation mModel;
-                    GLlocation zDistanceFromCamera;
                     GLlocation modulationColor;
                     GLlocation tileId;
                     GLlocation offsetInTile;

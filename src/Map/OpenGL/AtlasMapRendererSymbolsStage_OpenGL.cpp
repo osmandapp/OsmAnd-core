@@ -2281,7 +2281,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "uniform mat4 param_vs_mModel;                                                                                      ""\n"
-        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
         "uniform vec2 param_vs_tileId;                                                                                      ""\n"
         "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
@@ -2327,11 +2326,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
         "        v.y = in_vs_vertexPosition.y / metersPerUnit;                                                              ""\n"
-        "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
-        "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
-        "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
-        "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
-        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
         "    }                                                                                                              ""\n"
         "    else if (abs(param_vs_elevation_scale.w) > 0.0 && param_vs_elevationInMeters == 0.0)                           ""\n"
         "    {                                                                                                              ""\n"
@@ -2344,26 +2338,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
         "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
         "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                       ""\n"
-        "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
-        "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
-        "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
-        "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
-        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
         "    }                                                                                                              ""\n"
-        "    else if (abs(param_vs_elevationInMeters) > 0.0)                                                                ""\n"
+        "    else                                                                                                           ""\n"
         "    {                                                                                                              ""\n"
         "        v = param_vs_mModel * v;                                                                                   ""\n"
-        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, param_vs_offsetInTile.y);""\n"
-        "        float heightInMeters = param_vs_elevationInMeters * param_vs_elevation_scale.w;                            ""\n"
-        "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                       ""\n"
-        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
-        "        gl_Position.z = param_vs_zDistanceFromCamera;                                                              ""\n"
+        "        if (abs(param_vs_elevationInMeters) > 0.0)                                                                 ""\n"
+        "        {                                                                                                          ""\n"
+        "            float metersPerUnit =                                                                                  ""\n"
+        "                mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, param_vs_offsetInTile.y);              ""\n"
+        "            float heightInMeters = param_vs_elevationInMeters * param_vs_elevation_scale.w;                        ""\n"
+        "            v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                   ""\n"
+        "        }                                                                                                          ""\n"
         "    }                                                                                                              ""\n"
-        "    else {                                                                                                         ""\n"
-        "        v = param_vs_mModel * v;                                                                                   ""\n"
-        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
-        "        gl_Position.z = param_vs_zDistanceFromCamera;                                                              ""\n"
-        "    }                                                                                                              ""\n"
+        "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
+        "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
+        "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
+        "    v.y += min(extraZfar, extraCam) + 0.1;                                                                         ""\n"
+        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "                                                                                                                   ""\n"
         // Prepare color
         "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
@@ -2425,7 +2416,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.tileId, "param_vs_tileId", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.offsetInTile, "param_vs_offsetInTile", GlslVariableType::Uniform);
@@ -2546,17 +2536,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mModel, 1, GL_FALSE, glm::value_ptr(mModel));
     GL_CHECK_RESULT;
 
-    // Set distance from camera
-    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
-    glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
-    GL_CHECK_RESULT;
-
     // Set modulation color
     glUniform4f(_onSurfaceVectorProgram.vs.param.modulationColor,
         symbol->modulationColor.r,
         symbol->modulationColor.g,
         symbol->modulationColor.b,
         symbol->modulationColor.a);
+    GL_CHECK_RESULT;
+
+    // Set camera position and zFar distance to compute suitable elevation shift (against z-fighting)
+    glUniform4f(_onSurfaceVectorProgram.vs.param.cameraPositionAndZfar,
+        internalState.worldCameraPosition.x,
+        internalState.worldCameraPosition.y,
+        internalState.worldCameraPosition.z,
+        internalState.zFar);
     GL_CHECK_RESULT;
 
     // If symbol has no tiled parts - render it flat using single elevation value
@@ -2696,14 +2689,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             startPosition.y,
             scaleFactor,
             scaleFactor);
-        GL_CHECK_RESULT;
-
-        // Set camera position and zFar distance to compute suitable elevation shift (against z-fighting)
-        glUniform4f(_onSurfaceVectorProgram.vs.param.cameraPositionAndZfar,
-            internalState.worldCameraPosition.x,
-            internalState.worldCameraPosition.y,
-            internalState.worldCameraPosition.z,
-            internalState.zFar);
         GL_CHECK_RESULT;
 
         const int elevationDataSamplerIndex = 0;
