@@ -23,6 +23,7 @@
 #include <Polyline2D/Vec2.h>
 
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
+#define LINE_WIDTH_THRESHOLD_DP 8.0f
 
 // Colorization shemes
 #define COLORIZATION_NONE 0
@@ -1352,7 +1353,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return owner->specialPathIcon != nullptr && _lineWidth <= owner->specialPathIcon->width() + 3.0f;
+    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale * owner->mapDensity);
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

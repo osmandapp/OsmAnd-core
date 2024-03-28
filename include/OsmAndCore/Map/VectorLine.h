@@ -90,6 +90,7 @@ namespace OsmAnd
             const sk_sp<const SkImage>& specialPathIcon = nullptr,
             const bool pathIconOnSurface = true,
             const float screenScale = 2,
+            const float mapDensity = 1,
             const EndCapStyle endCapStyle = EndCapStyle::ROUND,
             const JointStyle jointStyle = JointStyle::ROUND
         );
@@ -104,6 +105,7 @@ namespace OsmAnd
         const sk_sp<const SkImage> specialPathIcon;
         const bool pathIconOnSurface;
         const float screenScale;
+        const float mapDensity;
         EndCapStyle endCapStyle;
         JointStyle jointStyle;
 
