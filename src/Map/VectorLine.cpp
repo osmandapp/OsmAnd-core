@@ -8,6 +8,7 @@ OsmAnd::VectorLine::VectorLine(
     const sk_sp<const SkImage>& specialPathIcon_/* = nullptr*/,
     const bool pathIconOnSurface_/* = true*/,
     const float screenScale_/* = 2*/,
+    const float mapDensity_ /* = 1*/,
     const VectorLine::EndCapStyle endCapStyle_/* = EndCapStyle::ROUND*/,
     const VectorLine::JointStyle jointStyle_/* = JointStyle::ROUND*/)
     : _p(new VectorLine_P(this))
@@ -17,6 +18,7 @@ OsmAnd::VectorLine::VectorLine(
     , specialPathIcon(specialPathIcon_)
     , pathIconOnSurface(pathIconOnSurface_)
     , screenScale(screenScale_)
+    , mapDensity(mapDensity_)
     , endCapStyle(endCapStyle_)
     , jointStyle(jointStyle_)
 {
