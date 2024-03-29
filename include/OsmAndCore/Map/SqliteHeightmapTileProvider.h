@@ -28,6 +28,7 @@ namespace OsmAnd
         PrivateImplementation<SqliteHeightmapTileProvider_P> _p;
     protected:
     public:
+        SqliteHeightmapTileProvider();
         SqliteHeightmapTileProvider(
             const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection,
             uint32_t outputTileSize
