@@ -49,7 +49,7 @@ namespace OsmAnd
 
         PointI _position;
 
-        float _direction;
+        float _height;
 
         sk_sp<const SkImage> _pinIcon;
         MapMarker::PinIconVerticalAlignment _pinIconVerticalAlignment;
@@ -87,6 +87,9 @@ namespace OsmAnd
 
         PointI getPosition() const;
         void setPosition(const PointI position);
+
+        float getHeight() const;
+        void setHeight(const float height);
 
         sk_sp<const SkImage> getPinIcon() const;
         void setPinIcon(const SingleSkImage& image);

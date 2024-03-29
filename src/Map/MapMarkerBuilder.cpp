@@ -106,6 +106,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPosition(const PointI pos
     return *this;
 }
 
+float OsmAnd::MapMarkerBuilder::getHeight() const
+{
+    return _p->getHeight();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setHeight(const float height)
+{
+    _p->setHeight(height);
+
+    return *this;
+}
+
 sk_sp<const SkImage> OsmAnd::MapMarkerBuilder::getPinIcon() const
 {
     return _p->getPinIcon();

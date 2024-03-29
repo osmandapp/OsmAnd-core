@@ -4,6 +4,7 @@ OsmAnd::OnSurfaceRasterMapSymbol::OnSurfaceRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : RasterMapSymbol(group_)
     , direction(0.0f)
+    , elevation(NAN)
 {
 }
 
@@ -29,4 +30,14 @@ OsmAnd::PointI OsmAnd::OnSurfaceRasterMapSymbol::getPosition31() const
 void OsmAnd::OnSurfaceRasterMapSymbol::setPosition31(const PointI position)
 {
     position31 = position;
+}
+
+float OsmAnd::OnSurfaceRasterMapSymbol::getElevation() const
+{
+    return elevation;
+}
+
+void OsmAnd::OnSurfaceRasterMapSymbol::setElevation(const float newElevation)
+{
+    elevation = newElevation;
 }

@@ -57,6 +57,9 @@ namespace OsmAnd
         PointI getPosition() const;
         MapMarkerBuilder& setPosition(const PointI position);
 
+        float getHeight() const;
+        MapMarkerBuilder& setHeight(const float height);
+
         sk_sp<const SkImage> getPinIcon() const;
         MapMarkerBuilder& setPinIcon(const SingleSkImage& image);
         MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;

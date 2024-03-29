@@ -4,6 +4,7 @@ OsmAnd::BillboardRasterMapSymbol::BillboardRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : RasterMapSymbol(group_)
     , drawAlongPath(false)
+    , elevation(NAN)
 {
 }
 
@@ -29,4 +30,14 @@ OsmAnd::PointI OsmAnd::BillboardRasterMapSymbol::getPosition31() const
 void OsmAnd::BillboardRasterMapSymbol::setPosition31(const PointI position)
 {
     position31 = position;
+}
+
+float OsmAnd::BillboardRasterMapSymbol::getElevation() const
+{
+    return elevation;
+}
+
+void OsmAnd::BillboardRasterMapSymbol::setElevation(const float newElevation)
+{
+    elevation = newElevation;
 }
