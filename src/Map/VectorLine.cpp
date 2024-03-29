@@ -275,9 +275,10 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
     return result;
 }
 
-OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction)
+OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction, float elevation)
     : position31(position31)
     , direction(direction)
+    , elevation(elevation)
 {
 }
 

@@ -95,6 +95,24 @@ void OsmAnd::MapMarker_P::setPosition(const PointI position)
     }
 }
 
+float OsmAnd::MapMarker_P::getHeight() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _height;
+}
+
+void OsmAnd::MapMarker_P::setHeight(const float height)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_height != height)
+    {
+        _height = height;
+        _hasUnappliedChanges = true;
+    }
+}
+
 float OsmAnd::MapMarker_P::getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const
 {
     QReadLocker scopedLocker(&_lock);
@@ -166,6 +184,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
             if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
             {
                 symbol->setPosition31(_position);
+                symbol->setElevation(_height);
                 symbol->modulationColor = _pinIconModulationColor;
             }
 
@@ -176,6 +195,8 @@ bool OsmAnd::MapMarker_P::applyChanges()
                 const auto citDirection = _directions.constFind(symbol->key);
                 if (citDirection != _directions.cend())
                     symbol->direction = *citDirection;
+
+                symbol->setElevation(_height);
             }
         }
     }
@@ -263,6 +284,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 mapSymbolCaption->size = PointI(textImage->width(), textImage->height());
                 mapSymbolCaption->languageId = LanguageId::Invariant;
                 mapSymbolCaption->position31 = _position;
+                mapSymbolCaption->elevation = _height;
                 symbolsGroup->symbols.push_back(mapSymbolCaption);
             }
         }
@@ -304,6 +326,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;
+        onMapSurfaceIconSymbol->elevation = _height;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }

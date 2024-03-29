@@ -1081,7 +1081,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         if (_showArrows && owner->pathIcon)
         {
             const auto arrowsOrigin = segments.back().back();
-            addArrowsOnSegmentPath(points, include, arrowsOrigin);
+            addArrowsOnSegmentPath(points, heightsForSegment, include, arrowsOrigin);
         }
 
         int patternLength = (int) _dashPattern.size();
@@ -1293,60 +1293,63 @@ const QList<OsmAnd::VectorLine::OnPathSymbolData> OsmAnd::VectorLine_P::getArrow
 
 void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     const std::vector<PointI>& segmentPoints,
+    QList<float>& segmentHeights,
     const std::vector<bool>& includedPoints,
     const PointI64& origin)
 {
-    SkPath path;
-    const PointI64 start = segmentPoints.back();
-    path.moveTo(start.x - origin.x, start.y - origin.y);
+    int64_t intFull = INT32_MAX;
+    intFull++;
+    const auto intHalf = intFull >> 1;
+    const auto intTwo = intFull << 1;
+    const PointD location(origin);
+    bool withHeights = !segmentHeights.isEmpty();
+    float pathIconStep = getPointStepPx();
+    double step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
+    double halfStep = step / 2.0;
+    bool ok = halfStep > 0.0;
+    if (!ok)
+        return;
+
+    PointD prevPoint(PointI64(segmentPoints.back()) - origin);
+    PointD nextPoint;
+    float prevHeight = withHeights ? segmentHeights[segmentPoints.size() - 1] : NAN;
+    float nextHeight;
+    double gap = halfStep;
     for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
     {
         if (!includedPoints[i])
             continue;
 
-        const auto& p = segmentPoints[i];
-        path.lineTo(p.x - origin.x, p.y - origin.y);
-    }
+        if (gap <= 0.0)
+            gap = step;
 
-    SkPathMeasure pathMeasure(path, false);
-    bool ok = false;
-    const auto length = pathMeasure.getLength();
-
-    float pathIconStep = getPointStepPx();
-
-    float step = Utilities::metersToX31(pathIconStep * _metersPerPixel * owner->screenScale);
-    auto iconOffset = 0.5f * step;
-    const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
-    if (iconInstancesCount > 0)
-    {
-        int64_t intFull = INT32_MAX;
-        intFull++;
-        const auto intHalf = intFull >> 1;
-        const auto intTwo = intFull << 1;
-        const PointD location(origin);
-
-        QWriteLocker scopedLocker(&_arrowsOnPathLock);
-
-        for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
+        nextPoint = PointD(PointI64(segmentPoints[i]) - origin);
+        nextHeight = withHeights ? segmentHeights[i] : NAN;
+        const auto lineLength = (nextPoint - prevPoint).norm();
+        auto shift = gap;
+        while (lineLength >= shift && (i > 0 || lineLength >= shift + halfStep))
         {
-            SkPoint p;
-            SkVector t;
-            ok = pathMeasure.getPosTan(iconOffset, &p, &t);
-            if (!ok)
-                break;
+            auto t = (nextPoint - prevPoint) / lineLength;
+            auto midPoint = prevPoint + t * shift;
+            auto midHeight =
+                withHeights ? prevHeight + (nextHeight - prevHeight) * static_cast<float>(shift / lineLength) : NAN;
 
             PointI64 origPos(
-                static_cast<int64_t>((double)p.x() + location.x),
-                static_cast<int64_t>((double)p.y() + location.y));
-            origPos += PointI64(intHalf, intHalf);
+                static_cast<int64_t>(midPoint.x + location.x) + intHalf,
+                static_cast<int64_t>(midPoint.y + location.y) + intHalf);
             const PointI position(
                 origPos.x + (origPos.x >= intFull ? -intTwo : (origPos.x < -intFull ? intFull : 0)),
                 origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
             // Get mirrored direction
-            float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())) - 180);
-            const VectorLine::OnPathSymbolData arrowSymbol(position, direction);
+            float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x, t.y)) - 180);
+            const VectorLine::OnPathSymbolData arrowSymbol(position, direction, midHeight);
             _arrowsOnPath.push_back(arrowSymbol);
+
+            shift += step;
         }
+        gap = shift - lineLength;
+        prevPoint = nextPoint;
+        prevHeight = nextHeight;
     }
 }
 

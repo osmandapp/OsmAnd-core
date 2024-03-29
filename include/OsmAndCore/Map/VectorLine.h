@@ -59,11 +59,12 @@ namespace OsmAnd
 
         struct OnPathSymbolData
         {
-            OnPathSymbolData(PointI position31, float direction);
+            OnPathSymbolData(PointI position31, float direction, float elevation);
             ~OnPathSymbolData();
 
             PointI position31;
             float direction;
+            float elevation;
         };
 
         enum class JointStyle {
