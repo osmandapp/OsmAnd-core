@@ -68,20 +68,46 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
+std::shared_ptr<const OsmAnd::LayeredIconData> OsmAnd::MapPresentationEnvironment::getLayeredIconData(
+    const QString& tag,
+    const QString& value,
+    const ZoomLevel zoom,
+    const int textLength) const
+{
+    return _p->getLayeredIconData(tag, value, zoom, textLength, nullptr);
+}
+
+std::shared_ptr<const OsmAnd::LayeredIconData> OsmAnd::MapPresentationEnvironment::getLayeredIconData(
+    const QString& tag,
+    const QString& value,
+    const ZoomLevel zoom,
+    const int textLength,
+    const QString& additional) const
+{
+    return _p->getLayeredIconData(tag, value ,zoom, textLength, &additional);
+}
+
+std::shared_ptr<const OsmAnd::IconData> OsmAnd::MapPresentationEnvironment::getIconData(const QString& name) const
+{
+    return _p->getIconData(name);
+}
+
+std::shared_ptr<const OsmAnd::IconData> OsmAnd::MapPresentationEnvironment::getMapIconData(const QString& name) const
+{
+    return _p->getMapIconData(name);
+}
+
+std::shared_ptr<const OsmAnd::IconData> OsmAnd::MapPresentationEnvironment::getShaderOrShieldData(const QString& name) const
+{
+    return _p->getShaderOrShieldData(name);
+}
+
 bool OsmAnd::MapPresentationEnvironment::obtainIcon(
     const QString& name,
     const float scale,
     sk_sp<const SkImage>& outIcon) const
 {
     return _p->obtainIcon(name, scale, outIcon);
-}
-
-bool OsmAnd::MapPresentationEnvironment::obtainShader(
-    const QString& name,
-    const float scale,
-    sk_sp<const SkImage>& outShader) const
-{
-    return _p->obtainShader(name, scale, outShader);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(
@@ -92,20 +118,12 @@ bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(
     return _p->obtainMapIcon(name, scale, outIcon);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainTextShield(
+bool OsmAnd::MapPresentationEnvironment::obtainShaderOrShield(
     const QString& name,
     const float scale,
     sk_sp<const SkImage>& outTextShield) const
 {
-    return _p->obtainTextShield(name, scale, outTextShield);
-}
-
-bool OsmAnd::MapPresentationEnvironment::obtainIconShield(
-    const QString& name,
-    const float scale,
-    sk_sp<const SkImage>& outIconShield) const
-{
-    return _p->obtainIconShield(name, scale, outIconShield);
+    return _p->obtainShaderOrShield(name, scale, outTextShield);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(

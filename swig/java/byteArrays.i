@@ -14,3 +14,30 @@
 
 /* Prevent default freearg typemap from being used */
 %typemap(freearg) (char *BYTE, size_t LENGTH) ""
+
+/*
+  This allows to return array of bytes. Example:
+
+  char* getBytesArray(size_t* LENGTH)
+  {
+      *LENGTH = bytes.size();
+      return bytes.data();
+  }
+
+*/
+%typemap(jni) signed char* getBytesArray "jbyteArray"
+%typemap(jtype) signed char* getBytesArray "byte[]"
+%typemap(jstype) signed char* getBytesArray "byte[]"
+%typemap(javaout) signed char* getBytesArray {
+  return $jnicall;
+}
+
+%typemap(in,numinputs=0,noblock=1) size_t* LENGTH { 
+  size_t length=0;
+  $1 = &length;
+}
+
+%typemap(out) signed char* getBytesArray {
+  $result = JCALL1(NewByteArray, jenv, length);
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, length, $1);
+}

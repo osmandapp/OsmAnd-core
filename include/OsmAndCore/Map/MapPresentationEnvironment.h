@@ -20,6 +20,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/Map/IMapStyle.h>
+#include <OsmAndCore/Icons.h>
 
 namespace OsmAnd
 {
@@ -100,11 +101,24 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
+        std::shared_ptr<const LayeredIconData> getLayeredIconData(
+            const QString& tag,
+            const QString& value,
+            const ZoomLevel zoom,
+            const int textLength) const;
+        std::shared_ptr<const LayeredIconData> getLayeredIconData(
+            const QString& tag,
+            const QString& value,
+            const ZoomLevel zoom,
+            const int textLength,
+            const QString& additional) const;
+        std::shared_ptr<const IconData> getIconData(const QString& name) const;
+        std::shared_ptr<const IconData> getMapIconData(const QString& name) const;
+        std::shared_ptr<const IconData> getShaderOrShieldData(const QString& name) const;
+
         bool obtainIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
-        bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
         bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
-        bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
-        bool obtainIconShield(const QString& name, const float scale, sk_sp<const SkImage>& outIconShield) const;
+        bool obtainShaderOrShield(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;

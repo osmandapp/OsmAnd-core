@@ -142,6 +142,7 @@
 #include <OsmAndCore/Map/WeatherTileResourcesManager.h>
 #include <OsmAndCore/Map/GeoTileObjectsProvider.h>
 #include <OsmAndCore/SingleSkImage.h>
+#include <OsmAndCore/Icons.h>
 #include <OsmAndCore/Metrics.h>
 #include "SwigUtilities.h"
 
@@ -339,6 +340,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::WeatherTileResourcesManager)
 	%shared_ptr(OsmAnd::GeoTileObjectsProvider)
 	%shared_ptr(OsmAnd::Metric)
+	%shared_ptr(OsmAnd::IconData)
+	%shared_ptr(OsmAnd::LayeredIconData)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -370,12 +373,18 @@ using namespace OsmAnd;
 #endif
 
 #ifdef SWIG_JAVA
+	%include <swig/java/AndroidBitmap.i>
+#endif
+
+#ifdef SWIG_JAVA
 	%rename(equals) operator==;
 	%rename(notEquals) operator!=;
 	%rename(method) operator();
 #endif
 %include <swig/OsmAndCore_Stubs.h>
 %include <OsmAndCore/SingleSkImage.h>
+%include <OsmAndCore/Icons.h>
+	%template(QListIconData) QList< std::shared_ptr<const OsmAnd::IconData> >;
 %include <OsmAndCore/Metrics.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>

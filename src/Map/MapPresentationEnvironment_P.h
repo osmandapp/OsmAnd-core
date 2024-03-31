@@ -23,6 +23,8 @@
 #include "MapStyleConstantValue.h"
 #include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
+#include "Icons.h"
+#include "IconsProvider.h"
 
 namespace OsmAnd
 {
@@ -82,28 +84,18 @@ namespace OsmAnd
 
         MapStubStyle _desiredStubsStyle;
 
-        mutable QMutex _shadersMutex;
-        mutable QHash< QString, sk_sp<const SkImage> > _shaders;
+        std::shared_ptr<IconsProvider> _mapIcons;
+        std::shared_ptr<IconsProvider> _shadersAndShields;
 
-        mutable QMutex _mapIconsMutex;
-        mutable QHash< QString, sk_sp<const SkImage> > _mapIcons;
+        bool obtainIconLayerData(
+            const std::shared_ptr<const MapObject>& mapObject,
+            const MapStyleEvaluationResult& evaluationResult,
+            const IMapStyle::ValueDefinitionId valueDefId,
+            const float scale,
+            std::shared_ptr<const IconData>& outIconData) const;
+        bool obtainResource(const QString& name, QByteArray& outResource) const;
+        std::shared_ptr<const IconData> getIconDataFromProvider(const QString& name, const std::shared_ptr<const IconsProvider>& provider) const;
 
-        mutable QMutex _textShieldsMutex;
-        mutable QHash< QString, sk_sp<const SkImage> > _textShields;
-
-        mutable QMutex _iconShieldsMutex;
-        mutable QHash< QString, sk_sp<const SkImage> > _iconShields;
-
-        QString getShaderResourcePath(const QString& name) const;
-        QString getMapIconResourcePath(const QString& name) const;
-        QString getShieldResourcePath(const QString& name) const;
-        bool containsResourceByName(const QString& name) const;
-        QByteArray obtainResourceByName(const QString& name) const;
-
-        static QString makeIconKey(const QString& name, const float scale)
-        {
-            return QLatin1String("%1_%2").arg(name).arg(static_cast<int>(scale * 1000));
-        }
     public:
         virtual ~MapPresentationEnvironment_P();
 
@@ -123,11 +115,19 @@ namespace OsmAnd
         void applyTo(MapStyleEvaluator& evaluator) const;
         void applyTo(MapStyleEvaluator &evaluator, const QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > &settings) const;
 
+        std::shared_ptr<const LayeredIconData> getLayeredIconData(
+            const QString& tag,
+            const QString& value,
+            const ZoomLevel zoom,
+            const int textLength,
+            const QString* const additional) const;
+        std::shared_ptr<const IconData> getIconData(const QString& name) const;
+        std::shared_ptr<const IconData> getMapIconData(const QString& name) const;
+        std::shared_ptr<const IconData> getShaderOrShieldData(const QString& name) const;
+
         bool obtainIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
-        bool obtainShader(const QString& name, const float scale, sk_sp<const SkImage>& outShader) const;
         bool obtainMapIcon(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
-        bool obtainTextShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
-        bool obtainIconShield(const QString& name, const float scale, sk_sp<const SkImage>& outTextShield) const;
+        bool obtainShaderOrShield(const QString& name, const float scale, sk_sp<const SkImage>& outIcon) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;
