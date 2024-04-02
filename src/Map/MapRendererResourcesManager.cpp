@@ -2514,7 +2514,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
         assert(resource->_cancelRequestCallback != nullptr);
         resource->_cancelRequestCallback();
 
-        return true;
+        return false;
     }
     else if (resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath))
     {

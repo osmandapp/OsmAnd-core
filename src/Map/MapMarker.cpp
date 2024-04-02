@@ -74,6 +74,16 @@ void OsmAnd::MapMarker::setPosition(const PointI position)
     _p->setPosition(position);
 }
 
+float OsmAnd::MapMarker::getHeight() const
+{
+    return _p->getHeight();
+}
+
+void OsmAnd::MapMarker::setHeight(const float height)
+{
+    _p->setHeight(height);
+}
+
 float OsmAnd::MapMarker::getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const
 {
     return _p->getOnMapSurfaceIconDirection(key);

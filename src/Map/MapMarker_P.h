@@ -45,6 +45,8 @@ namespace OsmAnd
 
         PointI _position;
 
+        float _height;
+
         QHash< MapMarker::OnSurfaceIconKey, float > _directions;
 
         ColorARGB _pinIconModulationColor;
@@ -98,6 +100,9 @@ namespace OsmAnd
 
         PointI getPosition() const;
         void setPosition(const PointI position);
+
+        float getHeight() const;
+        void setHeight(const float height);
 
         float getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction);
