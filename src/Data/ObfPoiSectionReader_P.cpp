@@ -925,8 +925,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                 if (!query.isNull())
                 {
-                    bool accept = false;
-                    accept = accept || matcher.matches(nativeName) || matcher.matches(OsmAnd::ICU::transliterateToLatin(nativeName));
+                    bool accept = !nativeName.isEmpty() &&
+                    (matcher.matches(nativeName) || matcher.matches(OsmAnd::ICU::transliterateToLatin(nativeName)));
                     for (const auto& localizedName : constOf(localizedNames))
                     {
                         accept = accept || matcher.matches(localizedName);
