@@ -1,6 +1,8 @@
 %native (copyPixels) jboolean copyPixels(SkBitmap sourceBitmap, jobject targetBitmap);
 %{
 
+#ifdef OSMAND_TARGET_OS_android
+
 extern "C" {
 
 #include <android/bitmap.h>
@@ -61,5 +63,7 @@ Java_net_osmand_core_jni_OsmAndCoreJNI_copyPixels(JNIEnv *jenv, jclass jCls,
 }
 
 }
+
+#endif // defined(OSMAND_TARGET_OS_android)
 
 %}
