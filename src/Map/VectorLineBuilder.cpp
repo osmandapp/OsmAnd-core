@@ -227,18 +227,6 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setScreenScale(const float
     return *this;
 }
 
-float OsmAnd::VectorLineBuilder::getMapDensity() const
-{
-    return _p->getMapDensity();
-}
-
-OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setMapDensity(const float mapDensity)
-{
-    _p->setMapDensity(mapDensity);
-
-    return *this;
-}
-
 OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setEndCapStyle(const VectorLine::EndCapStyle endCapStyle)
 {
     _p->setEndCapStyle(endCapStyle);

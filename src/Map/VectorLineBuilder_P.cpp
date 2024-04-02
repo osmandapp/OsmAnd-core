@@ -356,20 +356,6 @@ void OsmAnd::VectorLineBuilder_P::setScreenScale(const float screenScale)
     _screenScale = screenScale;
 }
 
-float OsmAnd::VectorLineBuilder_P::getMapDensity() const
-{
-    QReadLocker scopedLocker(&_lock);
-
-    return _mapDensity;
-}
-
-void OsmAnd::VectorLineBuilder_P::setMapDensity(const float mapDensity)
-{
-    QWriteLocker scopedLocker(&_lock);
-
-    _mapDensity = mapDensity;
-}
-
 void OsmAnd::VectorLineBuilder_P::setEndCapStyle(const VectorLine::EndCapStyle endCapStyle)
 {
     QWriteLocker scopedLocker(&_lock);
@@ -411,7 +397,6 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
                                                           _specialPathIcon,
                                                           _pathIconOnSurface,
                                                           _screenScale,
-                                                          _mapDensity,
                                                           _endCapStyle,
                                                           _jointStyle));
     line->setLineWidth(_lineWidth);

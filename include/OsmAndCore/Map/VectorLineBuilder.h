@@ -126,9 +126,6 @@ namespace OsmAnd
 
         float getScreenScale() const;
         VectorLineBuilder& setScreenScale(const float step);
-        
-        float getMapDensity() const;
-        VectorLineBuilder& setMapDensity(const float mapDensity);
 
         // Get/set cap style for path ends (BUTT, SQUARE, ROUND, JOINT, ARROW)
         VectorLineBuilder& setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);

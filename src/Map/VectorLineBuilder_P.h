@@ -62,7 +62,6 @@ namespace OsmAnd
         float _specialPathIconStep;
         bool _pathIconOnSurface;
         float _screenScale;
-        float _mapDensity;
 
     public:
         virtual ~VectorLineBuilder_P();
@@ -137,9 +136,6 @@ namespace OsmAnd
 
         float getScreenScale() const;
         void setScreenScale(const float screenScale);
-        
-        float getMapDensity() const;
-        void setMapDensity(const float mapDensity);
 
         void setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);
 
