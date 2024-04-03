@@ -4,6 +4,14 @@
 #include "MapDataProviderHelpers.h"
 #include "MapRenderer.h"
 
+OsmAnd::SqliteHeightmapTileProvider::SqliteHeightmapTileProvider()
+    : _p(new SqliteHeightmapTileProvider_P(this))
+    , sourcesCollection(nullptr)
+    , filesCollection(nullptr)
+    , outputTileSize(OsmAnd::MapRenderer::ElevationDataTileSize)
+{
+}
+
 OsmAnd::SqliteHeightmapTileProvider::SqliteHeightmapTileProvider(
     const std::shared_ptr<const ITileSqliteDatabasesCollection>& sourcesCollection_,
     uint32_t outputTileSize_)

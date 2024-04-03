@@ -235,6 +235,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
 {
     _resourcesInGPU.clear();
+    _resourcesInGPUCache.clear();
 }
 
 void OsmAnd::MapRendererKeyedSymbolsResource::lostDataInGPU()

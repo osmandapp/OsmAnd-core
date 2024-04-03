@@ -118,6 +118,9 @@ namespace OsmAnd
         PointI getPosition() const;
         void setPosition(const PointI position);
 
+        float getHeight() const;
+        void setHeight(const float height);
+
         float getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction);
 

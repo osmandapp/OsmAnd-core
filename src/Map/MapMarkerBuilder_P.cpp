@@ -16,7 +16,7 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)
     , _accuracyCircleRadius(0.0)
-    , _direction(0.0f)
+    , _height(NAN)
     , _pinIconVerticalAlignment(MapMarker::PinIconVerticalAlignment::CenterVertical)
     , _pinIconHorisontalAlignment(MapMarker::PinIconHorisontalAlignment::CenterHorizontal)
     , owner(owner_)
@@ -137,6 +137,20 @@ void OsmAnd::MapMarkerBuilder_P::setPosition(const PointI position)
     QWriteLocker scopedLocker(&_lock);
 
     _position = position;
+}
+
+float OsmAnd::MapMarkerBuilder_P::getHeight() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _height;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setHeight(const float height)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _height = height;
 }
 
 sk_sp<const SkImage> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
@@ -309,6 +323,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         marker->setAccuracyCircleRadius(_accuracyCircleRadius);
     }
     marker->setPosition(_position);
+    marker->setHeight(_height);
     marker->setPinIconModulationColor(_pinIconModulationColor);
     
     marker->applyChanges();

@@ -40,6 +40,7 @@ namespace OsmAnd
                 
         void addArrowsOnSegmentPath(
             const std::vector<PointI>& segmentPoints,
+            QList<float>& segmentHeights,
             const std::vector<bool>& includedPoints,
             const PointI64& arrowsOrigin);
         

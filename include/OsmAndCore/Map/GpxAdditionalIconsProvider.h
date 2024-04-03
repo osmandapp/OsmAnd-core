@@ -49,10 +49,12 @@ namespace OsmAnd
             SplitLabel(
                 const PointI& pos31,
                 const QString& text,
-                const ColorARGB& gpxColor);
+                const ColorARGB& gpxColor,
+                const float height = NAN);
             virtual ~SplitLabel();
             
             PointI pos31;
+            float height;
             QString text;
             ColorARGB gpxColor;
         };
@@ -89,13 +91,15 @@ namespace OsmAnd
             const QList<SplitLabel>& splitLabels,
             const SingleSkImage& startIcon,
             const SingleSkImage& finishIcon,
-            const SingleSkImage& startFinishIcon);
+            const SingleSkImage& startFinishIcon,
+            const QList<float>& startFinishHeights = QList<float>());
         virtual ~GpxAdditionalIconsProvider();
         
         const int baseOrder;
         const double screenScale;
 
         const QList<PointI> startFinishPoints;
+        const QList<float> startFinishHeights;
         const QList<SplitLabel> splitLabels;
         
         const sk_sp<const SkImage> startIcon;
