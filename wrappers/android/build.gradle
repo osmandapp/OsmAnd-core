@@ -195,23 +195,16 @@ task copyOsmAndResources(type: Copy) {
     // Map icons
     from("../../../resources/rendering_styles/style-icons/map-icons-svg") {
         include "mx_*.svg"
+        include "c_mx_*.svg"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/icons/" + fileCopyDetails.path.replaceAll(/mx_(.*)\.svg/, '$1.svg')
-        }
-    }
-    from("../../../resources/rendering_styles/style-icons/map-shaders-svg") {
-        include "h_*shield*.svg"
-        include "h_*osmc*.svg"
-        eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.svg/, '$1.svg')
+            fileCopyDetails.path = "map/icons/" + fileCopyDetails.path.replaceAll(/(c_)?mx_(.*)\.svg/, '$1$2.svg')
         }
     }
     from("../../../resources/rendering_styles/style-icons/map-shaders-svg") {
         include "h_*.svg"
-        exclude "h_*shield*.svg"
-        exclude "h_*osmc*.svg"
+        include "c_h_*.svg"
         eachFile { fileCopyDetails ->
-            fileCopyDetails.path = "map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.svg/, '$1.svg')
+            fileCopyDetails.path = "map/shaders_and_shields/" + fileCopyDetails.path.replaceAll(/(c_)?h_(.*)\.svg/, '$1$2.svg')
         }
     }
 

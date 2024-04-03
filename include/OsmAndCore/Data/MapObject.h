@@ -134,6 +134,7 @@ namespace OsmAnd
         bool containsTag(const QStringRef& tagRef, const bool checkAdditional = false) const;
         const AttributeMapping::TagValue* resolveAttributeByIndex(const uint32_t index, const bool additional = false) const;
         virtual QHash<QString, QString> getResolvedAttributes() const;
+        QString formatWithAdditionalAttributes(const QString& value) const;
 
         // Layers
         virtual LayerType getLayerType() const;
