@@ -791,22 +791,29 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime /*= 0*/,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost,
+    int64_t dateTime /*= 0*/,
     const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
+    if (*gpuContextLost)
+        return false;
+
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU, dateTime, resource);
+        return uploadTiledDataAsTextureToGPU(
+            rasterMapLayerData, resourceInGPU, waitForGPU, gpuContextLost, dateTime, resource);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
         if (isSupported_vertexShaderTextureLookup)
         {
-            return uploadTiledDataAsTextureToGPU(elevationData, resourceInGPU);
+            return uploadTiledDataAsTextureToGPU(elevationData, resourceInGPU, waitForGPU, gpuContextLost);
         }
         else
         {
-            return uploadTiledDataAsArrayBufferToGPU(elevationData, resourceInGPU);
+            return uploadTiledDataAsArrayBufferToGPU(elevationData, resourceInGPU, waitForGPU, gpuContextLost);
         }
     }
 
@@ -816,15 +823,20 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(
     const std::shared_ptr< const MapSymbol >& symbol,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
 {
+    if (*gpuContextLost)
+        return false;
+
     if (const auto rasterMapSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(symbol))
     {
-        return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU);
+        return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU, waitForGPU, gpuContextLost);
     }
     else if (const auto primitiveMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(symbol))
     {
-        return uploadSymbolAsMeshToGPU(primitiveMapSymbol, resourceInGPU);
+        return uploadSymbolAsMeshToGPU(primitiveMapSymbol, resourceInGPU, waitForGPU, gpuContextLost);
     }
 
     assert(false);
@@ -887,7 +899,10 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime /*= 0*/,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost,
+    int64_t dateTime /*= 0*/,
     const std::shared_ptr<MapRendererBaseResource>& resource /*= nullptr*/)
 {
     GL_CHECK_PRESENT(glGenTextures);
@@ -1097,6 +1112,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
             dateTimePrevious,
             dateTimeNext);
 
+        if (waitForGPU)
+            waitUntilUploadIsComplete(gpuContextLost);
+
         resourceInGPU = textureInGPU;
         if (isOldInGPU)
             resource->markAsFreshInGPU();
@@ -1172,6 +1190,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
 
+    if (waitForGPU)
+        waitUntilUploadIsComplete(gpuContextLost);
+
     resourceInGPU = slotInGPU;
     if (isOldInGPU)
         resource->markAsFreshInGPU();
@@ -1181,7 +1202,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -1269,8 +1292,16 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
-    auto arrayBufferInGPU = new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(buffer), itemsCount);
-    resourceInGPU.reset(static_cast<ResourceInGPU*>(arrayBufferInGPU));
+    // Create resource-in-GPU descriptor
+    const auto arrayBufferInGPU = std::make_shared<ArrayBufferInGPU>(
+        this,
+        reinterpret_cast<RefInGPU>(buffer),
+        itemsCount);
+
+    if (waitForGPU)
+        waitUntilUploadIsComplete(gpuContextLost);
+
+    resourceInGPU = arrayBufferInGPU;
 
     delete[] pItems;
 
@@ -1279,7 +1310,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
 
 bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     const std::shared_ptr< const RasterMapSymbol >& symbol,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -1355,20 +1388,27 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     GL_CHECK_RESULT;
 
     // Create resource-in-GPU descriptor
-    resourceInGPU.reset(new TextureInGPU(
+    const auto textureInGPU = std::make_shared<TextureInGPU>(
         this,
         reinterpret_cast<RefInGPU>(texture),
         image->width(),
         image->height(),
         1,
-        alphaChannelType));
+        alphaChannelType);
+
+    if (waitForGPU)
+        waitUntilUploadIsComplete(gpuContextLost);
+
+    resourceInGPU = textureInGPU;
 
     return true;
 }
 
 bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     const std::shared_ptr< const VectorMapSymbol >& symbol,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+    bool waitForGPU,
+    volatile bool* gpuContextLost)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -1447,15 +1487,29 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
             new std::vector<std::pair<TileId, int32_t>>(*verticesAndIndices->partSizes));
     }
     
-    // Create mesh resource
-    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource, partSizes,
-        verticesAndIndices->zoomLevel, verticesAndIndices->isDenseObject, position31));
+    // Create resource-in-GPU descriptor
+    const auto meshInGPU = std::make_shared<MeshInGPU>(
+        this,
+        vertexBufferResource,
+        indexBufferResource,
+        partSizes,
+        verticesAndIndices->zoomLevel,
+        verticesAndIndices->isDenseObject,
+        position31);
+
+    if (waitForGPU)
+        waitUntilUploadIsComplete(gpuContextLost);
+
+    resourceInGPU = meshInGPU;
 
     return true;
 }
 
 void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextLost)
 {
+    if (*gpuContextLost)
+        return;
+
     if (isSupported_sync)
     {
         const auto sync = glFenceSync_wrapper(GL_SYNC_GPU_COMMANDS_COMPLETE /*0x9117*/, 0);

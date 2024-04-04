@@ -84,6 +84,9 @@ namespace OsmAnd
         // Up-to-date data request is being processed
         ProcessingUpdate,
 
+        // Up-to-date data request is being processed while resource is being reuploaded to GPU
+        ProcessingUpdateWhileRenewing,
+
         // Up-to-date data request was canceled while being processed
         UpdatingCancelledWhileBeingProcessed,
 

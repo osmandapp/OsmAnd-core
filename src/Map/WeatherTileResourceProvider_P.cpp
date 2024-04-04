@@ -1209,10 +1209,14 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
         }
         else if (cacheOnly)
         {
+            /* Don't provide incomplete set of images from cache
             zoom = InvalidZoomLevel; // indicate, that recent data should be requested
             auto emptyImage = SkiaUtilities::getEmptyImage(provider->tileSize, provider->tileSize);
             if (emptyImage)
                 images.insert(dateTime, emptyImage);
+            */
+            callback(true, nullptr, nullptr);
+            return;
         }
         dateTime += timeGap;
     }

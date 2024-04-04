@@ -201,7 +201,13 @@ bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
 {
     QReadLocker scopedLocker(&_tileDateTimeLock);
 
-    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU, _tileDateTime, resource);
+    bool ok = renderer->gpuAPI->uploadTiledDataToGPU(
+        mapTile,
+        outResourceInGPU,
+        renderer->setupOptions.gpuWorkerThreadEnabled,
+        &(renderer->gpuContextIsLost),
+        _tileDateTime,
+        resource);
     return ok;
 }
 
@@ -209,7 +215,11 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
     const std::shared_ptr<const MapSymbol>& mapSymbol,
     std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    return renderer->gpuAPI->uploadSymbolToGPU(mapSymbol, outResourceInGPU);
+    return renderer->gpuAPI->uploadSymbolToGPU(
+        mapSymbol,
+        outResourceInGPU,
+        renderer->setupOptions.gpuWorkerThreadEnabled,
+        &(renderer->gpuContextIsLost));
 }
 
 bool OsmAnd::MapRendererResourcesManager::adjustImageToConfiguration(
@@ -335,7 +345,8 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                             || state == MapRendererResourceState::IsBeingUsed
                             || state == MapRendererResourceState::PreparedRenew
                             || state == MapRendererResourceState::Renewing
-                            || state == MapRendererResourceState::ProcessingUpdate))
+                            || state == MapRendererResourceState::ProcessingUpdate
+                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing))
                         {
                             resource->markAsJunk();
                         }
@@ -1139,6 +1150,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
                     if (cachedResource && requestSucceeded &&
                         (!dataAvailable || cachedResource->zoom != cachedResource->_sourceData->zoom) &&
                         (cachedResource->getState() == MapRendererResourceState::ProcessingUpdate ||
+                        cachedResource->getState() == MapRendererResourceState::ProcessingUpdateWhileRenewing ||
                         cachedResource->getState() == MapRendererResourceState::ProcessingRequest) &&
                         !queryController->isAborted())
                     {
@@ -1355,7 +1367,7 @@ bool OsmAnd::MapRendererResourcesManager::beginResourceRequestProcessing(
         //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
         //     In this case entry will be removed in post-execute handler.
         //   - if update request task was cancelled before has started it's execution,
-        //     since in that case a state change "RequestedUpdate => ProcessingUpdate" must have happend.
+        //     since in that case a state change "RequestedUpdate => UnloadPending" must have happend.
         return false;
     }
 
@@ -1374,6 +1386,12 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
         {
             LOG_RESOURCE_STATE_CHANGE(resource,
                 MapRendererResourceState::ProcessingUpdate, MapRendererResourceState::Outdated);
+        }
+        else if (resource->setStateIf(
+            MapRendererResourceState::ProcessingUpdateWhileRenewing, MapRendererResourceState::Outdated))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource,
+                MapRendererResourceState::ProcessingUpdateWhileRenewing, MapRendererResourceState::Outdated);
         }
         else if (resource->setStateIf(
             MapRendererResourceState::UpdatingCancelledWhileBeingProcessed, MapRendererResourceState::UnloadPending))
@@ -1397,6 +1415,8 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
     if (!resource->setStateIf(MapRendererResourceState::ProcessingRequest,
         dataAvailable ? MapRendererResourceState::Ready : MapRendererResourceState::Unavailable)
         && !resource->setStateIf(MapRendererResourceState::ProcessingUpdate,
+        dataAvailable ? MapRendererResourceState::PreparedRenew : MapRendererResourceState::Uploaded)
+        && !resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
         dataAvailable ? MapRendererResourceState::PreparedRenew : MapRendererResourceState::Uploaded))
     {
         assert(resource->getState() == MapRendererResourceState::RequestCanceledWhileBeingProcessed
@@ -1439,6 +1459,23 @@ void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
             LOG_RESOURCE_STATE_CHANGE(
                 resource,
                 MapRendererResourceState::ProcessingUpdate,
+                MapRendererResourceState::Uploaded);
+        }
+    }
+    else if (resource->getState() == MapRendererResourceState::MapRendererResourceState::ProcessingUpdateWhileRenewing)
+    {
+        if (dataAvailable)
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                MapRendererResourceState::PreparedRenew);
+        }
+        else
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingUpdateWhileRenewing,
                 MapRendererResourceState::Uploaded);
         }
     }
@@ -1774,7 +1811,8 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         {
             // Skip not-ready resources
             if (entry->getState() != MapRendererResourceState::Ready &&
-                entry->getState() != MapRendererResourceState::PreparedRenew)
+                entry->getState() != MapRendererResourceState::PreparedRenew &&
+                entry->getState() != MapRendererResourceState::ProcessingUpdate)
                 return false;
 
             // Check if limit was reached
@@ -1807,6 +1845,12 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             LOG_RESOURCE_STATE_CHANGE(
                 resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
         }
+        else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdate,
+            MapRendererResourceState::ProcessingUpdateWhileRenewing))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::ProcessingUpdate,
+                MapRendererResourceState::ProcessingUpdateWhileRenewing);
+        }
         else
             continue;
 
@@ -1829,25 +1873,41 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
                     "Failed to upload resource %p to GPU",
                     resource.get());
             }
+
+            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Unloaded))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading,
+                    MapRendererResourceState::Unloaded);
+            }
+            else if (resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Uploaded))
+            {
+                LOG_RESOURCE_STATE_CHANGE(
+                    resource, MapRendererResourceState::Renewing, MapRendererResourceState::Uploaded);
+            }
+
             continue;
         }
 
-        // Before marking as uploaded, if uploading is done from GPU worker thread,
-        // wait until operation completes
-        if (renderer->setupOptions.gpuWorkerThreadEnabled)
-            renderer->gpuAPI->waitUntilUploadIsComplete(&(renderer->gpuContextIsLost));
-
-        // Mark as uploaded
-        assert(resource->getState() == MapRendererResourceState::Uploading || resource->getState() == MapRendererResourceState::Renewing);
-
+        // Mark as uploaded/outdated
         if (resource->isOld)
         {
-            resource->setState(MapRendererResourceState::Outdated);
+            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Outdated)
+                || resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Outdated)
+                || resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                MapRendererResourceState::ProcessingUpdate))
+            {
+                if (!resource->leaveQuietly)
+                    renderer->invalidateFrame();
+            }
+        }
+        else if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded)
+                || resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Uploaded)
+                || resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                MapRendererResourceState::ProcessingUpdate))
+        {
             if (!resource->leaveQuietly)
                 renderer->invalidateFrame();
         }
-        else
-            resource->setState(MapRendererResourceState::Uploaded);
 
         // Count uploaded resources
         totalUploaded++;
@@ -2491,6 +2551,25 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 
         return false;
     }
+    else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+        MapRendererResourceState::UpdatingCancelledWhileBeingProcessed))
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource,
+            MapRendererResourceState::ProcessingUpdateWhileRenewing,
+            MapRendererResourceState::UpdatingCancelledWhileBeingProcessed);
+
+        // If resource request is being processed, keep the entry until processing is complete.
+
+        // Cancel the task
+        if (resource->type == MapRendererResourceType::MapLayer && resource->supportsObtainDataAsync())
+        {
+            assert(resource->_cancelRequestCallback != nullptr);
+            resource->_cancelRequestCallback();
+        }
+
+        return false;
+    }
     else if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))
     {
         LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
@@ -2595,7 +2674,7 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
             [&needsResourcesUploadOrUnload, &containedUnprocessableResources, gpuContextLost]
             (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
             {
-                // Block poddible attempts to access renderer in finishing async tasks
+                // Block possible attempts to access renderer in finishing async tasks
                 entry->shouldLeaveQuietly();
 
                 // When resources are released, it's a termination process, so all entries have to be removed.
@@ -2604,6 +2683,7 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 // - ProcessingRequest
                 // - RequestedUpdate
                 // - ProcessingUpdate
+                // - ProcessingUpdateWhileRenewing
                 // - Ready
                 // - Unloaded
                 // - Uploaded
@@ -2668,7 +2748,19 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                     LOG_RESOURCE_STATE_CHANGE(
                         entry,
                         MapRendererResourceState::ProcessingUpdate,
-                        MapRendererResourceState::pdatingCancelledWhileBeingProcessed);
+                        MapRendererResourceState::UpdatingCancelledWhileBeingProcessed);
+
+                    containedUnprocessableResources = true;
+
+                    return false;
+                }
+                else if (entry->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                    MapRendererResourceState::UpdatingCancelledWhileBeingProcessed))
+                {
+                    LOG_RESOURCE_STATE_CHANGE(
+                        entry,
+                        MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                        MapRendererResourceState::UpdatingCancelledWhileBeingProcessed);
 
                     containedUnprocessableResources = true;
 
@@ -3080,6 +3172,8 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     resourceStateMap.insert(MapRendererResourceState::Updating, QLatin1String("Updating"));
     resourceStateMap.insert(MapRendererResourceState::RequestedUpdate, QLatin1String("RequestedUpdate"));
     resourceStateMap.insert(MapRendererResourceState::ProcessingUpdate, QLatin1String("ProcessingUpdate"));
+    resourceStateMap.insert(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+        QLatin1String("ProcessingUpdateWhileRenewing"));
     resourceStateMap.insert(MapRendererResourceState::UpdatingCancelledWhileBeingProcessed,
         QLatin1String("UpdatingCancelledWhileBeingProcessed"));
     resourceStateMap.insert(MapRendererResourceState::JustBeforeDeath, QLatin1String("JustBeforeDeath"));

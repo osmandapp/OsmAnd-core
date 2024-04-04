@@ -22,6 +22,7 @@ OsmAnd::MapRendererBaseTiledResource::~MapRendererBaseTiledResource()
         state == MapRendererResourceState::Updating ||
         state == MapRendererResourceState::RequestedUpdate ||
         state == MapRendererResourceState::ProcessingUpdate ||
+        state == MapRendererResourceState::ProcessingUpdateWhileRenewing ||
         state == MapRendererResourceState::UpdatingCancelledWhileBeingProcessed ||
         state == MapRendererResourceState::Uploaded ||
         state == MapRendererResourceState::IsBeingUsed ||
