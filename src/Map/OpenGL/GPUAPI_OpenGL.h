@@ -246,14 +246,29 @@ namespace OsmAnd
             ProgramPipeline,
         };
     private:
-        bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0,
+        bool uploadTiledDataAsTextureToGPU(
+            const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost,
+            int64_t dateTime = 0,
             const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
-        bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTiledDataAsArrayBufferToGPU(
+            const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost);
 
-        bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadSymbolAsTextureToGPU(
+            const std::shared_ptr< const RasterMapSymbol >& symbol,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost);
+        bool uploadSymbolAsMeshToGPU(
+            const std::shared_ptr< const VectorMapSymbol >& symbol,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost);
 
         GLuint _vaoSimulationLastUnusedId;
         struct SimulatedVAO
@@ -425,10 +440,18 @@ namespace OsmAnd
             const QHash<QString, GlslProgramVariable>& variablesMap);
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
-        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& tile,
-            std::shared_ptr<const ResourceInGPU>& resourceInGPU, int64_t dateTime = 0,
+        bool uploadTiledDataToGPU(
+            const std::shared_ptr<const IMapTiledDataProvider::Data>& tile,
+            std::shared_ptr<const ResourceInGPU>& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost,
+            int64_t dateTime = 0,
             const std::shared_ptr<MapRendererBaseResource>& resource = nullptr) override;
-        bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) override;
+        bool uploadSymbolToGPU(
+            const std::shared_ptr< const MapSymbol >& symbol,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost) override;
 
         void waitUntilUploadIsComplete(volatile bool* gpuContextLost) override;
 

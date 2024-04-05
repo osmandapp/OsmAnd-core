@@ -155,15 +155,19 @@ void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
 
 bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()
 {
-    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU, shared_from_this());
+    auto sourceData = _sourceData;
+    if (!sourceData)
+        return true;
+
+    bool ok = resourcesManager->uploadTiledDataToGPU(sourceData, _resourceInGPU, shared_from_this());
     if (!ok)
         return false;
 
     // Since content was uploaded to GPU, it's safe to release it keeping retainable data
-    _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
+    _retainableCacheMetadata = sourceData->retainableCacheMetadata;
     // Remove data in case it contains constant (single) raster image only
-    if (_sourceData && _sourceData->images.size() <= 1)
-        _sourceData.reset();
+    if (sourceData->images.size() <= 1)
+        sourceData.reset();
 
     return true;
 }

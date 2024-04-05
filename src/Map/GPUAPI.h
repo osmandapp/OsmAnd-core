@@ -326,11 +326,16 @@ namespace OsmAnd
 
         virtual bool uploadTiledDataToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU, int64_t dateTime = 0,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost,
+            int64_t dateTime = 0,
             const std::shared_ptr<MapRendererBaseResource>& resource = nullptr) = 0;
         virtual bool uploadSymbolToGPU(
             const std::shared_ptr< const MapSymbol >& symbol,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
+            bool waitForGPU,
+            volatile bool* gpuContextLost) = 0;
 
         virtual void waitUntilUploadIsComplete(volatile bool* gpuContextLost) = 0;
 
