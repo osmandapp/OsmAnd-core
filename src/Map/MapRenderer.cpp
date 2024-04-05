@@ -49,6 +49,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
     , _requestedDebugSettings(baseDebugSettings_->createCopy())
+    , gpuContextIsLost(false)
     , gpuAPI(gpuAPI_)
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
