@@ -24,6 +24,9 @@
 
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
+#define VECTOR_LINE_SCALE_COEF 2.0f
+#define LINE_WIDTH_THRESHOLD_DP 8.0f * VECTOR_LINE_SCALE_COEF
+
 // Colorization shemes
 #define COLORIZATION_NONE 0
 #define COLORIZATION_GRADIENT 1
@@ -1355,7 +1358,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return owner->specialPathIcon != nullptr && _lineWidth <= owner->specialPathIcon->width() + 3.0f;
+    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale);
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const
