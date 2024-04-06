@@ -611,8 +611,7 @@ QHash<QString, int> OsmAnd::MapPresentationEnvironment_P::getLineRenderingAttrib
 {
     int color = -1, shadowColor = -1, color_2 = -1, color_3 = -1;
     float strokeWidth = -1.0f, strokeWidth_2 = -1.0f, strokeWidth_3 = -1.0f, shadowRadius = -1.0f;
-    
-    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->mapScaleFactor);
+    MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor);
     applyTo(evaluator);
     auto renderAttr = owner->mapStyle->getAttribute(renderAttrName);
     MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
