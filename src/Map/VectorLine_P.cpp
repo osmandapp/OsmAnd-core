@@ -22,10 +22,10 @@
 #include <Polyline2D/Polyline2D.h>
 #include <Polyline2D/Vec2.h>
 
-#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 10.0f
-#define ARROW_DISTANCE_MULTIPLIER 1.5f
-#define LINE_WIDTH_THRESHOLD_DP 8.0f
+#define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
+
 #define VECTOR_LINE_SCALE_COEF 2.0f
+#define LINE_WIDTH_THRESHOLD_DP 8.0f * VECTOR_LINE_SCALE_COEF
 
 // Colorization shemes
 #define COLORIZATION_NONE 0
@@ -230,7 +230,7 @@ void OsmAnd::VectorLine_P::setLineWidth(const double width)
         if (owner->pathIcon)
         {
             double newWidth = _lineWidth / 3.4f;
-            double scale = VECTOR_LINE_SCALE_COEF * newWidth / owner->pathIcon->width();
+            double scale = newWidth / owner->pathIcon->width();
             auto scaledPathIcon = SkiaUtilities::scaleImage(owner->pathIcon, scale, scale);
             _scaledPathIcon = scaledPathIcon ? scaledPathIcon : owner->pathIcon;
         }
@@ -984,7 +984,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     const bool withHeights = _hasElevationDataProvider && hasHeights();
     float zoom = !withHeights ? this->zoom() : _surfaceZoomLevel +
         (_surfaceVisualZoom >= 1.0f ? _surfaceVisualZoom - 1.0f : (_surfaceVisualZoom - 1.0f) * 2.0f);
-    double scale = VECTOR_LINE_SCALE_COEF * Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
+    double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
 
     double visualShiftCoef = 1 / (1 + _mapVisualZoomShift);
@@ -1371,7 +1371,7 @@ double OsmAnd::VectorLine_P::getPointStepPx() const
     }
     else
     {
-        return _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height() * ARROW_DISTANCE_MULTIPLIER;
+        return _pathIconStep > 0 ? _pathIconStep : _scaledPathIcon->height();
     }
 }
 
