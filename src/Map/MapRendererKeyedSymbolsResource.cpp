@@ -15,8 +15,10 @@
 OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(
     MapRendererResourcesManager* owner_,
     const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection_,
-    const Key key_)
+    const Key key_,
+    int64_t priority_ /* = std::numeric_limits<int64_t>::min() */)
     : MapRendererBaseKeyedResource(owner_, MapRendererResourceType::Symbols, collection_, key_)
+    , priority(priority_)
 {
 }
 
@@ -324,4 +326,9 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSym
     if (citResourceInGPU == _resourcesInGPU.cend())
         return nullptr;
     return *citResourceInGPU;
+}
+
+int64_t OsmAnd::MapRendererKeyedSymbolsResource::getPriority() const
+{
+    return priority;
 }

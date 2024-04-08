@@ -5,6 +5,7 @@
 
 OsmAnd::VectorLinesCollection::VectorLinesCollection()
     : _p(new VectorLinesCollection_P(this))
+    , priority(std::numeric_limits<int64_t>::min())
 {
 }
 
@@ -77,4 +78,14 @@ OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::VectorLinesCollection::getMaxZoom() const
 {
     return OsmAnd::MaxZoomLevel;
+}
+
+int64_t OsmAnd::VectorLinesCollection::getPriority() const
+{
+    return priority;
+}
+
+void OsmAnd::VectorLinesCollection::setPriority(int64_t priority_)
+{
+    priority = priority_;
 }
