@@ -112,15 +112,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
         metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage::withTerrainFilter()
-{
-    const auto result = currentState.elevationDataProvider
-        && currentState.zoomLevel >= currentState.elevationDataProvider->getMinZoom()
-        && currentState.elevationAngle < std::min(5.0f * currentState.zoomLevel, 89.0f);
-
-    return result;
-}
-
 void OsmAnd::AtlasMapRendererSymbolsStage::convertRenderableSymbolsToMapSymbolInformation(
     const QList< std::shared_ptr<const RenderableSymbol> >& input,
     QList<IMapRenderer::MapSymbolInformation>& output)
@@ -458,7 +449,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     ComputedPathsDataCache computedPathsDataCache;
     clearTerrainVisibilityFiltering();
     bool applyFiltering = pOutAcceptedMapSymbolsByOrder != nullptr;
-    if (!applyFiltering || !withTerrainFilter())
+    if (!applyFiltering || !currentState.elevationDataProvider)
     {
         // Simplified one-pass cycle if all symbols are visible on terrain
         for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))

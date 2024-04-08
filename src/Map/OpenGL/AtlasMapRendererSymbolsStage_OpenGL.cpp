@@ -2722,7 +2722,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             maxZoom = currentState.elevationDataProvider->getMaxZoom();
         }
         double tileSize;
-        for (const auto partSizes : *gpuResource->partSizes)
+        for (const auto& partSizes : *gpuResource->partSizes)
         {
             auto baseTileId = partSizes.first;
             const auto zoomLevel = gpuResource->zoomLevel;
@@ -3087,7 +3087,7 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
     const glm::vec3& thirdPointInWorld,
     const glm::vec3& fourthPointInWorld)
 {
-    if (!withTerrainFilter())
+    if (!currentState.elevationDataProvider)
         return -1;
 
     const auto gpuAPI = getGPUAPI();

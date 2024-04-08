@@ -33,12 +33,14 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMinZoom() const
     auto minZoomTiff = InvalidZoomLevel;
     if (owner->filesCollection)
         minZoomTiff = owner->filesCollection->getMinZoom();
-    if (minZoomDatabase == InvalidZoomLevel)
+    if (minZoomDatabase == InvalidZoomLevel && minZoomTiff != InvalidZoomLevel)
         return minZoomTiff;
-    else if (minZoomTiff == InvalidZoomLevel)
+    else if (minZoomTiff == InvalidZoomLevel && minZoomDatabase != InvalidZoomLevel)
         return minZoomDatabase;
-    else
+    else if (minZoomDatabase != InvalidZoomLevel && minZoomTiff != InvalidZoomLevel)
         return std::max(minZoomDatabase, minZoomTiff);
+    else
+        return MaxZoomLevel;
 }
 
 OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
@@ -49,12 +51,14 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
     auto maxZoomTiff = InvalidZoomLevel;
     if (owner->filesCollection)
         maxZoomTiff = owner->filesCollection->getMaxZoom(owner->outputTileSize - 3);
-    if (maxZoomDatabase == InvalidZoomLevel)
+    if (maxZoomDatabase == InvalidZoomLevel && maxZoomTiff != InvalidZoomLevel)
         return maxZoomTiff;
-    else if (maxZoomTiff == InvalidZoomLevel)
+    else if (maxZoomTiff == InvalidZoomLevel && maxZoomDatabase != InvalidZoomLevel)
         return maxZoomDatabase;
-    else
+    else if (maxZoomDatabase != InvalidZoomLevel && maxZoomTiff != InvalidZoomLevel)
         return std::min(maxZoomDatabase, maxZoomTiff);
+    else
+        return MaxZoomLevel;
 }
 
 int OsmAnd::SqliteHeightmapTileProvider_P::getMaxMissingDataZoomShift(int defaultMaxMissingDataZoomShift) const

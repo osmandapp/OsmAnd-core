@@ -444,7 +444,6 @@ namespace OsmAnd
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
         void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
-        bool withTerrainFilter();
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
