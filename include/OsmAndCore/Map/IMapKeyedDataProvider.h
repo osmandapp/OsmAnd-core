@@ -57,7 +57,10 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom() const = 0;
-        
+
+        virtual int64_t getPriority() const;
+        virtual void setPriority(int64_t priority);
+
         virtual QList<Key> getProvidedDataKeys() const = 0;
         virtual bool obtainKeyedData(
             const Request& request,

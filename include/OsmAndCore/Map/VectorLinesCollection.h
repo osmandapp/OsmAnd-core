@@ -31,6 +31,7 @@ namespace OsmAnd
         PrivateImplementation<VectorLinesCollection_P> _p;
         
         std::shared_ptr<VectorLineArrowsProvider> _arrowsProvider;
+        int64_t priority;
     protected:
     public:
         VectorLinesCollection();
@@ -58,6 +59,9 @@ namespace OsmAnd
         
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+
+        virtual int64_t getPriority() const Q_DECL_OVERRIDE;
+        virtual void setPriority(int64_t priority) Q_DECL_OVERRIDE;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;
