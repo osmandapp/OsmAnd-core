@@ -332,6 +332,8 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     if (_isRenderingInitialized)
         return false;
 
+    gpuContextIsLost = false;
+
     // Capture render thread ID, since rendering must be performed from
     // same thread where it was initialized
     _renderThreadId = QThread::currentThreadId();
@@ -365,8 +367,6 @@ bool OsmAnd::MapRenderer::doInitializeRendering()
 bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
-
-    gpuContextIsLost = false;
 
     // GPU worker should not be suspended initially
     _gpuWorkerIsSuspended = false;
