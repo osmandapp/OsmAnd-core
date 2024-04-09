@@ -29,14 +29,16 @@ namespace OsmAnd
 
     public:
         IconsProvider(
-            const QString& pathFormat_,
-            const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_,
-            const float displayDensityFactor_);
+            const QString& pathFormat,
+            const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider,
+            const float displayDensityFactor,
+            const bool shields);
         virtual ~IconsProvider();
 
         const QString pathFormat;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
         const float displayDensityFactor;
+        const bool shields;
 
         bool obtainIcon(
             const QString& name,

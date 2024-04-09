@@ -36,8 +36,8 @@ OsmAnd::MapPresentationEnvironment_P::~MapPresentationEnvironment_P()
 
 void OsmAnd::MapPresentationEnvironment_P::initialize()
 {
-    _mapIcons.reset(new IconsProvider(("map/icons/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor));
-    _shadersAndShields.reset(new IconsProvider(QLatin1String("map/shaders_and_shields/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor));
+    _mapIcons.reset(new IconsProvider(("map/icons/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor, false));
+    _shadersAndShields.reset(new IconsProvider(QLatin1String("map/shaders_and_shields/%1.svg"), owner->externalResourcesProvider, owner->displayDensityFactor, true));
 
     _defaultBackgroundColorAttribute = owner->mapStyle->getAttribute(QLatin1String("defaultColor"));
     _defaultBackgroundColor = ColorRGB(0xf1, 0xee, 0xe8);

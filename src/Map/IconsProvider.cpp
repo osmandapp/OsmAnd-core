@@ -7,10 +7,12 @@
 OsmAnd::IconsProvider::IconsProvider(
     const QString& pathFormat_,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_,
-    const float displayDensityFactor_)
+    const float displayDensityFactor_,
+    const bool shields_)
     : pathFormat(pathFormat_)
     , externalResourcesProvider(externalResourcesProvider_)
     , displayDensityFactor(displayDensityFactor_)
+    , shields(shields_)
 {
 }
 
@@ -78,16 +80,26 @@ bool OsmAnd::IconsProvider::containsResource(const QString& name, bool colorable
 
 QString OsmAnd::IconsProvider::makeIconKey(const QString& name, const float scale, const bool colorable) const
 {
-    return colorable
-        ? QLatin1String("%1_%2").arg(name).arg(static_cast<int>(scale * 1000))
-        : QLatin1String("c_%1_%2").arg(name).arg(static_cast<int>(scale * 1000));
+    if (shields)
+        return colorable
+            ? QLatin1String("h_%1_%2").arg(name).arg(static_cast<int>(scale * 1000))
+            : QLatin1String("c_h_%1_%2").arg(name).arg(static_cast<int>(scale * 1000));
+    else
+        return colorable
+            ? QLatin1String("%1_%2").arg(name).arg(static_cast<int>(scale * 1000))
+            : QLatin1String("c_%1_%2").arg(name).arg(static_cast<int>(scale * 1000));
 }
 
 QString OsmAnd::IconsProvider::makeIconPath(const QString& name, const bool colorable) const
 {
-    return colorable
-        ? pathFormat.arg(name)
-        : pathFormat.arg(QLatin1String("c_%1").arg(name));
+    if (shields)
+        return colorable
+            ? pathFormat.arg(QLatin1String("h_%1").arg(name))
+            : pathFormat.arg(QLatin1String("c_h_%1").arg(name));
+    else
+        return colorable
+            ? pathFormat.arg(name)
+            : pathFormat.arg(QLatin1String("c_%1").arg(name));
 }
 
 bool OsmAnd::IconsProvider::obtainIcon(
