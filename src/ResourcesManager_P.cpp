@@ -1107,7 +1107,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?file=") +
+                    QLatin1String("/download?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::RoadMapRegion:
@@ -1118,7 +1118,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".road.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?road=yes&file=") +
+                    QLatin1String("/download?road=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::SrtmMapRegion: {
@@ -1131,7 +1131,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                         .append(QLatin1String(!isSRTMF ? ".srtm.obf" : ".srtmf.obf"));
                 downloadUrl =
                         owner->repositoryBaseUrl +
-                                QLatin1String("/download.php?srtmcountry=yes&file=") +
+                                QLatin1String("/download?srtmcountry=yes&file=") +
                                 QUrl::toPercentEncoding(name);
                 break;
             }
@@ -1146,7 +1146,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".depth.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?depth=yes&file=") +
+                    QLatin1String("/download?depth=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
                 break;
@@ -1158,7 +1158,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".wiki.obf"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?wiki=yes&file=") +
+                    QLatin1String("/download?wiki=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::HillshadeRegion:
@@ -1170,7 +1170,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".hillshade.sqlitedb"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?hillshade=yes&file=") +
+                    QLatin1String("/download?hillshade=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::SlopeRegion:
@@ -1182,7 +1182,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".slope.sqlitedb"));
                 downloadUrl =
                 owner->repositoryBaseUrl +
-                QLatin1String("/download.php?slope=yes&file=") +
+                QLatin1String("/download?slope=yes&file=") +
                 QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::WeatherForecast:
@@ -1193,7 +1193,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .remove(QLatin1String(".zip"));
                 downloadUrl =
                 owner->repositoryBaseUrl +
-                QLatin1String("/download.php?weather=yes&file=") +
+                QLatin1String("/download?weather=yes&file=") +
                 QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::HeightmapRegionLegacy:
@@ -1203,7 +1203,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?heightmap=yes&file=") +
+                    QLatin1String("/download?heightmap=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::GeoTiffRegion:
@@ -1214,7 +1214,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .toLower();
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?heightmap=yes&file=") +
+                    QLatin1String("/download?heightmap=yes&file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::VoicePack:
@@ -1225,7 +1225,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
                     .append(QLatin1String(".voice"));
                 downloadUrl =
                     owner->repositoryBaseUrl +
-                    QLatin1String("/download.php?file=") +
+                    QLatin1String("/download?file=") +
                     QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::Travel:
