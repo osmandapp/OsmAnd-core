@@ -23,10 +23,16 @@ namespace OsmAnd
     {
     public:
         enum {
-            DefaultMemoryWindowSize = 16384, // 1 * 1024 * 1024, // 1Mb
+            DefaultMemoryWindowSize = 1 * 1024 * 1024, // 1Mb
         };
 
     private:
+
+		int mapCounter = 0;
+		int bytesMapped = 0;
+		int skipCounter = 0;
+		int bytesSkipped = 0;
+
         GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QFileDeviceInputStream);
 
         //! Pointer to I/O device

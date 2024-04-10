@@ -1,7 +1,5 @@
 #include "QIODeviceInputStream.h"
 
-#include "Logging.h"
-
 namespace OsmAnd
 {
     namespace gpb = google::protobuf;
@@ -43,7 +41,6 @@ bool OsmAnd::QIODeviceInputStream::Next(const void** data, int* size)
     }
     else
     {
-		LogPrintf(LogSeverityLevel::Warning, "XXX io-next %d bytes", bytesRead);
         *data = _buffer;
         *size = bytesRead;
         return true;

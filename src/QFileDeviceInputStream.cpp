@@ -26,6 +26,9 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 {
     bool ok;
 
+	LogPrintf(LogSeverityLevel::Warning, "XXX closed maps/bytes=%d/%d skips/bytes=%d/%d",
+		mapCounter, bytesMapped, skipCounter, bytesSkipped);
+
     // Unmap memory if it's still mapped
     if (_mappedMemory)
     {
@@ -119,6 +122,8 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
     
     _currentPosition += mappedSize;
 
+	mapCounter++;
+	bytesMapped += mappedSize;
 //	LogPrintf(LogSeverityLevel::Warning, "XXX mmap-next %d bytes", mappedSize);
 
     *data = _mappedMemory;
@@ -141,6 +146,9 @@ bool OsmAnd::QFileDeviceInputStream::Skip(int count)
         _currentPosition = _fileSize;
         return false;
     }
+
+	skipCounter++;
+	bytesSkipped += count;
 
     _currentPosition += count;
     return true;
