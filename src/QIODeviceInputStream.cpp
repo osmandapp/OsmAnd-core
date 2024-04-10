@@ -41,6 +41,7 @@ bool OsmAnd::QIODeviceInputStream::Next(const void** data, int* size)
     }
     else
     {
+		LogPrintf(LogSeverityLevel::Warning, "XXX io-next %d bytes", bytesRead);
         *data = _buffer;
         *size = bytesRead;
         return true;
