@@ -1,6 +1,6 @@
 ## Project-specific
 # Ignore all externals upstream files
-/externals/**/upstream.*
+#/externals/**/upstream.*
 **/*build*/
 **/*debug*/
 

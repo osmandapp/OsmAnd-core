@@ -27,7 +27,7 @@
 #include "ObfReaderUtilities.h"
 #include "Logging.h"
 
-//#define OSMAND_TRACE_OBF_READERS 1
+#define OSMAND_TRACE_OBF_READERS 1
 #if !defined(OSMAND_TRACE_OBF_READERS)
 #   define OSMAND_TRACE_OBF_READERS 0
 #endif // !defined(OSMAND_TRACE_OBF_READERS)
