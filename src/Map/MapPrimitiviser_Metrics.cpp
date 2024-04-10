@@ -5,10 +5,6 @@ OsmAnd::MapPrimitiviser_Metrics::Metric_primitivise::Metric_primitivise()
     reset();
 }
 
-OsmAnd::MapPrimitiviser_Metrics::Metric_primitivise::~Metric_primitivise()
-{
-}
-
 void OsmAnd::MapPrimitiviser_Metrics::Metric_primitivise::reset()
 {
     OsmAnd__MapPrimitiviser_Metrics__Metric_primitivise__FIELDS(RESET_METRIC_FIELD);
@@ -44,10 +40,6 @@ OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects::Metric_primiti
     reset();
 }
 
-OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects::~Metric_primitiviseAllMapObjects()
-{
-}
-
 void OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects::reset()
 {
     OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseAllMapObjects__FIELDS(RESET_METRIC_FIELD);
@@ -76,10 +68,6 @@ OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface::Metric_primit
     reset();
 }
 
-OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface::~Metric_primitiviseWithoutSurface()
-{
-}
-
 void OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface::reset()
 {
     OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithoutSurface__FIELDS(RESET_METRIC_FIELD);
@@ -106,10 +94,6 @@ QString OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface::toStr
 OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithSurface::Metric_primitiviseWithSurface()
 {
     reset();
-}
-
-OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithSurface::~Metric_primitiviseWithSurface()
-{
 }
 
 void OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseWithSurface::reset()
