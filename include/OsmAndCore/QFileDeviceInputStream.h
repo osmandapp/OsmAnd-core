@@ -23,7 +23,7 @@ namespace OsmAnd
     {
     public:
         enum {
-            DefaultMemoryWindowSize = 1 * 1024 * 1024, // 1Mb
+            DefaultMemoryWindowSize = (2 * 1024 * 1024 * 1024) - 1; // 1 * 1024 * 1024, // 1Mb 2Gb
         };
 
     private:
