@@ -236,7 +236,7 @@ bool CopyingInputStreamAdaptor::Next(const void** data, int* size) {
   }
 
   // Read new data into the buffer.
-  printf("XXX CIS read %d bytes", buffer_size_);
+  printf("XXX CIS read %d bytes\n", buffer_size_); fflush(stdout);
   buffer_used_ = copying_stream_->Read(buffer_.get(), buffer_size_);
   if (buffer_used_ <= 0) {
     // EOF or read error.  We don't need the buffer anymore.
