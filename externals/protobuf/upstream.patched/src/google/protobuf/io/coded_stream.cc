@@ -236,7 +236,7 @@ bool CodedInputStream::GetDirectBufferPointer(const void** data, int* size) {
 }
 
 bool CodedInputStream::ReadRaw(void* buffer, int size) {
-  printf("XXX CIS ReadRaw %d bytes\n", size); fflush(stdout);
+	if (size > 4) printf("XXX CIS ReadRaw %d bytes\n", size); fflush(stdout);
   int current_buffer_size;
   while ((current_buffer_size = BufferSize()) < size) {
     // Reading past end of buffer.  Copy what we have, then refresh.
@@ -254,6 +254,7 @@ bool CodedInputStream::ReadRaw(void* buffer, int size) {
 }
 
 bool CodedInputStream::ReadString(string* buffer, int size) {
+	printf("XXX CIS ReadString %d bytes\n", size); fflush(stdout);
   if (size < 0) return false;  // security: size is often user-supplied
   return InternalReadStringInline(buffer, size);
 }
