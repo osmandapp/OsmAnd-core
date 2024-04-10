@@ -1,5 +1,7 @@
 #include "QIODeviceInputStream.h"
 
+#include "Logging.h"
+
 namespace OsmAnd
 {
     namespace gpb = google::protobuf;
