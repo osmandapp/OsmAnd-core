@@ -29,9 +29,9 @@ namespace OsmAnd
     private:
 
 		int mapCounter = 0;
-		int bytesMapped = 0;
+		long bytesMapped = 0;
 		int skipCounter = 0;
-		int bytesSkipped = 0;
+		long bytesSkipped = 0;
 
         GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QFileDeviceInputStream);
 

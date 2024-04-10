@@ -26,8 +26,9 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 {
     bool ok;
 
-	LogPrintf(LogSeverityLevel::Warning, "XXX closed maps/bytes=%d/%d skips/bytes=%d/%d",
-		mapCounter, bytesMapped, skipCounter, bytesSkipped);
+	LogPrintf(LogSeverityLevel::Warning, "XXX %d ms maps/MB=%d/%d skips/MB=%d/%d [%s]",
+		0, mapCounter, (int)(bytesMapped / 1024 / 1024), skipCounter, (int)(bytesSkipped / 1024 / 1024),
+			_file->fileName().toUtf8());
 
     // Unmap memory if it's still mapped
     if (_mappedMemory)
