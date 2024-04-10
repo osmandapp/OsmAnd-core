@@ -75,9 +75,9 @@ bool OsmAnd::ObfReader_P::open()
 
     // Create zero-copy input stream
     gpb::io::ZeroCopyInputStream* zcis = nullptr;
-    if (const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
-        zcis = new QFileDeviceInputStream(inputFileDevice);
-    else
+//    if (const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
+//        zcis = new QFileDeviceInputStream(inputFileDevice);
+//    else
         zcis = new QIODeviceInputStream(_input);
     _zeroCopyInputStream.reset(zcis);
 
