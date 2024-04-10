@@ -119,7 +119,7 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
     
     _currentPosition += mappedSize;
 
-	LogPrintf(LogSeverityLevel::Warning, "XXX mmap-next %d bytes", mappedSize);
+//	LogPrintf(LogSeverityLevel::Warning, "XXX mmap-next %d bytes", mappedSize);
 
     *data = _mappedMemory;
     *size = mappedSize;
