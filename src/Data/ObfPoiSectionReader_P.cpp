@@ -1529,6 +1529,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         visitor,
         queryController);
 
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX readAmenitiesByName (1st)");
+
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
 }
