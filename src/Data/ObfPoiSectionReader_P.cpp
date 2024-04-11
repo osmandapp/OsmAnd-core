@@ -1160,7 +1160,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 	QElapsedTimer timer;
 	QFileInfo fileInfo(reader->_zeroCopyInputStream->_file->fileName());
 	QString baseName = fileInfo.baseName();
-	char *file = baseName.toUtf8().constData();
+	const char *file = baseName.toUtf8().constData();
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     for (;;)
