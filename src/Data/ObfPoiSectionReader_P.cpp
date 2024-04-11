@@ -1272,7 +1272,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const TileAcceptorFunction tileFilter)
 {
 	QElapsedTimer timer;
-	timer.restart();
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
@@ -1313,6 +1312,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 std::sort(intermediateOffsets);
                 for (const auto& intermediateOffset : constOf(intermediateOffsets))
                 {
+					timer.restart();
                     cis->Seek(baseOffset + intermediateOffset);
 
                     gpb::uint32 length;
@@ -1326,8 +1326,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                         bbox31, 
                         tileFilter);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
-					LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d size=%d (%d ms)",
-							  skips, breaks, outDataOffsets.size(), timer.elapsed());
+					LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d of=%d size=%d (%d ms)",
+							  skips, breaks, intermediateOffsets.size(), outDataOffsets.size(), timer.elapsed());
 
                     cis->PopLimit(oldLimit);
                 }
