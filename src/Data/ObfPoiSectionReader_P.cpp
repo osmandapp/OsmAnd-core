@@ -1158,9 +1158,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const std::shared_ptr<const IQueryController>& queryController)
 {
 	QElapsedTimer timer;
-	QFileInfo fileInfo(reader._input->fileName());
+	const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(reader._input);
+	QFileInfo fileInfo(inputFileDevice->fileName());
 	QString baseName = fileInfo.baseName();
 	const char *file = baseName.toUtf8().constData();
+
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     for (;;)
