@@ -1271,6 +1271,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter)
 {
+	QElapsedTimer timer;
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
@@ -1315,6 +1316,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->ReadVarint32(&length);
                     const auto oldLimit = cis->PushLimit(length);
 
+					timer.restart();
                     readNameIndexData(
                         reader,
                         outDataOffsets,
@@ -1322,6 +1324,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                         bbox31, 
                         tileFilter);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
+					LogPrintf(LogSeverityLevel::Warning, "XXX readNameIndexData = %d (%d ms)", outDataOffsets.size(), timer.elapsed());
 
                     cis->PopLimit(oldLimit);
                 }
@@ -1507,8 +1510,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
-	QElapsedTimer timer;
-
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
 
