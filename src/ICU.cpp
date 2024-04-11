@@ -510,7 +510,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
 	return false;
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
-    const auto collator = g_pIcuCollator; // ->clone();
+    const auto collator = g_pIcuCollator->clone();
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
