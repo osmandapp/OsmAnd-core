@@ -128,7 +128,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 if (!matchesForward)
                 {
-                    if (strictMatch)
+                    if (true || strictMatch)
                         matchesBackward = query.startsWith(key, Qt::CaseInsensitive);
                     else
                         matchesBackward = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
