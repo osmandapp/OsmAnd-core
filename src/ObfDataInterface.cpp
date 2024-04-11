@@ -8,7 +8,6 @@
 #include <QHash>
 #include <QList>
 #include "restore_internal_warnings.h"
-#include <QElapsedTimer>
 
 #include "Ref.h"
 #include "ObfReader.h"
@@ -586,7 +585,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-	QElapsedTimer timer;
     typedef std::pair< std::shared_ptr<const ObfReader>, Ref<ObfPoiSectionInfo> > OrderedSection;
     std::vector< OrderedSection > orderedSections;
     for (const auto& obfReader : constOf(obfReaders))
@@ -688,7 +686,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             }
         }
 
-		timer.restart();
         OsmAnd::ObfPoiSectionReader::scanAmenitiesByName( // slow !!!
             obfReader,
             poiSection,
@@ -700,7 +697,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             categoriesFilter ? &categoriesFilterById : nullptr,
             visitor,
             queryController);
-		LogPrintf(LogSeverityLevel::Warning, "XXX scanAmenitiesByName (%d ms)", timer.elapsed());
     }
 
     return true;

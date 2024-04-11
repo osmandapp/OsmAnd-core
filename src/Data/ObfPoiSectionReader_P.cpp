@@ -1156,6 +1156,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
+	QElapsedTimer timer;
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     for (;;)
@@ -1170,6 +1171,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 return;
             case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
             {
+				timer.restart();
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
@@ -1184,6 +1186,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
+				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms)", dataBoxesOffsetsSet.size(), timer.elapsed());
                 break;
             }
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
@@ -1191,6 +1194,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 break;
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
+				timer.restart();
                 auto offKeys = dataBoxesOffsetsSet.keys();
                 std::sort(offKeys,
                           [&dataBoxesOffsetsSet]
@@ -1247,6 +1251,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
+				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms)", timer.elapsed());
                 return;
             }
             default:
@@ -1502,20 +1507,16 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
 {
 	QElapsedTimer timer;
 
-	timer.restart();
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
-	LogPrintf(LogSeverityLevel::Warning, "XXX ensure (%d ms)", timer.elapsed());
 
-	timer.restart();
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->offset);
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
-	LogPrintf(LogSeverityLevel::Warning, "XXX seek/skip (%d ms)", timer.elapsed());
 
 	timer.restart();
-    readAmenitiesByName(
+    readAmenitiesByName( // slow !!!
         reader,
         section,
         query,
@@ -1528,8 +1529,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         queryController);
 	LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesByName (%d ms)", timer.elapsed());
 
-	timer.restart();
     ObfReaderUtilities::ensureAllDataWasRead(cis);
-	LogPrintf(LogSeverityLevel::Warning, "XXX final ensure (%d ms)", timer.elapsed());
     cis->PopLimit(oldLimit);
 }

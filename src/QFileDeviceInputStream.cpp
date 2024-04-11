@@ -29,9 +29,9 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 	QFileInfo fileInfo(_file->fileName());
 	QString baseName = fileInfo.baseName();
 
-	LogPrintf(LogSeverityLevel::Warning, "XXX %d ms maps %d (%d MB) skips %d (%d MB) [%s]",
-		0, mapCounter, (int)(bytesMapped / 1024 / 1024), skipCounter, (int)(bytesSkipped / 1024 / 1024),
-			baseName.toUtf8().constData());
+//	LogPrintf(LogSeverityLevel::Warning, "XXX %d ms maps %d (%d MB) skips %d (%d MB) [%s]",
+//		0, mapCounter, (int)(bytesMapped / 1024 / 1024), skipCounter, (int)(bytesSkipped / 1024 / 1024),
+//			baseName.toUtf8().constData());
 
     // Unmap memory if it's still mapped
     if (_mappedMemory)
