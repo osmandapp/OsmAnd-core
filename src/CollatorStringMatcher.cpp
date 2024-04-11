@@ -53,3 +53,7 @@ QString OsmAnd::CollatorStringMatcher::alignChars(const QString& fullText)
 {
     return CollatorStringMatcher_P::alignChars(fullText);
 }
+
+void OsmAnd::CollatorStringMatcher::cleanupCollatorCache() {
+    OsmAnd::ICU::cleanupCollatorCache();
+}
