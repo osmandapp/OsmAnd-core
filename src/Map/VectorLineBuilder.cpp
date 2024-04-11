@@ -315,6 +315,42 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setFarOutlineColor(const F
     return *this;
 }
 
+bool OsmAnd::VectorLineBuilder::getElevatedLineVisibility() const
+{
+    return _p->getElevatedLineVisibility();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setElevatedLineVisibility(const bool visible)
+{
+    _p->setElevatedLineVisibility(visible);
+    
+    return *this;
+}
+
+bool OsmAnd::VectorLineBuilder::getSurfaceLineVisibility() const
+{
+    return _p->getSurfaceLineVisibility();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setSurfaceLineVisibility(const bool visible)
+{
+    _p->setSurfaceLineVisibility(visible);
+    
+    return *this;
+}
+
+float OsmAnd::VectorLineBuilder::getElevationScaleFactor() const
+{
+    return _p->getElevationScaleFactor();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setElevationScaleFactor(const float scaleFactor)
+{
+    _p->setElevationScaleFactor(scaleFactor);
+    
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

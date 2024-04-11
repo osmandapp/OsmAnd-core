@@ -50,6 +50,7 @@ namespace OsmAnd
         PointI _position;
 
         float _height;
+        float _elevationScaleFactor;
 
         sk_sp<const SkImage> _pinIcon;
         MapMarker::PinIconVerticalAlignment _pinIconVerticalAlignment;
@@ -90,6 +91,9 @@ namespace OsmAnd
 
         float getHeight() const;
         void setHeight(const float height);
+
+        float getElevationScaleFactor() const;
+        void setElevationScaleFactor(const float scaleFactor);
 
         sk_sp<const SkImage> getPinIcon() const;
         void setPinIcon(const SingleSkImage& image);
