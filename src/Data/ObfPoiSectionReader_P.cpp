@@ -1,6 +1,7 @@
 #include "ObfPoiSectionReader_P.h"
 
 #include <QElapsedTimer>
+#include <QFileInfo>
 
 #include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
@@ -1157,6 +1158,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const std::shared_ptr<const IQueryController>& queryController)
 {
 	QElapsedTimer timer;
+	QFileInfo fileInfo(reader->_zeroCopyInputStream->_file->fileName());
+	QString baseName = fileInfo.baseName();
+	char *file = baseName.toUtf8().constData();
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     for (;;)
@@ -1186,7 +1190,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms)", dataBoxesOffsetsSet.size(), timer.elapsed());
+				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms) [%s]", dataBoxesOffsetsSet.size(), timer.elapsed(), file);
                 break;
             }
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
@@ -1251,7 +1255,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
-				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms)", timer.elapsed());
+				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms) [%s]", timer.elapsed(), file);
                 return;
             }
             default:
@@ -1515,7 +1519,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
 
-	timer.restart();
     readAmenitiesByName( // slow !!!
         reader,
         section,
@@ -1527,7 +1530,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         categoriesFilter,
         visitor,
         queryController);
-	LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesByName (%d ms)", timer.elapsed());
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
