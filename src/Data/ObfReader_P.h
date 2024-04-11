@@ -39,7 +39,6 @@ namespace OsmAnd
 
     private:
         const std::shared_ptr<QIODevice> _input;
-        std::shared_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
         std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
 
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
@@ -52,6 +51,7 @@ namespace OsmAnd
     protected:
         ObfReader_P(ObfReader* const owner, const std::shared_ptr<QIODevice>& input);
     public:
+		std::shared_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
         virtual ~ObfReader_P();
 
         ImplementationInterface<ObfReader> owner;
