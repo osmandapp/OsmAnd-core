@@ -98,7 +98,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     auto matchedCharactersCount = matchedCharactersCount_;
 
 	QElapsedTimer timer;
-	int skips = 0, breaks = 0;
+	int skips = 0, breaksKey = 0, breaksVal = 0, breaksSub = 0;
 
 	timer.restart();
     for (;;)
@@ -107,8 +107,8 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-				LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d match=%d (%d ms)",
-						  skips, breaks, matchedCharactersCount, timer.elapsed());
+				LogPrintf(LogSeverityLevel::Warning, "XXX skips %d breaks %d %d %d match %d (%d ms)",
+						  skips, breaksKey, breaksVal, breaksSub, matchedCharactersCount, timer.elapsed());
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return matchedCharactersCount;
 
@@ -162,7 +162,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 {
                     key = QString::null;
                 }
-				breaks++;
+				breaksKey++;
                 break;
             }
             case OBF::IndexedStringTable::kValFieldNumber:
@@ -171,7 +171,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 if (!key.isNull())
                     outValues.push_back(value);
-				breaks++;
+				breaksVal++;
                 break;
             }
             case OBF::IndexedStringTable::kSubtablesFieldNumber:
@@ -187,7 +187,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
-				breaks++;
+				breaksSub++;
                 break;
             }
             default:
