@@ -1290,6 +1290,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
+				timer.restart();
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
@@ -1304,6 +1305,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
+				LogPrintf(LogSeverityLevel::Warning, "XXX break timer (%d ms)", timer.elapsed());
 				breaks++;
                 break;
             }
@@ -1326,12 +1328,11 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                         bbox31, 
                         tileFilter);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
-					LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d of=%d size=%d (%d ms)",
-							  skips, breaks, intermediateOffsets.size(), outDataOffsets.size(), timer.elapsed());
-					timer.start();
 
                     cis->PopLimit(oldLimit);
                 }
+				LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d of=%d size=%d (%d ms)",
+						  skips, breaks, intermediateOffsets.size(), outDataOffsets.size(), timer.elapsed());
                 cis->Skip(cis->BytesUntilLimit());
                 return;
             }
