@@ -509,12 +509,12 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
 {
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
-    const auto collator = g_pIcuCollator; // ->clone();
+    const auto collator = g_pIcuCollator->clone();
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-//        if (collator != nullptr)
-//            delete collator;
+        if (collator != nullptr)
+            delete collator;
         return false;
     }
     else
@@ -524,7 +524,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         UnicodeString searchIn = qStrToUniStr(OsmAnd::CollatorStringMatcher::simplifyStringAndAlignChars(_searchInParam));
         QString theStartAligned = OsmAnd::CollatorStringMatcher::alignChars(_theStart);
         UnicodeString theStart = qStrToUniStr(theStartAligned);
-
+        
         int startLength = theStart.length();
         int serchInLength = searchIn.length();
         
@@ -586,8 +586,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
             result = collator->equals(searchIn, theStart);
     }
     
-//    if (collator != nullptr)
-//        delete collator;
+    if (collator != nullptr)
+        delete collator;
     return result;
 }
 
