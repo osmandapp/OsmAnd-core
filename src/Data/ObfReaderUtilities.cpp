@@ -1,5 +1,3 @@
-#include <QElapsedTimer>
-
 #include "ObfReaderUtilities.h"
 
 #include "QtExtensions.h"
@@ -16,6 +14,8 @@
 #include "ObfSectionInfo.h"
 #include "Logging.h"
 #include "CollatorStringMatcher.h"
+
+#include <QElapsedTimer>
 
 bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QString& output)
 {
