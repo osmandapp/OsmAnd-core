@@ -1278,6 +1278,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     uint32_t baseOffset;
     QVector<uint32_t> intermediateOffsets;
 
+	int skips = 0, breaks = 0;
+
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -1286,7 +1288,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
-
                 return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
@@ -1304,6 +1305,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
+				breaks++;
                 break;
             }
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
@@ -1324,7 +1326,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                         bbox31, 
                         tileFilter);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
-					LogPrintf(LogSeverityLevel::Warning, "XXX readNameIndexData = %d (%d ms)", outDataOffsets.size(), timer.elapsed());
+					LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d size=%d (%d ms)",
+							  skips, breaks, outDataOffsets.size(), timer.elapsed());
 
                     cis->PopLimit(oldLimit);
                 }
@@ -1333,6 +1336,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
+				skips++;
                 break;
         }
     }
