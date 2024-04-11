@@ -596,7 +596,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
 
 		timer.restart();
         const auto &obfInfo = obfReader->obtainInfo();
-		NSLog(@"XXX obtainInfo (%d ms)", timer.elapsed());
+		LogPrintf(LogSeverityLevel::Warning, "XXX obtainInfo (%d ms)", timer.elapsed());
 
         for (const auto& poiSection : constOf(obfInfo->poiSections))
         {
@@ -690,7 +690,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                 }
             }
         }
-		NSLog(@"XXX loadCategories (%d ms)", timer.elapsed());
+		LogPrintf(LogSeverityLevel::Warning, "XXX loadCategories (%d ms)", timer.elapsed());
 
 		timer.restart();
         OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
@@ -704,7 +704,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             categoriesFilter ? &categoriesFilterById : nullptr,
             visitor,
             queryController);
-		NSLog(@"XXX scanAmenitiesByName (%d ms)", timer.elapsed());
+		LogPrintf(LogSeverityLevel::Warning, "XXX scanAmenitiesByName (%d ms)", timer.elapsed());
     }
 
     return true;
