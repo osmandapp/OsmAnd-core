@@ -1,3 +1,5 @@
+#include <QElapsedTimer>
+
 #include "ObfReaderUtilities.h"
 
 #include "QtExtensions.h"
@@ -95,12 +97,18 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     QString key;
     auto matchedCharactersCount = matchedCharactersCount_;
 
+	QElapsedTimer timer;
+	int skips = 0, breaks = 0;
+
+	timer.restart();
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+				LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d match=%d (%d ms)",
+						  skips, breaks, matchedCharactersCount, timer.elapsed());
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return matchedCharactersCount;
 
@@ -154,6 +162,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 {
                     key = QString::null;
                 }
+				breaks++;
                 break;
             }
             case OBF::IndexedStringTable::kValFieldNumber:
@@ -162,6 +171,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 if (!key.isNull())
                     outValues.push_back(value);
+				breaks++;
                 break;
             }
             case OBF::IndexedStringTable::kSubtablesFieldNumber:
@@ -177,10 +187,12 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
+				breaks++;
                 break;
             }
             default:
                 skipUnknownField(cis, tag);
+				skips++;
                 break;
         }
     }

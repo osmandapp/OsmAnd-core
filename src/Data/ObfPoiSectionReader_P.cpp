@@ -1,7 +1,6 @@
 #include "ObfPoiSectionReader_P.h"
 
 #include <QElapsedTimer>
-#include <QFileInfo>
 
 #include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
@@ -1271,13 +1270,10 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter)
 {
-	QElapsedTimer timer;
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
     QVector<uint32_t> intermediateOffsets;
-
-	int skips = 0, breaks = 0;
 
     for (;;)
     {
@@ -1294,9 +1290,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-				timer.restart();
                 ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
-				LogPrintf(LogSeverityLevel::Warning, "XXX scan timer (%d ms)", timer.elapsed());
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -1312,7 +1306,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
             {
                 std::sort(intermediateOffsets);
-				timer.restart();
                 for (const auto& intermediateOffset : constOf(intermediateOffsets))
                 {
                     cis->Seek(baseOffset + intermediateOffset);
@@ -1331,8 +1324,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
 
                     cis->PopLimit(oldLimit);
                 }
-				LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d of=%d size=%d (%d ms)",
-						  skips, breaks, intermediateOffsets.size(), outDataOffsets.size(), timer.elapsed());
                 cis->Skip(cis->BytesUntilLimit());
                 return;
             }
