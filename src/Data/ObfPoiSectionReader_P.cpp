@@ -1502,19 +1502,19 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
 {
 	QElapsedTimer timer;
 
-	timer.reset();
+	timer.restart();
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
 	LogPrintf(LogSeverityLevel::Warning, "XXX ensure (%d ms)", timer.elapsed());
 
-	timer.reset();
+	timer.restart();
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->offset);
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
 	LogPrintf(LogSeverityLevel::Warning, "XXX seek/skip (%d ms)", timer.elapsed());
 
-	timer.reset();
+	timer.restart();
     readAmenitiesByName(
         reader,
         section,
@@ -1528,7 +1528,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         queryController);
 	LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesByName (%d ms)", timer.elapsed());
 
-	timer.reset();
+	timer.restart();
     ObfReaderUtilities::ensureAllDataWasRead(cis);
 	LogPrintf(LogSeverityLevel::Warning, "XXX final ensure (%d ms)", timer.elapsed());
     cis->PopLimit(oldLimit);
