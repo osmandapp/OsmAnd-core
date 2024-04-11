@@ -1158,10 +1158,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const std::shared_ptr<const IQueryController>& queryController)
 {
 	QElapsedTimer timer;
-	const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(reader._input);
-	QFileInfo fileInfo(inputFileDevice->fileName());
-	QString baseName = fileInfo.baseName();
-	const char *file = baseName.toUtf8().constData();
 
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
@@ -1192,7 +1188,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms) [%s]", dataBoxesOffsetsSet.size(), timer.elapsed(), file);
+				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms) [basemap %d]",
+						  dataBoxesOffsetsSet.size(), timer.elapsed(), (int) reader.isBasemap);
                 break;
             }
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
@@ -1257,7 +1254,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
-				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms) [%s]", timer.elapsed(), file);
+				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms) [basemap %d]",
+						  timer.elapsed(), reader.isBasemap);
                 return;
             }
             default:
