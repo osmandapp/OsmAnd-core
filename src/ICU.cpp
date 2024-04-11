@@ -507,6 +507,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _searchInParam, const QString& _theStart,
                                                   bool checkBeginning, bool checkSpaces, bool equals)
 {
+	return false;
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
     const auto collator = g_pIcuCollator->clone();
