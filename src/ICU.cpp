@@ -540,6 +540,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         
         if (checkBeginning)
         {
+			return false; // TODO
             bool starts = collator->equals(searchIn.tempSubString(0, startLength), theStart);
             if (starts)
             {

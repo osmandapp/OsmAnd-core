@@ -121,14 +121,14 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 bool matchesForward = false;
                 bool matchesBackward = false;
-                if (true || strictMatch)
+                if (strictMatch)
                     matchesForward = key.startsWith(query, Qt::CaseInsensitive);
                 else
                     matchesForward = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
 
                 if (!matchesForward)
                 {
-                    if (true || strictMatch)
+                    if (strictMatch)
                         matchesBackward = query.startsWith(key, Qt::CaseInsensitive);
                     else
                         matchesBackward = CollatorStringMatcher::cmatches(query, key, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
