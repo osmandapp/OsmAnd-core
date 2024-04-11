@@ -8,6 +8,7 @@
 #include <QHash>
 #include <QList>
 #include "restore_internal_warnings.h"
+#include <QElapsedTimer>
 
 #include "Ref.h"
 #include "ObfReader.h"
@@ -585,6 +586,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
+	QElapsedTimer timer;
     typedef std::pair< std::shared_ptr<const ObfReader>, Ref<ObfPoiSectionInfo> > OrderedSection;
     std::vector< OrderedSection > orderedSections;
     for (const auto& obfReader : constOf(obfReaders))
@@ -592,7 +594,10 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
         if (queryController && queryController->isAborted())
             return false;
 
+		timer.restart();
         const auto &obfInfo = obfReader->obtainInfo();
+		NSLog(@"XXX obtainInfo (%d ms)", timer.elapsed());
+
         for (const auto& poiSection : constOf(obfInfo->poiSections))
         {
             if (queryController && queryController->isAborted())
@@ -638,6 +643,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             });
     }
 
+	timer.restart();
     for (const auto& orderedSection : constOf(orderedSections))
     {
         if (queryController && queryController->isAborted())
@@ -684,7 +690,9 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                 }
             }
         }
+		NSLog(@"XXX loadCategories (%d ms)", timer.elapsed());
 
+		timer.restart();
         OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
             obfReader,
             poiSection,
@@ -696,6 +704,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             categoriesFilter ? &categoriesFilterById : nullptr,
             visitor,
             queryController);
+		NSLog(@"XXX scanAmenitiesByName (%d ms)", timer.elapsed());
     }
 
     return true;
