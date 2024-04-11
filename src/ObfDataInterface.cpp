@@ -643,7 +643,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             });
     }
 
-	timer.restart();
     for (const auto& orderedSection : constOf(orderedSections))
     {
         if (queryController && queryController->isAborted())
@@ -652,6 +651,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
         const auto& obfReader = orderedSection.first;
         const auto& poiSection = orderedSection.second;
 
+		timer.restart();
         QSet<ObfPoiCategoryId> categoriesFilterById;
         if (categoriesFilter)
         {
