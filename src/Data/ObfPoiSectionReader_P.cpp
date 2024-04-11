@@ -1,5 +1,7 @@
 #include "ObfPoiSectionReader_P.h"
 
+#include <QElapsedTimer>
+
 #include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
 #include <google/protobuf/wire_format_lite.h>
@@ -1498,14 +1500,21 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
+	QElapsedTimer timer;
+
+	timer.reset();
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
+	LogPrintf(LogSeverityLevel::Warning, "XXX ensure (%d ms)", timer.elapsed());
 
+	timer.reset();
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->offset);
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
+	LogPrintf(LogSeverityLevel::Warning, "XXX seek/skip (%d ms)", timer.elapsed());
 
+	timer.reset();
     readAmenitiesByName(
         reader,
         section,
@@ -1517,7 +1526,10 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         categoriesFilter,
         visitor,
         queryController);
+	LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesByName (%d ms)", timer.elapsed());
 
+	timer.reset();
     ObfReaderUtilities::ensureAllDataWasRead(cis);
+	LogPrintf(LogSeverityLevel::Warning, "XXX final ensure (%d ms)", timer.elapsed());
     cis->PopLimit(oldLimit);
 }

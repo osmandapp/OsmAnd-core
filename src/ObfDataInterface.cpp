@@ -594,9 +594,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
         if (queryController && queryController->isAborted())
             return false;
 
-		timer.restart();
-        const auto &obfInfo = obfReader->obtainInfo();
-		LogPrintf(LogSeverityLevel::Warning, "XXX obtainInfo (%d ms)", timer.elapsed());
+        const auto &obfInfo = obfReader->obtainInfo(); // 0ms
 
         for (const auto& poiSection : constOf(obfInfo->poiSections))
         {
@@ -651,7 +649,6 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
         const auto& obfReader = orderedSection.first;
         const auto& poiSection = orderedSection.second;
 
-		timer.restart();
         QSet<ObfPoiCategoryId> categoriesFilterById;
         if (categoriesFilter)
         {
@@ -690,10 +687,9 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                 }
             }
         }
-		LogPrintf(LogSeverityLevel::Warning, "XXX loadCategories (%d ms)", timer.elapsed());
 
 		timer.restart();
-        OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+        OsmAnd::ObfPoiSectionReader::scanAmenitiesByName( // slow !!!
             obfReader,
             poiSection,
             query,
