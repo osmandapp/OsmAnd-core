@@ -117,6 +117,8 @@ namespace OsmAnd
         virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetElevationDataProvider(bool forcedUpdate = false) = 0;
         virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) = 0;
+        virtual bool setElevationScaleFactor(const float scaleFactor, bool forcedUpdate = false) = 0;
+        virtual float getElevationScaleFactor() = 0;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;

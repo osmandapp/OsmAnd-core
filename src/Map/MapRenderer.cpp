@@ -1435,6 +1435,34 @@ bool OsmAnd::MapRenderer::setElevationConfiguration(
     return true;
 }
 
+bool OsmAnd::MapRenderer::setElevationScaleFactor(const float scaleFactor, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!_requestedState.elevationConfiguration.isValid())
+        return false;
+
+    bool update = forcedUpdate || (_requestedState.elevationConfiguration.zScaleFactor != scaleFactor);
+    if (!update)
+        return false;
+
+    _requestedState.elevationConfiguration.setZScaleFactor(scaleFactor);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_Configuration);
+
+    return true;
+}
+
+float OsmAnd::MapRenderer::getElevationScaleFactor()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!_requestedState.elevationConfiguration.isValid())
+        return NAN;
+
+    return _requestedState.elevationConfiguration.zScaleFactor;
+}
+
 bool OsmAnd::MapRenderer::addSymbolsProvider(
     const int subsectionIndex,
     const std::shared_ptr<IMapTiledSymbolsProvider>& provider,

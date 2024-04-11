@@ -25,6 +25,9 @@ OsmAnd::VectorLineBuilder_P::VectorLineBuilder_P(VectorLineBuilder* const owner_
     , _specialPathIconStep(-1.0)
     , _pathIconOnSurface(true)
     , _screenScale(2)
+    , _isElevatedLineVisible(true)
+    , _isSurfaceLineVisible(false)
+    , _elevationScaleFactor(1.0f)
     , owner(owner_)
 {
 }
@@ -272,6 +275,48 @@ void OsmAnd::VectorLineBuilder_P::setOutlineColorizationMapping(const QList<OsmA
     _outlineColorizationMapping = colorizationMapping;
 }
 
+bool OsmAnd::VectorLineBuilder_P::getElevatedLineVisibility() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _isElevatedLineVisible;
+}
+
+void OsmAnd::VectorLineBuilder_P::setElevatedLineVisibility(const bool visible)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _isElevatedLineVisible = visible;
+}
+
+bool OsmAnd::VectorLineBuilder_P::getSurfaceLineVisibility() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _isSurfaceLineVisible;
+}
+
+void OsmAnd::VectorLineBuilder_P::setSurfaceLineVisibility(const bool visible)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _isSurfaceLineVisible = visible;
+}
+
+float OsmAnd::VectorLineBuilder_P::getElevationScaleFactor() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _elevationScaleFactor;
+}
+
+void OsmAnd::VectorLineBuilder_P::setElevationScaleFactor(const float scaleFactor)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _elevationScaleFactor = scaleFactor;
+}
+
 sk_sp<const SkImage> OsmAnd::VectorLineBuilder_P::getPathIcon() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -415,6 +460,9 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::build()
     line->setPathIconStep(_pathIconStep);
     line->setSpecialPathIconStep(_specialPathIconStep);
     line->setColorizationScheme(_colorizationScheme);
+    line->setElevatedLineVisibility(_isElevatedLineVisible);
+    line->setSurfaceLineVisibility(_isSurfaceLineVisible);
+    line->setElevationScaleFactor(_elevationScaleFactor);
     line->applyChanges();
     
     return line;

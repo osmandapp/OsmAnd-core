@@ -81,6 +81,11 @@ namespace OsmAnd
         bool _dash;
         std::vector<double> _dashPattern;
 
+        bool _isElevatedLineVisible;
+        bool _isSurfaceLineVisible;
+
+        float _elevationScaleFactor;
+
         double _metersPerPixel;
         AreaI _visibleBBoxShifted;
         ZoomLevel _mapZoomLevel;
@@ -187,6 +192,15 @@ namespace OsmAnd
         void setFarOutlineColor(const FColorARGB color);
 
         void setColorizationScheme(const int colorizationScheme);
+
+        bool getElevatedLineVisibility() const;
+        void setElevatedLineVisibility(const bool visible);
+
+        bool getSurfaceLineVisibility() const;
+        void setSurfaceLineVisibility(const bool visible);
+
+        float getElevationScaleFactor() const;
+        void setElevationScaleFactor(const float scaleFactor);
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

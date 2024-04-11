@@ -5,6 +5,7 @@ OsmAnd::BillboardRasterMapSymbol::BillboardRasterMapSymbol(
     : RasterMapSymbol(group_)
     , drawAlongPath(false)
     , elevation(NAN)
+    , elevationScaleFactor(1.0f)
 {
 }
 
@@ -40,4 +41,14 @@ float OsmAnd::BillboardRasterMapSymbol::getElevation() const
 void OsmAnd::BillboardRasterMapSymbol::setElevation(const float newElevation)
 {
     elevation = newElevation;
+}
+
+float OsmAnd::BillboardRasterMapSymbol::getElevationScaleFactor() const
+{
+    return elevationScaleFactor;
+}
+
+void OsmAnd::BillboardRasterMapSymbol::setElevationScaleFactor(const float scaleFactor)
+{
+    elevationScaleFactor = scaleFactor;
 }

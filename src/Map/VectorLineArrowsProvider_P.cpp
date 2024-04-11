@@ -85,6 +85,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                 marker->setIsHidden(false);
                 marker->setPosition(symbolInfo.position31);
                 marker->setHeight(symbolInfo.elevation);
+                marker->setElevationScaleFactor(symbolInfo.elevationScaleFactor);
                 if (line->pathIconOnSurface)
                 {
                     marker->setOnMapSurfaceIconDirection(
@@ -107,6 +108,7 @@ void OsmAnd::VectorLineArrowsProvider_P::rebuildArrows()
                 builder.setIsHidden(false);
                 builder.setPosition(symbolInfo.position31);
                 builder.setHeight(symbolInfo.elevation);
+                builder.setElevationScaleFactor(symbolInfo.elevationScaleFactor);
                 builder.setIsAccuracyCircleVisible(false);
                 const auto newMarker = builder.buildAndAddToCollection(_markersCollection);
                 if (line->pathIconOnSurface)

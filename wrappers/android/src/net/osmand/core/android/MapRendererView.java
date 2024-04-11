@@ -608,6 +608,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.resetElevationDataProvider();
     }
 
+    public final boolean setElevationScaleFactor(float scaleFactor) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setElevationScaleFactor(scaleFactor);
+    }
+
+    public final float getElevationScaleFactor() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getElevationScaleFactor();
+    }
+
     public final boolean addSymbolsProvider(IMapTiledSymbolsProvider provider) {
         NativeCore.checkIfLoaded();
 

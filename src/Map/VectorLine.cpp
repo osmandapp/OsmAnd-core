@@ -161,6 +161,36 @@ void OsmAnd::VectorLine::setFillColor(const FColorARGB color)
     _p->setFillColor(color);
 }
 
+bool OsmAnd::VectorLine::getElevatedLineVisibility() const
+{
+    return _p->getElevatedLineVisibility();
+}
+
+void OsmAnd::VectorLine::setElevatedLineVisibility(const bool visible)
+{
+    _p->setElevatedLineVisibility(visible);
+}
+
+bool OsmAnd::VectorLine::getSurfaceLineVisibility() const
+{
+    return _p->getSurfaceLineVisibility();
+}
+
+void OsmAnd::VectorLine::setSurfaceLineVisibility(const bool visible)
+{
+    _p->setSurfaceLineVisibility(visible);
+}
+
+float OsmAnd::VectorLine::getElevationScaleFactor() const
+{
+    return _p->getElevationScaleFactor();
+}
+
+void OsmAnd::VectorLine::setElevationScaleFactor(const float scaleFactor)
+{
+    _p->setElevationScaleFactor(scaleFactor);
+}
+
 float OsmAnd::VectorLine::getPathIconStep() const
 {
     return _p->getPathIconStep();
@@ -275,10 +305,12 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup
     return result;
 }
 
-OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(OsmAnd::PointI position31, float direction, float elevation)
+OsmAnd::VectorLine::OnPathSymbolData::OnPathSymbolData(
+    OsmAnd::PointI position31, float direction, float elevation, float elevationScaleFactor)
     : position31(position31)
     , direction(direction)
     , elevation(elevation)
+    , elevationScaleFactor(elevationScaleFactor)
 {
 }
 

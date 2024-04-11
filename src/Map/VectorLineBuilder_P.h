@@ -56,6 +56,11 @@ namespace OsmAnd
 
         float _direction;
 
+        bool _isElevatedLineVisible;
+        bool _isSurfaceLineVisible;
+
+        float _elevationScaleFactor;
+
         sk_sp<const SkImage> _pathIcon;
         sk_sp<const SkImage> _specialPathIcon;
         float _pathIconStep;
@@ -140,6 +145,15 @@ namespace OsmAnd
         void setEndCapStyle(const VectorLine::EndCapStyle endCapStyle);
 
         void setJointStyle(const VectorLine::JointStyle jointStyle);
+
+        bool getElevatedLineVisibility() const;
+        void setElevatedLineVisibility(const bool visible);
+
+        bool getSurfaceLineVisibility() const;
+        void setSurfaceLineVisibility(const bool visible);
+
+        float getElevationScaleFactor() const;
+        void setElevationScaleFactor(const float scaleFactor);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
         std::shared_ptr<VectorLine> build();

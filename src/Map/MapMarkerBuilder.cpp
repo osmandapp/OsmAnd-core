@@ -118,6 +118,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setHeight(const float height
     return *this;
 }
 
+float OsmAnd::MapMarkerBuilder::getElevationScaleFactor() const
+{
+    return _p->getElevationScaleFactor();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setElevationScaleFactor(const float scaleFactor)
+{
+    _p->setElevationScaleFactor(scaleFactor);
+
+    return *this;
+}
+
 sk_sp<const SkImage> OsmAnd::MapMarkerBuilder::getPinIcon() const
 {
     return _p->getPinIcon();

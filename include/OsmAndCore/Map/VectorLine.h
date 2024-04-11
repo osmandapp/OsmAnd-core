@@ -59,12 +59,13 @@ namespace OsmAnd
 
         struct OnPathSymbolData
         {
-            OnPathSymbolData(PointI position31, float direction, float elevation);
+            OnPathSymbolData(PointI position31, float direction, float elevation, float elevationScaleFactor);
             ~OnPathSymbolData();
 
             PointI position31;
             float direction;
             float elevation;
+            float elevationScaleFactor;
         };
 
         enum class JointStyle {
@@ -157,6 +158,15 @@ namespace OsmAnd
 
         std::vector<double> getLineDash() const;
         void setLineDash(const std::vector<double> dashPattern);
+
+        bool getElevatedLineVisibility() const;
+        void setElevatedLineVisibility(const bool visible);
+
+        bool getSurfaceLineVisibility() const;
+        void setSurfaceLineVisibility(const bool visible);
+
+        float getElevationScaleFactor() const;
+        void setElevationScaleFactor(const float scaleFactor);
 
         sk_sp<const SkImage> getPointImage() const;
 

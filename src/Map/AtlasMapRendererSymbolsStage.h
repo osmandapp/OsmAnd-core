@@ -68,6 +68,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters> instanceParameters;
 
             float elevationInMeters;
+            float elevationFactor;
             TileId tileId;
             PointF offsetInTileN;
             PointI offsetFromTarget31;

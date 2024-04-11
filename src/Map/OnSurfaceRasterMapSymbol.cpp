@@ -5,6 +5,7 @@ OsmAnd::OnSurfaceRasterMapSymbol::OnSurfaceRasterMapSymbol(
     : RasterMapSymbol(group_)
     , direction(0.0f)
     , elevation(NAN)
+    , elevationScaleFactor(1.0f)
 {
 }
 
@@ -40,4 +41,14 @@ float OsmAnd::OnSurfaceRasterMapSymbol::getElevation() const
 void OsmAnd::OnSurfaceRasterMapSymbol::setElevation(const float newElevation)
 {
     elevation = newElevation;
+}
+
+float OsmAnd::OnSurfaceRasterMapSymbol::getElevationScaleFactor() const
+{
+    return elevationScaleFactor;
+}
+
+void OsmAnd::OnSurfaceRasterMapSymbol::setElevationScaleFactor(const float scaleFactor)
+{
+    elevationScaleFactor = scaleFactor;
 }
