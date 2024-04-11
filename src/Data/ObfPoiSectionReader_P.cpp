@@ -1290,12 +1290,13 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
-				timer.restart();
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
+				timer.restart();
                 ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
+				LogPrintf(LogSeverityLevel::Warning, "XXX scan timer (%d ms)", timer.elapsed());
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -1305,7 +1306,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
-				LogPrintf(LogSeverityLevel::Warning, "XXX break timer (%d ms)", timer.elapsed());
 				breaks++;
                 break;
             }
