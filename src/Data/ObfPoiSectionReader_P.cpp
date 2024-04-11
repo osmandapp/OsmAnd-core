@@ -1195,7 +1195,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 break;
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
-				timer.restart();
+//				timer.restart();
                 auto offKeys = dataBoxesOffsetsSet.keys();
                 std::sort(offKeys,
                           [&dataBoxesOffsetsSet]

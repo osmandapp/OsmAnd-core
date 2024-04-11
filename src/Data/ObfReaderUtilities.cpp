@@ -97,18 +97,18 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     QString key;
     auto matchedCharactersCount = matchedCharactersCount_;
 
-	QElapsedTimer timer;
+//	QElapsedTimer timer;
 	int skips = 0, breaksKey = 0, breaksVal = 0, breaksSub = 0;
 
-	timer.restart();
+//	timer.restart();
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-				LogPrintf(LogSeverityLevel::Warning, "XXX skips %d breaks %d %d %d match %d (%d ms)",
-						  skips, breaksKey, breaksVal, breaksSub, matchedCharactersCount, timer.elapsed());
+//				LogPrintf(LogSeverityLevel::Warning, "XXX skips %d breaks %d %d %d match %d (%d ms)",
+//						  skips, breaksKey, breaksVal, breaksSub, matchedCharactersCount, timer.elapsed());
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return matchedCharactersCount;
 
