@@ -1253,7 +1253,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
-				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms)", timer.elapsed());
+//				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms)", timer.elapsed()); // fast
                 return;
             }
             default:
@@ -1272,6 +1272,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const TileAcceptorFunction tileFilter)
 {
 	QElapsedTimer timer;
+	timer.restart();
     const auto cis = reader.getCodedInputStream().get();
 
     uint32_t baseOffset;
@@ -1316,7 +1317,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->ReadVarint32(&length);
                     const auto oldLimit = cis->PushLimit(length);
 
-					timer.restart();
                     readNameIndexData(
                         reader,
                         outDataOffsets,

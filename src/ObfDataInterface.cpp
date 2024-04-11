@@ -587,7 +587,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
 {
     typedef std::pair< std::shared_ptr<const ObfReader>, Ref<ObfPoiSectionInfo> > OrderedSection;
     std::vector< OrderedSection > orderedSections;
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX readAmenitiesByName size=%d", obfReaders.size());
+//	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX readAmenitiesByName size=%d", obfReaders.size());
     for (const auto& obfReader : constOf(obfReaders))
     {
 		// TODO avoid world mini when world full exists
