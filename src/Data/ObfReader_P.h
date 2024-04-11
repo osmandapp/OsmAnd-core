@@ -40,7 +40,6 @@ namespace OsmAnd
     private:
         std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
 
-        mutable std::shared_ptr<const ObfInfo> _obfInfo;
         static bool readInfo(const ObfReader_P& reader, std::shared_ptr<ObfInfo>& info);
         static bool readOsmAndOwner(gpb::io::CodedInputStream* cis, const std::shared_ptr<ObfInfo> info);
 
@@ -50,6 +49,7 @@ namespace OsmAnd
     protected:
         ObfReader_P(ObfReader* const owner, const std::shared_ptr<QIODevice>& input);
     public:
+		mutable std::shared_ptr<const ObfInfo> _obfInfo;
 		std::shared_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
 		const std::shared_ptr<QIODevice> _input;
         virtual ~ObfReader_P();

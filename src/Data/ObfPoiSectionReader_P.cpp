@@ -1189,7 +1189,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 				LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex = %d (%d ms) [basemap %d]",
-						  dataBoxesOffsetsSet.size(), timer.elapsed(), (int) reader.isBasemap);
+						  dataBoxesOffsetsSet.size(), timer.elapsed(), (int) reader._obfInfo.isBasemap);
                 break;
             }
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
@@ -1255,7 +1255,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 
                 cis->Skip(cis->BytesUntilLimit());
 				LogPrintf(LogSeverityLevel::Warning, "XXX readAmenitiesDataBox (%d ms) [basemap %d]",
-						  timer.elapsed(), reader.isBasemap);
+						  timer.elapsed(), reader._obfInfo->isBasemap);
                 return;
             }
             default:
