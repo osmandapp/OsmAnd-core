@@ -589,6 +589,9 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     std::vector< OrderedSection > orderedSections;
     for (const auto& obfReader : constOf(obfReaders))
     {
+		// TODO avoid world mini when world full exists
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX readAmenitiesByName 1st");
+
         if (queryController && queryController->isAborted())
             return false;
 
