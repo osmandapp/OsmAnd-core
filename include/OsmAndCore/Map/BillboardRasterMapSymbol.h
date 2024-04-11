@@ -37,6 +37,10 @@ namespace OsmAnd
         float elevation;
         float getElevation() const;
         void setElevation(const float elevation);
+
+        float elevationScaleFactor;
+        float getElevationScaleFactor() const;
+        void setElevationScaleFactor(const float scaleFactor);
     };
 }
 

@@ -1224,29 +1224,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
     auto positionInWorld = glm::vec3(offsetFromTarget.x, 0.0f, offsetFromTarget.y);
 
-    // Get elevation data
-    float elevationInMeters = NAN;
+    // Get elevation scale factor (affects distance from the surface)
+    float elevationFactor = 1.0f;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
-        elevationInMeters = rasterMapSymbol->getElevation();
+        elevationFactor = rasterMapSymbol->getElevationScaleFactor();
+
+    // Get elevation data
+    const auto upperMetersPerUnit =
+            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+    const auto lowerMetersPerUnit =
+            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    float surfaceInMeters = 0.0f;
+    float surfaceInWorld = 0.0f;
     std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
     PointF offsetInScaledTileN = offsetInTileN;
-    if (!qIsNaN(elevationInMeters)
-        || (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel
-            && elevationData && elevationData->getValue(offsetInScaledTileN, elevationInMeters)))
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel
+            && elevationData && elevationData->getValue(offsetInScaledTileN, surfaceInMeters))
     {
-        const auto scaledElevationInMeters = elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
-
-        const auto upperMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-        const auto lowerMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-        const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-
-        positionInWorld.y =
-            (scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor;
+        float scaleFactor =
+            currentState.elevationConfiguration.dataScaleFactor * currentState.elevationConfiguration.zScaleFactor;
+        surfaceInWorld = scaleFactor * surfaceInMeters / metersPerUnit;
     }
-    if (qIsNaN(elevationInMeters))
-        elevationInMeters = 0.0f;
+    float elevationInWorld = surfaceInWorld;
+    float elevationInMeters = NAN;
+    if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
+        elevationInMeters = rasterMapSymbol->getElevation();
+    if (!qIsNaN(elevationInMeters))
+        elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
+    positionInWorld.y = elevationInWorld;
 
     // Test against visible frustum area (if allowed)
     if (!debugSettings->disableSymbolsFastCheckByFrustum &&
@@ -1532,31 +1538,36 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     const auto tileId = Utilities::normalizeTileId(Utilities::getTileId(Utilities::normalizeCoordinates(
         position31, ZoomLevel31), currentState.zoomLevel, &offsetInTileN), currentState.zoomLevel);
 
+    // Get elevation scale factor (affects distance from the surface)
+    float elevationFactor = 1.0f;
+    if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
+        elevationFactor = rasterMapSymbol->getElevationScaleFactor();
+    else if (const auto& vectorMapSymbol = std::dynamic_pointer_cast<const OnSurfaceVectorMapSymbol>(mapSymbol))
+        elevationFactor = vectorMapSymbol->getElevationScaleFactor();
+
     // Get elevation data
+    const auto upperMetersPerUnit =
+            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
+    const auto lowerMetersPerUnit =
+            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
+    const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
+    float surfaceInMeters = 0.0f;
+    float surfaceInWorld = 0.0f;
+    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
+    PointF offsetInScaledTileN = offsetInTileN;
+    if (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel
+            && elevationData && elevationData->getValue(offsetInScaledTileN, surfaceInMeters))
+    {
+        float scaleFactor =
+            currentState.elevationConfiguration.dataScaleFactor * currentState.elevationConfiguration.zScaleFactor;
+        surfaceInWorld = scaleFactor * surfaceInMeters / metersPerUnit;
+    }
+    float elevationInWorld = surfaceInWorld;
     float elevationInMeters = NAN;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
         elevationInMeters = rasterMapSymbol->getElevation();
-    float elevationInWorld = 0.0f;
-    std::shared_ptr<const IMapElevationDataProvider::Data> elevationData;
-    PointF offsetInScaledTileN = offsetInTileN;
-    if (!qIsNaN(elevationInMeters)
-        || (getElevationData(tileId, currentState.zoomLevel, offsetInScaledTileN, &elevationData) != InvalidZoomLevel
-            && elevationData && elevationData->getValue(offsetInScaledTileN, elevationInMeters)))
-    {
-        const auto scaledElevationInMeters =
-            elevationInMeters * currentState.elevationConfiguration.dataScaleFactor;
-
-        const auto upperMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y, AtlasMapRenderer::TileSize3D);
-        const auto lowerMetersPerUnit =
-            Utilities::getMetersPerTileUnit(currentState.zoomLevel, tileId.y + 1, AtlasMapRenderer::TileSize3D);
-        const auto metersPerUnit = glm::mix(upperMetersPerUnit, lowerMetersPerUnit, offsetInTileN.y);
-
-        elevationInWorld =
-            (scaledElevationInMeters / metersPerUnit) * currentState.elevationConfiguration.zScaleFactor;
-    }
-    if (qIsNaN(elevationInMeters))
-        elevationInMeters = 0.0f;
+    if (!qIsNaN(elevationInMeters))
+        elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
 
     // Don't render fully transparent symbols
     const auto opacityFactor = getSubsectionOpacityFactor(mapSymbol);
@@ -1570,6 +1581,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         renderable->referenceOrigins = const_cast<MapRenderer::MapSymbolReferenceOrigins*>(&referenceOrigins);
         renderable->gpuResource = gpuResource;
         renderable->elevationInMeters = elevationInMeters;
+        renderable->elevationFactor = elevationFactor;
         renderable->tileId = tileId;
         renderable->offsetInTileN = offsetInTileN;
         renderable->opacityFactor = opacityFactor;

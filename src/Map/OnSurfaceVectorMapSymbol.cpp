@@ -4,6 +4,7 @@ OsmAnd::OnSurfaceVectorMapSymbol::OnSurfaceVectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : VectorMapSymbol(group_)
     , direction(0.0f)
+    , elevationScaleFactor(1.0f)
 {
 }
 
@@ -29,4 +30,14 @@ OsmAnd::PointI OsmAnd::OnSurfaceVectorMapSymbol::getPosition31() const
 void OsmAnd::OnSurfaceVectorMapSymbol::setPosition31(const PointI newPosition31)
 {
     position31 = newPosition31;
+}
+
+float OsmAnd::OnSurfaceVectorMapSymbol::getElevationScaleFactor() const
+{
+    return elevationScaleFactor;
+}
+
+void OsmAnd::OnSurfaceVectorMapSymbol::setElevationScaleFactor(const float scaleFactor)
+{
+    elevationScaleFactor = scaleFactor;
 }

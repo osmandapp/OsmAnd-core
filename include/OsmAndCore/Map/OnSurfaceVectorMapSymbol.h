@@ -32,6 +32,10 @@ namespace OsmAnd
         PointI position31;
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
+
+        float elevationScaleFactor;
+        virtual float getElevationScaleFactor() const;
+        virtual void setElevationScaleFactor(const float scaleFactor);
     };
 }
 

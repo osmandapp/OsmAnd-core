@@ -109,6 +109,18 @@ namespace OsmAnd
         FColorARGB getFarOutlineColor() const;
         OsmAnd::VectorLineBuilder& setFarOutlineColor(const FColorARGB color);
 
+        // Get/set visibility of line with heights (3D only - see get/set heights):
+        bool getElevatedLineVisibility() const;
+        OsmAnd::VectorLineBuilder& setElevatedLineVisibility(const bool visible);
+
+        // Get/set visibility of line on the surface (3D only - see get/set heights):
+        bool getSurfaceLineVisibility() const;
+        OsmAnd::VectorLineBuilder& setSurfaceLineVisibility(const bool visible);
+
+        // Get/set scale factor for line elevation (affects distance from the surface - 3D only):
+        float getElevationScaleFactor() const;
+        OsmAnd::VectorLineBuilder& setElevationScaleFactor(const float scaleFactor);
+
         sk_sp<const SkImage> getPathIcon() const;
         VectorLineBuilder& setPathIcon(const SingleSkImage& image);
         
