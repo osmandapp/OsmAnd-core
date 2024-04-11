@@ -22,6 +22,8 @@
 #include <Logging.h>
 #include <OsmAndCore/ICU.h>
 
+#include <QElapsedTimer>
+
 const int BUCKET_SEARCH_BY_NAME = 5;
 const int BASE_POI_SHIFT = 7;
 const int FINAL_POI_SHIFT = 5;
@@ -1154,6 +1156,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const std::shared_ptr<const IQueryController>& queryController)
 {
+    QElapsedTimer timer;
+
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     for (;;)
@@ -1168,6 +1172,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 return;
             case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
             {
+                timer.restart();
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
@@ -1182,6 +1187,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
+                LogPrintf(LogSeverityLevel::Warning, "XXX scanNameIndex found=%d (%d ms)", dataBoxesOffsetsSet.size(), timer.elapsed());
                 break;
             }
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
@@ -1275,7 +1281,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
-
                 return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
