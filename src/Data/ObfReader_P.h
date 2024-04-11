@@ -38,7 +38,6 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ObfReader_P);
 
     private:
-        const std::shared_ptr<QIODevice> _input;
         std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
 
         mutable std::shared_ptr<const ObfInfo> _obfInfo;
@@ -52,6 +51,7 @@ namespace OsmAnd
         ObfReader_P(ObfReader* const owner, const std::shared_ptr<QIODevice>& input);
     public:
 		std::shared_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
+		const std::shared_ptr<QIODevice> _input;
         virtual ~ObfReader_P();
 
         ImplementationInterface<ObfReader> owner;
