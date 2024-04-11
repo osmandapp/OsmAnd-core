@@ -121,7 +121,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 bool matchesForward = false;
                 bool matchesBackward = false;
-                if (strictMatch)
+                if (true || strictMatch)
                     matchesForward = key.startsWith(query, Qt::CaseInsensitive);
                 else
                     matchesForward = CollatorStringMatcher::cmatches(key, query, StringMatcherMode::CHECK_ONLY_STARTS_WITH);
@@ -136,27 +136,27 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
 
                 if (matchesForward)
                 {
-//                    if (query.length() > matchedCharactersCount)
-//                    {
-//                        matchedCharactersCount = query.length();
-//                        outValues.clear();
-//                    }
-//                    else if (query.length() < matchedCharactersCount)
-//                    {
-//                        key = QString::null;
-//                    }
+                    if (query.length() > matchedCharactersCount)
+                    {
+                        matchedCharactersCount = query.length();
+                        outValues.clear();
+                    }
+                    else if (query.length() < matchedCharactersCount)
+                    {
+                        key = QString::null;
+                    }
                 }
                 else if (matchesBackward)
                 {
-//                    if (key.length() > matchedCharactersCount)
-//                    {
-//                        matchedCharactersCount = key.length();
-//                        outValues.clear();
-//                    }
-//                    else if (key.length() < matchedCharactersCount)
-//                    {
-//                        key = QString::null;
-//                    }
+                    if (key.length() > matchedCharactersCount)
+                    {
+                        matchedCharactersCount = key.length();
+                        outValues.clear();
+                    }
+                    else if (key.length() < matchedCharactersCount)
+                    {
+                        key = QString::null;
+                    }
                 }
                 else
                 {
