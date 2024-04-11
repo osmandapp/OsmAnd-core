@@ -1300,7 +1300,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
-				breaks++;
                 break;
             }
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
@@ -1329,7 +1328,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
-				skips++;
                 break;
         }
     }
