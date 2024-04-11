@@ -1310,9 +1310,9 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             case OBF::OsmAndPoiNameIndex::kDataFieldNumber:
             {
                 std::sort(intermediateOffsets);
+				timer.restart();
                 for (const auto& intermediateOffset : constOf(intermediateOffsets))
                 {
-					timer.restart();
                     cis->Seek(baseOffset + intermediateOffset);
 
                     gpb::uint32 length;
@@ -1328,6 +1328,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
 					LogPrintf(LogSeverityLevel::Warning, "XXX skips=%d breaks=%d of=%d size=%d (%d ms)",
 							  skips, breaks, intermediateOffsets.size(), outDataOffsets.size(), timer.elapsed());
+					timer.start();
 
                     cis->PopLimit(oldLimit);
                 }
