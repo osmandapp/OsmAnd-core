@@ -26,6 +26,7 @@ namespace OsmAnd
         enum {
             DefaultMemoryWindowSize = 1 * 1024 * 1024, // 1Mb
         };
+		const std::shared_ptr<QFileDevice> _file;
 
     private:
 
@@ -37,7 +38,6 @@ namespace OsmAnd
         GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QFileDeviceInputStream);
 
         //! Pointer to I/O device
-        const std::shared_ptr<QFileDevice> _file;
 
         //! File size
         const qint64 _fileSize;
