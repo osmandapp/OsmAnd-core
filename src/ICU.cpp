@@ -11,9 +11,7 @@
 #include <QVector>
 #include <QThread>
 #include <QHash>
-#include <QDateTime>
-#include <QMutex>
-#include <QMutexLocker>
+#include <QReadWriteLock>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -35,50 +33,43 @@ const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 
-// Thread-safe and fast wrapper over Collator->clone()
-const Collator* getThreadSafeCollator() {
-    const int expireSeconds = 60;
+// Thread-safe and fast wrapper over Collator->clone() @alex-osm version
+const Collator* getThreadSafeCollator()
+{
+    static QReadWriteLock collatorsLock;
+    static QHash<Qt::HANDLE, Collator*> collatorsMap;
+    const auto threadId = QThread::currentThreadId();
+    auto thread = QThread::currentThread();
 
-    static qint64 cleanupTimer = 0;
-    static QMutex mutex; // optimal
-    static QHash<Qt::HANDLE, qint64> timers;
-    static QHash<Qt::HANDLE, Collator*> collators;
-
-    if (!g_pIcuCollator) return nullptr;
-
-    QMutexLocker locker(&mutex);
-    Collator* collator = nullptr;
-    const Qt::HANDLE threadId = QThread::currentThreadId();
-
-    if (collators.contains(threadId)) {
-        collator = collators.value(threadId); // cached
-    } else {
-        collator = g_pIcuCollator->clone(); // cloned
-        if (!collator) return nullptr;
-        collators.insert(threadId, collator);
+    {
+        QReadLocker readLocker(&collatorsLock);
+        const auto citCollator = collatorsMap.constFind(threadId);
+        if (citCollator != collatorsMap.cend())
+            return *citCollator;
     }
 
-    // update collator's timestamp
-    qint64 unixTime = QDateTime::currentSecsSinceEpoch();
-    timers.insert(threadId, unixTime + expireSeconds);
+    {
+        QWriteLocker readLocker(&collatorsLock);
 
-    // cleanup expired cache
-    if (unixTime > cleanupTimer) {
-        cleanupTimer = unixTime + expireSeconds;
-
-        auto it = timers.begin();
-        while (it != timers.end()) {
-            if (unixTime > it.value()) {
-                delete collators.value(it.key());
-                collators.remove(it.key());
-                it = timers.erase(it);
-            } else {
-                it++;
+        if (g_pIcuCollator)
+        {
+            const auto clone = g_pIcuCollator->clone();
+            if (clone)
+            {
+                collatorsMap.insert(threadId, clone);
+                QObject::connect(thread, &QThread::finished, [=](){
+                    // This slot (or lambda function) will be called when the QThread finishes
+                    // You can put your desired functionality here
+                    QWriteLocker writeLocker(&collatorsLock);
+                    delete collatorsMap[threadId];
+                    collatorsMap.remove(threadId);
+                });
+                return clone;
             }
         }
     }
 
-    return collator;
+    return nullptr;
 }
 
 bool OsmAnd::ICU::initialize()
