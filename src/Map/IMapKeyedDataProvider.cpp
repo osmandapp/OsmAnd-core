@@ -20,6 +20,15 @@ OsmAnd::ZoomLevel OsmAnd::IMapKeyedDataProvider::getMaxZoom() const
     return OsmAnd::MaxZoomLevel;
 }
 
+int64_t OsmAnd::IMapKeyedDataProvider::getPriority() const
+{
+    return std::numeric_limits<int64_t>::min();
+}
+
+void OsmAnd::IMapKeyedDataProvider::setPriority(int64_t priority)
+{
+}
+
 bool OsmAnd::IMapKeyedDataProvider::obtainKeyedData(
     const Request& request,
     std::shared_ptr<Data>& outKeyedData,

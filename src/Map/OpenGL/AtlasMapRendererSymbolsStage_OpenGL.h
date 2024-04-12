@@ -48,16 +48,12 @@ namespace OsmAnd
                     GLlocation viewport;
                     GLlocation target31;
 
-                    // Per-tile data
-                    GLlocation elevation_scale;
-
                     // Per-symbol data
                     GLlocation position31;
-                    GLlocation offsetInTile;
                     GLlocation symbolSize;
                     GLlocation distanceFromCamera;
                     GLlocation onScreenOffset;
-                    GLlocation elevationInMeters;
+                    GLlocation elevationInWorld;
                 } param;
             } vs;
 
@@ -210,16 +206,12 @@ namespace OsmAnd
                     // Common data
                     GLlocation mPerspectiveProjectionView;
 
-                    // Per-tile data
-                    GLlocation elevation_scale;
-
                     // Per-symbol data
-                    GLlocation offsetInTile;
                     GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
                     GLlocation zDistanceFromCamera;
-                    GLlocation elevationInMeters;
+                    GLlocation elevationInWorld;
                 } param;
             } vs;
 
@@ -262,6 +254,7 @@ namespace OsmAnd
                     GLlocation cameraPositionAndZfar;
                     GLlocation elevation_scale;
                     GLlocation elevationInMeters;
+                    GLlocation elevationFactor;
                     GLlocation elevation_dataSampler;
                     GLlocation texCoordsOffsetAndScale;
                     GLlocation elevationLayerDataPlace;

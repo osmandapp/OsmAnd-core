@@ -348,6 +348,8 @@ namespace OsmAnd
         virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool resetElevationDataProvider(bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setElevationConfiguration(const ElevationConfiguration& configuration, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setElevationScaleFactor(const float scaleFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual float getElevationScaleFactor() Q_DECL_OVERRIDE;
 
         virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool addSymbolsProvider(const int subsectionIndex, const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) Q_DECL_OVERRIDE;

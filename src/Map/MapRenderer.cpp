@@ -332,6 +332,8 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     if (_isRenderingInitialized)
         return false;
 
+    gpuContextIsLost = false;
+
     // Capture render thread ID, since rendering must be performed from
     // same thread where it was initialized
     _renderThreadId = QThread::currentThreadId();
@@ -365,8 +367,6 @@ bool OsmAnd::MapRenderer::doInitializeRendering()
 bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
-
-    gpuContextIsLost = false;
 
     // GPU worker should not be suspended initially
     _gpuWorkerIsSuspended = false;
@@ -1433,6 +1433,34 @@ bool OsmAnd::MapRenderer::setElevationConfiguration(
     notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_Configuration);
 
     return true;
+}
+
+bool OsmAnd::MapRenderer::setElevationScaleFactor(const float scaleFactor, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!_requestedState.elevationConfiguration.isValid())
+        return false;
+
+    bool update = forcedUpdate || (_requestedState.elevationConfiguration.zScaleFactor != scaleFactor);
+    if (!update)
+        return false;
+
+    _requestedState.elevationConfiguration.setZScaleFactor(scaleFactor);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_Configuration);
+
+    return true;
+}
+
+float OsmAnd::MapRenderer::getElevationScaleFactor()
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!_requestedState.elevationConfiguration.isValid())
+        return NAN;
+
+    return _requestedState.elevationConfiguration.zScaleFactor;
 }
 
 bool OsmAnd::MapRenderer::addSymbolsProvider(

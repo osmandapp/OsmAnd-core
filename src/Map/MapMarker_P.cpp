@@ -113,6 +113,24 @@ void OsmAnd::MapMarker_P::setHeight(const float height)
     }
 }
 
+float OsmAnd::MapMarker_P::getElevationScaleFactor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _elevationScaleFactor;
+}
+
+void OsmAnd::MapMarker_P::setElevationScaleFactor(const float scaleFactor)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_elevationScaleFactor != scaleFactor)
+    {
+        _elevationScaleFactor = scaleFactor;
+        _hasUnappliedChanges = true;
+    }
+}
+
 float OsmAnd::MapMarker_P::getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const
 {
     QReadLocker scopedLocker(&_lock);
@@ -210,6 +228,13 @@ bool OsmAnd::MapMarker_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
 
+            if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
+            {
+                symbol->setPosition31(_position);
+                symbol->direction = _model3DDirection;
+                symbol->maxSizeInPixels = _model3DMaxSizeInPixels;
+            }
+
             if (const auto symbol = std::dynamic_pointer_cast<AccuracyCircleMapSymbol>(symbol_))
             {
                 symbol->setPosition31(_position);
@@ -221,6 +246,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
             {
                 symbol->setPosition31(_position);
                 symbol->setElevation(_height);
+                symbol->setElevationScaleFactor(_elevationScaleFactor);
                 symbol->modulationColor = _pinIconModulationColor;
             }
 
@@ -233,6 +259,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
                     symbol->direction = *citDirection;
 
                 symbol->setElevation(_height);
+                symbol->setElevationScaleFactor(_elevationScaleFactor);
             }
         }
     }
@@ -321,6 +348,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
                 mapSymbolCaption->languageId = LanguageId::Invariant;
                 mapSymbolCaption->position31 = _position;
                 mapSymbolCaption->elevation = _height;
+                mapSymbolCaption->elevationScaleFactor = _elevationScaleFactor;
                 symbolsGroup->symbols.push_back(mapSymbolCaption);
             }
         }
@@ -363,6 +391,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;
         onMapSurfaceIconSymbol->elevation = _height;
+        onMapSurfaceIconSymbol->elevationScaleFactor = _elevationScaleFactor;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }

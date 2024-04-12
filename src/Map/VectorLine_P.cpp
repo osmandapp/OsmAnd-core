@@ -24,6 +24,9 @@
 
 #define SPECIAL_ARROW_DISTANCE_MULTIPLIER 2.5f
 
+#define VECTOR_LINE_SCALE_COEF 2.0f
+#define LINE_WIDTH_THRESHOLD_DP 8.0f * VECTOR_LINE_SCALE_COEF
+
 // Colorization shemes
 #define COLORIZATION_NONE 0
 #define COLORIZATION_GRADIENT 1
@@ -50,6 +53,9 @@ OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
     , _mapVisualZoom(0.f)
     , _surfaceVisualZoom(0.f)
     , _mapVisualZoomShift(0.f)
+    , _isElevatedLineVisible(true)
+    , _isSurfaceLineVisible(false)
+    , _elevationScaleFactor(1.0f)
     , owner(owner_)
 {
 }
@@ -365,6 +371,66 @@ void OsmAnd::VectorLine_P::setColorizationScheme(const int colorizationScheme)
     if (_colorizationScheme != colorizationScheme)
     {
         _colorizationScheme = colorizationScheme;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+bool OsmAnd::VectorLine_P::getElevatedLineVisibility() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _isElevatedLineVisible;
+}
+
+void OsmAnd::VectorLine_P::setElevatedLineVisibility(const bool visible)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_isElevatedLineVisible != visible)
+    {
+        _isElevatedLineVisible = visible;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+bool OsmAnd::VectorLine_P::getSurfaceLineVisibility() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _isSurfaceLineVisible;
+}
+
+void OsmAnd::VectorLine_P::setSurfaceLineVisibility(const bool visible)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_isSurfaceLineVisible != visible)
+    {
+        _isSurfaceLineVisible = visible;
+
+        _hasUnappliedPrimitiveChanges = true;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::VectorLine_P::getElevationScaleFactor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _elevationScaleFactor;
+}
+
+void OsmAnd::VectorLine_P::setElevationScaleFactor(const float scaleFactor)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_elevationScaleFactor != scaleFactor)
+    {
+        _elevationScaleFactor = scaleFactor;
 
         _hasUnappliedPrimitiveChanges = true;
         _hasUnappliedChanges = true;
@@ -1197,22 +1263,50 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                     filteredHeights,
                     _fillColor, _nearOutlineColor, _farOutlineColor,
                     filteredColorsMap, filteredOutlineColorsMap,
-                    outlineThickness,
+                    _isElevatedLineVisible ? outlineThickness : 0.0f,
                     _mapZoomLevel,
                     Utilities::convert31toDouble(*(verticesAndIndices->position31), _mapZoomLevel),
                     AtlasMapRenderer::HeixelsPerTileSide - 1,
                     0.4f, false,
                     _colorizationScheme == COLORIZATION_SOLID);
+                if (_isElevatedLineVisible)
+                {
+                    crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                        vertex,
+                        vertices,
+                        original, thickness, 0.0f,
+                        _fillColor, _nearOutlineColor, _farOutlineColor,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                        static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                        _colorizationScheme == COLORIZATION_SOLID);
+                }
+                if (_isSurfaceLineVisible)
+                {
+                    filteredHeights.clear();
+                    crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                        vertex,
+                        vertices,
+                        original, thickness, 0.0f,
+                        _fillColor, _nearOutlineColor, _farOutlineColor,
+                        filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                        static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
+                        static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                        _colorizationScheme == COLORIZATION_SOLID);
+                }
             }
-            crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
-                vertex,
-                vertices,
-                original, thickness, withHeights ? 0.0f : (outlineThickness - thickness) / 2.0f,
-                _fillColor, _nearOutlineColor, _farOutlineColor,
-                filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
-                static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
-                static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
-                _colorizationScheme == COLORIZATION_SOLID);
+            else
+            {
+                crushedpixel::Polyline2D::create<OsmAnd::VectorMapSymbol::Vertex, std::vector<OsmAnd::PointD>>(
+                    vertex,
+                    vertices,
+                    original, thickness, (outlineThickness - thickness) / 2.0f,
+                    _fillColor, _nearOutlineColor, _farOutlineColor,
+                    filteredColorsMap, filteredOutlineColorsMap, filteredHeights,
+                    static_cast<crushedpixel::Polyline2D::JointStyle>(static_cast<int>(owner->jointStyle)),
+                    static_cast<crushedpixel::Polyline2D::EndCapStyle>(static_cast<int>(owner->endCapStyle)),
+                    _colorizationScheme == COLORIZATION_SOLID);
+            }
         }
     }
     if (vertices.size() == 0)
@@ -1251,6 +1345,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
 
     vectorLine->isHidden = _isHidden;
+    vectorLine->elevationScaleFactor = _elevationScaleFactor;
     vectorLine->setVerticesAndIndices(verticesAndIndices);
     return vectorLine;
 }
@@ -1342,7 +1437,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
                 origPos.y + (origPos.y >= intFull ? -intTwo : (origPos.y < -intFull ? intFull : 0)));
             // Get mirrored direction
             float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x, t.y)) - 180);
-            const VectorLine::OnPathSymbolData arrowSymbol(position, direction, midHeight);
+            const VectorLine::OnPathSymbolData arrowSymbol(position, direction, midHeight, _elevationScaleFactor);
             _arrowsOnPath.push_back(arrowSymbol);
 
             shift += step;
@@ -1355,7 +1450,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return owner->specialPathIcon != nullptr && _lineWidth <= owner->specialPathIcon->width() + 3.0f;
+    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale);
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

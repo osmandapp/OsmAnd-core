@@ -76,6 +76,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters> instanceParameters;
 
             float elevationInMeters;
+            float elevationFactor;
             TileId tileId;
             PointF offsetInTileN;
             PointI offsetFromTarget31;
@@ -452,7 +453,6 @@ namespace OsmAnd
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
         void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
-        bool withTerrainFilter();
 
         std::shared_ptr<AtlasMapRendererSymbolsStageModel3D> _model3DSubstage;
         virtual void createSubstages() = 0;

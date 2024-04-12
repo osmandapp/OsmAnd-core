@@ -334,7 +334,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         // Parameters: per-layer-in-tile data
         "struct VsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    mediump vec4 texCoordsOffsetAndScale;                                                                          ""\n"
+        "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
@@ -677,7 +677,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp float opacityFactor;                                                                                      ""\n"
         "    lowp float transitionPhase;                                                                                    ""\n"
-        "    lowp float texelSize;                                                                                          ""\n"
+        "    highp float texelSize;                                                                                         ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
@@ -1173,8 +1173,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     // Configure elevation data
     QList<Ref<ElevationResource>> elevationResources;
     ZoomLevel elevationZoom = zoomLevel;
-    auto tileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
+    auto baseTileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
         static_cast<double>(1ull << currentState.zoomLevel - zoomLevel);
+    auto tileSize = baseTileSize;
     if (withElevation && currentState.elevationDataProvider)
     {
         const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
@@ -1300,7 +1301,25 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         if (!elevationResource && elevationResources.isEmpty())
             cancelElevation(program, elevationDataSamplerIndex, activeElevationVertexAttribArray);
         else
+        {
+            // Per-tile elevation data configuration
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+                zoomLevel,
+                tileIdN.y,
+                baseTileSize);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                zoomLevel,
+                tileIdN.y + 1,
+                baseTileSize);
+            glUniform4f(
+                program.vs.param.elevation_scale,
+                (float)upperMetersPerUnit,
+                (float)lowerMetersPerUnit,
+                currentState.elevationConfiguration.zScaleFactor,
+                currentState.elevationConfiguration.dataScaleFactor);
+            GL_CHECK_RESULT;
             haveElevation = true;
+        }
     }
 
     // Shader expects blending to be premultiplied, since output color of fragment shader is premultiplied by alpha
@@ -1967,23 +1986,6 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
-
-    // Per-tile elevation data configuration
-    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y,
-        tileSize);
-    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-        zoomLevel,
-        tileIdN.y + 1,
-        tileSize);
-    glUniform4f(
-        program.vs.param.elevation_scale,
-        (float)upperMetersPerUnit,
-        (float)lowerMetersPerUnit,
-        currentState.elevationConfiguration.zScaleFactor,
-        currentState.elevationConfiguration.dataScaleFactor);
-    GL_CHECK_RESULT;
 
     const auto& perTile_vs = program.vs.param.elevationLayer;
 

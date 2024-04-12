@@ -642,12 +642,12 @@ bool OsmAnd::GeometryModifiers::cutMeshWithGrid(std::vector<VectorMapSymbol::Ver
 				} while (frag != fragments.end());
 			}
 		} while (i > 0);
-		for (const auto frag : fragments)
+		for (const auto& frag : fragments)
 			putTriangle(meshes, frag.second.A, frag.second.B, frag.second.C, tileSize, tilePosN);
 	}
 	vertices.clear();
 	partSizes->clear();
-	for (const auto mesh : meshes)
+	for (const auto& mesh : meshes)
 	{
 		vertices.insert(vertices.end(), mesh.second.begin(), mesh.second.end());
 		partSizes->push_back({mesh.first, mesh.second.size()});

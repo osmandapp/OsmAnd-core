@@ -5,6 +5,7 @@
 
 OsmAnd::MapMarkersCollection::MapMarkersCollection()
     : _p(new MapMarkersCollection_P(this))
+    , priority(std::numeric_limits<int64_t>::min())
 {
 }
 
@@ -69,4 +70,14 @@ OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
 {
     return OsmAnd::MaxZoomLevel;
+}
+
+int64_t OsmAnd::MapMarkersCollection::getPriority() const
+{
+    return priority;
+}
+
+void OsmAnd::MapMarkersCollection::setPriority(int64_t priority_)
+{
+    priority = priority_;
 }

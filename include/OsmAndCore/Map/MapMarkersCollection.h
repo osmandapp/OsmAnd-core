@@ -27,6 +27,7 @@ namespace OsmAnd
 
     private:
         PrivateImplementation<MapMarkersCollection_P> _p;
+        int64_t priority;
     protected:
     public:
         MapMarkersCollection();
@@ -52,6 +53,9 @@ namespace OsmAnd
         
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
+
+        virtual int64_t getPriority() const Q_DECL_OVERRIDE;
+        virtual void setPriority(int64_t priority) Q_DECL_OVERRIDE;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;

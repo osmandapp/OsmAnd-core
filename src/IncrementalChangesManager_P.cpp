@@ -223,7 +223,7 @@ bool OsmAnd::IncrementalChangesManager_P::parseRepository(
         .append(QLatin1String(".live.obf"));
         
         QString urlString = owner->repositoryBaseUrl +
-        QLatin1String("download.php?file=") +
+        QLatin1String("download?file=") +
         QUrl::toPercentEncoding(name) +
         QStringLiteral("&aosmc=yes");
         

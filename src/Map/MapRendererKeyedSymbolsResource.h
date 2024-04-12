@@ -27,8 +27,10 @@ namespace OsmAnd
         MapRendererKeyedSymbolsResource(
             MapRendererResourcesManager* owner,
             const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
-            const Key key);
+            const Key key,
+            int64_t priority = std::numeric_limits<int64_t>::min());
 
+        int64_t priority;
         std::shared_ptr<IMapKeyedSymbolsProvider::Data> _sourceData;
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
@@ -56,6 +58,8 @@ namespace OsmAnd
         virtual void prepareResourcesRenew() Q_DECL_OVERRIDE;
         virtual void finishResourcesRenewing() Q_DECL_OVERRIDE;
         
+        int64_t getPriority() const;
+
     public:
         virtual ~MapRendererKeyedSymbolsResource();
 

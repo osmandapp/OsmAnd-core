@@ -17,6 +17,7 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     , _isAccuracyCircleVisible(false)
     , _accuracyCircleRadius(0.0)
     , _height(NAN)
+    , _elevationScaleFactor(1.0f)
     , _pinIconVerticalAlignment(MapMarker::PinIconVerticalAlignment::CenterVertical)
     , _pinIconHorisontalAlignment(MapMarker::PinIconHorisontalAlignment::CenterHorizontal)
     , _model3DMaxSizeInPixels(0)
@@ -152,6 +153,20 @@ void OsmAnd::MapMarkerBuilder_P::setHeight(const float height)
     QWriteLocker scopedLocker(&_lock);
 
     _height = height;
+}
+
+float OsmAnd::MapMarkerBuilder_P::getElevationScaleFactor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _elevationScaleFactor;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setElevationScaleFactor(const float scaleFactor)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _elevationScaleFactor = scaleFactor;
 }
 
 sk_sp<const SkImage> OsmAnd::MapMarkerBuilder_P::getPinIcon() const
@@ -383,6 +398,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     }
     marker->setPosition(_position);
     marker->setHeight(_height);
+    marker->setElevationScaleFactor(_elevationScaleFactor);
     marker->setPinIconModulationColor(_pinIconModulationColor);
 
     if (marker->model3D)

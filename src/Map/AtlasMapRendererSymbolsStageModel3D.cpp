@@ -33,8 +33,8 @@ glm::mat4 OsmAnd::AtlasMapRendererSymbolsStageModel3D::calculateModelMatrix(
     bool& outElevated) const
 {
     const auto mScale = glm::scale(glm::vec3(scale));
-    const auto directionAngle = static_cast<float>(Utilities::normalizedAngleDegrees(direction + M_PI));
-    const auto mDirectionInWorld = glm::rotate(directionAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    const auto directionAngle = static_cast<float>(Utilities::normalizedAngleDegrees(90.0f - direction));
+    const auto mDirectionInWorld = glm::rotate(qDegreesToRadians(directionAngle), glm::vec3(0.0f, 1.0f, 0.0f));
     const auto mTranslateToPositionInWorld = glm::translate(positionInWorld);
     const auto mPositionInWorld = mTranslateToPositionInWorld * mDirectionInWorld * mScale;
 

@@ -1062,6 +1062,9 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
     if (!provider || activeZoom < provider->getMinZoom() || activeZoom > provider->getMaxZoom())
         return;
 
+    // Use provider's priority as value of priority for all its resources
+    const auto priority = provider->getPriority();
+
     // Get list of keys this provider has and check that all are present
     const auto& resourceKeys = provider->getProvidedDataKeys();
     for (const auto& resourceKey : constOf(resourceKeys))
@@ -1071,13 +1074,13 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
         std::shared_ptr<MapRendererBaseKeyedResource> resource;
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, resourceKey,
-            [this, resourceType]
+            [this, resourceType, priority]
             (const KeyedEntriesCollection<MapRendererKeyedResourcesCollection::Key,
                 MapRendererBaseKeyedResource>& collection,
                 MapRendererKeyedResourcesCollection::Key const key) -> MapRendererBaseKeyedResource*
             {
                 if (resourceType == MapRendererResourceType::Symbols)
-                    return new MapRendererKeyedSymbolsResource(this, collection, key);
+                    return new MapRendererKeyedSymbolsResource(this, collection, key, priority);
                 else
                     return nullptr;
             });
@@ -1891,22 +1894,41 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         // Mark as uploaded/outdated
         if (resource->isOld)
         {
-            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Outdated)
-                || resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Outdated)
-                || resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Outdated))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading,
+                    MapRendererResourceState::Outdated);
+            }
+            else if (resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Outdated))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Renewing,
+                    MapRendererResourceState::Outdated);
+            }
+            else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
                 MapRendererResourceState::ProcessingUpdate))
             {
-                if (!resource->leaveQuietly)
-                    renderer->invalidateFrame();
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                    MapRendererResourceState::ProcessingUpdate);
             }
         }
-        else if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded)
-                || resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Uploaded)
-                || resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
-                MapRendererResourceState::ProcessingUpdate))
+        else
         {
-            if (!resource->leaveQuietly)
-                renderer->invalidateFrame();
+            if (resource->setStateIf(MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading,
+                    MapRendererResourceState::Uploaded);
+            }
+            else if (resource->setStateIf(MapRendererResourceState::Renewing, MapRendererResourceState::Uploaded))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Renewing,
+                    MapRendererResourceState::Uploaded);
+            }
+            else if (resource->setStateIf(MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                MapRendererResourceState::ProcessingUpdate))
+            {
+                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::ProcessingUpdateWhileRenewing,
+                    MapRendererResourceState::ProcessingUpdate);
+            }
         }
 
         // Count uploaded resources
@@ -3308,7 +3330,11 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
 {
     // Priority calculation does not need to be stable
 
-    // Keyed resources have minimal priority always
+    // Special keyed resources have exactly set priority
+    if (auto symbol = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(requestedResource))
+        return symbol->getPriority();
+
+    // Ordinary keyed resources have minimal priority always
     if (std::dynamic_pointer_cast<MapRendererBaseKeyedResource>(requestedResource))
         return std::numeric_limits<int64_t>::min();
 
@@ -3317,7 +3343,7 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
         return 0;
 
     // The closer tiled resource coordinates are from center, the higher priority it has
-    auto priority = std::numeric_limits<int64_t>::max();
+    auto priority = std::numeric_limits<int64_t>::max() - 1000000000;
 
     switch (tiledResource->type)
     {
