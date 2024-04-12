@@ -11,8 +11,9 @@
 #include <QVector>
 #include <QThread>
 #include <QHash>
-#include <QMutex>
 #include <QDateTime>
+#include <QMutex>
+#include <QMutexLocker>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -34,41 +35,50 @@ const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 
-QMutex threadCollatorsMutex;
-qint64 threadCollatorsCleanupTimer = 0;
-QHash<Qt::HANDLE, const Collator*> threadCollators;
-
 // Thread-safe and fast wrapper over Collator->clone()
 const Collator* getThreadSafeCollator() {
-	threadCollatorsMutex.lock();
+    const int expireSeconds = 60;
 
-	const Qt::HANDLE thread = QThread::currentThreadId();
-	if (threadCollators.contains(thread)) {
-		const Collator* cached = threadCollators.value(thread);
-		threadCollatorsMutex.unlock();
-		return cached;
-	}
+    static qint64 cleanupTimer = 0;
+    static QMutex mutex; // optimal
+    static QHash<Qt::HANDLE, qint64> timers;
+    static QHash<Qt::HANDLE, Collator*> collators;
 
-	qint64 unixTime = QDateTime::currentSecsSinceEpoch();
-	if (unixTime > threadCollatorsCleanupTimer) {
-		threadCollatorsCleanupTimer = unixTime + 60; // every minute
-		for (const Collator* victim : threadCollators) {
-			delete victim;
-		}
-		threadCollators.clear();
-	}
+    if (!g_pIcuCollator) return nullptr;
 
-	if (g_pIcuCollator) {
-		const Collator* clone = g_pIcuCollator->clone();
-		if (clone) {
-			threadCollators.insert(thread, clone);
-			threadCollatorsMutex.unlock();
-			return clone;
-		}
-	}
+    QMutexLocker locker(&mutex);
+    Collator* collator = nullptr;
+    const Qt::HANDLE threadId = QThread::currentThreadId();
 
-	threadCollatorsMutex.unlock();
-	return nullptr;
+    if (collators.contains(threadId)) {
+        collator = collators.value(threadId); // cached
+    } else {
+        collator = g_pIcuCollator->clone(); // cloned
+        if (!collator) return nullptr;
+        collators.insert(threadId, collator);
+    }
+
+    // update collator's timestamp
+    qint64 unixTime = QDateTime::currentSecsSinceEpoch();
+    timers.insert(threadId, unixTime + expireSeconds);
+
+    // cleanup expired cache
+    if (unixTime > cleanupTimer) {
+        cleanupTimer = unixTime + expireSeconds;
+
+        auto it = timers.begin();
+        while (it != timers.end()) {
+            if (unixTime > it.value()) {
+                delete collators.value(it.key());
+                collators.remove(it.key());
+                it = timers.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
+
+    return collator;
 }
 
 bool OsmAnd::ICU::initialize()
