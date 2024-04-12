@@ -38,18 +38,6 @@ QMutex threadCollatorsMutex;
 qint64 threadCollatorsCleanupTimer = 0;
 QHash<Qt::HANDLE, const Collator*> threadCollators;
 
-// `threadsCollators` cache is used to fast up ccontains/ccompare/cstartsWith
-// The cleanup function should be called at the end of thread/destructor/cycle
-//void cleanupCollatorCache() {
-//    const Qt::HANDLE thread = QThread::currentThreadId();
-//    if (threadCollators.contains(thread)) {
-//        threadCollatorsMutex.lock();
-//        delete threadCollators.value(thread);
-//        threadCollators.remove(thread);
-//        threadCollatorsMutex.unlock();
-//    }
-//}
-
 // Thread-safe and fast wrapper over Collator->clone()
 const Collator* getThreadSafeCollator() {
 	threadCollatorsMutex.lock();
@@ -62,9 +50,8 @@ const Collator* getThreadSafeCollator() {
 
 	qint64 unixTime = QDateTime::currentSecsSinceEpoch();
 	if (unixTime > threadCollatorsCleanupTimer) {
-		threadCollatorsCleanupTimer = unixTime + 10; // every minute
+		threadCollatorsCleanupTimer = unixTime + 60; // every minute
 		for (const Collator* victim : threadCollators) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX delete time=%d ptr=%X", unixTime, victim);
 			delete victim;
 		}
 		threadCollators.clear();
