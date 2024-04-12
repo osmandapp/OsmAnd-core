@@ -12,6 +12,7 @@
 #include <QThread>
 #include <QHash>
 #include <QMutex>
+#include <QDateTime>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -63,7 +64,7 @@ const Collator* getThreadSafeCollator() {
 	if (unixTime > threadCollatorsCleanupTimer) {
 		threadCollatorsCleanupTimer = unixTime + 10; // every minute
 		for (const Collator* victim : threadCollators) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX delete time=%d ptr=%X", unixTime, collator);
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX delete time=%d ptr=%X", unixTime, victim);
 			delete victim;
 		}
 		threadCollators.clear();
