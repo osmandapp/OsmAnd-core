@@ -84,6 +84,15 @@ namespace OsmAnd
         MapMarkerBuilder& removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         MapMarkerBuilder& clearOnMapSurfaceIcons();
 
+        std::shared_ptr<const Model3D> getModel3D() const;
+        MapMarkerBuilder& setModel3D(const std::shared_ptr<const Model3D>& model3D);
+        QHash<QString, FColorARGB> getModel3DCustomMaterialColors() const;
+        MapMarkerBuilder& addModel3DCustomMaterialColor(const QString& materialName, const FColorARGB& color);
+        MapMarkerBuilder& removeModel3DCustomMaterialColor(const QString& materialName);
+        MapMarkerBuilder& clearModel3DCustomMaterialColors();
+        int getModel3DMaxSizeInPixels() const;
+        MapMarkerBuilder& setModel3DMaxSizeInPixels(const int maxSizeInPixels);
+
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
     };
 }

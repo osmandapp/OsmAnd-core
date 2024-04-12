@@ -171,3 +171,42 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     mapSymbol.setVerticesAndIndices(verticesAndIndices);
 }
 
+void OsmAnd::VectorMapSymbol::generateModel3DPrimitive(
+    VectorMapSymbol& mapSymbol,
+    const std::shared_ptr<const Model3D>& model3D,
+    const QHash<QString, FColorARGB>& customMaterialColors)
+{
+    mapSymbol.primitiveType = PrimitiveType::Triangles;
+
+    const auto verticesAndIndices = std::make_shared<VerticesAndIndices>();
+    verticesAndIndices->indices = nullptr;
+    verticesAndIndices->indicesCount = 0;
+
+    verticesAndIndices->verticesCount = model3D->vertices.size();
+    verticesAndIndices->vertices = new Vertex[verticesAndIndices->verticesCount];
+    auto pVertex = verticesAndIndices->vertices;
+
+    for (auto vertexIndex = 0u; vertexIndex < verticesAndIndices->verticesCount; vertexIndex++)
+    {
+        const auto& modelVertex = model3D->vertices[vertexIndex];
+
+        pVertex->positionXYZ[0] = modelVertex.xyz[0];
+        pVertex->positionXYZ[1] = modelVertex.xyz[1];
+        pVertex->positionXYZ[2] = modelVertex.xyz[2];
+
+        if (modelVertex.materialIndex == -1)
+            pVertex->color = modelVertex.color;
+        else
+        {
+            const auto& material = model3D->materials[modelVertex.materialIndex];
+            const auto citCustomColor = customMaterialColors.constFind(material.name);
+            pVertex->color = citCustomColor == customMaterialColors.cend()
+                ? pVertex->color = material.color
+                : pVertex->color = citCustomColor.value();
+        }
+
+        pVertex++;
+    }
+
+    mapSymbol.setVerticesAndIndices(verticesAndIndices);
+}

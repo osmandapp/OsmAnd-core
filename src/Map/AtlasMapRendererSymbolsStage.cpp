@@ -22,6 +22,7 @@
 #include "AtlasMapRenderer.h"
 #include "AtlasMapRenderer_Metrics.h"
 #include "AtlasMapRendererDebugStage.h"
+#include "AtlasMapRendererSymbolsStageModel3D.h"
 #include "MapSymbol.h"
 #include "VectorMapSymbol.h"
 #include "BillboardVectorMapSymbol.h"
@@ -29,6 +30,7 @@
 #include "OnPathRasterMapSymbol.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
+#include "Model3DMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "QKeyValueIterator.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
@@ -1121,6 +1123,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
             allowFastCheckByFrustum,
             metric);
     }
+    else if (const auto model3DMapSymbol = std::dynamic_pointer_cast<const Model3DMapSymbol>(mapSymbol))
+    {
+        if (Q_UNLIKELY(debugSettings->excludeModel3DSymbolsFromProcessing))
+            return;
+
+        _model3DSubstage->obtainRenderables(
+            mapSymbolGroup,
+            model3DMapSymbol,
+            referenceOrigins,
+            outRenderableSymbols,
+            allowFastCheckByFrustum,
+            metric);
+    }
     else if (const auto onSurfaceMapSymbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(mapSymbol))
     {
         if (Q_UNLIKELY(debugSettings->excludeOnSurfaceSymbolsFromProcessing))
@@ -1182,6 +1197,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     else if (const auto& renderableOnPath = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
     {
         plotted = plotOnPathSymbol(renderableOnPath, intersections, applyFiltering, metric);
+    }
+    else if (const auto& renderableModel3D = std::dynamic_pointer_cast<RenderableModel3DSymbol>(renderable))
+    {
+        plotted = _model3DSubstage->plotSymbol(renderableModel3D, intersections, applyFiltering, metric);
     }
     else if (const auto& renderableOnSurface = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
     {
@@ -3812,6 +3831,10 @@ OsmAnd::AtlasMapRendererSymbolsStage::RenderableBillboardSymbol::~RenderableBill
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnPathSymbol::~RenderableOnPathSymbol()
+{
+}
+
+OsmAnd::AtlasMapRendererSymbolsStage::RenderableModel3DSymbol::~RenderableModel3DSymbol()
 {
 }
 

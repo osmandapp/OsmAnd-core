@@ -131,6 +131,42 @@ void OsmAnd::MapMarker_P::setOnMapSurfaceIconDirection(const MapMarker::OnSurfac
     }
 }
 
+int OsmAnd::MapMarker_P::getModel3DMaxSizeInPixels() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3DMaxSizeInPixels;
+}
+
+void OsmAnd::MapMarker_P::setModel3DMaxSizeInPixels(const int maxSizeInPixels)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_model3DMaxSizeInPixels != maxSizeInPixels)
+    {
+        _model3DMaxSizeInPixels = maxSizeInPixels;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::MapMarker_P::getModel3DDirection() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3DDirection;
+}
+
+void OsmAnd::MapMarker_P::setModel3DDirection(const float direction)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_model3DDirection != direction)
+    {
+        _model3DDirection = direction;
+        _hasUnappliedChanges = true;
+    }
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarker_P::getPinIconModulationColor() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -329,6 +365,22 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->elevation = _height;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
+    }
+
+    order++;
+
+    if (owner->model3D)
+    {
+        // Set Model3DMapSymbol from model3D 
+        const std::shared_ptr<Model3DMapSymbol> model3DMapSymbol(new Model3DMapSymbol(symbolsGroup));
+        model3DMapSymbol->order = order++;
+        model3DMapSymbol->position31 = _position;
+        VectorMapSymbol::generateModel3DPrimitive(*model3DMapSymbol, owner->model3D, owner->model3DCustomMaterialColors);
+        model3DMapSymbol->isHidden = _isHidden;
+        model3DMapSymbol->direction = _model3DDirection;
+        model3DMapSymbol->bbox = owner->model3D->bbox;
+        model3DMapSymbol->maxSizeInPixels = _model3DMaxSizeInPixels;
+        symbolsGroup->symbols.push_back(model3DMapSymbol);
     }
     
     order++;

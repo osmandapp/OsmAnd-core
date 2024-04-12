@@ -221,9 +221,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     {
         Stopwatch symbolsStageStopwatch(metric != nullptr);
 
-        glDepthMask(GL_FALSE);
-        GL_CHECK_RESULT;
-
         if (!_symbolsStage->render(metric))
             ok = false;
 

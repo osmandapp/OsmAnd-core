@@ -62,6 +62,10 @@ namespace OsmAnd
         double _captionTopSpace;
 
         QHash< MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > _onMapSurfaceIcons;
+
+        std::shared_ptr<const Model3D> _model3D;
+        QHash<QString, FColorARGB> _model3DCustomMaterialColors;
+        int _model3DMaxSizeInPixels;
     public:
         virtual ~MapMarkerBuilder_P();
 
@@ -115,6 +119,15 @@ namespace OsmAnd
         void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const SingleSkImage& image);
         void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         void clearOnMapSurfaceIcons();
+
+        std::shared_ptr<const Model3D> getModel3D() const;
+        void setModel3D(const std::shared_ptr<const Model3D>& model3D);
+        QHash<QString, FColorARGB> getModel3DCustomMaterialColors() const;
+        void addModel3DCustomMaterialColor(const QString& materialName, const FColorARGB& color);
+        void removeModel3DCustomMaterialColor(const QString& materialName);
+        void clearModel3DCustomMaterialColors();
+        int getModel3DMaxSizeInPixels() const;
+        void setModel3DMaxSizeInPixels(const int maxSizeInPixels);
 
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
 

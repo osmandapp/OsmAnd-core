@@ -12,6 +12,8 @@ OsmAnd::MapMarker::MapMarker(
     const TextRasterizer::Style captionStyle_,
     const double captionTopSpace_,
     const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons_,
+    const std::shared_ptr<const Model3D>& model3D_,
+    const QHash<QString, FColorARGB>& model3DCustomMaterialColors_,
     const bool isAccuracyCircleSupported_,
     const FColorRGB accuracyCircleBaseColor_)
     : _p(new MapMarker_P(this))
@@ -25,6 +27,8 @@ OsmAnd::MapMarker::MapMarker(
     , captionStyle(captionStyle_)
     , captionTopSpace(captionTopSpace_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
+    , model3D(model3D_)
+    , model3DCustomMaterialColors(model3DCustomMaterialColors_)
     , isAccuracyCircleSupported(isAccuracyCircleSupported_)
     , accuracyCircleBaseColor(accuracyCircleBaseColor_)
 {
@@ -92,6 +96,26 @@ float OsmAnd::MapMarker::getOnMapSurfaceIconDirection(const OnSurfaceIconKey key
 void OsmAnd::MapMarker::setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction)
 {
     _p->setOnMapSurfaceIconDirection(key, direction);
+}
+
+int OsmAnd::MapMarker::getModel3DMaxSizeInPixels() const
+{
+    return _p->getModel3DMaxSizeInPixels();
+}
+
+void OsmAnd::MapMarker::setModel3DMaxSizeInPixels(const int maxSizeInPixels)
+{
+    _p->setModel3DMaxSizeInPixels(maxSizeInPixels);
+}
+
+float OsmAnd::MapMarker::getModel3DDirection() const
+{
+    return _p->getModel3DDirection();
+}
+
+void OsmAnd::MapMarker::setModel3DDirection(const float direction)
+{
+    _p->setModel3DDirection(direction);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapMarker::getPinIconModulationColor() const

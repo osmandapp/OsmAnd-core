@@ -6,10 +6,12 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <QVector>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/Model3D.h>
 
 namespace OsmAnd
 {
@@ -99,6 +101,10 @@ namespace OsmAnd
             const unsigned int pointsCount = 360,
             float radius = 1.0f);
 
+        static void generateModel3DPrimitive(
+            VectorMapSymbol& mapSymbol,
+            const std::shared_ptr<const Model3D>& model3D,
+            const QHash<QString, FColorARGB>& customMaterialColors);
     };
 }
 

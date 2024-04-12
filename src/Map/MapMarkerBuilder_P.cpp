@@ -19,6 +19,7 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     , _height(NAN)
     , _pinIconVerticalAlignment(MapMarker::PinIconVerticalAlignment::CenterVertical)
     , _pinIconHorisontalAlignment(MapMarker::PinIconHorisontalAlignment::CenterHorizontal)
+    , _model3DMaxSizeInPixels(0)
     , owner(owner_)
 {
 }
@@ -296,6 +297,62 @@ void OsmAnd::MapMarkerBuilder_P::clearOnMapSurfaceIcons()
     _onMapSurfaceIcons.clear();
 }
 
+std::shared_ptr<const OsmAnd::Model3D> OsmAnd::MapMarkerBuilder_P::getModel3D() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3D;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setModel3D(const std::shared_ptr<const Model3D>& model3D)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _model3D = model3D;
+}
+
+QHash<QString, OsmAnd::FColorARGB> OsmAnd::MapMarkerBuilder_P::getModel3DCustomMaterialColors() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return detachedOf(_model3DCustomMaterialColors);
+}
+
+void OsmAnd::MapMarkerBuilder_P::addModel3DCustomMaterialColor(const QString& materialName, const FColorARGB& color)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _model3DCustomMaterialColors.insert(materialName, color);
+}
+
+void OsmAnd::MapMarkerBuilder_P::removeModel3DCustomMaterialColor(const QString& materialName)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _model3DCustomMaterialColors.remove(materialName);
+}
+
+void OsmAnd::MapMarkerBuilder_P::clearModel3DCustomMaterialColors()
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _model3DCustomMaterialColors.clear();
+}
+
+int OsmAnd::MapMarkerBuilder_P::getModel3DMaxSizeInPixels() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3DMaxSizeInPixels;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setModel3DMaxSizeInPixels(const int maxSizeInPixels)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _model3DMaxSizeInPixels = maxSizeInPixels;
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<MapMarkersCollection>& collection)
 {
@@ -313,6 +370,8 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _captionStyle,
         _captionTopSpace,
         detachedOf(_onMapSurfaceIcons),
+        _model3D,
+        detachedOf(_model3DCustomMaterialColors),
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));
     
@@ -325,6 +384,11 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     marker->setPosition(_position);
     marker->setHeight(_height);
     marker->setPinIconModulationColor(_pinIconModulationColor);
+
+    if (marker->model3D)
+    {
+        marker->setModel3DMaxSizeInPixels(_model3DMaxSizeInPixels);
+    }
     
     marker->applyChanges();
 

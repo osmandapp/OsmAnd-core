@@ -20,6 +20,8 @@ namespace OsmAnd
 
     private:
     protected:
+        void createSubstages() override;
+
         GLname _lastUsedProgram;
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
@@ -354,6 +356,8 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool render(IMapRenderer_Metrics::Metric_renderFrame* metric) override;
         bool release(bool gpuContextLost) override;
+
+    friend class AtlasMapRendererSymbolsStageModel3D_OpenGL;
     };
 }
 

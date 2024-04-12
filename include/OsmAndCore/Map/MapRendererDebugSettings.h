@@ -18,6 +18,7 @@ namespace OsmAnd
         bool debugStageEnabled;
         bool excludeOnPathSymbolsFromProcessing;
         bool excludeBillboardSymbolsFromProcessing;
+        bool excludeModel3DSymbolsFromProcessing;
         bool excludeOnSurfaceSymbolsFromProcessing;
         bool showSymbolsMarksRejectedByViewpoint;
         bool skipSymbolsIntersectionCheck;

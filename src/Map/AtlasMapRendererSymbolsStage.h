@@ -26,6 +26,7 @@ namespace OsmAnd
     class OnPathRasterMapSymbol;
     class IOnSurfaceMapSymbol;
     class IBillboardMapSymbol;
+    class AtlasMapRendererSymbolsStageModel3D;
 
     class AtlasMapRendererSymbolsStage : public AtlasMapRendererStage
     {
@@ -59,6 +60,13 @@ namespace OsmAnd
             float elevationInMeters;
             TileId tileId;
             PointF offsetInTileN;
+        };
+
+        struct RenderableModel3DSymbol : RenderableSymbol
+        {
+            ~RenderableModel3DSymbol() override;
+
+            glm::mat4 mModel;
         };
 
         struct RenderableOnSurfaceSymbol : RenderableSymbol
@@ -445,6 +453,9 @@ namespace OsmAnd
 
         void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* metric);
         bool withTerrainFilter();
+
+        std::shared_ptr<AtlasMapRendererSymbolsStageModel3D> _model3DSubstage;
+        virtual void createSubstages() = 0;
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
@@ -463,6 +474,8 @@ namespace OsmAnd
             const AreaI& screenArea,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
             const bool strict = false) const;
+
+        friend class AtlasMapRendererSymbolsStageModel3D;
     };
 }
 
