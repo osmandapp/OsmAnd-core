@@ -33,16 +33,17 @@ const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 
+QReadWriteLock collatorsLock;
+QHash<Qt::HANDLE, Collator*> collatorsMap;
+
 // Thread-safe and fast wrapper over Collator->clone() @alex-osm version
 const Collator* getThreadSafeCollator()
 {
-    static QReadWriteLock collatorsLock;
-    static QHash<Qt::HANDLE, Collator*> collatorsMap;
     const auto threadId = QThread::currentThreadId();
-    auto thread = QThread::currentThread();
 
     {
         QReadLocker readLocker(&collatorsLock);
+
         const auto citCollator = collatorsMap.constFind(threadId);
         if (citCollator != collatorsMap.cend())
             return *citCollator;
@@ -57,12 +58,12 @@ const Collator* getThreadSafeCollator()
             if (clone)
             {
                 collatorsMap.insert(threadId, clone);
-                QObject::connect(thread, &QThread::finished, [=](){
-                    // This slot (or lambda function) will be called when the QThread finishes
-                    // You can put your desired functionality here
+
+                QObject::connect(QThread::currentThread(), &QThread::finished, [=](){
                     QWriteLocker writeLocker(&collatorsLock);
-                    delete collatorsMap[threadId];
-                    collatorsMap.remove(threadId);
+
+                    if (auto collator = collatorsMap.take(threadId))
+                        delete collator;
                 });
                 return clone;
             }
