@@ -44,8 +44,9 @@ const Collator* getThreadSafeCollator() {
 
 	const Qt::HANDLE thread = QThread::currentThreadId();
 	if (threadCollators.contains(thread)) {
+		const Collator* cached = threadCollators.value(thread);
 		threadCollatorsMutex.unlock();
-		return threadCollators.value(thread);
+		return cached;
 	}
 
 	qint64 unixTime = QDateTime::currentSecsSinceEpoch();
