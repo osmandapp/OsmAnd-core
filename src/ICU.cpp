@@ -505,8 +505,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-//        if (collator != nullptr)
-//            delete collator;
         return false;
     }
     else
@@ -534,8 +532,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
                 break;
         }
     }
-//    if (collator != nullptr)
-//        delete collator;
     return result;
 }
 OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _searchInParam, const QString& _theStart,
@@ -547,8 +543,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-//        if (collator != nullptr)
-//            delete collator;
         return false;
     }
     else
@@ -620,8 +614,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
             result = collator->equals(searchIn, theStart);
     }
     
-//    if (collator != nullptr)
-//        delete collator;
     return result;
 }
 
@@ -633,8 +625,6 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
-//        if (collator != nullptr)
-//            delete collator;
         return result;
     }
     else
@@ -643,7 +633,5 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
         UnicodeString s2 = qStrToUniStr(_s2);
         result = collator->compare(s1, s2);
     }
-//    if (collator != nullptr)
-//        delete collator;
     return result;
 }
