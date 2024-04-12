@@ -1275,7 +1275,6 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
-
                 return;
             case OBF::OsmAndPoiNameIndex::kTableFieldNumber:
             {
