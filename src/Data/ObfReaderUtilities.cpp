@@ -101,12 +101,10 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-            {
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return matchedCharactersCount;
 
                 return matchedCharactersCount;
-            }
             case OBF::IndexedStringTable::kKeyFieldNumber:
             {
                 readQString(cis, key);

@@ -33,35 +33,53 @@ const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 const Collator* g_pIcuCollator = nullptr;
 
-QHash<Qt::HANDLE, const Collator*> threadCollators;
 QMutex threadCollatorsMutex;
+qint64 threadCollatorsCleanupTimer = 0;
+QHash<Qt::HANDLE, const Collator*> threadCollators;
 
 // `threadsCollators` cache is used to fast up ccontains/ccompare/cstartsWith
 // The cleanup function should be called at the end of thread/destructor/cycle
-void OsmAnd::ICU::cleanupCollatorCache() {
-    const Qt::HANDLE thread = QThread::currentThreadId();
-    if (threadCollators.contains(thread)) {
-        threadCollatorsMutex.lock();
-        delete threadCollators.value(thread);
-        threadCollators.remove(thread);
-        threadCollatorsMutex.unlock();
-    }
-}
+//void cleanupCollatorCache() {
+//    const Qt::HANDLE thread = QThread::currentThreadId();
+//    if (threadCollators.contains(thread)) {
+//        threadCollatorsMutex.lock();
+//        delete threadCollators.value(thread);
+//        threadCollators.remove(thread);
+//        threadCollatorsMutex.unlock();
+//    }
+//}
 
 // Thread-safe and fast wrapper over Collator->clone()
-const Collator* getThreadSafeCollator(const Collator* collator) {
-    const Qt::HANDLE thread = QThread::currentThreadId();
-    if (threadCollators.contains(thread)) {
-        return threadCollators.value(thread);
-    } else {
-        const Collator* clone = collator->clone();
-        if (clone != nullptr) {
-            threadCollatorsMutex.lock();
-            threadCollators.insert(thread, clone);
-            threadCollatorsMutex.unlock();
-        }
-        return clone;
-    }
+const Collator* getThreadSafeCollator() {
+	threadCollatorsMutex.lock();
+
+	const Qt::HANDLE thread = QThread::currentThreadId();
+	if (threadCollators.contains(thread)) {
+		threadCollatorsMutex.unlock();
+		return threadCollators.value(thread);
+	}
+
+	qint64 unixTime = QDateTime::currentSecsSinceEpoch();
+	if (unixTime > threadCollatorsCleanupTimer) {
+		threadCollatorsCleanupTimer = unixTime + 10; // every minute
+		for (const Collator* victim : threadCollators) {
+			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "XXX delete time=%d ptr=%X", unixTime, collator);
+			delete victim;
+		}
+		threadCollators.clear();
+	}
+
+	if (g_pIcuCollator) {
+		const Collator* clone = g_pIcuCollator->clone();
+		if (clone) {
+			threadCollators.insert(thread, clone);
+			threadCollatorsMutex.unlock();
+			return clone;
+		}
+	}
+
+	threadCollatorsMutex.unlock();
+	return nullptr;
 }
 
 bool OsmAnd::ICU::initialize()
@@ -501,7 +519,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _bas
 {
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
-    const auto collator = getThreadSafeCollator(g_pIcuCollator);
+    const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
@@ -539,7 +557,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
 {
     UErrorCode icuError = U_ZERO_ERROR;
     bool result = false;
-    const auto collator = getThreadSafeCollator(g_pIcuCollator);
+    const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
@@ -621,7 +639,7 @@ OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, c
 {
     UErrorCode icuError = U_ZERO_ERROR;
     int result = 0;
-    const auto collator = getThreadSafeCollator(g_pIcuCollator);
+    const auto collator = getThreadSafeCollator();
     if (collator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
