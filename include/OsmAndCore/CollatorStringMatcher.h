@@ -33,7 +33,6 @@ namespace OsmAnd
                          bool checkBeginning, bool checkSpaces, bool equals);
         static QString simplifyStringAndAlignChars(const QString& fullText);
         static QString alignChars(const QString& fullText);
-        static void cleanupCollatorCache();
     };
 }
 

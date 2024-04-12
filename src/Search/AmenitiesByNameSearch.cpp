@@ -11,7 +11,6 @@ OsmAnd::AmenitiesByNameSearch::AmenitiesByNameSearch(const std::shared_ptr<const
 
 OsmAnd::AmenitiesByNameSearch::~AmenitiesByNameSearch()
 {
-    CollatorStringMatcher::cleanupCollatorCache();
 }
 
 void OsmAnd::AmenitiesByNameSearch::performSearch(

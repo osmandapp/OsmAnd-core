@@ -102,8 +102,6 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
         {
             case 0:
             {
-                CollatorStringMatcher::cleanupCollatorCache();
-
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return matchedCharactersCount;
 
