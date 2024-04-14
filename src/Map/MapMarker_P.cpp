@@ -16,6 +16,7 @@
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
     , textRasterizer(TextRasterizer::getDefault())
+    , _model3DDirection(-90.0f)
 {
 }
 
