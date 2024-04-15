@@ -995,6 +995,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setFogColor(color);
     }
 
+    public final boolean hideMyLocationCircle() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyLocationRadiusInMeters(0.0f);
+    }
+
     public final boolean setSymbolsOpacity(float opacityFactor) {
         NativeCore.checkIfLoaded();
 

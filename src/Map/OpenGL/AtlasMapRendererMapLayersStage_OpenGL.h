@@ -160,6 +160,8 @@ namespace OsmAnd
                     GLlocation lastBatch;
                     GLlocation blendingEnabled;
                     GLlocation backgroundColor;
+                    GLlocation myLocationColor;
+                    GLlocation myLocation;
                     GLlocation worldCameraPosition;
                     GLlocation mistConfiguration;
                     GLlocation mistColor;

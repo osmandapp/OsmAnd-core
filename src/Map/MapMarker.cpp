@@ -119,9 +119,9 @@ bool OsmAnd::MapMarker::hasUnappliedChanges() const
     return _p->hasUnappliedChanges();
 }
 
-bool OsmAnd::MapMarker::applyChanges()
+bool OsmAnd::MapMarker::applyChanges(IMapRenderer& mapRenderer)
 {
-    return _p->applyChanges();
+    return _p->applyChanges(mapRenderer);
 }
 
 std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup() const
@@ -155,10 +155,11 @@ bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
     return false;
 }
 
-OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup::update(const MapState& mapState)
+OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup::update(
+    const MapState& mapState, IMapRenderer& mapRenderer)
 {
     if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->applyChanges() ? UpdateResult::Properties : UpdateResult::None;
+        return mapMarkerP->applyChanges(mapRenderer) ? UpdateResult::Properties : UpdateResult::None;
 
     return UpdateResult::None;
 }

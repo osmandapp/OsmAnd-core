@@ -120,7 +120,8 @@ namespace OsmAnd
         void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
         void clearOnMapSurfaceIcons();
 
-        std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
+        std::shared_ptr<MapMarker> buildAndAddToCollection(
+            const std::shared_ptr<MapMarkersCollection>& collection, const std::shared_ptr<IMapRenderer>& mapRenderer);
 
     friend class OsmAnd::MapMarkerBuilder;
     };

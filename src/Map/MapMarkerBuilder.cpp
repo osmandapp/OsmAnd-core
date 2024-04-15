@@ -227,9 +227,10 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setCaptionTopSpace(const dou
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(
-    const std::shared_ptr<MapMarkersCollection>& collection)
+    const std::shared_ptr<MapMarkersCollection>& collection,
+    const std::shared_ptr<IMapRenderer>& mapRenderer /*= nullptr*/)
 {
-    return _p->buildAndAddToCollection(collection);
+    return _p->buildAndAddToCollection(collection, mapRenderer);
 }
 
 QHash< OsmAnd::MapMarker::OnSurfaceIconKey, sk_sp<const SkImage> > OsmAnd::MapMarkerBuilder::getOnMapSurfaceIcons() const

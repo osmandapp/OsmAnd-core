@@ -13,6 +13,7 @@ OsmAnd::PolygonBuilder_P::PolygonBuilder_P(PolygonBuilder* const owner_)
     : _isHidden(false)
     , _polygonId(0)
     , _baseOrder(std::numeric_limits<int>::min())
+    , _circleRadiusInMeters(NAN)
     , _direction(0.0f)
     , owner(owner_)
 {
@@ -92,6 +93,14 @@ void OsmAnd::PolygonBuilder_P::setPoints(const QVector<OsmAnd::PointI> points)
     _points = points;
 }
 
+void OsmAnd::PolygonBuilder_P::setCircle(const OsmAnd::PointI& center, const double radiusInMeters)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _circleCenter = center;
+    _circleRadiusInMeters = radiusInMeters;
+}
+
 std::shared_ptr<OsmAnd::Polygon> OsmAnd::PolygonBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<PolygonsCollection>& collection)
 {
@@ -117,7 +126,10 @@ std::shared_ptr<OsmAnd::Polygon> OsmAnd::PolygonBuilder_P::build()
                                                           _baseOrder,
                                                           _fillColor));
     polygon->setIsHidden(_isHidden);
-    polygon->setPoints(_points);
+    if (!qIsNaN(_circleRadiusInMeters))
+        polygon->setCircle(_circleCenter, _circleRadiusInMeters);
+    else
+        polygon->setPoints(_points);
     polygon->applyChanges();
     
     return polygon;

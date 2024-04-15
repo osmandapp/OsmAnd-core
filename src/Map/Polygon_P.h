@@ -38,10 +38,16 @@ namespace OsmAnd
 
         QVector<PointI> _points;
 
+        PointI _circleCenter;
+        double _circleRadiusInMeters;
+
         double _metersPerPixel;
         ZoomLevel _mapZoomLevel;
+        ZoomLevel _surfaceZoomLevel;
         float _mapVisualZoom;
+        float _surfaceVisualZoom;
         float _mapVisualZoomShift;
+        bool _hasElevationDataProvider;
 
         float zoom() const;
 
@@ -57,8 +63,6 @@ namespace OsmAnd
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
-
-        std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> polygon) const;
 
         PointD getProjection(PointD point, PointD from, PointD to ) const;
         double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
@@ -76,6 +80,10 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+
+        void setCircle(const PointI& center, const double radiusInMeters);
+        void setZoomLevel(const ZoomLevel zoomLevel, const bool hasElevationDataProvider);
+        void generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol>& polygon) const;
 
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;

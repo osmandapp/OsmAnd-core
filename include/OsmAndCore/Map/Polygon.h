@@ -14,6 +14,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
+#include <OsmAndCore/Map/OnSurfaceVectorMapSymbol.h>
 
 namespace OsmAnd
 {
@@ -50,7 +51,7 @@ namespace OsmAnd
             const Polygon* getPolygon() const;
 
             virtual bool updatesPresent();
-            virtual UpdateResult update(const MapState& mapState);
+            virtual UpdateResult update(const MapState& mapState, IMapRenderer& mapRenderer);
 
             virtual bool supportsResourcesRenew();
 
@@ -80,6 +81,10 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI>& points);
+
+        void setCircle(const PointI& center, const double radiusInMeters);
+        void setZoomLevel(const ZoomLevel zoomLevel, const bool hasElevationDataProvider = false);
+        void generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol>& polygon) const;
 
         bool hasUnappliedChanges() const;
 

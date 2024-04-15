@@ -18,11 +18,18 @@
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "AtlasMapRenderer.h"
+#include "GeometryModifiers.h"
 
 OsmAnd::Polygon_P::Polygon_P(Polygon* const owner_)
-: _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
-  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f),
-  owner(owner_)
+: _hasUnappliedChanges(false)
+, _hasUnappliedPrimitiveChanges(false)
+, _isHidden(false)
+, _metersPerPixel(1.0)
+, _mapZoomLevel(InvalidZoomLevel)
+, _mapVisualZoom(0.f)
+, _mapVisualZoomShift(0.f)
+, _circleRadiusInMeters(NAN)
+, owner(owner_)
 {
 }
 
@@ -62,6 +69,28 @@ void OsmAnd::Polygon_P::setPoints(const QVector<PointI>& points)
     _hasUnappliedChanges = true;
 }
 
+void OsmAnd::Polygon_P::setCircle(const PointI& center, const double radiusInMeters)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _circleCenter = center;
+    _circleRadiusInMeters = radiusInMeters;
+    
+    _hasUnappliedPrimitiveChanges = true;
+    _hasUnappliedChanges = true;
+}
+
+void OsmAnd::Polygon_P::setZoomLevel(const OsmAnd::ZoomLevel zoomLevel, const bool hasElevationDataProvider)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _mapZoomLevel = zoomLevel;
+    _hasElevationDataProvider = hasElevationDataProvider;
+
+    _hasUnappliedPrimitiveChanges = true;
+    _hasUnappliedChanges = true;
+}
+
 bool OsmAnd::Polygon_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -78,7 +107,12 @@ bool OsmAnd::Polygon_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::Polygon_P::isMapStateChanged(const MapState& mapState) const
 {
-    return qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
+    bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
+    changed |=
+        qAbs(_surfaceZoomLevel + _surfaceVisualZoom - mapState.surfaceZoomLevel - mapState.surfaceVisualZoom) > 0.5;
+    changed |= _hasElevationDataProvider != mapState.hasElevationDataProvider;
+
+    return changed;
 }
 
 void OsmAnd::Polygon_P::applyMapState(const MapState& mapState)
@@ -86,7 +120,10 @@ void OsmAnd::Polygon_P::applyMapState(const MapState& mapState)
     _metersPerPixel = mapState.metersPerPixel;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
+    _surfaceZoomLevel = mapState.surfaceZoomLevel;
+    _surfaceVisualZoom = mapState.surfaceVisualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
+    _hasElevationDataProvider = mapState.hasElevationDataProvider;
 }
 
 bool OsmAnd::Polygon_P::update(const MapState& mapState)
@@ -142,7 +179,7 @@ std::shared_ptr<OsmAnd::Polygon::SymbolsGroup> OsmAnd::Polygon_P::inflateSymbols
     const std::shared_ptr<Polygon::SymbolsGroup> symbolsGroup(new Polygon::SymbolsGroup(std::const_pointer_cast<Polygon_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
     
-    if (_points.size() > 1)
+    if (_points.size() > 1 || !qIsNaN(_circleRadiusInMeters))
     {
         const auto& polygon = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
         generatePrimitive(polygon);
@@ -228,13 +265,15 @@ float OsmAnd::Polygon_P::zoom() const
     return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
 }
 
-std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> polygon) const
+void OsmAnd::Polygon_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol>& polygon) const
 {
     int order = owner->baseOrder;
     int pointsCount = _points.size();
-    
+
+    bool isCircle = !qIsNaN(_circleRadiusInMeters);
+
     polygon->order = order++;
-    polygon->position31 = _points[0];
+    polygon->position31 = isCircle ? _circleCenter : _points[0];
     polygon->primitiveType = VectorMapSymbol::PrimitiveType::Triangles;
 
     const auto verticesAndIndices = std::make_shared<VectorMapSymbol::VerticesAndIndices>();
@@ -246,6 +285,82 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     polygon->scale = 1.0;
     polygon->direction = 0.f;
     
+    // Generate vertices for a circle
+    if (isCircle)
+    {
+        int pointsCount = 128;
+
+        verticesAndIndices->position31 = new PointI(polygon->position31.x, polygon->position31.y);
+
+        const auto radius =
+            _circleRadiusInMeters / Utilities::getMetersPerTileUnit(ZoomLevel31, polygon->position31.y, 1.0);
+
+        std::vector<VectorMapSymbol::Vertex> vertices;
+        VectorMapSymbol::Vertex vertex;
+        VectorMapSymbol::Vertex* pVertex = &vertex;
+        
+        // generate triangles to cover the round
+        const auto tinyAngle = M_PI / pointsCount;
+        auto stepAngle = tinyAngle;
+        auto angle = tinyAngle;
+        for (int step = 2; step < pointsCount; step = step << 1)
+        {
+            stepAngle = tinyAngle * step;
+            angle = 0.0;
+            for (int pointIdx = 0; pointIdx < pointsCount; pointIdx += step)
+            {
+                pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();;
+                pVertex->positionXYZ[0] = radius * qCos(angle);
+                pVertex->positionXYZ[2] = radius * qSin(angle);
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+
+                angle += stepAngle;
+                pVertex->positionXYZ[0] = radius * qCos(angle);
+                pVertex->positionXYZ[2] = radius * qSin(angle);
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+
+                angle += stepAngle;
+                pVertex->positionXYZ[0] = radius * qCos(angle);
+                pVertex->positionXYZ[2] = radius * qSin(angle);
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+            }
+        }
+        // Tesselate round for the surface
+        auto partSizes =
+            std::shared_ptr<std::vector<std::pair<TileId, int32_t>>>(new std::vector<std::pair<TileId, int32_t>>);
+        const auto zoomLevel =
+            _mapZoomLevel < MaxZoomLevel ? static_cast<ZoomLevel>(_mapZoomLevel + 1) : _mapZoomLevel;
+        const auto cellsPerTileSize = (AtlasMapRenderer::HeixelsPerTileSide - 1) / (1 << (zoomLevel - _mapZoomLevel));
+        bool tesselated = _hasElevationDataProvider
+            ? GeometryModifiers::cutMeshWithGrid(
+                vertices,
+                nullptr,
+                polygon->primitiveType,
+                partSizes,
+                zoomLevel,
+                Utilities::convert31toDouble(*(verticesAndIndices->position31), zoomLevel),
+                cellsPerTileSize,
+                0.5f, 0.01f,
+                false, false)
+            : false;
+        verticesAndIndices->partSizes = tesselated ? partSizes : nullptr;
+        verticesAndIndices->zoomLevel = tesselated ? zoomLevel : InvalidZoomLevel;
+
+        verticesAndIndices->verticesCount = (unsigned int) vertices.size();
+        verticesAndIndices->vertices = new VectorMapSymbol::Vertex[vertices.size()];
+        std::copy(vertices.begin(), vertices.end(), verticesAndIndices->vertices);
+
+        polygon->isHidden = _isHidden;
+        polygon->setVerticesAndIndices(verticesAndIndices);
+
+        return;
+    }
+
+    // Generate vertices for polygon
+
     float zoom = this->zoom();
     double radius = Utilities::getPowZoom( 31 - _mapZoomLevel) * qSqrt(zoom) /
                         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
@@ -339,6 +454,4 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
 
     polygon->isHidden = _isHidden;
     polygon->setVerticesAndIndices(verticesAndIndices);
-    
-    return polygon;
 }

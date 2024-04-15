@@ -47,6 +47,8 @@ namespace OsmAnd
         QVector<PointI> getPoints() const;
         PolygonBuilder& setPoints(const QVector<PointI>& points);
 
+        PolygonBuilder& setCircle(const PointI& center, const double radiusInMeters);
+
         std::shared_ptr<Polygon> buildAndAddToCollection(const std::shared_ptr<PolygonsCollection>& collection);
         std::shared_ptr<Polygon> build();
     };

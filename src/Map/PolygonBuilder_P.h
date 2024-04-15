@@ -40,6 +40,9 @@ namespace OsmAnd
 
         QVector<PointI> _points;
 
+        PointI _circleCenter;
+        double _circleRadiusInMeters;
+
         float _direction;
  
     public:
@@ -61,6 +64,8 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI> poinst);
+
+        void setCircle(const PointI& center, const double radiusInMeters);
 
         std::shared_ptr<Polygon> buildAndAddToCollection(const std::shared_ptr<PolygonsCollection>& collection);
         std::shared_ptr<Polygon> build();

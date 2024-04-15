@@ -37,7 +37,8 @@ namespace OsmAnd
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPUCache;
 
         virtual bool updatesPresent() Q_DECL_OVERRIDE;
-        virtual bool checkForUpdatesAndApply(const MapState& mapState) Q_DECL_OVERRIDE;
+        virtual bool checkForUpdatesAndApply(
+            const MapState& mapState, IMapRenderer& mapRenderer) Q_DECL_OVERRIDE;
 
         virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

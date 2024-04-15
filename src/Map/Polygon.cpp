@@ -33,7 +33,22 @@ QVector<OsmAnd::PointI> OsmAnd::Polygon::getPoints() const
 
 void OsmAnd::Polygon::setPoints(const QVector<OsmAnd::PointI>& points)
 {
-    _p->setPoints(points);    
+    _p->setPoints(points);
+}
+
+void OsmAnd::Polygon::setCircle(const OsmAnd::PointI& center, const double radiusInMeters)
+{
+    _p->setCircle(center, radiusInMeters);
+}
+
+void OsmAnd::Polygon::setZoomLevel(const OsmAnd::ZoomLevel zoomLevel, const bool hasElevationDataProvider /*= false*/)
+{
+    _p->setZoomLevel(zoomLevel, hasElevationDataProvider);
+}
+
+void OsmAnd::Polygon::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol>& polygon) const
+{
+    _p->generatePrimitive(polygon);
 }
 
 bool OsmAnd::Polygon::hasUnappliedChanges() const
@@ -82,7 +97,8 @@ bool OsmAnd::Polygon::SymbolsGroup::supportsResourcesRenew()
     return true;
 }
 
-OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::Polygon::SymbolsGroup::update(const MapState& mapState)
+OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::Polygon::SymbolsGroup::update(
+    const MapState& mapState, IMapRenderer& mapRenderer)
 {
     UpdateResult result = UpdateResult::None;
     if (const auto polygonP = _polygonP.lock())

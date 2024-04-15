@@ -57,13 +57,14 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::supportsResourcesRenew()
     return supportsResourcesRenew;
 }
 
-bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapState& mapState)
+bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(
+    const MapState& mapState, IMapRenderer& mapRenderer)
 {
-    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply(mapState);
+    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply(mapState, mapRenderer);
 
     if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
     {
-        IUpdatableMapSymbolsGroup::UpdateResult result = updatableMapSymbolGroup->update(mapState);
+        IUpdatableMapSymbolsGroup::UpdateResult result = updatableMapSymbolGroup->update(mapState, mapRenderer);
         switch (result)
         {
             case IUpdatableMapSymbolsGroup::UpdateResult::All:

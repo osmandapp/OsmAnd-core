@@ -49,7 +49,7 @@ namespace OsmAnd
             const VectorLine* getVectorLine() const;
 
             virtual bool updatesPresent();
-            virtual UpdateResult update(const MapState& mapState);
+            virtual UpdateResult update(const MapState& mapState, IMapRenderer& mapRenderer);
 
             virtual bool supportsResourcesRenew();
 

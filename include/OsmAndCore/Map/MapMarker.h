@@ -65,7 +65,7 @@ namespace OsmAnd
             const MapMarker* getMapMarker() const;
 
             virtual bool updatesPresent();
-            virtual UpdateResult update(const MapState& mapState);
+            virtual UpdateResult update(const MapState& mapState, IMapRenderer& mapRenderer);
 
             virtual bool supportsResourcesRenew();
 
@@ -90,7 +90,7 @@ namespace OsmAnd
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
 
-        bool applyChanges();
+        bool applyChanges(IMapRenderer& mapRenderer);
     public:
         virtual ~MapMarker();
 

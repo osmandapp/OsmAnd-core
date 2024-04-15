@@ -31,7 +31,7 @@ namespace OsmAnd
         virtual ~IUpdatableMapSymbolsGroup();
 
         virtual bool updatesPresent() = 0;
-        virtual UpdateResult update(const MapState& mapState) = 0;
+        virtual UpdateResult update(const MapState& mapState, IMapRenderer& mapRenderer) = 0;
 
         virtual bool supportsResourcesRenew() = 0;
 };

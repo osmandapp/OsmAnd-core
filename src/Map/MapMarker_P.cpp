@@ -12,10 +12,12 @@
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
+#include "IMapRenderer.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
     , textRasterizer(TextRasterizer::getDefault())
+    , _accuracyCircleRadius(0.0)
 {
 }
 
@@ -174,12 +176,19 @@ bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
     return _hasUnappliedChanges;
 }
 
-bool OsmAnd::MapMarker_P::applyChanges()
+bool OsmAnd::MapMarker_P::applyChanges(IMapRenderer& mapRenderer)
 {
     QReadLocker scopedLocker1(&_lock);
     
     if (!_hasUnappliedChanges)
         return false;
+
+    if (_isAccuracyCircleVisible && !_isHidden)
+    {
+        mapRenderer.setMyLocationColor(owner->accuracyCircleBaseColor.withAlpha(0.25f));
+        mapRenderer.setMyLocation31(_position);
+        mapRenderer.setMyLocationRadiusInMeters(_accuracyCircleRadius);
+    }
 
     QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
     for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
@@ -191,13 +200,6 @@ bool OsmAnd::MapMarker_P::applyChanges()
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
-
-            if (const auto symbol = std::dynamic_pointer_cast<AccuracyCircleMapSymbol>(symbol_))
-            {
-                symbol->setPosition31(_position);
-                symbol->isHidden = _isHidden || !_isAccuracyCircleVisible;
-                symbol->scale = _accuracyCircleRadius;
-            }
 
             if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
             {
@@ -355,33 +357,6 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
     
     order++;
 
-    if (owner->isAccuracyCircleSupported)
-    {
-        // Add a circle that represent precision circle
-        const std::shared_ptr<AccuracyCircleMapSymbol> accuracyCircleSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup));
-        accuracyCircleSymbol->order = order++;
-        accuracyCircleSymbol->position31 = _position;
-        VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
-        accuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        accuracyCircleSymbol->scale = _accuracyCircleRadius;
-        accuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        accuracyCircleSymbol->direction = Q_SNAN;
-        symbolsGroup->symbols.push_back(accuracyCircleSymbol);
-
-        // Add a ring-line that represent precision circle
-        const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup));
-        precisionRingSymbol->order = order++;
-        precisionRingSymbol->position31 = _position;
-        VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
-        precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        precisionRingSymbol->scale = _accuracyCircleRadius;
-        precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        precisionRingSymbol->direction = Q_SNAN;
-        symbolsGroup->symbols.push_back(precisionRingSymbol);
-    }
-
     return symbolsGroup;
 }
 
@@ -415,15 +390,5 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbo
 }
 
 OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::~KeyedOnSurfaceRasterMapSymbol()
-{
-}
-
-OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::AccuracyCircleMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_)
-    : OnSurfaceVectorMapSymbol(group_)
-{
-}
-
-OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::~AccuracyCircleMapSymbol()
 {
 }

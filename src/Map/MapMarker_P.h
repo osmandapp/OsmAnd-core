@@ -68,19 +68,7 @@ namespace OsmAnd
         friend class OsmAnd::MapMarker_P;
         };
 
-        class AccuracyCircleMapSymbol : public OnSurfaceVectorMapSymbol
-        {
-        private:
-        protected:
-            AccuracyCircleMapSymbol(
-                const std::shared_ptr<MapSymbolsGroup>& group);
-        public:
-            virtual ~AccuracyCircleMapSymbol();
-
-        friend class OsmAnd::MapMarker_P;
-        };
-
-        bool applyChanges();
+        bool applyChanges(IMapRenderer& mapRenderer);
 
         std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup() const;
         mutable QReadWriteLock _symbolsGroupsRegistryLock;

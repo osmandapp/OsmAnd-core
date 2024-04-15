@@ -277,7 +277,8 @@ bool OsmAnd::VectorLine::SymbolsGroup::supportsResourcesRenew()
     return true;
 }
 
-OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
+OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(
+    const MapState& mapState, IMapRenderer& mapRenderer)
 {
     UpdateResult result = UpdateResult::None;
     if (const auto vectorLineP = _vectorLineP.lock())

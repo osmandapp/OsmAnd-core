@@ -70,6 +70,13 @@ OsmAnd::PolygonBuilder& OsmAnd::PolygonBuilder::setPoints(const QVector<OsmAnd::
     return *this;
 }
 
+OsmAnd::PolygonBuilder& OsmAnd::PolygonBuilder::setCircle(const OsmAnd::PointI& center, const double radiusInMeters)
+{
+    _p->setCircle(center, radiusInMeters);
+
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::Polygon> OsmAnd::PolygonBuilder::buildAndAddToCollection(const std::shared_ptr<PolygonsCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

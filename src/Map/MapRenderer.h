@@ -405,6 +405,9 @@ namespace OsmAnd
 
         virtual bool setBackgroundColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setFogColor(const FColorRGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMyLocationColor(const FColorARGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMyLocation31(const PointI& location31, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMyLocationRadiusInMeters(const float radius, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;

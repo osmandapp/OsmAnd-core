@@ -43,7 +43,8 @@ namespace OsmAnd
         void shouldLeaveQuietly();
 
         virtual bool updatesPresent();
-        virtual bool checkForUpdatesAndApply(const MapState& mapState);
+        virtual bool checkForUpdatesAndApply(
+            const MapState& mapState, IMapRenderer& mapRenderer);
 
         typedef std::function<void(const bool requestSucceeded, const bool dataAvailable)> ObtainDataAsyncCallback;
         virtual bool supportsObtainDataAsync() const = 0;

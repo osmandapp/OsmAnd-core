@@ -153,7 +153,8 @@ namespace OsmAnd
         QMap<ZoomLevel, TileId> _activeTilesTargets;
         QVector<QRunnable*> _requestedResourcesTasks;
         bool updatesPresent() const;
-        virtual bool checkForUpdatesAndApply(const MapState& mapState) const;
+        virtual bool checkForUpdatesAndApply(
+            const MapState& mapState, IMapRenderer& mapRenderer) const;
         void updateResources(
             QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
             QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset);

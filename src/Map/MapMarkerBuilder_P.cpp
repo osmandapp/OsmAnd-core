@@ -312,7 +312,7 @@ void OsmAnd::MapMarkerBuilder_P::clearOnMapSurfaceIcons()
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(
-    const std::shared_ptr<MapMarkersCollection>& collection)
+    const std::shared_ptr<MapMarkersCollection>& collection, const std::shared_ptr<IMapRenderer>& mapRenderer)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -332,17 +332,15 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         _accuracyCircleBaseColor));
     
     marker->setIsHidden(_isHidden);
-    if (_isAccuracyCircleSupported)
-    {
-        marker->setIsAccuracyCircleVisible(_isAccuracyCircleVisible);
-        marker->setAccuracyCircleRadius(_accuracyCircleRadius);
-    }
+    marker->setIsAccuracyCircleVisible(_isAccuracyCircleVisible);
+    marker->setAccuracyCircleRadius(_accuracyCircleRadius);
     marker->setPosition(_position);
     marker->setHeight(_height);
     marker->setElevationScaleFactor(_elevationScaleFactor);
     marker->setPinIconModulationColor(_pinIconModulationColor);
     
-    marker->applyChanges();
+    if (mapRenderer)
+        marker->applyChanges(*mapRenderer);
 
     // Add marker to collection and return it if adding was successful
     if (!collection->_p->addMarker(marker))
