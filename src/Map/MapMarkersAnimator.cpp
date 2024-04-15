@@ -158,3 +158,29 @@ void OsmAnd::MapMarkersAnimator::animateDirectionWith(
 {
     _p->animateDirectionWith(mapMarker, iconKey, velocity, deceleration);
 }
+
+void OsmAnd::MapMarkersAnimator::animateModel3DDirectionBy(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float deltaValue,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    _p->animateModel3DDirectionBy(mapMarker, deltaValue, duration, timingFunction);
+}
+
+void OsmAnd::MapMarkersAnimator::animateModel3DDirectionTo(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float value,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    _p->animateModel3DDirectionTo(mapMarker, value, duration, timingFunction);
+}
+
+void OsmAnd::MapMarkersAnimator::animateModel3DDirectionWith(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float velocity,
+    const float deceleration)
+{
+    _p->animateModel3DDirectionWith(mapMarker, velocity, deceleration);
+}

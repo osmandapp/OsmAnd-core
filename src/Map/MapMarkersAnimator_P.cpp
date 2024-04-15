@@ -356,7 +356,7 @@ void OsmAnd::MapMarkersAnimator_P::animateDirectionBy(
     QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructDirectionAnimationByDelta(newAnimations, mapMarker, iconKey, deltaValue, duration, timingFunction);
+    constructDirectionAnimationByDelta(newAnimations, mapMarker, &iconKey, deltaValue, duration, timingFunction);
 
     QWriteLocker scopedMarkersLocker(&_animationMarkersLock);
 
@@ -375,7 +375,7 @@ void OsmAnd::MapMarkersAnimator_P::animateDirectionTo(
     QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructDirectionAnimationToValue(newAnimations, mapMarker, iconKey, value, duration, timingFunction);
+    constructDirectionAnimationToValue(newAnimations, mapMarker, &iconKey, value, duration, timingFunction);
 
     QWriteLocker scopedMarkersLocker(&_animationMarkersLock);
 
@@ -396,20 +396,75 @@ void OsmAnd::MapMarkersAnimator_P::animateDirectionWith(
     animateDirectionBy(mapMarker, iconKey, deltaValue, duration, TimingFunction::EaseOutQuadratic);
 }
 
+void OsmAnd::MapMarkersAnimator_P::animateModel3DDirectionBy(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float deltaValue,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructDirectionAnimationByDelta(newAnimations, mapMarker, nullptr, deltaValue, duration, timingFunction);
+
+    QWriteLocker scopedMarkersLocker(&_animationMarkersLock);
+
+    Key key = mapMarker.get();
+    _animationMarkers[key] = std::weak_ptr<MapMarker>(mapMarker);
+    _animationsByKey[key].append(newAnimations);
+}
+
+void OsmAnd::MapMarkersAnimator_P::animateModel3DDirectionTo(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float value,
+    const float duration,
+    const TimingFunction timingFunction)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    AnimationsCollection newAnimations;
+    constructDirectionAnimationToValue(newAnimations, mapMarker, nullptr, value, duration, timingFunction);
+
+    QWriteLocker scopedMarkersLocker(&_animationMarkersLock);
+
+    Key key = mapMarker.get();
+    _animationMarkers[key] = std::weak_ptr<MapMarker>(mapMarker);
+    _animationsByKey[key].append(newAnimations);
+}
+
+void OsmAnd::MapMarkersAnimator_P::animateModel3DDirectionWith(
+    const std::shared_ptr<MapMarker> mapMarker,
+    const float velocity,
+    const float deceleration)
+{
+    const auto duration = qAbs(velocity / deceleration);
+    const auto deltaValue = 0.5f * velocity * duration;
+
+    animateModel3DDirectionBy(mapMarker, deltaValue, duration, TimingFunction::EaseOutQuadratic);
+}
+
 float OsmAnd::MapMarkersAnimator_P::directionGetter(const Key key, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
     QReadLocker scopedLocker(&_animationMarkersLock);
 
     const auto itMarker = _animationMarkers.find(key);
-    if (itMarker == _animationMarkers.end() || sharedContext->storageList.empty())
+    if (itMarker == _animationMarkers.end())
         return Q_SNAN;
 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
     if (marker)
     {
-        OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
-        return marker->getOnMapSurfaceIconDirection(iconKey);
+        if (sharedContext->storageList.empty())
+        {
+            if (marker->model3D)
+                return marker->getModel3DDirection();
+        }
+        else
+        {
+            OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
+            return marker->getOnMapSurfaceIconDirection(iconKey);
+        }
     }
     return Q_SNAN;
 }
@@ -419,15 +474,23 @@ void OsmAnd::MapMarkersAnimator_P::directionSetter(const Key key, const float ne
     QReadLocker scopedLocker(&_animationMarkersLock);
 
     const auto itMarker = _animationMarkers.find(key);
-    if (itMarker == _animationMarkers.end() || sharedContext->storageList.empty())
+    if (itMarker == _animationMarkers.end())
         return;
 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
     if (marker)
     {
-        OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
-        return marker->setOnMapSurfaceIconDirection(iconKey, newValue);
+        if (sharedContext->storageList.empty())
+        {
+            if (marker->model3D)
+                marker->setModel3DDirection(newValue);
+        }
+        else
+        {
+            OnSurfaceIconKey iconKey = sharedContext->storageList.first().value<void*>();
+            marker->setOnMapSurfaceIconDirection(iconKey, newValue);
+        }
     }
 }
 
@@ -505,7 +568,7 @@ void OsmAnd::MapMarkersAnimator_P::constructPositionAnimationToValue(
 void OsmAnd::MapMarkersAnimator_P::constructDirectionAnimationByDelta(
     AnimationsCollection& outAnimation,
     const std::shared_ptr<MapMarker> mapMarker,
-    const OnSurfaceIconKey iconKey,
+    const OnSurfaceIconKey* const pIconKey,
     const float deltaValue,
     const float duration,
     const TimingFunction timingFunction)
@@ -514,7 +577,8 @@ void OsmAnd::MapMarkersAnimator_P::constructDirectionAnimationByDelta(
         return;
 
     const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
-    sharedContext->storageList.append(QVariant::fromValue(const_cast<void*>(iconKey)));
+    if (pIconKey)
+       sharedContext->storageList.append(QVariant::fromValue(const_cast<void*>(*pIconKey)));
     std::shared_ptr<GenericAnimation> newAnimation(new Animation<float>(
         mapMarker.get(),
         AnimatedValue::Azimuth,
@@ -527,7 +591,7 @@ void OsmAnd::MapMarkersAnimator_P::constructDirectionAnimationByDelta(
 void OsmAnd::MapMarkersAnimator_P::constructDirectionAnimationToValue(
     AnimationsCollection& outAnimation,
     const std::shared_ptr<MapMarker> mapMarker,
-    const OnSurfaceIconKey iconKey,
+    const OnSurfaceIconKey* const pIconKey,
     const float value,
     const float duration,
     const TimingFunction timingFunction)
@@ -536,7 +600,8 @@ void OsmAnd::MapMarkersAnimator_P::constructDirectionAnimationToValue(
         return;
 
     const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
-    sharedContext->storageList.append(QVariant::fromValue(const_cast<void*>(iconKey)));
+    if (pIconKey)
+        sharedContext->storageList.append(QVariant::fromValue(const_cast<void*>(*pIconKey)));
     std::shared_ptr<GenericAnimation> newAnimation(new Animation<float>(
         mapMarker.get(),
         AnimatedValue::Azimuth,
