@@ -7,12 +7,6 @@ OsmAnd::Model3D::Model3D(const QVector<Vertex>& vertices_, const QVector<Materia
 {
 }
 
-OsmAnd::Model3D::Model3D(const QString& error_)
-    : error(error_)
-    , bbox(BBox())
-{
-}
-
 OsmAnd::Model3D::~Model3D()
 {
 }

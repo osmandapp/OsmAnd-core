@@ -37,22 +37,18 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
         LogPrintf(LogSeverityLevel::Error, error.c_str());
 
     if (!ok)
-        return error.length() > 0
-            ? std::shared_ptr<const Model3D>(new Model3D(QString::fromStdString(error)))
-            : std::shared_ptr<const Model3D>(new Model3D(QString::fromStdString(warn)));
+        return nullptr;
 
     if (attrib.vertices.empty())
     {
-        const auto error = QLatin1String("No vertex data provided in %1").arg(_objFilePath);
-        LogPrintf(LogSeverityLevel::Error, qPrintable(error));
-        return std::shared_ptr<const Model3D>(new Model3D(error));
+        LogPrintf(LogSeverityLevel::Error, "No 3vertex data provided for 3D model at '%s'", qPrintable(_objFilePath));
+        return nullptr;
     }
 
     if (materials.empty() && attrib.colors.size() != attrib.vertices.size())
     {
-        const auto error = QLatin1String("Incompleted color data provided in %1").arg(_objFilePath);
-        LogPrintf(LogSeverityLevel::Error, qPrintable(error));
-        return std::shared_ptr<const Model3D>(new Model3D(error));
+        LogPrintf(LogSeverityLevel::Error, "Incompleted color data provided for 3D Model at '%s'", qPrintable(_objFilePath));
+        return nullptr;
     }
 
     QVector<Model3D::Vertex> vertices;
@@ -132,9 +128,8 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
 
     if (qFuzzyIsNull(bbox.lengthX()) || qFuzzyIsNull(bbox.lengthY()) || qFuzzyIsNull(bbox.lengthZ()))
     {
-        const auto error = QLatin1String("3D Model is flat in one of axis");
-        LogPrintf(LogSeverityLevel::Error, qPrintable(error));
-        return std::shared_ptr<const Model3D>(new Model3D(error));
+        LogPrintf(LogSeverityLevel::Error, "3D Model at '%s' is flat in one of axis", qPrintable(_objFilePath));
+        return nullptr;
     }
 
     QVector<Model3D::Material> processedMaterials(materials.size());

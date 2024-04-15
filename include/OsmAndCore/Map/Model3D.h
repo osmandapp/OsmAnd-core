@@ -58,14 +58,11 @@ namespace OsmAnd
     protected:
     public:
         Model3D(const QVector<Vertex>& vertices, const QVector<Material>& materials, const BBox& bbox);
-        Model3D(const QString& error);
         virtual ~Model3D();
 
         const QVector<Vertex> vertices;
         const QVector<Material> materials;
         const BBox bbox;
-
-        const QString error;
     };
 }
 
