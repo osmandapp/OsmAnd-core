@@ -16,6 +16,7 @@
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
     : owner(owner_)
     , textRasterizer(TextRasterizer::getDefault())
+    , _model3DDirection(-90.0f)
 {
 }
 
@@ -149,6 +150,42 @@ void OsmAnd::MapMarker_P::setOnMapSurfaceIconDirection(const MapMarker::OnSurfac
     }
 }
 
+int OsmAnd::MapMarker_P::getModel3DMaxSizeInPixels() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3DMaxSizeInPixels;
+}
+
+void OsmAnd::MapMarker_P::setModel3DMaxSizeInPixels(const int maxSizeInPixels)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_model3DMaxSizeInPixels != maxSizeInPixels)
+    {
+        _model3DMaxSizeInPixels = maxSizeInPixels;
+        _hasUnappliedChanges = true;
+    }
+}
+
+float OsmAnd::MapMarker_P::getModel3DDirection() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _model3DDirection;
+}
+
+void OsmAnd::MapMarker_P::setModel3DDirection(const float direction)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    if (_model3DDirection != direction)
+    {
+        _model3DDirection = direction;
+        _hasUnappliedChanges = true;
+    }
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarker_P::getPinIconModulationColor() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -191,6 +228,13 @@ bool OsmAnd::MapMarker_P::applyChanges()
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
+
+            if (const auto symbol = std::dynamic_pointer_cast<Model3DMapSymbol>(symbol_))
+            {
+                symbol->setPosition31(_position);
+                symbol->direction = _model3DDirection;
+                symbol->maxSizeInPixels = _model3DMaxSizeInPixels;
+            }
 
             if (const auto symbol = std::dynamic_pointer_cast<AccuracyCircleMapSymbol>(symbol_))
             {
@@ -351,6 +395,22 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         onMapSurfaceIconSymbol->elevationScaleFactor = _elevationScaleFactor;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
+    }
+
+    order++;
+
+    if (owner->model3D)
+    {
+        // Set Model3DMapSymbol from model3D 
+        const std::shared_ptr<Model3DMapSymbol> model3DMapSymbol(new Model3DMapSymbol(symbolsGroup));
+        model3DMapSymbol->order = order++;
+        model3DMapSymbol->position31 = _position;
+        VectorMapSymbol::generateModel3DPrimitive(*model3DMapSymbol, owner->model3D, owner->model3DCustomMaterialColors);
+        model3DMapSymbol->isHidden = _isHidden;
+        model3DMapSymbol->direction = _model3DDirection;
+        model3DMapSymbol->bbox = owner->model3D->bbox;
+        model3DMapSymbol->maxSizeInPixels = _model3DMaxSizeInPixels;
+        symbolsGroup->symbols.push_back(model3DMapSymbol);
     }
     
     order++;

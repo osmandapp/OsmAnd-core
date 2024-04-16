@@ -67,14 +67,14 @@ namespace OsmAnd
         void constructDirectionAnimationByDelta(
             AnimationsCollection& outAnimation,
             const std::shared_ptr<MapMarker> mapMarker,
-            const OnSurfaceIconKey iconKey,
+            const OnSurfaceIconKey* const pIconKey,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructDirectionAnimationToValue(
             AnimationsCollection& outAnimation,
             const std::shared_ptr<MapMarker> mapMarker,
-            const OnSurfaceIconKey iconKey,
+            const OnSurfaceIconKey* const pIconKey,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
@@ -149,6 +149,21 @@ namespace OsmAnd
         void animateDirectionWith(
             const std::shared_ptr<MapMarker> mapMarker,
             const OnSurfaceIconKey iconKey,
+            const float velocity,
+            const float deceleration);
+
+        void animateModel3DDirectionBy(
+            const std::shared_ptr<MapMarker> mapMarker,
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction);
+        void animateModel3DDirectionTo(
+            const std::shared_ptr<MapMarker> mapMarker,
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction);
+        void animateModel3DDirectionWith(
+            const std::shared_ptr<MapMarker> mapMarker,
             const float velocity,
             const float deceleration);
 

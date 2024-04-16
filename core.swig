@@ -144,6 +144,8 @@
 #include <OsmAndCore/SingleSkImage.h>
 #include <OsmAndCore/Icons.h>
 #include <OsmAndCore/Metrics.h>
+#include <OsmAndCore/Map/Model3D.h>
+#include <OsmAndCore/ObjParser.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -342,6 +344,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::Metric)
 	%shared_ptr(OsmAnd::IconData)
 	%shared_ptr(OsmAnd::LayeredIconData)
+	%shared_ptr(OsmAnd::Model3D)
 
 %include <std_pair.i>
 %include <std_string.i>
@@ -449,6 +452,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Utilities.h>
 %include <OsmAndCore/WorldRegions.h>
 %include <OsmAndCore/TrackArea.h>
+%include <OsmAndCore/Map/Model3D.h>
+	%template(QVectorMaterials) QVector<OsmAnd::Model3D::Material>;
+%include <OsmAndCore/ObjParser.h>
 %include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>

@@ -34,6 +34,7 @@ namespace OsmAnd
     class MapSymbol;
     class MapRendererStage;
     class AtlasMapRendererSymbolsStage;
+    class AtlasMapRendererSymbolsStageModel3D;
     struct MapRendererInternalState;
 
     class MapRenderer : public IMapRenderer
@@ -466,6 +467,7 @@ namespace OsmAnd
     friend struct OsmAnd::MapRendererInternalState;
     friend class OsmAnd::MapRendererStage;
     friend class OsmAnd::AtlasMapRendererSymbolsStage;
+    friend class OsmAnd::AtlasMapRendererSymbolsStageModel3D;
     friend class OsmAnd::MapRendererResourcesManager;
     friend class OsmAnd::MapRendererTiledSymbolsResource;
     friend class OsmAnd::MapRendererRasterMapLayerResource;

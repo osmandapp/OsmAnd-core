@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 181
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 182
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -289,6 +289,7 @@ file(GLOB includes
 	"include/mapbox/*.h*"
 	"include/Polyline2D/*.h*"
 	"include/proper/*.h*"
+	"include/tinyobjloader/*.h*"
 	"include/*.h*"
 	"include/OsmAndCore/*.h*"
 	"include/OsmAndCore/Concurrent/*.h*"

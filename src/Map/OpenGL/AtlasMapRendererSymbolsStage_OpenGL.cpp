@@ -11,6 +11,7 @@
 
 #include "Utilities.h"
 #include "AtlasMapRenderer_OpenGL.h"
+#include "AtlasMapRendererSymbolsStageModel3D_OpenGL.h"
 #include "AtlasMapRenderer_Metrics.h"
 #include "MapSymbol.h"
 #include "VectorMapSymbol.h"
@@ -37,13 +38,21 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenG
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
+    createSubstages();
+
     bool ok = true;
     ok = ok && initializeBillboardRaster();
     ok = ok && initializeOnPath();
     ok = ok && initializeOnSurfaceRaster();
     ok = ok && initializeOnSurfaceVector();
+    ok = ok && _model3DSubstage->initialize();
     ok = ok && initializeVisibilityCheck();
     return ok;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::createSubstages()
+{
+    _model3DSubstage.reset(new AtlasMapRendererSymbolsStageModel3D_OpenGL(this));
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
@@ -165,6 +174,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
                 metric->onPathSymbolsRendered += 1;
             }
         }
+        else if (const auto& renderableModel3DSymbol = std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
+        {
+            Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
+            ok = ok && _model3DSubstage->render(renderableModel3DSymbol, currentAlphaChannelType);
+            if (metric)
+            {
+                metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
+                metric->model3DSymbolsRendered += 1;
+            }
+        }
         else if (const auto& renderableOnSurfaceSymbol = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderableSymbol))
         {
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
@@ -261,6 +280,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(bool gpuContextLost)
     ok = ok && releaseOnPath(gpuContextLost);
     ok = ok && releaseOnSurfaceRaster(gpuContextLost);
     ok = ok && releaseOnSurfaceVector(gpuContextLost);
+    ok = ok && (!_model3DSubstage || _model3DSubstage->release(gpuContextLost));
     ok = ok && releaseVisibilityCheck(gpuContextLost);
     return ok;
 }
@@ -572,6 +592,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
 
         // Change depth test function to accept everything to avoid issues with terrain (regardless of elevation presence)
         glDepthFunc(GL_ALWAYS);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
 
         _lastUsedProgram = _billboardRasterProgram.id;
@@ -1404,6 +1427,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
+        glDepthMask(GL_FALSE);
+        GL_CHECK_RESULT;
+
         _lastUsedProgram = _onPath2dProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -1575,6 +1601,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
         // Change depth test function to perform <= depth test (regardless of elevation presence)
         glDepthFunc(GL_LEQUAL);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
 
         _lastUsedProgram = _onPath3dProgram.id;
@@ -2038,6 +2067,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
+        glDepthMask(GL_FALSE);
+        GL_CHECK_RESULT;
+
         _lastUsedProgram = _onSurfaceRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -2370,6 +2402,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
 
         // Change depth test function to perform <= depth test (regardless of elevation presence)
         glDepthFunc(GL_LEQUAL);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
 
         _lastUsedProgram = _onSurfaceVectorProgram.id;

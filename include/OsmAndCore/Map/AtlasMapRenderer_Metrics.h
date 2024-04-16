@@ -36,6 +36,7 @@ namespace OsmAnd
         FIELD_ACTION(float, elapsedTimeForObtainRenderableSymbolCalls, "s");                                    \
         FIELD_ACTION(unsigned int, obtainRenderableSymbolCalls, "");                                            \
         FIELD_ACTION(unsigned int, onPathSymbolsRejectedByFrustum, "");                                         \
+        FIELD_ACTION(unsigned int, model3DSymbolsRejectedByFrustum, "");                                        \
         FIELD_ACTION(unsigned int, onSurfaceSymbolsRejectedByFrustum, "");                                      \
         FIELD_ACTION(unsigned int, billboardSymbolsRejectedByFrustum, "");                                      \
         FIELD_ACTION(float, elapsedTimeForPlotSymbolCalls, "s");                                                \
@@ -67,9 +68,10 @@ namespace OsmAnd
         FIELD_ACTION(unsigned int, billboardSymbolsRendered, "");                                               \
         FIELD_ACTION(float, elapsedTimeForOnPathSymbolsRendering, "s");                                         \
         FIELD_ACTION(unsigned int, onPathSymbolsRendered, "");                                                  \
+        FIELD_ACTION(float, elapsedTimeForModel3DSymbolsRendering, "s");                                        \
+        FIELD_ACTION(unsigned int, model3DSymbolsRendered, "");                                                 \
         FIELD_ACTION(float, elapsedTimeForOnSurfaceSymbolsRendering, "s");                                      \
         FIELD_ACTION(unsigned int, onSurfaceSymbolsRendered, "");                                               \
-                                                                                                                \
         /* Time elapsed for debug stage */                                                                      \
         FIELD_ACTION(float, elapsedTimeForDebugStage, "s");                                                     \
         FIELD_ACTION(float, elapsedTimeForDebugPoints2D, "s");                                                  \

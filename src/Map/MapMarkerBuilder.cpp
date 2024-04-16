@@ -257,3 +257,53 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::clearOnMapSurfaceIcons()
 
     return *this;
 }
+
+std::shared_ptr<const OsmAnd::Model3D> OsmAnd::MapMarkerBuilder::getModel3D() const
+{
+    return _p->getModel3D();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setModel3D(const std::shared_ptr<const Model3D>& model3D)
+{
+    _p->setModel3D(model3D);
+
+    return *this;
+}
+
+QHash<QString, OsmAnd::FColorARGB> OsmAnd::MapMarkerBuilder::getModel3DCustomMaterialColors() const
+{
+    return _p->getModel3DCustomMaterialColors();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addModel3DCustomMaterialColor(const QString& materialName, const FColorARGB& color)
+{
+    _p->addModel3DCustomMaterialColor(materialName, color);
+
+    return *this;
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::removeModel3DCustomMaterialColor(const QString& materialName)
+{
+    _p->removeModel3DCustomMaterialColor(materialName);
+
+    return *this;
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::clearModel3DCustomMaterialColors()
+{
+    _p->clearModel3DCustomMaterialColors();
+
+    return *this;
+}
+
+int OsmAnd::MapMarkerBuilder::getModel3DMaxSizeInPixels() const
+{
+    return _p->getModel3DMaxSizeInPixels();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setModel3DMaxSizeInPixels(const int maxSizeInPixels)
+{
+    _p->setModel3DMaxSizeInPixels(maxSizeInPixels);
+
+    return *this;
+}

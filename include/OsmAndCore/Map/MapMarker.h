@@ -21,6 +21,7 @@
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/TextRasterizer.h>
+#include <OsmAndCore/Map/Model3D.h>
 
 namespace OsmAnd
 {
@@ -87,6 +88,8 @@ namespace OsmAnd
             const TextRasterizer::Style captionStyle,
             const double captionTopSpace,
             const QHash< OnSurfaceIconKey, sk_sp<const SkImage> >& onMapSurfaceIcons,
+            const std::shared_ptr<const Model3D>& model3D,
+            const QHash<QString, FColorARGB>& model3DCustomMaterialColors,
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
 
@@ -101,6 +104,8 @@ namespace OsmAnd
         const PinIconHorisontalAlignment pinIconHorisontalAlignment;
         const PointI pinIconOffset;
         const QHash< OnSurfaceIconKey, sk_sp<const SkImage> > onMapSurfaceIcons;
+        const std::shared_ptr<const Model3D> model3D;
+        const QHash<QString, FColorARGB> model3DCustomMaterialColors;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;
         const QString caption;
@@ -126,6 +131,11 @@ namespace OsmAnd
 
         float getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction);
+
+        int getModel3DMaxSizeInPixels() const;
+        void setModel3DMaxSizeInPixels(const int maxSizeInPixels);
+        float getModel3DDirection() const;
+        void setModel3DDirection(const float direction);
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);

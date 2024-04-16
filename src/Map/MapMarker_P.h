@@ -14,6 +14,7 @@
 #include "IUpdatableMapSymbolsGroup.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
+#include "Model3DMapSymbol.h"
 #include "MapMarker.h"
 
 namespace OsmAnd
@@ -50,6 +51,9 @@ namespace OsmAnd
         float _elevationScaleFactor;
 
         QHash< MapMarker::OnSurfaceIconKey, float > _directions;
+
+        int _model3DMaxSizeInPixels;
+        float _model3DDirection;
 
         ColorARGB _pinIconModulationColor;
 
@@ -111,6 +115,11 @@ namespace OsmAnd
 
         float getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction);
+
+        int getModel3DMaxSizeInPixels() const;
+        void setModel3DMaxSizeInPixels(const int maxSizeInPixels);
+        float getModel3DDirection() const;
+        void setModel3DDirection(const float direction);
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
