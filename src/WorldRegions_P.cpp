@@ -50,7 +50,6 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         auto regionFullNameAttributeId = std::numeric_limits<uint32_t>::max();
         auto regionParentNameAttributeId = std::numeric_limits<uint32_t>::max();
         auto osmandRegionId = std::numeric_limits<uint32_t>::max();
-
         auto langAttributeId = std::numeric_limits<uint32_t>::max();
         auto metricAttributeId = std::numeric_limits<uint32_t>::max();
         auto roadSignsAttributeId = std::numeric_limits<uint32_t>::max();
@@ -139,6 +138,8 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                 auto worldRegion = std::make_shared<WorldRegion>();
                 worldRegion->boundary = mapObject->containsAttribute("osmand_region", "boundary");
+                worldRegion->regionJoinMap = mapObject->containsAttribute("region_join_map", "yes", true);
+                worldRegion->regionJoinRoads = mapObject->containsAttribute("region_join_roads", "yes", true);
                 if (worldRegion->boundary)
                 {
                     const auto &fullRegionName = mapObject->captions[regionFullNameAttributeId];
