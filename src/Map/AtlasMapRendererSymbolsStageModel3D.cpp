@@ -6,7 +6,8 @@
 #include "AtlasMapRenderer_Metrics.h"
 #include "AtlasMapRendererDebugStage.h"
 
-#define ADDITIONAL_HEIGHT_POINTS 2
+// Should be even: currently there is no use of height in the middle of bbox edge
+#define INTERMEDIATE_HEIGHTS 2
 
 OsmAnd::AtlasMapRendererSymbolsStageModel3D::AtlasMapRendererSymbolsStageModel3D(
     AtlasMapRendererSymbolsStage* const symbolsStage_)
@@ -50,10 +51,10 @@ glm::mat4 OsmAnd::AtlasMapRendererSymbolsStageModel3D::calculateModelMatrix(
     const auto nearLeftElevation = getPointInWorldHeight(leftNear);
     const auto nearRightElevation = getPointInWorldHeight(rightNear);
 
-    const auto leftHeights = getHeightOfPointsOnSegment(leftFar, leftNear);
-    const auto rightHeights = getHeightOfPointsOnSegment(rightFar, rightNear);
-    const auto farHeights = getHeightOfPointsOnSegment(leftFar, rightFar);
-    const auto nearHeights = getHeightOfPointsOnSegment(leftNear, rightNear);
+    const auto leftHeights = getHeightOfPointsOnSegment(leftFar, leftNear, farLeftElevation, nearLeftElevation);
+    const auto rightHeights = getHeightOfPointsOnSegment(rightFar, rightNear, farRightElevation, nearRightElevation);
+    const auto farHeights = getHeightOfPointsOnSegment(leftFar, rightFar, farLeftElevation, farRightElevation);
+    const auto nearHeights = getHeightOfPointsOnSegment(leftNear, rightNear, nearLeftElevation, nearRightElevation);
 
     const auto lengthX = scale * bbox.lengthX();
     const auto lengthZ = scale * bbox.lengthZ();
@@ -107,22 +108,25 @@ glm::mat4 OsmAnd::AtlasMapRendererSymbolsStageModel3D::calculateModelMatrix(
 
 QVector<float> OsmAnd::AtlasMapRendererSymbolsStageModel3D::getHeightOfPointsOnSegment(
     const glm::vec2& startInWorld,
-    const glm::vec2& endInWorld) const
+    const glm::vec2& endInWorld,
+    const float startHeight,
+    const float endHeight) const
 {
     const auto delta = endInWorld - startInWorld;
     
     QVector<float> heights;
-    heights.push_back(getPointInWorldHeight(startInWorld));
+    heights.push_back(startHeight);
 
-    const int segmentsCount = ADDITIONAL_HEIGHT_POINTS + 1;
-    for (auto additionalPoint = 1; additionalPoint < ADDITIONAL_HEIGHT_POINTS; additionalPoint++)
+    const int segmentsCount = INTERMEDIATE_HEIGHTS + 1;
+    for (auto intermediatePoint = 0; intermediatePoint < INTERMEDIATE_HEIGHTS; intermediatePoint++)
     {
-        const auto percent = static_cast<float>(additionalPoint + 1) / segmentsCount;
+        const auto percent = static_cast<float>(intermediatePoint + 1) / segmentsCount;
         const auto postitionInWorld = startInWorld + delta * percent;
         const auto height = getPointInWorldHeight(postitionInWorld);
         heights.push_back(height);
     }
-    heights.push_back(getPointInWorldHeight(endInWorld));
+
+    heights.push_back(endHeight);
 
     return heights;
 }

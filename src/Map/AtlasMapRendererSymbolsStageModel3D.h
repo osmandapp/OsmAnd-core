@@ -27,7 +27,9 @@ namespace OsmAnd
             bool& outElevated) const;
         QVector<float> getHeightOfPointsOnSegment(
             const glm::vec2& startInWorld,
-            const glm::vec2& endInWorld) const;
+            const glm::vec2& endInWorld,
+            const float startHeight,
+            const float endHeight) const;
         float getPointInWorldHeight(const glm::vec2& pointInWorld) const;
         PointI getLocation31FromPointInWorld(const glm::vec2& pointInWorld) const;
         
