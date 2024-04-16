@@ -248,8 +248,15 @@ QString OsmAnd::NetworkRouteKey::getRouteName() const
     QString name = getValue(QStringLiteral("name"));
     if (name.isEmpty())
         name = getValue(QStringLiteral("ref"));
+    if (name.isEmpty())
+        name = getRelationID();
 
     return name;
+}
+
+QString OsmAnd::NetworkRouteKey::getRelationID() const
+{
+    return getValue(QStringLiteral("relation_id"));
 }
 
 OsmAnd::NetworkRoutePoint::~NetworkRoutePoint()
