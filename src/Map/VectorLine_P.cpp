@@ -1410,6 +1410,9 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
     float prevHeight = withHeights ? segmentHeights[segmentPoints.size() - 1] : NAN;
     float nextHeight;
     double gap = halfStep;
+
+    QWriteLocker scopedLocker(&_arrowsOnPathLock);
+    
     for (int i = (int) segmentPoints.size() - 2; i >= 0; i--)
     {
         if (!includedPoints[i])
