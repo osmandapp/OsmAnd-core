@@ -47,7 +47,8 @@ namespace OsmAnd
         QString getKeyFromTag(const QString& tag) const;
         QString getValue(const QString& key) const;
         QString getRouteName() const;
-        
+        QString getRelationID() const;
+
         QString getNetwork();
         QString getOperator();
         QString getSymbol();
