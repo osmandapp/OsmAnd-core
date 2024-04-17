@@ -36,6 +36,8 @@ namespace OsmAnd
         QString regionRoadSigns;
         QString wikiLink;
         QString population;
+        bool regionJoinMap;
+        bool regionJoinRoads;
         
         LatLon regionCenter;
         QVector<PointI> polygon;
