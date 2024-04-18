@@ -30,7 +30,7 @@ namespace OsmAnd
     private:
         PrivateImplementation<VectorLinesCollection_P> _p;
         
-        std::shared_ptr<VectorLineArrowsProvider> _arrowsProvider;
+        std::weak_ptr<VectorLineArrowsProvider> _arrowsProvider;
         int64_t priority;
     protected:
     public:
