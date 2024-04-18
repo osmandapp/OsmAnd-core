@@ -30,10 +30,14 @@ void OsmAnd::VectorLinesCollection::removeAllLines()
 
 const std::shared_ptr<OsmAnd::VectorLineArrowsProvider> OsmAnd::VectorLinesCollection::getVectorLineArrowsProvider()
 {
-    if (!_arrowsProvider)
-        _arrowsProvider = std::make_shared<VectorLineArrowsProvider>(shared_from_this());
+    auto arrowsProvider = _arrowsProvider.lock();
+    if (!arrowsProvider)
+    {
+        arrowsProvider = std::make_shared<VectorLineArrowsProvider>(shared_from_this());
+        _arrowsProvider = std::weak_ptr<VectorLineArrowsProvider>(arrowsProvider);
+    }
 
-    return _arrowsProvider;
+    return arrowsProvider;
 }
 
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::VectorLinesCollection::getProvidedDataKeys() const
