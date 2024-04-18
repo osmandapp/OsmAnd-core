@@ -1910,7 +1910,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getExtraZoomAndRotationForAiming(const Map
     const PointD secondSegment(cameraLocation - secondCurrent);
     const PointD segmentLength(firstSegment.norm(), secondSegment.norm());
     PointD segmentRatio(firstHeightInMeters, secondHeightInMeters);
-    segmentRatio /= internalState.distanceFromCameraToGroundInMeters;
+    segmentRatio /= internalState.distanceFromCameraToGroundInMeters / state.elevationConfiguration.zScaleFactor;
     if (segmentRatio.x >= 1.0 || segmentRatio.y >= 1.0)
         segmentRatio = PointD();
     const PointD segmentOffset(segmentLength.x * segmentRatio.x, segmentLength.y * segmentRatio.y);
