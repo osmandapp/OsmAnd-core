@@ -19,6 +19,7 @@ allprojects {
 
 apply plugin: 'eclipse'
 apply plugin: 'com.android.library'
+apply plugin: 'ivy-publish'
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -319,16 +320,18 @@ artifacts {
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-uploadArchives {
-    repositories.ivy {
+publishing {
+    repositories {
+	ivy {
     //    credentials {
     //        username ""
      //       password ""
      //   }
-        url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-        layout "pattern" , {
+          url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+          patternLayout {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-        }
+          }
+	}
     }
 }
 
