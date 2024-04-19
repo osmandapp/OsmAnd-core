@@ -92,7 +92,8 @@ namespace OsmAnd
             const SingleSkImage& startIcon,
             const SingleSkImage& finishIcon,
             const SingleSkImage& startFinishIcon,
-            const QList<float>& startFinishHeights = QList<float>());
+            const QList<float>& startFinishHeights = QList<float>(),
+            const float elevationScaleFactor = 1.0f);
         virtual ~GpxAdditionalIconsProvider();
         
         const int baseOrder;
@@ -105,6 +106,8 @@ namespace OsmAnd
         const sk_sp<const SkImage> startIcon;
         const sk_sp<const SkImage> finishIcon;
         const sk_sp<const SkImage> startFinishIcon;
+
+        const float elevationScaleFactor;
         
         virtual OsmAnd::ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual OsmAnd::ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
