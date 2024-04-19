@@ -63,7 +63,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter = nullptr,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const bool strictMatch = false);
     };
 }
 
