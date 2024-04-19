@@ -19,6 +19,7 @@ allprojects {
 
 apply plugin: 'eclipse'
 apply plugin: 'com.android.library'
+apply plugin: 'ivy-publish'
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
