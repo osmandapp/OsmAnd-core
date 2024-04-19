@@ -319,7 +319,7 @@ artifacts {
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
-uploadArchives {
+publishing {
     repositories.ivy {
     //    credentials {
     //        username ""
