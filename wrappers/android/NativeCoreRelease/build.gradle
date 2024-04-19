@@ -64,15 +64,17 @@ tasks.withType(JavaCompile) {
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
-uploadArchives {
-    repositories.ivy {
-       // credentials {
-       //     username ""
-       //     password ""
-       //  }
-        url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-        layout "pattern" , {
+publishing {
+    repositories {
+        ivy {
+    //    credentials {
+    //        username ""
+     //       password ""
+     //   }
+          url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+          patternLayout {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+          }
         }
     }
 }
