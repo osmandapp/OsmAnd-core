@@ -320,15 +320,17 @@ artifacts {
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
 publishing {
-    repositories.ivy {
+    repositories {
+	ivy {
     //    credentials {
     //        username ""
      //       password ""
      //   }
         url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-        layout "pattern" , {
+          layout "pattern" , {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-        }
+          }
+	}
     }
 }
 
