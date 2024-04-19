@@ -1248,7 +1248,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     }
     float elevationInWorld = surfaceInWorld;
     float elevationInMeters = NAN;
-    if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
+    if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(mapSymbol))
         elevationInMeters = rasterMapSymbol->getElevation();
     if (!qIsNaN(elevationInMeters))
         elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
