@@ -327,8 +327,8 @@ publishing {
     //        username ""
      //       password ""
      //   }
-        url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-          layout "pattern" , {
+          url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+          patternLayout {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
           }
 	}
