@@ -1152,7 +1152,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const bool strictMatch)
 {
     const auto cis = reader.getCodedInputStream().get();
     QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
@@ -1178,7 +1179,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     dataBoxesOffsetsSet,
                     xy31,
                     bbox31,
-                    tileFilter);
+                    tileFilter,
+                    strictMatch);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -1260,7 +1262,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     QMap<uint32_t, uint32_t>& outDataOffsets,
     const PointI* const xy31,
     const AreaI* const bbox31,
-    const TileAcceptorFunction tileFilter)
+    const TileAcceptorFunction tileFilter,
+    const bool strictMatch)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -1282,7 +1285,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
+                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets, strictMatch);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -1495,7 +1498,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const std::shared_ptr<const IQueryController>& queryController)
+    const std::shared_ptr<const IQueryController>& queryController,
+    const bool strictMatch)
 {
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
@@ -1515,7 +1519,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         tileFilter,
         categoriesFilter,
         visitor,
-        queryController);
+        queryController,
+        strictMatch);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
