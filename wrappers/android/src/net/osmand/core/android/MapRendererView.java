@@ -115,6 +115,8 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private final RenderRequestCallback _renderRequestCallback = new RenderRequestCallback();
 
+    private MapRendererSetupOptions _setupOptions;
+
     private IMapRendererSetupOptionsConfigurator _mapRendererSetupOptionsConfigurator;
 
     /**
@@ -1618,21 +1620,10 @@ public abstract class MapRendererView extends FrameLayout {
             _display = display;
 
             // Change renderer setup options
-            MapRendererSetupOptions setupOptions = new MapRendererSetupOptions();
-            if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
-                setupOptions.setGpuWorkerThreadEnabled(true);
-                setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
-                setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
-            } else {
-                setupOptions.setGpuWorkerThreadEnabled(false);
-                setupOptions.setGpuWorkerThreadPrologue(null);
-                setupOptions.setGpuWorkerThreadEpilogue(null);
-            }
-            setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
-            setupOptions.setDisplayDensityFactor(_densityFactor);
+            _setupOptions = new MapRendererSetupOptions();
+            _setupOptions.setDisplayDensityFactor(_densityFactor);
             if (_mapRendererSetupOptionsConfigurator != null)
-                _mapRendererSetupOptionsConfigurator.configureMapRendererSetupOptions(setupOptions);
-            _mapRenderer.setup(setupOptions);
+                _mapRendererSetupOptionsConfigurator.configureMapRendererSetupOptions(_setupOptions);
 
             return _mainContext;
         }
@@ -1705,6 +1696,17 @@ public abstract class MapRendererView extends FrameLayout {
             if (!_mapRenderer.isRenderingInitialized()) {
                 Log.v(TAG, "Initializing rendering due to surface size change");
 
+                if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
+                    _setupOptions.setGpuWorkerThreadEnabled(true);
+                    _setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
+                    _setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+                } else {
+                    _setupOptions.setGpuWorkerThreadEnabled(false);
+                    _setupOptions.setGpuWorkerThreadPrologue(null);
+                    _setupOptions.setGpuWorkerThreadEpilogue(null);
+                }
+                _setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());    
+                _mapRenderer.setup(_setupOptions);
                 if (!_mapRenderer.initializeRendering(true))
                     Log.e(TAG, "Failed to initialize rendering");
             }
