@@ -34,3 +34,27 @@ QString OsmAnd::TransportRoute::getName(const QString lang, bool transliterate) 
     }
     return name;
 }
+
+bool OsmAnd::TransportRoute::compareRoute(std::shared_ptr<const OsmAnd::TransportRoute>& thatObj) const
+{
+    if (id == thatObj->id && enName == thatObj->enName && ref == thatObj->ref &&
+        oper == thatObj->oper && type == thatObj->type && color == thatObj->color && dist == thatObj->dist &&
+        forwardStops.size() == thatObj->forwardStops.size() && (forwardWays31.size() == thatObj->forwardWays31.size()))
+    {
+        for (int i = 0; i < forwardStops.size(); i++)
+        {
+            if (!forwardStops[i]->compareStop(thatObj->forwardStops[i]))
+                return false;
+        }
+        for (int i = 0; i < forwardWays31.size(); i++) 
+        {
+            if (!(forwardWays31.at(i) == thatObj->forwardWays31.at(i)))
+                return false;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
