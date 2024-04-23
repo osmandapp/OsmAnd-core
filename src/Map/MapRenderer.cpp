@@ -21,6 +21,8 @@
 #include "Logging.h"
 #include "Stopwatch.h"
 #include "QKeyValueIterator.h"
+#include <SqliteHeightmapTileProvider.h>
+#include <VectorLinesCollection.h>
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -1402,7 +1404,20 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
     if (!update)
         return false;
 
-    _requestedState.elevationDataProvider.reset();
+    // Check there are vector symbols that need elevation provider to be present
+    bool withVolumetricSymbols = false;
+    for (const auto& keyedSymbolsSubsection : constOf(_requestedState.keyedSymbolsProviders))
+    {
+        for (const auto& provider : constOf(keyedSymbolsSubsection))
+        {
+            if (const auto vectorLinesCollection = std::dynamic_pointer_cast<VectorLinesCollection>(provider))
+                withVolumetricSymbols = withVolumetricSymbols || vectorLinesCollection->hasVolumetricSymbols;
+        }
+    }
+    if (withVolumetricSymbols)
+        _requestedState.elevationDataProvider.reset(new SqliteHeightmapTileProvider());
+    else
+        _requestedState.elevationDataProvider.reset();
 
     _requestedState.fixedHeight = 0.0f;
 
@@ -1517,6 +1532,20 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(
     bool update = forcedUpdate || (!isSet || !itKeyedSymbolSubsection->contains(provider));
     if (!update)
         return false;
+
+    // Check elevation provider is needed
+    if (!_requestedState.elevationDataProvider)
+    {
+        bool hasVolumetricSymbols = false;
+        if (const auto vectorLinesCollection = std::dynamic_pointer_cast<VectorLinesCollection>(provider))
+            hasVolumetricSymbols = vectorLinesCollection->hasVolumetricSymbols;
+        if (hasVolumetricSymbols)
+        {
+            _requestedState.elevationDataProvider.reset(new SqliteHeightmapTileProvider());
+
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
+        }
+    }
 
     if (isSet)
         itKeyedSymbolSubsection->insert(provider);
@@ -1646,6 +1675,16 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
     if (!provider)
         return false;
 
+    // Check there is elevation provider without heightmap collections
+    bool withoutHeightmaps = false;
+    if (const auto heightmapProvider =
+        std::dynamic_pointer_cast<SqliteHeightmapTileProvider>(_requestedState.elevationDataProvider))
+    {
+        if (!heightmapProvider->sourcesCollection && !heightmapProvider->filesCollection)
+            withoutHeightmaps = true;
+    }
+
+    bool withVolumetricSymbols = false;
     bool update = forcedUpdate;
     for (auto& keyedSymbolsSubsection : _requestedState.keyedSymbolsProviders)
     {
@@ -1654,9 +1693,26 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(
             keyedSymbolsSubsection.remove(provider);
             update = true;
         }
+        if (withoutHeightmaps)
+        {
+            // Check there are vector symbols that need elevation provider to be present
+            for (const auto& provider : constOf(keyedSymbolsSubsection))
+            {
+                if (const auto vectorLinesCollection = std::dynamic_pointer_cast<VectorLinesCollection>(provider))
+                    withVolumetricSymbols = withVolumetricSymbols || vectorLinesCollection->hasVolumetricSymbols;
+            }
+        }
     }
     if (!update)
         return false;
+
+    // Remove elevation provider if it isn't needed anymore
+    if (withoutHeightmaps && !withVolumetricSymbols)
+    {
+        _requestedState.elevationDataProvider.reset();
+
+        notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
+    }
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1673,6 +1729,18 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
         !_requestedState.keyedSymbolsProviders.isEmpty();
     if (!update)
         return false;
+
+    // Remove elevation provider if it has no heightmap collections
+    if (const auto heightmapProvider =
+        std::dynamic_pointer_cast<SqliteHeightmapTileProvider>(_requestedState.elevationDataProvider))
+    {
+        if (!heightmapProvider->sourcesCollection && !heightmapProvider->filesCollection)
+        {
+            _requestedState.elevationDataProvider.reset();
+
+            notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
+        }
+    }
 
     _requestedState.tiledSymbolsProviders.clear();
     _requestedState.keyedSymbolsProviders.clear();
