@@ -3,8 +3,9 @@
 
 #include "MapDataProviderHelpers.h"
 
-OsmAnd::VectorLinesCollection::VectorLinesCollection()
+OsmAnd::VectorLinesCollection::VectorLinesCollection(const bool hasVolumetricSymbols_ /* = false */)
     : _p(new VectorLinesCollection_P(this))
+    , hasVolumetricSymbols(hasVolumetricSymbols_)
     , priority(std::numeric_limits<int64_t>::min())
 {
 }
