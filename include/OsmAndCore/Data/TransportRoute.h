@@ -7,7 +7,6 @@
 #include <QString>
 #include <QList>
 #include <QVector>
-#include "TransportStop.h"
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>

@@ -1,4 +1,5 @@
 #include "TransportRoute.h"
+#include "TransportStop.h"
 #include <ICU.h>
 
 OsmAnd::TransportRoute::TransportRoute()
