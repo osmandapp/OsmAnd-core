@@ -188,6 +188,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_fs_lastBatch*/ +
         1 /*param_fs_blendingEnabled*/ + 
         1 /*param_fs_backgroundColor*/ +
+        1 /*param_fs_myLocationColor*/ +
+        1 /*param_fs_myLocation*/ +
         1 /*param_fs_worldCameraPosition*/ +
         1 /*param_fs_mistConfiguration*/ +
         1 /*param_fs_mistColor*/;
@@ -668,6 +670,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "uniform lowp float param_fs_lastBatch;                                                                             ""\n"
         "uniform lowp float param_fs_blendingEnabled;                                                                       ""\n"
         "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
+        "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
+        "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
         "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
         "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
         "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
@@ -704,6 +708,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    lowp vec4 finalColor;                                                                                          ""\n"
+        "                                                                                                                   ""\n"
+        //   Calculate color of accuracy circle
+        "    lowp vec4 myColor = param_fs_myLocationColor;                                                                  ""\n"
+        "    float dist = distance(v2f_position.xz, param_fs_myLocation.xy);                                                ""\n"
+        "    myColor.a = dist > param_fs_myLocation.z ? 0.0 : myColor.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);""\n"
         "                                                                                                                   ""\n"
         //   Calculate mist color
         "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
@@ -772,6 +781,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "                                                                                                                   ""\n"
+        "    mixColors(finalColor, myColor * param_fs_lastBatch);                                                           ""\n"
         "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
         "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
         "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
@@ -1056,6 +1066,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.backgroundColor,
         "param_fs_backgroundColor",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.myLocationColor,
+        "param_fs_myLocationColor",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.myLocation,
+        "param_fs_myLocation",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.worldCameraPosition,
@@ -1624,6 +1642,24 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         currentState.backgroundColor.r,
         currentState.backgroundColor.g,
         currentState.backgroundColor.b,
+        1.0f);
+    GL_CHECK_RESULT;
+
+    // Set color, location and size of accuracy circle
+    glUniform4f(program.fs.param.myLocationColor,
+        currentState.myLocationColor.r,
+        currentState.myLocationColor.g,
+        currentState.myLocationColor.b,
+        currentState.myLocationColor.a);
+    GL_CHECK_RESULT;
+    auto offset31 = Utilities::shortestVector31(currentState.target31, currentState.myLocation31);
+    auto offset = Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+    auto metersPerTile = Utilities::getMetersPerTileUnit(currentState.zoomLevel,
+        currentState.myLocation31.y >> (ZoomLevel31 - currentState.zoomLevel), AtlasMapRenderer::TileSize3D);
+    glUniform4f(program.fs.param.myLocation,
+        offset.x,
+        offset.y,
+        currentState.myLocationRadiusInMeters / metersPerTile,
         1.0f);
     GL_CHECK_RESULT;
 

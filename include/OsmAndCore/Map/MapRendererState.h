@@ -52,6 +52,7 @@ namespace OsmAnd
         StubsStyle,
         BackgroundColor,
         FogColor,
+        MyLocation,
         SymbolsOpacity,
         DateTime,
         TimePeriod
@@ -100,6 +101,9 @@ namespace OsmAnd
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
         FColorRGB fogColor;
+        FColorARGB myLocationColor;
+        PointI myLocation31;
+        float myLocationRadiusInMeters;
         float symbolsOpacity;
         int64_t dateTime;
         
@@ -154,6 +158,9 @@ namespace OsmAnd
         MapStubStyle stubsStyle;
         FColorRGB backgroundColor;
         FColorRGB fogColor;
+        FColorARGB myLocationColor;
+        PointI myLocation31;
+        float myLocationRadiusInMeters;
         float symbolsOpacity;
         int64_t dateTime;
         
