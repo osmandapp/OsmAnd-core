@@ -310,11 +310,16 @@ afterEvaluate {
 }
 
 
-artifacts {
-	 archives file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
-		name "OsmAndCore_android"
-		type "jar"
-	}
+// artifacts {
+// 	 archives file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
+// 		name "OsmAndCore_android"
+// 		type "jar"
+// 	}
+// }
+def srcFile = layout.buildDirectory.file('intermediates/runtime_library_classes_jar/release/classes.jar')
+def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
+    name "OsmAndCore_android"
+	type "jar"
 }
 // Uploading artifacts to local path
 group = "net.osmand"
@@ -329,10 +334,7 @@ publishing {
 		}
 		publications {
 			jar(IvyPublication) {
-				artifact {
-					name "OsmAndCore_android"
-					type "jar"		
-				}
+				artifact(srcArtifact)
 			}
 		}
 	}
