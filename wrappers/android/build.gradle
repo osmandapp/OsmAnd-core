@@ -324,7 +324,7 @@ def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
     name "OsmAndCore_android"
 	type "jar"
 }
-def aarFile = layout.buildDirectory.file('build/outputs/aar/OsmAndCore_android-release.aar')
+def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_android-release.aar')
 def aarArtifact = artifacts.add('OsmAndCore_android', aarFile.get().asFile) {
     name "OsmAndCore_android"
 	type "aar"
