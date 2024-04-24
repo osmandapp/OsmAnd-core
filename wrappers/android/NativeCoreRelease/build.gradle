@@ -60,6 +60,14 @@ tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
 }
 
+configurations {
+    OsmAndCore_androidNativeDebug
+}
+def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeDebug-debug.aar')
+def aarArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarFile.get().asFile) {
+    name "OsmAndCore_androidNativeDebug"
+	type "aar"
+}
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
@@ -77,12 +85,9 @@ publishing {
           }
         }
         publications {
-			aar(IvyPublication) {
-                artifact bundleDebugAar {// 'build/outputs/aar/OsmAndCore_androidNativeDebug-debug.aar'  {
-					name "OsmAndCore_androidNativeDebug"
-					type "aar"
-				}
-			}
+            pub(IvyPublication) {
+			    artifact(aarArtifact)
+            }
 		}
     }
 }

@@ -324,6 +324,11 @@ def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
     name "OsmAndCore_android"
 	type "jar"
 }
+def aarFile = layout.buildDirectory.file('build/outputs/aar/OsmAndCore_android-release.aar')
+def aarArtifact = artifacts.add('OsmAndCore_android', aarFile.get().asFile) {
+    name "OsmAndCore_android"
+	type "aar"
+}
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
@@ -336,18 +341,17 @@ publishing {
 			}
 		}
 		publications {
-			jar(IvyPublication) {
+			pub(IvyPublication) {
 				artifact(srcArtifact)
-				artifact bundleReleaseAar { // 'build/outputs/aar/OsmAndCore_android-release.aar'
-					name "OsmAndCore_android"
-					type "aar"
-				}
+				artifact(aarArtifact)
+				// artifact bundleReleaseAar { // 'build/outputs/aar/OsmAndCore_android-release.aar'
+				// 	name "OsmAndCore_android"
+				// 	type "aar"
+				// }
 			}
 		}
 	}
 }
-
-
 
 
 dependencies {
