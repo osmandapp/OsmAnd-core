@@ -72,6 +72,7 @@ def aarDebArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarDebFile.g
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeDebug"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
+project.afterEvaluate {
 publishing {
     repositories {
         ivy {   
@@ -86,14 +87,15 @@ publishing {
         }
         publications {
             debugAar(IvyPublication) {
-                artifact ':OsmAndCore_androidNativeDebug:bundleReleaseAar' {
+                artifact bundleReleaseAar {
                     name "OsmAndCore_androidNativeDebug"
                 }
             }
 		}
     }
 }
-  
+}
+
 dependencies {
     compile project(":OsmAndCore_androidNative")
 }
