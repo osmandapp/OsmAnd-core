@@ -77,7 +77,10 @@ publishing {
         }
         publications {
 			aar(IvyPublication) {
-				artifact ':OsmAndCore_androidNative:bundleReleaseAar'
+                artifact 'build/outputs/aar/OsmAndCore_androidNativeRelease-release.aar'  {
+					name "OsmAndCore_androidNativeRelease"
+					type "aar"
+				}
 			}
 		}
     }

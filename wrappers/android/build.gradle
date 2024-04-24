@@ -338,8 +338,10 @@ publishing {
 		publications {
 			jar(IvyPublication) {
 				artifact(srcArtifact)
-				artifact ':OsmAndCore_androidNative:bundleReleaseAar'
-				//artifact ':OsmAndCore_android:bundleReleaseAar'
+				artifact 'build/outputs/aar/OsmAndCore_android-release.aar' {
+					name "OsmAndCore_android"
+					type "aar"
+				}
 			}
 		}
 	}
