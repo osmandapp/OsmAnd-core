@@ -349,6 +349,7 @@ publishing {
 			mainAar(IvyPublication) {
 				artifact(bundleReleaseAar) {
 					name "OsmAndCore_android"
+					module "OsmAndCore_android"
 					type "aar"
 				}
 			}

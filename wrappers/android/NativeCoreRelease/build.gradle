@@ -90,6 +90,7 @@ publishing {
             releaseAar(IvyPublication) {
                 artifact(bundleReleaseAar) {
                     name "OsmAndCore_androidNativeRelease"
+                    module "OsmAndCore_androidNativeRelease"
                 }
             }
 		}

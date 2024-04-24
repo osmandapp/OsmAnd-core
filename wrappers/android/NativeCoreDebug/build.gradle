@@ -89,6 +89,7 @@ publishing {
             debugAar(IvyPublication) {
                 artifact(bundleDebugAar) {
                     name "OsmAndCore_androidNativeDebug"
+                    module "OsmAndCore_androidNativeDebug"
                 }
             }
 		}
