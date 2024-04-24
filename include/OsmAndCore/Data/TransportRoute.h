@@ -7,7 +7,6 @@
 #include <QString>
 #include <QList>
 #include <QVector>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
@@ -42,6 +41,8 @@ namespace OsmAnd
         uint32_t dist;
         QString color;
         QList< QVector<PointI> > forwardWays31;
+
+        bool compareRoute(std::shared_ptr<const OsmAnd::TransportRoute>& thatObj) const;
     };
 }
 

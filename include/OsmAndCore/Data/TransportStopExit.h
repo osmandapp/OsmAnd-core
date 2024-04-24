@@ -33,6 +33,7 @@ namespace OsmAnd
         QString enName;
         
         void setLocation(int zoom, uint32_t dx, uint32_t dy);
+        bool compareExit(std::shared_ptr<TransportStopExit>& thatObj);
     };
 }
 
