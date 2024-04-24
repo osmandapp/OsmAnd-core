@@ -310,6 +310,12 @@ afterEvaluate {
 }
 
 
+artifacts {
+	 archives file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
+		name "OsmAndCore_android"
+		type "jar"
+	}
+}
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
@@ -323,7 +329,7 @@ publishing {
 		}
 		publications {
 			jar(IvyPublication) {
-				artifact "intermediates/runtime_library_classes_jar/release/classes.jar" {
+				artifact {
 					name "OsmAndCore_android"
 					type "jar"		
 				}
