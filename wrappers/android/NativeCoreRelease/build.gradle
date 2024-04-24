@@ -61,13 +61,14 @@ tasks.withType(JavaCompile) {
 }
 
 configurations {
-    OsmAndCore_androidNativeDebug
+    OsmAndCore_androidNativeRelease
 }
-def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeDebug-debug.aar')
-def aarArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarFile.get().asFile) {
-    name "OsmAndCore_androidNativeDebug"
+def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeRelease-release.aar')
+def aarArtifact = artifacts.add('OsmAndCore_androidNativeRelease', aarFile.get().asFile) {
+    name "OsmAndCore_androidNativeRelease"
 	type "aar"
 }
+
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"

@@ -60,11 +60,11 @@ tasks.withType(JavaCompile) {
 }
 
 configurations {
-    OsmAndCore_android
+    OsmAndCore_androidNativeDebug
 }
-def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeRelease-release.aar')
-def aarArtifact = artifacts.add('OsmAndCore_androidNativeRelease', aarFile.get().asFile) {
-    name "OsmAndCore_androidNativeRelease"
+def aarDebFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeDebug-debug.aar')
+def aarDebArtifact = artifacts.add('OsmAndCore_androidNativeDebug', aarDebFile.get().asFile) {
+    name "OsmAndCore_androidNativeDebug"
 	type "aar"
 }
 
@@ -86,7 +86,7 @@ publishing {
         }
         publications {
             pub(IvyPublication) {
-			    artifact(aarArtifact)
+			    artifact(aarDebArtifact)
             }
 		}
     }
