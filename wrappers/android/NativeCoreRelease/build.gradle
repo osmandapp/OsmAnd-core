@@ -86,7 +86,7 @@ publishing {
           }
         }
         publications {
-            pub(IvyPublication) {
+            releaseAar(IvyPublication) {
 			    artifact(aarArtifact)
             }
 		}

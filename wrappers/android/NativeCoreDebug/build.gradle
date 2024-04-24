@@ -85,7 +85,7 @@ publishing {
           }
         }
         publications {
-            pub(IvyPublication) {
+            debugAar(IvyPublication) {
 			    artifact(aarDebArtifact)
             }
 		}

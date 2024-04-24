@@ -341,13 +341,11 @@ publishing {
 			}
 		}
 		publications {
-			pub(IvyPublication) {
+			jar(IvyPublication) {
 				artifact(srcArtifact)
+			}
+			mainAar(IvyPublication) {
 				artifact(aarArtifact)
-				// artifact bundleReleaseAar { // 'build/outputs/aar/OsmAndCore_android-release.aar'
-				// 	name "OsmAndCore_android"
-				// 	type "aar"
-				// }
 			}
 		}
 	}
