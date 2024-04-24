@@ -332,6 +332,8 @@ def aarArtifact = artifacts.add('OsmAndCore_android', aarFile.get().asFile) {
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
+project.afterEvaluate {
+
 publishing {
 	repositories {
 		ivy {
@@ -353,7 +355,7 @@ publishing {
 		}
 	}
 }
-
+}
 
 dependencies {
     compile fileTree(dir: "libs", include: ["**/*.jar"])
