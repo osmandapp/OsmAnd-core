@@ -325,8 +325,8 @@ publishing {
 			jar(IvyPublication) {
 				artifact file("build/intermediates/runtime_library_classes_jar/release/classes.jar") {
 					name "OsmAndCore_android"
-					type "jar"
-					
+					type "jar"		
+				}
 			}
 		}
 	}
