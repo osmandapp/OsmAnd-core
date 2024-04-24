@@ -27,6 +27,9 @@ OsmAnd::MapRendererState::MapRendererState()
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
+    , myLocationColor(ColorARGB(0x80, 0x80, 0x80, 0x80))
+    , myLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , myLocationRadiusInMeters(0.0f)
     , symbolsOpacity(1.0f)
     , dateTime(0)
     , metersPerPixel(1.0)
@@ -69,6 +72,9 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.stubsStyle = stubsStyle;
     mapState.backgroundColor = backgroundColor;
     mapState.fogColor = fogColor;
+    mapState.myLocationColor = myLocationColor;
+    mapState.myLocation31 = myLocation31;
+    mapState.myLocationRadiusInMeters = myLocationRadiusInMeters;
     mapState.symbolsOpacity = symbolsOpacity;
     mapState.dateTime = dateTime;
     
@@ -106,6 +112,9 @@ OsmAnd::MapState::MapState()
     , stubsStyle(MapStubStyle::Light)
     , backgroundColor(ColorRGB(0xf1, 0xee, 0xe8))
     , fogColor(ColorRGB(0xeb, 0xe7, 0xe4))
+    , myLocationColor(ColorARGB(0x80, 0x80, 0x80, 0x80))
+    , myLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
+    , myLocationRadiusInMeters(0.0f)
     , symbolsOpacity(1.0f)
     , dateTime(0)
     , metersPerPixel(1.0)

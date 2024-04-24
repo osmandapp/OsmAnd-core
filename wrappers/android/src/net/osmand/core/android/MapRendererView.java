@@ -13,6 +13,7 @@ import android.opengl.GLSurfaceView;
 import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.ElevationConfiguration;
 import net.osmand.core.jni.FColorRGB;
+import net.osmand.core.jni.FColorARGB;
 import net.osmand.core.jni.IMapElevationDataProvider;
 import net.osmand.core.jni.IMapKeyedSymbolsProvider;
 import net.osmand.core.jni.IMapLayerProvider;
@@ -995,6 +996,24 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.setFogColor(color);
+    }
+
+    public final boolean setMyLocationCircleColor(FColorARGB color) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyLocationColor(color);
+    }
+
+    public final boolean setMyLocationCirclePosition(PointI location31) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyLocation31(location31);
+    }
+
+    public final boolean setMyLocationCircleRadius(float radiusInMeters) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyLocationRadiusInMeters(radiusInMeters);
     }
 
     public final boolean setSymbolsOpacity(float opacityFactor) {

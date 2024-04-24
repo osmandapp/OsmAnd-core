@@ -2788,6 +2788,52 @@ bool OsmAnd::MapRenderer::setFogColor(const FColorRGB& color, bool forcedUpdate 
     return true;
 }
 
+bool OsmAnd::MapRenderer::setMyLocationColor(const FColorARGB& color, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.myLocationColor != color;
+    if (!update)
+        return false;
+
+    _requestedState.myLocationColor = color;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::MyLocation);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMyLocation31(const PointI& location31, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    const auto myLocation31 = Utilities::normalizeCoordinates(location31, ZoomLevel31);
+    bool update = forcedUpdate || _requestedState.myLocation31 != myLocation31;
+    if (!update)
+        return false;
+
+    _requestedState.myLocation31 = myLocation31;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::MyLocation);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMyLocationRadiusInMeters(const float radius, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.myLocationRadiusInMeters != radius;
+    if (!update)
+        return false;
+
+    _requestedState.myLocationRadiusInMeters = radius;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::MyLocation);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setSymbolsOpacity(const float opacityFactor, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

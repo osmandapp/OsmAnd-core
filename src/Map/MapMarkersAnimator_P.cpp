@@ -519,7 +519,12 @@ void OsmAnd::MapMarkersAnimator_P::positionSetter(const Key key, const PointI64 
     auto& weakMarker = *itMarker;
     auto marker = weakMarker.lock();
     if (marker)
-        marker->setPosition(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
+    {
+        const auto location31 = Utilities::normalizeCoordinates(newValue, ZoomLevel31);
+        marker->setPosition(location31);
+        if (marker->isAccuracyCircleSupported && marker->isAccuracyCircleVisible())
+            _renderer->setMyLocation31(location31);
+    }
 }
 
 void OsmAnd::MapMarkersAnimator_P::constructPositionAnimationByDelta(
