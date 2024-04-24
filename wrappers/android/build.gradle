@@ -309,31 +309,29 @@ afterEvaluate {
 	}
 }
 
-// Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
-artifacts {
-    archives(file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
-        name "OsmAndCore_android"
-        type "jar"
-    }
-}
 
 // Uploading artifacts to local path
 group = "net.osmand"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
 publishing {
-    repositories {
-	ivy {
-    //    credentials {
-    //        username ""
-     //       password ""
-     //   }
-          url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-          patternLayout {
-            artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-          }
+	repositories {
+		ivy {
+			url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+			patternLayout {
+				artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+			}
+		}
+		publications {
+			jar(IvyPublication) {
+				artifact file("build/intermediates/runtime_library_classes_jar/release/classes.jar") {
+					name "OsmAndCore_android"
+					type "jar"
+					
+			}
+		}
 	}
-    }
 }
+
 
 
 
