@@ -76,6 +76,11 @@ publishing {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
           }
         }
+        publications {
+			aar(IvyPublication) {
+                artifact ':OsmAndCore_androidNativeRelease:bundleReleaseAar'
+			}
+		}
     }
 }
 
