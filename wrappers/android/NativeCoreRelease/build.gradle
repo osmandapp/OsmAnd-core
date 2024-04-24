@@ -73,6 +73,7 @@ def aarArtifact = artifacts.add('OsmAndCore_androidNativeRelease', aarFile.get()
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
 version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
+project.afterEvaluate {
 publishing {
     repositories {
         ivy {
@@ -93,6 +94,7 @@ publishing {
             }
 		}
     }
+}
 }
 
 dependencies {
