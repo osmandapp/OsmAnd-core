@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 181
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 184
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -258,6 +258,8 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/hhRoutePlanner.cpp"
 		"${LEGACY_SRC}/NetworkDBPointRouteInfo.h"
 		"${LEGACY_SRC}/NetworkDBPointRouteInfo.cpp"
+
+		"${LEGACY_SRC}/gpxSegmentsApproximation.cpp"
 
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
