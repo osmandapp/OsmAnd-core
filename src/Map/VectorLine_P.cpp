@@ -1453,7 +1453,7 @@ void OsmAnd::VectorLine_P::addArrowsOnSegmentPath(
 
 bool OsmAnd::VectorLine_P::useSpecialArrow() const
 {
-    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale);
+    return _lineWidth < (LINE_WIDTH_THRESHOLD_DP * owner->screenScale) && owner->specialPathIcon;
 }
 
 double OsmAnd::VectorLine_P::getPointStepPx() const

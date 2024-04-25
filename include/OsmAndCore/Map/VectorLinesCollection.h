@@ -30,12 +30,14 @@ namespace OsmAnd
     private:
         PrivateImplementation<VectorLinesCollection_P> _p;
         
-        std::shared_ptr<VectorLineArrowsProvider> _arrowsProvider;
+        std::weak_ptr<VectorLineArrowsProvider> _arrowsProvider;
         int64_t priority;
     protected:
     public:
-        VectorLinesCollection();
+        VectorLinesCollection(const bool hasVolumetricSymbols = false);
         virtual ~VectorLinesCollection();
+
+        const bool hasVolumetricSymbols;
 
         QList<std::shared_ptr<OsmAnd::VectorLine>> getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);

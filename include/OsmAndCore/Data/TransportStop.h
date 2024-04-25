@@ -41,6 +41,7 @@ namespace OsmAnd
         QString localizedName;
         
         void addExit(std::shared_ptr<TransportStopExit> &exit);
+        bool compareStop(const std::shared_ptr<OsmAnd::TransportStop>& thatObj);
     };
 }
 

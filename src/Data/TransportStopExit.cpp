@@ -25,3 +25,7 @@ void OsmAnd::TransportStopExit::setLocation(int zoom, uint32_t dx, uint32_t dy)
     y31 = dy << (31 - zoom);
     location = LatLon(Utilities::getLatitudeFromTile(zoom, dy), Utilities::getLongitudeFromTile(zoom, dx));
 }
+
+bool OsmAnd::TransportStopExit::compareExit(std::shared_ptr<TransportStopExit>& thatObj) {
+    return x31 == thatObj->x31 && y31 == thatObj->y31 && ref == thatObj->ref;
+}

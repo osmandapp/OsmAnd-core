@@ -40,3 +40,35 @@ void OsmAnd::TransportStop::addExit(std::shared_ptr<OsmAnd::TransportStopExit> &
 {
     exits.append(exit);
 }
+
+bool OsmAnd::TransportStop::compareStop(const std::shared_ptr<OsmAnd::TransportStop>& thatObj)
+{
+    if (id == thatObj->id && location.latitude == thatObj->location.latitude && location.longitude == thatObj->location.longitude && enName == thatObj->enName && exits.size() == thatObj->exits.size())
+    {
+        if (exits.size() > 0) {
+            for (auto exit1 : exits)
+            {
+                if (!exit1.get())
+                    return false;
+                bool contains = false;
+                for (auto exit2 : thatObj->exits)
+                {
+                    if (exit1 == exit2) 
+                    {
+                        contains = true;
+                        if (!exit1->compareExit(exit2))
+                            return false;
+                        break;
+                    }
+                }
+                if (!contains)
+                    return false;
+            }
+        }
+    } 
+    else
+    {
+        return false;
+    }
+    return true;
+}

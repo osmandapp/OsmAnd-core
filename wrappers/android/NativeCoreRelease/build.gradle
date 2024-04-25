@@ -60,21 +60,42 @@ tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
 }
 
+configurations {
+    OsmAndCore_androidNativeRelease
+}
+def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_androidNativeRelease-release.aar')
+def aarArtifact = artifacts.add('OsmAndCore_androidNativeRelease', aarFile.get().asFile) {
+    name "OsmAndCore_androidNativeRelease"
+	type "aar"
+}
+
 // Uploading artifacts to local path
 group = "net.osmand"
 //archivesBaseName = "OsmAndCore_androidNativeRelease"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-uploadArchives {
-    repositories.ivy {
-       // credentials {
-       //     username ""
-       //     password ""
-       //  }
-        url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-        layout "pattern" , {
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
+project.afterEvaluate {
+publishing {
+    repositories {
+        ivy {
+    //    credentials {
+    //        username ""
+     //       password ""
+     //   }
+          url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+          patternLayout {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+          }
         }
+        publications {
+            releaseAar(IvyPublication) {
+                artifact(bundleReleaseAar) {
+                    name "OsmAndCore_androidNativeRelease"
+                    module "OsmAndCore_androidNativeRelease"
+                }
+            }
+		}
     }
+}
 }
 
 dependencies {

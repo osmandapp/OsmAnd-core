@@ -19,6 +19,7 @@ allprojects {
 
 apply plugin: 'eclipse'
 apply plugin: 'com.android.library'
+apply plugin: 'ivy-publish'
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -308,31 +309,54 @@ afterEvaluate {
 	}
 }
 
-// Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
-artifacts {
-    archives(file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
-        name "OsmAndCore_android"
-        type "jar"
-    }
-}
 
+// artifacts {
+// 	 archives file("build/intermediates/runtime_library_classes_jar/release/classes.jar")) {
+// 		name "OsmAndCore_android"
+// 		type "jar"
+// 	}
+// }
+configurations {
+    OsmAndCore_android
+}
+def srcFile = layout.buildDirectory.file('intermediates/runtime_library_classes_jar/release/classes.jar')
+def srcArtifact = artifacts.add('OsmAndCore_android', srcFile.get().asFile) {
+    name "OsmAndCore_android"
+	type "jar"
+}
+def aarFile = layout.buildDirectory.file('outputs/aar/OsmAndCore_android-release.aar')
+def aarArtifact = artifacts.add('OsmAndCore_android', aarFile.get().asFile) {
+    name "OsmAndCore_android"
+	type "aar"
+}
 // Uploading artifacts to local path
 group = "net.osmand"
-version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "master-snapshot"
-uploadArchives {
-    repositories.ivy {
-    //    credentials {
-    //        username ""
-     //       password ""
-     //   }
-        url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-        layout "pattern" , {
-            artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-        }
-    }
+version = System.getenv("OSMAND_BINARIES_IVY_REVISION") ?: "4.7"
+project.afterEvaluate {
+
+publishing {
+	repositories {
+		ivy {
+			url = System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+			patternLayout {
+				artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+			}
+		}
+		publications {
+			jar(IvyPublication) {
+				artifact(srcArtifact)
+			}
+			mainAar(IvyPublication) {
+				artifact(bundleReleaseAar) {
+					name "OsmAndCore_android"
+					module "OsmAndCore_android"
+					type "aar"
+				}
+			}
+		}
+	}
 }
-
-
+}
 
 dependencies {
     compile fileTree(dir: "libs", include: ["**/*.jar"])

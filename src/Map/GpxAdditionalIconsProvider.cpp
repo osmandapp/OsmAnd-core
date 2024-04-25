@@ -21,7 +21,8 @@ OsmAnd::GpxAdditionalIconsProvider::GpxAdditionalIconsProvider(
     const SingleSkImage& startIcon_,
     const SingleSkImage& finishIcon_,
     const SingleSkImage& startFinishIcon_,
-    const QList<float>& startFinishHeights_ /* = QList<float>() */)
+    const QList<float>& startFinishHeights_, /* = QList<float>() */
+    const float elevationScaleFactor_ /* = 1.0 */)
     : _cachedZoomLevel(MinZoomLevel)
     , _textRasterizer(TextRasterizer::getDefault())
     , baseOrder(baseOrder_)
@@ -32,6 +33,7 @@ OsmAnd::GpxAdditionalIconsProvider::GpxAdditionalIconsProvider(
     , finishIcon(finishIcon_.sp)
     , startFinishIcon(startFinishIcon_.sp)
     , startFinishHeights(startFinishHeights_)
+    , elevationScaleFactor(elevationScaleFactor_)
 {
     _captionStyle
         .setWrapWidth(100)
@@ -133,6 +135,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildSplitIntervalsSymbolsGroup(
             mapSymbol->languageId = OsmAnd::LanguageId::Invariant;
             mapSymbol->position31 = label.pos31;
             mapSymbol->elevation = label.height;
+            mapSymbol->elevationScaleFactor = elevationScaleFactor;
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
     }
@@ -171,6 +174,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
                 mapSymbol->languageId = LanguageId::Invariant;
                 mapSymbol->position31 = startPos31;
                 mapSymbol->elevation = startHeight;
+                mapSymbol->elevationScaleFactor = elevationScaleFactor;
                 mapSymbolsGroup->symbols.push_back(mapSymbol);
                 continue;
             }
@@ -184,6 +188,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
             mapSymbol->languageId = OsmAnd::LanguageId::Invariant;
             mapSymbol->position31 = startPos31;
             mapSymbol->elevation = startHeight;
+            mapSymbol->elevationScaleFactor = elevationScaleFactor;
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
         if (containsFinish && finishIcon)
@@ -195,6 +200,7 @@ void OsmAnd::GpxAdditionalIconsProvider::buildStartFinishSymbolsGroup(
             mapSymbol->languageId = OsmAnd::LanguageId::Invariant;
             mapSymbol->position31 = finishPos31;
             mapSymbol->elevation = finishHeight;
+            mapSymbol->elevationScaleFactor = elevationScaleFactor;
             mapSymbolsGroup->symbols.push_back(mapSymbol);
         }
     }
