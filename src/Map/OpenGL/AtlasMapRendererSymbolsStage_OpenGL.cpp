@@ -100,6 +100,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glPolygonOffset);
 
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -109,6 +110,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     // Initially, configure for straight alpha channel type
     auto currentAlphaChannelType = AlphaChannelType::Straight;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
+    // Initially, configure depth buffer offset for vector symbols (against z-fighting)
+    glPolygonOffset(0.0f, -2.0f);
+    GL_CHECK_RESULT;
+    glDisable(GL_POLYGON_OFFSET_FILL);
     GL_CHECK_RESULT;
 
     prepare(metric);
@@ -2416,6 +2423,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString()));
 
+    // Enable depth buffer offset for all vector symbols (against z-fighting)
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
     if (currentAlphaChannelType != AlphaChannelType::Straight)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2801,6 +2812,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
     }
+
+    // Disable depth buffer offset for other symbols
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
 
