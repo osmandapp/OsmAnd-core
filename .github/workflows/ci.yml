@@ -1,0 +1,24 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@3.20
+
+      - uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'minimum-debug'
+          buildPreset: 'minimum-debug'
+

@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "minimum-debug",
+      "description": "minimum build setup with debug symbols",
+      "binaryDir": "${sourceDir}/build",
+      "installDir": "${sourceDir}/install",
+      "cacheVariables": {
+        "OSMAND_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}"
+        },
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "minimum-debug",
+      "configurePreset": "minimum-debug",
+      "jobs": 8
+    }
+  ]
+}
