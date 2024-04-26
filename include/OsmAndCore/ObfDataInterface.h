@@ -108,7 +108,8 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
+            const bool strictMatch = false);
 
         bool findAmenityByObfMapObject(
             const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
