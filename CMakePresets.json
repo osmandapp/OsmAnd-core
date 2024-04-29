@@ -1,11 +1,11 @@
 {
-  "version": 3,
+  "version": 2,
   "configurePresets": [
     {
       "name": "minimum-debug",
       "description": "minimum build setup with debug symbols",
-      "binaryDir": "${sourceDir}/build",
-      "installDir": "${sourceDir}/install",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/minimum-debug",
       "cacheVariables": {
         "OSMAND_ROOT": {
           "type": "PATH",

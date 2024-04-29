@@ -1,21 +1,25 @@
 name: build
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: [push]
+  # push:
+  #   branches:
+  #     - master
+  # pull_request:
+  #   branches:
+  #     - master
 
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qtbase5-dev qtdeclarative5-dev
       - uses: actions/checkout@v4
 
-      - uses: lukka/get-cmake@3.20
+      - uses: lukka/get-cmake@v3.20.1
 
       - uses: lukka/run-cmake@v10
         with:
