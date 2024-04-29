@@ -84,7 +84,8 @@ void OsmAnd::AmenitiesByNameSearch::performTravelGuidesSearch(
         criteria.tileFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
         visitorFunction,
-        queryController);
+        queryController,
+        true);
 }
 
 OsmAnd::AmenitiesByNameSearch::Criteria::Criteria()

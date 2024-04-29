@@ -583,7 +583,8 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QHash<QString, QStringList>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const bool strictMatch /*= false*/)
 {
     typedef std::pair< std::shared_ptr<const ObfReader>, Ref<ObfPoiSectionInfo> > OrderedSection;
     std::vector< OrderedSection > orderedSections;
@@ -695,7 +696,8 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             tileFilter,
             categoriesFilter ? &categoriesFilterById : nullptr,
             visitor,
-            queryController);
+            queryController,
+            strictMatch);
     }
 
     return true;

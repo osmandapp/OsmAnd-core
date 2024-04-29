@@ -61,7 +61,8 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
+    const bool strictMatch /*= false*/)
 {
     ObfPoiSectionReader_P::scanAmenitiesByName(
         *reader->_p,
@@ -73,5 +74,6 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
         tileFilter,
         categoriesFilter,
         visitor,
-        queryController);
+        queryController,
+        strictMatch);
 }
