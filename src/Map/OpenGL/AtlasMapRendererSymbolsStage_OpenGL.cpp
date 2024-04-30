@@ -2203,7 +2203,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
         "uniform vec4 param_vs_cameraPositionAndZfar;                                                                       ""\n"
         "uniform float param_vs_elevationInMeters;                                                                          ""\n"
-        "uniform float param_vs_elevationFactor;                                                                            ""\n"
         "uniform highp vec2 param_vs_offsetInTile;                                                                          ""\n"
         "uniform highp sampler2D param_vs_elevation_dataSampler;                                                            ""\n"
         "uniform highp vec4 param_vs_texCoordsOffsetAndScale;                                                               ""\n"
@@ -2237,21 +2236,37 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    v.y = 0.0;                                                                                                     ""\n"
         "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
-        "    bool isElevated = param_vs_elevationInMeters > -12000000.0;                                                    ""\n"
-        "    bool withHeight = in_vs_vertexPosition.y > -12000000.0;                                                        ""\n"
-        "    bool withSurface = abs(param_vs_elevation_scale.w) > 0.0;                                                      ""\n"
-        "    vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;              ""\n"
-        "    v = param_vs_mModel * v;                                                                                       ""\n"
-        "    vertexTexCoords -= param_vs_tileId;                                                                            ""\n"
-        "    vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                               ""\n"
-        "    elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                     ""\n"
-        "    float surfaceInMeters = withSurface ? interpolatedHeight(elevationTexCoords) : 0.0;                            ""\n"
-        "    float tileOffset = withSurface ? vertexTexCoords.t : param_vs_offsetInTile.y;                                  ""\n"
-        "    float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, tileOffset);                 ""\n"
-        "    v.y = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;               ""\n"
-        "    float elevation = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                       ""\n"
-        "    elevation = ((isElevated ? param_vs_elevationInMeters : elevation) - surfaceInMeters) / metersPerUnit;         ""\n"
-        "    v.y += elevation * param_vs_elevationFactor;                                                                   ""\n"
+        "    if (in_vs_vertexPosition.y > -12000000.0)                                                                      ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
+        "        v.y = in_vs_vertexPosition.y / metersPerUnit;                                                              ""\n"
+        "    }                                                                                                              ""\n"
+        "    else if (abs(param_vs_elevation_scale.w) > 0.0 && param_vs_elevationInMeters == 0.0)                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
+        "        vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                           ""\n"
+        "        elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                 ""\n"
+        "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
+        "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
+        "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                       ""\n"
+        "    }                                                                                                              ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        if (abs(param_vs_elevationInMeters) > 0.0)                                                                 ""\n"
+        "        {                                                                                                          ""\n"
+        "            float metersPerUnit =                                                                                  ""\n"
+        "                mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, param_vs_offsetInTile.y);              ""\n"
+        "            float heightInMeters = param_vs_elevationInMeters * param_vs_elevation_scale.w;                        ""\n"
+        "            v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                   ""\n"
+        "        }                                                                                                          ""\n"
+        "    }                                                                                                              ""\n"
         "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
         "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
         "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
@@ -2326,7 +2341,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_scale, "param_vs_elevation_scale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevation_dataSampler, "param_vs_elevation_dataSampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationInMeters, "param_vs_elevationInMeters", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationFactor, "param_vs_elevationFactor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.texCoordsOffsetAndScale, "param_vs_texCoordsOffsetAndScale", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.elevationLayerDataPlace, "param_vs_elevationLayerDataPlace", GlslVariableType::Uniform);
     if (!ok)
@@ -2455,29 +2469,33 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         internalState.zFar);
     GL_CHECK_RESULT;
 
-    // Set elevation scale factor (affects distance from the surface)
-    glUniform1f(_onSurfaceVectorProgram.vs.param.elevationFactor, renderable->elevationFactor);
-    GL_CHECK_RESULT;
-
     // If symbol has no tiled parts - render it flat using single elevation value
     if (gpuResource->zoomLevel == InvalidZoomLevel || gpuResource->partSizes == nullptr)
     {
         // Parameters: per-tile data
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-            currentState.zoomLevel,
-            renderable->tileId.y,
-            AtlasMapRenderer::TileSize3D);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-            currentState.zoomLevel,
-            renderable->tileId.y + 1,
-            AtlasMapRenderer::TileSize3D);
-        glUniform4f(
-            _onSurfaceVectorProgram.vs.param.elevation_scale,
-            (float)upperMetersPerUnit,
-            (float)lowerMetersPerUnit,
-            0.0f,
-            0.0f);
-        GL_CHECK_RESULT;
+        if (renderable->positionInWorld.y != 0.0f)
+        {
+            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+                currentState.zoomLevel,
+                renderable->tileId.y,
+                AtlasMapRenderer::TileSize3D);
+            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                currentState.zoomLevel,
+                renderable->tileId.y + 1,
+                AtlasMapRenderer::TileSize3D);
+            glUniform4f(
+                _onSurfaceVectorProgram.vs.param.elevation_scale,
+                (float)upperMetersPerUnit,
+                (float)lowerMetersPerUnit,
+                currentState.elevationConfiguration.zScaleFactor,
+                currentState.elevationConfiguration.dataScaleFactor);
+            GL_CHECK_RESULT;
+        }
+        else
+        {
+            glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+            GL_CHECK_RESULT;
+        }
 
         glUniform2f(_onSurfaceVectorProgram.vs.param.offsetInTile, renderable->offsetInTileN.x, renderable->offsetInTileN.y);
         GL_CHECK_RESULT;
@@ -2574,7 +2592,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         }
 
         // Reset common elevation
-        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, NAN);
+        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, 0.0f);
         GL_CHECK_RESULT;
 
         // Set symbol position and scale for heightmap lookup
@@ -2621,7 +2639,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             maxZoom = currentState.elevationDataProvider->getMaxZoom();
         }
         double tileSize;
-        for (const auto& partSizes : *gpuResource->partSizes)
+        for (const auto partSizes : *gpuResource->partSizes)
         {
             auto baseTileId = partSizes.first;
             const auto zoomLevel = gpuResource->zoomLevel;
@@ -2713,21 +2731,24 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
                     }
                 }
             }
-            // Per-tile elevation data configuration
-            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-                currentState.zoomLevel,
-                baseTileIdN.y,
-                AtlasMapRenderer::TileSize3D);
-            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-                currentState.zoomLevel,
-                baseTileIdN.y + 1,
-                AtlasMapRenderer::TileSize3D);
-            glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale,
-                static_cast<float>(upperMetersPerUnit),
-                static_cast<float>(lowerMetersPerUnit),
-                useElevationData ? currentState.elevationConfiguration.zScaleFactor : 0.0f,
-                useElevationData ? currentState.elevationConfiguration.dataScaleFactor : 0.0f);
-            GL_CHECK_RESULT;
+            if (!elevationResource || useElevationData)
+            {
+                // Per-tile elevation data configuration
+                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomLevel,
+                    baseTileIdN.y,
+                    AtlasMapRenderer::TileSize3D);
+                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomLevel,
+                    baseTileIdN.y + 1,
+                    AtlasMapRenderer::TileSize3D);
+                glUniform4f(_onSurfaceVectorProgram.vs.param.elevation_scale,
+                    static_cast<float>(upperMetersPerUnit),
+                    static_cast<float>(lowerMetersPerUnit),
+                    useElevationData ? currentState.elevationConfiguration.zScaleFactor : 0.0f,
+                    useElevationData ? currentState.elevationConfiguration.dataScaleFactor : 0.0f);
+                GL_CHECK_RESULT;
+            }
 
             glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
             GL_CHECK_RESULT;
