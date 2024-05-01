@@ -316,7 +316,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::Polygon_P::generatePri
     // generate triangles
     for (auto pointIdx = 0u; pointIdx + 2 < indices.size(); pointIdx += 3)
     {
-        pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();;
+        pVertex->positionXYZ[1] = VectorMapSymbol::_absentElevation;
         pVertex->positionXYZ[0] = original[indices[pointIdx]][0];
         pVertex->positionXYZ[2] = original[indices[pointIdx]][1];
         pVertex->color = owner->fillColor;
