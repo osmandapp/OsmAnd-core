@@ -222,7 +222,7 @@ public:
         bool hasColorMapping = !colorizationMapping.isEmpty();
         bool hasOutlineColorMapping = !outlineColorizationMapping.isEmpty();
         bool hasHeights = heights.size() == points.size();
-        auto noHeight = std::numeric_limits<float>::quiet_NaN();
+        auto noHeight = OsmAnd::VectorMapSymbol::_absentElevation;
         auto outlineWidth = !hasHeights && outline > 0.0f ? outline : -1.0f;
         bool showOutline = outlineWidth >= 0.0f;
 		Vec2 startSide1, startSide2, endSide1, endSide2, nextStartSide1, nextStartSide2, lastSide1, lastSide2;
@@ -656,8 +656,10 @@ public:
             }
 
             if (showOutline) {
-                auto startBottom = std::isnan(startHeight) ? startHeight : startHeight - outline;
-                auto endBottom = std::isnan(endHeight) ? endHeight : endHeight - outline;
+                auto startBottom =
+                    startHeight == OsmAnd::VectorMapSymbol::_absentElevation ? startHeight : startHeight - outline;
+                auto endBottom =
+                    endHeight == OsmAnd::VectorMapSymbol::_absentElevation ? endHeight : endHeight - outline;
                 if (!Vec2Maths::equal(start1, end1)) {
                     if (!Vec2Maths::equal(startSide1, endSide1)) {
                         pVertex->color = startOuterColor;
@@ -1448,7 +1450,7 @@ private:
 
 			// connect the intersection points according to the joint style
             float top = height;
-            float bottom = std::isnan(height) ? height : height - outlineHeight;
+            float bottom = height == OsmAnd::VectorMapSymbol::_absentElevation ? height : height - outlineHeight;
 			if (jointStyle == JointStyle::BEVEL) {
                 // simply connect the intersection points
 				const Vec2& firstPoint = clockwise ? outer1->b : outer2->a;
@@ -1652,7 +1654,7 @@ private:
 		Vec2 startPoint = start;
 		Vec2 endPoint, startPointSide, endPointSide;
         float top = height;
-        float bottom = std::isnan(height) ? height : height - outlineHeight;
+        float bottom = height == OsmAnd::VectorMapSymbol::_absentElevation ? height : height - outlineHeight;
         bool showOutline = outlineWidth >= 0.0f;
         if (showOutline) {
             startPointSide = Vec2Maths::add(start, Vec2Maths::multiply(Vec2Maths::normalized(point1), outlineWidth));
