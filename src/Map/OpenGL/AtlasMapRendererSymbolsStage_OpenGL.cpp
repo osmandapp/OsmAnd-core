@@ -2198,6 +2198,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "uniform vec4 param_vs_elevation_scale;                                                                             ""\n"
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "uniform mat4 param_vs_mModel;                                                                                      ""\n"
+        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
         "uniform vec2 param_vs_tileId;                                                                                      ""\n"
         "uniform vec4 param_vs_lookupOffsetAndScale;                                                                        ""\n"
@@ -2237,26 +2238,39 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    v.y = 0.0;                                                                                                     ""\n"
         "    v.z = in_vs_vertexPosition.z;                                                                                  ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
-        "    bool isElevated = param_vs_elevationInMeters > -12000000.0;                                                    ""\n"
-        "    bool withHeight = in_vs_vertexPosition.y > -12000000.0;                                                        ""\n"
-        "    bool withSurface = abs(param_vs_elevation_scale.w) > 0.0;                                                      ""\n"
-        "    vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;              ""\n"
-        "    v = param_vs_mModel * v;                                                                                       ""\n"
-        "    vertexTexCoords -= param_vs_tileId;                                                                            ""\n"
-        "    vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                               ""\n"
-        "    elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                     ""\n"
-        "    float surfaceInMeters = withSurface ? interpolatedHeight(elevationTexCoords) : 0.0;                            ""\n"
-        "    float tileOffset = withSurface ? vertexTexCoords.t : param_vs_offsetInTile.y;                                  ""\n"
-        "    float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, tileOffset);                 ""\n"
-        "    v.y = surfaceInMeters * param_vs_elevation_scale.w * param_vs_elevation_scale.z / metersPerUnit;               ""\n"
-        "    float elevation = withHeight ? in_vs_vertexPosition.y : surfaceInMeters;                                       ""\n"
-        "    elevation = ((isElevated ? param_vs_elevationInMeters : elevation) - surfaceInMeters) / metersPerUnit;         ""\n"
-        "    v.y += elevation * param_vs_elevationFactor;                                                                   ""\n"
-        "    float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                              ""\n"
-        "    float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                               ""\n"
-        "    float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                            ""\n"
-        "    v.y += min(extraZfar, extraCam) + 0.1;                                                                         ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
+        "    bool never1 = false;                                                                                           ""\n"
+        "    bool never2 = never1;                                                                                          ""\n"
+        "    if (never1)                                                                                                    ""\n"
+        "    {                                                                                                              ""\n"
+        "        vec2 vertexTexCoords = v.xz * param_vs_lookupOffsetAndScale.z + param_vs_lookupOffsetAndScale.xy;          ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        vertexTexCoords -= param_vs_tileId;                                                                        ""\n"
+        "        vec2 elevationTexCoords = vertexTexCoords * param_vs_texCoordsOffsetAndScale.zw;                           ""\n"
+        "        elevationTexCoords += param_vs_texCoordsOffsetAndScale.xy;                                                 ""\n"
+        "        float heightInMeters = interpolatedHeight(elevationTexCoords);                                             ""\n"
+        "        heightInMeters *= param_vs_elevation_scale.w;                                                              ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, vertexTexCoords.t);      ""\n"
+        "        v.y += (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z + param_vs_elevationFactor;           ""\n"
+        "        float dist = distance(param_vs_cameraPositionAndZfar.xyz, v.xyz);                                          ""\n"
+        "        float extraZfar = 2.0 * dist / param_vs_cameraPositionAndZfar.w;                                           ""\n"
+        "        float extraCam = dist / length(param_vs_cameraPositionAndZfar.xyz);                                        ""\n"
+        "        v.y += min(extraZfar, extraCam) + 0.1;                                                                     ""\n"
+        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "    }                                                                                                              ""\n"
+        "    else if (never2)                                                                                               ""\n"
+        "    {                                                                                                              ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, param_vs_offsetInTile.y);""\n"
+        "        float heightInMeters = param_vs_elevationInMeters * param_vs_elevation_scale.w;                            ""\n"
+        "        v.y = (heightInMeters / metersPerUnit) * param_vs_elevation_scale.z;                                       ""\n"
+        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "        gl_Position.z = param_vs_zDistanceFromCamera;                                                              ""\n"
+        "    }                                                                                                              ""\n"
+        "    else {                                                                                                         ""\n"
+        "        v = param_vs_mModel * v;                                                                                   ""\n"
+        "        gl_Position = param_vs_mPerspectiveProjectionView * v;                                                     ""\n"
+        "        gl_Position.z = param_vs_zDistanceFromCamera;                                                              ""\n"
+        "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Prepare color
         "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
@@ -2318,6 +2332,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModel, "param_vs_mModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.tileId, "param_vs_tileId", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.offsetInTile, "param_vs_offsetInTile", GlslVariableType::Uniform);
@@ -2437,6 +2452,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     // Calculate and set model matrix (scale -> direction -> position)
     const auto mModel = mPosition * mDirection * mScale;
     glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mModel, 1, GL_FALSE, glm::value_ptr(mModel));
+    GL_CHECK_RESULT;
+
+    // Set distance from camera
+    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
+    glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
     GL_CHECK_RESULT;
 
     // Set modulation color
