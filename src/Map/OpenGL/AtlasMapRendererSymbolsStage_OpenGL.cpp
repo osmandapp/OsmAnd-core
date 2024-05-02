@@ -2529,7 +2529,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         GL_CHECK_RESULT;
 
         // Set common elevation
-        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, renderable->elevationInMeters);
+        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, qIsNaN(renderable->elevationInMeters)
+            ? VectorMapSymbol::_absentElevation : renderable->elevationInMeters);
         GL_CHECK_RESULT;
 
         // Activate vertex buffer
@@ -2620,7 +2621,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         }
 
         // Reset common elevation
-        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, NAN);
+        glUniform1f(_onSurfaceVectorProgram.vs.param.elevationInMeters, VectorMapSymbol::_absentElevation);
         GL_CHECK_RESULT;
 
         // Set symbol position and scale for heightmap lookup

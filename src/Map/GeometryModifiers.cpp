@@ -709,7 +709,7 @@ bool OsmAnd::GeometryModifiers::getTesselatedPlane(std::vector<VectorMapSymbol::
 	float w, u, rod, rate, xMin, xMax, yMin, yMax, wMin, wMax, uMin, uMax;
 	int32_t prev, next, c, iMinX, iMaxX, iMinY, iMaxY, iMinW, iMaxW, iMinU, iMaxU;
 	bool withTraceColorMap = !traceColorizationMapping.isEmpty();
-	float noHeight = std::numeric_limits<float>::quiet_NaN();
+	float noHeight = VectorMapSymbol::_absentElevation;
 	while (inObj.size() > 0)
 	{
 		xMin = std::numeric_limits<float>::max();

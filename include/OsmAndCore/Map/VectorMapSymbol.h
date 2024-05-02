@@ -79,6 +79,8 @@ namespace OsmAnd
     public:
         virtual ~VectorMapSymbol();
         
+        static const float _absentElevation;
+
         const std::shared_ptr<VerticesAndIndices> getVerticesAndIndices() const;
         void setVerticesAndIndices(const std::shared_ptr<VerticesAndIndices>& verticesAndIndices);
 

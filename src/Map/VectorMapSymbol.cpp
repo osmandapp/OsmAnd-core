@@ -1,5 +1,7 @@
 #include "VectorMapSymbol.h"
 
+const float OsmAnd::VectorMapSymbol::_absentElevation = -13e9f;
+
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : MapSymbol(group_)
@@ -103,7 +105,7 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
 
     // First vertex is the center
     pVertex->positionXYZ[0] = 0.0f;
-    pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+    pVertex->positionXYZ[1] = _absentElevation;
     pVertex->positionXYZ[2] = 0.0f;
     pVertex->color = color;
     pVertex += 1;
@@ -114,7 +116,7 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     {
         const auto angle = step * pointIdx;
         pVertex->positionXYZ[0] = radius * qCos(angle);
-        pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+        pVertex->positionXYZ[1] = _absentElevation;
         pVertex->positionXYZ[2] = radius * qSin(angle);
         pVertex->color = color;
 
@@ -123,7 +125,7 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
 
     // Close the fan
     pVertex->positionXYZ[0] = verticesAndIndices->vertices[1].positionXYZ[0];
-    pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+    pVertex->positionXYZ[1] = _absentElevation;
     pVertex->positionXYZ[2] = verticesAndIndices->vertices[1].positionXYZ[2];
     pVertex->color = color;
     
@@ -161,7 +163,7 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     {
         const auto angle = step * pointIdx;
         pVertex->positionXYZ[0] = radius * qCos(angle);
-        pVertex->positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();
+        pVertex->positionXYZ[1] = _absentElevation;
         pVertex->positionXYZ[2] = radius * qSin(angle);
         pVertex->color = color;
 

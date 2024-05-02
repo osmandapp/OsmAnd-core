@@ -1312,7 +1312,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     if (vertices.size() == 0)
     {
         vertex.positionXYZ[0] = 0;
-        vertex.positionXYZ[1] = std::numeric_limits<float>::quiet_NaN();;
+        vertex.positionXYZ[1] = VectorMapSymbol::_absentElevation;
         vertex.positionXYZ[2] = 0;
         vertices.push_back(vertex);
         verticesAndIndices->position31 = new PointI(0, 0);
