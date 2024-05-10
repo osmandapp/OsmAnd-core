@@ -1,107 +1,106 @@
 #include "Dispatcher.h"
 
-OsmAnd::Concurrent::Dispatcher::Dispatcher()
-{
-}
-
-OsmAnd::Concurrent::Dispatcher::~Dispatcher()
-{
-}
+#include <cassert>
 
 int OsmAnd::Concurrent::Dispatcher::queueSize() const
 {
-    QMutexLocker scopedLocker(&_queueMutex);
-
+    std::lock_guard<std::mutex> scopedLocker(_queueMutex);
     return _queue.size();
 }
 
 void OsmAnd::Concurrent::Dispatcher::runAll()
 {
-    for (;;)
+    while (runOne())
     {
-        Delegate method = nullptr;
-        {
-            QMutexLocker scopedLocker(&_queueMutex);
-
-            if (_queue.isEmpty())
-                break;
-            method = _queue.dequeue();
-        }
-
-        method();
-    }
+    };
 }
 
-void OsmAnd::Concurrent::Dispatcher::runOne()
+bool OsmAnd::Concurrent::Dispatcher::runOne()
 {
     Delegate method = nullptr;
     {
-        QMutexLocker scopedLocker(&_queueMutex);
-
-        if (_queue.isEmpty())
-            return;
-        method = _queue.dequeue();
+        std::lock_guard<std::mutex> scopedLocker(_queueMutex);
+        if (_queue.empty())
+        {
+            return false;
+        }
+        method = _queue.front();
+        _queue.pop();
     }
 
     method();
+    return true;
 }
 
 void OsmAnd::Concurrent::Dispatcher::run()
 {
-    _shutdownRequested = false;
-    _isRunningStandalone = true;
-
-    while (!_shutdownRequested)
-        runOne();
-
-    _isRunningStandalone = false;
     {
-        QMutexLocker scopedLocker(&_performedShutdownConditionMutex);
-        _performedShutdown.wakeAll();
+        std::lock_guard<std::mutex> _scopedLocker(_runnerMutex);
+        _shutdownRequested = false;
+        _isRunningStandalone = true;
     }
+    bool keepRunning = true;
+    while (keepRunning)
+    {
+        // WARNING: if _queue is empty, this will become a tight loop
+        //TODO: wait on _queueCondition
+        bool workDone = runOne();
+
+        std::lock_guard<std::mutex> _scopedLocker(_runnerMutex);
+        keepRunning = !_shutdownRequested;
+    }
+
+    std::lock_guard<std::mutex> _scopedLocker(_runnerMutex);
+    _isRunningStandalone = false;
+    _runnerCondition.notify_all();
 }
 
 void OsmAnd::Concurrent::Dispatcher::invoke(const Delegate method)
 {
     assert(method != nullptr);
 
-    QMutex waitMutex;
-    QWaitCondition waitCondition;
-    invokeAsync([&waitCondition, &waitMutex, method]
-    {
-        method();
-
+    std::mutex waitMutex;
+    std::condition_variable waitCondition;
+    bool done = false;
+    invokeAsync(
+        [&waitCondition, &waitMutex, method = std::move( method ), &done]
         {
-            QMutexLocker scopedLocker(&waitMutex);
-            waitCondition.wakeAll();
-        }
-    });
+            method();
+            std::lock_guard<std::mutex> scopedLocker(waitMutex);
+            done = true;
+            waitCondition.notify_all();
+        });
 
-    {
-        QMutexLocker scopedLocker(&waitMutex);
-        REPEAT_UNTIL(waitCondition.wait(&waitMutex));
-    }
+    std::unique_lock<std::mutex> scopedLocker(waitMutex);
+    waitCondition.wait(
+        scopedLocker,
+        [&done]()
+        {
+            return done;
+        });
 }
 
 void OsmAnd::Concurrent::Dispatcher::invokeAsync(const Delegate method)
 {
-    QMutexLocker scopedLocker(&_queueMutex);
-
-    _queue.enqueue(method);
+    std::lock_guard<std::mutex> scopedLocker(_queueMutex);
+    _queue.push(method);
 }
 
 void OsmAnd::Concurrent::Dispatcher::shutdown()
 {
-    QMutexLocker scopedLocker(&_performedShutdownConditionMutex);
-
     shutdownAsync();
-
-    REPEAT_UNTIL(_performedShutdown.wait(&_performedShutdownConditionMutex));
+    std::unique_lock<std::mutex> scopedLocker(_runnerMutex);
+    _runnerCondition.wait(
+        scopedLocker,
+        [this]()
+        {
+            return !_isRunningStandalone;
+        });
 }
 
 void OsmAnd::Concurrent::Dispatcher::shutdownAsync()
 {
+    std::lock_guard<std::mutex> scopedLocker(_runnerMutex);
     assert(_isRunningStandalone);
-
     _shutdownRequested = true;
 }
