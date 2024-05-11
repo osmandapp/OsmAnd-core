@@ -13,6 +13,20 @@ OsmAnd::VectorLinesCollection_P::~VectorLinesCollection_P()
 {
 }
 
+bool OsmAnd::VectorLinesCollection_P::isEmpty() const
+{
+    QReadLocker scopedLocker(&_linesLock);
+
+    return _lines.isEmpty();
+}
+
+bool OsmAnd::VectorLinesCollection_P::getLinesCount() const
+{
+    QReadLocker scopedLocker(&_linesLock);
+
+    return _lines.size();
+}
+
 QList<std::shared_ptr<OsmAnd::VectorLine>> OsmAnd::VectorLinesCollection_P::getLines() const
 {
     QReadLocker scopedLocker(&_linesLock);

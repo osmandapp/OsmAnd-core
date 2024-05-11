@@ -40,6 +40,8 @@ namespace OsmAnd
 
         ImplementationInterface<VectorLinesCollection> owner;
 
+        bool isEmpty() const;
+        bool getLinesCount() const;
         QList< std::shared_ptr<VectorLine> > getLines() const;
         bool removeLine(const std::shared_ptr<VectorLine>& line);
         void removeAllLines();
