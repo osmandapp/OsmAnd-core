@@ -14,6 +14,16 @@ OsmAnd::VectorLinesCollection::~VectorLinesCollection()
 {
 }
 
+bool OsmAnd::VectorLinesCollection::isEmpty() const
+{
+    return _p->isEmpty();
+}
+
+bool OsmAnd::VectorLinesCollection::getLinesCount() const
+{
+    return _p->getLinesCount();
+}
+
 QList<std::shared_ptr<OsmAnd::VectorLine>> OsmAnd::VectorLinesCollection::getLines() const
 {
     return _p->getLines();

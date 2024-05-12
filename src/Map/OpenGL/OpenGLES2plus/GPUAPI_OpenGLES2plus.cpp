@@ -524,6 +524,11 @@ int OsmAnd::GPUAPI_OpenGLES2plus::checkElementVisibility(int queryIndex, float p
     if (prevSize <= queryIndex)
     {
         const auto nextSize = queryIndex + 10;
+
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES number of queries used will be increased to %d", nextSize);
+
+        if (nextSize > 128)
+            return -1;
         _pointVisibilityCheckQueries.resize(nextSize);
         glGenQueries(nextSize - prevSize, _pointVisibilityCheckQueries.data() + prevSize);
         if (glGetError() != GL_NO_ERROR)
