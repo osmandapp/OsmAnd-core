@@ -12,6 +12,9 @@
 
 #include <Logging.h>
 
+// Name of color profile file that should be created in order to use it when rasterized wind vectors are needed
+const QString OsmAnd::WeatherTileResourceProvider::_windColorProfile = QStringLiteral("/vsimem/wind_vector_color");
+
 OsmAnd::WeatherTileResourceProvider::WeatherTileResourceProvider(
     const QHash<BandIndex, std::shared_ptr<const GeoBandSettings>>& bandSettings,
     const QString& localCachePath,

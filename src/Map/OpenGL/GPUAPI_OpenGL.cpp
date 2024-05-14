@@ -965,7 +965,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                     if (++itImage != rasterMapLayerData->images.constEnd())
                     {
                         auto secondImage = itImage.value();
-                        image = SkiaUtilities::createTileImage(firstImage, secondImage);
+                        image = SkiaUtilities::joinImages(firstImage, secondImage);
                         dateTimeFirst = timeFirst;
                         dateTimeLast = timeLast;
                         dateTimePrevious = imgTimePrevious;
@@ -977,7 +977,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
                         if (itImage != rasterMapLayerData->images.constEnd())
                         {
                             auto secondImage = itImage.value();
-                            image = SkiaUtilities::createTileImage(secondImage, firstImage);
+                            image = SkiaUtilities::joinImages(secondImage, firstImage);
                             dateTimeFirst = timeFirst;
                             dateTimeLast = timeLast;
                             dateTimePrevious = imgTimePrevious - timeStep;
@@ -995,6 +995,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
         }
         else
             image = rasterMapLayerData->images.constBegin().value();
+
+        if (!image)
+        {
+            assert(false);
+            return false;
+        }            
 
         colorType = image->colorType();
         
