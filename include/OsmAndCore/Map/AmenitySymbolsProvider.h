@@ -87,7 +87,7 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoom() const Q_DECL_OVERRIDE;
 
-        virtual int getMaxMissingDataUnderZoomShift() const Q_DECL_OVERRIDE;
+        //virtual int getMaxMissingDataUnderZoomShift() const Q_DECL_OVERRIDE;
 
         virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(

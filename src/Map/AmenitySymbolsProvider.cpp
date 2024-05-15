@@ -37,10 +37,11 @@ OsmAnd::ZoomLevel OsmAnd::AmenitySymbolsProvider::getMaxZoom() const
     return MaxZoomLevel;
 }
 
-int OsmAnd::AmenitySymbolsProvider::getMaxMissingDataUnderZoomShift() const
-{
-    return 0;
-}
+// Сommented as fix of the issue: https://github.com/osmandapp/OsmAnd-iOS/issues/3690
+//int OsmAnd::AmenitySymbolsProvider::getMaxMissingDataUnderZoomShift() const
+//{
+//    return 0;
+//}
 
 bool OsmAnd::AmenitySymbolsProvider::supportsNaturalObtainData() const
 {
