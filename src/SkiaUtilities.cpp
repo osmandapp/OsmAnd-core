@@ -279,16 +279,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::cropImage(
     const auto cutWidth = width / cutPart;
     const auto cutHeight = height / cutPart;
 
-    SkBitmap target;
-    if (!target.tryAllocPixels(image->imageInfo().makeWH(width - cutWidth, height - cutHeight)))
-        return nullptr;
-    target.eraseColor(SK_ColorTRANSPARENT);
-
-    SkCanvas canvas(target);
-    canvas.drawImage(image.get(), -cutWidth / 2, -cutHeight / 2);
-    canvas.flush();
-
-    return target.asImage();
+    return image->makeSubset(SkIRect::MakeXYWH(cutWidth / 2, cutHeight / 2, width - cutWidth, height - cutHeight));
 }
 
 sk_sp<SkImage> OsmAnd::SkiaUtilities::stackImages(
@@ -418,7 +409,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::joinImages(
 sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromRawData(const QByteArray& byteArray)
 {
     SkBitmap bitmap;
-    auto pData = (int*) byteArray.data();
+    auto pData = reinterpret_cast<const int*>(byteArray.data());
     if (!bitmap.tryAllocPixels(SkImageInfo::Make(
         *pData++,
         *pData++,
@@ -449,7 +440,7 @@ QByteArray OsmAnd::SkiaUtilities::getRawDataFromImage(const sk_sp<const SkImage>
     }
     const auto size = imagePixmap.computeByteSize();
     QByteArray byteArray(size + sizeof(int) * 2, 0);
-    auto pData = (int*) byteArray.data();
+    auto pData = reinterpret_cast<int*>(byteArray.data());
     *pData = imagePixmap.width();
     pData++;
     *pData = imagePixmap.height();
