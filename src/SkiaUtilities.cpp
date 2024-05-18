@@ -406,7 +406,9 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::joinImages(
     return target.asImage();
 }
 
-sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromRawData(const QByteArray& byteArray)
+sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromRawData(
+    const QByteArray& byteArray,
+    const SkAlphaType alphaType)
 {
     SkBitmap bitmap;
     auto pData = reinterpret_cast<const int*>(byteArray.data());
@@ -414,7 +416,7 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromRawData(const QByteArray& b
         *pData++,
         *pData++,
         SkColorType::kRGBA_8888_SkColorType,
-        SkAlphaType::kPremul_SkAlphaType)))
+        alphaType)))
     {
         return nullptr;
     }
@@ -426,7 +428,8 @@ sk_sp<SkImage> OsmAnd::SkiaUtilities::createImageFromRawData(const QByteArray& b
     return bitmap.asImage();
 }
 
-QByteArray OsmAnd::SkiaUtilities::getRawDataFromImage(const sk_sp<const SkImage>& sourceImage)
+QByteArray OsmAnd::SkiaUtilities::getRawDataFromImage(
+    const sk_sp<const SkImage>& sourceImage)
 {
     SkPixmap imagePixmap;
 

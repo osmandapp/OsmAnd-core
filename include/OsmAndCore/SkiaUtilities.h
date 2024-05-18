@@ -87,9 +87,12 @@ namespace OsmAnd
             const sk_sp<const SkImage>& left,
             const sk_sp<const SkImage>& right);
 
-        static sk_sp<SkImage> createImageFromRawData(const QByteArray& byteArray);
+        static sk_sp<SkImage> createImageFromRawData(
+            const QByteArray& byteArray,
+            const SkAlphaType alphaType);
 
-        static QByteArray getRawDataFromImage(const sk_sp<const SkImage>& sourceImage);
+        static QByteArray getRawDataFromImage(
+            const sk_sp<const SkImage>& sourceImage);
 
         static sk_sp<SkTypeface> createTypefaceFromData(
             const QByteArray& data);

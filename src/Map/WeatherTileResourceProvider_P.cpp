@@ -1038,8 +1038,10 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     if (bands.contains(static_cast<BandIndex>(WeatherBand::WindAnimation)))
     {
         bands.removeOne(static_cast<BandIndex>(WeatherBand::WindAnimation));
-        withWindAnimation = true;
+        withWindAnimation = withWindVectors;
     }
+    else if (bands.contains(static_cast<BandIndex>(WeatherBand::WindSpeed)))
+        withWindAnimation = withWindVectors;
 
     BandIndex combination = 0;
     if (withWindVectors)
@@ -1110,7 +1112,8 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
                     && rasterTime >= geoTileTime)
                 {
                     bool isFreshRaster = currentTime - rasterTimestamp < RASTER_FRESHNESS_PERIOD;
-                    const auto image = SkiaUtilities::createImageFromRawData(data);
+                    const auto image = SkiaUtilities::createImageFromRawData(data,
+                        withWindAnimation ? SkAlphaType::kOpaque_SkAlphaType : SkAlphaType::kPremul_SkAlphaType);
                     if (image && (localData || isFreshRaster))
                     {
                         if (!localData)

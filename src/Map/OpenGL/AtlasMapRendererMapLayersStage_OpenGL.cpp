@@ -20,6 +20,12 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
+// Size of wind particle in pixels (default is 5.0f)
+const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSize = 5.0f;
+
+// Factor for speed of wind (default is 1.0f - for 1 hour per second on ZoomLevel5)
+const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSpeedFactor = 1.0f;
+
 OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererMapLayersStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
@@ -729,47 +735,94 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    windVector = vec2(result.x, -result.y);                                                                        ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
-        "void getTextureColor(in FsRasterLayerTile rasterTileLayer, in vec2 texCoords, out lowp vec4 finalColor)            ""\n"
+        "float getRandPixel(in vec2 pixCoords, in vec2 tileSize, in float normSeed)                                         ""\n"
         "{                                                                                                                  ""\n"
-        "    vec2 leftCoords = texCoords;                                                                           ""\n"
-        "    vec2 rightCoords = leftCoords;                                                                                 ""\n"
+        "    vec2 intCoords = floor(pixCoords);                                                                             ""\n"
+        "    float randValue = abs(fract(sin(dot(intCoords / tileSize + normSeed, vec2(12.9898, 78.233))) * 43758.5453));   ""\n"
+        "    return randValue > 0.97 ? 1.0 : 0.0;                                                                           ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void getParticleColor(in vec2 pixCoords, in vec2 windVector, in vec2 tileSize, in float seed, out lowp vec4 color) ""\n"
+        "{                                                                                                                  ""\n"
+        "    float normSeed = fract(seed) * 0.001;                                                                          ""\n"
+        "    float windMagnitude = length(windVector);                                                                      ""\n"
+        "    vec2 shift = windMagnitude >= 0.5 ? windVector / windMagnitude : vec2(0.0);                                    ""\n"
+        //   Rescale two times: to get out of tile data without overlap (- 0.1 / 0.8) and to access full texture (/ 0.5)
+        "    vec2 coords = (pixCoords - 0.05) * tileSize / 0.4;                                                             ""\n"
+        "    vec2 center = coords + shift;                                                                                  ""\n"
+        "    float nextPixel = 0.5 * getRandPixel(center, tileSize, normSeed);                                              ""\n"
+        "    float prevPixel = getRandPixel(coords - shift, tileSize, normSeed);                                            ""\n"
+        "    center = prevPixel > 0.0 ? coords - shift : center;                                                            ""\n"
+        "    float actPixel = 0.8 * getRandPixel(coords, tileSize, normSeed);                                               ""\n"
+        "    center = actPixel > 0.0 ? coords : center;                                                                     ""\n"
+        "    float alpha = max(max(actPixel, nextPixel), prevPixel);                                                        ""\n"
+        "    vec2 norm = vec2(shift.y, -shift.x);                                                                           ""\n"
+        "    alpha *= clamp(1.0 - 2.0 * abs(dot(norm, coords) - dot(norm, floor(center) + 0.5)), 0.0, 1.0);                 ""\n"
+        "    color = vec4(1.0, 1.0, 1.0, alpha);                                                                            ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void getTextureColor(in FsRasterLayerTile rasterTileLayer, in vec2 texCoords, out lowp vec4 resultColor)           ""\n"
+        "{                                                                                                                  ""\n"
         "    if (rasterTileLayer.transitionPhase.x >= 0.0)                                                                  ""\n"
         "    {                                                                                                              ""\n"
+        //       Animate transition between textures
+        "        vec2 leftCoords = texCoords;                                                                               ""\n"
+        "        vec2 rightCoords;                                                                                          ""\n"
+        "        lowp vec4 windColor = vec4(0.0);                                                                           ""\n"
         "        float halfTexelSize = rasterTileLayer.texelSize / 2.0;                                                     ""\n"
-        //       Rescale two times: to get into tile data without overlap (* 0.8 + 0.1) and to access quadrants (* 0.5)
+        //       Scale two times: to get into tile data without overlap (* 0.8 + 0.1) and to access quadrants (* 0.5)
         "        leftCoords = leftCoords * 0.4 + 0.05;                                                                      ""\n"
         "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
         "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        rightCoords = leftCoords;                                                                                  ""\n"
-        "        rightCoords.y += 0.5;                                                                                      ""\n"
-        "        vec2 leftWind;                                                                                             ""\n"
-        //"        getWind(rasterTileLayer.sampler, rightCoords, leftWind);                                                   ""\n"
-        "        rightCoords.x += 0.5;                                                                                      ""\n"
+        "        rightCoords = leftCoords + 0.5;                                                                            ""\n"
         "        vec2 rightWind;                                                                                            ""\n"
         "        getWind(rasterTileLayer.sampler, rightCoords, rightWind);                                                  ""\n"
-        "        rightCoords.y -= 0.5;                                                                                      ""\n"
-        "        leftWind = rightWind;                                                                                      ""\n"
-        //"        vec2 windVector = mix(leftWind, rightWind, rasterTileLayer.transitionPhase.x);                             ""\n"
-        //       Rescale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
+        //       Scale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
         "        float factor = rasterTileLayer.transitionPhase.y / (v2f_metersPerUnit * 250.0);                            ""\n"
-        //"        leftWind += windVector;                                                                                    ""\n"
-        "        leftWind *= factor * rasterTileLayer.transitionPhase.x;                                                    ""\n"
-        "        leftWind *= rasterTileLayer.texCoordsOffsetAndScale.zw;                                                            ""\n"
-        //"        rightWind += windVector;                                                                                   ""\n"
-        "        rightWind *= factor * (1.0 - rasterTileLayer.transitionPhase.x);                                           ""\n"
-        "        rightWind *= rasterTileLayer.texCoordsOffsetAndScale.zw;                                                           ""\n"
-        "        leftCoords -= leftWind;                                                                                    ""\n"
+        "        vec2 texShift = rightWind * rasterTileLayer.texCoordsOffsetAndScale.zw * factor;                           ""\n"
+        "        if (rasterTileLayer.transitionPhase.z >= 0.0)                                                              ""\n"
+        "        {                                                                                                          ""\n"
+        //           Animate wind particles
+        "            float seed = floor(rasterTileLayer.transitionPhase.z) / 10.0;                                          ""\n"
+        "            float phase = fract(rasterTileLayer.transitionPhase.z);                                                ""\n"
+        "            vec2 tileSize = rasterTileLayer.transitionPhase.w / rasterTileLayer.texCoordsOffsetAndScale.zw;        ""\n"
+        "            rightCoords.x -= 0.5;                                                                                  ""\n"
+        "            vec2 leftWind;                                                                                         ""\n"
+        "            getWind(rasterTileLayer.sampler, rightCoords, leftWind);                                               ""\n"
+        "            vec2 windVector = mix(leftWind, rightWind, rasterTileLayer.transitionPhase.x);                         ""\n"
+        "            vec2 windShift = windVector * rasterTileLayer.texCoordsOffsetAndScale.zw * factor;                     ""\n"
+        "            vec2 leftShift = windShift * phase;                                                                    ""\n"
+        "            vec2 rightShift = windShift * (1.0 - phase);                                                           ""\n"
+        "            lowp vec4 tmpColor;                                                                                    ""\n"
+        "            lowp vec4 leftColor;                                                                                   ""\n"
+        "            lowp vec4 rightColor;                                                                                  ""\n"
+        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, seed, leftColor);                       ""\n"
+        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, seed + 0.1, tmpColor);                  ""\n"
+        "            leftColor = mix(tmpColor, leftColor, clamp(phase + 0.5, 0.0, 1.0));                                    ""\n"
+        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, seed + 0.1, rightColor);               ""\n"
+        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, seed + 0.2, tmpColor);                 ""\n"
+        "            rightColor = mix(rightColor, tmpColor, clamp(phase - 0.5, 0.0, 1.0));                                  ""\n"
+        "            windColor = mix(leftColor, rightColor, phase);                                                         ""\n"
+        "        }                                                                                                          ""\n"
+        "        rightCoords = leftCoords;                                                                                  ""\n"
+        "        rightCoords.x += 0.5;                                                                                      ""\n"
+        "        leftCoords -= texShift * rasterTileLayer.transitionPhase.x;                                                ""\n"
         "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
         "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
-        "        rightCoords += rightWind;                                                                                  ""\n"
+        "        rightCoords += texShift * (1.0 - rasterTileLayer.transitionPhase.x);                                       ""\n"
         "        rightCoords.x = clamp(rightCoords.x, 0.5 + halfTexelSize, 1.0 - halfTexelSize);                            ""\n"
         "        rightCoords.y = clamp(rightCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                  ""\n"
+        "        lowp vec4 texColorLeft;                                                                                    ""\n"
+        "        lowp vec4 texColorRight;                                                                                   ""\n"
+        "        fromTexture(rasterTileLayer.sampler, leftCoords, texColorLeft);                                            ""\n"
+        "        fromTexture(rasterTileLayer.sampler, rightCoords, texColorRight);                                          ""\n"
+        "        lowp vec4 texColor = mix(texColorLeft, texColorRight, clamp(rasterTileLayer.transitionPhase.x, 0.0, 1.0)); ""\n"
+        "        resultColor = vec4(mix(texColor.rgb, windColor.rgb, windColor.a), texColor.a);                             ""\n"
         "    }                                                                                                              ""\n"
-        "    lowp vec4 finalColorLeft;                                                                                      ""\n"
-        "    lowp vec4 finalColorRight;                                                                                     ""\n"
-        "    fromTexture(rasterTileLayer.sampler, leftCoords, finalColorLeft);                                              ""\n"
-        "    fromTexture(rasterTileLayer.sampler, rightCoords, finalColorRight);                                            ""\n"
-        "    finalColor = mix(finalColorLeft, finalColorRight, clamp(rasterTileLayer.transitionPhase.x, 0.0, 1.0));         ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        fromTexture(rasterTileLayer.sampler, texCoords, resultColor);                                              ""\n"
+        "    }                                                                                                              ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -1450,31 +1503,38 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             auto dateTimeNext = batchedResourceInGPU->resourceInGPU->dateTimeNext;
             auto dateTimeStep = dateTimeNext - dateTimePrevious;
             auto step = static_cast<double>(dateTimeStep);
-            float transitionStage;
-            float animationStage = 0.0f;
-            float transitionTime =
-                static_cast<float>(step / 1000.0); // Transition time in seconds
-            if (dateTimeStep <= 0)
+            float transitionTime = static_cast<float>(step / 1000.0); // Transition time in seconds
+            float transitionStage = -1.0; // If no transition is needed
+            float animationStage = -1.0f; // If no animation is needed
+            float tileSizeInParticles = internalState.referenceTileSizeOnScreenInPixels / _particleSize;
+            if (dateTimeStep > 0)
             {
-                transitionStage = -1.0f; // No transition needed
-                animationStage = static_cast<float>(
-                    static_cast<double>(QDateTime::currentMSecsSinceEpoch() % dateTimeStep) / step);
-            }
-            else if (currentState.dateTime <= dateTimePrevious)
-                transitionStage = 0.0f;
-            else if (currentState.dateTime >= dateTimeNext)
-                transitionStage = 1.0f;
-            else
-            {
-                transitionStage =
-                    static_cast<float>(static_cast<double>(currentState.dateTime - dateTimePrevious) / step);
+                if (currentState.dateTime <= dateTimePrevious)
+                    transitionStage = 0.0f;
+                else if (currentState.dateTime >= dateTimeNext)
+                    transitionStage = 1.0f;
+                else
+                {
+                    transitionStage =
+                        static_cast<float>(static_cast<double>(currentState.dateTime - dateTimePrevious) / step);
+                }
+                if (withWindAnimation)
+                {
+                    auto zoomFactor = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
+                    auto realTimeStage = static_cast<double>(QDateTime::currentMSecsSinceEpoch() % dateTimeStep) / step
+                        * zoomFactor * static_cast<double>(_particleSpeedFactor) / 186413.5;
+                    animationStage = static_cast<float>((realTimeStage - qFloor(realTimeStage)) * 10.0);
+                    if (animationStage >= 10.0f)
+                        animationStage = 9.999999f;
+                    invalidateFrame();
+                }
             }
 
             glUniform4f(perTile_fs.transitionPhase,
                 transitionStage,
                 transitionTime,
                 animationStage,
-                animationStage);
+                tileSizeInParticles);
             GL_CHECK_RESULT;
 
             auto texelSize = gpuAPI->getGpuResourceTexelSize(batchedResourceInGPU->resourceInGPU);
