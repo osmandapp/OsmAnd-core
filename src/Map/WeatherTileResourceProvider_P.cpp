@@ -1300,11 +1300,11 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
         return nullptr;
     }
 
+    if (!localData)
+        provider->unlockRasterTile(tileId, zoom);
+
     if (request->version != provider->getCurrentRequestVersion())
     {
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         LogPrintf(LogSeverityLevel::Debug,
             "Cancel rasterization tile image of weather tile %dx%dx%d. Version changed %d:%d",
             tileId.x, tileId.y, zoom, request->version, provider->getCurrentRequestVersion());
@@ -1320,27 +1320,6 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     if (!images.empty())
     {
         auto image = createTileImage(images, bands, withWindAnimation);
-        if (image && withWindVectors)
-        {
-            const auto data = SkiaUtilities::getRawDataFromImage(image);
-            if (!data.isEmpty())
-            {
-                auto db = provider->getRasterTilesDatabase(combination);
-                if (db && db->isOpened())
-                {
-                    if (!db->storeTileData(tileId, zoom, dateTime, data, geoTileTime, currentTime))
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Failed to store tile image of combined weather tile %dx%dx%d for time %lld",
-                                tileId.x, tileId.y, zoom, dateTime);
-                    }
-                }
-            }
-        }
-
-        if (!localData)
-            provider->unlockRasterTile(tileId, zoom);
-
         if (image)
             return image; // without "success" to initiate second reqiuest for a fresh data
         else
