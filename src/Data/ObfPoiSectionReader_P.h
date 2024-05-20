@@ -99,16 +99,14 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController,
-            const bool strictMatch);
+            const std::shared_ptr<const IQueryController>& queryController);
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
             QMap<uint32_t, uint32_t>& outDataOffsets,
             const PointI* const xy31,
             const AreaI* const bbox31,
-            const TileAcceptorFunction tileFilter,
-            const bool strictMatch);
+            const TileAcceptorFunction tileFilter);
         static void readNameIndexData(
             const ObfReader_P& reader,
             QMap<uint32_t, uint32_t>& outDataOffsets,
@@ -178,8 +176,7 @@ namespace OsmAnd
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const std::shared_ptr<const IQueryController>& queryController,
-            const bool strictMatch);
+            const std::shared_ptr<const IQueryController>& queryController);
 
     friend class OsmAnd::ObfReader_P;
     friend class OsmAnd::ObfPoiSectionReader;
