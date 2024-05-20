@@ -36,6 +36,7 @@ OsmAnd::HillshadeRasterMapLayerProvider_P::HillshadeRasterMapLayerProvider_P(
     auto profileBuffer = new char[fbSize];
     memset(profileBuffer, 0, fbSize);
     procParameters.rasterType = GeoTiffCollection::RasterType::Hillshade;
+    procParameters.colorsFilename = hillshadeColorsFilename_;
     procParameters.resultColorsFilename = QString("/vsimem/hillshadeColorProfile");
     if (const auto file = VSIFileFromMemBuffer(qPrintable(procParameters.resultColorsFilename),
         reinterpret_cast<GByte*>(profileBuffer), fbSize, TRUE))

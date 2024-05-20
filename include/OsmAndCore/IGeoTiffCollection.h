@@ -32,6 +32,7 @@ namespace OsmAnd
         struct ProcessingParameters
         {
             RasterType rasterType;
+            QString colorsFilename;
             QString resultColorsFilename;
             QString intermediateColorsFilename;
         };

@@ -1073,7 +1073,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                         uint hash;
                         if (procParameters)
                         {
-                            hash = qHash(procParameters->resultColorsFilename);
+                            hash = qHash(procParameters->colorsFilename);
                             switch (procParameters->rasterType)
                             {
                                 case GeoTiffCollection::RasterType::Slope:

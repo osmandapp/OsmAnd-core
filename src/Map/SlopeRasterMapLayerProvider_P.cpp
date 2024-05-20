@@ -35,6 +35,7 @@ OsmAnd::SlopeRasterMapLayerProvider_P::SlopeRasterMapLayerProvider_P(
     auto fileBuffer = new char[fbSize];
     memset(fileBuffer, 0, fbSize);
     procParameters.rasterType = GeoTiffCollection::RasterType::Slope;
+    procParameters.colorsFilename = slopeColorsFilename_;
     procParameters.resultColorsFilename = QString("/vsimem/slopeColorProfile");
     if (const auto file = VSIFileFromMemBuffer(qPrintable(procParameters.resultColorsFilename),
         reinterpret_cast<GByte*>(fileBuffer), fbSize, TRUE))

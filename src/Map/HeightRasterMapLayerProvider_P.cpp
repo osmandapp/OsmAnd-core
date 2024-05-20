@@ -35,6 +35,7 @@ OsmAnd::HeightRasterMapLayerProvider_P::HeightRasterMapLayerProvider_P(
     auto fileBuffer = new char[fbSize];
     memset(fileBuffer, 0, fbSize);
     procParameters.rasterType = GeoTiffCollection::RasterType::Height;
+    procParameters.colorsFilename = heightColorsFilename_;
     procParameters.resultColorsFilename = QString("/vsimem/heightColorProfile");
     if (const auto file = VSIFileFromMemBuffer(qPrintable(procParameters.resultColorsFilename),
         reinterpret_cast<GByte*>(fileBuffer), fbSize, TRUE))
