@@ -31,7 +31,7 @@ namespace OsmAnd
 
         static sk_sp<SkImage> createImageFromData(
             const QByteArray& data);
-        
+
         static sk_sp<SkImage> createImageFromVectorData(
             const QByteArray& data,
             const float scale);
@@ -73,9 +73,26 @@ namespace OsmAnd
             const sk_sp<const SkImage>& second,
             float yOffset);
 
-        static sk_sp<SkImage> createTileImage(
+        static sk_sp<SkImage> cropImage(
+            const sk_sp<const SkImage>& image,
+            const uint32_t cutPart);
+
+        static sk_sp<SkImage> stackImages(
+            const sk_sp<const SkImage>& top,
+            const sk_sp<const SkImage>& bottom,
+            const sk_sp<const SkImage>& extraBottom,
+            const SkAlphaType alphaType);
+
+        static sk_sp<SkImage> joinImages(
             const sk_sp<const SkImage>& left,
             const sk_sp<const SkImage>& right);
+
+        static sk_sp<SkImage> createImageFromRawData(
+            const QByteArray& byteArray,
+            const SkAlphaType alphaType);
+
+        static QByteArray getRawDataFromImage(
+            const sk_sp<const SkImage>& sourceImage);
 
         static sk_sp<SkTypeface> createTypefaceFromData(
             const QByteArray& data);

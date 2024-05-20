@@ -48,6 +48,8 @@ void OsmAnd::WeatherRasterLayerProvider::setDateTime(int64_t dateTimeFirst, int6
     QWriteLocker scopedLocker(&_lock);
     
     _dateTimeStep = Utilities::roundMillisecondsToHours(dateTimeStep);
+    if (_dateTimeStep < 1)
+        _dateTimeStep = 1;
     _dateTimeFirst = dateTimeFirst / _dateTimeStep * _dateTimeStep;
     _dateTimeLast = dateTimeLast / _dateTimeStep * _dateTimeStep;
     if (dateTimeLast > _dateTimeLast || (dateTimeFirst > _dateTimeFirst && _dateTimeLast == _dateTimeFirst))

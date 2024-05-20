@@ -70,8 +70,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
 
     GlobalMercator mercator;
         
-    double latExtent = 1.0;
-    double lonExtent = 1.0;
+    double latExtent = 3.0;
+    double lonExtent = 3.0;
     auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     auto tlLatLon = Utilities::convert31ToLatLon(tileBBox31.topLeft);
     auto brLatLon = Utilities::convert31ToLatLon(tileBBox31.bottomRight);
@@ -142,7 +142,9 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
     QHash<BandIndex, sk_sp<const SkImage>> bandImages;
     for (auto band : owner->bands)
     {
-        if (!owner->bandSettings.contains(band))
+        if (!owner->bandSettings.contains(band)
+            && band != static_cast<BandIndex>(WeatherBand::WindWestToEast)
+            && band != static_cast<BandIndex>(WeatherBand::WindSouthToNorth))
             continue;
 
         auto bandIndexStr = QString::number(band).toLatin1();
@@ -167,7 +169,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psCropOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for crop GeoTIFF %dx%d@%d to %s / %s.",
+                "Failed to create options for crop GeoTIFF %d:%dx%d@%d to %s / %s.",
+                band,
                 tileId.x,
                 tileId.y,
                 zoom,
@@ -193,7 +196,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!hCroppedDS || bCropError)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to crop GeoTIFF %dx%d@%d to %s / %s. Error: %d",
+                "Failed to crop GeoTIFF %d:%dx%d@%d to %s / %s. Error: %d",
+                band,
                 tileId.x,
                 tileId.y,
                 zoom,
@@ -245,7 +249,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psInterpolateOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for interpolate GeoTIFF %dx%d@%d. ProjDB path: %s. Error: %s", tileId.x, tileId.y, zoom, qPrintable(projSearchPath), CPLGetLastErrorMsg());
+                "Failed to create options for interpolate GeoTIFF %d:%dx%d@%d. ProjDB path: %s. Error: %s",
+                 band, tileId.x, tileId.y, zoom, qPrintable(projSearchPath), CPLGetLastErrorMsg());
             return QHash<BandIndex, sk_sp<const SkImage>>();
         }
         int bWarpError = FALSE;
@@ -270,14 +275,19 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!hInterpolatedDS || bWarpError)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to interpolate GeoTIFF %dx%d@%d. Error: %d", tileId.x, tileId.y, zoom, bWarpError);
+                "Failed to interpolate GeoTIFF %d:%dx%d@%d. Error: %d",
+                band, tileId.x, tileId.y, zoom, bWarpError);
             return QHash<BandIndex, sk_sp<const SkImage>>();
         }
 
         if (queryController && queryController->isAborted())
             return QHash<BandIndex, sk_sp<const SkImage>>();
 
-        auto colorProfilePath = owner->bandSettings[band]->colorProfilePath;
+        auto colorProfilePath = band == static_cast<BandIndex>(WeatherBand::WindWestToEast)
+            || band == static_cast<BandIndex>(WeatherBand::WindSouthToNorth)
+            ? WeatherTileResourceProvider::_windColorProfile
+            : owner->bandSettings[band]->colorProfilePath;
+        
         const auto colorizeFilename = QString::asprintf("/vsimem/geoTile@%p_%d_%dx%d@%d_raster_colorize",
                                                         this, band, tileId.x, tileId.y, zoom);
         const char* colorizeArgs[] = {
@@ -288,7 +298,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psColorizeOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to to create options for colorize GeoTIFF %dx%d@%d: %s", tileId.x, tileId.y, zoom, CPLGetLastErrorMsg());
+                "Failed to to create options for colorize GeoTIFF %d:%dx%d@%d: %s",
+                band, tileId.x, tileId.y, zoom, CPLGetLastErrorMsg());
             return QHash<BandIndex, sk_sp<const SkImage>>();
         }
 
@@ -324,11 +335,19 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         int tileX = tileId.x;
         int tileY = tileId.y;
             
-        auto origin = PointD(abs(tileMinPix.x - tileMinExtPix.x), abs(tileMinPix.y - tileMinExtPix.y));
+        const auto tileSize = owner->tileSize;
+
+        // Get overlapped tile data to predict its move with the wind
+        const auto overlap = tileSize / 4;
+        const auto sideOverlap = overlap / 2;
+
+        auto origin = PointD(
+            abs(tileMinPix.x - tileMinExtPix.x) - sideOverlap,
+            abs(tileMinPix.y - tileMinExtPix.y) - sideOverlap);
         
         auto originShiftXStr = doubleToStr(origin.x).toLatin1();
         auto originShiftYStr = doubleToStr(origin.y).toLatin1();
-        auto tileSizeStr = QString::number(owner->tileSize).toLatin1();
+        auto tileSizeStr = QString::number(tileSize + overlap).toLatin1();
 
         const auto tileFilename = QString::asprintf("/vsimem/geoTile%p_%d_%dx%dx%d_raster_tile",
                                                     this, band, (int) zoom, tileX, tileY);
@@ -345,7 +364,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!psOptions)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create options for result tile %dx%dx%d band=%d error=%s", tileX, tileX, zoom, band, CPLGetLastErrorMsg());
+                "Failed to create options for result tile %dx%dx%d band=%d error=%s",
+                tileX, tileX, zoom, band, CPLGetLastErrorMsg());
             continue;
         }
         int bTranslateError = FALSE;
@@ -366,7 +386,8 @@ QHash<OsmAnd::BandIndex, sk_sp<const SkImage>> OsmAnd::GeoTileRasterizer_P::rast
         if (!hResultDS || bTranslateError)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to create result weather tile %dx%dx%d band=%d. Error: %d", tileX, tileX, zoom, band, bTranslateError);
+                "Failed to create result weather tile %dx%dx%d band=%d. Error: %d",
+                 tileX, tileX, zoom, band, bTranslateError);
             continue;
         }
         

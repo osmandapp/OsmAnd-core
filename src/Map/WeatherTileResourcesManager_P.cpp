@@ -137,7 +137,7 @@ double OsmAnd::WeatherTileResourcesManager_P::getConvertedBandValue(const BandIn
                     delete precip;
                     break;
                 }
-                case WeatherBand::Undefined:
+                case WeatherBand::WindAnimation:
                     break;
             }
         }

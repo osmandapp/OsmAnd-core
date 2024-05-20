@@ -62,9 +62,10 @@ namespace OsmAnd
 
             sk_sp<const SkImage> createTileImage(
                 const QHash<BandIndex, sk_sp<const SkImage>>& bandImages,
-                const QList<BandIndex>& bands);
+                const QList<BandIndex>& bands,
+                const bool withWindAnimation);
 
-            sk_sp<const SkImage> obtainRasterImage(int64_t dateTime, bool& success);
+            sk_sp<const SkImage> obtainRasterImage(int64_t dateTime, bool withWindVectors, bool& success);
             void obtainRasterTile();
             void obtainContourTile();
 
@@ -258,6 +259,8 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> getRasterTilesDatabase(BandIndex band);
 
         bool importTileData(const QString& dbFilePath);
+
+        QList<BandIndex> getAllBandCombinations();
 
         uint64_t calculateTilesSize(
             const QList<TileId>& tileIds,

@@ -160,6 +160,8 @@ namespace OsmAnd
             const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~WeatherTileResourceProvider();
 
+        static const QString _windColorProfile;
+
         bool networkAccessAllowed;
 
         virtual void obtainValue(

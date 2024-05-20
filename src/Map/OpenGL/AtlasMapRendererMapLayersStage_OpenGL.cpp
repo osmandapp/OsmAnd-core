@@ -20,6 +20,12 @@
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 
+// Size of wind particle in pixels (default is 5.0f)
+const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSize = 5.0f;
+
+// Factor for speed of wind (default is 1.0f - for 1 hour per second on ZoomLevel5)
+const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSpeedFactor = 1.0f;
+
 OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
     : AtlasMapRendererMapLayersStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
@@ -159,6 +165,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*texCoordsOffsetAndScale*/;
     const auto fsUniformsPerLayer =
         1 /*opacityFactor*/ +
+        1 /*texCoordsOffsetAndScale*/;
         1 /*transitionPhase*/ +
         1 /*texelSize*/ +
         1 /*isPremultipliedAlpha*/ +
@@ -201,6 +208,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     const auto varyingFloatsPerLayer =
         2 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingFloats =
+        1 /*v2f_metersPerUnit*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled ? 4 : 0) /*v2f_elevationColor*/ +
         4 /*v2f_position*/;
@@ -211,6 +219,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     const auto varyingVectorsPerLayer =
         1 /*v2f_texCoordsPerLayer_%rasterLayerIndex%*/;
     const auto otherVaryingVectors =
+        1 /*v2f_metersPerUnit*/ +
         (gpuAPI->isSupported_textureLod ? 1 : 0) /*v2f_mipmapLOD*/ +
         (setupOptions.elevationVisualizationEnabled ? 1 : 0) /*v2f_elevationColor*/ +
         1 /*v2f_position*/;
@@ -301,6 +310,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         // Output data to next shader stages
         "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
+        "PARAM_OUTPUT float v2f_metersPerUnit;                                                                              ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    PARAM_OUTPUT float v2f_mipmapLOD;                                                                              ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
@@ -380,6 +390,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    v.xz *= param_vs_tileSize;                                                                                     ""\n"
         "    v.xz += param_vs_tileSize * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                           ""\n"
         "                                                                                                                   ""\n"
+        //   Get meters per unit, which is needed at both shader stages
+        "    v2f_metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);      ""\n"
+        "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
         "                                                                                                                   ""\n"
@@ -390,8 +403,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    if (abs(param_vs_elevation_scale.w) > 0.0)                                                                     ""\n"
         "    {                                                                                                              ""\n"
         "        float slopeAlgorithm = param_vs_elevation_configuration.x;                                                 ""\n"
-        "                                                                                                                   ""\n"
-        "        float metersPerUnit = mix(param_vs_elevation_scale.x, param_vs_elevation_scale.y, in_vs_vertexTexCoords.t);""\n"
         "                                                                                                                   ""\n"
         // [0][0] - TL (0); [1][0] - T (1); [2][0] - TR (2)
         // [0][1] -  L (3); [1][1] - O (4); [2][1] -  R (5)
@@ -462,7 +473,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            const float M_3PI_2 = 3.0 * M_PI_2;                                                                    ""\n"
         "            const float M_COS_225_D = -0.70710678118;                                                              ""\n"
         "                                                                                                                   ""\n"
-        "            float heixelInMeters = metersPerUnit * (param_vs_tileSize / %HeixelsPerTileSide%.0);                   ""\n"
+        "            float heixelInMeters = v2f_metersPerUnit * (param_vs_tileSize / %HeixelsPerTileSide%.0);               ""\n"
         "                                                                                                                   ""\n"
         "            vec2 slopeInMeters = vec2(0.0);                                                                        ""\n"
         "            float slopeAlgorithmScale = 1.0;                                                                       ""\n"
@@ -612,7 +623,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            v2f_elevationColor.a *= param_vs_elevation_configuration.z;                                            ""\n"
         "        }                                                                                                          ""\n"
         "#endif // ELEVATION_VISUALIZATION_ENABLED                                                                          ""\n"
-        "        v.y = heightInMeters[1][1] / metersPerUnit;                                                                ""\n"
+        "        v.y = heightInMeters[1][1] / v2f_metersPerUnit;                                                            ""\n"
         "    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
@@ -658,6 +669,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         // Input data
         "%UnrolledPerRasterLayerTexCoordsDeclarationCode%                                                                   ""\n"
+        "PARAM_INPUT float v2f_metersPerUnit;                                                                               ""\n"
         "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
         "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
@@ -680,7 +692,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp float opacityFactor;                                                                                      ""\n"
-        "    lowp float transitionPhase;                                                                                    ""\n"
+        "    highp vec4 texCoordsOffsetAndScale;                                                                            ""\n"
+        "    highp vec4 transitionPhase;                                                                                    ""\n"
         "    highp float texelSize;                                                                                         ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
@@ -705,6 +718,113 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    destColor += srcColor * vec4(srcColorMultiplier, srcColorMultiplier,  srcColorMultiplier, 1.0);                ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
+        "void fromTexture(in lowp sampler2D sampler, in vec2 coords, out lowp vec4 destColor)                               ""\n"
+        "{                                                                                                                  ""\n"
+        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
+        "    destColor = SAMPLE_TEXTURE_2D_LOD(sampler, coords, v2f_mipmapLOD);                                             ""\n"
+        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "    destColor = SAMPLE_TEXTURE_2D(sampler, coords);                                                                ""\n"
+        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void getWind(in lowp sampler2D sampler, in vec2 coords, out vec2 windVector)                                       ""\n"
+        "{                                                                                                                  ""\n"
+        "    lowp vec4 windColor;                                                                                           ""\n"
+        "    fromTexture(sampler, coords, windColor);                                                                       ""\n"
+        "    vec2 result = (windColor.rb + windColor.ga * 255.0 - 8.0) * 10.0;                                              ""\n"
+        "    windVector = vec2(result.x, -result.y);                                                                        ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "float getRandPixel(in vec2 pixCoords, in vec2 tileSize, in float normSeed)                                         ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 intCoords = floor(pixCoords);                                                                             ""\n"
+        "    float randValue = abs(fract(sin(dot(intCoords / tileSize + normSeed, vec2(12.9898, 78.233))) * 43758.5453));   ""\n"
+        "    return randValue > 0.97 ? 1.0 : 0.0;                                                                           ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void getParticleColor(in vec2 pixCoords, in vec2 windVector, in vec2 tileSize, in float seed, out lowp vec4 color) ""\n"
+        "{                                                                                                                  ""\n"
+        "    float normSeed = fract(seed) * 0.001;                                                                          ""\n"
+        "    float windMagnitude = length(windVector);                                                                      ""\n"
+        "    vec2 shift = windMagnitude >= 0.5 ? windVector / windMagnitude : vec2(0.0);                                    ""\n"
+        //   Rescale two times: to get out of tile data without overlap (- 0.1 / 0.8) and to access full texture (/ 0.5)
+        "    vec2 coords = (pixCoords - 0.05) * tileSize / 0.4;                                                             ""\n"
+        "    vec2 center = coords + shift;                                                                                  ""\n"
+        "    float nextPixel = 0.5 * getRandPixel(center, tileSize, normSeed);                                              ""\n"
+        "    float prevPixel = getRandPixel(coords - shift, tileSize, normSeed);                                            ""\n"
+        "    center = prevPixel > 0.0 ? coords - shift : center;                                                            ""\n"
+        "    float actPixel = 0.8 * getRandPixel(coords, tileSize, normSeed);                                               ""\n"
+        "    center = actPixel > 0.0 ? coords : center;                                                                     ""\n"
+        "    float alpha = max(max(actPixel, nextPixel), prevPixel);                                                        ""\n"
+        "    vec2 norm = vec2(shift.y, -shift.x);                                                                           ""\n"
+        "    alpha *= clamp(1.0 - 2.0 * abs(dot(norm, coords) - dot(norm, floor(center) + 0.5)), 0.0, 1.0);                 ""\n"
+        "    color = vec4(1.0, 1.0, 1.0, alpha);                                                                            ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        "void getTextureColor(in FsRasterLayerTile rasterTileLayer, in vec2 texCoords, out lowp vec4 resultColor)           ""\n"
+        "{                                                                                                                  ""\n"
+        "    if (rasterTileLayer.transitionPhase.x >= 0.0)                                                                  ""\n"
+        "    {                                                                                                              ""\n"
+        //       Animate transition between textures
+        "        vec2 leftCoords = texCoords;                                                                               ""\n"
+        "        vec2 rightCoords;                                                                                          ""\n"
+        "        lowp vec4 windColor = vec4(0.0);                                                                           ""\n"
+        "        float halfTexelSize = rasterTileLayer.texelSize / 2.0;                                                     ""\n"
+        //       Scale two times: to get into tile data without overlap (* 0.8 + 0.1) and to access quadrants (* 0.5)
+        "        leftCoords = leftCoords * 0.4 + 0.05;                                                                      ""\n"
+        "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+        "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+        "        rightCoords = leftCoords + 0.5;                                                                            ""\n"
+        "        vec2 rightWind;                                                                                            ""\n"
+        "        getWind(rasterTileLayer.sampler, rightCoords, rightWind);                                                  ""\n"
+        //       Scale two times (* 0.8 and * 0.5) and then divide to TileSize3D (/ 100)
+        "        float factor = rasterTileLayer.transitionPhase.y / (v2f_metersPerUnit * 250.0);                            ""\n"
+        "        vec2 texShift = rightWind * rasterTileLayer.texCoordsOffsetAndScale.zw * factor;                           ""\n"
+        "        if (rasterTileLayer.transitionPhase.z >= 0.0)                                                              ""\n"
+        "        {                                                                                                          ""\n"
+        //           Animate wind particles
+        "            float seed = floor(rasterTileLayer.transitionPhase.z) / 10.0;                                          ""\n"
+        "            float phase = fract(rasterTileLayer.transitionPhase.z);                                                ""\n"
+        "            vec2 tileSize = rasterTileLayer.transitionPhase.w / rasterTileLayer.texCoordsOffsetAndScale.zw;        ""\n"
+        "            rightCoords.x -= 0.5;                                                                                  ""\n"
+        "            vec2 leftWind;                                                                                         ""\n"
+        "            getWind(rasterTileLayer.sampler, rightCoords, leftWind);                                               ""\n"
+        "            vec2 windVector = mix(leftWind, rightWind, rasterTileLayer.transitionPhase.x);                         ""\n"
+        "            vec2 windShift = windVector * rasterTileLayer.texCoordsOffsetAndScale.zw * factor;                     ""\n"
+        "            vec2 leftShift = windShift * phase;                                                                    ""\n"
+        "            vec2 rightShift = windShift * (1.0 - phase);                                                           ""\n"
+        "            lowp vec4 tmpColor;                                                                                    ""\n"
+        "            lowp vec4 leftColor;                                                                                   ""\n"
+        "            lowp vec4 rightColor;                                                                                  ""\n"
+        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, seed, leftColor);                       ""\n"
+        "            getParticleColor(leftCoords - leftShift, windVector, tileSize, seed + 0.1, tmpColor);                  ""\n"
+        "            leftColor = mix(tmpColor, leftColor, clamp(phase + 0.5, 0.0, 1.0));                                    ""\n"
+        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, seed + 0.1, rightColor);               ""\n"
+        "            getParticleColor(leftCoords + rightShift, windVector, tileSize, seed + 0.2, tmpColor);                 ""\n"
+        "            rightColor = mix(rightColor, tmpColor, clamp(phase - 0.5, 0.0, 1.0));                                  ""\n"
+        "            windColor = mix(leftColor, rightColor, phase);                                                         ""\n"
+        "        }                                                                                                          ""\n"
+        "        rightCoords = leftCoords;                                                                                  ""\n"
+        "        rightCoords.x += 0.5;                                                                                      ""\n"
+        "        leftCoords -= texShift * rasterTileLayer.transitionPhase.x;                                                ""\n"
+        "        leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+        "        leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                    ""\n"
+        "        rightCoords += texShift * (1.0 - rasterTileLayer.transitionPhase.x);                                       ""\n"
+        "        rightCoords.x = clamp(rightCoords.x, 0.5 + halfTexelSize, 1.0 - halfTexelSize);                            ""\n"
+        "        rightCoords.y = clamp(rightCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                  ""\n"
+        "        lowp vec4 texColorLeft;                                                                                    ""\n"
+        "        lowp vec4 texColorRight;                                                                                   ""\n"
+        "        fromTexture(rasterTileLayer.sampler, leftCoords, texColorLeft);                                            ""\n"
+        "        fromTexture(rasterTileLayer.sampler, rightCoords, texColorRight);                                          ""\n"
+        "        lowp vec4 texColor = mix(texColorLeft, texColorRight, clamp(rasterTileLayer.transitionPhase.x, 0.0, 1.0)); ""\n"
+        "        resultColor = vec4(mix(texColor.rgb, windColor.rgb, windColor.a), texColor.a);                             ""\n"
+        "    }                                                                                                              ""\n"
+        "    else                                                                                                           ""\n"
+        "    {                                                                                                              ""\n"
+        "        fromTexture(rasterTileLayer.sampler, texCoords, resultColor);                                              ""\n"
+        "    }                                                                                                              ""\n"
+        "}                                                                                                                  ""\n"
+        "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    lowp vec4 finalColor;                                                                                          ""\n"
@@ -726,33 +846,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         //   Mix colors of all layers.
         //   First layer is processed unconditionally, as well as its color is converted to premultiplied alpha.
-        "    vec2 leftCoords_0 = v2f_texCoordsPerLayer_0;                                                                   ""\n"
-        "    vec2 rightCoords_0 = leftCoords_0;                                                                             ""\n"
-        "    if (param_fs_rasterTileLayer_0.transitionPhase >= 0.0)                                                         ""\n"
-        "    {                                                                                                              ""\n"
-        "        float halfTexelSize = param_fs_rasterTileLayer_0.texelSize / 2.0;                                          ""\n"
-        "        leftCoords_0 *= 0.5;                                                                                       ""\n"
-        "        leftCoords_0.x = clamp(leftCoords_0.x, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
-        "        leftCoords_0.y = clamp(leftCoords_0.y, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
-        "        rightCoords_0 = leftCoords_0;                                                                              ""\n"
-        "        rightCoords_0.x += 0.5;                                                                                    ""\n"
-        "    }                                                                                                              ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
-        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        leftCoords_0, v2f_mipmapLOD);                                                                              ""\n"
-        "    lowp vec4 finalColorRight = SAMPLE_TEXTURE_2D_LOD(                                                             ""\n"
-        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        rightCoords_0, v2f_mipmapLOD);                                                                             ""\n"
-        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D(                                                                  ""\n"
-        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        leftCoords_0);                                                                                             ""\n"
-        "    lowp vec4 finalColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                              ""\n"
-        "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
-        "        rightCoords_0, v2f_mipmapLOD);                                                                             ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    finalColor = mix(finalColorLeft, finalColorRight, clamp(param_fs_rasterTileLayer_0.transitionPhase, 0.0, 1.0));""\n"
+        "    getTextureColor(param_fs_rasterTileLayer_0, v2f_texCoordsPerLayer_0, finalColor);                              ""\n"
         "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor,                                            ""\n"
         "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
@@ -788,38 +882,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
-        "        vec2 leftCoords = v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                ""\n"
-        "        vec2 rightCoords = leftCoords;                                                                             ""\n"
-        "        if (param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase >= 0.0)                                    ""\n"
-        "        {                                                                                                          ""\n"
-        "            float halfTexelSize = param_fs_rasterTileLayer_%rasterLayerIndex%.texelSize / 2.0;                     ""\n"
-        "            leftCoords *= 0.5;                                                                                     ""\n"
-        "            leftCoords.x = clamp(leftCoords.x, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
-        "            leftCoords.y = clamp(leftCoords.y, halfTexelSize, 0.5 - halfTexelSize);                                ""\n"
-        "            rightCoords = leftCoords;                                                                              ""\n"
-        "            rightCoords.x += 0.5;                                                                                  ""\n"
-        "        }                                                                                                          ""\n"
-        "#if TEXTURE_LOD_SUPPORTED                                                                                          ""\n"
-        "        lowp vec4 layerColorLeft = SAMPLE_TEXTURE_2D_LOD(                                                          ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            leftCoords, v2f_mipmapLOD);                                                                            ""\n"
-        "        lowp vec4 layerColorRight = SAMPLE_TEXTURE_2D_LOD(                                                         ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            rightCoords, v2f_mipmapLOD);                                                                           ""\n"
-        "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "        lowp vec4 layerColorLeft = SAMPLE_TEXTURE_2D(                                                              ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            leftCoords);                                                                                           ""\n"
-        "        lowp vec4 layerColorRight = SAMPLE_TEXTURE_2D(                                                             ""\n"
-        "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            rightCoords);                                                                                          ""\n"
-        "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        "        lowp float transitionFactor = param_fs_rasterTileLayer_%rasterLayerIndex%.transitionPhase;                 ""\n"
-        "        lowp vec4 layerColor = mix(layerColorLeft, layerColorRight, clamp(transitionFactor, 0.0, 1.0));            ""\n"
-        "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                       ""\n"
+        "        lowp vec4 tc;                                                                                              ""\n"
+        "        getTextureColor(param_fs_rasterTileLayer_%rasterLayerIndex%, v2f_texCoordsPerLayer_%rasterLayerIndex%, tc);""\n"
+        "        addExtraAlpha(tc, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                               ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
-        "        mixColors(finalColor, layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);       ""\n"
+        "        mixColors(finalColor, tc, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);               ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
@@ -1118,6 +1185,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
                 layerStructName + ".opacityFactor",
                 GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(
+                layerStruct.texCoordsOffsetAndScale,
+                layerStructName + ".texCoordsOffsetAndScale",
+                GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(
                 layerStruct.transitionPhase,
                 layerStructName + ".transitionPhase",
                 GlslVariableType::Uniform);
@@ -1194,9 +1265,19 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     auto baseTileSize = static_cast<double>(AtlasMapRenderer::TileSize3D) *
         static_cast<double>(1ull << currentState.zoomLevel - zoomLevel);
     auto tileSize = baseTileSize;
+    const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+        zoomLevel,
+        tileIdN.y,
+        baseTileSize);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+        zoomLevel,
+        tileIdN.y + 1,
+        baseTileSize);
+    float zScaleFactor = 0.0f;
+    float dataScaleFactor = 0.0f;
     if (withElevation && currentState.elevationDataProvider)
     {
-        const auto tileIdN = Utilities::normalizeTileId(batch->tileId, zoomLevel);
         auto elevationResource = captureElevationDataResource(tileIdN, zoomLevel);
         if (elevationResource)
         {
@@ -1320,25 +1401,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             cancelElevation(program, elevationDataSamplerIndex, activeElevationVertexAttribArray);
         else
         {
-            // Per-tile elevation data configuration
-            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-                zoomLevel,
-                tileIdN.y,
-                baseTileSize);
-            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-                zoomLevel,
-                tileIdN.y + 1,
-                baseTileSize);
-            glUniform4f(
-                program.vs.param.elevation_scale,
-                (float)upperMetersPerUnit,
-                (float)lowerMetersPerUnit,
-                currentState.elevationConfiguration.zScaleFactor,
-                currentState.elevationConfiguration.dataScaleFactor);
-            GL_CHECK_RESULT;
+            zScaleFactor = currentState.elevationConfiguration.zScaleFactor;
+            dataScaleFactor = currentState.elevationConfiguration.dataScaleFactor;
             haveElevation = true;
         }
     }
+
+    // Per-tile elevation data configuration
+    glUniform4f(
+        program.vs.param.elevation_scale,
+        (float)upperMetersPerUnit,
+        (float)lowerMetersPerUnit,
+        zScaleFactor,
+        dataScaleFactor);
+    GL_CHECK_RESULT;
 
     // Shader expects blending to be premultiplied, since output color of fragment shader is premultiplied by alpha
     if (currentAlphaChannelType != AlphaChannelType::Premultiplied)
@@ -1404,9 +1480,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
+            bool withWindAnimation = false;
             const auto& batchedResourceInGPU = layer->resourcesInGPU[subtileIndex / subtileRasterFactor];
             switch (gpuAPI->getGpuResourceAlphaChannelType(batchedResourceInGPU->resourceInGPU))
             {
+                case AlphaChannelType::Opaque:
+                    withWindAnimation = true;
                 case AlphaChannelType::Premultiplied:
                     glUniform1f(perTile_fs.isPremultipliedAlpha, 1.0f);
                     GL_CHECK_RESULT;
@@ -1423,20 +1502,39 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             auto dateTimePrevious = batchedResourceInGPU->resourceInGPU->dateTimePrevious;
             auto dateTimeNext = batchedResourceInGPU->resourceInGPU->dateTimeNext;
             auto dateTimeStep = dateTimeNext - dateTimePrevious;
-            float transitionPhase;
-            if (dateTimeStep <= 0)
-                transitionPhase = -1.0f; // No transition needed
-            else if (currentState.dateTime <= dateTimePrevious)
-                transitionPhase = 0.0f;
-            else if (currentState.dateTime >= dateTimeNext)
-                transitionPhase = 1.0f;
-            else
+            auto step = static_cast<double>(dateTimeStep);
+            float transitionTime = static_cast<float>(step / 1000.0); // Transition time in seconds
+            float transitionStage = -1.0; // If no transition is needed
+            float animationStage = -1.0f; // If no animation is needed
+            float tileSizeInParticles = internalState.referenceTileSizeOnScreenInPixels / _particleSize;
+            if (dateTimeStep > 0)
             {
-                transitionPhase = static_cast<float>(
-                    static_cast<double>(currentState.dateTime - dateTimePrevious) / static_cast<double>(dateTimeStep));
+                if (currentState.dateTime <= dateTimePrevious)
+                    transitionStage = 0.0f;
+                else if (currentState.dateTime >= dateTimeNext)
+                    transitionStage = 1.0f;
+                else
+                {
+                    transitionStage =
+                        static_cast<float>(static_cast<double>(currentState.dateTime - dateTimePrevious) / step);
+                }
+                if (withWindAnimation)
+                {
+                    auto zoomFactor = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
+                    auto realTimeStage = static_cast<double>(QDateTime::currentMSecsSinceEpoch() % dateTimeStep) / step
+                        * zoomFactor * static_cast<double>(_particleSpeedFactor) / 186413.5;
+                    animationStage = static_cast<float>((realTimeStage - qFloor(realTimeStage)) * 10.0);
+                    if (animationStage >= 10.0f)
+                        animationStage = 9.999999f;
+                    invalidateFrame();
+                }
             }
 
-            glUniform1f(perTile_fs.transitionPhase, transitionPhase);
+            glUniform4f(perTile_fs.transitionPhase,
+                transitionStage,
+                transitionTime,
+                animationStage,
+                tileSizeInParticles);
             GL_CHECK_RESULT;
 
             auto texelSize = gpuAPI->getGpuResourceTexelSize(batchedResourceInGPU->resourceInGPU);
@@ -1471,12 +1569,26 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     texCoordsScale.x,
                     texCoordsScale.y);
                 GL_CHECK_RESULT;
+
+                glUniform4f(perTile_fs.texCoordsOffsetAndScale,
+                    texCoordsOffset.x,
+                    texCoordsOffset.y,
+                    texCoordsScale.x,
+                    texCoordsScale.y);
+                GL_CHECK_RESULT;
             }
             else // if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
             {
                 const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(batchedResourceInGPU->resourceInGPU);
 
                 glUniform4f(perTile_vs.texCoordsOffsetAndScale,
+                    batchedResourceInGPU->texCoordsOffset.x,
+                    batchedResourceInGPU->texCoordsOffset.y,
+                    batchedResourceInGPU->texCoordsScale.x,
+                    batchedResourceInGPU->texCoordsScale.y);
+                GL_CHECK_RESULT;
+
+                glUniform4f(perTile_fs.texCoordsOffsetAndScale,
                     batchedResourceInGPU->texCoordsOffset.x,
                     batchedResourceInGPU->texCoordsOffset.y,
                     batchedResourceInGPU->texCoordsScale.x,
@@ -1631,11 +1743,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
                 reinterpret_cast<const GLfloat*>(&pColorMapEntry->second));
             GL_CHECK_RESULT;
         }
-    }
-    else
-    {
-        glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
-        GL_CHECK_RESULT;
     }
 
     glUniform4f(program.fs.param.backgroundColor,
@@ -2171,9 +2278,6 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::cancelElevation(
     GL_CHECK_PRESENT(glBindTexture);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glDisableVertexAttribArray);
-
-    glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
-    GL_CHECK_RESULT;
 
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {

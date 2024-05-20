@@ -100,6 +100,9 @@ namespace OsmAnd
         QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(
             const QVector<TileId>& tiles, const QSet<TileId>& visibleTilesSet, ZoomLevel zoomLevel);
 
+        static const float _particleSize;
+        static const float _particleSpeedFactor;
+
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;
         GLsizei _rasterTileIndicesCount;
@@ -171,6 +174,7 @@ namespace OsmAnd
                         GLlocation sampler;
                         GLlocation isPremultipliedAlpha;
                         GLlocation opacityFactor;
+                        GLlocation texCoordsOffsetAndScale;
                         GLlocation transitionPhase;
                         GLlocation texelSize;
                     };

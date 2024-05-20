@@ -3,6 +3,10 @@
 #include "WeatherTileResourcesManager.h"
 #include "GeoTileRasterizer.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <cpl_vsi.h>
+#include "restore_internal_warnings.h"
+
 #include "Logging.h"
 #include "Utilities.h"
 #include "SkiaUtilities.h"
@@ -39,6 +43,52 @@ OsmAnd::WeatherTileResourceProvider_P::WeatherTileResourceProvider_P(
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
+    // Create GDAL color configuration files to use them when rasterized wind vectors are needed
+    auto windColorConfig = QStringLiteral(
+        "-79.999996,0,0,0,255\n"
+        "-70.0,255,0,0,255\n"
+        "-69.999996,0,1,0,255\n"
+        "-60.0,255,1,0,255\n"
+        "-59.999996,0,2,0,255\n"
+        "-50.0,255,2,0,255\n"
+        "-49.999996,0,3,0,255\n"
+        "-40.0,255,3,0,255\n"
+        "-39.999996,0,4,0,255\n"
+        "-30.0,255,4,0,255\n"
+        "-29.999998,0,5,0,255\n"
+        "-20.0,255,5,0,255\n"
+        "-19.999998,0,6,0,255\n"
+        "-10.0,255,6,0,255\n"
+        "-9.999999,0,7,0,255\n"
+        "-1.17549e-38,255,7,0,255\n"
+        "0.0,0,8,0,255\n"
+        "9.999999,255,8,0,255\n"
+        "10.0,0,9,0,255\n"
+        "19.999998,255,9,0,255\n"
+        "20.0,0,10,0,255\n"
+        "29.999998,255,10,0,255\n"
+        "30.0,0,11,0,255\n"
+        "39.999996,255,11,0,255\n"
+        "40.0,0,12,0,255\n"
+        "49.999996,255,12,0,255\n"
+        "50.0,0,13,0,255\n"
+        "59.999996,255,13,0,255\n"
+        "60.0,0,14,0,255\n"
+        "69.999996,255,14,0,255\n"
+        "70.0,0,15,0,255\n"
+        "79.999996,255,15,0,255\n").toLocal8Bit();
+
+    auto colorBufferSize = windColorConfig.size();
+    auto colorBuffer = new char[colorBufferSize];
+    memcpy(colorBuffer, windColorConfig.constData(), colorBufferSize);
+    if (const auto file = VSIFileFromMemBuffer(qPrintable(WeatherTileResourceProvider::_windColorProfile),
+        reinterpret_cast<GByte*>(colorBuffer), colorBufferSize, TRUE))
+    {
+        VSIFCloseL(file);
+    }
+    else
+        delete colorBuffer;
+
     _obtainValueThreadPool->setMaxThreadCount(1);
     _obtainCacheDataThreadPool->setMaxThreadCount(1);
     _obtainOnlineDataThreadPool->setMaxThreadCount(4);
@@ -518,6 +568,34 @@ bool OsmAnd::WeatherTileResourceProvider_P::importTileData(const QString& dbFile
     return true;
 }
 
+QList<OsmAnd::BandIndex> OsmAnd::WeatherTileResourceProvider_P::getAllBandCombinations()
+{
+    WeatherBand bandNumbers[] = {
+        WeatherBand::Cloud,
+        WeatherBand::Temperature,
+        WeatherBand::Pressure,
+        WeatherBand::WindSpeed,
+        WeatherBand::Precipitation,
+        WeatherBand::WindWestToEast, // Should always be in the end of this array
+        WeatherBand::WindSouthToNorth}; // Should always be in the end of this array
+    const auto bandsCount = sizeof(bandNumbers) / sizeof(WeatherBand) - 2;
+    const auto combinationsCount = (1u << bandsCount) - 1;
+    std::bitset<sizeof(BandIndex)> bits;
+    QList<BandIndex> values;
+    for (BandIndex i = 0; i < combinationsCount; i++)
+    {
+        BandIndex combination = 0;
+        bits = i + 1;
+        for (BandIndex j = 0; j < bandsCount; j++)
+            combination |= bits[j] ? 1u << static_cast<int>(bandNumbers[j]) : 0;
+        values.append(combination << 8);
+    }
+    for (BandIndex i = 0; i < bandsCount; i++)
+        values.append(static_cast<BandIndex>(bandNumbers[i]));
+
+    return values;
+}
+
 uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
     const QList<TileId>& tileIds,
     const QList<TileId>& excludeTileIds,
@@ -557,23 +635,18 @@ uint64_t OsmAnd::WeatherTileResourceProvider_P::calculateTilesSize(
         }
     }
 
-    WeatherBand values[] = {
-        WeatherBand::Cloud,
-        WeatherBand::Temperature,
-        WeatherBand::Pressure,
-        WeatherBand::WindSpeed,
-        WeatherBand::Precipitation };
-    for (WeatherBand band : values)
+    const auto values = getAllBandCombinations();
+    for (auto band : values)
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
             + QStringLiteral("weather_cache_")
-            + QString::number(static_cast<BandIndex>(band))
+            + QString::number(band)
             + QStringLiteral(".db");
 
         if (QFile(rasterDbCachePath).exists())
         {
-            auto rasterDb = getRasterTilesDatabase(static_cast<BandIndex>(band));
+            auto rasterDb = getRasterTilesDatabase(band);
             if (rasterDb)
             {
                 QReadLocker geoScopedLocker(&_rasterDbLock);
@@ -631,24 +704,19 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileDataBefore(
         res &= geoDb->removePreviousTilesData(dateTime);
     }
 
-    WeatherBand values[] = {
-        WeatherBand::Cloud,
-        WeatherBand::Temperature,
-        WeatherBand::Pressure,
-        WeatherBand::WindSpeed,
-        WeatherBand::Precipitation };
     auto dateTiemStr = Utilities::getDateTimeString(dateTime);
-    for (WeatherBand band : values)
+    const auto values = getAllBandCombinations();
+    for (auto band : values)
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
             + QStringLiteral("weather_cache_")
-            + QString::number(static_cast<BandIndex>(band))
+            + QString::number(band)
             + QStringLiteral(".db");
 
         if (QFile(rasterDbCachePath).exists())
         {
-            auto rasterTileDb = getRasterTilesDatabase(static_cast<BandIndex>(band));
+            auto rasterTileDb = getRasterTilesDatabase(band);
             if (rasterTileDb)
             {
                 QWriteLocker rasterScopedLocker(&_rasterDbLock);
@@ -676,24 +744,19 @@ bool OsmAnd::WeatherTileResourceProvider_P::removeTileData(
         res &= removeTileIds(geoDb, tileIds, excludeTileIds, zoom, dateTime);
     }
 
-    WeatherBand values[] = {
-        WeatherBand::Cloud,
-        WeatherBand::Temperature,
-        WeatherBand::Pressure,
-        WeatherBand::WindSpeed,
-        WeatherBand::Precipitation };
     auto dateTiemStr = Utilities::getDateTimeString(dateTime);
-    for (WeatherBand band : values)
+    const auto values = getAllBandCombinations();
+    for (auto band : values)
     {
         auto rasterDbCachePath = localCachePath
             + QDir::separator()
             + QStringLiteral("weather_cache_")
-            + QString::number(static_cast<BandIndex>(band))
+            + QString::number(band)
             + QStringLiteral(".db");
 
         if (QFile(rasterDbCachePath).exists())
         {
-            auto rasterTileDb = getRasterTilesDatabase(static_cast<BandIndex>(band));
+            auto rasterTileDb = getRasterTilesDatabase(band);
             if (rasterTileDb)
             {
                 QWriteLocker rasterScopedLocker(&_rasterDbLock);
@@ -896,13 +959,15 @@ OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::~ObtainTileTask()
 
 sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::createTileImage(
     const QHash<BandIndex, sk_sp<const SkImage>>& bandImages,
-    const QList<BandIndex>& bands)
+    const QList<BandIndex>& bands,
+    const bool withWindAnimation)
 {
     const auto provider = _provider.lock();
     if (!provider || bandImages.empty() || bands.empty())
         return nullptr;
 
-    QList<sk_sp<const SkImage>> images;
+    QList<sk_sp<const SkImage>> topImages;
+    QList<sk_sp<const SkImage>> bottomImages;
     QList<float> alphas;
     const auto& bandSettings = provider->getBandSettings();
     for (auto band : bands)
@@ -910,17 +975,36 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::crea
         const auto citImage = bandImages.constFind(band);
         if (citImage != bandImages.cend())
         {
-            images << *citImage;
-            alphas << bandSettings[band]->opacity;
+            if (band != static_cast<BandIndex>(WeatherBand::WindWestToEast)
+                && band != static_cast<BandIndex>(WeatherBand::WindSouthToNorth))
+            {
+                topImages << *citImage;
+                alphas << bandSettings[band]->opacity;
+            }
+            else
+                bottomImages << *citImage;
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to create tile image of weather tile. Band %d is not rasterized.", band);
+            if (band == static_cast<BandIndex>(WeatherBand::WindWestToEast)
+                || band == static_cast<BandIndex>(WeatherBand::WindSouthToNorth))
+            {
+                return nullptr;
+            }
         }
     }
 
-    return SkiaUtilities::mergeImages(images, alphas);
+    const auto top = SkiaUtilities::mergeImages(topImages, alphas);
+
+    const auto result = bottomImages.size() == 2
+        ? SkiaUtilities::stackImages(top, bottomImages[0], bottomImages[1],  // add wind vector data
+            // opaque alpha works the same way but turns wind animation on in shader
+            withWindAnimation ? SkAlphaType::kOpaque_SkAlphaType : SkAlphaType::kPremul_SkAlphaType)
+        : SkiaUtilities::cropImage(top, 5); // remove overlap from tile data
+
+    return result;
 }
 
 void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
@@ -939,7 +1023,7 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::run()
 }
 
 sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterImage(
-    int64_t dateTime, bool& success)
+    int64_t dateTime, bool withWindVectors, bool& success)
 {
     success = false;
     const auto provider = _provider.lock();
@@ -949,6 +1033,24 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     TileId tileId = request->tileId;
     ZoomLevel zoom = request->zoom;
     auto bands = request->bands;
+
+    bool withWindAnimation = false;
+    if (bands.contains(static_cast<BandIndex>(WeatherBand::WindAnimation)))
+    {
+        bands.removeOne(static_cast<BandIndex>(WeatherBand::WindAnimation));
+        withWindAnimation = withWindVectors;
+    }
+    else if (bands.contains(static_cast<BandIndex>(WeatherBand::WindSpeed)))
+        withWindAnimation = withWindVectors;
+
+    BandIndex combination = 0;
+    if (withWindVectors)
+    {
+        for (auto band : bands)
+            combination |= 1u << band + 8;
+        bands.append(static_cast<BandIndex>(WeatherBand::WindWestToEast));
+        bands.append(static_cast<BandIndex>(WeatherBand::WindSouthToNorth));
+    }
     bool cacheOnly = request->cacheOnly;
     bool localData = request->localData || cacheOnly;
 
@@ -995,6 +1097,36 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     int64_t minTimestampOfRaster = INT64_MAX;
     const auto currentTime = QDateTime::currentMSecsSinceEpoch();
 
+    if  (withWindVectors)
+    {
+        auto db = provider->getRasterTilesDatabase(combination);
+        if (db && db->isOpened())
+        {
+            QByteArray data;
+            int64_t rasterTime = 0;
+            int64_t rasterTimestamp = 0;
+            if (db->obtainTileData(tileId, zoom, dateTime, data, &rasterTime, &rasterTimestamp) && !data.isEmpty())
+            {
+                int64_t geoTileTime = 0;
+                if (provider->obtainGeoTileTime(geoTileId, geoTileZoom, dateTime, geoTileTime)
+                    && rasterTime >= geoTileTime)
+                {
+                    bool isFreshRaster = currentTime - rasterTimestamp < RASTER_FRESHNESS_PERIOD;
+                    const auto image = SkiaUtilities::createImageFromRawData(data,
+                        withWindAnimation ? SkAlphaType::kOpaque_SkAlphaType : SkAlphaType::kPremul_SkAlphaType);
+                    if (image && (localData || isFreshRaster))
+                    {
+                        if (!localData)
+                            provider->unlockRasterTile(tileId, zoom);
+
+                        success = isFreshRaster; // without "success" to initiate second reqiuest for a fresh data
+                        return image;
+                    }
+                }
+            }
+        }
+    }
+
     for (auto band : bands)
     {
         auto db = provider->getRasterTilesDatabase(band);
@@ -1029,10 +1161,29 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     if (!images.empty() && missingBands.empty() && (localData || isFreshRaster))
     {
+        auto image = createTileImage(images, bands, withWindAnimation);
+
+        if (image && withWindVectors)
+        {
+            const auto data = SkiaUtilities::getRawDataFromImage(image);
+            if (!data.isEmpty())
+            {
+                auto db = provider->getRasterTilesDatabase(combination);
+                if (db && db->isOpened())
+                {
+                    if (!db->storeTileData(tileId, zoom, dateTime, data, minTimeOfRaster, currentTime))
+                    {
+                        LogPrintf(LogSeverityLevel::Error,
+                            "Failed to store tile image of combined weather tile %dx%dx%d for time %lld",
+                                tileId.x, tileId.y, zoom, dateTime);
+                    }
+                }
+            }
+        }
+
         if (!localData)
             provider->unlockRasterTile(tileId, zoom);
 
-        auto image = createTileImage(images, bands);
         if (image)
         {
             success = isFreshRaster; // without "success" to initiate second reqiuest for a fresh data
@@ -1074,10 +1225,17 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
                 db->updateTileTimestamp(tileId, zoom, currentTime);
         }
 
+        if (withWindVectors)
+        {
+            auto db = provider->getRasterTilesDatabase(combination);
+            if (db && db->isOpened())
+                db->updateTileTimestamp(tileId, zoom, currentTime);
+        }
+
         if (!localData)
             provider->unlockRasterTile(tileId, zoom);
 
-        auto image = createTileImage(images, bands);
+        auto image = createTileImage(images, bands, withWindAnimation);
         if (image)
         {
             success = true;
@@ -1144,7 +1302,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
 
     if (!localData)
         provider->unlockRasterTile(tileId, zoom);
-    
+
     if (request->version != provider->getCurrentRequestVersion())
     {
         LogPrintf(LogSeverityLevel::Debug,
@@ -1161,7 +1319,7 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     images.insert(rasterizedImages);
     if (!images.empty())
     {
-        auto image = createTileImage(images, bands);
+        auto image = createTileImage(images, bands, withWindAnimation);
         if (image)
             return image; // without "success" to initiate second reqiuest for a fresh data
         else
@@ -1173,6 +1331,9 @@ sk_sp<const SkImage> OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obta
     }
     else
     {
+        if (!localData)
+            provider->unlockRasterTile(tileId, zoom);
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to create tile image of non rasterized weather tile %dx%dx%d", tileId.x, tileId.y, zoom);
         return nullptr;
@@ -1193,9 +1354,10 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainRasterTile()
     bool cacheOnly = request->cacheOnly;
     QMap<int64_t, sk_sp<const SkImage>> images;
     bool success;
+    bool withWindVectors = dateTime + timeGap <= dateTimeLast;
     while (dateTime <= dateTimeLast)
     {
-        auto image = obtainRasterImage(dateTime, success);
+        auto image = obtainRasterImage(dateTime, withWindVectors, success);
         if (image)
         {
             images.insert(dateTime, image);
@@ -1247,6 +1409,9 @@ void OsmAnd::WeatherTileResourceProvider_P::ObtainTileTask::obtainContourTile()
     auto bands = request->bands;
     bool cacheOnly = request->cacheOnly;
     bool localData = request->localData || cacheOnly;
+
+    if (bands.contains(static_cast<BandIndex>(WeatherBand::WindAnimation)))
+        bands.removeOne(static_cast<BandIndex>(WeatherBand::WindAnimation));
 
     if (request->queryController && request->queryController->isAborted())
     {

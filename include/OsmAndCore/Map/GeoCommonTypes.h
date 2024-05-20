@@ -7,16 +7,18 @@
 
 namespace OsmAnd
 {
-    typedef uint8_t BandIndex;
+    typedef uint32_t BandIndex;
     
     enum class WeatherBand
     {
-        Undefined = 0,
+        WindAnimation = 0,
         Cloud = 1,
         Temperature = 2,
         Pressure = 3,
         WindSpeed = 4,
-        Precipitation = 5
+        Precipitation = 5,
+        WindWestToEast = 6,
+        WindSouthToNorth = 7
     };
 }
 
