@@ -413,7 +413,7 @@ void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Aut
 void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
 {
     if (!copyright->author.isEmpty())
-        xmlWriter.writeTextElement(QStringLiteral("author"), copyright->author);
+        xmlWriter.writeAttribute(QStringLiteral("author"), copyright->author);
 
     writeNotNullText(xmlWriter, QStringLiteral("year"), copyright->year);
     writeNotNullText(xmlWriter, QStringLiteral("license"), copyright->license);
