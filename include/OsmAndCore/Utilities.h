@@ -54,7 +54,7 @@ namespace OsmAnd
 
         inline static QString getDateTimeString(int64_t dateTime)
         {
-            int64_t time = qBound(-100000000000000ll, dateTime, 100000000000000ll);
+            int64_t time = qBound(-100000000000000ll, static_cast<long long>(dateTime), 100000000000000ll);
             QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
             return locale.toString(QDateTime::fromMSecsSinceEpoch(time, Qt::UTC), QStringLiteral("yyyyMMdd_hh00"));
         }
