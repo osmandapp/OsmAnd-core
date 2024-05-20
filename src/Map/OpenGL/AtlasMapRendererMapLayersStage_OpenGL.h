@@ -102,6 +102,7 @@ namespace OsmAnd
 
         static const float _particleSize;
         static const float _particleSpeedFactor;
+        static const ZoomLevel _particleConstantSpeedMinZoom;
 
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;

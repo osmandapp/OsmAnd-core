@@ -23,7 +23,10 @@
 // Size of wind particle in pixels (default is 5.0f)
 const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSize = 5.0f;
 
-// Factor for speed of wind (default is 1.0f - for 1 hour per second on ZoomLevel5)
+// Minimum zoom level for constant speed of particles on screen (if less - speed is constant on map)
+const OsmAnd::ZoomLevel OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleConstantSpeedMinZoom = ZoomLevel6;
+
+// Factor for speed of wind particles (default is 1.0f - for 1 hour per second on _particleConstantSpeedMinZoom)
 const float OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::_particleSpeedFactor = 1.0f;
 
 OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* renderer_)
@@ -739,7 +742,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    vec2 intCoords = floor(pixCoords);                                                                             ""\n"
         "    float randValue = abs(fract(sin(dot(intCoords / tileSize + normSeed, vec2(12.9898, 78.233))) * 43758.5453));   ""\n"
-        "    return randValue > 0.97 ? 1.0 : 0.0;                                                                           ""\n"
+        "    return randValue > 0.98 ? 1.0 : 0.0;                                                                           ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void getParticleColor(in vec2 pixCoords, in vec2 windVector, in vec2 tileSize, in float seed, out lowp vec4 color) ""\n"
@@ -1520,9 +1523,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 }
                 if (withWindAnimation)
                 {
-                    auto zoomFactor = static_cast<double>(1u << (ZoomLevel::MaxZoomLevel - currentState.zoomLevel));
-                    auto realTimeStage = static_cast<double>(QDateTime::currentMSecsSinceEpoch() % dateTimeStep) / step
-                        * zoomFactor * static_cast<double>(_particleSpeedFactor) / 186413.5;
+                    const auto zoomDelta = 
+                        static_cast<int>(currentState.zoomLevel) - static_cast<int>(_particleConstantSpeedMinZoom);
+                    const auto zoomSpeedFactor = 360.0 / (zoomDelta > 0 ? static_cast<double>(1u << zoomDelta) : 1.0);
+                    const auto realTimeStage = static_cast<double>(QDateTime::currentMSecsSinceEpoch() % dateTimeStep)
+                        / step * static_cast<double>(_particleSpeedFactor) * zoomSpeedFactor;
                     animationStage = static_cast<float>((realTimeStage - qFloor(realTimeStage)) * 10.0);
                     if (animationStage >= 10.0f)
                         animationStage = 9.999999f;
