@@ -26,7 +26,8 @@ namespace OsmAnd
         {
             Heightmap,
             Hillshade,
-            Slope
+            Slope,
+            Height
         };        
         struct ProcessingParameters
         {

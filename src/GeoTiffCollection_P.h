@@ -121,6 +121,7 @@ namespace OsmAnd
         std::shared_ptr<TileSqliteDatabase> heightmapCache;
         std::shared_ptr<TileSqliteDatabase> hillshadeCache;
         std::shared_ptr<TileSqliteDatabase> slopeCache;
+        std::shared_ptr<TileSqliteDatabase> heightCache;
 
         void invalidateCollectedSources();
         void clearCollectedSources() const;

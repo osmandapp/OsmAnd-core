@@ -495,7 +495,39 @@ inline bool OsmAnd::GeoTiffCollection_P::postProcess(
     if (const auto heightmapDataset = (GDALDataset*) GDALOpen(filename, GA_ReadOnly))
     {
         auto band = heightmapDataset->GetRasterBand(1);
-        if (band && heightmapDataset->SetGCPs(gcpCount, pGCPList, "") == CE_None)
+        if (procParameters.rasterType == GeoTiffCollection::RasterType::Height)
+        {
+            // Produce colorized height raster
+            if (band && heightmapDataset->SetGCPs(gcpCount, pGCPList, "") == CE_None)
+            {
+                band->SetNoDataValue(TIFF_NODATA);
+                char outputFormat[] = "MEM";
+                const char* colorizeArgs[] = { "-of", outputFormat, "-alpha", NULL };
+                if (GDALDEMProcessingOptions* colorizeOptions = GDALDEMProcessingOptionsNew(
+                    const_cast<char **>(colorizeArgs), NULL))
+                {
+                    const auto resultDataset = (GDALDataset*) GDALDEMProcessing(
+                        outputFormat,
+                        heightmapDataset,
+                        "color-relief",
+                        qPrintable(procParameters.resultColorsFilename),
+                        colorizeOptions,
+                        nullptr);
+                    if (resultDataset)
+                    {
+                        const auto resultOffset = overlap / 2;
+                        const auto resultSize = tileSize - overlap;
+                        result = resultDataset->RasterIO(GF_Read,
+                            resultOffset, resultOffset, resultSize, resultSize,
+                            pBuffer, resultSize, resultSize, GDT_Byte, 4, nullptr,
+                            4, resultSize * 4, 1, nullptr) == CE_None;
+                        GDALClose(resultDataset);
+                    }
+                    GDALDEMProcessingOptionsFree(colorizeOptions);
+                }
+            }
+        }
+        else if (band && heightmapDataset->SetGCPs(gcpCount, pGCPList, "") == CE_None)
         {
             band->SetNoDataValue(TIFF_NODATA);
             // Prepare common slope raster
@@ -754,6 +786,7 @@ void OsmAnd::GeoTiffCollection_P::setLocalCache(const QDir& localCacheDir)
         heightmapCache = openCacheFile(QStringLiteral("heightmap_cache.sqlite"));
         hillshadeCache = openCacheFile(QStringLiteral("hillshade_cache.sqlite"));
         slopeCache = openCacheFile(QStringLiteral("slope_cache.sqlite"));
+        heightCache = openCacheFile(QStringLiteral("height_cache.sqlite"));
     }
 
     clearCollectedSources();
@@ -774,6 +807,9 @@ bool OsmAnd::GeoTiffCollection_P::removeFileTilesFromCache(
             break;
         case GeoTiffCollection::RasterType::Slope:
             cacheDatabase = slopeCache;
+            break;
+        case GeoTiffCollection::RasterType::Height:
+            cacheDatabase = heightCache;
             break;
         default:
             cacheDatabase = heightmapCache;
@@ -797,6 +833,9 @@ bool OsmAnd::GeoTiffCollection_P::refreshTilesInCache(const GeoTiffCollection::R
         case GeoTiffCollection::RasterType::Slope:
             cacheDatabase = slopeCache;
             break;
+        case GeoTiffCollection::RasterType::Height:
+            cacheDatabase = heightCache;
+            break;
         default:
             cacheDatabase = heightmapCache;
     }
@@ -816,6 +855,9 @@ bool OsmAnd::GeoTiffCollection_P::removeOlderTilesFromCache(
             break;
         case GeoTiffCollection::RasterType::Slope:
             cacheDatabase = slopeCache;
+            break;
+        case GeoTiffCollection::RasterType::Height:
+            cacheDatabase = heightCache;
             break;
         default:
             cacheDatabase = heightmapCache;
@@ -1024,17 +1066,33 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
 
                 if (tileFound)
                 {
-                    const auto hash = qHash(filePath);
-                    const auto specification = *(reinterpret_cast<const int*>(&hash));
-                        
+                    int specification;
                     // Check one time if data is available in cache file
                     if (!cacheDatabase)
                     {
+                        uint hash;
                         if (procParameters)
-                            cacheDatabase = procParameters->rasterType == GeoTiffCollection::RasterType::Hillshade
-                                ? hillshadeCache : slopeCache;
+                        {
+                            hash = qHash(procParameters->resultColorsFilename);
+                            switch (procParameters->rasterType)
+                            {
+                                case GeoTiffCollection::RasterType::Slope:
+                                    cacheDatabase = slopeCache;
+                                    break;
+                                case GeoTiffCollection::RasterType::Height:
+                                    cacheDatabase = heightCache;
+                                    break;
+                                default:
+                                    cacheDatabase = hillshadeCache;
+
+                            }
+                        }
                         else
+                        {
+                            hash = qHash(filePath);
                             cacheDatabase = heightmapCache;
+                        }
+                        specification = *(reinterpret_cast<int*>(&hash));                        
                         if (cacheDatabase && cacheDatabase->isOpened() &&
                             cacheDatabase->obtainTileData(tileId, zoom, pBuffer, minValue, maxValue))
                         {
@@ -1216,7 +1274,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 if (!result)
                                     empty = true;
                             }
-                            // Hillshade/slope raster processing
+                            // Hillshade/slope/height raster processing
                             if (procParameters)
                             {
                                 if (compose)
@@ -1247,7 +1305,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                 }
                                 else
                                 {
-                                    // Produce hillshade/slope raster from heightmap data
+                                    // Produce hillshade/slope/height raster from heightmap data
                                     result = result && destDataType == GDT_Byte && bandCount == 4 &&
                                         postProcess(pByteBuffer, *procParameters, tileSize, overlap, tileOrigin,
                                             tileResolution, gcpCount, gcpList, pBuffer);                                
@@ -1297,7 +1355,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
         bool result = true;
         if (atLeastOnePresent)
         {
-            // Produce hillshade/slope raster from heightmap data
+            // Produce hillshade/slope/height raster from heightmap data
             result = postProcess(compositeTile.constData(), *procParameters, tileSize, overlap, compositeOrigin,
                 compositeResolution, compositeGCPCount, compositeGCPList.constData(), pBuffer);
         }
