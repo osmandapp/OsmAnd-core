@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_WEATHER_TILE_RESOURCE_PROVIDER_P_H_
 
 #include "stdlib_common.h"
+#include <bitset>
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
