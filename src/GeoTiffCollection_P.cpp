@@ -1086,7 +1086,7 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                             const auto hash = qHash(procParameters->colorsFilename);
                             specification = *(reinterpret_cast<const int*>(&hash));                        
                             if (cacheDatabase && cacheDatabase->isOpened() &&
-                                cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
+                                cacheDatabase->obtainTileData(tileId, zoom, specification, pBuffer))
                             {
                                 return GeoTiffCollection::CallResult::Completed;
                             }
