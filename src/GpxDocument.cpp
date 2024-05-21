@@ -184,14 +184,14 @@ void OsmAnd::GpxDocument::writeMetadata(const Ref<Metadata>& metadata, const QSt
     writeNotNullText(xmlWriter, QStringLiteral("name"), trackName);
     writeNotNullText(xmlWriter, QStringLiteral("desc"), metadata->description);
 
-    if (metadata->author)
+    if (metadata->author && !metadata->author->name.isEmpty())
     {
         xmlWriter.writeStartElement(QStringLiteral("author"));
         writeAuthor(xmlWriter, metadata->author);
         xmlWriter.writeEndElement();
     }
 
-    if (metadata->copyright)
+    if (metadata->copyright && !metadata->copyright->author.isEmpty())
     {
         xmlWriter.writeStartElement(QStringLiteral("copyright"));
         writeCopyright(xmlWriter, metadata->copyright);
@@ -412,7 +412,9 @@ void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Aut
 
 void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
 {
-    xmlWriter.writeTextElement(QStringLiteral("author"), copyright->author);
+    if (!copyright->author.isEmpty())
+        xmlWriter.writeAttribute(QStringLiteral("author"), copyright->author);
+
     writeNotNullText(xmlWriter, QStringLiteral("year"), copyright->year);
     writeNotNullText(xmlWriter, QStringLiteral("license"), copyright->license);
 }
