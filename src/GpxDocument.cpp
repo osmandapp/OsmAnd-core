@@ -412,7 +412,9 @@ void OsmAnd::GpxDocument::writeAuthor(QXmlStreamWriter& xmlWriter, const Ref<Aut
 
 void OsmAnd::GpxDocument::writeCopyright(QXmlStreamWriter& xmlWriter, const Ref<Copyright>& copyright)
 {
-    xmlWriter.writeTextElement(QStringLiteral("author"), copyright->author);
+    if (copyright->author != nullptr)
+        xmlWriter.writeAttribute(QStringLiteral("author"), copyright->author);
+
     writeNotNullText(xmlWriter, QStringLiteral("year"), copyright->year);
     writeNotNullText(xmlWriter, QStringLiteral("license"), copyright->license);
 }
@@ -900,8 +902,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     if (tag == QStringLiteral("metadata"))
                     {
                         const auto metadata = std::make_shared<Metadata>();
-                        metadata->author = std::make_shared<Author>();
-                        metadata->copyright = std::make_shared<Copyright>();
                         gpxDocument->metadata = metadata;
                         parserState.push(metadata);
                     }
