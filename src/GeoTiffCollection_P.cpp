@@ -1070,10 +1070,8 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                     // Check one time if data is available in cache file
                     if (!cacheDatabase)
                     {
-                        uint hash;
                         if (procParameters)
                         {
-                            hash = qHash(procParameters->colorsFilename);
                             switch (procParameters->rasterType)
                             {
                                 case GeoTiffCollection::RasterType::Slope:
@@ -1084,24 +1082,30 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
                                     break;
                                 default:
                                     cacheDatabase = hillshadeCache;
-
+                            }
+                            const auto hash = qHash(procParameters->colorsFilename);
+                            specification = *(reinterpret_cast<const int*>(&hash));                        
+                            if (cacheDatabase && cacheDatabase->isOpened() &&
+                                cacheDatabase->obtainTileData(tileId, zoom, pBuffer))
+                            {
+                                return GeoTiffCollection::CallResult::Completed;
                             }
                         }
                         else
                         {
-                            hash = qHash(filePath);
                             cacheDatabase = heightmapCache;
-                        }
-                        specification = *(reinterpret_cast<int*>(&hash));                        
-                        if (cacheDatabase && cacheDatabase->isOpened() &&
-                            cacheDatabase->obtainTileData(tileId, zoom, pBuffer, minValue, maxValue))
-                        {
-                            if (!procParameters && (minValue == std::numeric_limits<float>::max()
-                                || maxValue == std::numeric_limits<float>::lowest()))
+                            const auto hash = qHash(filePath);
+                            specification = *(reinterpret_cast<const int*>(&hash));
+                            if (cacheDatabase && cacheDatabase->isOpened() &&
+                                cacheDatabase->obtainTileData(tileId, zoom, pBuffer, minValue, maxValue))
                             {
-                                getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
+                                if (minValue == std::numeric_limits<float>::max()
+                                    || maxValue == std::numeric_limits<float>::lowest())
+                                {
+                                    getMinMaxValues(pByteBuffer, destDataType, noData, valueCount, minValue, maxValue);
+                                }
+                                return GeoTiffCollection::CallResult::Completed;
                             }
-                            return GeoTiffCollection::CallResult::Completed;
                         }
                     }
 
