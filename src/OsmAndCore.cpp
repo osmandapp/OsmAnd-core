@@ -11,6 +11,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QLocale>
+#include <QDateTime>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <gdal.h>
@@ -144,6 +145,12 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(
     EmbeddedTypefaceFinder_initialize();
     TextRasterizer_initialize();
     MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
+
+    const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+    QLocale locale = QLocale(QLocale::English, QLocale::UnitedStates);
+    QString initTime =
+        locale.toString(QDateTime::fromMSecsSinceEpoch(currentTime, Qt::UTC), QStringLiteral("MMMM d yyyy"));
+    LogPrintf(LogSeverityLevel::Info, "OsmAnd Core was initialized successfully on %s", qPrintable(initTime));
 
     return true;
 }
