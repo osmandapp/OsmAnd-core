@@ -180,7 +180,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->image = qMove(rasterizedText);
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
-                    rasterizedSymbol->content = textSymbol->value;
+                    rasterizedSymbol->content = textSymbol->baseValue;
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->glyphsWidth = glyphsWidth;
@@ -253,7 +253,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->image = rasterizedText;
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
-                    rasterizedSymbol->content = textSymbol->value;
+                    rasterizedSymbol->content = textSymbol->baseValue;
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->location31 = textSymbol->location31;
