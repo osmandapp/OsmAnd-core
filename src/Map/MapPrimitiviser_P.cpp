@@ -2038,6 +2038,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const std::shared_ptr<TextSymbol> text(new TextSymbol(primitive));
         text->location31 = location;
         text->languageId = languageId;
+        text->baseValue = caption;
         text->value = caption;
         text->scaleFactor = env->symbolsScaleFactor;
 

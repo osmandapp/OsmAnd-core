@@ -211,6 +211,7 @@ namespace OsmAnd
         public:
             virtual ~TextSymbol();
 
+            QString baseValue;
             QString value;
             LanguageId languageId;
             bool drawOnPath;
