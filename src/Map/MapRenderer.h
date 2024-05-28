@@ -60,8 +60,9 @@ namespace OsmAnd
             MaxMissingDataUnderZoomShift = 2,
             HeixelsPerTileSide = (1 << MapRenderer::MaxMissingDataZoomShift) + 1,
             ElevationDataTileSize = HeixelsPerTileSide + 2,
-            MaxNumberOfTilesToUseUnderscaledOnce = 16, // Maximum number of visible tiles allowed / 4
-            MaxNumberOfTilesToUseUnderscaledTwice = 4 // Maximum number of visible tiles allowed / 16
+            MaxNumberOfTilesAllowed = 64,
+            MaxNumberOfTilesToUseUnderscaledOnce = MaxNumberOfTilesAllowed >> 2,
+            MaxNumberOfTilesToUseUnderscaledTwice = MaxNumberOfTilesToUseUnderscaledOnce >> 2
         };
 
     private:

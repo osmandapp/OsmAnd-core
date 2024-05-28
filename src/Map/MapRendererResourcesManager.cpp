@@ -549,12 +549,14 @@ void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const Map
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(
     QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset, int visibleTilesCount)
+    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, QSet<TileId>& extraDetailedTiles,
+    int zoomLevelOffset, int visibleTilesCount)
 {
     // Check if update needed
     bool update = true; //NOTE: So far this won't work, since resources won't be updated
     update = update || (_activeTiles != activeTiles) || (_activeTilesTargets != activeTilesTargets)
         || (_visibleTiles != visibleTiles)
+        || (_extraDetailedTiles != extraDetailedTiles)
         || (_zoomLevelOffset != zoomLevelOffset)
         || (_visibleTilesCount != visibleTilesCount);
 
@@ -569,6 +571,7 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(
         _visibleTiles = visibleTiles;
         _activeTiles = activeTiles;
         _activeTilesTargets = activeTilesTargets;
+        _extraDetailedTiles = extraDetailedTiles;
 
         // Wake up the worker
         _workerThreadWakeup.wakeAll();
@@ -741,6 +744,7 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
         QMap<ZoomLevel, QVector<TileId>> visibleTiles;
         QMap<ZoomLevel, QVector<TileId>> activeTiles;
         QMap<ZoomLevel, TileId> activeTilesTargets;
+        QSet<TileId> extraDetailedTiles;
 
         // Wait until we're unblocked by host
         {
@@ -753,12 +757,13 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
             visibleTiles = _visibleTiles;
             activeTiles = _activeTiles;
             activeTilesTargets = _activeTilesTargets;
+            extraDetailedTiles = _extraDetailedTiles;
         }
         if (!_workerThreadIsAlive)
             break;
 
         // Update resources
-        updateResources(activeTiles, activeTilesTargets, visibleTiles, zoomLevelOffset);
+        updateResources(activeTiles, activeTilesTargets, visibleTiles, extraDetailedTiles, zoomLevelOffset);
     }
 
     _workerThreadId = nullptr;
@@ -819,6 +824,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     const ZoomLevel activeZoom,
     const ZoomLevel currentZoom,
     const QVector<TileId>& visibleTiles,
+    const QSet<TileId>& extraDetailedTiles,
     const int zoomLevelOffset)
 {
     _requestedResourcesTasks.resize(0);
@@ -828,9 +834,15 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             continue;
 
         if (resourcesCollection->type != MapRendererResourceType::ElevationData)
-            requestNeededResources(resourcesCollection, centerTileId, visibleTiles, activeZoom, currentZoom, zoomLevelOffset);
+        {
+            requestNeededResources(resourcesCollection, centerTileId, visibleTiles, extraDetailedTiles,
+                activeZoom, currentZoom, zoomLevelOffset);
+        }
         else
-            requestNeededResources(resourcesCollection, centerTileId, activeTiles, activeZoom, currentZoom, zoomLevelOffset);
+        {
+            requestNeededResources(resourcesCollection, centerTileId, activeTiles, extraDetailedTiles,
+                activeZoom, currentZoom, zoomLevelOffset);
+        }
     }
 
     _resourcesRequestWorkerPool.enqueue(
@@ -852,6 +864,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
     const TileId centerTileId,
     const QVector<TileId>& activeTiles,
+    const QSet<TileId>& extraDetailedTiles,
     const ZoomLevel activeZoom,
     const ZoomLevel currentZoom,
     const int zoomLevelOffset)
@@ -870,6 +883,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
                 tiledResourcesCollection,
                 centerTileId,
                 activeTiles,
+                extraDetailedTiles,
                 activeZoom,
                 currentZoom,
                 zoomLevelOffset);
@@ -888,6 +902,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
     const TileId centerTileId,
     const QVector<TileId>& activeTiles,
+    const QSet<TileId>& extraDetailedTiles,
     const ZoomLevel activeZoom,
     const ZoomLevel currentZoom,
     const int zoomLevelOffset)
@@ -954,13 +969,19 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     // Prepare to request more detailed resource (of higher zoom level) if needed and possible
     const auto neededZoom = isElevationData || zoomLevelOffset == 0 ? activeZoom : static_cast<ZoomLevel>(std::min(
         activeZoom + std::min(zoomLevelOffset, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
+    const auto extraZoom =
+        isElevationData || zoomLevelOffset != 0 || activeZoom != currentZoom || extraDetailedTiles.empty() ? neededZoom
+        : static_cast<ZoomLevel>(
+            std::min(activeZoom + std::min(1, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
     // Request all tiles on needed zoom levels
     const int levelCount = 1 + (isSymbolData ? 0 : maxMissingDataUnderZoomShift);
     for (const auto& activeTileId : constOf(activeTiles))
     {
+        const auto neededZoomForTile =
+            extraZoom != neededZoom && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
         for (int absZoomShift = 0; absZoomShift < levelCount; absZoomShift++)
         {
-            const int underZoom = neededZoom - absZoomShift;
+            const int underZoom = neededZoomForTile - absZoomShift;
             if (underZoom < activeZoom)
                 break;
 
@@ -1675,7 +1696,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState
 
 void OsmAnd::MapRendererResourcesManager::updateResources(
     QMap<ZoomLevel, QVector<TileId>>& activeTiles, QMap<ZoomLevel, TileId>& activeTilesTargets,
-    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset)
+    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, QSet<TileId>& extraDetailedTiles, int zoomLevelOffset)
 {
     QList< std::shared_ptr<MapRendererBaseResourcesCollection> > pendingRemovalResourcesCollections;
     QList< std::shared_ptr<MapRendererBaseResourcesCollection> > otherResourcesCollections;
@@ -1690,7 +1711,7 @@ void OsmAnd::MapRendererResourcesManager::updateResources(
         currentZoom = (tilesEnd - 1).key();
         if (!renderer->currentDebugSettings->disableJunkResourcesCleanup)
             cleanupJunkResources(pendingRemovalResourcesCollections, otherResourcesCollections,
-                activeTiles, currentZoom, visibleTiles, zoomLevelOffset);
+                activeTiles, currentZoom, visibleTiles, extraDetailedTiles, zoomLevelOffset);
     }
 
     // In the end of rendering processing, request tiled resources that are neither
@@ -1706,7 +1727,7 @@ void OsmAnd::MapRendererResourcesManager::updateResources(
             if (targetTileId != activeTilesTargets.cend() && visibleTileIds != visibleTiles.cend())
             {
                 requestNeededResources(otherResourcesCollections, targetTileId.value(), tilesEntry.value(),
-                    zoomLevel, currentZoom, visibleTileIds.value(), zoomLevelOffset);
+                    zoomLevel, currentZoom, visibleTileIds.value(), extraDetailedTiles, zoomLevelOffset);
                 requestOutdatedResources(otherResourcesCollections);
             }
         }
@@ -1940,7 +1961,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
     const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& pendingRemovalResourcesCollections,
     const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
     const QMap<ZoomLevel, QVector<TileId>>& tiles, const ZoomLevel currentZoom,
-    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, int zoomLevelOffset)
+    QMap<ZoomLevel, QVector<TileId>>& visibleTiles, QSet<TileId>& extraDetailedTiles, int zoomLevelOffset)
 {
     const auto debugSettings = renderer->getDebugSettings();
 
@@ -2188,6 +2209,11 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 const auto neededZoom = !checkVisible || zoomLevelOffset == 0 ? activeZoom
                     : static_cast<ZoomLevel>(std::min(activeZoom
                         + std::min(zoomLevelOffset, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
+                const auto extraZoom =
+                    !checkVisible || zoomLevelOffset != 0 || activeZoom != currentZoom || extraDetailedTiles.empty()
+                    ? neededZoom
+                    : static_cast<ZoomLevel>(std::min(activeZoom
+                        + std::min(1, maxMissingDataUnderZoomShift), static_cast<int>(maxZoom)));
 
                 bool updateSymbolResources = _clearOldSymbolResources;
                 if (resourcesType == MapRendererResourceType::Symbols)
@@ -2198,8 +2224,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     // Don't update symbols if there are no more scaled resources already
                     if (updateSymbolResources && !keepOldSymbolResources && !atLeastOneScaledPresent)
                     {
-                        int lastZoom = std::max(neededZoom - maxMissingDataZoomShift, static_cast<int>(minZoom));
-                        for (int zoom = neededZoom - 1; zoom >= lastZoom; zoom--)
+                        const auto lowestZoom = std::min(neededZoom, extraZoom);
+                        int lastZoom = std::max(lowestZoom - maxMissingDataZoomShift, static_cast<int>(minZoom));
+                        for (int zoom = lowestZoom - 1; zoom >= lastZoom; zoom--)
                         {
                             if (tiledResourcesCollection->containsResources(static_cast<ZoomLevel>(zoom)))
                             {
@@ -2210,8 +2237,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     }
                     if (updateSymbolResources && !keepOldSymbolResources && !atLeastOneScaledPresent)
                     {
-                        int lastZoom = std::min(neededZoom + maxMissingDataUnderZoomShift, static_cast<int>(maxZoom));
-                        for (int zoom = neededZoom + 1; zoom < lastZoom; zoom++)
+                        const auto highestZoom = std::max(neededZoom, extraZoom);
+                        int lastZoom = std::min(highestZoom + maxMissingDataUnderZoomShift, static_cast<int>(maxZoom));
+                        for (int zoom = highestZoom + 1; zoom <= lastZoom; zoom++)
                         {
                             if (tiledResourcesCollection->containsResources(static_cast<ZoomLevel>(zoom)))
                             {
@@ -2243,14 +2271,16 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                         bool atLeastOnePresent = false;
                         for (const auto& activeTileId : constOf(activeTiles))
                         {
-                            const auto neededTiles =
-                                Utilities::getTileIdsUnderscaledByZoomShift(activeTileId, neededZoom - activeZoom);
+                            const auto neededZoomForTile = extraZoom != neededZoom
+                                && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
+                            const auto neededTiles = Utilities::getTileIdsUnderscaledByZoomShift(
+                                activeTileId, neededZoomForTile - activeZoom);
                             for (const auto& neededTileId : constOf(neededTiles))
                             {
                                 // Don't remove overscaled/underscaled resources while some resource is loading
                                 if (tiledResourcesCollection->containsResource(
                                         neededTileId,
-                                        neededZoom,
+                                        neededZoomForTile,
                                         isLoadingResource))
                                 {
                                     updateSymbolResources = false;
@@ -2260,7 +2290,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 // Don't remove overscaled/underscaled resources if no resource is there yet
                                 if (tiledResourcesCollection->containsResource(
                                         neededTileId,
-                                        neededZoom,
+                                        neededZoomForTile,
                                         isUsableResource))
                                 {
                                     atLeastOnePresent = true;
@@ -2279,10 +2309,12 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
                     // If resources have complete set or match for this tile, use only that
+                    const auto neededZoomForTile = extraZoom != neededZoom
+                        && extraDetailedTiles.contains(activeTileId) ? extraZoom : neededZoom;
                     bool isComplete = false;
                     for (int absZoomShift = 0; absZoomShift < levelCount; absZoomShift++)
                     {
-                        const int underZoom = neededZoom - absZoomShift;
+                        const int underZoom = neededZoomForTile - absZoomShift;
                         if (underZoom < activeZoom)
                             break;
                         const auto underscaledZoom = static_cast<ZoomLevel>(underZoom);

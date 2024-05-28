@@ -2375,6 +2375,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(
             // Try to obtain more detailed resource (of higher zoom level) if needed and possible
             int neededZoom = internalState.zoomLevelOffset == 0 ? zoomLevel : std::min(static_cast<int>(MaxZoomLevel),
                 zoomLevel + std::min(internalState.zoomLevelOffset, maxMissingDataUnderZoomShift));
+            neededZoom = internalState.zoomLevelOffset != 0 || internalState.extraDetailedTiles.empty() ? neededZoom
+                : std::min(static_cast<int>(MaxZoomLevel), zoomLevel + std::min(1, maxMissingDataUnderZoomShift));
             bool haveMatch = false;
             while (neededZoom > zoomLevel)
             {

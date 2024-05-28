@@ -33,6 +33,7 @@ namespace OsmAnd
         QMap<ZoomLevel, QVector<TileId>> frustumTiles;
         QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
         QMap<ZoomLevel, TileId> uniqueTilesTargets;
+        QSet<TileId> extraDetailedTiles;
 
 
         glm::vec4 glmViewport;
