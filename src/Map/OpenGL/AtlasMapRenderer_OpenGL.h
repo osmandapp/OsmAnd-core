@@ -60,6 +60,7 @@ namespace OsmAnd
             const glm::vec3& startPoint, const glm::vec3& endPoint) const;
         bool isTileVisible(const InternalState& internalState,
             const glm::vec3& minPoint, const glm::vec3& maxPoint) const;
+        double getZoomOffset(const ZoomLevel zoomLevel, const double visualZoom, const double distanceFactor) const;
         void getElevationDataLimits(const MapRendererState& state,
             std::shared_ptr<const IMapElevationDataProvider::Data>& elevationData,
             const TileId& tileId, const ZoomLevel zoomLevel, float& minHeight, float& maxHeight) const;
@@ -119,6 +120,7 @@ namespace OsmAnd
             const PointI& screenPoint, const PointI& location31, PointI& target31, const float height = 0.0f) const override;
         bool getLocationFromElevatedPoint(const MapRendererState& state, const PointI& screenPoint, PointI& location31,
             float* heightInMeters = nullptr) const override;
+        bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const override;
         bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,

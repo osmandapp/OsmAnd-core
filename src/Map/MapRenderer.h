@@ -90,7 +90,7 @@ namespace OsmAnd
         bool setMapTargetLocationToState(MapRendererState& state,
             const PointI& location31, const bool forcedUpdate = false, const bool disableUpdate = false);
         bool setMapTarget(MapRendererState& state,
-            bool forcedUpdate = false, bool disableUpdate = false, bool keepSecondaryTarget = false);
+            bool forcedUpdate = false, bool disableUpdate = false, bool ignoreSecondaryTarget = false);
         bool setMapTargetOnly(MapRendererState& state, const PointI& location31, const float heightInMeters,
             bool forcedUpdate = false, bool disableUpdate = false);
         bool setZoomToState(MapRendererState& state,
@@ -166,6 +166,7 @@ namespace OsmAnd
         virtual float getLocationHeightInMeters(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getLocationFromElevatedPoint(const MapRendererState& state,
             const PointI& screenPoint, PointI& location31, float* heightInMeters = nullptr) const = 0;
+        virtual bool getExtraZoomAndTiltForRelief(const MapRendererState& state, PointF& zoomAndTilt) const = 0;
         virtual bool getExtraZoomAndRotationForAiming(const MapRendererState& state,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondPoint,

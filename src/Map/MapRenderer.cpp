@@ -511,10 +511,38 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     }
 
     // Deal with state
+    bool isNew = false;
     unsigned int requestedStateUpdatedMask;
     if ((requestedStateUpdatedMask = _requestedStateUpdatedMask.fetchAndStoreOrdered(0)) != 0)
     {
         QMutexLocker scopedLocker(&_requestedStateMutex);
+
+        // Update internal state, that is derived from requested state and configuration
+        isNew = updateInternalState(*getInternalStateRef(), _requestedState, *currentConfiguration, false, true);
+
+        // Elevate and zoom out if camera is too close to the ground
+        PointF zoomAndTilt;
+        if (isNew && getExtraZoomAndTiltForRelief(_requestedState, zoomAndTilt))
+        {
+            const auto zoom = zoomAndTilt.x + 
+                _requestedState.zoomLevel + Utilities::visualZoomToFraction(_requestedState.visualZoom);
+            const auto elevationAngle = zoomAndTilt.y + _requestedState.elevationAngle;
+            const auto zoomLevel = qBound(
+                _requestedState.minZoomLimit,
+                static_cast<ZoomLevel>(qRound(zoom)),
+                _requestedState.maxZoomLimit);
+            const auto zoomFraction = zoom - zoomLevel;
+            if (zoomFraction >= -0.5f && zoomFraction <= 0.5f && elevationAngle <= 90.0f)
+            {
+                _requestedState.zoomLevel = zoomLevel;
+                _requestedState.visualZoom = Utilities::zoomFractionToVisual(zoomFraction);
+                _requestedState.elevationAngle = elevationAngle;
+                setMapTargetOnly(_requestedState, _requestedState.fixedLocation31, 0.0f, false, true);
+                _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
+                const auto changeMask = (1u << static_cast<uint32_t>(MapRendererStateChange::Zoom));
+                _requestedStateUpdatedMask.fetchAndOrOrdered(changeMask);
+            }
+        }
 
         // Capture new state
         _currentState = _requestedState;
@@ -534,16 +562,13 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     // Update internal state, that is derived from current state and configuration
     if (requestedStateUpdatedMask != 0 || currentConfigurationInvalidatedMask != 0)
     {
-        ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration, false, true);
-
-        _currentState.metersPerPixel = getPixelsToMetersScaleFactor(_currentState, getInternalState());
-        _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
-        _currentState.visibleBBoxShifted = getVisibleBBoxShifted(getInternalState());
+        if (!isNew)
+            isNew = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration, false, true);
 
         // Anyways, invalidate the frame
         invalidateFrame();
 
-        if (!ok)
+        if (!isNew)
         {
             // In case updating internal state failed, restore changes as not-applied
             if (requestedStateUpdatedMask != 0)
@@ -553,6 +578,10 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
             return false;
         }
+
+        _currentState.metersPerPixel = getPixelsToMetersScaleFactor(_currentState, getInternalState());
+        _currentState.visibleBBox31 = getVisibleBBox31(getInternalState());
+        _currentState.visibleBBoxShifted = getVisibleBBoxShifted(getInternalState());
     }
 
     return true;
@@ -1889,19 +1918,7 @@ bool OsmAnd::MapRenderer::setAzimuth(const float azimuth, bool forcedUpdate /*= 
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    const float normalizedAzimuth = Utilities::normalizedAngleDegrees(azimuth);
-
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.azimuth, normalizedAzimuth);
-    if (!update)
-        return false;
-
-    _requestedState.azimuth = normalizedAzimuth;
-
-    setMapTarget(_requestedState, forcedUpdate);
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Azimuth);
-
-    return true;
+    return setAzimuthToState(_requestedState, azimuth, forcedUpdate);
 }
 
 bool OsmAnd::MapRenderer::setElevationAngle(const float elevationAngle, bool forcedUpdate /*= false*/)
@@ -2031,7 +2048,7 @@ bool OsmAnd::MapRenderer::setMapTargetLocationToState(MapRendererState& state,
 }
 
 bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
-    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/, bool keepSecondaryTarget /*= false*/)
+    bool forcedUpdate /*= false*/, bool disableUpdate /*= false*/, bool ignoreSecondaryTarget /*= false*/)
 {
     auto zoomLevel = state.surfaceZoomLevel;
     auto visualZoom = state.surfaceVisualZoom;
@@ -2056,7 +2073,7 @@ bool OsmAnd::MapRenderer::setMapTarget(MapRendererState& state,
             notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
     }
     auto result = setMapTargetOnly(state, state.fixedLocation31, 0.0f, forcedUpdate, disableUpdate);
-    if (!keepSecondaryTarget && (result || update))
+    if (!ignoreSecondaryTarget && (result || update))
         setSecondaryTarget(state, forcedUpdate, disableUpdate);
 
     return result;
