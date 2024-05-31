@@ -1911,6 +1911,8 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
 
             continue;
         }
+        else if (resource->type == MapRendererResourceType::ElevationData)
+            renderer->notifyRequestedStateWasUpdated(MapRendererStateChange::Elevation_DataProvider);
 
         // Mark as uploaded/outdated
         if (resource->isOld)

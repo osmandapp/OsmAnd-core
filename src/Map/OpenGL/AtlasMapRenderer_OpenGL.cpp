@@ -273,6 +273,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
 
     bool ok = AtlasMapRenderer::handleStateChange(state, mask);
 
+/*  Disable depth buffer reading
     if (mask.isSet(MapRendererStateChange::WindowSize))
     {
         const auto depthBufferSize = state.windowSize.x * state.windowSize.y * gpuAPI->framebufferDepthBytes;
@@ -282,7 +283,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::handleStateChange(const MapRendererState& 
             _terrainDepthBufferSize = state.windowSize;
         }
     }
-
+*/
     return ok;
 }
 
@@ -389,7 +390,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         Utilities::getLongitudeFromTile(state.zoomLevel, groundPos.x));
 
     // Calculate distance to horizon
-    const auto inglobeAngle = qAcos(_radius / (_radius + internalState->distanceFromCameraToGroundInMeters));
+    const auto inglobeAngle =
+        qAcos(qBound(-1.0, _radius / (_radius + internalState->distanceFromCameraToGroundInMeters), 1.0));
     const auto referenceDistance = _radius * inglobeAngle / metersPerUnit;
     double groundDistanceToHorizon;
     if (inglobeAngle < _minimumAngleForAdvancedHorizon)
@@ -751,6 +753,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(
     internalState->frustumTiles.clear();
     internalState->uniqueTiles.clear();
     internalState->extraDetailedTiles.clear();
+    internalState->extraElevation = 0.0f;
 
     // Normalize 2D-frustum points to tiles
     PointF p[4];
@@ -989,6 +992,47 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
                 const auto cameraToTile = glm::distance(internalState->worldCameraPosition, topPoint);
                 if (zoomLevel == state.zoomLevel && cameraToTile < superDetailedDistance)
                     internalState->extraDetailedTiles.insert(tileId);
+                const auto heightDelta = qMax(0.0f, maxHeight + 1.0f - internalState->worldCameraPosition.y);
+                if (heightDelta > 0.0f)
+                {
+                    float distanceDelta = 0.0f;
+                    if (minPointOnPlane.x > internalState->worldCameraPosition.x
+                        || internalState->worldCameraPosition.x > maxPointOnPlane.x
+                        || minPointOnPlane.y > internalState->worldCameraPosition.z
+                        || internalState->worldCameraPosition.z > maxPointOnPlane.y)
+                    {
+                        if (minPointOnPlane.x <= internalState->worldCameraPosition.x
+                            && internalState->worldCameraPosition.x <= maxPointOnPlane.x)
+                        {
+                            distanceDelta = qMin(qAbs(internalState->worldCameraPosition.z - minPointOnPlane.y),
+                                qAbs(internalState->worldCameraPosition.z - maxPointOnPlane.y));
+                        }
+                        else if (minPointOnPlane.y <= internalState->worldCameraPosition.z
+                            && internalState->worldCameraPosition.z <= maxPointOnPlane.y)
+                        {
+                            distanceDelta = qMin(qAbs(internalState->worldCameraPosition.x - minPointOnPlane.x),
+                                qAbs(internalState->worldCameraPosition.x - maxPointOnPlane.x));
+                        }
+                        else
+                        {
+                            distanceDelta = qMin(qMin(glm::length(glm::vec2(
+                                internalState->worldCameraPosition.x - minPointOnPlane.x,
+                                internalState->worldCameraPosition.z - minPointOnPlane.y)),
+                                glm::length(glm::vec2(
+                                internalState->worldCameraPosition.x - maxPointOnPlane.x,
+                                internalState->worldCameraPosition.z - maxPointOnPlane.y))),
+                                qMin(glm::length(glm::vec2(
+                                internalState->worldCameraPosition.x - minPointOnPlane.x,
+                                internalState->worldCameraPosition.z - maxPointOnPlane.y)),
+                                glm::length(glm::vec2(
+                                internalState->worldCameraPosition.x - maxPointOnPlane.x,
+                                internalState->worldCameraPosition.z - minPointOnPlane.y))));
+                        }
+                    }
+                    const auto extraElevation = heightDelta - distanceDelta * 4.0f;
+                    if (extraElevation > 0.0f)
+                        internalState->extraElevation = std::max(internalState->extraElevation, extraElevation);
+                }
             }                
         }
         internalState->visibleTilesCount += visibleTiles.size();
@@ -1182,8 +1226,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getHeightLimits(const MapRendererState& st
             }
             if (complete)
             {
-                minValue = minimum / scaleFactor;
-                maxValue = maximum / scaleFactor;
+                minHeight = minimum / scaleFactor;
+                maxHeight = maximum / scaleFactor;
                 return true;
             }
         }
@@ -1869,6 +1913,37 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromElevatedPoint(
     return getLocationFromElevatedPoint(state, screenPoint, location31, heightInMeters);
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::getExtraZoomAndTiltForRelief(
+    const MapRendererState& state, PointF& zoomAndTilt) const
+{
+    const auto extraElevation = _internalState.extraElevation;
+    if (extraElevation > 0.0f)
+    {
+        const auto currentPoint = _internalState.worldCameraPosition;
+        const auto elevatedPoint = glm::vec3(currentPoint.x, currentPoint.y + extraElevation, currentPoint.z);
+        const auto elevatedLength = glm::length(elevatedPoint);
+        const auto currentLength = glm::length(currentPoint);
+        if (qFuzzyIsNull(elevatedLength) || qFuzzyIsNull(currentLength))
+            return false;
+
+        const auto deltaZoom = getZoomOffset(state.zoomLevel, state.visualZoom, currentLength / elevatedLength);
+        if (qIsNaN(deltaZoom) || deltaZoom > 0.0)
+            return false;
+
+        const auto neededAngle = qRadiansToDegrees(
+            qAcos(qBound(0.0f, glm::dot(elevatedPoint / elevatedLength, currentPoint / currentLength), 1.0f)));
+
+        if (deltaZoom > -0.01 && neededAngle < 0.01)
+            return false;
+
+        zoomAndTilt.x = static_cast<float>(deltaZoom / 10.0);
+        zoomAndTilt.y = static_cast<float>(neededAngle / 10.0);
+
+        return true;
+    }
+    return false;
+}
+
 float OsmAnd::AtlasMapRenderer_OpenGL::getHeightAndLocationFromElevatedPoint(
     const PointI& screenPoint, PointI& location31) const
 {
@@ -1958,17 +2033,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getExtraZoomAndRotationForAiming(const Map
 
     // Calculate needed offsets for zoom and azimuth to show the same location
     // using new screen coordinates of the second target point, assuming the first one is a pivot point
-    const auto totalFactor =
-        distanceFactor * static_cast<double>(1u << static_cast<int>(state.zoomLevel)) * state.visualZoom;
-    if (totalFactor < 1.0 || totalFactor > static_cast<double>(1u << static_cast<int>(MaxZoomLevel)))
+    const auto deltaZoom = getZoomOffset(state.zoomLevel, state.visualZoom, distanceFactor);
+    if (qIsNaN(deltaZoom))
         return false;
-    const auto zoomLevel = std::floor(std::log2(totalFactor));
-    const auto zoomLevelFactor = static_cast<double>(1u << static_cast<int>(zoomLevel));
-    const auto totalZoom = zoomLevel + std::max(totalFactor / zoomLevelFactor, 1.0) - 1.0;
-    const auto currentZoomFloatPart = state.visualZoom >= 1.0f
-        ? state.visualZoom - 1.0f
-        : (state.visualZoom - 1.0f) * 2.0f;
-    const auto deltaZoom = totalZoom - static_cast<double>(state.zoomLevel) - currentZoomFloatPart;
 
     const auto actualSegment = PointD(PointD(secondCurrent) + secondSegment * zoomedRatio.y -
         PointD(firstCurrent) - firstSegment * zoomedRatio.x);
@@ -2553,6 +2620,22 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isTileVisible(const int tileX, const int t
         return tilesOfZoom->contains(TileId::fromXY(tileX, tileY));
 
     return false;
+}
+
+double OsmAnd::AtlasMapRenderer_OpenGL::getZoomOffset(
+    const ZoomLevel zoomLevel, const double visualZoom, const double distanceFactor) const
+{
+    const auto totalFactor =
+        distanceFactor * static_cast<double>(1u << static_cast<int>(zoomLevel)) * visualZoom;
+    if (totalFactor < 1.0 || totalFactor > static_cast<double>(1u << static_cast<int>(MaxZoomLevel)))
+        return std::numeric_limits<double>::quiet_NaN();
+    const auto newZoomLevel = std::floor(std::log2(totalFactor));
+    const auto zoomLevelFactor = static_cast<double>(1u << static_cast<int>(newZoomLevel));
+    const auto totalZoom = newZoomLevel + std::max(totalFactor / zoomLevelFactor, 1.0) - 1.0;
+    const auto currentZoomFloatPart = visualZoom >= 1.0
+        ? visualZoom - 1.0
+        : (visualZoom - 1.0) * 2.0;
+    return totalZoom - static_cast<double>(zoomLevel) - currentZoomFloatPart;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const

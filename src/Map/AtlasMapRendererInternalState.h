@@ -34,7 +34,7 @@ namespace OsmAnd
         QMap<ZoomLevel, QVector<TileId>> uniqueTiles;
         QMap<ZoomLevel, TileId> uniqueTilesTargets;
         QSet<TileId> extraDetailedTiles;
-
+        float extraElevation;
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;

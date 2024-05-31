@@ -2696,10 +2696,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
             worldLengthOnPlane = glm::distance(
                 glm::vec2(prevPointInWorld.x, prevPointInWorld.z), glm::vec2(pointInWorld.x, pointInWorld.z));
             screenLengthInPixels = glm::distance(prevPointOnScreen, pointOnScreen);
-            worldAngle = qAcos((prevWorldDistance * prevWorldDistance + worldLength * worldLength
-                - worldDistance * worldDistance) / (2.0f * prevWorldDistance * worldLength));
-            screenAngle = qAcos((prevScreenDistance * prevScreenDistance + screenLength * screenLength
-                - screenDistance * screenDistance) / (2.0f * prevScreenDistance * screenLength));
+            worldAngle = qAcos(qBound(-1.0f, (prevWorldDistance * prevWorldDistance + worldLength * worldLength
+                - worldDistance * worldDistance) / (2.0f * prevWorldDistance * worldLength), 1.0f));
+            screenAngle = qAcos(qBound(-1.0f, (prevScreenDistance * prevScreenDistance + screenLength * screenLength
+                - screenDistance * screenDistance) / (2.0f * prevScreenDistance * screenLength), 1.0f));
             computedPathData.pathSegmentsLengthsOnRelief[prevIdx] = worldLength;
             computedPathData.pathSegmentsLengthsInWorld[prevIdx] = worldLengthOnPlane;
             computedPathData.pathSegmentsLengthsOnScreen[prevIdx] = screenLengthInPixels;
