@@ -16,14 +16,61 @@ namespace OsmAnd
 {
     class IObfsCollection;
 
-    enum class RouteType
+    class OsmRouteType
     {
-        HIKING,
-        BICYCLE,
-        MTB,
-        HORSE,
+    public:
+        static std::vector<OsmRouteType> values;
         
-        Count
+        static const OsmRouteType HIKING;
+        static const OsmRouteType BICYCLE;
+        static const OsmRouteType MTB;
+        static const OsmRouteType HORSE;
+        
+        const std::string name;
+    
+        inline bool operator == (const OsmAnd::OsmRouteType& other) const
+        {
+            if (!this->name.compare(other.name))
+                return false;
+            return true;
+        }
+        
+        inline bool operator != (const OsmAnd::OsmRouteType& other) const
+        {
+            return !(*this == other);
+        }
+        
+    private:
+        OsmRouteType(const std::string& n) : name(n) {}
+        class RouteActivityTypeBuilder {
+            public:
+                RouteActivityTypeBuilder& setName(const std::string& name) {
+                    this->name = name;
+                    return *this;
+                }
+                RouteActivityTypeBuilder& setRouteType(const OsmRouteType& routeType) {
+                    this->routeType = routeType;
+                    return *this;
+                }
+                OsmRouteType* build() const {
+                    return new OsmRouteType(name);
+                }
+
+            private:
+                std::string name;
+                OsmRouteType routeType;
+            };
+        
+        static RouteActivityTypeBuilder createType(const std::string& name) {
+            OsmRouteType newRoute(name);
+            values.push_back(newRoute);
+            RouteActivityTypeBuilder builder;
+            builder.setName(name);
+            builder.setRouteType(newRoute);
+            return builder;
+        }
+
+        //Count
     };
 
     struct OSMAND_CORE_API NetworkRouteKey
@@ -33,7 +80,7 @@ namespace OsmAnd
         NetworkRouteKey(const NetworkRouteKey & other);
         NetworkRouteKey(int index);
         virtual ~NetworkRouteKey();
-        RouteType type;
+        OsmRouteType type;
         QSet<QString> tags;
         QString toString() const;
         
@@ -91,14 +138,14 @@ namespace OsmAnd
             }
             return tagsNotEqual;
         }
-        inline bool operator > (const NetworkRouteKey & other) const
-        {
-            return (type > other.type || tags.size() > other.tags.size());
-        }
-        inline bool operator < (const NetworkRouteKey & other) const
-        {
-            return (type < other.type || tags.size() < other.tags.size());
-        }
+//        inline bool operator > (const NetworkRouteKey & other) const
+//        {
+//            return (type > other.type || tags.size() > other.tags.size());
+//        }
+//        inline bool operator < (const NetworkRouteKey & other) const
+//        {
+//            return (type < other.type || tags.size() < other.tags.size());
+//        }
         inline operator int() const
         {
             const int prime = 31;
@@ -109,7 +156,7 @@ namespace OsmAnd
                 s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(static_cast<int>(type));
+            result = prime * result + qHash(&type.name);
             return result;
         }
     private:
@@ -136,7 +183,7 @@ namespace OsmAnd
         NetworkRouteSelectorFilter(NetworkRouteSelectorFilter & other);
         virtual ~NetworkRouteSelectorFilter();
         QSet<NetworkRouteKey> keyFilter;
-        QSet<RouteType> typeFilter;
+        QSet<OsmRouteType> typeFilter;
     };
 
     struct OSMAND_CORE_API NetworkRoutePoint

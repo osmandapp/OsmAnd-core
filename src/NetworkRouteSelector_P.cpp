@@ -64,16 +64,16 @@ void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const s
 {
     QString routeKeyString;
     switch (segment->routeKey.type) {
-        case RouteType::HORSE:
+        case OsmRouteType::HORSE:
             routeKeyString = QStringLiteral("HORSE");
             break;
-        case RouteType::HIKING:
+        case OsmRouteType::HIKING:
             routeKeyString = QStringLiteral("HIKING");
             break;
-        case RouteType::BICYCLE:
+        case OsmRouteType::BICYCLE:
             routeKeyString = QStringLiteral("BICYCLE");
             break;
-        case RouteType::MTB:
+        case OsmRouteType::MTB:
             routeKeyString = QStringLiteral("MTB");
             break;
         default:

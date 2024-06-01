@@ -66,10 +66,10 @@ OsmAnd::NetworkRouteSegment::~NetworkRouteSegment()
     robj.get();
 }
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey()
-: type(static_cast<RouteType>(RouteType::Count))
-{
-}
+//OsmAnd::NetworkRouteKey::NetworkRouteKey()
+//: type(static_cast<OsmRouteType>(OsmRouteType))
+//{
+//}
 
 OsmAnd::NetworkRouteKey::NetworkRouteKey(NetworkRouteKey & other)
 : type(other.type), tags(other.tags)
@@ -81,10 +81,10 @@ OsmAnd::NetworkRouteKey::NetworkRouteKey(const NetworkRouteKey & other)
 {
 }
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey(int index)
-: type(static_cast<RouteType>(index))
-{
-}
+//OsmAnd::NetworkRouteKey::NetworkRouteKey(int index)
+//: type(static_cast<RouteType>(index))
+//{
+//}
 
 OsmAnd::NetworkRouteKey::~NetworkRouteKey()
 {
@@ -96,7 +96,7 @@ const QString OsmAnd::NetworkRouteKey::NETWORK_ROUTE_TYPE = QStringLiteral("type
 
 QString OsmAnd::NetworkRouteKey::getTag() const
 {
-    return ROUTE_TYPES_TAGS[static_cast<int>(type)];
+    return "hiking"; //ROUTE_TYPES_TAGS[static_cast<int>(type)];
 }
 
 void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
@@ -205,15 +205,15 @@ std::shared_ptr<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const 
     {
         QString type = *it;
         int rtype = ROUTE_TYPES_TAGS.indexOf(type);
-        if (rtype < static_cast<int>(RouteType::Count))
-        {
-            const auto routeKey = std::make_shared<OsmAnd::NetworkRouteKey>(rtype);
-            for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
-            {
-                routeKey->addTag(i.key(), i.value());
-            }
-            return routeKey;
-        }
+//        if (rtype < static_cast<int>(OsmRouteType::Count))
+//        {
+//            const auto routeKey = std::make_shared<OsmAnd::NetworkRouteKey>(rtype);
+//            for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
+//            {
+//                routeKey->addTag(i.key(), i.value());
+//            }
+//            return routeKey;
+//        }
     }
     return nullptr;
 }
@@ -306,7 +306,7 @@ OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
 
 QString OsmAnd::NetworkRouteKey::toString() const
 {
-    QString hash = QString::number(static_cast<int>(type));
+    QString hash = QString((type.name.c_str()));
     for (auto & s : tags)
     {
         hash += s;
