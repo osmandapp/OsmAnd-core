@@ -541,6 +541,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
                 _requestedState.surfaceZoomLevel = getSurfaceZoom(_requestedState, _requestedState.surfaceVisualZoom);
                 const auto changeMask = (1u << static_cast<uint32_t>(MapRendererStateChange::Zoom));
                 _requestedStateUpdatedMask.fetchAndOrOrdered(changeMask);
+                isNew = false;
             }
         }
 
