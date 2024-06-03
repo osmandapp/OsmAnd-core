@@ -15,18 +15,26 @@
 namespace OsmAnd
 {
     class IObfsCollection;
+    
 
     class OsmRouteType
     {
     public:
-        static std::vector<OsmRouteType> values;
+        static OsmRouteType HIKING;
+        static OsmRouteType BICYCLE;
+        static OsmRouteType MTB;
+        static OsmRouteType HORSE;
+
+        class RouteActivityTypeBuilder;
+        //       static std::vector<OsmRouteType> values;
         
-        static const OsmRouteType HIKING;
-        static const OsmRouteType BICYCLE;
-        static const OsmRouteType MTB;
-        static const OsmRouteType HORSE;
+        OsmRouteType(){}
+        OsmRouteType(std::string n);
+        OsmRouteType(OsmRouteType& ort);
+        OsmRouteType(const OsmRouteType& ort);
+
         
-        const std::string name;
+        std::string name;
     
         inline bool operator == (const OsmAnd::OsmRouteType& other) const
         {
@@ -39,46 +47,36 @@ namespace OsmAnd
         {
             return !(*this == other);
         }
+
+        inline bool operator > (const OsmAnd::OsmRouteType & other) const
+        {
+            return true;
+        }
+
+        inline bool operator < (const OsmAnd::OsmRouteType & other) const
+        {
+            return false;
+        }
+
         
     private:
-        OsmRouteType(const std::string& n) : name(n) {}
-        class RouteActivityTypeBuilder {
-            public:
-                RouteActivityTypeBuilder& setName(const std::string& name) {
-                    this->name = name;
-                    return *this;
-                }
-                RouteActivityTypeBuilder& setRouteType(const OsmRouteType& routeType) {
-                    this->routeType = routeType;
-                    return *this;
-                }
-                OsmRouteType* build() const {
-                    return new OsmRouteType(name);
-                }
-
-            private:
-                std::string name;
-                OsmRouteType routeType;
-            };
-        
-        static RouteActivityTypeBuilder createType(const std::string& name) {
-            OsmRouteType newRoute(name);
-            values.push_back(newRoute);
-            RouteActivityTypeBuilder builder;
-            builder.setName(name);
-            builder.setRouteType(newRoute);
-            return builder;
-        }
+        static RouteActivityTypeBuilder createType(const std::string& name);
 
         //Count
     };
+
+inline  unsigned int qHash(const OsmAnd::OsmRouteType& key, unsigned int seed = 0) {
+    return key.name.length();
+}
+
+
 
     struct OSMAND_CORE_API NetworkRouteKey
     {
         NetworkRouteKey();
         NetworkRouteKey(NetworkRouteKey & other);
         NetworkRouteKey(const NetworkRouteKey & other);
-        NetworkRouteKey(int index);
+        NetworkRouteKey(OsmRouteType ort);
         virtual ~NetworkRouteKey();
         OsmRouteType type;
         QSet<QString> tags;
@@ -138,14 +136,15 @@ namespace OsmAnd
             }
             return tagsNotEqual;
         }
-//        inline bool operator > (const NetworkRouteKey & other) const
-//        {
-//            return (type > other.type || tags.size() > other.tags.size());
-//        }
-//        inline bool operator < (const NetworkRouteKey & other) const
-//        {
-//            return (type < other.type || tags.size() < other.tags.size());
-//        }
+
+        inline bool operator > (const NetworkRouteKey & other) const
+        {
+            return (type == other.type || tags.size() > other.tags.size());
+        }
+        inline bool operator < (const NetworkRouteKey & other) const
+        {
+            return (type == other.type || tags.size() < other.tags.size());
+        }
         inline operator int() const
         {
             const int prime = 31;
@@ -153,10 +152,10 @@ namespace OsmAnd
             int s = 0;
             for (const QString & tag : constOf(tags))
             {
-                s += qHash(tag);
+//                s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(&type.name);
+ //           result = prime * result + qHash(&type.name);
             return result;
         }
     private:
