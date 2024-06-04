@@ -25,25 +25,34 @@ namespace OsmAnd
         static OsmRouteType MTB;
         static OsmRouteType HORSE;
 
-        class RouteActivityTypeBuilder;
+        QString name;
+
+        class RouteActivityTypeBuilder
+        {
+        public:
+            RouteActivityTypeBuilder();
+            RouteActivityTypeBuilder& setName(const QString& name);
+            RouteActivityTypeBuilder& setRouteType(OsmAnd::OsmRouteType* routeType);
+            OsmAnd::OsmRouteType* build() const;
+        private:
+            QString name;
+            OsmAnd::OsmRouteType* routeType;
+        };
         //       static std::vector<OsmRouteType> values;
         
-        OsmRouteType(){}
-        OsmRouteType(std::string n);
-        OsmRouteType(OsmRouteType& ort);
-        OsmRouteType(const OsmRouteType& ort);
+        OsmRouteType() {}
+        OsmRouteType(QString n);
+        OsmRouteType(OsmRouteType & ort);
+        OsmRouteType(const OsmRouteType & ort);
 
-        
-        std::string name;
-    
-        inline bool operator == (const OsmAnd::OsmRouteType& other) const
+        inline bool operator == (const OsmAnd::OsmRouteType & other) const
         {
             if (!this->name.compare(other.name))
                 return false;
             return true;
         }
         
-        inline bool operator != (const OsmAnd::OsmRouteType& other) const
+        inline bool operator != (const OsmAnd::OsmRouteType & other) const
         {
             return !(*this == other);
         }
@@ -60,13 +69,14 @@ namespace OsmAnd
 
         
     private:
-        static RouteActivityTypeBuilder createType(const std::string& name);
+        static RouteActivityTypeBuilder createType(const QString & name);
+        
 
         //Count
     };
 
-inline  unsigned int qHash(const OsmAnd::OsmRouteType& key, unsigned int seed = 0) {
-    return key.name.length();
+inline  unsigned int qHash(const OsmAnd::OsmRouteType & key, unsigned int seed = 0) {
+    return (unsigned int)key.name.length();
 }
 
 
@@ -152,10 +162,10 @@ inline  unsigned int qHash(const OsmAnd::OsmRouteType& key, unsigned int seed = 
             int s = 0;
             for (const QString & tag : constOf(tags))
             {
-//                s += qHash(tag);
+                s += qHash(tag);
             }
             result = prime * result + s;
- //           result = prime * result + qHash(&type.name);
+            result = prime * result + qHash(&type.name);
             return result;
         }
     private:

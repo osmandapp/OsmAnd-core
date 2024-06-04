@@ -1,6 +1,12 @@
 #include "NetworkRouteContext.h"
 #include "NetworkRouteContext_P.h"
 
+
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING("hiking");
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BICYCLE("bicycle");
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MTB("mtb");
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HORSE("horse");
+
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
     const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache_)
@@ -98,15 +104,10 @@ const QString OsmAnd::NetworkRouteKey::NETWORK_ROUTE_TYPE = QStringLiteral("type
 
 QString OsmAnd::NetworkRouteKey::getTag() const
 {
-    return "hiking";//ROUTE_TYPES_TAGS[static_cast<int>(type)];
+    return OsmAnd::OsmRouteType::HIKING.name;//ROUTE_TYPES_TAGS[static_cast<int>(type)];
 }
 
-static OsmAnd::OsmRouteType HIKING("hiking");
-static OsmAnd::OsmRouteType BICYCLE("bicycle");
-static OsmAnd::OsmRouteType MTB("mtb");
-static OsmAnd::OsmRouteType HORSE("horse");
-
-OsmAnd::OsmRouteType::OsmRouteType(std::string n) : name(n)
+OsmAnd::OsmRouteType::OsmRouteType(QString n) : name(n)
 {
 }
 
@@ -118,34 +119,29 @@ OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name)
 {
 }
 
-//class OsmAnd::OsmRouteType::RouteActivityTypeBuilder {
-//    public:
-//        RouteActivityTypeBuilder();
-//        RouteActivityTypeBuilder& setName(const std::string& name) {
-//            this->name = name;
-//            return *this;
-//        }
-//    RouteActivityTypeBuilder& setRouteType(OsmAnd::OsmRouteType* routeType) {
-//            this->routeType = routeType;
-//            return *this;
-//        }
-//    OsmAnd::OsmRouteType* build() const {
-//        return new OsmAnd::OsmRouteType(name);
-//        }
-//
-//    private:
-//        std::string name;
-//        OsmAnd::OsmRouteType* routeType;
-//    };
-//
-//OsmAnd::OsmRouteType::RouteActivityTypeBuilder OsmAnd::OsmRouteType::createType(const std::string& name) {
-//    OsmAnd::OsmRouteType newRoute(name);
-// //   OsmAnd::OsmRouteType::values.push_back(newRoute);
-//    RouteActivityTypeBuilder builder;
-//    builder.setName(name);
-//    builder.setRouteType(&newRoute);
-//    return builder;
-//}
+     
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::setName(const QString& name) {
+        this->name = name;
+        return *this;
+    }
+    
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::setRouteType(OsmAnd::OsmRouteType* routeType) {
+        this->routeType = routeType;
+        return *this;
+    }
+    
+    OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::RouteActivityTypeBuilder::build() const {
+        return new OsmRouteType(name);
+    }
+
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder OsmAnd::OsmRouteType::createType(const QString& name) {
+    OsmAnd::OsmRouteType newRoute(name);
+ //   OsmAnd::OsmRouteType::values.push_back(newRoute);
+    RouteActivityTypeBuilder builder;
+    builder.setName(name);
+    builder.setRouteType(&newRoute);
+    return builder;
+}
 
 void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 {
@@ -357,7 +353,7 @@ OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
 
 QString OsmAnd::NetworkRouteKey::toString() const
 {
-    QString hash = type.name.c_str();
+    QString hash = type.name;
 
     for (auto & s : tags)
     {
