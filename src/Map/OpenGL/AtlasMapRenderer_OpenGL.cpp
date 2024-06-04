@@ -992,7 +992,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeUniqueTileset(InternalState* intern
                 const auto cameraToTile = glm::distance(internalState->worldCameraPosition, topPoint);
                 if (zoomLevel == state.zoomLevel && cameraToTile < superDetailedDistance)
                     internalState->extraDetailedTiles.insert(tileId);
-                const auto heightDelta = qMax(0.0f, maxHeight + 0.1f - internalState->worldCameraPosition.y);
+                const auto heightDelta = qMax(0.0f, maxHeight + 1.0f - internalState->worldCameraPosition.y);
                 if (heightDelta > 0.0f)
                 {
                     float distanceDelta = 0.0f;

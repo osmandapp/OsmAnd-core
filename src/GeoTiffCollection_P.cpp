@@ -952,7 +952,9 @@ OsmAnd::GeoTiffCollection::CallResult OsmAnd::GeoTiffCollection_P::getGeoTiffDat
             compose = true;
         }
     }
-    else if (zoom < minZoom || zoom > maxZoom)
+    else if (zoom > maxZoom)
+        resamplingAlgorithm = GRIORA_Bilinear;
+    else if (zoom < minZoom)
         return GeoTiffCollection::CallResult::Empty;
 
     // Calculate tile edges to find corresponding data

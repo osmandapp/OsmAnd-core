@@ -50,7 +50,7 @@ OsmAnd::ZoomLevel OsmAnd::SqliteHeightmapTileProvider_P::getMaxZoom() const
         maxZoomDatabase = owner->sourcesCollection->getMaxZoom();
     auto maxZoomTiff = InvalidZoomLevel;
     if (owner->filesCollection)
-        maxZoomTiff = owner->filesCollection->getMaxZoom(owner->outputTileSize - 3);
+        maxZoomTiff = ZoomLevel31;
     if (maxZoomDatabase == InvalidZoomLevel && maxZoomTiff != InvalidZoomLevel)
         return maxZoomTiff;
     else if (maxZoomTiff == InvalidZoomLevel && maxZoomDatabase != InvalidZoomLevel)
