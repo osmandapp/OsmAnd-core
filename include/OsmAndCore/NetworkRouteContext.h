@@ -24,7 +24,8 @@ namespace OsmAnd
         static OsmRouteType BICYCLE;
         static OsmRouteType MTB;
         static OsmRouteType HORSE;
-
+        
+        static QList<OsmRouteType> values;
         QString name;
 
         class RouteActivityTypeBuilder
@@ -32,37 +33,38 @@ namespace OsmAnd
         public:
             RouteActivityTypeBuilder();
             RouteActivityTypeBuilder& setName(const QString& name);
-            RouteActivityTypeBuilder& setRouteType(OsmAnd::OsmRouteType* routeType);
-            OsmAnd::OsmRouteType* build() const;
+            RouteActivityTypeBuilder& setRouteType(OsmRouteType* routeType);
+            OsmRouteType reg() const;
         private:
             QString name;
-            OsmAnd::OsmRouteType* routeType;
+            OsmRouteType* routeType;
         };
-        //       static std::vector<OsmRouteType> values;
-        
-        OsmRouteType() {}
+
+        OsmRouteType();
         OsmRouteType(QString n);
         OsmRouteType(OsmRouteType & ort);
         OsmRouteType(const OsmRouteType & ort);
+        
+        static std::shared_ptr<OsmRouteType> getByTag(QString tag);
 
-        inline bool operator == (const OsmAnd::OsmRouteType & other) const
+        inline bool operator == (const OsmRouteType & other) const
         {
             if (!this->name.compare(other.name))
                 return false;
             return true;
         }
-        
-        inline bool operator != (const OsmAnd::OsmRouteType & other) const
+
+        inline bool operator != (const OsmRouteType & other) const
         {
             return !(*this == other);
         }
 
-        inline bool operator > (const OsmAnd::OsmRouteType & other) const
+        inline bool operator > (const OsmRouteType & other) const
         {
             return true;
         }
 
-        inline bool operator < (const OsmAnd::OsmRouteType & other) const
+        inline bool operator < (const OsmRouteType & other) const
         {
             return false;
         }
@@ -70,16 +72,12 @@ namespace OsmAnd
         
     private:
         static RouteActivityTypeBuilder createType(const QString & name);
-        
 
-        //Count
     };
 
-inline  unsigned int qHash(const OsmAnd::OsmRouteType & key, unsigned int seed = 0) {
-    return (unsigned int)key.name.length();
-}
-
-
+    inline uint qHash(const OsmRouteType & key, uint seed = 0) {
+        return (uint)key.name.length();
+    }
 
     struct OSMAND_CORE_API NetworkRouteKey
     {
