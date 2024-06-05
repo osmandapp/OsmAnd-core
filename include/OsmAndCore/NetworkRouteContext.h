@@ -27,17 +27,23 @@ namespace OsmAnd
         
         static QList<OsmRouteType> values;
         QString name;
-
+        QString tagPrefix;
+        QString color;
+        QString icon;
+        
         class RouteActivityTypeBuilder
         {
         public:
             RouteActivityTypeBuilder();
-            RouteActivityTypeBuilder& setName(const QString& name);
-            RouteActivityTypeBuilder& setRouteType(OsmRouteType* routeType);
-            OsmRouteType reg() const;
-        private:
-            QString name;
+            RouteActivityTypeBuilder& setName(const QString & name);
+            RouteActivityTypeBuilder& color(const QString & color);
+            RouteActivityTypeBuilder& icon(const QString & icon);
+            OsmRouteType reg();
             OsmRouteType* routeType;
+            QString name;
+        private:
+           
+            
         };
 
         OsmRouteType();

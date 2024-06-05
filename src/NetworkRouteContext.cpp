@@ -3,7 +3,7 @@
 
 QList<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::values;
 
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING = createType("hiking").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING = createType("hiking").color("orange").icon("special_trekking").reg();
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BICYCLE = createType("bicycle").reg();
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MTB = createType("mtb").reg();
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HORSE = createType("horse").reg();
@@ -99,7 +99,6 @@ OsmAnd::NetworkRouteKey::~NetworkRouteKey()
 {
 }
 
-static const QVector<QString> ROUTE_TYPES_PREFIX { "route_hiking_", "route_bicycle_", "route_mtb_", "route_horse_"};
 const QString OsmAnd::NetworkRouteKey::NETWORK_ROUTE_TYPE = QStringLiteral("type");
 
 QString OsmAnd::NetworkRouteKey::getTag() const
@@ -107,15 +106,19 @@ QString OsmAnd::NetworkRouteKey::getTag() const
     return type.name;
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(QString n) : name(n)
+OsmAnd::OsmRouteType::OsmRouteType()
 {
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(OsmRouteType& ort) : name(ort.name)
+OsmAnd::OsmRouteType::OsmRouteType(QString n) : name(n), tagPrefix(QStringLiteral("route_") + n + QStringLiteral("_"))
 {
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name)
+OsmAnd::OsmRouteType::OsmRouteType(OsmRouteType& ort) : name(ort.name), tagPrefix(ort.tagPrefix), color(ort.color), icon(ort.icon)
+{
+}
+
+OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name), tagPrefix(ort.tagPrefix), color(ort.color), icon(ort.icon)
 {
 }
 
@@ -123,27 +126,31 @@ OsmAnd::OsmRouteType::RouteActivityTypeBuilder::RouteActivityTypeBuilder()
 {
 }
 
-     
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::setName(const QString& name) {
-        this->name = name;
-        return *this;
-    }
-    
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::setRouteType(OsmAnd::OsmRouteType* routeType) {
-        this->routeType = routeType;
-        return *this;
-    }
-    
-    OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() const {
-        return OsmAnd::OsmRouteType(name);
-    }
+    this->name = name;
+    return *this;
+}
 
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder OsmAnd::OsmRouteType::createType(const QString& name) {
-    OsmAnd::OsmRouteType newRoute(name);
-    values.append(newRoute);
-    RouteActivityTypeBuilder builder;
-    builder.setName(name);
-    builder.setRouteType(&newRoute);
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::color(const QString& color) {
+    this->routeType->color = color;
+    return *this;
+}
+
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::icon(const QString& icon) {
+    this->routeType->icon = icon;
+    return *this;
+}
+    
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() {
+    values.append(*routeType);
+    return *routeType;
+}
+
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) {
+    OsmAnd::OsmRouteType* newRoute = new OsmAnd::OsmRouteType(name);
+    auto builder = OsmAnd::OsmRouteType::RouteActivityTypeBuilder();
+    builder.name = name;
+    builder.routeType = newRoute;
     return builder;
 }
 
@@ -166,16 +173,13 @@ void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHash<QString, QString> &tags)
 {
     QVector<NetworkRouteKey> lst;
-    for (const auto& tagPrefix : ROUTE_TYPES_PREFIX)
+    for(OsmRouteType routeType : OsmRouteType::values)
     {
-        int rq = getRouteQuantity(tags, tagPrefix);
+        int rq = getRouteQuantity(tags, routeType.tagPrefix);
         for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
         {
-            const QString & prefix = tagPrefix + QString::number(routeIdx);
-            
-//            NetworkRouteKey routeKey(ROUTE_TYPES_PREFIX.indexOf(tagPrefix));
-            NetworkRouteKey routeKey(OsmAnd::OsmRouteType::HIKING);
-
+            const QString & prefix = routeType.tagPrefix + QString::number(routeIdx);
+            NetworkRouteKey routeKey(routeType);
             for (auto e = tags.begin(); e != tags.end(); ++e)
             {
                 const QString & tag = e.key();
