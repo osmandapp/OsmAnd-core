@@ -114,10 +114,6 @@ OsmAnd::OsmRouteType::OsmRouteType(QString n) : name(n), tagPrefix(QStringLitera
 {
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(OsmRouteType& ort) : name(ort.name), tagPrefix(ort.tagPrefix), color(ort.color), icon(ort.icon)
-{
-}
-
 OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name), tagPrefix(ort.tagPrefix), color(ort.color), icon(ort.icon)
 {
 }
@@ -126,37 +122,37 @@ OsmAnd::OsmRouteType::RouteActivityTypeBuilder::RouteActivityTypeBuilder()
 {
 }
 
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::setName(const QString& name) {
-    this->name = name;
-    return *this;
-}
-
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::color(const QString& color) {
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::color(const QString& color) 
+{
     this->routeType->color = color;
     return *this;
 }
 
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::icon(const QString& icon) {
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::icon(const QString& icon) 
+{
     this->routeType->icon = icon;
     return *this;
 }
     
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() {
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() 
+{
     values.append(*routeType);
     return *routeType;
 }
 
-OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) {
-    OsmAnd::OsmRouteType* newRoute = new OsmAnd::OsmRouteType(name);
-    auto builder = OsmAnd::OsmRouteType::RouteActivityTypeBuilder();
-    builder.name = name;
-    builder.routeType = newRoute;
+OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) 
+{
+    auto builder = RouteActivityTypeBuilder();
+    builder.routeType = new OsmRouteType(name);
     return builder;
 }
 
-std::shared_ptr<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::getByTag(QString tag) {
-    for (OsmRouteType routeType : values) {
-        if (routeType.name == tag) {
+std::shared_ptr<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::getByTag(QString tag)
+{
+    for (OsmRouteType routeType : values)
+    {
+        if (routeType.name == tag) 
+        {
             return std::make_shared<OsmRouteType>(routeType);
         }
     }

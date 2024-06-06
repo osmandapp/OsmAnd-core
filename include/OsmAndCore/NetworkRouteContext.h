@@ -15,9 +15,8 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    
 
-    class OsmRouteType
+    class OSMAND_CORE_API OsmRouteType
     {
     public:
         static OsmRouteType HIKING;
@@ -34,55 +33,36 @@ namespace OsmAnd
         class RouteActivityTypeBuilder
         {
         public:
-            RouteActivityTypeBuilder();
-            RouteActivityTypeBuilder& setName(const QString & name);
-            RouteActivityTypeBuilder& color(const QString & color);
-            RouteActivityTypeBuilder& icon(const QString & icon);
-            OsmRouteType reg();
             OsmRouteType* routeType;
-            QString name;
-        private:
-           
-            
+            RouteActivityTypeBuilder();
+            OsmRouteType reg();
+            RouteActivityTypeBuilder & color(const QString & color);
+            RouteActivityTypeBuilder & icon(const QString & icon);
         };
 
         OsmRouteType();
         OsmRouteType(QString n);
-        OsmRouteType(OsmRouteType & ort);
         OsmRouteType(const OsmRouteType & ort);
-        
+
         static std::shared_ptr<OsmRouteType> getByTag(QString tag);
 
         inline bool operator == (const OsmRouteType & other) const
         {
-            if (!this->name.compare(other.name))
-                return false;
-            return true;
+            return (this->name == other.name &&
+                    this->color == other.color &&
+                    this->icon == other.icon);
         }
 
         inline bool operator != (const OsmRouteType & other) const
         {
-            return !(*this == other);
+            return !(* this == other);
         }
-
-        inline bool operator > (const OsmRouteType & other) const
-        {
-            return true;
-        }
-
-        inline bool operator < (const OsmRouteType & other) const
-        {
-            return false;
-        }
-
-        
     private:
         static RouteActivityTypeBuilder createType(const QString & name);
-
     };
 
     inline uint qHash(const OsmRouteType & key, uint seed = 0) {
-        return (uint)key.name.length();
+        return qHash(key.name) + qHash(key.color) + qHash(key.icon);
     }
 
     struct OSMAND_CORE_API NetworkRouteKey
@@ -169,7 +149,7 @@ namespace OsmAnd
                 s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(&type.name);
+            result = prime * result + qHash(type);
             return result;
         }
     private:
