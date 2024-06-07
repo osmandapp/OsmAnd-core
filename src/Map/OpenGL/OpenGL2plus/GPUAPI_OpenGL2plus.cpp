@@ -163,15 +163,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d", _maxTextureUnitsInFragmentShader);
 
-    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInVertexShader));
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", _maxTextureUnitsInVertexShader);
-    //////////////////////////////////////////////////////////////////////////
-    //NOTE: for testing
-    // _maxTextureUnitsInVertexShader = 0;
-    //////////////////////////////////////////////////////////////////////////
-    _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
-
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsCombined));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units combined %d", _maxTextureUnitsCombined);
@@ -755,7 +746,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define PARAM_INPUT in                                                                                             ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
-            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
@@ -774,7 +764,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define PARAM_INPUT in                                                                                             ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
-            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
@@ -798,7 +787,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
             "#define lowp                                                                                                       ""\n"
             "                                                                                                                   ""\n"
             // Features definitions
-            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
             "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
             "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
@@ -811,7 +799,6 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
     }
 
     auto shaderHeaderPreprocessed = shaderHeader;
-    shaderHeaderPreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
     shaderHeaderPreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
     shaderHeaderPreprocessed.replace("%IntegerOperationsSupported%", QString::number(isSupported_integerOperations ? 1 : 0));
 

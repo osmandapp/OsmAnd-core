@@ -253,11 +253,6 @@ namespace OsmAnd
             volatile bool* gpuContextLost,
             int64_t dateTime = 0,
             const std::shared_ptr<MapRendererBaseResource>& resource = nullptr);
-        bool uploadTiledDataAsArrayBufferToGPU(
-            const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-            std::shared_ptr< const ResourceInGPU >& resourceInGPU,
-            bool waitForGPU,
-            volatile bool* gpuContextLost);
 
         bool uploadSymbolAsTextureToGPU(
             const std::shared_ptr< const RasterMapSymbol >& symbol,
@@ -298,10 +293,8 @@ namespace OsmAnd
         QVector<GLint> _compressedFormats;
 
         GLint _maxTextureSize;
-        GLint _maxTextureUnitsInVertexShader;
         GLint _maxTextureUnitsInFragmentShader;
         GLint _maxTextureUnitsCombined;
-        bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
         bool _isSupported_debug_label;
@@ -349,10 +342,8 @@ namespace OsmAnd
         const QVector<GLint>& compressedFormats;
 
         const GLint& maxTextureSize;
-        const GLint& maxTextureUnitsInVertexShader;
         const GLint& maxTextureUnitsInFragmentShader;
         const GLint& maxTextureUnitsCombined;
-        const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
         const bool& isSupported_debug_label;

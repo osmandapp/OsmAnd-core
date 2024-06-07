@@ -335,10 +335,6 @@ namespace OsmAnd
             const PointF& texCoordsScaleN,
             const double tileSize,
             const int elevationDataSamplerIndex);
-        void cancelElevation(
-            const OnSurfaceVectorProgram& program,
-            const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray);
         void reportCommonParameters(QJsonObject& jsonObject, const RenderableSymbol& renderableSymbol);
     public:
         explicit AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* renderer);
