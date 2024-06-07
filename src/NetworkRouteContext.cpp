@@ -3,10 +3,43 @@
 
 QList<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::values;
 
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING = createType("hiking").color("orange").icon("special_trekking").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WATER = createType("water").color("yellow").icon("special_kayak")
+    .reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WINTER = createType("winter").color("yellow").icon("special_skiing").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SNOWMOBILE = createType("snowmobile").color("yellow").icon("special_snowmobile").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RIDING = createType("riding").color("yellow").icon("special_horse").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RACING = createType("racing").color("yellow").icon("raceway").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MOUNTAINBIKE = createType("mountainbike").color("blue").icon("sport_cycling").reg();
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BICYCLE = createType("bicycle").reg();
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MTB = createType("mtb").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CYCLING = createType("cycling").color("blue").icon("special_bicycle").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING = createType("hiking").color("orange").icon("special_trekking").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RUNNING = createType("running").color("orange").icon("running").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WALKING = createType("walking").color("orange").icon("special_walking").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::OFFROAD = createType("offroad").color("yellow").icon("special_offroad").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MOTORBIKE = createType("motorbike").color("green").icon("special_motorcycle").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CAR = createType("car").color("green").icon("shop_car").reg();
+
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HORSE = createType("horse").reg();
+
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::ROAD = createType("road").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::DETOUR = createType("detour").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BUS = createType("bus").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CANOE = createType("canoe").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FERRY = createType("ferry").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FOOT = createType("foot").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::LIGHT_RAIL = createType("light_rail").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::PISTE = createType("piste").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RAILWAY = createType("railway").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SKI = createType("ski").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::ALPINE = createType("alpine").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FITNESS = createType("fitness").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::INLINE_SKATES = createType("inline_skates").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SUBWAY = createType("subway").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRAIN = createType("train").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRACKS = createType("tracks").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRAM = createType("tram").reg();
+OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TROLLEYBUS = createType("trolleybus").reg();
 
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,

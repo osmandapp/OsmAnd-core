@@ -19,11 +19,41 @@ namespace OsmAnd
     class OSMAND_CORE_API OsmRouteType
     {
     public:
-        static OsmRouteType HIKING;
+        static OsmRouteType WATER;
+        static OsmRouteType WINTER;
+        static OsmRouteType SNOWMOBILE;
+        static OsmRouteType RIDING;
+        static OsmRouteType RACING;
+        static OsmRouteType MOUNTAINBIKE;
         static OsmRouteType BICYCLE;
         static OsmRouteType MTB;
+        static OsmRouteType CYCLING;
+        static OsmRouteType HIKING;
+        static OsmRouteType RUNNING;
+        static OsmRouteType WALKING;
+        static OsmRouteType OFFROAD;
+        static OsmRouteType MOTORBIKE;
+        static OsmRouteType CAR;
         static OsmRouteType HORSE;
-        
+        static OsmRouteType ROAD;
+        static OsmRouteType DETOUR;
+        static OsmRouteType BUS;
+        static OsmRouteType CANOE;
+        static OsmRouteType FERRY;
+        static OsmRouteType FOOT;
+        static OsmRouteType LIGHT_RAIL;
+        static OsmRouteType PISTE;
+        static OsmRouteType RAILWAY;
+        static OsmRouteType SKI;
+        static OsmRouteType ALPINE;
+        static OsmRouteType FITNESS;
+        static OsmRouteType INLINE_SKATES;
+        static OsmRouteType SUBWAY;
+        static OsmRouteType TRAIN;
+        static OsmRouteType TRACKS;
+        static OsmRouteType TRAM;
+        static OsmRouteType TROLLEYBUS;
+
         static QList<OsmRouteType> values;
         QString name;
         QString tagPrefix;
