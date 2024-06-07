@@ -41,10 +41,8 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _glVersion(0)
     , _glslVersion(0)
     , _maxTextureSize(0)
-    , _maxTextureUnitsInVertexShader(0)
     , _maxTextureUnitsInFragmentShader(0)
     , _maxTextureUnitsCombined(0)
-    , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
     , _isSupported_debug_label(false)
@@ -68,10 +66,8 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , extensions(_extensions)
     , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)
-    , maxTextureUnitsInVertexShader(_maxTextureUnitsInVertexShader)
     , maxTextureUnitsInFragmentShader(_maxTextureUnitsInFragmentShader)
     , maxTextureUnitsCombined(_maxTextureUnitsCombined)
-    , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
     , isSupported_debug_label(_isSupported_debug_label)
@@ -806,16 +802,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
             rasterMapLayerData, resourceInGPU, waitForGPU, gpuContextLost, dateTime, resource);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
-    {
-        if (isSupported_vertexShaderTextureLookup)
-        {
-            return uploadTiledDataAsTextureToGPU(elevationData, resourceInGPU, waitForGPU, gpuContextLost);
-        }
-        else
-        {
-            return uploadTiledDataAsArrayBufferToGPU(elevationData, resourceInGPU, waitForGPU, gpuContextLost);
-        }
-    }
+        return uploadTiledDataAsTextureToGPU(elevationData, resourceInGPU, waitForGPU, gpuContextLost);
 
     assert(false);
     return false;
@@ -1206,114 +1193,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
-    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
-    std::shared_ptr< const ResourceInGPU >& resourceInGPU,
-    bool waitForGPU,
-    volatile bool* gpuContextLost)
-{
-    GL_CHECK_PRESENT(glGenBuffers);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glBufferData);
-
-    const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile);
-    if (!elevationData)
-    {
-        assert(false);
-        return false;
-    }
-
-#pragma pack(push, 1)
-    struct Item
-    {
-        float tl;
-        float t;
-        float tr;
-
-        float l;
-        float o;
-        float r;
-
-        float bl;
-        float b;
-        float br;
-    };
-#pragma pack(pop)
-
-    const auto pHeixels = reinterpret_cast<const uint8_t*>(elevationData->pRawData);
-    const auto pHeixelsRowLength = elevationData->rowLength;
-    const auto itemsPerTileSide = elevationData->size - 2;
-    const auto itemsCount = itemsPerTileSide * itemsPerTileSide;
-    const auto pItems = new Item[itemsCount];
-
-    auto pItem = pItems;
-    for (int row = 0; row < itemsPerTileSide; row++)
-    {
-        const auto pPrevHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 0) * pHeixelsRowLength);
-        const auto pCurrHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 1) * pHeixelsRowLength);
-        const auto pNextHeixelsRow = reinterpret_cast<const float*>(pHeixels + (row + 2) * pHeixelsRowLength);
-
-        auto pHeixelO = pCurrHeixelsRow + 1;
-        auto pHeixelT = pPrevHeixelsRow + 1;
-        auto pHeixelL = pCurrHeixelsRow + 0;
-        auto pHeixelB = pNextHeixelsRow + 1;
-        auto pHeixelR = pCurrHeixelsRow + 2;
-        auto pHeixelTL = pPrevHeixelsRow + 0;
-        auto pHeixelTR = pPrevHeixelsRow + 2;
-        auto pHeixelBL = pNextHeixelsRow + 0;
-        auto pHeixelBR = pNextHeixelsRow + 2;
-        for (int col = 0; col < itemsPerTileSide; col++)
-        {
-            auto& item = *(pItem++);
-
-            item.o = *(pHeixelO++);
-            item.t = *(pHeixelT++);
-            item.l = *(pHeixelL++);
-            item.b = *(pHeixelB++);
-            item.r = *(pHeixelR++);
-            item.tl = *(pHeixelTL++);
-            item.tr = *(pHeixelTR++);
-            item.bl = *(pHeixelBL++);
-            item.br = *(pHeixelBR++);
-        }
-    }
-
-    // Create array buffer
-    GLuint buffer;
-    glGenBuffers(1, &buffer);
-    GL_CHECK_RESULT;
-
-    // Bind it
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    GL_CHECK_RESULT;
-
-    // Name it
-    setObjectLabel(ObjectType::Buffer, buffer, QString::asprintf("MapElevationDataProvider::Data(@%p)->buffer", elevationData.get()));
-
-    // Upload data
-    glBufferData(GL_ARRAY_BUFFER, itemsCount * sizeof(Item), pItems, GL_STATIC_DRAW);
-    GL_CHECK_RESULT;
-
-    // Unbind it
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GL_CHECK_RESULT;
-
-    // Create resource-in-GPU descriptor
-    const auto arrayBufferInGPU = std::make_shared<ArrayBufferInGPU>(
-        this,
-        reinterpret_cast<RefInGPU>(buffer),
-        itemsCount);
-
-    if (waitForGPU)
-        waitUntilUploadIsComplete(gpuContextLost);
-
-    resourceInGPU = arrayBufferInGPU;
-
-    delete[] pItems;
-
-    return true;
-}
-
 bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
     const std::shared_ptr< const RasterMapSymbol >& symbol,
     std::shared_ptr< const ResourceInGPU >& resourceInGPU,
@@ -1551,11 +1430,7 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
         return getTextureFormat(colorType);
     }
     else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
-    {
-        assert(isSupported_vertexShaderTextureLookup);
-
         return getTextureFormat_float();
-    }
 
     assert(false);
     return TextureFormat::Make(GL_INVALID_ENUM, GL_INVALID_ENUM);

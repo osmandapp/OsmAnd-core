@@ -42,11 +42,15 @@ namespace OsmAnd
             ElevationResource(
                 const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU,
                 const TileId tileIdN,
+                const ZoomLevel zoomLevel_,
+                const double tileSize_,
                 const PointF texCoordsOffset = PointF(0.0f, 0.0f),
                 const PointF texCoordsScale = PointF(1.0f, 1.0f));
 
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             TileId tileIdN;
+            ZoomLevel zoomLevel;
+            double tileSize;
             PointF texCoordsOffset;
             PointF texCoordsScale;
 
@@ -91,6 +95,7 @@ namespace OsmAnd
             const bool containsOriginLayer;
             bool lastBatch;
             QList< Ref<BatchedLayer> > layers;
+            std::shared_ptr<QList<Ref<ElevationResource>>> elevationResourcesInGPU;
 
             bool operator<(const PerTileBatchedLayers& that) const;
 
@@ -121,7 +126,6 @@ namespace OsmAnd
                 struct {
                     GLlocation vertexPosition;
                     GLlocation vertexTexCoords;
-                    GLlocation vertexElevation;
                 } in;
 
                 // Parameters
@@ -191,7 +195,6 @@ namespace OsmAnd
         bool renderRasterLayersBatch(
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
-            GLlocation& activeElevationVertexAttribArray,
             GLname& lastUsedProgram,
             bool& haveElevation,
             const bool withElevation,
@@ -205,17 +208,14 @@ namespace OsmAnd
             const PointF& texCoordsOffsetN,
             const PointF& texCoordsScaleN,
             const double tileSize,
-            const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray);
+            const int elevationDataSamplerIndex);
         void cancelElevation(
             const RasterLayerTileProgram& program,
-            const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray);
+            const int elevationDataSamplerIndex);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
             GLname& lastUsedProgram,
-            GLlocation& activeElevationVertexAttribArray,
             const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,

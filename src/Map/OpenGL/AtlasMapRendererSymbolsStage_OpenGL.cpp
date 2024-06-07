@@ -3216,103 +3216,73 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::configureElevationData(
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
-    if (gpuAPI->isSupported_vertexShaderTextureLookup)
-    {
-        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
-        GL_CHECK_RESULT;
-
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
-        GL_CHECK_RESULT;
-
-        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
-
-        if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-        {
-            const auto tileOnAtlasTexture =
-                std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
-            const auto& texture = tileOnAtlasTexture->atlasTexture;
-
-            const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
-            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
-
-            // NOTE: Must be in sync with IMapElevationDataProvider::Data::getValue
-            const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
-                texture->tileSizeN - 3.0f * texture->vTexelSizeN);
-            const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texPlace(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
-            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
-                texPlace.y + innerSize.y * texCoordsOffsetN.y);
-
-            glUniform4f(program.vs.param.texCoordsOffsetAndScale,
-                texCoordsOffset.x,
-                texCoordsOffset.y,
-                texCoordsScale.x,
-                texCoordsScale.y);
-            GL_CHECK_RESULT;
-            glUniform4f(program.vs.param.elevationLayerDataPlace,
-                texPlace.x,
-                texPlace.y,
-                texture->uHalfTexelSizeN,
-                texture->vHalfTexelSizeN);
-            GL_CHECK_RESULT;
-
-        }
-        else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
-        {
-            const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
-
-            const PointF innerSize(
-                1.0f - 3.0f * texture->uTexelSizeN,
-                1.0f - 3.0f * texture->vTexelSizeN
-            );
-            const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
-            const PointF texPlace(texture->uHalfTexelSizeN + texture->uTexelSizeN,
-                texture->vHalfTexelSizeN + texture->vTexelSizeN);
-            const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
-                texPlace.y + innerSize.y * texCoordsOffsetN.y);
-
-            glUniform4f(program.vs.param.texCoordsOffsetAndScale,
-                texCoordsOffset.x,
-                texCoordsOffset.y,
-                texCoordsScale.x,
-                texCoordsScale.y);
-            GL_CHECK_RESULT;
-            glUniform4f(program.vs.param.elevationLayerDataPlace,
-                texPlace.x,
-                texPlace.y,
-                texture->uHalfTexelSizeN,
-                texture->vHalfTexelSizeN);
-            GL_CHECK_RESULT;
-        }
-        return true;
-    }
-    else
-        return false;
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::cancelElevation(
-    const OnSurfaceVectorProgram& program,
-    const int elevationDataSamplerIndex,
-    GLlocation& activeElevationVertexAttribArray)
-{
-    const auto gpuAPI = getGPUAPI();
-
-    GL_CHECK_PRESENT(glUniform4f);
-    GL_CHECK_PRESENT(glActiveTexture);
-    GL_CHECK_PRESENT(glBindTexture);
-
-    glUniform4f(program.vs.param.elevation_scale, 0.0f, 0.0f, 0.0f, 0.0f);
+    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
     GL_CHECK_RESULT;
 
-    if (gpuAPI->isSupported_vertexShaderTextureLookup)
-    {
-        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
-        GL_CHECK_RESULT;
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
+    GL_CHECK_RESULT;
 
-        glBindTexture(GL_TEXTURE_2D, 0);
+    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
+
+    if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+    {
+        const auto tileOnAtlasTexture =
+            std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+        const auto& texture = tileOnAtlasTexture->atlasTexture;
+
+        const auto rowIndex = tileOnAtlasTexture->slotIndex / texture->slotsPerSide;
+        const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * texture->slotsPerSide;
+
+        // NOTE: Must be in sync with IMapElevationDataProvider::Data::getValue
+        const PointF innerSize(texture->tileSizeN - 3.0f * texture->uTexelSizeN,
+            texture->tileSizeN - 3.0f * texture->vTexelSizeN);
+        const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
+        const PointF texPlace(colIndex * texture->tileSizeN + texture->uHalfTexelSizeN + texture->uTexelSizeN,
+            rowIndex * texture->tileSizeN + texture->vHalfTexelSizeN + texture->vTexelSizeN);
+        const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+            texPlace.y + innerSize.y * texCoordsOffsetN.y);
+
+        glUniform4f(program.vs.param.texCoordsOffsetAndScale,
+            texCoordsOffset.x,
+            texCoordsOffset.y,
+            texCoordsScale.x,
+            texCoordsScale.y);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.elevationLayerDataPlace,
+            texPlace.x,
+            texPlace.y,
+            texture->uHalfTexelSizeN,
+            texture->vHalfTexelSizeN);
         GL_CHECK_RESULT;
     }
+    else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
+    {
+        const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
+
+        const PointF innerSize(
+            1.0f - 3.0f * texture->uTexelSizeN,
+            1.0f - 3.0f * texture->vTexelSizeN
+        );
+        const PointF texCoordsScale(innerSize.x * texCoordsScaleN.x, innerSize.y * texCoordsScaleN.y);
+        const PointF texPlace(texture->uHalfTexelSizeN + texture->uTexelSizeN,
+            texture->vHalfTexelSizeN + texture->vTexelSizeN);
+        const PointF texCoordsOffset(texPlace.x + innerSize.x * texCoordsOffsetN.x,
+            texPlace.y + innerSize.y * texCoordsOffsetN.y);
+
+        glUniform4f(program.vs.param.texCoordsOffsetAndScale,
+            texCoordsOffset.x,
+            texCoordsOffset.y,
+            texCoordsScale.x,
+            texCoordsScale.y);
+        GL_CHECK_RESULT;
+        glUniform4f(program.vs.param.elevationLayerDataPlace,
+            texPlace.x,
+            texPlace.y,
+            texture->uHalfTexelSizeN,
+            texture->vHalfTexelSizeN);
+        GL_CHECK_RESULT;
+    }
+    return true;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::reportCommonParameters(
