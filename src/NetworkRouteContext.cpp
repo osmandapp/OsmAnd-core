@@ -123,8 +123,8 @@ OsmAnd::NetworkRouteKey::NetworkRouteKey(const NetworkRouteKey & other)
 }
 
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey(OsmAnd::OsmRouteType t)
-: type(t)
+OsmAnd::NetworkRouteKey::NetworkRouteKey(const OsmRouteType & type)
+: type(type)
 {
 }
 
@@ -143,11 +143,15 @@ OsmAnd::OsmRouteType::OsmRouteType()
 {
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(QString n) : name(n), tagPrefix(QStringLiteral("route_") + n + QStringLiteral("_"))
+OsmAnd::OsmRouteType::OsmRouteType(const QString & n) : name(n), tagPrefix(QStringLiteral("route_") + n + QStringLiteral("_"))
 {
 }
 
 OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name), tagPrefix(ort.tagPrefix), color(ort.color), icon(ort.icon)
+{
+}
+
+OsmAnd::OsmRouteType::OsmRouteType(const QString& name, const QString& color, const QString& icon) : name(name), tagPrefix(name), color(color), icon(icon)
 {
 }
 
@@ -157,36 +161,37 @@ OsmAnd::OsmRouteType::RouteActivityTypeBuilder::RouteActivityTypeBuilder()
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::color(const QString& color) 
 {
-    this->routeType->color = color;
+    this->_color = color;
     return *this;
 }
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::icon(const QString& icon) 
 {
-    this->routeType->icon = icon;
+    this->_icon = icon;
     return *this;
 }
     
 OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() 
 {
-    values.append(*routeType);
-    return *routeType;
+    OsmRouteType routeType(_name, _color, _icon);
+    values.append(routeType);
+    return routeType;
+    delete this;
 }
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) 
 {
     auto builder = RouteActivityTypeBuilder();
-    builder.routeType = new OsmRouteType(name);
     return builder;
 }
 
-std::shared_ptr<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::getByTag(QString tag)
+OsmAnd::OsmRouteType * OsmAnd::OsmRouteType::getByTag(QString tag)
 {
-    for (OsmRouteType routeType : values)
+    for (auto & routeType : values)
     {
         if (routeType.name == tag) 
         {
-            return std::make_shared<OsmRouteType>(routeType);
+            return &routeType;
         }
     }
     return nullptr;
@@ -202,7 +207,7 @@ void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHash<QString, QString> &tags)
 {
     QVector<NetworkRouteKey> lst;
-    for(OsmRouteType routeType : OsmRouteType::values)
+    for(const auto & routeType : OsmRouteType::values)
     {
         int rq = getRouteQuantity(tags, routeType.tagPrefix);
         for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
@@ -291,7 +296,7 @@ QMap<QString, QString> OsmAnd::NetworkRouteKey::tagsToGpx() const
     return networkRouteKey;
 }
 
-std::shared_ptr<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QString> & networkRouteKeyTags)
+OsmAnd::NetworkRouteKey* OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QString> & networkRouteKeyTags)
 {
     auto it = networkRouteKeyTags.find(NETWORK_ROUTE_TYPE);
     if (it != networkRouteKeyTags.end())
@@ -299,7 +304,7 @@ std::shared_ptr<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::fromGpx(const 
         QString type = *it;
         auto routeType = OsmRouteType::getByTag(type);
         if (routeType) {
-            const auto routeKey = std::make_shared<NetworkRouteKey>(*routeType);
+            const auto routeKey = new NetworkRouteKey(*routeType);
             for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
             {
                 routeKey->addTag(i.key(), i.value());
@@ -398,11 +403,11 @@ OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
 
 QString OsmAnd::NetworkRouteKey::toString() const
 {
-    QString hash = type.name;
+    QString res = type.name;
 
     for (auto & s : tags)
     {
-        hash += s;
+        res += s;
     }
-    return hash;
+    return res;
 }

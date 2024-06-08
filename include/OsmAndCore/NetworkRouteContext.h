@@ -55,26 +55,32 @@ namespace OsmAnd
         static OsmRouteType TROLLEYBUS;
 
         static QList<OsmRouteType> values;
-        QString name;
-        QString tagPrefix;
-        QString color;
-        QString icon;
+        const QString name;
+        const QString tagPrefix;
+        const QString color;
+        const QString icon;
         
         class RouteActivityTypeBuilder
         {
         public:
-            OsmRouteType* routeType;
+           
             RouteActivityTypeBuilder();
             OsmRouteType reg();
             RouteActivityTypeBuilder & color(const QString & color);
             RouteActivityTypeBuilder & icon(const QString & icon);
+            QString _name;
+            QString _color;
+            QString _icon;
+        private:
+            OsmRouteType* routeType;
         };
 
         OsmRouteType();
-        OsmRouteType(QString n);
+        OsmRouteType(const QString & n);
         OsmRouteType(const OsmRouteType & ort);
+        OsmRouteType(const QString & name, const QString & color, const QString & icon);
 
-        static std::shared_ptr<OsmRouteType> getByTag(QString tag);
+        static OsmRouteType * getByTag(QString tag);
 
         inline bool operator == (const OsmRouteType & other) const
         {
@@ -100,7 +106,7 @@ namespace OsmAnd
         NetworkRouteKey();
         NetworkRouteKey(NetworkRouteKey & other);
         NetworkRouteKey(const NetworkRouteKey & other);
-        NetworkRouteKey(OsmRouteType ort);
+        NetworkRouteKey(const OsmRouteType & ort);
         virtual ~NetworkRouteKey();
         OsmRouteType type;
         QSet<QString> tags;
@@ -112,7 +118,7 @@ namespace OsmAnd
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;
         QMap<QString, QString> tagsToGpx() const;
-        static std::shared_ptr<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
+        static NetworkRouteKey * fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
         QString getKeyFromTag(const QString& tag) const;
         QString getValue(const QString& key) const;
         QString getRouteName() const;
