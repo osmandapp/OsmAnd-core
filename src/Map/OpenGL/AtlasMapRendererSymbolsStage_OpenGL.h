@@ -281,8 +281,8 @@ namespace OsmAnd
         int _nextQueryIndex;
         int _queryResultsCount;
         QVector<bool> _queryResults;
-        QHash<int, int> _queryMapEven;
-        QHash<int, int> _queryMapOdd;
+        QHash<int64_t, int> _queryMapEven;
+        QHash<int64_t, int> _queryMapOdd;
         QHash<int, bool> _queryResultsMap;
         float _querySizeFactor;
         GLname _visibilityCheckVAO;
