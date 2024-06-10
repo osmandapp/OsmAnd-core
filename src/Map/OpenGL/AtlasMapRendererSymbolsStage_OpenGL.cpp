@@ -3040,19 +3040,24 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
-    const auto filterQuery = pointOnScreen.x > -1.0f && pointOnScreen.y > -1.0f;
+    const auto filterQuery = pointOnScreen.x > -1.0f && pointOnScreen.y > -1.0f
+        && firstPointInWorld == secondPointInWorld
+        && firstPointInWorld == thirdPointInWorld
+        && firstPointInWorld == fourthPointInWorld;
 
     PointF scaledPoint;
-    int evenCode;
-    int oddCode;
+    int64_t evenCode;
+    int64_t oddCode;
 
     float pointSize = 1.0f;
 
     if (filterQuery)
     {
+        const auto distance = static_cast<int64_t>(qMin(
+            glm::distance(internalState.worldCameraPosition, firstPointInWorld), 1000000.0f)) * 1000000;
         scaledPoint = pointOnScreen / _querySizeFactor;
-        evenCode = static_cast<int>(scaledPoint.y) * 1000 + static_cast<int>(scaledPoint.x);
-        oddCode = static_cast<int>(scaledPoint.y + 0.5f) * 1000 + static_cast<int>(scaledPoint.x + 0.5f);
+        evenCode = distance + static_cast<int>(scaledPoint.y) * 1000 + static_cast<int>(scaledPoint.x);
+        oddCode = distance + static_cast<int>(scaledPoint.y + 0.5f) * 1000 + static_cast<int>(scaledPoint.x + 0.5f);
         auto citQueryIndex = _queryMapEven.constFind(evenCode);
         if (citQueryIndex != _queryMapEven.cend())
             return citQueryIndex.value();
@@ -3090,6 +3095,9 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
 
         // Change depth test function to perform > depth test
         glDepthFunc(GL_GREATER);
+        GL_CHECK_RESULT;
+
+        glDepthMask(GL_FALSE);
         GL_CHECK_RESULT;
 
         _lastUsedProgram = _visibilityCheckProgram.id;
@@ -3151,7 +3159,7 @@ int OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::startTerrainVisibilityFiltering
     else
         queryIndex += _queryResultsCount;
 
-    _nextQueryIndex += 1;
+    _nextQueryIndex++;
 
     if (filterQuery)
     {
