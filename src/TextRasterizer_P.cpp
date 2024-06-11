@@ -74,6 +74,8 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
             const auto position = pNextCharacter - pText;
             auto npNextCharacter = pNextCharacter;
             const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&npNextCharacter));
+            if (npNextCharacter > pEnd)
+                npNextCharacter = pEnd;
             const auto charSize = npNextCharacter - pNextCharacter;
             pNextCharacter = npNextCharacter;
             if (typeface)
