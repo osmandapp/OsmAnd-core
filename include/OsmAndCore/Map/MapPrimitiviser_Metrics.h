@@ -131,7 +131,7 @@ namespace OsmAnd
         protected:
             Metric_primitivise();
         public:
-            virtual ~Metric_primitivise();
+            virtual ~Metric_primitivise() = default;
             virtual void reset();
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitivise__FIELDS(EMIT_METRIC_FIELD);
@@ -147,7 +147,7 @@ namespace OsmAnd
         struct OSMAND_CORE_API Metric_primitiviseAllMapObjects : public Metric_primitivise
         {
             Metric_primitiviseAllMapObjects();
-            virtual ~Metric_primitiviseAllMapObjects();
+            virtual ~Metric_primitiviseAllMapObjects() = default;
             virtual void reset();
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseAllMapObjects__FIELDS(EMIT_METRIC_FIELD);
@@ -168,7 +168,7 @@ namespace OsmAnd
         struct OSMAND_CORE_API Metric_primitiviseWithoutSurface : public Metric_primitivise
         {
             Metric_primitiviseWithoutSurface();
-            virtual ~Metric_primitiviseWithoutSurface();
+            virtual ~Metric_primitiviseWithoutSurface() = default;
             virtual void reset();
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithoutSurface__FIELDS(EMIT_METRIC_FIELD);
@@ -189,7 +189,7 @@ namespace OsmAnd
         struct OSMAND_CORE_API Metric_primitiviseWithSurface : public Metric_primitiviseWithoutSurface
         {
             Metric_primitiviseWithSurface();
-            virtual ~Metric_primitiviseWithSurface();
+            virtual ~Metric_primitiviseWithSurface() = default;
             virtual void reset();
 
             OsmAnd__MapPrimitiviser_Metrics__Metric_primitiviseWithSurface__FIELDS(EMIT_METRIC_FIELD);
