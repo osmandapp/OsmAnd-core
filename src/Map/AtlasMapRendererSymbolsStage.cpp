@@ -254,9 +254,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         return result;
     }
 
-    // Do not suspend MapMarker and VectorLine objects
+    // Do not suspend VectorLine objects
 
-    // Acquire fresh MapMarker and VectorLine objects from publishedMapSymbolsByOrder
+    // Acquire fresh VectorLine objects from publishedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredPublishedMapSymbols;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
     {
@@ -268,8 +268,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsGroup = mapSymbolsEntry.first;
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-            if (std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
-                || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            if (std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
             {
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
             }
@@ -278,7 +277,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             filteredPublishedMapSymbols[order] = acceptedMapSymbols;
     }
 
-    // Filter out old MapMarker and VectorLine objects from _lastAcceptedMapSymbolsByOrder
+    // Filter out old VectorLine objects from _lastAcceptedMapSymbolsByOrder
     MapRenderer::PublishedMapSymbolsByOrder filteredLastAcceptedMapSymbols;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(_lastAcceptedMapSymbolsByOrder)))
     {
@@ -290,8 +289,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& mapSymbolsGroup = mapSymbolsEntry.first;
             const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-            if (!std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
-                && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
+            if (!std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup))
             {
                 acceptedMapSymbols[mapSymbolsGroup] = mapSymbolsFromGroup;
             }
@@ -299,7 +297,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         filteredLastAcceptedMapSymbols[order] = acceptedMapSymbols;
     }
 
-    // Append new MapMarker and VectorLine objects to filteredLastAcceptedMapSymbols
+    // Append new VectorLine objects to filteredLastAcceptedMapSymbols
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(filteredPublishedMapSymbols)))
     {
         const auto order = mapSymbolsByOrderEntry.key();
@@ -468,14 +466,21 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsGroup = mapSymbolsEntry.first;
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
-                const bool isDenseSymbolGroup = preRenderDenseSymbolsDepth
-                    && std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+                const bool skipNotDenseSymbolGroup = preRenderDenseSymbolsDepth
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
 
-                if (preRenderDenseSymbolsDepth && !isDenseSymbolGroup)
+                if (skipNotDenseSymbolGroup)
                     continue;
 
-                const bool freshlyPublishedGroup = std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup)
-                    || std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+                const auto freshlyPublishedGroup =
+                    std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+
+                const bool canSkip = !applyFiltering && !freshlyPublishedGroup;
+
+                const auto groupWithoutFiltering =
+                    std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
+
+                const bool withFiltering = applyFiltering && !groupWithoutFiltering;
 
                 // Debug: showTooShortOnPathSymbolsRenderablesPaths
                 if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
@@ -524,7 +529,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         if (citSymbolInfo == mapSymbolsFromGroup.cend())
                             continue;
 
-                        if (!applyFiltering && !freshlyPublishedGroup)
+                        if (canSkip)
                         {
                             const auto& plottedSymbolInstances = citSymbolInfo->plottedInstances;
                             if (!plottedSymbolInstances.contains(nullptr))
@@ -600,7 +605,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
                         const auto& additionalSymbolInstance = *citAdditionalSymbolInstance;
 
-                        if (!applyFiltering && !freshlyPublishedGroup)
+                        if (canSkip)
                         {
                             const auto& plottedSymbolInstances = citSymbolInfo->plottedInstances;
                             if (!plottedSymbolInstances.contains(additionalSymbolInstance))
@@ -1274,7 +1279,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     positionInWorld.y = elevationInWorld;
 
     // Test against visible frustum area (if allowed)
-    if (!debugSettings->disableSymbolsFastCheckByFrustum &&
+    const bool isntMarker = !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolGroup);
+    if (isntMarker && !debugSettings->disableSymbolsFastCheckByFrustum &&
         allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
         if (!renderer->isPointVisible(internalState, positionInWorld))
@@ -1322,7 +1328,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         symbol->size.x,
         symbol->size.y);
 
-    if (allowFastCheckByFrustum && !applyOnScreenVisibilityFiltering(visibleBBox, intersections, metric))
+    if (isntMarker && allowFastCheckByFrustum && !applyOnScreenVisibilityFiltering(visibleBBox, intersections, metric))
         return;
 
     // Don't render fully transparent symbols
@@ -1415,11 +1421,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         if (renderable->queryIndex > -1 && !applyTerrainVisibilityFiltering(renderable->queryIndex, metric))
             return false;
 
-        if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
-            return false;
+        if (!std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(renderable->mapSymbolGroup))
+        {
+            if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
+                return false;
 
-        if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
-            return false;
+            if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
+                return false;
+        }
     }
     return addToIntersections(renderable, intersections, metric);
 }
@@ -1456,7 +1465,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         : onSurfaceMapSymbol->getDirection();
 
     // Test against visible frustum area (if allowed)
-    if (!debugSettings->disableSymbolsFastCheckByFrustum &&
+    const bool isntMarker = !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolGroup);
+    if (isntMarker && !debugSettings->disableSymbolsFastCheckByFrustum &&
         allowFastCheckByFrustum && mapSymbol->allowFastCheckByFrustum)
     {
         const auto height = getRenderer()->getHeightOfLocation(currentState, position31);
@@ -1714,8 +1724,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         glm::vec3(pinPoint.x, renderer->getHeightOfLocation(currentState, pinPointOnPath.point31), pinPoint.y);
 
     // Test against visible frustum (if allowed)
-    bool checkVisibility = !debugSettings->disableSymbolsFastCheckByFrustum && allowFastCheckByFrustum &&
-        onPathMapSymbol->allowFastCheckByFrustum;
+    const bool isntMarker = !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolGroup);
+    bool checkVisibility = isntMarker && !debugSettings->disableSymbolsFastCheckByFrustum && allowFastCheckByFrustum
+        && onPathMapSymbol->allowFastCheckByFrustum;
     if (checkVisibility)
     {
         if (!renderer->isPointVisible(internalState, pinPointInWorld))
@@ -2042,7 +2053,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
                 renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
             }
 
-            if (allowFastCheckByFrustum)
+            if (isntMarker && allowFastCheckByFrustum)
             {
                 // Make sure the symbol is at least two-thirds visible
                 if (glyphsPlacement.size() > 1)
@@ -2217,14 +2228,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
             //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
             //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-            if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
-                return false;
+            if (!std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(renderable->mapSymbolGroup))
+            {
+                if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
+                    return false;
 
-            if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
-                return false;
+                if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
+                    return false;
 
-            if (!addToIntersections(renderable, intersections, metric))
-                return false;
+                if (!addToIntersections(renderable, intersections, metric))
+                    return false;
+            }
         }
 
         if (Q_UNLIKELY(debugSettings->showOnPath2dSymbolGlyphDetails))
@@ -2254,14 +2268,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
             //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
             //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-            if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
-                return false;
+            if (!std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(renderable->mapSymbolGroup))
+            {
+                if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
+                    return false;
 
-            if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
-                return false;
+                if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
+                    return false;
 
-            if (!addToIntersections(renderable, intersections, metric))
-                return false;
+                if (!addToIntersections(renderable, intersections, metric))
+                    return false;
+            }
         }
 
         if (Q_UNLIKELY(debugSettings->showOnPath3dSymbolGlyphDetails))
