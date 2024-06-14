@@ -85,6 +85,20 @@ public abstract class MapRendererView extends FrameLayout {
     private volatile boolean _renderingResultIsReady;
 
     /**
+     * Rendering time metrics
+     */
+    private long _frameStartTime;
+    private long _frameTotalTime;
+    private long _frameRenderTime;
+    private long _frameGPUFinishTime;
+    private volatile float _frameRate;
+    private volatile float _frameIdleTime;
+    private volatile float _frameGPUWaitTime;
+    private volatile float _frameRateLast1K;
+    private volatile float _frameIdleTimeLast1K;
+    private volatile float _frameGPUWaitTimeLast1K;
+
+    /**
      * Reference to OsmAndCore::MapAnimator instance
      */
     protected MapAnimator _mapAnimator;
@@ -1295,6 +1309,30 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
+    public final float getFrameRate() {
+        return _frameRate;
+    }
+
+    public final float getIdleTimePart() {
+        return _frameIdleTime;
+    }
+
+    public final float getGPUWaitTimePart() {
+        return _frameGPUWaitTime;
+    }
+
+    public final float getFrameRateLast1K() {
+        return _frameRateLast1K;
+    }
+
+    public final float getIdleTimePartLast1K() {
+        return _frameIdleTimeLast1K;
+    }
+
+    public final float getGPUWaitTimePartLast1K() {
+        return _frameGPUWaitTimeLast1K;
+    }
+
     public final void resumeMapAnimation() {
         _mapAnimationStartTime = SystemClock.uptimeMillis();
         _mapAnimationFinished = false;
@@ -1728,6 +1766,10 @@ public abstract class MapRendererView extends FrameLayout {
                 _mapRenderer.setup(_setupOptions);
                 if (!_mapRenderer.initializeRendering(true))
                     Log.e(TAG, "Failed to initialize rendering");
+                else {
+                    _frameStartTime = SystemClock.uptimeMillis();
+                    _frameRenderTime = 0;
+                }
             }
         }
 
@@ -1738,7 +1780,17 @@ public abstract class MapRendererView extends FrameLayout {
                 return;
             }
 
+            long waitTime = _frameGPUFinishTime + _mapRenderer.getWaitTime();
+
             long currTime = SystemClock.uptimeMillis();
+
+            _frameTotalTime = currTime - _frameStartTime;
+            _frameStartTime = currTime;
+            _frameIdleTime = (float) (_frameTotalTime - _frameRenderTime) / (float) _frameTotalTime;
+            _frameGPUWaitTime = (float) waitTime / (float) _frameTotalTime;
+            _frameIdleTimeLast1K = (_frameIdleTimeLast1K * 999.0f + _frameIdleTime) / 1000.0f;
+            _frameGPUWaitTimeLast1K = (_frameGPUWaitTimeLast1K * 999.0f + _frameGPUWaitTime) / 1000.0f;
+
             _mapAnimationFinished = _mapAnimator.update((currTime - _mapAnimationStartTime) / 1000f);
             _mapAnimationStartTime = currTime;
             _mapMarkersAnimationFinished = _mapMarkersAnimator.update((currTime - _mapMarkersAnimationStartTime) / 1000f);
@@ -1757,6 +1809,7 @@ public abstract class MapRendererView extends FrameLayout {
                 _mapRenderer.renderFrame();
             }
 
+            long preFlushTime = SystemClock.uptimeMillis();
 
             // Flush all the commands to GPU
             gl.glFlush();
@@ -1773,6 +1826,13 @@ public abstract class MapRendererView extends FrameLayout {
                     listener.onFrameReady(MapRendererView.this);
                 }
             }
+
+            long postRenderTime = SystemClock.uptimeMillis();
+
+            _frameGPUFinishTime = postRenderTime - preFlushTime;
+            _frameRenderTime = postRenderTime - _frameStartTime;
+            _frameRate = 1000.0f / (float) _frameRenderTime;
+            _frameRateLast1K = (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f;
         }
     }
 

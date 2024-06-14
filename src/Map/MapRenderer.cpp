@@ -3190,3 +3190,8 @@ void OsmAnd::MapRenderer::dumpResourcesInfo() const
 {
     getResources().dumpResourcesInfo();
 }
+
+int OsmAnd::MapRenderer::getWaitTime() const
+{
+    return gpuAPI->waitTimeInMicroseconds.fetchAndStoreOrdered(0) / 1000;
+}

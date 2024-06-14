@@ -1395,6 +1395,8 @@ void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextL
     if (*gpuContextLost)
         return;
 
+    const auto start = std::chrono::high_resolution_clock::now();
+
     if (isSupported_sync)
     {
         const auto sync = glFenceSync_wrapper(GL_SYNC_GPU_COMMANDS_COMPLETE /*0x9117*/, 0);
@@ -1419,6 +1421,9 @@ void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete(volatile bool* gpuContextL
         glFinish();
         GL_CHECK_RESULT;
     }
+
+    const int64_t period = (std::chrono::high_resolution_clock::now() - start).count() / 1000;
+    waitTimeInMicroseconds.fetchAndAddOrdered(static_cast<int>(std::min(period, static_cast<int64_t>(INT32_MAX))));
 }
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
