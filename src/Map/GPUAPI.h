@@ -342,6 +342,8 @@ namespace OsmAnd
         virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
         float getGpuResourceTexelSize(const std::shared_ptr<const ResourceInGPU> gpuResource);
 
+        QAtomicInt waitTimeInMicroseconds;
+
     friend OsmAnd::GPUAPI::ResourceInGPU;
     };
 }

@@ -264,6 +264,7 @@ namespace OsmAnd
         virtual void resetResourceWorkerThreadsLimit() = 0;
         virtual unsigned int getActiveResourceRequestsCount() const = 0;
         virtual void dumpResourcesInfo() const = 0;
+        virtual int getWaitTime() const = 0;
     };
 
     enum class MapRendererClass

@@ -388,7 +388,14 @@ bool OsmAnd::GPUAPI_OpenGL2plus::elementIsVisible(int queryIndex)
     assert(_pointVisibilityCheckQueries.size() > queryIndex);
 
     GLuint queryResult = 0;
+
+    const auto start = std::chrono::high_resolution_clock::now();
+
     glGetQueryObjectuiv(_pointVisibilityCheckQueries[queryIndex], GL_QUERY_RESULT, &queryResult);
+
+    const int64_t period = (std::chrono::high_resolution_clock::now() - start).count() / 1000;
+    waitTimeInMicroseconds.fetchAndAddOrdered(static_cast<int>(std::min(period, static_cast<int64_t>(INT32_MAX))));
+
     GL_CHECK_RESULT;
 
     return queryResult == 0;
