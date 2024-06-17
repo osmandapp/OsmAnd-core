@@ -96,6 +96,13 @@ namespace OsmAnd
         };
         void setResourceWorkerThreadsLimit(const unsigned int limit);
         void resetResourceWorkerThreadsLimit();
+        void reportActiveThread(const float delta);
+
+        mutable QMutex _threadCountLock;
+        std::chrono::steady_clock::time_point _threadCountTime;
+        float _threadCount;
+        float _threadCountPeriod;
+        float _basicThreadsCPULoad;
 
         // Each provider has a binded resource collection, and these are bindings:
         struct Binding
@@ -297,6 +304,7 @@ namespace OsmAnd
         bool eachResourceIsUploadedOrUnavailable() const;
         bool allResourcesAreUploaded() const;
         void dumpResourcesInfo() const;
+        float getBasicThreadsCPULoad();
 
     friend class OsmAnd::MapRenderer;
     friend class OsmAnd::MapRendererBaseResource;

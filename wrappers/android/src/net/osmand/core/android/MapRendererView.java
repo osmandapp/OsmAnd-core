@@ -1309,6 +1309,12 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.dumpResourcesInfo();
     }
 
+    public final float getBasicThreadsCPULoad() {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getBasicThreadsCPULoad();
+    }
+
     public final float getFrameRate() {
         return _frameRate;
     }

@@ -72,6 +72,11 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 
     _requestedResourcesTasks.reserve(1024);
 
+    _threadCountTime = std::chrono::high_resolution_clock::now();
+    _threadCount = 0.0f;
+    _threadCountPeriod = 0.0f;
+    _basicThreadsCPULoad = 0.0f;
+
     // Start worker thread
     _workerThreadIsAlive = true;
     _workerThread->start();
@@ -613,6 +618,22 @@ void OsmAnd::MapRendererResourcesManager::resetResourceWorkerThreadsLimit()
     {
         LogPrintf(LogSeverityLevel::Verbose,
             "Map renderer will use unlimited number of concurrent workers to process requests");
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::reportActiveThread(const float delta)
+{
+    QMutexLocker scopedLocker(&_threadCountLock);
+
+    const auto maxThreadCount = static_cast<float>(_resourcesRequestWorkerPool.maxThreadCount());
+    if (maxThreadCount > 0.0f)
+    {
+        const auto currentTime = std::chrono::high_resolution_clock::now();
+        const auto timePeriod = std::chrono::duration<float>(currentTime - _threadCountTime).count();
+        _basicThreadsCPULoad += timePeriod * _threadCount / maxThreadCount;
+        _threadCount += delta;
+        _threadCountPeriod += timePeriod;
+        _threadCountTime = currentTime;
     }
 }
 
@@ -3304,6 +3325,22 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     LogPrintf(LogSeverityLevel::Debug, qPrintable(dump));
 }
 
+float OsmAnd::MapRendererResourcesManager::getBasicThreadsCPULoad()
+{
+    QMutexLocker scopedLocker(&_threadCountLock);
+
+    LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: l = %f, t = %f", _basicThreadsCPULoad, _threadCountPeriod);
+    float result = NAN;
+    if (_threadCountPeriod >= 1.0f)
+    {
+        result = _basicThreadsCPULoad / _threadCountPeriod;
+        _threadCountTime = std::chrono::high_resolution_clock::now();
+        _threadCountPeriod = 0.0f;
+        _basicThreadsCPULoad = 0.0f;
+    }
+    return result;
+}
+
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
     const std::shared_ptr<MapRendererBaseResource>& requestedResource_,
     const Concurrent::TaskHost::Bridge& bridge_)
@@ -3324,6 +3361,8 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
     if (!manager->beginResourceRequestProcessing(requestedResource))
         return;
 
+    manager->reportActiveThread(1.0f);
+
     // Ask resource to obtain it's data
     bool dataAvailable = false;
     const std::shared_ptr<FunctorQueryController> obtainDataQueryController(new FunctorQueryController(
@@ -3337,6 +3376,8 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
         !isCancellationRequested();
 
     manager->endResourceRequestProcessing(requestedResource, requestSucceeded, dataAvailable);
+
+    manager->reportActiveThread(-1.0f);
 }
 
 void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::postExecute(const bool wasCancelled)
