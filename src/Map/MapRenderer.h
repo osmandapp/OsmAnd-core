@@ -468,6 +468,7 @@ namespace OsmAnd
         virtual void resetResourceWorkerThreadsLimit() Q_DECL_OVERRIDE;
         virtual unsigned int getActiveResourceRequestsCount() const Q_DECL_OVERRIDE;
         virtual void dumpResourcesInfo() const Q_DECL_OVERRIDE;
+        virtual float getBasicThreadsCPULoad() Q_DECL_OVERRIDE;
         virtual int getWaitTime() const Q_DECL_OVERRIDE;
 
     friend struct OsmAnd::MapRendererInternalState;
