@@ -99,7 +99,7 @@ namespace OsmAnd
         void reportActiveThread(const float delta);
 
         mutable QMutex _threadCountLock;
-        std::chrono::steady_clock::time_point _threadCountTime;
+        std::chrono::high_resolution_clock::time_point _threadCountTime;
         float _threadCount;
         float _threadCountPeriod;
         float _basicThreadsCPULoad;
