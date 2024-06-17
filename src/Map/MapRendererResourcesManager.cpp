@@ -3329,7 +3329,6 @@ float OsmAnd::MapRendererResourcesManager::getBasicThreadsCPULoad()
 {
     QMutexLocker scopedLocker(&_threadCountLock);
 
-    LogPrintf(OsmAnd::LogSeverityLevel::Debug, "OSMTEST: l = %f, t = %f", _basicThreadsCPULoad, _threadCountPeriod);
     float result = NAN;
     if (_threadCountPeriod >= 1.0f)
     {
