@@ -19,42 +19,42 @@ namespace OsmAnd
     class OSMAND_CORE_API OsmRouteType
     {
     public:
-        static OsmRouteType WATER;
-        static OsmRouteType WINTER;
-        static OsmRouteType SNOWMOBILE;
-        static OsmRouteType RIDING;
-        static OsmRouteType RACING;
-        static OsmRouteType MOUNTAINBIKE;
-        static OsmRouteType BICYCLE;
-        static OsmRouteType MTB;
-        static OsmRouteType CYCLING;
-        static OsmRouteType HIKING;
-        static OsmRouteType RUNNING;
-        static OsmRouteType WALKING;
-        static OsmRouteType OFFROAD;
-        static OsmRouteType MOTORBIKE;
-        static OsmRouteType CAR;
-        static OsmRouteType HORSE;
-        static OsmRouteType ROAD;
-        static OsmRouteType DETOUR;
-        static OsmRouteType BUS;
-        static OsmRouteType CANOE;
-        static OsmRouteType FERRY;
-        static OsmRouteType FOOT;
-        static OsmRouteType LIGHT_RAIL;
-        static OsmRouteType PISTE;
-        static OsmRouteType RAILWAY;
-        static OsmRouteType SKI;
-        static OsmRouteType ALPINE;
-        static OsmRouteType FITNESS;
-        static OsmRouteType INLINE_SKATES;
-        static OsmRouteType SUBWAY;
-        static OsmRouteType TRAIN;
-        static OsmRouteType TRACKS;
-        static OsmRouteType TRAM;
-        static OsmRouteType TROLLEYBUS;
+        static const OsmRouteType* WATER;
+        static const OsmRouteType* WINTER;
+        static const OsmRouteType* SNOWMOBILE;
+        static const OsmRouteType* RIDING;
+        static const OsmRouteType* RACING;
+        static const OsmRouteType* MOUNTAINBIKE;
+        static const OsmRouteType* BICYCLE;
+        static const OsmRouteType* MTB;
+        static const OsmRouteType* CYCLING;
+        static const OsmRouteType* HIKING;
+        static const OsmRouteType* RUNNING;
+        static const OsmRouteType* WALKING;
+        static const OsmRouteType* OFFROAD;
+        static const OsmRouteType* MOTORBIKE;
+        static const OsmRouteType* CAR;
+        static const OsmRouteType* HORSE;
+        static const OsmRouteType* ROAD;
+        static const OsmRouteType* DETOUR;
+        static const OsmRouteType* BUS;
+        static const OsmRouteType* CANOE;
+        static const OsmRouteType* FERRY;
+        static const OsmRouteType* FOOT;
+        static const OsmRouteType* LIGHT_RAIL;
+        static const OsmRouteType* PISTE;
+        static const OsmRouteType* RAILWAY;
+        static const OsmRouteType* SKI;
+        static const OsmRouteType* ALPINE;
+        static const OsmRouteType* FITNESS;
+        static const OsmRouteType* INLINE_SKATES;
+        static const OsmRouteType* SUBWAY;
+        static const OsmRouteType* TRAIN;
+        static const OsmRouteType* TRACKS;
+        static const OsmRouteType* TRAM;
+        static const OsmRouteType* TROLLEYBUS;
 
-        static QList<OsmRouteType> values;
+        static QList<OsmRouteType*> values;
         const QString name;
         const QString tagPrefix;
         const QString color;
@@ -65,50 +65,46 @@ namespace OsmAnd
         public:
            
             RouteActivityTypeBuilder();
-            OsmRouteType reg();
-            RouteActivityTypeBuilder & color(const QString & color);
-            RouteActivityTypeBuilder & icon(const QString & icon);
+            const OsmRouteType* reg();
+            RouteActivityTypeBuilder& color(const QString& color);
+            RouteActivityTypeBuilder& icon(const QString& icon);
             QString _name;
             QString _color;
             QString _icon;
-        private:
-            OsmRouteType* routeType;
         };
 
         OsmRouteType();
-        OsmRouteType(const QString & n);
-        OsmRouteType(const OsmRouteType & ort);
-        OsmRouteType(const QString & name, const QString & color, const QString & icon);
+        OsmRouteType(const OsmRouteType& ort);
+        OsmRouteType(const QString& name, const QString& color, const QString& icon);
 
         static OsmRouteType * getByTag(QString tag);
 
-        inline bool operator == (const OsmRouteType & other) const
+        inline bool operator == (const OsmRouteType& other) const
         {
             return (this->name == other.name &&
                     this->color == other.color &&
                     this->icon == other.icon);
         }
 
-        inline bool operator != (const OsmRouteType & other) const
+        inline bool operator != (const OsmRouteType& other) const
         {
             return !(* this == other);
         }
     private:
-        static RouteActivityTypeBuilder createType(const QString & name);
+        static RouteActivityTypeBuilder createType(const QString& name);
     };
 
-    inline uint qHash(const OsmRouteType & key, uint seed = 0) {
+    inline uint qHash(const OsmRouteType& key, uint seed = 0) {
         return qHash(key.name) + qHash(key.color) + qHash(key.icon);
     }
 
     struct OSMAND_CORE_API NetworkRouteKey
     {
         NetworkRouteKey();
-        NetworkRouteKey(NetworkRouteKey & other);
-        NetworkRouteKey(const NetworkRouteKey & other);
-        NetworkRouteKey(const OsmRouteType & ort);
+        NetworkRouteKey(const NetworkRouteKey& other);
+        NetworkRouteKey(OsmRouteType* ort);
         virtual ~NetworkRouteKey();
-        OsmRouteType type;
+        const OsmRouteType *type;
         QSet<QString> tags;
         QString toString() const;
         
@@ -167,14 +163,6 @@ namespace OsmAnd
             return tagsNotEqual;
         }
 
-        inline bool operator > (const NetworkRouteKey & other) const
-        {
-            return (type == other.type || tags.size() > other.tags.size());
-        }
-        inline bool operator < (const NetworkRouteKey & other) const
-        {
-            return (type == other.type || tags.size() < other.tags.size());
-        }
         inline operator int() const
         {
             const int prime = 31;
@@ -185,7 +173,7 @@ namespace OsmAnd
                 s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(type);
+            result = prime * result + qHash(*type);
             return result;
         }
     private:

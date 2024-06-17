@@ -62,7 +62,7 @@ void OsmAnd::NetworkRouteSelector_P::connectAlgorithm(const std::shared_ptr<OsmA
 
 void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const std::shared_ptr<OsmAnd::NetworkRouteSegment> &segment) const
 {
-    QString routeKeyString(segment->routeKey.type.name);
+    QString routeKeyString(segment->routeKey.type->name);
     for (const QString &tag : segment->routeKey.tags)
     {
         routeKeyString += QStringLiteral(" ") + tag;

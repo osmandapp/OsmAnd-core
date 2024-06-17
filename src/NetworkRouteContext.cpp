@@ -1,45 +1,42 @@
 #include "NetworkRouteContext.h"
 #include "NetworkRouteContext_P.h"
 
-QList<OsmAnd::OsmRouteType> OsmAnd::OsmRouteType::values;
+QList<OsmAnd::OsmRouteType*> OsmAnd::OsmRouteType::values;
 
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WATER = createType("water").color("yellow").icon("special_kayak")
-    .reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WINTER = createType("winter").color("yellow").icon("special_skiing").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SNOWMOBILE = createType("snowmobile").color("yellow").icon("special_snowmobile").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RIDING = createType("riding").color("yellow").icon("special_horse").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RACING = createType("racing").color("yellow").icon("raceway").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MOUNTAINBIKE = createType("mountainbike").color("blue").icon("sport_cycling").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BICYCLE = createType("bicycle").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MTB = createType("mtb").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CYCLING = createType("cycling").color("blue").icon("special_bicycle").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HIKING = createType("hiking").color("orange").icon("special_trekking").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RUNNING = createType("running").color("orange").icon("running").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::WALKING = createType("walking").color("orange").icon("special_walking").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::OFFROAD = createType("offroad").color("yellow").icon("special_offroad").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::MOTORBIKE = createType("motorbike").color("green").icon("special_motorcycle").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CAR = createType("car").color("green").icon("shop_car").reg();
-
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::HORSE = createType("horse").reg();
-
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::ROAD = createType("road").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::DETOUR = createType("detour").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::BUS = createType("bus").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::CANOE = createType("canoe").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FERRY = createType("ferry").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FOOT = createType("foot").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::LIGHT_RAIL = createType("light_rail").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::PISTE = createType("piste").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RAILWAY = createType("railway").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SKI = createType("ski").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::ALPINE = createType("alpine").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::FITNESS = createType("fitness").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::INLINE_SKATES = createType("inline_skates").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::SUBWAY = createType("subway").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRAIN = createType("train").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRACKS = createType("tracks").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TRAM = createType("tram").reg();
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::TROLLEYBUS = createType("trolleybus").reg();
+auto OsmAnd::OsmRouteType::WATER = createType("water").color("yellow").icon("special_kayak").reg();
+auto OsmAnd::OsmRouteType::WINTER = createType("winter").color("yellow").icon("special_skiing").reg();
+auto OsmAnd::OsmRouteType::SNOWMOBILE = createType("snowmobile").color("yellow").icon("special_snowmobile").reg();
+auto OsmAnd::OsmRouteType::RIDING = createType("riding").color("yellow").icon("special_horse").reg();
+auto OsmAnd::OsmRouteType::RACING = createType("racing").color("yellow").icon("raceway").reg();
+auto OsmAnd::OsmRouteType::MOUNTAINBIKE = createType("mountainbike").color("blue").icon("sport_cycling").reg();
+auto OsmAnd::OsmRouteType::BICYCLE = createType("bicycle").reg();
+auto OsmAnd::OsmRouteType::MTB = createType("mtb").reg();
+auto OsmAnd::OsmRouteType::CYCLING = createType("cycling").color("blue").icon("special_bicycle").reg();
+auto OsmAnd::OsmRouteType::HIKING = createType("hiking").color("orange").icon("special_trekking").reg();
+auto OsmAnd::OsmRouteType::RUNNING = createType("running").color("orange").icon("running").reg();
+auto OsmAnd::OsmRouteType::WALKING = createType("walking").color("orange").icon("special_walking").reg();
+auto OsmAnd::OsmRouteType::OFFROAD = createType("offroad").color("yellow").icon("special_offroad").reg();
+auto OsmAnd::OsmRouteType::MOTORBIKE = createType("motorbike").color("green").icon("special_motorcycle").reg();
+auto OsmAnd::OsmRouteType::CAR = createType("car").color("green").icon("shop_car").reg();
+auto OsmAnd::OsmRouteType::HORSE = createType("horse").reg();
+auto OsmAnd::OsmRouteType::ROAD = createType("road").reg();
+auto OsmAnd::OsmRouteType::DETOUR = createType("detour").reg();
+auto OsmAnd::OsmRouteType::BUS = createType("bus").reg();
+auto OsmAnd::OsmRouteType::CANOE = createType("canoe").reg();
+auto OsmAnd::OsmRouteType::FERRY = createType("ferry").reg();
+auto OsmAnd::OsmRouteType::FOOT = createType("foot").reg();
+auto OsmAnd::OsmRouteType::LIGHT_RAIL = createType("light_rail").reg();
+auto OsmAnd::OsmRouteType::PISTE = createType("piste").reg();
+auto OsmAnd::OsmRouteType::RAILWAY = createType("railway").reg();
+auto OsmAnd::OsmRouteType::SKI = createType("ski").reg();
+auto OsmAnd::OsmRouteType::ALPINE = createType("alpine").reg();
+auto OsmAnd::OsmRouteType::FITNESS = createType("fitness").reg();
+auto OsmAnd::OsmRouteType::INLINE_SKATES = createType("inline_skates").reg();
+auto OsmAnd::OsmRouteType::SUBWAY = createType("subway").reg();
+auto OsmAnd::OsmRouteType::TRAIN = createType("train").reg();
+auto OsmAnd::OsmRouteType::TRACKS = createType("tracks").reg();
+auto OsmAnd::OsmRouteType::TRAM = createType("tram").reg();
+auto OsmAnd::OsmRouteType::TROLLEYBUS = createType("trolleybus").reg();
 
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
@@ -107,24 +104,15 @@ OsmAnd::NetworkRouteSegment::~NetworkRouteSegment()
 }
 
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey()
-: type(OsmRouteType::HIKING)
+OsmAnd::NetworkRouteKey::NetworkRouteKey() : type(OsmRouteType::HIKING)
 {
 }
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey(NetworkRouteKey & other)
-: type(other.type), tags(other.tags)
+OsmAnd::NetworkRouteKey::NetworkRouteKey(const NetworkRouteKey& other) : type(other.type), tags(other.tags)
 {
 }
 
-OsmAnd::NetworkRouteKey::NetworkRouteKey(const NetworkRouteKey & other)
-: type(other.type), tags(other.tags)
-{
-}
-
-
-OsmAnd::NetworkRouteKey::NetworkRouteKey(const OsmRouteType & type)
-: type(type)
+OsmAnd::NetworkRouteKey::NetworkRouteKey(OsmRouteType* type) : type(type)
 {
 }
 
@@ -136,14 +124,10 @@ const QString OsmAnd::NetworkRouteKey::NETWORK_ROUTE_TYPE = QStringLiteral("type
 
 QString OsmAnd::NetworkRouteKey::getTag() const
 {
-    return type.name;
+    return type->name;
 }
 
 OsmAnd::OsmRouteType::OsmRouteType()
-{
-}
-
-OsmAnd::OsmRouteType::OsmRouteType(const QString & n) : name(n), tagPrefix(QStringLiteral("route_") + n + QStringLiteral("_"))
 {
 }
 
@@ -151,7 +135,8 @@ OsmAnd::OsmRouteType::OsmRouteType(const OsmRouteType& ort) : name(ort.name), ta
 {
 }
 
-OsmAnd::OsmRouteType::OsmRouteType(const QString& name, const QString& color, const QString& icon) : name(name), tagPrefix(name), color(color), icon(icon)
+OsmAnd::OsmRouteType::OsmRouteType(const QString& name, const QString& color, const QString& icon) 
+: name(name), tagPrefix(QStringLiteral("route_") + name + QStringLiteral("_")), color(color), icon(icon)
 {
 }
 
@@ -161,19 +146,19 @@ OsmAnd::OsmRouteType::RouteActivityTypeBuilder::RouteActivityTypeBuilder()
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::color(const QString& color) 
 {
-    this->_color = color;
+    _color = color;
     return *this;
 }
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder& OsmAnd::OsmRouteType::RouteActivityTypeBuilder::icon(const QString& icon) 
 {
-    this->_icon = icon;
+    _icon = icon;
     return *this;
 }
     
-OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg() 
+const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg()
 {
-    OsmRouteType routeType(_name, _color, _icon);
+    auto routeType = new OsmRouteType(_name, _color, _icon);
     values.append(routeType);
     return routeType;
     delete this;
@@ -182,16 +167,17 @@ OsmAnd::OsmRouteType OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg()
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) 
 {
     auto builder = RouteActivityTypeBuilder();
+    builder._name = name;
     return builder;
 }
 
-OsmAnd::OsmRouteType * OsmAnd::OsmRouteType::getByTag(QString tag)
+OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::getByTag(QString tag)
 {
     for (auto & routeType : values)
     {
-        if (routeType.name == tag) 
+        if (routeType->name == tag) 
         {
-            return &routeType;
+            return routeType;
         }
     }
     return nullptr;
@@ -207,12 +193,12 @@ void OsmAnd::NetworkRouteKey::addTag(const QString& key, const QString& value)
 QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteKey::getRouteKeys(const QHash<QString, QString> &tags)
 {
     QVector<NetworkRouteKey> lst;
-    for(const auto & routeType : OsmRouteType::values)
+    for(auto & routeType : OsmRouteType::values)
     {
-        int rq = getRouteQuantity(tags, routeType.tagPrefix);
+        int rq = getRouteQuantity(tags, routeType->tagPrefix);
         for (int routeIdx = 1; routeIdx <= rq; routeIdx++)
         {
-            const QString & prefix = routeType.tagPrefix + QString::number(routeIdx);
+            const QString & prefix = routeType->tagPrefix + QString::number(routeIdx);
             NetworkRouteKey routeKey(routeType);
             for (auto e = tags.begin(); e != tags.end(); ++e)
             {
@@ -304,7 +290,7 @@ OsmAnd::NetworkRouteKey* OsmAnd::NetworkRouteKey::fromGpx(const QMap<QString, QS
         QString type = *it;
         auto routeType = OsmRouteType::getByTag(type);
         if (routeType) {
-            const auto routeKey = new NetworkRouteKey(*routeType);
+            const auto routeKey = new NetworkRouteKey(routeType);
             for (auto i = networkRouteKeyTags.begin(); i != networkRouteKeyTags.end(); ++i)
             {
                 routeKey->addTag(i.key(), i.value());
@@ -403,7 +389,7 @@ OsmAnd::PointI OsmAnd::NetworkRouteContext::getPointFromLong(int64_t l) const
 
 QString OsmAnd::NetworkRouteKey::toString() const
 {
-    QString res = type.name;
+    QString res = type->name;
 
     for (auto & s : tags)
     {

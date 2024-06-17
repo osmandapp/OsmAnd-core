@@ -147,7 +147,7 @@ QVector<OsmAnd::NetworkRouteKey> OsmAnd::NetworkRouteContext_P::filterKeys(QVect
         {
             result.append(key);
         }
-        else if (owner->filter.typeFilter.contains(key.type))
+        else if (owner->filter.typeFilter.contains(*key.type))
         {
             result.append(key);
         }
