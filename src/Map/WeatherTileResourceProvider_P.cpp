@@ -292,12 +292,11 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     if (geoDb->isOpened())
     {
         int64_t timestamp = 0;
-        geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp);
         const auto currentTime = QDateTime::currentMSecsSinceEpoch();
-        const bool expired =
-            currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD
-            && currentTime - timestamp > GEOTIFF_FRESHNESS_PERIOD;
-        if (forceDownload || (!localData && expired))
+        const auto hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp);
+        const bool isFresh = currentTime - timestamp < GEOTIFF_FRESHNESS_PERIOD;
+        const bool isExpired = currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD;
+        if (forceDownload || (!localData && !isFresh && isExpired))
         {
             auto filePath = localCachePath
                 + QDir::separator()
@@ -354,6 +353,8 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 QFile(filePathGz).remove();
                 QFile(filePath).remove();
             }
+            else if (hasData)
+                geoDb->storeTileData(tileId, zoom, dateTime, outData, obtainedTime, currentTime);
 
             {
                 QWriteLocker scopedLocker(&_lock);
