@@ -161,7 +161,6 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::RouteActivityTypeBuilder::reg(
     auto routeType = new OsmRouteType(_name, _color, _icon);
     values.append(routeType);
     return routeType;
-    delete this;
 }
 
 OsmAnd::OsmRouteType::RouteActivityTypeBuilder  OsmAnd::OsmRouteType::createType(const QString& name) 
