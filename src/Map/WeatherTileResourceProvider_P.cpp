@@ -17,6 +17,12 @@
 
 static const QString WEATHER_TILES_URL_PREFIX = QStringLiteral("https://osmand.net/weather/gfs/tiff/");
 
+// During this time period geotiff data in cache don't need to be updated (6 hours)
+static const int64_t GEOTIFF_RELEVANCE_PERIOD = 21600000;
+
+// During this time period geotiff data in cache will represent an actual online data (15 min)
+static const int64_t GEOTIFF_FRESHNESS_PERIOD = 900000;
+
 // During this time period raster data in cache will represent an actual online data (5 min)
 static const int64_t RASTER_FRESHNESS_PERIOD = 300000;
 
@@ -285,8 +291,12 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
     auto geoDb = getGeoTilesDatabase();
     if (geoDb->isOpened())
     {
-        geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime);
-        if (forceDownload || !localData)
+        int64_t timestamp = 0;
+        const auto currentTime = QDateTime::currentMSecsSinceEpoch();
+        const auto hasData = geoDb->obtainTileData(tileId, zoom, dateTime, outData, &obtainedTime, &timestamp);
+        const bool isFresh = currentTime - timestamp < GEOTIFF_FRESHNESS_PERIOD;
+        const bool isExpired = currentTime - obtainedTime > GEOTIFF_RELEVANCE_PERIOD;
+        if (forceDownload || (!localData && !isFresh && isExpired))
         {
             auto filePath = localCachePath
                 + QDir::separator()
@@ -334,7 +344,7 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                             tileFile.close();
                             if (!outData.isEmpty())
                             {
-                                geoDb->storeTileData(tileId, zoom, dateTime, outData, generatedTime);
+                                geoDb->storeTileData(tileId, zoom, dateTime, outData, generatedTime, currentTime);
                                 obtainedTime = generatedTime;
                             }
                         }
@@ -343,6 +353,8 @@ int64_t OsmAnd::WeatherTileResourceProvider_P::obtainGeoTile(
                 QFile(filePathGz).remove();
                 QFile(filePath).remove();
             }
+            else if (hasData)
+                geoDb->storeTileData(tileId, zoom, dateTime, outData, obtainedTime, currentTime);
 
             {
                 QWriteLocker scopedLocker(&_lock);
