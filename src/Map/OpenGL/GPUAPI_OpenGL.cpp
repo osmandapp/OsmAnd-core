@@ -1301,9 +1301,6 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
 
     const auto verticesAndIndices = symbol->getVerticesAndIndices();
 
-    // Primitive map symbol has to have vertices, so checks are worthless
-    assert(verticesAndIndices->vertices && verticesAndIndices->verticesCount > 0);
-
     // Create vertex buffer
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
@@ -1314,11 +1311,22 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_RESULT;
 
     // Name it
-    setObjectLabel(ObjectType::Buffer, vertexBuffer, QString::asprintf("VectorMapSymbol(@%p)->vertexBuffer", symbol.get()));
+    setObjectLabel(ObjectType::Buffer, vertexBuffer,
+        QString::asprintf("VectorMapSymbol(@%p)->vertexBuffer", symbol.get()));
 
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, verticesAndIndices->verticesCount*sizeof(VectorMapSymbol::Vertex), verticesAndIndices->vertices, GL_STATIC_DRAW);
-    GL_CHECK_RESULT;
+    if (verticesAndIndices->vertices != nullptr && verticesAndIndices->verticesCount > 0)
+    {
+        glBufferData(GL_ARRAY_BUFFER, verticesAndIndices->verticesCount*sizeof(VectorMapSymbol::Vertex),
+            verticesAndIndices->vertices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+    }
+    else if (verticesAndIndices->verticesWithNormals != nullptr && verticesAndIndices->verticesCount > 0)
+    {
+        glBufferData(GL_ARRAY_BUFFER, verticesAndIndices->verticesCount*sizeof(VectorMapSymbol::VertexWithNormals),
+            verticesAndIndices->verticesWithNormals, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+    }
 
     // Unbind it
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -1343,12 +1351,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         GL_CHECK_RESULT;
 
         // Name it
-        setObjectLabel(ObjectType::Buffer, indexBuffer, QString::asprintf("VectorMapSymbol(@%p)->indexBuffer", symbol.get()));
+        setObjectLabel(ObjectType::Buffer, indexBuffer,
+            QString::asprintf("VectorMapSymbol(@%p)->indexBuffer", symbol.get()));
 
         // Upload data
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, verticesAndIndices->indicesCount*sizeof(VectorMapSymbol::Index), verticesAndIndices->indices,
-            GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, verticesAndIndices->indicesCount*sizeof(VectorMapSymbol::Index),
+            verticesAndIndices->indices, GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
         // Unbind it

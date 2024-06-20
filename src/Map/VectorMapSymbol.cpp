@@ -20,6 +20,7 @@ OsmAnd::VectorMapSymbol::~VectorMapSymbol()
 OsmAnd::VectorMapSymbol::VerticesAndIndices::VerticesAndIndices()
 : position31(nullptr)
 , vertices(nullptr)
+, verticesWithNormals(nullptr)
 , verticesCount(0)
 , indices(nullptr)
 , indicesCount(0)
@@ -40,6 +41,11 @@ OsmAnd::VectorMapSymbol::VerticesAndIndices::~VerticesAndIndices()
     {
         delete[] vertices;
         vertices = nullptr;
+    }
+    if (verticesWithNormals != nullptr)
+    {
+        delete[] verticesWithNormals;
+        verticesWithNormals = nullptr;
     }
     verticesCount = 0;
     
@@ -185,16 +191,20 @@ void OsmAnd::VectorMapSymbol::generateModel3DPrimitive(
     verticesAndIndices->indicesCount = 0;
 
     verticesAndIndices->verticesCount = model3D->vertices.size();
-    verticesAndIndices->vertices = new Vertex[verticesAndIndices->verticesCount];
-    auto pVertex = verticesAndIndices->vertices;
+    verticesAndIndices->verticesWithNormals = new VertexWithNormals[verticesAndIndices->verticesCount];
+    auto pVertex = verticesAndIndices->verticesWithNormals;
 
     for (auto vertexIndex = 0u; vertexIndex < verticesAndIndices->verticesCount; vertexIndex++)
     {
         const auto& modelVertex = model3D->vertices[vertexIndex];
 
-        pVertex->positionXYZ[0] = modelVertex.xyz[0];
-        pVertex->positionXYZ[1] = modelVertex.xyz[1];
-        pVertex->positionXYZ[2] = modelVertex.xyz[2];
+        pVertex->positionXYZ[0] = modelVertex.position[0];
+        pVertex->positionXYZ[1] = modelVertex.position[1];
+        pVertex->positionXYZ[2] = modelVertex.position[2];
+
+        pVertex->normalXYZ[0] = modelVertex.normal[0];
+        pVertex->normalXYZ[1] = modelVertex.normal[1];
+        pVertex->normalXYZ[2] = modelVertex.normal[2];
 
         if (modelVertex.materialIndex == -1)
             pVertex->color = modelVertex.color;
@@ -202,9 +212,7 @@ void OsmAnd::VectorMapSymbol::generateModel3DPrimitive(
         {
             const auto& material = model3D->materials[modelVertex.materialIndex];
             const auto citCustomColor = customMaterialColors.constFind(material.name);
-            pVertex->color = citCustomColor == customMaterialColors.cend()
-                ? pVertex->color = material.color
-                : pVertex->color = citCustomColor.value();
+            pVertex->color = citCustomColor == customMaterialColors.cend() ? material.color : citCustomColor.value();
         }
 
         pVertex++;

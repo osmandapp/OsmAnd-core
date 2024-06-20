@@ -31,6 +31,19 @@ namespace OsmAnd
         };
 #pragma pack(pop)
         typedef uint16_t Index;
+#pragma pack(push, 1)
+        struct VertexWithNormals
+        {
+            // Position coordinates
+            float positionXYZ[3];
+
+            // Normal coordinates
+            float normalXYZ[3];
+
+            // Color
+            FColorARGB color;
+        };
+#pragma pack(pop)
 
         struct VerticesAndIndices
         {
@@ -41,6 +54,7 @@ namespace OsmAnd
             PointI* position31;
             
             Vertex* vertices;
+            VertexWithNormals* verticesWithNormals;
             unsigned int verticesCount;
             
             Index* indices;

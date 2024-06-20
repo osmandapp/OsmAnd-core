@@ -21,7 +21,8 @@ namespace OsmAnd
     public:
         struct Vertex
         {
-            float xyz[3];
+            float position[3];
+            float normal[3];
             int materialIndex;
             FColorARGB color;
         };
@@ -57,12 +58,14 @@ namespace OsmAnd
     private:
     protected:
     public:
-        Model3D(const QVector<Vertex>& vertices, const QVector<Material>& materials, const BBox& bbox);
+        Model3D(const QVector<Vertex>& vertices, const QVector<Material>& materials, const BBox& bbox,
+            const FColorARGB& mainColor = FColorARGB());
         virtual ~Model3D();
-
+       
         const QVector<Vertex> vertices;
         const QVector<Material> materials;
         const BBox bbox;
+        FColorARGB mainColor;
     };
 }
 

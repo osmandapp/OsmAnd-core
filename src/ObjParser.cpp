@@ -41,14 +41,33 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
 
     if (attrib.vertices.empty())
     {
-        LogPrintf(LogSeverityLevel::Error, "No 3vertex data provided for 3D model at '%s'", qPrintable(_objFilePath));
+        LogPrintf(LogSeverityLevel::Error, "No vertex data provided for 3D model at '%s'", qPrintable(_objFilePath));
         return nullptr;
     }
 
     if (materials.empty() && attrib.colors.size() != attrib.vertices.size())
     {
-        LogPrintf(LogSeverityLevel::Error, "Incompleted color data provided for 3D Model at '%s'", qPrintable(_objFilePath));
+        LogPrintf(LogSeverityLevel::Error, "Incomplete color data provided for 3D Model at '%s'", qPrintable(_objFilePath));
         return nullptr;
+    }
+
+    int dummyMaterialIdx = -1;
+    
+    QVector<Model3D::Material> processedMaterials(materials.size());
+    for (int i = 0; i < materials.size(); i++)
+    {
+        const auto& material = materials[i];
+
+        Model3D::Material processedMaterial;
+        processedMaterial.color = FColorARGB(
+            material.dissolve,
+            material.diffuse[0],
+            material.diffuse[1],
+            material.diffuse[2]);
+        processedMaterial.name = QString::fromStdString(material.name);
+        processedMaterials[i] = processedMaterial;
+        if (processedMaterial.name.contains("profile_color"))
+            dummyMaterialIdx = i;
     }
 
     QVector<Model3D::Vertex> vertices;
@@ -79,12 +98,11 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
 
             for (auto idx = startVertexIdx; idx < endVertexIdx; idx++)
             {
-                const auto vertexOrder = mesh.indices[idx].vertex_index;
-                if (vertexOrder == -1)
+                const auto vertexIdx = mesh.indices[idx].vertex_index * 3;
+                const auto normalIdx = mesh.indices[idx].normal_index * 3;
+                if (vertexIdx < 0 || normalIdx < 0)
                     break;
                 
-                const auto vertexIdx = vertexOrder * vertexNumberPerFace;
-
                 const float x = attrib.vertices[vertexIdx + 0];
                 const float y = attrib.vertices[vertexIdx + 1];
                 const float z = attrib.vertices[vertexIdx + 2];
@@ -104,9 +122,13 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
                     bbox.maxZ = z;
 
                 Model3D::Vertex vertex;
-                vertex.xyz[0] = x;
-                vertex.xyz[1] = y;
-                vertex.xyz[2] = z;
+                vertex.position[0] = x;
+                vertex.position[1] = y;
+                vertex.position[2] = z;
+                vertex.normal[0] = attrib.normals[normalIdx + 0];
+                vertex.normal[1] = attrib.normals[normalIdx + 1];
+                vertex.normal[2] = attrib.normals[normalIdx + 2];
+                
                 vertex.materialIndex = materialIdx;
                 if (materialIdx == -1)
                 {
@@ -115,6 +137,11 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
                         attrib.colors[vertexIdx + 0],
                         attrib.colors[vertexIdx + 1],
                         attrib.colors[vertexIdx + 2]);
+                }
+                else if (materialIdx == dummyMaterialIdx)
+                {
+                    vertex.materialIndex = -1;
+                    vertex.color = FColorARGB(NAN, NAN, NAN, NAN);
                 }
 
                 faceVertices.push_back(vertex);
@@ -132,21 +159,6 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
         return nullptr;
     }
 
-    QVector<Model3D::Material> processedMaterials(materials.size());
-    for (int i = 0; i < materials.size(); i++)
-    {
-        const auto& material = materials[i];
-
-        Model3D::Material processedMaterial;
-        processedMaterial.color = FColorARGB(
-            material.dissolve,
-            material.diffuse[0],
-            material.diffuse[1],
-            material.diffuse[2]);
-        processedMaterial.name = QString::fromStdString(material.name);
-        processedMaterials[i] = processedMaterial;
-    }
-
     if (translateToOrigin)
     {
         const auto translateX = -(bbox.minX + bbox.lengthX() / 2.0f);
@@ -156,9 +168,9 @@ std::shared_ptr<const OsmAnd::Model3D> OsmAnd::ObjParser::parse(const bool trans
         for (auto i = 0u; i < vertices.size(); i++)
         {
             auto& vertex = vertices[i];
-            vertex.xyz[0] += translateX;
-            vertex.xyz[1] += translateY;
-            vertex.xyz[2] += translateZ;
+            vertex.position[0] += translateX;
+            vertex.position[1] += translateY;
+            vertex.position[2] += translateZ;
         }
 
         bbox.minX += translateX;

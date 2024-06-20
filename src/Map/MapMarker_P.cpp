@@ -402,6 +402,7 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         model3DMapSymbol->isHidden = _isHidden;
         model3DMapSymbol->direction = _model3DDirection;
         model3DMapSymbol->bbox = owner->model3D->bbox;
+        model3DMapSymbol->mainColor = owner->model3D->mainColor;
         model3DMapSymbol->maxSizeInPixels = _model3DMaxSizeInPixels;
         symbolsGroup->symbols.push_back(model3DMapSymbol);
     }
