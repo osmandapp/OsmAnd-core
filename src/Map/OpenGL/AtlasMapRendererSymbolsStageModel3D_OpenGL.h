@@ -25,6 +25,7 @@ namespace OsmAnd
                 struct
                 {
                     GLlocation vertexPosition;
+                    GLlocation vertexNormal;
                     GLlocation vertexColor;
                 } in;
 
@@ -33,11 +34,22 @@ namespace OsmAnd
                 {
                     // Per-model data
                     GLlocation mModel;
+                    GLlocation mainColor;
 
                     // Common data
                     GLlocation mPerspectiveProjectionView;
                 } params;
             } vs;
+            // Vertex data
+            struct
+            {
+                // Params
+                struct
+                {
+                    // Common data
+                    GLlocation cameraPosition;
+                } params;
+            } fs;
         } _program;
 
     public:

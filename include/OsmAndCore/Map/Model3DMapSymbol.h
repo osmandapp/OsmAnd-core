@@ -17,6 +17,7 @@ namespace OsmAnd
 
         Model3D::BBox bbox;
         int maxSizeInPixels;
+        FColorARGB mainColor;
     };
 }
 
