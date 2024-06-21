@@ -16,24 +16,78 @@ namespace OsmAnd
 {
     class IObfsCollection;
 
-    enum class RouteType
+    class OSMAND_CORE_API OsmRouteType
     {
-        HIKING,
-        BICYCLE,
-        MTB,
-        HORSE,
-        
-        Count
+    public:
+        static const OsmRouteType* WATER;
+        static const OsmRouteType* WINTER;
+        static const OsmRouteType* SNOWMOBILE;
+        static const OsmRouteType* RIDING;
+        static const OsmRouteType* RACING;
+        static const OsmRouteType* MOUNTAINBIKE;
+        static const OsmRouteType* BICYCLE;
+        static const OsmRouteType* MTB;
+        static const OsmRouteType* CYCLING;
+        static const OsmRouteType* HIKING;
+        static const OsmRouteType* RUNNING;
+        static const OsmRouteType* WALKING;
+        static const OsmRouteType* OFFROAD;
+        static const OsmRouteType* MOTORBIKE;
+        static const OsmRouteType* CAR;
+        static const OsmRouteType* HORSE;
+        static const OsmRouteType* ROAD;
+        static const OsmRouteType* DETOUR;
+        static const OsmRouteType* BUS;
+        static const OsmRouteType* CANOE;
+        static const OsmRouteType* FERRY;
+        static const OsmRouteType* FOOT;
+        static const OsmRouteType* LIGHT_RAIL;
+        static const OsmRouteType* PISTE;
+        static const OsmRouteType* RAILWAY;
+        static const OsmRouteType* SKI;
+        static const OsmRouteType* ALPINE;
+        static const OsmRouteType* FITNESS;
+        static const OsmRouteType* INLINE_SKATES;
+        static const OsmRouteType* SUBWAY;
+        static const OsmRouteType* TRAIN;
+        static const OsmRouteType* TRACKS;
+        static const OsmRouteType* TRAM;
+        static const OsmRouteType* TROLLEYBUS;
+
+        const QString name;
+        const QString tagPrefix;
+        const QString color;
+        const QString icon;
+
+        OsmRouteType(const QString& name, const QString& color = QString(), const QString& icon = QString());
+
+    public:
+        static const OsmRouteType* getByTag(const QString& tag);
+
+        inline bool operator == (const OsmRouteType& other) const
+        {
+            return (this->name == other.name &&
+                    this->color == other.color &&
+                    this->icon == other.icon);
+        }
+
+        inline bool operator != (const OsmRouteType& other) const
+        {
+            return !(* this == other);
+        }
     };
+
+    inline uint qHash(const OsmRouteType& key, uint seed = 0) {
+        return qHash(key.name) + qHash(key.color) + qHash(key.icon);
+    }
 
     struct OSMAND_CORE_API NetworkRouteKey
     {
         NetworkRouteKey();
-        NetworkRouteKey(NetworkRouteKey & other);
-        NetworkRouteKey(const NetworkRouteKey & other);
-        NetworkRouteKey(int index);
+        NetworkRouteKey(const NetworkRouteKey& other);
+        NetworkRouteKey(const OsmRouteType* type);
         virtual ~NetworkRouteKey();
-        RouteType type;
+        const OsmRouteType* type;
         QSet<QString> tags;
         QString toString() const;
         
@@ -91,14 +145,7 @@ namespace OsmAnd
             }
             return tagsNotEqual;
         }
-        inline bool operator > (const NetworkRouteKey & other) const
-        {
-            return (type > other.type || tags.size() > other.tags.size());
-        }
-        inline bool operator < (const NetworkRouteKey & other) const
-        {
-            return (type < other.type || tags.size() < other.tags.size());
-        }
+
         inline operator int() const
         {
             const int prime = 31;
@@ -109,7 +156,9 @@ namespace OsmAnd
                 s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(static_cast<int>(type));
+            if (type)
+            	result = prime * result + qHash(*type);
+
             return result;
         }
     private:
@@ -136,7 +185,7 @@ namespace OsmAnd
         NetworkRouteSelectorFilter(NetworkRouteSelectorFilter & other);
         virtual ~NetworkRouteSelectorFilter();
         QSet<NetworkRouteKey> keyFilter;
-        QSet<RouteType> typeFilter;
+        QSet<OsmRouteType> typeFilter;
     };
 
     struct OSMAND_CORE_API NetworkRoutePoint

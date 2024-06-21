@@ -62,23 +62,7 @@ void OsmAnd::NetworkRouteSelector_P::connectAlgorithm(const std::shared_ptr<OsmA
 
 void OsmAnd::NetworkRouteSelector_P::debug(QString msg, short direction, const std::shared_ptr<OsmAnd::NetworkRouteSegment> &segment) const
 {
-    QString routeKeyString;
-    switch (segment->routeKey.type) {
-        case RouteType::HORSE:
-            routeKeyString = QStringLiteral("HORSE");
-            break;
-        case RouteType::HIKING:
-            routeKeyString = QStringLiteral("HIKING");
-            break;
-        case RouteType::BICYCLE:
-            routeKeyString = QStringLiteral("BICYCLE");
-            break;
-        case RouteType::MTB:
-            routeKeyString = QStringLiteral("MTB");
-            break;
-        default:
-            routeKeyString = QStringLiteral("UNKNOWN");
-    }
+    QString routeKeyString(segment->routeKey.type->name);
     for (const QString &tag : segment->routeKey.tags)
     {
         routeKeyString += QStringLiteral(" ") + tag;
