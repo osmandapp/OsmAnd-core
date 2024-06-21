@@ -1,6 +1,8 @@
 #include "NetworkRouteContext.h"
 #include "NetworkRouteContext_P.h"
 
+static QList<const OsmAnd::OsmRouteType*> VALUES;
+
 static const OsmAnd::OsmRouteType _WATER("water", "yellow", "special_kayak");
 static const OsmAnd::OsmRouteType _WINTER("winter", "yellow", "special_skiing");
 static const OsmAnd::OsmRouteType _SNOWMOBILE("snowmobile", "yellow", "special_snowmobile");
@@ -70,8 +72,6 @@ const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRAIN = &_TRAIN;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRACKS = &_TRACKS;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TRAM = &_TRAM;
 const OsmAnd::OsmRouteType* OsmAnd::OsmRouteType::TROLLEYBUS = &_TROLLEYBUS;
-
-static QList<const OsmAnd::OsmRouteType*> VALUES;
 
 OsmAnd::NetworkRouteContext::NetworkRouteContext(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
