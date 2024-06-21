@@ -54,30 +54,15 @@ namespace OsmAnd
         static const OsmRouteType* TRAM;
         static const OsmRouteType* TROLLEYBUS;
 
-        static QList<OsmRouteType*> values;
         const QString name;
         const QString tagPrefix;
         const QString color;
         const QString icon;
-        
-        class RouteActivityTypeBuilder
-        {
-        public:
-           
-            RouteActivityTypeBuilder();
-            const OsmRouteType* reg();
-            RouteActivityTypeBuilder& color(const QString& color);
-            RouteActivityTypeBuilder& icon(const QString& icon);
-            QString _name;
-            QString _color;
-            QString _icon;
-        };
 
-        OsmRouteType();
-        OsmRouteType(const OsmRouteType& ort);
-        OsmRouteType(const QString& name, const QString& color, const QString& icon);
+        OsmRouteType(const QString& name, const QString& color = QString(), const QString& icon = QString());
 
-        static OsmRouteType * getByTag(QString tag);
+    public:
+        static const OsmRouteType* getByTag(const QString& tag);
 
         inline bool operator == (const OsmRouteType& other) const
         {
@@ -90,8 +75,6 @@ namespace OsmAnd
         {
             return !(* this == other);
         }
-    private:
-        static RouteActivityTypeBuilder createType(const QString& name);
     };
 
     inline uint qHash(const OsmRouteType& key, uint seed = 0) {
@@ -102,9 +85,9 @@ namespace OsmAnd
     {
         NetworkRouteKey();
         NetworkRouteKey(const NetworkRouteKey& other);
-        NetworkRouteKey(OsmRouteType* ort);
+        NetworkRouteKey(const OsmRouteType* type);
         virtual ~NetworkRouteKey();
-        const OsmRouteType *type;
+        const OsmRouteType* type;
         QSet<QString> tags;
         QString toString() const;
         
@@ -114,7 +97,7 @@ namespace OsmAnd
         static int getRouteQuantity(const QHash<QString, QString>& tags, const QString& tagPrefix);
         QString getTag() const;
         QMap<QString, QString> tagsToGpx() const;
-        static NetworkRouteKey * fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
+        static std::shared_ptr<NetworkRouteKey> fromGpx(const QMap<QString, QString> &networkRouteKeyTags);
         QString getKeyFromTag(const QString& tag) const;
         QString getValue(const QString& key) const;
         QString getRouteName() const;
@@ -173,7 +156,9 @@ namespace OsmAnd
                 s += qHash(tag);
             }
             result = prime * result + s;
-            result = prime * result + qHash(*type);
+            if (type)
+            	result = prime * result + qHash(*type);
+
             return result;
         }
     private:
