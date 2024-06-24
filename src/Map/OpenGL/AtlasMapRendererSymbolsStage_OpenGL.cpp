@@ -81,6 +81,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::preRender(
                 }
             }
         }
+        else if (const auto& renderableModel3DSymbol =
+            std::dynamic_pointer_cast<const RenderableModel3DSymbol>(renderableSymbol))
+        {
+            if (std::dynamic_pointer_cast<const Model3DMapSymbol>(renderableModel3DSymbol->mapSymbol))
+            {
+                const auto& gpuResource =
+                    std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderableModel3DSymbol->gpuResource);
+                if (gpuResource->isDenseObject)
+                {
+                    Stopwatch renderableModel3DSymbolStopwatch(metric != nullptr);
+                    ok = ok && _model3DSubstage->render(renderableModel3DSymbol, currentAlphaChannelType);
+                    if (metric)
+                        metric->elapsedTimeForModel3DSymbolsRendering += renderableModel3DSymbolStopwatch.elapsed();
+                }
+            }
+        }
     }
 
     // Disable actual drawing for symbol preparation phase
@@ -1868,7 +1884,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
         "uniform float param_vs_direction;                                                                                  ""\n"
         "uniform vec2 param_vs_symbolSize;                                                                                  ""\n"
-        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "uniform float param_vs_elevationInWorld;                                                                           ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
@@ -1885,7 +1900,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "    v.z = param_vs_symbolOffsetFromTarget.y * %TileSize3D%.0 + (p.x*sin_a + p.y*cos_a);                            ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
         "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
@@ -1951,7 +1965,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.elevationInWorld, "param_vs_elevationInWorld", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
@@ -2070,8 +2083,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
-        // Change depth test function to accept everything to avoid issues with terrain (regardless of elevation presence)
-        glDepthFunc(GL_ALWAYS);
+        // Change depth test function to perform <= depth test (regardless of elevation presence)
+        glDepthFunc(GL_LEQUAL);
         GL_CHECK_RESULT;
 
         glDepthMask(GL_FALSE);
@@ -2114,9 +2127,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glUniform1f(_onSurfaceRasterProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
     GL_CHECK_RESULT;
 
-    // Set distance from camera
-    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
-    glUniform1f(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+    // Enable depth buffer offset for surface raster symbols (against z-fighting)
+    glEnable(GL_POLYGON_OFFSET_FILL);
     GL_CHECK_RESULT;
 
     if (currentAlphaChannelType != gpuResource->alphaChannelType)
@@ -2167,6 +2179,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     GL_CHECK_RESULT;
 
+    // Disable depth buffer offset other symbols
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
     GL_POP_GROUP_MARKER;
 
     return true;
@@ -2211,7 +2227,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(bool gp
             glDeleteProgram(_onSurfaceRasterProgram.id);
             GL_CHECK_RESULT;
         }
-        _onSurfaceRasterProgram = OnSurfaceSymbolProgram();
+        _onSurfaceRasterProgram = OnSurfaceRasterProgram();
     }
 
     return true;

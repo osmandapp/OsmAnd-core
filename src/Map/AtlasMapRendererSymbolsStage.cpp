@@ -467,7 +467,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
                 const bool skipNotDenseSymbolGroup = preRenderDenseSymbolsDepth
-                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
+                    && !std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup)
+                    && !std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
 
                 if (skipNotDenseSymbolGroup)
                     continue;
@@ -475,7 +476,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 const auto freshlyPublishedGroup =
                     std::dynamic_pointer_cast<const VectorLine::SymbolsGroup>(mapSymbolsGroup);
 
-                const bool canSkip = !applyFiltering && !freshlyPublishedGroup;
+                const bool canSkip = !applyFiltering && !freshlyPublishedGroup && !preRenderDenseSymbolsDepth;
 
                 const auto groupWithoutFiltering =
                     std::dynamic_pointer_cast<const MapMarker::SymbolsGroup>(mapSymbolsGroup);
@@ -1594,7 +1595,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     float elevationInWorld = surfaceInWorld;
     float elevationInMeters = NAN;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
+    {
         elevationInMeters = rasterMapSymbol->getElevation();
+        // Raise elevated raster symbols to show them on top of dense objects
+        if (!qIsNaN(elevationInMeters))
+            elevationInWorld += 1.0f;
+    }
     if (!qIsNaN(elevationInMeters))
         elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
 
