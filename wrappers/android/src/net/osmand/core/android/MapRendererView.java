@@ -1792,10 +1792,12 @@ public abstract class MapRendererView extends FrameLayout {
 
             _frameTotalTime = currTime - _frameStartTime;
             _frameStartTime = currTime;
-            _frameIdleTime = (float) (_frameTotalTime - _frameRenderTime) / (float) _frameTotalTime;
-            _frameGPUWaitTime = (float) waitTime / (float) _frameTotalTime;
-            _frameIdleTimeLast1K = (_frameIdleTimeLast1K * 999.0f + _frameIdleTime) / 1000.0f;
-            _frameGPUWaitTimeLast1K = (_frameGPUWaitTimeLast1K * 999.0f + _frameGPUWaitTime) / 1000.0f;
+            if (_frameTotalTime > 0.0f) {
+                _frameIdleTime = (float) (_frameTotalTime - _frameRenderTime) / (float) _frameTotalTime;
+                _frameGPUWaitTime = (float) waitTime / (float) _frameTotalTime;
+                _frameIdleTimeLast1K = _frameIdleTimeLast1K > 0.0 ? (_frameIdleTimeLast1K * 999.0f + _frameIdleTime) / 1000.0f : _frameIdleTime;
+                _frameGPUWaitTimeLast1K = _frameGPUWaitTimeLast1K > 0.0 ? (_frameGPUWaitTimeLast1K * 999.0f + _frameGPUWaitTime) / 1000.0f : _frameGPUWaitTime;
+            }
 
             _mapAnimationFinished = _mapAnimator.update((currTime - _mapAnimationStartTime) / 1000f);
             _mapAnimationStartTime = currTime;
@@ -1838,7 +1840,7 @@ public abstract class MapRendererView extends FrameLayout {
             _frameGPUFinishTime = postRenderTime - preFlushTime;
             _frameRenderTime = postRenderTime - _frameStartTime;
             _frameRate = 1000.0f / (float) _frameRenderTime;
-            _frameRateLast1K = (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f;
+            _frameRateLast1K = _frameRateLast1K > 0.0 ? (_frameRateLast1K * 999.0f + _frameRate) / 1000.0f : _frameRate;
         }
     }
 
