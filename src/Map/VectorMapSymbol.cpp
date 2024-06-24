@@ -217,6 +217,7 @@ void OsmAnd::VectorMapSymbol::generateModel3DPrimitive(
 
         pVertex++;
     }
+    verticesAndIndices->isDenseObject = true;
 
     mapSymbol.setVerticesAndIndices(verticesAndIndices);
 }

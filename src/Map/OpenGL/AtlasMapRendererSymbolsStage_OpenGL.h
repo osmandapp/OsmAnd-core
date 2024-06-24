@@ -191,7 +191,7 @@ namespace OsmAnd
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
         GLname _onSurfaceRasterSymbolIBO;
-        struct OnSurfaceSymbolProgram {
+        struct OnSurfaceRasterProgram {
             GLname id;
 
             struct {
@@ -210,7 +210,6 @@ namespace OsmAnd
                     GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
-                    GLlocation zDistanceFromCamera;
                     GLlocation elevationInWorld;
                 } param;
             } vs;

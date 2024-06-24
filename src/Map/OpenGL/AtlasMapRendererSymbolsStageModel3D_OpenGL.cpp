@@ -198,6 +198,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         .arg(QString::asprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString()));
 
+
+    // Enable depth buffer offset for all vector symbols (against z-fighting)
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
+
     if (currentAlphaChannelType != AlphaChannelType::Straight)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -300,6 +305,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStageModel3D_OpenGL::render(
         glDrawArrays(primitivesType, 0, count);
         GL_CHECK_RESULT;
     }
+
+    // Disable depth buffer offset for other symbols
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
 
