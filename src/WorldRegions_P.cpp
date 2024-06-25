@@ -138,6 +138,8 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                 auto worldRegion = std::make_shared<WorldRegion>();
                 worldRegion->boundary = mapObject->containsAttribute("osmand_region", "boundary");
+                worldRegion->regionMap = mapObject->containsAttribute("region_map", "yes", true);
+                worldRegion->regionRoads = mapObject->containsAttribute("region_roads", "yes", true);
                 worldRegion->regionJoinMap = mapObject->containsAttribute("region_join_map", "yes", true);
                 worldRegion->regionJoinRoads = mapObject->containsAttribute("region_join_roads", "yes", true);
                 if (worldRegion->boundary)
