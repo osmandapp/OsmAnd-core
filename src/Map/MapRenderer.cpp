@@ -2852,6 +2852,36 @@ bool OsmAnd::MapRenderer::setMyLocationRadiusInMeters(const float radius, bool f
     return true;
 }
 
+bool OsmAnd::MapRenderer::setMyDirection(const float directionAngle, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.myDirection != directionAngle;
+    if (!update)
+        return false;
+
+    _requestedState.myDirection = directionAngle;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::MyLocation);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setMyDirectionRadius(const float radius, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.myDirectionRadius != radius;
+    if (!update)
+        return false;
+
+    _requestedState.myDirectionRadius = radius;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::MyLocation);
+
+    return true;
+}
+
 bool OsmAnd::MapRenderer::setSymbolsOpacity(const float opacityFactor, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);

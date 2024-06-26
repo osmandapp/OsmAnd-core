@@ -1030,6 +1030,18 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setMyLocationRadiusInMeters(radiusInMeters);
     }
 
+    public final boolean setMyLocationSectorDirection(float directionAngle) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyDirection(directionAngle);
+    }
+
+    public final boolean setMyLocationSectorRadius(float radius) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMyDirectionRadius(radius);
+    }
+
     public final boolean setSymbolsOpacity(float opacityFactor) {
         NativeCore.checkIfLoaded();
 

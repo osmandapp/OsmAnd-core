@@ -175,7 +175,6 @@ namespace OsmAnd
             const PointI& firstLocation31, const float firstHeight, const PointI& firstPoint,
             const PointI& secondLocation31, const float secondHeight, const PointI& secondPoint,
             PointD& tiltAndRotate) const = 0;
-        virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
         virtual bool getProjectedLocation(const MapRendererInternalState& internalState, const MapRendererState& state,
             const PointI& location31, const float height, PointI& outLocation31) const = 0;
         virtual bool getLastProjectablePoint(const MapRendererInternalState& internalState,
@@ -411,6 +410,8 @@ namespace OsmAnd
         virtual bool setMyLocationColor(const FColorARGB& color, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMyLocation31(const PointI& location31, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setMyLocationRadiusInMeters(const float radius, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMyDirection(const float directionAngle, bool forcedUpdate = false) Q_DECL_OVERRIDE;
+        virtual bool setMyDirectionRadius(const float radius, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) Q_DECL_OVERRIDE;
         virtual float getSymbolsOpacity() const Q_DECL_OVERRIDE;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) Q_DECL_OVERRIDE;
@@ -425,6 +426,7 @@ namespace OsmAnd
             const PointI& fixedLocation31, float surfaceZoom, float rotation,
             const PointI& firstLocation31, const float firstHeightInMeters, const PointI& firstScreenPoint,
             const PointI& secondLocation31, const float secondHeightInMeters, const PointI& secondScreenPoint) Q_DECL_OVERRIDE;
+        virtual float getHeightOfLocation(const MapRendererState& state, const PointI& location31) const = 0;
 
         virtual ZoomLevel getMinZoomLevel() const Q_DECL_OVERRIDE;
         virtual ZoomLevel getMaxZoomLevel() const Q_DECL_OVERRIDE;

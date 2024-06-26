@@ -2084,7 +2084,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         GL_CHECK_RESULT;
 
         // Change depth test function to perform <= depth test (regardless of elevation presence)
-        glDepthFunc(GL_LEQUAL);
+        glDepthFunc(GL_ALWAYS);
         GL_CHECK_RESULT;
 
         glDepthMask(GL_FALSE);
@@ -2125,10 +2125,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
     // Set direction
     glUniform1f(_onSurfaceRasterProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
-    GL_CHECK_RESULT;
-
-    // Enable depth buffer offset for surface raster symbols (against z-fighting)
-    glEnable(GL_POLYGON_OFFSET_FILL);
     GL_CHECK_RESULT;
 
     if (currentAlphaChannelType != gpuResource->alphaChannelType)
@@ -2177,10 +2173,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
     // Draw symbol actually
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-    GL_CHECK_RESULT;
-
-    // Disable depth buffer offset other symbols
-    glDisable(GL_POLYGON_OFFSET_FILL);
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;

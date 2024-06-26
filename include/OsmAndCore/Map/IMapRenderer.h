@@ -176,6 +176,8 @@ namespace OsmAnd
         virtual bool setMyLocationColor(const FColorARGB& color, bool forcedUpdate = false) = 0;
         virtual bool setMyLocation31(const PointI& location31, bool forcedUpdate = false) = 0;
         virtual bool setMyLocationRadiusInMeters(const float radius, bool forcedUpdate = false) = 0;
+        virtual bool setMyDirection(const float directionAngle, bool forcedUpdate = false) = 0;
+        virtual bool setMyDirectionRadius(const float radius, bool forcedUpdate = false) = 0;
         virtual bool setSymbolsOpacity(const float opacityFactor, bool forcedUpdate = false) = 0;
         virtual float getSymbolsOpacity() const = 0;
         virtual bool setDateTime(const int64_t dateTime, bool forcedUpdate = false) = 0;
