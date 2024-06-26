@@ -109,6 +109,12 @@ namespace OsmAnd
         static const float _particleSpeedFactor;
         static const ZoomLevel _particleConstantSpeedMinZoom;
 
+        // My location parameters:
+        glm::vec3 myLocation;
+        float myLocationRadius;
+        float headingDirection;
+        float headingRadius;
+
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;
         GLsizei _rasterTileIndicesCount;
@@ -170,6 +176,7 @@ namespace OsmAnd
                     GLlocation backgroundColor;
                     GLlocation myLocationColor;
                     GLlocation myLocation;
+                    GLlocation myDirection;
                     GLlocation worldCameraPosition;
                     GLlocation mistConfiguration;
                     GLlocation mistColor;

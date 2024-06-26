@@ -104,6 +104,8 @@ namespace OsmAnd
         FColorARGB myLocationColor;
         PointI myLocation31;
         float myLocationRadiusInMeters;
+        float myDirection;
+        float myDirectionRadius;
         float symbolsOpacity;
         int64_t dateTime;
         
@@ -161,6 +163,8 @@ namespace OsmAnd
         FColorARGB myLocationColor;
         PointI myLocation31;
         float myLocationRadiusInMeters;
+        float myDirection;
+        float myDirectionRadius;
         float symbolsOpacity;
         int64_t dateTime;
         

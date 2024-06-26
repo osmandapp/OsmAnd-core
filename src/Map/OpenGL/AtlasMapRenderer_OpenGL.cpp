@@ -349,12 +349,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     const auto elevationTangent = elevationSine / elevationCosine;
     internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * elevationCosine;
     internalState->distanceFromCameraToGround = internalState->distanceFromCameraToTarget * elevationSine;    
-    const auto distanceFromCameraToTargetWithNoVisualScale =
-        internalState->distanceFromCameraToTarget * internalState->tileOnScreenScaleFactor;
-    internalState->scaleToRetainProjectedSize =
-        internalState->distanceFromCameraToTarget / distanceFromCameraToTargetWithNoVisualScale;
+    internalState->scaleToRetainProjectedSize = 1.0f / internalState->tileOnScreenScaleFactor;
     internalState->pixelInWorldProjectionScale = static_cast<float>(AtlasMapRenderer::TileSize3D)
-        / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
+        / internalState->referenceTileSizeOnScreenInPixels * internalState->scaleToRetainProjectedSize;
 
     // Setup camera
     internalState->mDistance = glm::translate(glm::vec3(0.0f, 0.0f, -internalState->distanceFromCameraToTarget));

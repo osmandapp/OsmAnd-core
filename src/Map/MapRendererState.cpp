@@ -30,6 +30,8 @@ OsmAnd::MapRendererState::MapRendererState()
     , myLocationColor(ColorARGB(0x80, 0x80, 0x80, 0x80))
     , myLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
     , myLocationRadiusInMeters(0.0f)
+    , myDirection(0.0f)
+    , myDirectionRadius(0.0f)
     , symbolsOpacity(1.0f)
     , dateTime(0)
     , metersPerPixel(1.0)
@@ -75,6 +77,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
     mapState.myLocationColor = myLocationColor;
     mapState.myLocation31 = myLocation31;
     mapState.myLocationRadiusInMeters = myLocationRadiusInMeters;
+    mapState.myDirection = myDirection;
+    mapState.myDirectionRadius = myDirectionRadius;
     mapState.symbolsOpacity = symbolsOpacity;
     mapState.dateTime = dateTime;
     
@@ -115,6 +119,8 @@ OsmAnd::MapState::MapState()
     , myLocationColor(ColorARGB(0x80, 0x80, 0x80, 0x80))
     , myLocation31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
     , myLocationRadiusInMeters(0.0f)
+    , myDirection(0.0f)
+    , myDirectionRadius(0.0f)
     , symbolsOpacity(1.0f)
     , dateTime(0)
     , metersPerPixel(1.0)

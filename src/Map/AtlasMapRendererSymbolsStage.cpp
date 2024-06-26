@@ -1595,12 +1595,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     float elevationInWorld = surfaceInWorld;
     float elevationInMeters = NAN;
     if (const auto& rasterMapSymbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(mapSymbol))
-    {
         elevationInMeters = rasterMapSymbol->getElevation();
-        // Raise elevated raster symbols to show them on top of dense objects
-        if (!qIsNaN(elevationInMeters))
-            elevationInWorld += 1.0f;
-    }
     if (!qIsNaN(elevationInMeters))
         elevationInWorld += elevationFactor * (elevationInMeters - surfaceInMeters) / metersPerUnit;
 
@@ -1634,10 +1629,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         const PointI64 offset = position - currentState.target31;
         renderable->offsetFromTarget31 = Utilities::wrapCoordinates(offset);
         renderable->offsetFromTarget = PointF(Utilities::convert31toDouble(offset, currentState.zoomLevel));
-        renderable->positionInWorld = glm::vec3(
+        const auto positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
             elevationInWorld,
             renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+        renderable->positionInWorld = positionInWorld;
+        const auto point = glm_extensions::project(
+            positionInWorld,
+            internalState.mPerspectiveProjectionView,
+            internalState.glmViewport).xy();
+        if (allowFastCheckByFrustum)
+        {
+            renderable->queryIndex = startTerrainVisibilityFiltering(PointF(point.x, point.y),
+                positionInWorld, positionInWorld, positionInWorld, positionInWorld);
+        }
+        else
+            renderable->queryIndex = -1;
 
         // Get direction
         if (IOnSurfaceMapSymbol::isAzimuthAlignedDirection(direction))
@@ -1675,12 +1682,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     bool applyFiltering /*= true*/,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
-    const auto& internalState = getInternalState();
+    const bool result = !applyFiltering || renderable->queryIndex < 0 || applyTerrainVisibilityFiltering(renderable->queryIndex, metric);
 
-    const auto& symbol = std::static_pointer_cast<const OnSurfaceRasterMapSymbol>(renderable->mapSymbol);
-    const auto& symbolGroupPtr = symbol->groupPtr;
-
-    return true;
+    return result;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(

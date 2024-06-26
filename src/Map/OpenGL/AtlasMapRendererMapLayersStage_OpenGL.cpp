@@ -67,6 +67,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
+    // Calculate my location parameters
+    const auto offset31 = Utilities::shortestVector31(currentState.target31, currentState.myLocation31);
+    const auto offset = Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
+    myLocation = glm::vec3(offset.x, renderer->getHeightOfLocation(currentState, currentState.myLocation31), offset.y);
+    auto metersPerTile = Utilities::getMetersPerTileUnit(currentState.zoomLevel,
+        currentState.myLocation31.y >> (ZoomLevel31 - currentState.zoomLevel), AtlasMapRenderer::TileSize3D);
+    myLocationRadius = currentState.myLocationRadiusInMeters / metersPerTile;
+    headingDirection = qDegreesToRadians(qIsNaN(currentState.myDirection)
+        ? Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f) : currentState.myDirection);
+    const float cameraHeight = internalState.distanceFromCameraToGround;
+    const float sizeScale = cameraHeight > myLocation.y && !qFuzzyIsNull(cameraHeight)
+        ? 1.0f - myLocation.y / cameraHeight : 1.0f;
+    headingRadius = currentState.myDirectionRadius * internalState.pixelInWorldProjectionScale * sizeScale;
+
     GLname lastUsedProgram;
     bool withElevation = true;
     bool haveElevation = false;
@@ -181,6 +195,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_fs_backgroundColor*/ +
         1 /*param_fs_myLocationColor*/ +
         1 /*param_fs_myLocation*/ +
+        1 /*param_fs_myDirection*/ +
         1 /*param_fs_worldCameraPosition*/ +
         1 /*param_fs_mistConfiguration*/ +
         1 /*param_fs_mistColor*/;
@@ -657,6 +672,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "uniform lowp vec4 param_fs_backgroundColor;                                                                        ""\n"
         "uniform lowp vec4 param_fs_myLocationColor;                                                                        ""\n"
         "uniform vec4 param_fs_myLocation;                                                                                  ""\n"
+        "uniform vec2 param_fs_myDirection;                                                                                  ""\n"
         "uniform vec4 param_fs_worldCameraPosition;                                                                         ""\n"
         "uniform vec4 param_fs_mistConfiguration;                                                                           ""\n"
         "uniform vec4 param_fs_mistColor;                                                                                   ""\n"
@@ -806,9 +822,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp vec4 finalColor;                                                                                          ""\n"
         "                                                                                                                   ""\n"
         //   Calculate color of accuracy circle
-        "    lowp vec4 myColor = param_fs_myLocationColor;                                                                  ""\n"
-        "    float dist = distance(v2f_position.xz, param_fs_myLocation.xy);                                                ""\n"
-        "    myColor.a = dist > param_fs_myLocation.z ? 0.0 : myColor.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);""\n"
+        "    lowp vec4 circle = param_fs_myLocationColor;                                                                   ""\n"
+        "    vec2 vMyToPos = v2f_position.xz - param_fs_myLocation.xy;                                                      ""\n"
+        "    float dist = length(vMyToPos);                                                                                 ""\n"
+        "    circle.a = dist > param_fs_myLocation.z ? 0.0 : circle.a * (dist + 0.05 > param_fs_myLocation.z ? 2.0 : 1.0);  ""\n"
+        "                                                                                                                   ""\n"
+        //   Calculate color of heading sector
+        "    lowp vec4 sector = param_fs_myLocationColor;                                                                   ""\n"
+        "    float fdir = dot(vec2(sin(param_fs_myDirection.x), -cos(param_fs_myDirection.x)), vMyToPos / dist);            ""\n"
+        "    sector.a = dist >= param_fs_myDirection.y ? 0.0 : (fdir < 0.7071 ? 0.0 : 1.0 - dist / param_fs_myDirection.y); ""\n"
         "                                                                                                                   ""\n"
         //   Calculate mist color
         "    lowp vec4 mistColor = param_fs_mistColor;                                                                      ""\n"
@@ -853,7 +875,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "                                                                                                                   ""\n"
-        "    mixColors(finalColor, myColor * param_fs_lastBatch);                                                           ""\n"
+        "    mixColors(finalColor, circle * param_fs_lastBatch);                                                            ""\n"
+        "    mixColors(finalColor, sector * param_fs_lastBatch);                                                            ""\n"
         "    mixColors(finalColor, mistColor * param_fs_lastBatch);                                                         ""\n"
         "    lowp vec4 overColor = mix(param_fs_backgroundColor, finalColor, finalColor.a);                                 ""\n"
         "    FRAGMENT_COLOR_OUTPUT = mix(overColor, finalColor, param_fs_blendingEnabled);                                  ""\n"
@@ -1107,6 +1130,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.myLocation,
         "param_fs_myLocation",
+        GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(
+        outRasterLayerTileProgram.fs.param.myDirection,
+        "param_fs_myDirection",
         GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(
         outRasterLayerTileProgram.fs.param.worldCameraPosition,
@@ -1737,15 +1764,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         currentState.myLocationColor.b,
         currentState.myLocationColor.a);
     GL_CHECK_RESULT;
-    auto offset31 = Utilities::shortestVector31(currentState.target31, currentState.myLocation31);
-    auto offset = Utilities::convert31toFloat(offset31, currentState.zoomLevel) * AtlasMapRenderer::TileSize3D;
-    auto metersPerTile = Utilities::getMetersPerTileUnit(currentState.zoomLevel,
-        currentState.myLocation31.y >> (ZoomLevel31 - currentState.zoomLevel), AtlasMapRenderer::TileSize3D);
     glUniform4f(program.fs.param.myLocation,
-        offset.x,
-        offset.y,
-        currentState.myLocationRadiusInMeters / metersPerTile,
+        myLocation.x,
+        myLocation.z,
+        myLocationRadius,
         1.0f);
+    GL_CHECK_RESULT;
+
+    // Set direction and radius of heading sector
+    glUniform2f(program.fs.param.myDirection,
+        headingDirection,
+        headingRadius);
     GL_CHECK_RESULT;
 
     // Set camera position for mist calculations
