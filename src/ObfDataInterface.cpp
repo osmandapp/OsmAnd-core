@@ -516,9 +516,12 @@ bool OsmAnd::ObfDataInterface::loadAmenityTopIndexSubtypes(
                     continue;
             }
             
-            std::shared_ptr<const OsmAnd::ObfPoiSectionSubtypes> c = poiSection->getSubtypes();
-            for (const std::shared_ptr<const ObfPoiSectionSubtype> & topIndex : c->topIndexSubtypes) {
-                outSubtypes.insert(topIndex->name, topIndex->possibleValues);
+            std::shared_ptr<const ObfPoiSectionSubtypes> allSubtypes = nullptr;
+            OsmAnd::ObfPoiSectionReader::loadSubtypes(obfReader, poiSection, allSubtypes, queryController);
+            if (allSubtypes) {
+                for (const std::shared_ptr<const ObfPoiSectionSubtype> & topIndex : allSubtypes->topIndexSubtypes) {
+                    outSubtypes.insert(topIndex->name, topIndex->possibleValues);
+                }
             }
         }
     }
