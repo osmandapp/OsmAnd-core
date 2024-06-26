@@ -489,6 +489,43 @@ bool OsmAnd::ObfDataInterface::loadAmenityCategories(
     return true;
 }
 
+bool OsmAnd::ObfDataInterface::loadAmenityTopIndexSubtypes(
+    QHash<QString, QStringList> & outSubtypes,
+    const AreaI* const pBbox31 /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& poiSection : constOf(obfInfo->poiSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+
+            if (pBbox31)
+            {
+                bool accept = false;
+                accept = accept || poiSection->area31.contains(*pBbox31);
+                accept = accept || poiSection->area31.intersects(*pBbox31);
+                accept = accept || pBbox31->contains(poiSection->area31);
+
+                if (!accept)
+                    continue;
+            }
+            
+            std::shared_ptr<const OsmAnd::ObfPoiSectionSubtypes> c = poiSection->getSubtypes();
+            for (const std::shared_ptr<const ObfPoiSectionSubtype> & topIndex : c->topIndexSubtypes) {
+                outSubtypes.insert(topIndex->name, topIndex->possibleValues);
+            }
+        }
+    }
+
+    return true;
+}
+
 bool OsmAnd::ObfDataInterface::loadAmenities(
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
     const AreaI* const pBbox31 /*= nullptr*/,

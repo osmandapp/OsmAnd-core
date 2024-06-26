@@ -292,6 +292,10 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtypesStructure(
                     subtypes->descriptionSubtypeIndex = subtypes->subtypes.size() - 1;
                     subtypes->descriptionSubtype = subtype;
                 }
+                
+                if (subtype->tagName.startsWith(QLatin1String("top_index_"))) {
+                    subtypes->topIndexSubtypes.push_back(subtype);
+                }
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -700,6 +704,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
                 }
                 break;
             }
+                //
             //            case OsmandOdb.OsmAndPoiCategories.SUBCATEGORIES_FIELD_NUMBER:
             //                int subcatvl = codedIS.readUInt32();
             //                if(req.poiTypeFilter.filterSubtypes()) {

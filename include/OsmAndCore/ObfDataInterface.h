@@ -90,6 +90,11 @@ namespace OsmAnd
             QHash<QString, QStringList>* outCategories,
             const AreaI* const pBbox31 = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        
+        bool loadAmenityTopIndexSubtypes(
+            QHash<QString, QStringList> & outSubtypes,
+            const AreaI* const pBbox31 = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadAmenities(
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
