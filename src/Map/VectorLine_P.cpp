@@ -1045,7 +1045,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
 {
     int order = owner->baseOrder;
     const bool withHeights = _hasElevationDataProvider && hasHeights();
-    float zoom = !withHeights ? this->zoom() : _surfaceZoomLevel +
+    float zoom = !_hasElevationDataProvider ? this->zoom() : _surfaceZoomLevel +
         (_surfaceVisualZoom >= 1.0f ? _surfaceVisualZoom - 1.0f : (_surfaceVisualZoom - 1.0f) * 2.0f);
     double scale = Utilities::getPowZoom(31 - zoom) * qSqrt(zoom) /
         (AtlasMapRenderer::TileSize3D * AtlasMapRenderer::TileSize3D); // TODO: this should come from renderer
