@@ -1368,7 +1368,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileTime(
     return false;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
+bool OsmAnd::TileSqliteDatabase_P::retrieveTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     QByteArray& outData,
@@ -1440,15 +1440,13 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                 }
                 *pOutTime = time;
             }
-
-            return true;
         }
     }
 
-    return false;
+    return true;
 }
 
-bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
+bool OsmAnd::TileSqliteDatabase_P::retrieveTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
@@ -1542,12 +1540,10 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
                 }
                 *pOutTimestamp = timestamp;
             }
-
-            return true;
         }
     }
 
-    return false;
+    return true;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(

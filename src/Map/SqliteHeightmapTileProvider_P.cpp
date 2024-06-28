@@ -83,7 +83,7 @@ bool OsmAnd::SqliteHeightmapTileProvider_P::obtainData(
     {
         for (const auto& database : owner->sourcesCollection->getTileSqliteDatabases(request.tileId, request.zoom))
         {
-            if (database->obtainTileData(request.tileId, request.zoom, data) && !data.isEmpty())
+            if (database->retrieveTileData(request.tileId, request.zoom, data) && !data.isEmpty())
             {
                 break;
             }

@@ -183,16 +183,16 @@ bool OsmAnd::TileSqliteDatabase::obtainTileTime(
     return _p->obtainTileTime(tileId, zoom, outTime, specification);
 }
 
-bool OsmAnd::TileSqliteDatabase::obtainTileData(
+bool OsmAnd::TileSqliteDatabase::retrieveTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     QByteArray& outData,
     int64_t* pOutTime /* = nullptr*/) const
 {
-    return _p->obtainTileData(tileId, zoom, outData, pOutTime);
+    return _p->retrieveTileData(tileId, zoom, outData, pOutTime);
 }
 
-bool OsmAnd::TileSqliteDatabase::obtainTileData(
+bool OsmAnd::TileSqliteDatabase::retrieveTileData(
     OsmAnd::TileId tileId,
     OsmAnd::ZoomLevel zoom,
     int64_t specification,
@@ -200,7 +200,7 @@ bool OsmAnd::TileSqliteDatabase::obtainTileData(
     int64_t* pOutTime /* = nullptr*/,
     int64_t* pOutTimestamp /* = nullptr*/) const
 {
-    return _p->obtainTileData(tileId, zoom, specification, outData, pOutTime, pOutTimestamp);
+    return _p->retrieveTileData(tileId, zoom, specification, outData, pOutTime, pOutTimestamp);
 }
 
 bool OsmAnd::TileSqliteDatabase::obtainTileData(
