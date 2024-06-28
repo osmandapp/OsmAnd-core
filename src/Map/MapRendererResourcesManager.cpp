@@ -339,6 +339,8 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                             && resource->setStateIf(MapRendererResourceState::PreparedRenew, newState))
                             LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, newState);
                         else if (isPeriodChanged && (state == MapRendererResourceState::ProcessingRequest
+                            || state == MapRendererResourceState::ProcessingUpdate
+                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing
                             || state == MapRendererResourceState::Unavailable))
                         {
                             resource->markAsJunk();
@@ -349,9 +351,7 @@ bool OsmAnd::MapRendererResourcesManager::updateBindingsAndTime(
                             || state == MapRendererResourceState::Uploaded
                             || state == MapRendererResourceState::IsBeingUsed
                             || state == MapRendererResourceState::PreparedRenew
-                            || state == MapRendererResourceState::Renewing
-                            || state == MapRendererResourceState::ProcessingUpdate
-                            || state == MapRendererResourceState::ProcessingUpdateWhileRenewing))
+                            || state == MapRendererResourceState::Renewing))
                         {
                             resource->markAsJunk();
                         }
