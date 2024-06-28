@@ -1445,7 +1445,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
         }
     }
 
-    return true;
+    return false;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
@@ -1547,7 +1547,7 @@ bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
         }
     }
 
-    return true;
+    return false;
 }
 
 bool OsmAnd::TileSqliteDatabase_P::obtainTileData(
